@@ -1,0 +1,141 @@
+import React from 'react';
+import { getAllBatches, getAllEggProduction } from '@/lib/actions/dashboard-actions';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { EggActionsHeader, EggLogActions, LogProductionButton } from './EggActions';
+import { formatDate } from '@/lib/utils';
+
+export default async function EggsPage() {
+  const [batches, productionHistory] = await Promise.all([
+    getAllBatches(),
+    getAllEggProduction()
+  ]);
+  
+  const layerBatches = batches.filter((b: any) => b.breedType === 'Layer' && b.status === 'active');
+
+  const todayTotal = productionHistory
+    .filter((log: any) => new Date(log.logDate).toDateString() === new Date().toDateString())
+    .reduce((acc: number, log: any) => acc + log.eggsCollected, 0);
+
+  const weekTotal = productionHistory
+    .filter((log: any) => {
+      const logDate = new Date(log.logDate);
+      const weekAgo = new Date();
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      return logDate >= weekAgo;
+    })
+    .reduce((acc: number, log: any) => acc + log.eggsCollected, 0);
+
+  return (
+    <div className="max-w-7xl mx-auto space-y-6 px-4 py-8">
+      <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+        <div>
+          <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">Egg Production</h2>
+          <p className="text-gray-500 mt-1">Track daily egg yields across your layer flocks.</p>
+        </div>
+        <EggActionsHeader batches={layerBatches} />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <Card className="rounded-2xl border-none shadow-xl shadow-gray-200/50">
+            <CardHeader className="bg-gray-50/50 rounded-t-2xl border-b border-gray-100">
+              <CardTitle className="text-gray-800">Active Layer Flocks</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              {layerBatches.length === 0 ? (
+                <div className="py-12 text-center bg-gray-50/50 rounded-xl border-2 border-dashed border-gray-200">
+                  <p className="text-gray-400 font-medium">No active layer batches found.</p>
+                </div>
+              ) : (
+                <div className="grid gap-4">
+                  {layerBatches.map((batch: any) => (
+                    <div key={batch.id} className="p-5 border border-gray-100 rounded-2xl bg-white hover:border-green-200 hover:shadow-lg hover:shadow-green-900/5 transition-all flex justify-between items-center group">
+                      <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-xl bg-green-50 flex items-center justify-center text-green-700 font-bold">
+                          {batch.id}
+                        </div>
+                        <div>
+                          <span className="font-bold text-gray-900">FLK-{batch.id.toString().padStart(3, '0')}</span>
+                          <p className="text-xs text-gray-500 font-medium">
+                            {batch.house?.name || `House ${batch.houseId}`} • {batch.currentCount.toLocaleString()} birds
+                          </p>
+                        </div>
+                      </div>
+                      <LogProductionButton batchId={batch.id} batches={layerBatches} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
+            <div className="bg-gray-50/50 px-6 py-4 border-b border-gray-100">
+              <h3 className="font-bold text-gray-800">Production History</h3>
+            </div>
+            <table className="min-w-full divide-y divide-gray-100">
+              <thead>
+                <tr>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Date</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Batch</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Collected</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Losses</th>
+                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-widest">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {productionHistory.map((log: any) => (
+                  <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">
+                      {formatDate(log.logDate)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">
+                      FLK-{log.batchId?.toString().padStart(3, '0')}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-green-700 font-bold">
+                      {log.eggsCollected} <span className="text-xs font-normal text-gray-400">eggs</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">
+                      {(log.damagedEggs || 0) + (log.crackedEggs || 0)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <EggLogActions log={log} batches={layerBatches} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <Card className="rounded-2xl border-none shadow-xl shadow-gray-200/50 overflow-hidden">
+            <CardHeader className="bg-amber-600 text-white p-6">
+              <CardTitle className="text-white text-lg">Production Stats</CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="space-y-6">
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                  <div className="text-sm text-gray-500 font-medium mb-1">Today's Yield</div>
+                  <div className="text-3xl font-extrabold text-gray-900">{todayTotal.toLocaleString()}</div>
+                  <div className="text-xs text-green-600 font-bold mt-1">Normal levels</div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center pb-3 border-b border-gray-100">
+                    <span className="text-gray-500 text-sm font-medium">This Week</span>
+                    <span className="font-bold text-gray-900">{weekTotal.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500 text-sm font-medium">Efficiency</span>
+                    <span className="font-bold text-amber-600">-- %</span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}

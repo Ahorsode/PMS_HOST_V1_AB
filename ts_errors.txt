@@ -1,0 +1,10 @@
+﻿prisma/seed.ts(18,31): error TS2339: Property 'poultryHouse' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+prisma/seed.ts(30,31): error TS2339: Property 'poultryHouse' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+prisma/seed.ts(57,16): error TS2551: Property 'feedInventory' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'. Did you mean 'inventory'?
+prisma/seed.ts(67,16): error TS2551: Property 'feedInventory' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'. Did you mean 'inventory'?
+prisma/seed.ts(78,16): error TS2339: Property 'productionLog' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+src/app/dashboard/flocks/analytics/page.tsx(10,40): error TS7006: Parameter 'b' implicitly has an 'any' type.
+src/app/dashboard/flocks/analytics/page.tsx(11,44): error TS7006: Parameter 'acc' implicitly has an 'any' type.
+src/app/dashboard/flocks/analytics/page.tsx(11,49): error TS7006: Parameter 'b' implicitly has an 'any' type.
+src/app/dashboard/flocks/analytics/page.tsx(12,42): error TS7006: Parameter 'acc' implicitly has an 'any' type.
+src/app/dashboard/flocks/analytics/page.tsx(12,47): error TS7006: Parameter 'b' implicitly has an 'any' type.
