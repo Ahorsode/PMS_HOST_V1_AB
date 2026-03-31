@@ -3,6 +3,7 @@
 import prisma from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
+import { checkWorkerPermissions } from './staff-actions'
 
 export async function createSale(data: {
   customerName?: string
@@ -11,6 +12,9 @@ export async function createSale(data: {
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
+
+  const hasEditAccess = await checkWorkerPermissions('finance', 'edit')
+  if (!hasEditAccess) throw new Error('Unauthorized: Missing Edit Finance Permission')
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const sale = await tx.sale.create({
@@ -35,6 +39,9 @@ export async function createSale(data: {
 export async function deleteSale(id: number) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
+
+  const hasEditAccess = await checkWorkerPermissions('finance', 'edit')
+  if (!hasEditAccess) throw new Error('Unauthorized: Missing Edit Finance Permission')
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     // Delete sale items first if not handled by cascade

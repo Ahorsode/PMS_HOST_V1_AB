@@ -5,7 +5,23 @@ import { Banknote, ShoppingBag, TrendingUp, Users } from 'lucide-react';
 import { SaleActionsHeader, SaleRowActions } from './SaleActions';
 import { formatDate, formatCurrency } from '@/lib/utils';
 
+import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
+import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
+
 export default async function SalesPage() {
+  const cookieStore = await cookies();
+  const activeFarmId = cookieStore.get('activeFarmId')?.value;
+  
+  if (!activeFarmId) {
+    redirect('/dashboard');
+  }
+
+  const hasAccess = await checkWorkerPermissions('finance', 'view');
+  if (!hasAccess) {
+    redirect('/dashboard/unauthorized');
+  }
+
   const sales = await getAllSales();
 
   const totalRevenue = sales.reduce((acc: number, sale: any) => acc + Number(sale.totalAmount), 0);

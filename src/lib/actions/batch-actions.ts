@@ -3,6 +3,7 @@
 import prisma from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
+import { checkWorkerPermissions } from './staff-actions'
 
 export async function createBatch(data: {
   houseId: number
@@ -12,6 +13,9 @@ export async function createBatch(data: {
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
+
+  const hasEditAccess = await checkWorkerPermissions('batches', 'edit')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Batches Permission' }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const batch = await tx.batch.create({
@@ -45,6 +49,9 @@ export async function updateBatch(id: number, data: {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
+  const hasEditAccess = await checkWorkerPermissions('batches', 'edit')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Batches Permission' }
+
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const batch = await tx.batch.update({
       where: { id, farmId: activeFarmId },
@@ -64,6 +71,9 @@ export async function updateBatch(id: number, data: {
 export async function deleteBatch(id: number) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
+
+  const hasEditAccess = await checkWorkerPermissions('batches', 'edit')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Batches Permission' }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     await tx.batch.delete({
@@ -87,6 +97,9 @@ export async function logMortality(data: {
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
+
+  const hasEditAccess = await checkWorkerPermissions('batches', 'edit')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Batches Permission' }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const mortality = await tx.mortality.create({

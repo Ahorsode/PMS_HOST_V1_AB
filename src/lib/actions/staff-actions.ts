@@ -134,14 +134,32 @@ export async function getFarmMembers() {
       }
     })
 
+    // Fetch permissions separately to bypass TS errors with Prisma extension
+    const permissions = await (prisma as any).userPermission.findMany({
+      where: { farmId: activeFarmId }
+    })
+
+    // Map permissions back to members
+    const membersWithPermissions = members.map((member: any) => ({
+      ...member,
+      user: {
+        ...member.user,
+        userPermissions: permissions.filter((p: any) => p.userId === member.userId)
+      }
+    }))
+
     const invitations = await tx.invitation.findMany({
       where: { 
         farmId: activeFarmId,
         status: 'PENDING'
       }
     })
+    
+    const currentUser = await tx.user.findUnique({
+      where: { id: userId }
+    })
 
-    return { members, invitations }
+    return { members: membersWithPermissions, invitations, currentUserRole: currentUser.role }
   })
 }
 
@@ -186,4 +204,144 @@ export async function deleteInvitation(invitationId: number) {
     console.error('Error deleting invitation:', error)
     return { success: false, error: error.message }
   })
+}
+
+export async function updateWorkerPermissions(targetUserId: string, permissions: any) {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) throw new Error('No active farm selected')
+
+  // Execute within a transaction for concurrency safety and atomicity
+  return await prisma.$transaction(async (tx) => {
+    // Only Owners can update permissions
+    const currentUser = await tx.user.findUnique({
+      where: { id: userId }
+    })
+    
+    if (!currentUser || currentUser.role !== 'OWNER') {
+      throw new Error('Only Data Owners can edit granular permissions.')
+    }
+
+    // Load existing permissions to generate audit logs
+    const existingPerm = await tx.userPermission.findFirst({
+      where: {
+        userId: targetUserId,
+        farmId: activeFarmId
+      }
+    })
+
+    const upserted = await tx.userPermission.upsert({
+      where: {
+        userId_farmId: {
+          userId: targetUserId,
+          farmId: activeFarmId
+        }
+      },
+      update: {
+        canViewFinance: permissions.canViewFinance ?? false,
+        canEditFinance: permissions.canEditFinance ?? false,
+        canViewInventory: permissions.canViewInventory ?? false,
+        canEditInventory: permissions.canEditInventory ?? false,
+        canViewBatches: permissions.canViewBatches ?? false,
+        canEditBatches: permissions.canEditBatches ?? false,
+      },
+      create: {
+        userId: targetUserId,
+        farmId: activeFarmId,
+        canViewFinance: permissions.canViewFinance ?? false,
+        canEditFinance: permissions.canEditFinance ?? false,
+        canViewInventory: permissions.canViewInventory ?? false,
+        canEditInventory: permissions.canEditInventory ?? false,
+        canViewBatches: permissions.canViewBatches ?? false,
+        canEditBatches: permissions.canEditBatches ?? false,
+      }
+    })
+
+    // Compare fields and generate audit logs
+    const fieldsToAudit = [
+      'canViewFinance', 'canEditFinance',
+      'canViewInventory', 'canEditInventory',
+      'canViewBatches', 'canEditBatches'
+    ]
+
+    for (const field of fieldsToAudit) {
+      const oldVal = (existingPerm as any)?.[field] ?? false
+      const newVal = (upserted as any)[field]
+      
+      if (oldVal !== newVal) {
+        await tx.auditLog.create({
+          data: {
+            tableName: 'user_permissions',
+            recordId: upserted.id,
+            attributeName: field,
+            oldValue: String(oldVal),
+            newValue: String(newVal),
+            reason: `Permission '${field}' updated by Owner`,
+            userId: userId,
+            farmId: activeFarmId
+          }
+        })
+      }
+    }
+
+    revalidatePath('/dashboard/team')
+    revalidatePath('/dashboard')
+    
+    return { success: true, permissions: upserted }
+  }).catch((error: any) => {
+    if (error.code === 'P2002' || error.code === 'P2034') {
+      return { success: false, error: 'Database is busy. Please try again in a few seconds.' }
+    }
+    console.error('Error updating permissions:', error)
+    return { success: false, error: error.message }
+  })
+}
+
+/**
+ * Hardened permission checker.
+ * Fetches user role and permission record directly from database on every call
+ * to ensure that stale session/JWT data never allows unauthorized access.
+ */
+export async function checkWorkerPermissions(module: 'finance' | 'inventory' | 'batches', action: 'view' | 'edit') {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return false
+  
+  try {
+    // FORCE fresh database fetch for role (Cache-Busting)
+    const userinfo = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true }
+    })
+    
+    if (!userinfo) return false
+    
+    // 1. OWNER Bypass - Always bypasses granular checks
+    if (userinfo.role === 'OWNER') {
+      return true
+    }
+    
+    // 2. Load Granular Permissions (FORCE fresh DB fetch)
+    const perm = await prisma.userPermission.findFirst({
+      where: {
+        userId: userId,
+        farmId: activeFarmId
+      }
+    })
+    
+    // 3. Apply overrides if record exists
+    if (perm) {
+      if (module === 'finance') return action === 'view' ? perm.canViewFinance : perm.canEditFinance
+      if (module === 'inventory') return action === 'view' ? perm.canViewInventory : perm.canEditInventory
+      if (module === 'batches') return action === 'view' ? perm.canViewBatches : perm.canEditBatches
+    }
+    
+    // 4. Default State (No Record Found)
+    // Managers bypass by default. Workers are View-Only by default.
+    if (userinfo.role === 'MANAGER') return true
+    if (userinfo.role === 'WORKER') return action === 'view'
+    
+    return false
+  } catch (error) {
+    console.error('Permission check failed:', error)
+    return false
+  }
 }

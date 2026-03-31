@@ -5,7 +5,23 @@ import { Wheat, History, Inbox, Scale } from 'lucide-react';
 import { FeedActionsHeader, FeedLogActions, InventoryActions } from './FeedActions';
 import { formatDate } from '@/lib/utils';
 
+import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
+import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
+
 export default async function FeedPage() {
+  const cookieStore = await cookies();
+  const activeFarmId = cookieStore.get('activeFarmId')?.value;
+  
+  if (!activeFarmId) {
+    redirect('/dashboard');
+  }
+
+  const hasAccess = await checkWorkerPermissions('inventory', 'view');
+  if (!hasAccess) {
+    redirect('/dashboard/unauthorized');
+  }
+
   const [batches, inventory, feedingLogs] = await Promise.all([
     getAllBatches(),
     getAllInventory(),

@@ -9,10 +9,12 @@ import { PageTransition } from './PageTransition';
 
 export const SidebarWrapper = ({ 
   children, 
-  role 
+  role,
+  permissions
 }: { 
   children: React.ReactNode;
   role: string | undefined;
+  permissions?: any;
 }) => {
   const pathname = usePathname();
   
@@ -39,8 +41,8 @@ export const SidebarWrapper = ({
       {/* Conditionally render Sidebar and BottomNav */}
       {!isIndeptPage && (
         <>
-          <Sidebar role={role} />
-          <BottomNav role={role} />
+          <Sidebar role={role} permissions={permissions} />
+          <BottomNav role={role} permissions={permissions} />
         </>
       )}
       

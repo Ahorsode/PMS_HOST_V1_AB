@@ -8,15 +8,23 @@ import { LayoutDashboard, Bird, XCircle, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { signOut } from 'next-auth/react';
 
-export const BottomNav = ({ role = 'OWNER' }: { role?: string }) => {
+export const BottomNav = ({ role = 'OWNER', permissions }: { role?: string, permissions?: any }) => {
   const pathname = usePathname();
 
   // Mobile navigation items
-  const navItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', roles: ['OWNER', 'MANAGER'] },
+  const allNavItems = [
+    { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', roles: ['OWNER', 'MANAGER', 'WORKER'] },
     { name: 'Flocks', icon: Bird, href: '/dashboard/flocks', roles: ['OWNER', 'MANAGER'] },
     { name: 'Mortality', icon: XCircle, href: '/dashboard/mortality', roles: ['OWNER', 'MANAGER', 'WORKER'] },
-  ].filter(item => item.roles.includes(role));
+  ];
+
+  const navItems = allNavItems.filter(item => {
+    if (item.roles.includes(role)) return true;
+    if (role === 'WORKER' && permissions) {
+      if (item.name === 'Flocks' && permissions.canViewBatches) return true;
+    }
+    return false;
+  });
 
   return (
     <motion.div

@@ -12,11 +12,11 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export const Sidebar = ({ role = 'OWNER' }: { role?: string }) => {
+export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permissions?: any }) => {
   const pathname = usePathname();
 
   const allNavItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', roles: ['OWNER', 'MANAGER'] },
+    { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', roles: ['OWNER', 'MANAGER', 'WORKER'] },
     { name: 'Flocks', icon: Bird, href: '/dashboard/flocks', roles: ['OWNER', 'MANAGER'] },
     { name: 'Houses', icon: ThermometerSun, href: '/dashboard/houses', roles: ['OWNER', 'MANAGER'] },
     { name: 'Eggs', icon: Egg, href: '/dashboard/eggs', roles: ['OWNER', 'MANAGER'] },
@@ -28,7 +28,14 @@ export const Sidebar = ({ role = 'OWNER' }: { role?: string }) => {
     { name: 'Settings', icon: Settings, href: '/dashboard/settings', roles: ['OWNER', 'MANAGER'] },
   ];
 
-  const navItems = allNavItems.filter(item => item.roles.includes(role));
+  const navItems = allNavItems.filter(item => {
+    if (item.roles.includes(role)) return true;
+    if (role === 'WORKER' && permissions) {
+      if ((item.name === 'Finance' || item.name === 'Sales') && permissions.canViewFinance) return true;
+      if (item.name === 'Flocks' && permissions.canViewBatches) return true;
+    }
+    return false;
+  });
 
   return (
     <aside className="hidden md:block fixed left-6 top-6 bottom-6 w-20 hover:w-64 group transition-all duration-500 ease-out z-50">

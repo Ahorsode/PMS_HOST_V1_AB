@@ -3,10 +3,14 @@
 import prisma from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
+import { checkWorkerPermissions } from './staff-actions'
 
 export async function getExpenses() {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return []
+
+  const hasViewAccess = await checkWorkerPermissions('finance', 'view')
+  if (!hasViewAccess) return []
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const expenses = await tx.expense.findMany({
@@ -33,6 +37,9 @@ export async function createExpense(data: {
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
+
+  const hasEditAccess = await checkWorkerPermissions('finance', 'edit')
+  if (!hasEditAccess) throw new Error('Unauthorized: Missing Edit Finance Permission')
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const expense = await tx.expense.create({

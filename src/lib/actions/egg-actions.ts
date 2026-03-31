@@ -3,6 +3,8 @@
 import prisma from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { auth } from '@/auth'
+import { getAuthContext } from '@/lib/auth-utils'
+import { checkWorkerPermissions } from './staff-actions'
 
 async function getUserId() {
   const session = await auth()
@@ -17,11 +19,17 @@ export async function createEggProduction(data: {
   crackedEggs?: number
   logDate: string
 }) {
-  const userId = await getUserId()
-  return await (prisma as any).$withUser(userId, async (tx: any) => {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return { success: false, error: 'No active farm selected' }
+
+  const hasEditAccess = await checkWorkerPermissions('batches', 'edit')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Batches Permission' }
+
+  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const log = await tx.eggProduction.create({
       data: {
         batchId: data.batchId,
+        farmId: activeFarmId,
         eggsCollected: data.eggsCollected,
         damagedEggs: data.damagedEggs || 0,
         crackedEggs: data.crackedEggs || 0,
@@ -43,10 +51,15 @@ export async function updateEggProduction(id: number, data: {
   crackedEggs?: number
   logDate?: string
 }) {
-  const userId = await getUserId()
-  return await (prisma as any).$withUser(userId, async (tx: any) => {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return { success: false, error: 'No active farm selected' }
+
+  const hasEditAccess = await checkWorkerPermissions('batches', 'edit')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Batches Permission' }
+
+  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const log = await tx.eggProduction.update({
-      where: { id },
+      where: { id, farmId: activeFarmId },
       data: {
         ...data,
         logDate: data.logDate ? new Date(data.logDate) : undefined,
@@ -61,10 +74,15 @@ export async function updateEggProduction(id: number, data: {
 }
 
 export async function deleteEggProduction(id: number) {
-  const userId = await getUserId()
-  return await (prisma as any).$withUser(userId, async (tx: any) => {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return { success: false, error: 'No active farm selected' }
+
+  const hasEditAccess = await checkWorkerPermissions('batches', 'edit')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Batches Permission' }
+
+  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     await tx.eggProduction.delete({
-      where: { id }
+      where: { id, farmId: activeFarmId }
     })
     revalidatePath('/dashboard/eggs')
     return { success: true }

@@ -8,28 +8,28 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-
 model User {
-  id            String       @id @default(cuid())
-  firstname     String?
-  surname       String?
-  email         String?      @unique
-  emailVerified DateTime?    @map("email_verified")
-  image         String?
-  role          Role         @default(OWNER)
-  createdAt     DateTime     @default(now()) @map("created_at")
-  updatedAt     DateTime     @updatedAt @map("updated_at")
-  name          String?
-  middleName    String?      @map("middle_name")
-  password      String?
-  phoneNumber   String?      @unique @map("phone_number")
-  accounts      Account[]
-  batches       Batch[]
-  feedingLogs   FeedingLog[]
-  memberships   FarmMember[]
-  farms         Farm[]
-  sessions      Session[]
-  expenses      Expense[]
+  id              String           @id @default(cuid())
+  firstname       String?
+  surname         String?
+  email           String?          @unique
+  emailVerified   DateTime?        @map("email_verified")
+  image           String?
+  role            Role             @default(OWNER)
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+  name            String?
+  middleName      String?          @map("middle_name")
+  password        String?
+  phoneNumber     String?          @unique @map("phone_number")
+  accounts        Account[]
+  batches         Batch[]
+  feedingLogs     FeedingLog[]
+  memberships     FarmMember[]
+  farms           Farm[]
+  sessions        Session[]
+  expenses        Expense[]
+  userPermissions UserPermission[]
 
   @@map("users")
 }
@@ -73,15 +73,15 @@ model VerificationToken {
 }
 
 model Farm {
-  id              Int             @id @default(autoincrement())
+  id              Int                   @id @default(autoincrement())
   name            String
   location        String?
   capacity        Int
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
-  userId          String          @default("user_placeholder")
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+  userId          String                @default("user_placeholder")
   members         FarmMember[]
-  user            User            @relation(fields: [userId], references: [id])
+  user            User                  @relation(fields: [userId], references: [id])
   houses          House[]
   invitations     Invitation[]
   batches         Batch[]
@@ -97,6 +97,7 @@ model Farm {
   vaccinations    VaccinationSchedule[]
   medications     MedicationSchedule[]
   settings        FarmSettings?
+  userPermissions UserPermission[]
 
   @@index([userId])
   @@map("farms")
@@ -121,20 +122,20 @@ model House {
 }
 
 model Batch {
-  id               Int             @id @default(autoincrement())
-  status           String          @default("active")
+  id               Int                   @id @default(autoincrement())
+  status           String                @default("active")
   arrivalDate      DateTime
   breedType        String
-  createdAt        DateTime        @default(now())
+  createdAt        DateTime              @default(now())
   currentCount     Int
   houseId          Int
-  farmId           Int             @default(1)
+  farmId           Int                   @default(1)
   initialCount     Int
-  updatedAt        DateTime        @updatedAt
-  userId           String          @default("user_placeholder")
-  house            House           @relation(fields: [houseId], references: [id])
-  farm             Farm            @relation(fields: [farmId], references: [id])
-  user             User            @relation(fields: [userId], references: [id])
+  updatedAt        DateTime              @updatedAt
+  userId           String                @default("user_placeholder")
+  house            House                 @relation(fields: [houseId], references: [id])
+  farm             Farm                  @relation(fields: [farmId], references: [id])
+  user             User                  @relation(fields: [userId], references: [id])
   feedingLogs      FeedingLog[]
   eggProduction    EggProduction[]
   healthRecords    HealthRecord[]
@@ -382,17 +383,17 @@ model AuditLog {
 }
 
 model Expense {
-  id          Int      @id @default(autoincrement())
+  id          Int             @id @default(autoincrement())
   farmId      Int
-  userId      String   @map("user_id")
-  amount      Decimal  @db.Decimal(10, 2)
+  userId      String          @map("user_id")
+  amount      Decimal         @db.Decimal(10, 2)
   category    ExpenseCategory
   description String?
-  expenseDate DateTime @default(now()) @map("expense_date")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  farm        Farm     @relation(fields: [farmId], references: [id], onDelete: Cascade)
-  user        User     @relation(fields: [userId], references: [id])
+  expenseDate DateTime        @default(now()) @map("expense_date")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+  farm        Farm            @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  user        User            @relation(fields: [userId], references: [id])
 
   @@index([farmId])
   @@index([userId])
@@ -407,4 +408,24 @@ enum ExpenseCategory {
   SALARY
   MAINTENANCE
   OTHER
+}
+
+model UserPermission {
+  id               Int     @id @default(autoincrement())
+  userId           String  @map("user_id")
+  farmId           Int     @map("farm_id")
+  canViewFinance   Boolean @default(false) @map("can_view_finance")
+  canEditFinance   Boolean @default(false) @map("can_edit_finance")
+  canViewInventory Boolean @default(false) @map("can_view_inventory")
+  canEditInventory Boolean @default(false) @map("can_edit_inventory")
+  canViewBatches   Boolean @default(false) @map("can_view_batches")
+  canEditBatches   Boolean @default(false) @map("can_edit_batches")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  farm Farm @relation(fields: [farmId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, farmId])
+  @@index([farmId])
+  @@index([userId])
+  @@map("user_permissions")
 }

@@ -2,20 +2,25 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Users, Mail, Shield, UserPlus, Loader2, CheckCircle2, XCircle, Trash2, ShieldCheck, UserCheck } from 'lucide-react';
-import { inviteWorker, getFarmMembers, deleteMember, deleteInvitation } from '@/lib/actions/staff-actions';
+import { Users, Mail, Shield, UserPlus, Loader2, CheckCircle2, XCircle, Trash2, ShieldCheck, UserCheck, Settings } from 'lucide-react';
+import { inviteWorker, getFarmMembers, deleteMember, deleteInvitation, updateWorkerPermissions } from '@/lib/actions/staff-actions';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
+import { PermissionsModal } from '@/components/ui/PermissionsModal';
+import { useRouter } from 'next/navigation';
 
 export default function TeamPage() {
+  const router = useRouter();
   const [members, setMembers] = useState<any[]>([]);
   const [invitations, setInvitations] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isInviting, setIsInviting] = useState(false);
+  const [currentUserRole, setCurrentUserRole] = useState<string>('WORKER');
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: number, type: 'member' | 'invite' } | null>(null);
+  const [permissionTarget, setPermissionTarget] = useState<any>(null);
 
   useEffect(() => {
     loadTeam();
@@ -28,6 +33,7 @@ export default function TeamPage() {
       if (data) {
         setMembers(data.members || []);
         setInvitations(data.invitations || []);
+        setCurrentUserRole(data.currentUserRole || 'WORKER');
       }
     } catch (err) {
       console.error(err);
@@ -76,6 +82,25 @@ export default function TeamPage() {
       await loadTeam();
     } catch (err) {
       console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSavePermissions = async (permissions: any) => {
+    if (!permissionTarget) return;
+    setIsLoading(true);
+    try {
+      const response = await updateWorkerPermissions(permissionTarget.userId, permissions);
+      if (response?.success) {
+        setPermissionTarget(null);
+        router.refresh();
+        await loadTeam();
+      } else {
+        alert(response?.error || 'Failed to save permissions');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Unknown error');
     } finally {
       setIsLoading(false);
     }
@@ -145,6 +170,14 @@ export default function TeamPage() {
                       </div>
                       <div className="flex items-center gap-4">
                         {getRoleBadge(member.role)}
+                        {currentUserRole === 'OWNER' && member.role !== 'OWNER' && (
+                          <button 
+                            onClick={() => setPermissionTarget(member)}
+                            className="p-2.5 text-blue-400 hover:bg-blue-500/10 rounded-xl transition-all opacity-0 group-hover:opacity-100 border border-transparent hover:border-blue-500/20"
+                          >
+                            <Settings className="w-5 h-5" />
+                          </button>
+                        )}
                         {member.role !== 'OWNER' && (
                           <button 
                             onClick={() => setDeleteTarget({ id: member.id, type: 'member' })}
@@ -293,6 +326,17 @@ export default function TeamPage() {
           </div>
         </div>
       </Dialog>
+      
+      {permissionTarget && (
+        <PermissionsModal
+          isOpen={!!permissionTarget}
+          onClose={() => setPermissionTarget(null)}
+          staffName={`${permissionTarget.user?.firstname || ''} ${permissionTarget.user?.surname || ''}`}
+          initialPermissions={permissionTarget.user?.userPermissions?.[0]}
+          isLoading={isLoading}
+          onSave={handleSavePermissions}
+        />
+      )}
     </div>
   );
 }

@@ -67,8 +67,20 @@ export default async function DashboardLayout({
     redirect('/onboarding/profile');
   }
 
+  let userPermissions = null;
+  if (farm && dbUser?.id) {
+    userPermissions = await (prisma as any).userPermission.findUnique({
+      where: {
+        userId_farmId: {
+          userId: dbUser.id,
+          farmId: farm.id
+        }
+      }
+    });
+  }
+
   return (
-    <SidebarWrapper role={dbUser?.role as any}>
+    <SidebarWrapper role={dbUser?.role as any} permissions={userPermissions}>
       <div className="md:hidden sticky top-[-1.5rem] z-40 -mx-4 mb-6 px-4 py-3 bg-[#0a0a0a]/80 backdrop-blur-xl border-b border-white/10 flex items-center justify-between">
         <h1 className="text-sm font-black text-emerald-400 tracking-widest uppercase truncate">
           {farm?.name || "My Farm"}

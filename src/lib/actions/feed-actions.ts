@@ -3,6 +3,7 @@
 import prisma from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
+import { checkWorkerPermissions } from './staff-actions'
 
 export async function createFeedingLog(data: {
   batchId: number
@@ -12,6 +13,9 @@ export async function createFeedingLog(data: {
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
+
+  const hasEditAccess = await checkWorkerPermissions('inventory', 'edit')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Inventory Permission' }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const log = await tx.feedingLog.create({
@@ -51,6 +55,9 @@ export async function updateFeedingLog(id: number, data: {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
+  const hasEditAccess = await checkWorkerPermissions('inventory', 'edit')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Inventory Permission' }
+
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const log = await tx.feedingLog.update({
       where: { id, farmId: activeFarmId },
@@ -84,6 +91,9 @@ export async function deleteFeedingLog(id: number, data: {
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
+
+  const hasEditAccess = await checkWorkerPermissions('inventory', 'edit')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Inventory Permission' }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     await tx.feedingLog.delete({

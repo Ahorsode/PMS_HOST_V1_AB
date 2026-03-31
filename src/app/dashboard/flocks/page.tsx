@@ -4,7 +4,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { HealthBadge } from '@/components/ui/HealthBadge';
 import { FlockActionsHeader, FlockRowActions } from './FlockActions';
 
+import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
+import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
+
 export default async function FlocksPage() {
+  const cookieStore = await cookies();
+  const activeFarmId = cookieStore.get('activeFarmId')?.value;
+  
+  if (!activeFarmId) {
+    redirect('/dashboard');
+  }
+
+  const hasAccess = await checkWorkerPermissions('batches', 'view');
+  if (!hasAccess) {
+    redirect('/dashboard/unauthorized');
+  }
+
   const [batches, houses] = await Promise.all([
     getAllBatches(),
     getHouses()

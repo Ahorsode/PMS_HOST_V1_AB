@@ -32,7 +32,23 @@ interface Expense {
   description?: string | null;
 }
 
+import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
+import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
+
 export default async function FinancePage() {
+  const cookieStore = await cookies();
+  const activeFarmId = cookieStore.get('activeFarmId')?.value;
+  
+  if (!activeFarmId) {
+    redirect('/dashboard');
+  }
+
+  const hasAccess = await checkWorkerPermissions('finance', 'view');
+  if (!hasAccess) {
+    redirect('/dashboard/unauthorized');
+  }
+
   const sales = (await getAllSales()) as Sale[];
   const expensesData = await getExpenses();
   const expenses = (expensesData.expenses || []) as Expense[];
