@@ -69,6 +69,11 @@ export default async function DashboardLayout({
 
   return (
     <SidebarWrapper role={dbUser?.role as any}>
+      <div className="md:hidden sticky top-[-1.5rem] z-40 -mx-4 mb-6 px-4 py-3 bg-[#0a0a0a]/80 backdrop-blur-xl border-b border-white/10 flex items-center justify-between">
+        <h1 className="text-sm font-black text-emerald-400 tracking-widest uppercase truncate">
+          {farm?.name || "My Farm"}
+        </h1>
+      </div>
       {children}
     </SidebarWrapper>
   );

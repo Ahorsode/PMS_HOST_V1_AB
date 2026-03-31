@@ -31,7 +31,7 @@ export const Sidebar = ({ role = 'OWNER' }: { role?: string }) => {
   const navItems = allNavItems.filter(item => item.roles.includes(role));
 
   return (
-    <aside className="fixed left-6 top-6 bottom-6 w-20 hover:w-64 group transition-all duration-500 ease-out z-50">
+    <aside className="hidden md:block fixed left-6 top-6 bottom-6 w-20 hover:w-64 group transition-all duration-500 ease-out z-50">
       <div className="h-full glass-pill rounded-[2.5rem] flex flex-col items-stretch pt-8 pb-4 overflow-hidden">
         
         {/* Logo Section */}

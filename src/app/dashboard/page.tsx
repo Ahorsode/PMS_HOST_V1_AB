@@ -3,6 +3,7 @@ import { getDashboardStats } from '@/lib/actions/dashboard-actions';
 import { DashboardContent } from './DashboardContent';
 import prisma from '@/lib/db';
 import { getAuthContext } from '@/lib/auth-utils';
+import { PullToRefresh } from '@/components/layout/PullToRefresh';
 
 export default async function DashboardPage() {
   const { userId, activeFarmId } = await getAuthContext();
@@ -35,7 +36,9 @@ export default async function DashboardPage() {
     }));
     
     return (
-      <DashboardContent stats={stats} houses={houses as any} />
+      <PullToRefresh>
+        <DashboardContent stats={stats} houses={houses as any} />
+      </PullToRefresh>
     );
   } catch (error) {
     return (

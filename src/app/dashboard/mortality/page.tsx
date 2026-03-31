@@ -57,7 +57,8 @@ export default async function MortalityPage() {
             <h3 className="font-bold text-gray-800 italic uppercase tracking-tight">Historical Mortality Record</h3>
           </div>
         </div>
-        <div className="overflow-x-auto">
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-100">
             <thead>
               <tr className="bg-gray-50/30">
@@ -70,7 +71,7 @@ export default async function MortalityPage() {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {logs.map((log: any) => (
-                <tr key={log.id} className="hover:bg-red-50/30 transition-colors">
+                <tr key={`desk-${log.id}`} className="hover:bg-red-50/30 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">
                     {formatDate(log.logDate)}
                   </td>
@@ -89,9 +90,9 @@ export default async function MortalityPage() {
                   <td className="px-6 py-4 text-right">
                     <Link 
                       href={`/dashboard/flocks/${log.batchId}`}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-tighter text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/20 transition-all font-mono"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-tighter text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/20 transition-all font-mono min-h-[44px] justify-center"
                     >
-                      <Eye className="h-3 w-3" />
+                      <Eye className="h-3 w-3 sm:block" />
                       <span>Explore</span>
                     </Link>
                   </td>
@@ -99,6 +100,37 @@ export default async function MortalityPage() {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Stacked Cards View */}
+        <div className="md:hidden flex flex-col gap-4 p-4">
+          {logs.map((log: any) => (
+            <div key={`mob-${log.id}`} className="bg-white border border-gray-100 p-4 rounded-3xl shadow-lg flex flex-col gap-3 relative overflow-hidden">
+              <div className="flex justify-between items-center border-b border-gray-50 pb-2">
+                <span className="text-xs font-black tracking-widest text-gray-400 uppercase">{formatDate(log.logDate)}</span>
+                <span className="text-sm font-black text-gray-800 bg-gray-50 px-3 py-1 rounded-full uppercase tracking-widest">
+                  FLK-{log.batchId?.toString().padStart(3, '0')}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-4xl font-black text-red-600 tracking-tighter">-{log.count}</h4>
+                  <div className="flex items-center mt-1">
+                    <span className="text-xs font-bold text-gray-700">{log.category}</span>
+                    <span className="px-1 text-gray-300">›</span>
+                    <span className="text-xs font-bold text-gray-500">{log.subCategory}</span>
+                  </div>
+                </div>
+                <Link 
+                  href={`/dashboard/flocks/${log.batchId}`}
+                  className="flex items-center justify-center min-h-[44px] px-6 text-[10px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl shadow-sm hover:bg-emerald-500/20"
+                >
+                  <Eye className="w-4 h-4 mr-2" />
+                  View
+                </Link>
+              </div>
+            </div>
+          ))}
         </div>
         {logs.length === 0 && (
           <div className="py-32 text-center">

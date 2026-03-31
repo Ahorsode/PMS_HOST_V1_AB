@@ -3,6 +3,7 @@
 import React from 'react';
 import { usePathname } from 'next/navigation';
 import { Sidebar } from './Sidebar';
+import { BottomNav } from './BottomNav';
 import { cn } from '@/lib/utils';
 import { PageTransition } from './PageTransition';
 
@@ -35,15 +36,20 @@ export const SidebarWrapper = ({
       <div className="fixed top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/10 blur-[120px] rounded-full animate-pulse pointer-events-none" />
       <div className="fixed bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-teal-500/10 blur-[120px] rounded-full animate-pulse [animation-delay:2s] pointer-events-none" />
 
-      {/* Conditionally render Sidebar */}
-      {!isIndeptPage && <Sidebar role={role} />}
+      {/* Conditionally render Sidebar and BottomNav */}
+      {!isIndeptPage && (
+        <>
+          <Sidebar role={role} />
+          <BottomNav role={role} />
+        </>
+      )}
       
       {/* Main content with conditional padding */}
       <main className={cn(
-        "flex-1 flex flex-col relative z-20 h-screen overflow-hidden transition-all duration-700 ease-in-out",
-        isIndeptPage ? "pl-0" : "pl-32"
+        "flex-1 flex flex-col relative z-20 h-[100dvh] overflow-hidden transition-all duration-700 ease-in-out",
+        isIndeptPage ? "pl-0" : "md:pl-32"
       )}>
-        <div className="flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar pt-6 pb-12 px-2 md:px-8">
+        <div className="flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar pt-6 pb-28 md:pb-12 px-4 md:px-8">
           <PageTransition>
             {children}
           </PageTransition>
