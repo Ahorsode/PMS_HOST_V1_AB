@@ -5,10 +5,15 @@ import { revalidatePath } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 import bcrypt from 'bcryptjs'
 import { redirect } from 'next/navigation'
+import { checkWorkerPermissions } from './staff-actions'
 
 export async function getDashboardStats() {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
+
+  const canViewFinance = await checkWorkerPermissions('finance', 'view')
+  const canViewInventory = await checkWorkerPermissions('inventory', 'view')
+  const canViewBatches = await checkWorkerPermissions('batches', 'view')
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const totalBirds = await tx.batch.aggregate({
@@ -85,10 +90,10 @@ export async function getDashboardStats() {
       orderBy: { logDate: 'asc' }
     })
 
-    const recentSales = await tx.sale.findMany({
+    const recentSales = canViewFinance ? await tx.sale.findMany({
       where: { saleDate: { gte: sevenDaysAgo }, farmId: activeFarmId },
       orderBy: { saleDate: 'asc' }
-    })
+    }) : []
 
     const recentMortality = await tx.mortality.findMany({
       where: { logDate: { gte: sevenDaysAgo }, farmId: activeFarmId },
@@ -115,10 +120,10 @@ export async function getDashboardStats() {
       return { date, count: dayTotal }
     })
 
-    const revenueTrendData = trendDates.map(date => {
+    const revenueTrendData = canViewFinance ? trendDates.map(date => {
       const dayTotal = recentSales.filter((s: any) => formatDate(s.saleDate) === date).reduce((sum: number, s: any) => sum + Number(s.totalAmount), 0)
       return { date, count: dayTotal }
-    })
+    }) : []
 
     const mortalityTrendData = trendDates.map(date => {
       const dayTotal = recentMortality.filter((m: any) => formatDate(m.logDate) === date).reduce((sum: number, m: any) => sum + m.count, 0)
@@ -203,7 +208,10 @@ export async function getDashboardStats() {
         hatchDate: batch.arrivalDate.toISOString(),
         status: batch.status,
         houseNumber: batch.house?.name || 'N/A'
-      }))
+      })),
+      canViewFinance,
+      canViewInventory,
+      canViewBatches
     }
   }).catch((error: any) => {
     console.error('Error fetching dashboard stats:', error)
@@ -220,6 +228,9 @@ export async function createBatch(data: {
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
+
+  const hasAccess = await checkWorkerPermissions('batches', 'edit')
+  if (!hasAccess) throw new Error('Unauthorized')
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const batch = await tx.batch.create({
@@ -250,6 +261,9 @@ export async function logFeeding(data: {
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
+
+  const hasAccess = await checkWorkerPermissions('inventory', 'edit')
+  if (!hasAccess) throw new Error('Unauthorized')
 
   try {
     const result = await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
@@ -328,6 +342,9 @@ export async function updateBatchStatus(id: number, status: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
 
+  const hasAccess = await checkWorkerPermissions('batches', 'edit')
+  if (!hasAccess) throw new Error('Unauthorized')
+
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const batch = await tx.batch.update({
       where: { id, farmId: activeFarmId },
@@ -351,6 +368,9 @@ export async function logProduction(data: {
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
+
+  const hasAccess = await checkWorkerPermissions('batches', 'edit')
+  if (!hasAccess) throw new Error('Unauthorized')
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     // Log eggs if collected
@@ -403,6 +423,9 @@ export async function updateFarmInfo(data: { name: string, location?: string, ca
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
 
+  const farm = await prisma.farm.findUnique({ where: { id: activeFarmId } })
+  if (farm?.userId !== userId) throw new Error('Unauthorized: Only the creator can update farm info')
+
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const updatedFarm = await tx.farm.update({
       where: { id: activeFarmId },
@@ -423,6 +446,16 @@ export async function updateFarmInfo(data: { name: string, location?: string, ca
 export async function createHouse(data: { houseNumber: string, capacity: number } | FormData) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
+
+  // House creation should be Owner-only or Manager
+  const membership = await prisma.farmMember.findUnique({
+    where: { farmId_userId: { farmId: activeFarmId, userId } }
+  })
+  const farm = await prisma.farm.findUnique({ where: { id: activeFarmId } })
+  
+  if (farm?.userId !== userId && membership?.role !== 'MANAGER') {
+    throw new Error('Unauthorized')
+  }
 
   let houseName: string;
   let houseCapacity: number;

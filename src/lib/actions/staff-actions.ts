@@ -5,18 +5,36 @@ import { revalidatePath } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 import { Role } from '@prisma/client'
 
+/**
+ * Invites a worker to a farm.
+ * Only the Absolute Owner (creator) or a Manager can invite others.
+ */
 export async function inviteWorker(data: { emailOrPhone: string, role: Role }) {
   try {
     const { userId, activeFarmId } = await getAuthContext()
     if (!activeFarmId) throw new Error('No active farm selected')
     
     return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-      // Ensure the current user is an OWNER or MANAGER
-      const currentUser = await tx.user.findUnique({
-        where: { id: userId }
+      // 1. Fetch Farm to check ownership
+      const farm = await tx.farm.findUnique({
+        where: { id: activeFarmId }
+      })
+      if (!farm) throw new Error('Farm not found')
+
+      // 2. Fetch current user's membership role
+      const membership = await tx.farmMember.findUnique({
+        where: {
+          farmId_userId: {
+            farmId: activeFarmId,
+            userId: userId
+          }
+        }
       })
 
-      if (currentUser.role === 'WORKER') {
+      const isAbsoluteOwner = farm.userId === userId
+      const isManager = membership?.role === 'MANAGER'
+
+      if (!isAbsoluteOwner && !isManager) {
         throw new Error('Only Owners or Managers can invite staff')
       }
 
@@ -63,6 +81,10 @@ export async function inviteWorker(data: { emailOrPhone: string, role: Role }) {
   }
 }
 
+/**
+ * Accepts an invitation.
+ * Sets the user's role in the farm membership based on the invitation.
+ */
 export async function acceptInvitation() {
   const { userId } = await getAuthContext()
   
@@ -87,7 +109,7 @@ export async function acceptInvitation() {
 
       if (!invitation) return null
 
-      // Create farm membership
+      // Create farm membership with the specific role from the invitation
       const membership = await tx.farmMember.create({
         data: {
           farmId: invitation.farmId,
@@ -102,16 +124,11 @@ export async function acceptInvitation() {
         data: { status: 'ACCEPTED' }
       })
 
-      // Update user role if it's the first time they are joining a farm as staff
-      await tx.user.update({
-        where: { id: userId },
-        data: { role: invitation.role }
-      })
-
       return membership
     })
 
     if (result) {
+      revalidatePath('/dashboard/team')
       return { success: true, membership: result }
     }
     
@@ -122,11 +139,20 @@ export async function acceptInvitation() {
   }
 }
 
+/**
+ * Fetches all members of the farm with their contextual roles.
+ */
 export async function getFarmMembers() {
   const { userId, activeFarmId } = await getAuthContext()
-  if (!activeFarmId) return { members: [], invitations: [] }
+  if (!activeFarmId) return { members: [], invitations: [], isAbsoluteOwner: false }
   
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    // Check if current user is the absolute owner
+    const farm = await tx.farm.findUnique({
+      where: { id: activeFarmId }
+    })
+    const isAbsoluteOwner = farm?.userId === userId
+
     const members = await tx.farmMember.findMany({
       where: { farmId: activeFarmId },
       include: {
@@ -134,16 +160,17 @@ export async function getFarmMembers() {
       }
     })
 
-    // Fetch permissions separately to bypass TS errors with Prisma extension
     const permissions = await (prisma as any).userPermission.findMany({
       where: { farmId: activeFarmId }
     })
 
-    // Map permissions back to members
-    const membersWithPermissions = members.map((member: any) => ({
+    // Map permissions and contextual roles back to members
+    const membersWithContext = members.map((member: any) => ({
       ...member,
+      // Overwrite the User.role with the FarmMember.role for accurate UI reporting
       user: {
         ...member.user,
+        role: member.role,
         userPermissions: permissions.filter((p: any) => p.userId === member.userId)
       }
     }))
@@ -155,45 +182,35 @@ export async function getFarmMembers() {
       }
     })
     
-    const currentUser = await tx.user.findUnique({
-      where: { id: userId }
-    })
-
-    return { members: membersWithPermissions, invitations, currentUserRole: currentUser.role }
+    return { 
+      members: membersWithContext, 
+      invitations, 
+      isAbsoluteOwner,
+      currentUserRole: isAbsoluteOwner ? 'OWNER' : (members.find((m: any) => m.userId === userId)?.role || 'WORKER')
+    }
   })
 }
 
-export async function deleteMember(memberId: number) {
-  const { userId, activeFarmId } = await getAuthContext()
-  if (!activeFarmId) throw new Error('No active farm selected')
-
-  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    // Only Owners or Managers can delete members
-    const currentUser = await tx.user.findUnique({
-      where: { id: userId }
-    })
-    if (currentUser.role === 'WORKER') throw new Error('Unauthorized')
-
-    await tx.farmMember.delete({
-      where: { id: memberId, farmId: activeFarmId }
-    })
-    revalidatePath('/dashboard/team')
-    return { success: true }
-  }).catch((error: any) => {
-    console.error('Error deleting member:', error)
-    return { success: false, error: error.message }
-  })
-}
-
+/**
+ * Deletes a pending invitation.
+ * Only the Absolute Owner (creator) or a Manager can cancel invitations.
+ */
 export async function deleteInvitation(invitationId: number) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    const currentUser = await tx.user.findUnique({
-      where: { id: userId }
+    const farm = await tx.farm.findUnique({ where: { id: activeFarmId } })
+    const membership = await tx.farmMember.findUnique({
+      where: { farmId_userId: { farmId: activeFarmId, userId } }
     })
-    if (currentUser.role === 'WORKER') throw new Error('Unauthorized')
+
+    const isAbsoluteOwner = farm?.userId === userId
+    const isManager = membership?.role === 'MANAGER'
+
+    if (!isAbsoluteOwner && !isManager) {
+      throw new Error('Unauthorized: Only Owners or Managers can cancel invitations')
+    }
 
     await tx.invitation.delete({
       where: { id: invitationId, farmId: activeFarmId }
@@ -206,142 +223,180 @@ export async function deleteInvitation(invitationId: number) {
   })
 }
 
-export async function updateWorkerPermissions(targetUserId: string, permissions: any) {
+/**
+ * Deletes a member from the farm.
+ * Only the Absolute Owner can remove others. 
+ */
+export async function deleteMember(memberId: number) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
 
-  // Execute within a transaction for concurrency safety and atomicity
-  return await prisma.$transaction(async (tx) => {
-    // Only Owners can update permissions
-    const currentUser = await tx.user.findUnique({
-      where: { id: userId }
+  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    const farm = await tx.farm.findUnique({ where: { id: activeFarmId } })
+    if (farm?.userId !== userId) throw new Error('Unauthorized: Only the creator can delete members')
+
+    await tx.farmMember.delete({
+      where: { id: memberId, farmId: activeFarmId }
     })
-    
-    if (!currentUser || currentUser.role !== 'OWNER') {
-      throw new Error('Only Data Owners can edit granular permissions.')
-    }
-
-    // Load existing permissions to generate audit logs
-    const existingPerm = await tx.userPermission.findFirst({
-      where: {
-        userId: targetUserId,
-        farmId: activeFarmId
-      }
-    })
-
-    const upserted = await tx.userPermission.upsert({
-      where: {
-        userId_farmId: {
-          userId: targetUserId,
-          farmId: activeFarmId
-        }
-      },
-      update: {
-        canViewFinance: permissions.canViewFinance ?? false,
-        canEditFinance: permissions.canEditFinance ?? false,
-        canViewInventory: permissions.canViewInventory ?? false,
-        canEditInventory: permissions.canEditInventory ?? false,
-        canViewBatches: permissions.canViewBatches ?? false,
-        canEditBatches: permissions.canEditBatches ?? false,
-      },
-      create: {
-        userId: targetUserId,
-        farmId: activeFarmId,
-        canViewFinance: permissions.canViewFinance ?? false,
-        canEditFinance: permissions.canEditFinance ?? false,
-        canViewInventory: permissions.canViewInventory ?? false,
-        canEditInventory: permissions.canEditInventory ?? false,
-        canViewBatches: permissions.canViewBatches ?? false,
-        canEditBatches: permissions.canEditBatches ?? false,
-      }
-    })
-
-    // Compare fields and generate audit logs
-    const fieldsToAudit = [
-      'canViewFinance', 'canEditFinance',
-      'canViewInventory', 'canEditInventory',
-      'canViewBatches', 'canEditBatches'
-    ]
-
-    for (const field of fieldsToAudit) {
-      const oldVal = (existingPerm as any)?.[field] ?? false
-      const newVal = (upserted as any)[field]
-      
-      if (oldVal !== newVal) {
-        await tx.auditLog.create({
-          data: {
-            tableName: 'user_permissions',
-            recordId: upserted.id,
-            attributeName: field,
-            oldValue: String(oldVal),
-            newValue: String(newVal),
-            reason: `Permission '${field}' updated by Owner`,
-            userId: userId,
-            farmId: activeFarmId
-          }
-        })
-      }
-    }
-
     revalidatePath('/dashboard/team')
-    revalidatePath('/dashboard')
-    
-    return { success: true, permissions: upserted }
+    return { success: true }
   }).catch((error: any) => {
-    if (error.code === 'P2002' || error.code === 'P2034') {
-      return { success: false, error: 'Database is busy. Please try again in a few seconds.' }
-    }
-    console.error('Error updating permissions:', error)
+    console.error('Error deleting member:', error)
     return { success: false, error: error.message }
   })
 }
 
 /**
- * Hardened permission checker.
- * Fetches user role and permission record directly from database on every call
- * to ensure that stale session/JWT data never allows unauthorized access.
+ * Updates granular worker permissions.
+ * STRICT: Only the Absolute Owner (Creator) can manage granular permissions.
+ * INCLUDES: Audit Log tracking for every permission change.
+ */
+export async function updateWorkerPermissions(
+  targetUserId: string,
+  permissions: {
+    canViewFinance?: boolean
+    canEditFinance?: boolean
+    canViewInventory?: boolean
+    canEditInventory?: boolean
+    canViewBatches?: boolean
+    canEditBatches?: boolean
+  }
+) {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) throw new Error('No active farm selected')
+
+  try {
+    return await prisma.$transaction(async (tx) => {
+      // 1. Fetch Farm for Absolute Ownership Check
+      const farm = await tx.farm.findUnique({
+        where: { id: activeFarmId }
+      })
+      if (!farm) throw new Error('Farm not found')
+      
+      if (farm.userId !== userId) {
+        throw new Error('Unauthorized: Only the farm creator can update worker permissions')
+      }
+
+      // 2. Prevent self-modification
+      if (targetUserId === userId) {
+        throw new Error('Cannot modify permissions for the absolute owner')
+      }
+
+      // 3. Get existing permissions for audit log comparison
+      const existingPerm = await tx.userPermission.findUnique({
+        where: { userId_farmId: { userId: targetUserId, farmId: activeFarmId } }
+      })
+
+      // 4. Update or Create permissions
+      const updatedPerm = await tx.userPermission.upsert({
+        where: { 
+          userId_farmId: { 
+            userId: targetUserId, 
+            farmId: activeFarmId 
+          } 
+        },
+        create: {
+          userId: targetUserId,
+          farmId: activeFarmId,
+          canViewFinance: permissions.canViewFinance ?? false,
+          canEditFinance: permissions.canEditFinance ?? false,
+          canViewInventory: permissions.canViewInventory ?? false,
+          canEditInventory: permissions.canEditInventory ?? false,
+          canViewBatches: permissions.canViewBatches ?? false,
+          canEditBatches: permissions.canEditBatches ?? false,
+        },
+        update: {
+          ...permissions
+        }
+      })
+
+      // 5. Audit the Auditor: Log every specific change
+      const fields = [
+        'canViewFinance', 'canEditFinance', 
+        'canViewInventory', 'canEditInventory', 
+        'canViewBatches', 'canEditBatches'
+      ]
+
+      for (const field of fields) {
+        const newVal = (permissions as any)[field]
+        const oldVal = (existingPerm as any)?.[field] ?? false
+
+        if (newVal !== undefined && newVal !== oldVal) {
+          await tx.auditLog.create({
+            data: {
+              tableName: 'user_permissions',
+              recordId: updatedPerm.id,
+              attributeName: field,
+              oldValue: String(oldVal),
+              newValue: String(newVal),
+              reason: 'Administrative permission update',
+              userId: userId, // The owner who made the change
+              farmId: activeFarmId
+            }
+          })
+        }
+      }
+
+      revalidatePath('/dashboard/team')
+      return { success: true, permissions: updatedPerm }
+    })
+  } catch (error: any) {
+    console.error('Permission Update Contention/Error:', error)
+    if (error.code === 'P2002' || error.code === 'P2034') {
+      throw new Error('Update Conflict: Another process modified this record. Please try again.')
+    }
+    return { success: false, error: error.message }
+  }
+}
+
+/**
+ * Hardened contextual permission checker.
+ * Identifies role based on farm membership, not global user role.
  */
 export async function checkWorkerPermissions(module: 'finance' | 'inventory' | 'batches', action: 'view' | 'edit') {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return false
   
   try {
-    // FORCE fresh database fetch for role (Cache-Busting)
-    const userinfo = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { role: true }
+    // 1. Fetch Farm for Absolute Ownership Check
+    const farm = await prisma.farm.findUnique({
+      where: { id: activeFarmId },
+      select: { userId: true }
     })
+    if (!farm) return false
     
-    if (!userinfo) return false
+    // Absolute Creator Bypass
+    if (farm.userId === userId) return true
     
-    // 1. OWNER Bypass - Always bypasses granular checks
-    if (userinfo.role === 'OWNER') {
-      return true
-    }
-    
-    // 2. Load Granular Permissions (FORCE fresh DB fetch)
-    const perm = await prisma.userPermission.findFirst({
+    // 2. Fetch Contextual Role (FarmMember)
+    const membership = await prisma.farmMember.findUnique({
       where: {
-        userId: userId,
-        farmId: activeFarmId
+        farmId_userId: {
+          farmId: activeFarmId,
+          userId: userId
+        }
       }
     })
+    if (!membership) return false
     
-    // 3. Apply overrides if record exists
+    // 3. Load Overrides
+    const perm = await prisma.userPermission.findFirst({
+      where: { userId: userId, farmId: activeFarmId }
+    })
+    
     if (perm) {
       if (module === 'finance') return action === 'view' ? perm.canViewFinance : perm.canEditFinance
       if (module === 'inventory') return action === 'view' ? perm.canViewInventory : perm.canEditInventory
       if (module === 'batches') return action === 'view' ? perm.canViewBatches : perm.canEditBatches
     }
     
-    // 4. Default State (No Record Found)
-    // Managers bypass by default. Workers are View-Only by default.
-    if (userinfo.role === 'MANAGER') return true
-    if (userinfo.role === 'WORKER') return action === 'view'
+    // 4. Fallback to Role Defaults
+    if (membership.role === 'MANAGER') return true
+    if (membership.role === 'WORKER') return action === 'view'
     
     return false
   } catch (error) {
-    console.error('Permission check failed:', error)
+    console.error('Permission check failure:', error)
     return false
   }
 }

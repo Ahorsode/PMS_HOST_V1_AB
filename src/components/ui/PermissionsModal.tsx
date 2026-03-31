@@ -92,14 +92,14 @@ export function PermissionsModal({ isOpen, onClose, staffName, initialPermission
             >
               <div className="bg-[#0a0a0a] border border-white/10 rounded-[2.5rem] shadow-2xl flex flex-col max-h-[90vh] glass-morphism">
                 {/* Header - Sticky */}
-                <div className="p-6 sm:p-8 border-b border-white/10 flex items-center justify-between bg-white/5 flex-shrink-0">
+                <div className="p-5 sm:p-8 border-b border-white/10 flex items-center justify-between bg-white/5 flex-shrink-0">
                   <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-blue-500/20 rounded-2xl border border-blue-500/30">
-                      <ShieldCheck className="w-6 h-6 text-blue-400" />
+                    <div className="p-2 sm:p-2.5 bg-blue-500/20 rounded-2xl border border-blue-500/30">
+                      <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-black text-white tracking-tight">Staff Access Control</h3>
-                      <p className="text-blue-400 text-xs font-bold uppercase tracking-widest">{staffName}</p>
+                      <h3 className="text-lg sm:text-xl font-black text-white tracking-tight">Access Control</h3>
+                      <p className="text-blue-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest">{staffName}</p>
                     </div>
                   </div>
                   <button 
@@ -112,38 +112,38 @@ export function PermissionsModal({ isOpen, onClose, staffName, initialPermission
                 </div>
                 
                 {/* Scrollable Content */}
-                <div className="p-6 sm:p-8 overflow-y-auto scrollbar-hide flex-grow">
+                <div className="p-5 sm:p-8 overflow-y-auto scrollbar-hide flex-grow custom-scrollbar">
                   <div className="space-y-1 mb-6">
-                    <p className="text-white/40 text-xs font-medium leading-relaxed">
+                    <p className="text-white/40 text-[11px] sm:text-xs font-medium leading-relaxed">
                       Configure individual access rights for this staff member. 
                       Changes are logged for security auditing.
                     </p>
                   </div>
                   
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     <PermissionRow title="Finance" viewKey="canViewFinance" editKey="canEditFinance" icon={Database} />
                     <PermissionRow title="Inventory" viewKey="canViewInventory" editKey="canEditInventory" icon={LayoutDashboard} />
                     <PermissionRow title="Batches" viewKey="canViewBatches" editKey="canEditBatches" icon={Settings} />
                   </div>
 
                   {/* Warning Note for small screens */}
-                  <div className="mt-4 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
-                     <p className="text-[10px] text-amber-400 font-bold uppercase tracking-tighter"> Security Reminder </p>
-                     <p className="text-white/60 text-[11px] leading-relaxed mt-1">
-                        Owners can bypass all checks. Managers bypass by default unless explicitly restricted here.
+                  <div className="mt-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
+                     <p className="text-[10px] text-amber-400 font-black uppercase tracking-widest mb-1"> Security Policy </p>
+                     <p className="text-white/60 text-[11px] leading-relaxed font-bold italic">
+                        Owners bypass all checks. Managers are unrestricted by default unless limited here.
                      </p>
                   </div>
                 </div>
 
                 {/* Footer - Sticky */}
-                <div className="p-6 sm:p-8 border-t border-white/10 flex flex-col sm:flex-row justify-end gap-3 bg-white/5 flex-shrink-0">
+                <div className="p-5 sm:p-8 border-t border-white/10 flex flex-col sm:flex-row justify-end gap-3 bg-white/5 flex-shrink-0">
                   <Button 
                     variant="outline" 
                     onClick={onClose} 
                     disabled={isLoading}
-                    className="w-full sm:w-auto rounded-xl border-white/10 hover:bg-white/5"
+                    className="w-full sm:w-auto rounded-xl border-white/10 hover:bg-white/5 text-[11px] uppercase font-black"
                   >
-                    Discard Changes
+                    Discard
                   </Button>
                   <Button 
                     onClick={() => onSave(permissions)} 

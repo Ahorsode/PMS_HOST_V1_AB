@@ -131,7 +131,7 @@ export default function TeamPage() {
         <div className="relative z-10">
           <h2 className="text-4xl font-black text-white tracking-tighter">Team <span className="text-emerald-400 italic">Management</span></h2>
           <p className="text-white/60 font-bold uppercase tracking-widest text-[10px] mt-2 flex items-center gap-2 italic">
-             <Shield className="w-3 h-3" /> Access Control & Operations
+             <Shield className="w-3 h-3" /> {currentUserRole === 'OWNER' ? 'Absolute Farm Owner' : `${currentUserRole} Access`}
           </p>
         </div>
       </div>
@@ -170,7 +170,7 @@ export default function TeamPage() {
                       </div>
                       <div className="flex items-center gap-4">
                         {getRoleBadge(member.role)}
-                        {currentUserRole === 'OWNER' && member.role !== 'OWNER' && (
+                        {currentUserRole === 'OWNER' && member.userId !== (members.find(m => m.role === 'OWNER')?.userId || '') && (
                           <button 
                             onClick={() => setPermissionTarget(member)}
                             className="p-2.5 text-blue-400 hover:bg-blue-500/10 rounded-xl transition-all opacity-0 group-hover:opacity-100 border border-transparent hover:border-blue-500/20"
@@ -178,7 +178,7 @@ export default function TeamPage() {
                             <Settings className="w-5 h-5" />
                           </button>
                         )}
-                        {member.role !== 'OWNER' && (
+                        {currentUserRole === 'OWNER' && (member.role !== 'OWNER') && (
                           <button 
                             onClick={() => setDeleteTarget({ id: member.id, type: 'member' })}
                             className="p-2.5 text-white/20 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all opacity-0 group-hover:opacity-100 border border-transparent hover:border-red-500/20"
@@ -241,51 +241,53 @@ export default function TeamPage() {
         </div>
 
         <div className="space-y-8">
-          <Card className="rounded-[2.5rem] border border-white/10 bg-emerald-500/5 backdrop-blur-xl text-white overflow-hidden relative shadow-2xl border-dashed">
-            <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
-              <UserPlus className="w-48 h-48 text-emerald-400" />
-            </div>
-            <CardHeader className="relative z-10 p-8">
-              <CardTitle className="flex items-center">
-                Invite Staff
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="relative z-10 px-8 pb-8">
-              <form onSubmit={handleInvite} className="space-y-6">
-                {message && (
-                  <div className={`p-4 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 animate-in fade-in slide-in-from-top-2 backdrop-blur-md ${
-                    message.type === 'success' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'
-                  }`}>
-                    {message.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
-                    {message.text}
-                  </div>
-                )}
-                <Input 
-                  label="Email or Phone Number"
-                  name="emailOrPhone"
-                  type="text" 
-                  required
-                  placeholder="staff@example.com or 0540000000"
-                />
-                <Select 
-                  label="Assign Role"
-                  name="role"
-                  options={[
-                    { label: 'Worker', value: 'WORKER' },
-                    { label: 'Manager', value: 'MANAGER' }
-                  ]}
-                  defaultValue="WORKER"
-                />
-                <Button 
-                  type="submit" 
-                  disabled={isInviting}
-                  className="w-full py-6 mt-4"
-                >
-                  {isInviting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Send Invitation'}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+          {(currentUserRole === 'OWNER' || currentUserRole === 'MANAGER') && (
+            <Card className="rounded-[2.5rem] border border-white/10 bg-emerald-500/5 backdrop-blur-xl text-white overflow-hidden relative shadow-2xl border-dashed">
+              <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+                <UserPlus className="w-48 h-48 text-emerald-400" />
+              </div>
+              <CardHeader className="relative z-10 p-8">
+                <CardTitle className="flex items-center">
+                  Invite Staff
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="relative z-10 px-8 pb-8">
+                <form onSubmit={handleInvite} className="space-y-6">
+                  {message && (
+                    <div className={`p-4 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-3 animate-in fade-in slide-in-from-top-2 backdrop-blur-md ${
+                      message.type === 'success' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                    }`}>
+                      {message.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+                      {message.text}
+                    </div>
+                  )}
+                  <Input 
+                    label="Email or Phone Number"
+                    name="emailOrPhone"
+                    type="text" 
+                    required
+                    placeholder="staff@example.com or 0540000000"
+                  />
+                  <Select 
+                    label="Assign Role"
+                    name="role"
+                    options={[
+                      { label: 'Worker', value: 'WORKER' },
+                      { label: 'Manager', value: 'MANAGER' }
+                    ]}
+                    defaultValue="WORKER"
+                  />
+                  <Button 
+                    type="submit" 
+                    disabled={isInviting}
+                    className="w-full py-6 mt-4"
+                  >
+                    {isInviting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Send Invitation'}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="rounded-[2.5rem] border border-white/10 bg-white/5 backdrop-blur-xl p-8 shadow-2xl">
             <div className="flex items-center gap-4 mb-8">

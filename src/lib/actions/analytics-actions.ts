@@ -2,10 +2,14 @@
 
 import prisma from '@/lib/db'
 import { getAuthContext } from '@/lib/auth-utils'
+import { checkWorkerPermissions } from './staff-actions'
 
 export async function getBatchAnalytics(batchId: number) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
+
+  const hasAccess = await checkWorkerPermissions('batches', 'view')
+  if (!hasAccess) throw new Error('Unauthorized')
   
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const batch = await tx.batch.findUnique({
@@ -45,6 +49,9 @@ export async function getMortalityTrends(farmId: number) {
   const { userId, activeFarmId } = await getAuthContext()
   const targetFarmId = farmId || activeFarmId
   if (!targetFarmId) throw new Error('No farm ID provided')
+
+  const hasAccess = await checkWorkerPermissions('batches', 'view')
+  if (!hasAccess) throw new Error('Unauthorized')
   
   return await (prisma as any).$withFarmContext(userId, targetFarmId, async (tx: any) => {
     const mortalityData = await tx.mortality.findMany({
