@@ -2,8 +2,9 @@
 
 import prisma from '@/lib/db'
 import { revalidatePath } from 'next/cache'
-import { getAuthContext } from '@/lib/auth-utils'
+import { getAuthContext, normalizePhoneNumber } from '@/lib/auth-utils'
 import { Role } from '@prisma/client'
+import bcrypt from 'bcryptjs'
 
 /**
  * Invites a worker to a farm.
@@ -39,8 +40,8 @@ export async function inviteWorker(data: { emailOrPhone: string, role: Role }) {
       }
 
       const isEmail = data.emailOrPhone.includes('@')
-      const email = isEmail ? data.emailOrPhone : null
-      const phone = isEmail ? null : data.emailOrPhone
+      const email = isEmail ? data.emailOrPhone.toLowerCase().trim() : null
+      const phone = isEmail ? null : normalizePhoneNumber(data.emailOrPhone)
 
       const existingInvite = await tx.invitation.findFirst({
         where: {
@@ -71,6 +72,30 @@ export async function inviteWorker(data: { emailOrPhone: string, role: Role }) {
           status: 'PENDING'
         }
       })
+
+      // NEW: Auto-create User record so they can login directly with 123456
+      const existingUser = await tx.user.findFirst({
+        where: {
+          OR: [
+            ...(email ? [{ email }] : []),
+            ...(phone ? [{ phoneNumber: phone }] : [])
+          ]
+        }
+      })
+
+      if (!existingUser) {
+        const hashedDefault = await bcrypt.hash('123456', 10)
+        await tx.user.create({
+          data: {
+            email: email,
+            phoneNumber: phone,
+            role: data.role,
+            password: hashedDefault,
+            mustChangePassword: true,
+            // Firstname/Surname will be updated during change-password
+          }
+        })
+      }
 
       revalidatePath('/dashboard/team')
       return { success: true, invitation }

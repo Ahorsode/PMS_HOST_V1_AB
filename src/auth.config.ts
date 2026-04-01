@@ -12,8 +12,8 @@ export const authConfig = {
       const isAuthPage = nextUrl.pathname.startsWith('/login') || nextUrl.pathname.startsWith('/signup');
       
       // Force change password if flag is set
-      if (isLoggedIn && mustChangePassword && nextUrl.pathname !== '/auth/change-password') {
-        return Response.redirect(new URL('/auth/change-password', nextUrl));
+      if (isLoggedIn && mustChangePassword && nextUrl.pathname !== '/change-password') {
+        return Response.redirect(new URL('/change-password', nextUrl));
       }
 
       if (isProtectedRoute) {

@@ -7,6 +7,8 @@ import { Lock, ArrowRight, Loader2, Bird, CheckCircle2 } from 'lucide-react';
 import Background3D from '@/components/auth/Background3D';
 
 export default function ChangePasswordPage() {
+  const [firstname, setFirstname] = useState('');
+  const [surname, setSurname] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -34,7 +36,7 @@ export default function ChangePasswordPage() {
       const res = await fetch('/api/auth/change-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ newPassword }),
+        body: JSON.stringify({ firstname, surname, newPassword }),
       });
 
       const data = await res.json();
@@ -83,11 +85,35 @@ export default function ChangePasswordPage() {
                   </motion.div>
                   
                   <div className="space-y-2">
-                    <h1 className="text-3xl font-black text-white tracking-tighter">Security Update</h1>
-                    <p className="text-white/50 font-medium">Please set a secure password for your account</p>
+                    <h1 className="text-3xl font-black text-white tracking-tighter text-center">Security Update</h1>
+                    <p className="text-white/50 font-medium text-center">Please complete your profile and set a secure password</p>
                   </div>
 
                   <form onSubmit={handleSubmit} className="w-full space-y-4 mt-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="relative group/input">
+                        <input
+                          type="text"
+                          value={firstname}
+                          onChange={(e) => setFirstname(e.target.value)}
+                          placeholder="First Name"
+                          required
+                          disabled={isLoading}
+                          className="w-full h-12 px-4 bg-black/40 border border-white/10 rounded-xl text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm"
+                        />
+                      </div>
+                      <div className="relative group/input">
+                        <input
+                          type="text"
+                          value={surname}
+                          onChange={(e) => setSurname(e.target.value)}
+                          placeholder="Surname"
+                          required
+                          disabled={isLoading}
+                          className="w-full h-12 px-4 bg-black/40 border border-white/10 rounded-xl text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm"
+                        />
+                      </div>
+                    </div>
                     <div className="relative group/input">
                       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <Lock className="w-4 h-4 text-white/30 group-focus-within/input:text-blue-400 transition-colors" />
@@ -133,7 +159,7 @@ export default function ChangePasswordPage() {
 
                     <button
                       type="submit"
-                      disabled={isLoading || !newPassword || !confirmPassword}
+                      disabled={isLoading || !newPassword || !confirmPassword || !firstname || !surname}
                       className="w-full h-14 bg-white hover:bg-gray-100 text-black rounded-2xl font-black text-lg transition-all shadow-xl hover:scale-[1.02] active:scale-95 disabled:opacity-50 flex items-center justify-center group/btn"
                     >
                       {isLoading ? (

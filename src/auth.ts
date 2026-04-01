@@ -5,6 +5,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { authConfig } from './auth.config';
 import prisma from '@/lib/db';
 import bcrypt from 'bcryptjs';
+import { normalizePhoneNumber } from '@/lib/auth-utils';
 
 function splitName(name: string | null | undefined) {
   if (!name) return { firstname: '', surname: '', middleName: '' };
@@ -48,8 +49,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.identifier || !credentials?.password) return null;
         
-        const identifier = credentials.identifier as string;
+        let identifier = credentials.identifier as string;
         const password = credentials.password as string;
+
+        // If it's not an email, normalize it as a phone number
+        if (!identifier.includes('@')) {
+          identifier = normalizePhoneNumber(identifier) || identifier;
+        }
 
         // 1. Look up existing user
         const user = await prisma.user.findFirst({

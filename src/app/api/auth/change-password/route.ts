@@ -10,7 +10,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
-    const { newPassword } = await req.json();
+    const { firstname, surname, newPassword } = await req.json();
 
     if (!newPassword || newPassword.length < 6) {
       return NextResponse.json({ message: 'Password must be at least 6 characters long' }, { status: 400 });
@@ -18,12 +18,17 @@ export async function POST(req: Request) {
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
+    const updateData: any = {
+      password: hashedPassword,
+      mustChangePassword: false,
+    };
+
+    if (firstname) updateData.firstname = firstname;
+    if (surname) updateData.surname = surname;
+
     await prisma.user.update({
       where: { id: session.user.id },
-      data: {
-        password: hashedPassword,
-        mustChangePassword: false,
-      },
+      data: updateData,
     });
 
     return NextResponse.json({ message: 'Password updated successfully' }, { status: 200 });
