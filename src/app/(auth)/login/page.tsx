@@ -128,7 +128,7 @@ export default function LoginPage() {
 
                     <button
                       type="submit"
-                      disabled={isLoading || !phoneNumber}
+                      disabled={isLoading || !phoneNumber || !password}
                       className="relative w-full h-14 bg-white hover:bg-gray-100 text-black rounded-2xl font-black text-lg transition-all shadow-[0_0_40px_rgba(255,255,255,0.1)] hover:shadow-[0_0_40px_rgba(255,255,255,0.2)] hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center group/btn overflow-hidden"
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-black/5 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000" />

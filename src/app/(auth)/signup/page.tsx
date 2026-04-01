@@ -191,7 +191,7 @@ export default function SignUpPage() {
 
                     <button
                       type="submit"
-                      disabled={isLoading}
+                      disabled={isLoading || !formData.phoneNumber || !formData.password}
                       className="w-full h-14 bg-white hover:bg-gray-100 text-black rounded-2xl font-black text-lg transition-all shadow-xl hover:scale-[1.02] active:scale-95 disabled:opacity-50 flex items-center justify-center group/btn"
                     >
                       {isLoading ? (
