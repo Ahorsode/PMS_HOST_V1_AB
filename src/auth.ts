@@ -33,6 +33,35 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
     }
   },
+  callbacks: {
+    ...authConfig.callbacks,
+    async jwt({ token, user }) {
+      // On login, set from user object
+      if (user) {
+        token.id = user.id;
+        token.role = user.role;
+        token.activeFarmId = (user as any).activeFarmId;
+      }
+      
+      // If activeFarmId is missing from token (e.g. user onboarded after login)
+      // refresh it from the database on every request
+      if (token.id && !token.activeFarmId) {
+        try {
+          const membership = await prisma.farmMember.findFirst({
+            where: { userId: token.id as string },
+            select: { farmId: true }
+          });
+          if (membership?.farmId) {
+            token.activeFarmId = membership.farmId;
+          }
+        } catch (err) {
+          console.error('[JWT] Failed to refresh activeFarmId:', err);
+        }
+      }
+      
+      return token;
+    },
+  },
   providers: [
     Google({
       clientId: process.env.AUTH_GOOGLE_ID,
@@ -76,25 +105,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           } as any; 
         }
 
-        // 2. Check invitations if user not found or needs registration
-        // (Simplified: Registration should happen separately, but for now we follow old logic)
-        const invitation = await prisma.invitation.findFirst({
-          where: { 
-            OR: [
-              { email: identifier },
-              { phoneNumber: identifier }
-            ], 
-            status: 'PENDING' 
-          }
-        });
-
-        // Invitations usually don't have passwords yet, so we might need a registration flow.
-        // For now, if there's an invitation but no user, we might allow initial sign-in to create account?
-        // Actually, the user said "New users signing up ... should input their password".
-        // This implies a signup form. 
-
         return null;
       }
     }),
   ],
 });
+

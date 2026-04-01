@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, Bird, XCircle, User } from 'lucide-react';
+import { LayoutDashboard, Bird, XCircle, User, Egg, ThermometerSun, Banknote, Wheat, Wallet, Users, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { signOut } from 'next-auth/react';
 
@@ -12,15 +12,23 @@ export const BottomNav = ({ role = 'OWNER', permissions }: { role?: string, perm
   const pathname = usePathname();
 
   // Mobile navigation items
-  const allNavItems = [
+  const allNavItems: { name: string; icon: React.ElementType; href: string; roles: string[] }[] = [
     { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', roles: ['OWNER', 'MANAGER', 'WORKER'] },
     { name: 'Flocks', icon: Bird, href: '/dashboard/flocks', roles: ['OWNER', 'MANAGER'] },
+    { name: 'Houses', icon: ThermometerSun, href: '/dashboard/houses', roles: ['OWNER', 'MANAGER'] },
+    { name: 'Eggs', icon: Egg, href: '/dashboard/eggs', roles: ['OWNER', 'MANAGER'] },
+    { name: 'Sales', icon: Banknote, href: '/dashboard/sales', roles: ['OWNER', 'MANAGER'] },
     { name: 'Mortality', icon: XCircle, href: '/dashboard/mortality', roles: ['OWNER', 'MANAGER', 'WORKER'] },
+    { name: 'Feeding', icon: Wheat, href: '/dashboard/feed', roles: ['OWNER', 'MANAGER', 'WORKER'] },
+    { name: 'Finance', icon: Wallet, href: '/dashboard/finance', roles: ['OWNER', 'MANAGER'] },
+    { name: 'Team', icon: Users, href: '/dashboard/team', roles: ['OWNER', 'MANAGER'] },
+    { name: 'Settings', icon: Settings, href: '/dashboard/settings', roles: ['OWNER', 'MANAGER'] },
   ];
 
   const navItems = allNavItems.filter(item => {
     if (item.roles.includes(role)) return true;
     if (role === 'WORKER' && permissions) {
+      if ((item.name === 'Finance' || item.name === 'Sales') && permissions.canViewFinance) return true;
       if (item.name === 'Flocks' && permissions.canViewBatches) return true;
     }
     return false;
@@ -33,7 +41,7 @@ export const BottomNav = ({ role = 'OWNER', permissions }: { role?: string, perm
       transition={{ type: "spring", stiffness: 260, damping: 20 }}
       className="fixed bottom-0 left-0 right-0 z-50 md:hidden pb-safe"
     >
-      <div className="glass-pill mx-4 mb-4 mt-2 px-2 py-2 rounded-3xl flex items-center justify-around border border-white/10 shadow-[0_-8px_30px_-15px_rgba(0,0,0,0.5)]">
+      <div className="bg-[#0a1510]/85 backdrop-blur-2xl mx-4 mb-4 mt-2 px-2 py-2 rounded-3xl flex items-center gap-1 overflow-x-auto custom-scrollbar border border-emerald-900/40 shadow-[0_-4px_30px_rgba(0,0,0,0.6),0_8px_32px_rgba(0,0,0,0.5)] snap-x">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -41,10 +49,10 @@ export const BottomNav = ({ role = 'OWNER', permissions }: { role?: string, perm
               key={item.name}
               href={item.href}
               className={cn(
-                "relative flex flex-col items-center justify-center w-16 h-14 rounded-2xl transition-all duration-300",
+                "relative flex flex-col items-center justify-center min-w-[4.5rem] shrink-0 snap-center h-14 rounded-2xl transition-all duration-300",
                 isActive 
                   ? "text-emerald-400" 
-                  : "text-white/50 hover:text-white/80"
+                  : "text-white/60 hover:text-white"
               )}
             >
               {isActive && (
@@ -63,7 +71,7 @@ export const BottomNav = ({ role = 'OWNER', permissions }: { role?: string, perm
         {/* Profile / Logout Button mapping */}
         <button
           onClick={() => signOut({ callbackUrl: '/login' })}
-          className="relative flex flex-col items-center justify-center w-16 h-14 rounded-2xl transition-all duration-300 text-white/50 hover:text-white/80"
+          className="relative flex flex-col items-center justify-center min-w-[4.5rem] shrink-0 snap-center h-14 rounded-2xl transition-all duration-300 text-white/60 hover:text-white"
         >
           <User className="w-6 h-6 z-10" />
           <span className="text-[10px] font-bold mt-1 z-10">Profile</span>

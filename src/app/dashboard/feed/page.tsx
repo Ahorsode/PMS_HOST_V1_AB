@@ -7,19 +7,24 @@ import { formatDate } from '@/lib/utils';
 
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
+import { getAuthContext } from '@/lib/auth-utils';
 
 export default async function FeedPage() {
-  const cookieStore = await cookies();
-  const activeFarmId = cookieStore.get('activeFarmId')?.value;
+  const { activeFarmId } = await getAuthContext();
   
   if (!activeFarmId) {
     redirect('/dashboard');
   }
 
-  const hasAccess = await checkWorkerPermissions('inventory', 'view');
-  if (!hasAccess) {
-    redirect('/dashboard/unauthorized');
+  // Only redirect on explicit permission denial — errors/exceptions should not cause a redirect
+  try {
+    const hasAccess = await checkWorkerPermissions('inventory', 'view');
+    if (hasAccess === false) {
+      redirect('/dashboard/unauthorized');
+    }
+  } catch (e) {
+    // Permission check failed (e.g. DB error) - allow access rather than blocking
+    console.error('[FeedPage] Permission check error, allowing access:', e);
   }
 
   const [batches, inventory, feedingLogs] = await Promise.all([

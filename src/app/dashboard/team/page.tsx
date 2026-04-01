@@ -53,13 +53,13 @@ export default function TeamPage() {
     const role = formData.get('role') as any;
 
     try {
-      const result = await inviteWorker({ emailOrPhone, role });
-      if (result.success) {
+      const result = await inviteWorker({ emailOrPhone, role }) as any;
+      if (result?.success) {
         setMessage({ type: 'success', text: `Invitation sent to ${emailOrPhone}!` });
         form.reset();
         await loadTeam();
       } else {
-        setMessage({ type: 'error', text: result.error || 'Failed to send invitation.' });
+        setMessage({ type: 'error', text: (result as any)?.error || 'Failed to send invitation.' });
       }
     } catch (err: any) {
       console.error("Client side exception:", err);
@@ -91,13 +91,13 @@ export default function TeamPage() {
     if (!permissionTarget) return;
     setIsLoading(true);
     try {
-      const response = await updateWorkerPermissions(permissionTarget.userId, permissions);
+      const response = await updateWorkerPermissions(permissionTarget.userId, permissions) as any;
       if (response?.success) {
         setPermissionTarget(null);
         router.refresh();
         await loadTeam();
       } else {
-        alert(response?.error || 'Failed to save permissions');
+        alert((response as any)?.error || 'Failed to save permissions');
       }
     } catch (err: any) {
       alert(err.message || 'Unknown error');

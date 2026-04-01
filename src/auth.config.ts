@@ -30,10 +30,12 @@ export const authConfig = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
-        session.user.activeFarmId = token.activeFarmId as number;
+        // Always carry activeFarmId from token — may be refreshed server-side via getAuthContext()
+        session.user.activeFarmId = token.activeFarmId as number | undefined;
       }
       return session;
     },
   },
   providers: [],
 } satisfies NextAuthConfig;
+

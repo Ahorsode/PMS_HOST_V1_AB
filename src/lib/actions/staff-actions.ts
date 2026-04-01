@@ -3,13 +3,13 @@
 import prisma from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
-import { Role } from '@prisma/client'
+
 
 /**
  * Invites a worker to a farm.
  * Only the Absolute Owner (creator) or a Manager can invite others.
  */
-export async function inviteWorker(data: { emailOrPhone: string, role: Role }) {
+export async function inviteWorker(data: { emailOrPhone: string, role: 'OWNER' | 'MANAGER' | 'WORKER' }) {
   try {
     const { userId, activeFarmId } = await getAuthContext()
     if (!activeFarmId) throw new Error('No active farm selected')
@@ -89,7 +89,7 @@ export async function acceptInvitation() {
   const { userId } = await getAuthContext()
   
   try {
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       const user = await tx.user.findUnique({ where: { id: userId } })
       if (!user) return null
 
@@ -266,7 +266,7 @@ export async function updateWorkerPermissions(
   if (!activeFarmId) throw new Error('No active farm selected')
 
   try {
-    return await prisma.$transaction(async (tx) => {
+    return await prisma.$transaction(async (tx: any) => {
       // 1. Fetch Farm for Absolute Ownership Check
       const farm = await tx.farm.findUnique({
         where: { id: activeFarmId }
