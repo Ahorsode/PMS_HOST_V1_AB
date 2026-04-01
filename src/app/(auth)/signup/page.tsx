@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Phone, ArrowRight, Loader2, Bird, User, Mail } from 'lucide-react';
+import { Phone, ArrowRight, Loader2, Bird, User, Mail, Lock } from 'lucide-react';
 import Background3D from '@/components/auth/Background3D';
 
 export default function SignUpPage() {
@@ -13,6 +13,7 @@ export default function SignUpPage() {
     surname: '',
     email: '',
     phoneNumber: '',
+    password: '',
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -25,7 +26,7 @@ export default function SignUpPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.phoneNumber) return;
+    if (!formData.phoneNumber || !formData.password) return;
     
     setIsLoading(true);
     setError('');
@@ -50,7 +51,8 @@ export default function SignUpPage() {
 
       // After successful registration, sign in
       const signinRes = await signIn('credentials', {
-        phoneNumber: formData.phoneNumber,
+        identifier: formData.phoneNumber,
+        password: formData.password,
         redirect: false,
       });
       
@@ -154,6 +156,21 @@ export default function SignUpPage() {
                         value={formData.phoneNumber}
                         onChange={handleChange}
                         placeholder="+233 54 000 0000"
+                        required
+                        className="w-full h-12 pl-10 pr-4 bg-black/40 border border-white/10 rounded-xl text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
+                      />
+                    </div>
+
+                    <div className="relative group/input">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <Lock className="w-4 h-4 text-white/30 group-focus-within/input:text-emerald-400 transition-colors" />
+                      </div>
+                      <input
+                        type="password"
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        placeholder="Create Password"
                         required
                         className="w-full h-12 pl-10 pr-4 bg-black/40 border border-white/10 rounded-xl text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
                       />

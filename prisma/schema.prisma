@@ -21,6 +21,7 @@ model User {
   name            String?
   middleName      String?          @map("middle_name")
   password        String?
+  mustChangePassword Boolean          @default(false) @map("must_change_password")
   phoneNumber     String?          @unique @map("phone_number")
   accounts        Account[]
   batches         Batch[]

@@ -61,8 +61,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           }
         });
 
-        if (user && (user as any).password) {
-          const isValid = await bcrypt.compare(password, (user as any).password);
+        if (user && user.password) {
+          const isValid = await bcrypt.compare(password, user.password);
           if (!isValid) return null;
 
           // Fetch active farm
@@ -71,27 +71,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           });
           
           return {
-            ...user,
+            id: user.id,
+            email: user.email,
+            name: `${user.firstname} ${user.surname}`,
+            role: user.role,
+            mustChangePassword: user.mustChangePassword,
             activeFarmId: membership?.farmId
-          } as any; 
+          }; 
         }
-
-        // 2. Check invitations if user not found or needs registration
-        // (Simplified: Registration should happen separately, but for now we follow old logic)
-        const invitation = await prisma.invitation.findFirst({
-          where: { 
-            OR: [
-              { email: identifier },
-              { phoneNumber: identifier }
-            ], 
-            status: 'PENDING' 
-          }
-        });
-
-        // Invitations usually don't have passwords yet, so we might need a registration flow.
-        // For now, if there's an invitation but no user, we might allow initial sign-in to create account?
-        // Actually, the user said "New users signing up ... should input their password".
-        // This implies a signup form. 
 
         return null;
       }

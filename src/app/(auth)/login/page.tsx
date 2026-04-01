@@ -4,11 +4,12 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Phone, ArrowRight, Loader2, Bird, Plus } from 'lucide-react';
+import { Phone, ArrowRight, Loader2, Bird, Plus, Lock } from 'lucide-react';
 import Background3D from '@/components/auth/Background3D';
 
 export default function LoginPage() {
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -16,19 +17,20 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phoneNumber) return;
+    if (!phoneNumber || !password) return;
     
     setIsLoading(true);
     setError('');
     
     try {
       const res = await signIn('credentials', {
-        phoneNumber,
+        identifier: phoneNumber,
+        password: password,
         redirect: false,
       });
       
         if (res?.error) {
-          setError('Number not found. New user? Click "Sign Up" below.');
+          setError('Invalid phone number or password.');
           setIsLoading(false);
         } else {
         setSuccess(true);
@@ -77,7 +79,7 @@ export default function LoginPage() {
                   
                   <div className="space-y-2">
                     <h1 className="text-4xl font-black text-white tracking-tighter">Welcome</h1>
-                    <p className="text-white/50 font-medium">Enter your mobile number to proceed</p>
+                    <p className="text-white/50 font-medium">Enter your details to proceed</p>
                   </div>
 
                   <form onSubmit={handleSubmit} className="w-full space-y-5 mt-4">
@@ -91,6 +93,22 @@ export default function LoginPage() {
                         onChange={(e) => setPhoneNumber(e.target.value)}
                         placeholder="+233 54 000 0000"
                         disabled={isLoading}
+                        required
+                        className="w-full h-14 pl-12 pr-4 bg-black/40 border border-white/10 rounded-2xl text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all font-medium text-lg disabled:opacity-50 shadow-inner"
+                      />
+                    </div>
+
+                    <div className="relative group/input">
+                      <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                        <Lock className="w-5 h-5 text-white/30 group-focus-within/input:text-emerald-400 transition-colors" />
+                      </div>
+                      <input
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••"
+                        disabled={isLoading}
+                        required
                         className="w-full h-14 pl-12 pr-4 bg-black/40 border border-white/10 rounded-2xl text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all font-medium text-lg disabled:opacity-50 shadow-inner"
                       />
                     </div>
