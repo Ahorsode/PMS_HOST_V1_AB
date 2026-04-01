@@ -4,7 +4,7 @@ const prismaClientSingleton = () => {
   return new PrismaClient().$extends({
     query: {
       $allModels: {
-        async $allOperations({ model, operation, args, query }) {
+        async $allOperations({ model, operation, args, query }: any) {
           // Automatic farmId injection for multi-tenant isolation
           // This ensures that even if a developer forgets to add farmId to a query,
           // the data is still isolated at the Prisma level (in addition to RLS).

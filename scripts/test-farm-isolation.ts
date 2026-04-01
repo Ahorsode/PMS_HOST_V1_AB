@@ -95,7 +95,7 @@ async function testIsolation() {
     const visibleBatchesForB = await prisma.batch.findMany()
     console.log(`Found ${visibleBatchesForB.length} batches visible to User B.`)
 
-    const foundAInB = visibleBatchesForB.some(b => b.id === batchA.id)
+    const foundAInB = visibleBatchesForB.some((b: any) => b.id === batchA.id)
 
     if (foundAInB) {
       console.error('❌ FAILURE: User B can see Farm A data via RLS!')

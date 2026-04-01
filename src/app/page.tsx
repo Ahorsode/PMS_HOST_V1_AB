@@ -210,37 +210,37 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-950 py-12 border-t border-gray-900 text-gray-400 font-medium">
-        <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-4 gap-8">
-          <div className="col-span-2 space-y-4">
+      <footer className="bg-[#0a0a0a] py-16 border-t border-gray-800 font-medium relative z-50 relative">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-y-12 gap-x-8">
+          <div className="sm:col-span-2 space-y-6">
             <div className="text-2xl font-bold text-white flex items-center">
                <div className="w-6 h-6 rounded bg-gradient-to-br from-amber-400 to-amber-600 mr-2 flex justify-center items-center">
                   <span className="text-white font-bold text-sm">A</span>
                </div>
                AgriTech
             </div>
-            <p className="max-w-sm text-sm leading-relaxed">Empowering modern farming with intelligent precision tools. Building the future of agriculture, from farm to fork.</p>
+            <p className="max-w-sm text-sm leading-relaxed text-slate-200">Empowering modern farming with intelligent precision tools. Building the future of agriculture, from farm to fork.</p>
           </div>
           <div>
-            <h4 className="text-white font-semibold mb-4 text-lg">Platform</h4>
-            <ul className="space-y-3 text-sm flex flex-col items-start">
-              <li><button className="hover:text-amber-400 transition-colors">Features</button></li>
-              <li><button className="hover:text-amber-400 transition-colors">Pricing</button></li>
-              <li><button className="hover:text-amber-400 transition-colors">Integrations</button></li>
+            <h4 className="text-white font-semibold mb-6 text-lg tracking-tight">Platform</h4>
+            <ul className="space-y-4 text-sm flex flex-col items-start">
+              <li><button className="text-slate-300 hover:text-amber-400 transition-colors">Features</button></li>
+              <li><button className="text-slate-300 hover:text-amber-400 transition-colors">Pricing</button></li>
+              <li><button className="text-slate-300 hover:text-amber-400 transition-colors">Integrations</button></li>
             </ul>
           </div>
           <div>
-            <h4 className="text-white font-semibold mb-4 text-lg">Company</h4>
-            <ul className="space-y-3 text-sm flex flex-col items-start">
-              <li><button className="hover:text-amber-400 transition-colors">About Us</button></li>
-              <li><button className="hover:text-amber-400 transition-colors">Contact Support</button></li>
-              <li><button className="hover:text-amber-400 transition-colors">Careers</button></li>
+            <h4 className="text-white font-semibold mb-6 text-lg tracking-tight">Company</h4>
+            <ul className="space-y-4 text-sm flex flex-col items-start">
+              <li><button className="text-slate-300 hover:text-amber-400 transition-colors">About Us</button></li>
+              <li><button className="text-slate-300 hover:text-amber-400 transition-colors">Contact Support</button></li>
+              <li><button className="text-slate-300 hover:text-amber-400 transition-colors">Careers</button></li>
             </ul>
           </div>
         </div>
-        <div className="max-w-7xl mx-auto px-6 mt-12 pt-8 border-t border-gray-900 text-sm text-center md:text-left flex flex-col md:flex-row justify-between items-center">
+        <div className="max-w-7xl mx-auto px-6 mt-16 pt-8 border-t border-gray-800 text-sm text-center md:text-left flex flex-col md:flex-row justify-between items-center text-slate-300">
           <p>© {new Date().getFullYear()} AgriTech Solutions Inc. All rights reserved.</p>
-          <div className="space-x-4 mt-4 md:mt-0">
+          <div className="space-x-6 mt-6 md:mt-0 flex items-center justify-center">
             <button className="hover:text-white transition-colors">Privacy Policy</button>
             <button className="hover:text-white transition-colors">Terms of Service</button>
           </div>

@@ -34,6 +34,35 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
     }
   },
+  callbacks: {
+    ...authConfig.callbacks,
+    async jwt({ token, user }) {
+      // On login, set from user object
+      if (user) {
+        token.id = user.id;
+        token.role = user.role;
+        token.activeFarmId = (user as any).activeFarmId;
+      }
+      
+      // If activeFarmId is missing from token (e.g. user onboarded after login)
+      // refresh it from the database on every request
+      if (token.id && !token.activeFarmId) {
+        try {
+          const membership = await prisma.farmMember.findFirst({
+            where: { userId: token.id as string },
+            select: { farmId: true }
+          });
+          if (membership?.farmId) {
+            token.activeFarmId = membership.farmId;
+          }
+        } catch (err) {
+          console.error('[JWT] Failed to refresh activeFarmId:', err);
+        }
+      }
+      
+      return token;
+    },
+  },
   providers: [
     Google({
       clientId: process.env.AUTH_GOOGLE_ID,
@@ -91,3 +120,4 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
 });
+

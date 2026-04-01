@@ -1,0 +1,128 @@
+﻿git : remote: error: 
+GH013: Repository rule 
+violations found for refs/
+heads/fixing-mobileview.  
+      
+At line:1 char:76
++ ... ng utf8 
+push_log.txt ; git push 
+origin fixing-mobileview 
+2>&1 | Out-F ...
++                         
+   ~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
+    + CategoryInfo        
+      : NotSpecified: (r  
+  emote: error: ...levi   
+ ew.        :String) [    
+], RemoteException
+    + FullyQualifiedError 
+   Id : NativeCommandErr  
+  or
+ 
+remote: 
+remote: - GITHUB PUSH 
+PROTECTION        
+remote:   ÔÇöÔÇöÔÇöÔÇöÔÇöÔ
+ÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇö
+ÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇ
+öÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔ
+ÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇö
+ÔÇö        
+remote:     Resolve the 
+following violations 
+before pushing again      
+  
+remote: 
+remote:     - Push cannot 
+contain secrets        
+remote: 
+remote:             
+remote:      (?) Learn 
+how to resolve a blocked 
+push        
+remote:      https://docs.
+github.com/code-security/s
+ecret-scanning/working-wit
+h-secret-scanning-and-push
+-protection/working-with-p
+ush-protection-from-the-co
+mmand-line#resolving-a-blo
+cked-push        
+remote:             
+remote:             
+remote:       ÔÇöÔÇö 
+Google OAuth Client ID ÔÇö
+ÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇ
+öÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔ
+ÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇö
+ÔÇö        
+remote:        locations: 
+       
+remote:          - 
+commit: c53157e988bd18f020
+719de36f12f708e1518bbb    
+    
+remote:            path: c
+lient_secret_1090499090810
+-f7t15g363n4va7fjc2duc0m6t
+5bju8mt.apps.googleusercon
+tent.com.json:1        
+remote:             
+remote:        (?) To 
+push, remove secret from 
+commit(s) or follow this 
+URL to allow the secret.  
+      
+remote:        https://git
+hub.com/Ahorsode/PMS_HOST_
+V1_AB/security/secret-scan
+ning/unblock-secret/3BlTo5
+uW9TigdSu2S3ZKJjgvcRQ     
+   
+remote:             
+remote:             
+remote:       ÔÇöÔÇö 
+Google OAuth Client 
+Secret ÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔ
+ÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇö
+ÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇöÔÇ
+ö        
+remote:        locations: 
+       
+remote:          - 
+commit: c53157e988bd18f020
+719de36f12f708e1518bbb    
+    
+remote:            path: c
+lient_secret_1090499090810
+-f7t15g363n4va7fjc2duc0m6t
+5bju8mt.apps.googleusercon
+tent.com.json:1        
+remote:             
+remote:        (?) To 
+push, remove secret from 
+commit(s) or follow this 
+URL to allow the secret.  
+      
+remote:        https://git
+hub.com/Ahorsode/PMS_HOST_
+V1_AB/security/secret-scan
+ning/unblock-secret/3BlTo7
+q0wtPp4q1HtbPzM1UtDBY     
+   
+remote:             
+remote: 
+remote: 
+To https://github.com/Ahor
+sode/PMS_HOST_V1_AB
+ ! [remote rejected] 
+fixing-mobileview -> 
+fixing-mobileview (push 
+declined due to 
+repository rule 
+violations)
+error: failed to push 
+some refs to 'https://gith
+ub.com/Ahorsode/PMS_HOST_V
+1_AB'

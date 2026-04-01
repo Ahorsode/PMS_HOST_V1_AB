@@ -1,0 +1,43 @@
+﻿On branch main
+Your branch is up to date with 'origin/main'.
+
+You have unmerged paths.
+  (fix conflicts and run "git commit")
+  (use "git merge --abort" to abort the merge)
+
+Changes to be committed:
+	modified:   .gitignore
+	modified:   next.config.ts
+	modified:   scripts/test-farm-isolation.ts
+	modified:   src/app/dashboard/feed/page.tsx
+	modified:   src/app/dashboard/finance/page.tsx
+	modified:   src/app/dashboard/flocks/page.tsx
+	modified:   src/app/dashboard/sales/page.tsx
+	modified:   src/app/dashboard/settings/page.tsx
+	modified:   src/app/dashboard/team/page.tsx
+	modified:   src/app/globals.css
+	modified:   src/app/page.tsx
+	modified:   src/auth.ts
+	modified:   src/components/layout/BottomNav.tsx
+	modified:   src/lib/actions/dashboard-actions.ts
+	modified:   src/lib/db.ts
+
+Unmerged paths:
+  (use "git add <file>..." to mark resolution)
+	both modified:   src/auth.config.ts
+	both modified:   src/lib/actions/staff-actions.ts
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	diff.txt
+	git_log.txt
+	git_log_4.txt
+	git_status.txt
+	git_status_after_add.txt
+	log.txt
+	merge_status.txt
+	push_err.txt
+	push_log.txt
+	status.txt
+	ts_out.txt
+

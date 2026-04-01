@@ -6,11 +6,10 @@ import { FlockActionsHeader, FlockRowActions } from './FlockActions';
 
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
+import { getAuthContext } from '@/lib/auth-utils';
 
 export default async function FlocksPage() {
-  const cookieStore = await cookies();
-  const activeFarmId = cookieStore.get('activeFarmId')?.value;
+  const { activeFarmId } = await getAuthContext();
   
   if (!activeFarmId) {
     redirect('/dashboard');

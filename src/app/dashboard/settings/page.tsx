@@ -28,7 +28,7 @@ export default async function SettingsPage() {
       })
     : [];
 
-  const serializedInventory = inventory.map(item => ({
+  const serializedInventory = inventory.map((item: any) => ({
     ...item,
     stockLevel: Number(item.stockLevel),
     reorderLevel: item.reorderLevel ? Number(item.reorderLevel) : undefined,

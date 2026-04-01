@@ -43,7 +43,8 @@ export const authConfig = {
       if (session.user) {
         (session.user as any).id = token.id as string;
         (session.user as any).role = token.role as string;
-        (session.user as any).activeFarmId = token.activeFarmId as number;
+        // Always carry activeFarmId from token — may be refreshed server-side via getAuthContext()
+        (session.user as any).activeFarmId = token.activeFarmId as number | undefined;
         (session.user as any).mustChangePassword = token.mustChangePassword as boolean;
       }
       return session;
@@ -51,3 +52,4 @@ export const authConfig = {
   },
   providers: [],
 } satisfies NextAuthConfig;
+

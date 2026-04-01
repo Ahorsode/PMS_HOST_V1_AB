@@ -1,0 +1,10 @@
+﻿scripts/test-farm-isolation.ts(98,47): error TS7006: Parameter 'b' implicitly has an 'any' type.
+src/app/dashboard/settings/page.tsx(31,45): error TS7006: Parameter 'item' implicitly has an 'any' type.
+src/lib/actions/dashboard-actions.ts(493,53): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+src/lib/actions/staff-actions.ts(6,10): error TS2305: Module '"@prisma/client"' has no exported member 'Role'.
+src/lib/actions/staff-actions.ts(92,53): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+src/lib/actions/staff-actions.ts(269,45): error TS7006: Parameter 'tx' implicitly has an 'any' type.
+src/lib/db.ts(7,32): error TS7031: Binding element 'model' implicitly has an 'any' type.
+src/lib/db.ts(7,39): error TS7031: Binding element 'operation' implicitly has an 'any' type.
+src/lib/db.ts(7,50): error TS7031: Binding element 'args' implicitly has an 'any' type.
+src/lib/db.ts(7,56): error TS7031: Binding element 'query' implicitly has an 'any' type.

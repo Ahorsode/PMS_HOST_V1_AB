@@ -490,7 +490,7 @@ export async function createHouse(data: { houseNumber: string, capacity: number 
 export async function onboardFarmer(data: { name: string, location: string, capacity: number }) {
   const { userId } = await getAuthContext()
   try {
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       const farm = await tx.farm.create({
         data: {
           name: data.name,
