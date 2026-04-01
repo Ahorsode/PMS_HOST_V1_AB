@@ -24,6 +24,8 @@ export const viewport: Viewport = {
   userScalable: false, // Prevents auto-zoom on input focus in iOS
 };
 
+import AuthProvider from "@/components/providers/SessionProvider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -32,12 +34,14 @@ export default function RootLayout({
   return (
       <html lang="en">
         <body className={`${geistSans.variable} antialiased bg-[#0a0a0a] min-h-screen text-white font-sans`}>
-          <div className="fixed inset-0 pointer-events-none">
+          <AuthProvider>
+            <div className="fixed inset-0 pointer-events-none">
             <div className="absolute inset-0 bg-gradient-to-tr from-emerald-950/20 via-[#0a0a0a] to-[#0a0a0a]" />
             <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-[128px]" />
             <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500/10 rounded-full blur-[128px]" />
           </div>
           {children}
+          </AuthProvider>
         </body>
       </html>
   );

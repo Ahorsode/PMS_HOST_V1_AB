@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { Lock, ArrowRight, Loader2, Bird, CheckCircle2 } from 'lucide-react';
 import Background3D from '@/components/auth/Background3D';
 
@@ -15,6 +16,7 @@ export default function ChangePasswordPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const router = useRouter();
+  const { update } = useSession();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +48,13 @@ export default function ChangePasswordPage() {
       }
 
       setSuccess(true);
+
+      // Force session update to clear mustChangePassword flag
+      await update({
+        mustChangePassword: false,
+        name: `${firstname} ${surname}`.trim()
+      });
+
       setTimeout(() => {
         router.push('/dashboard');
         router.refresh();

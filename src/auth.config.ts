@@ -26,12 +26,16 @@ export const authConfig = {
       }
       return true;
     },
-    jwt({ token, user }) {
+    jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.role = (user as any).role;
         token.activeFarmId = (user as any).activeFarmId;
         token.mustChangePassword = (user as any).mustChangePassword;
+      }
+      if (trigger === "update" && session) {
+        token.mustChangePassword = session.mustChangePassword;
+        if (session.name) token.name = session.name;
       }
       return token;
     },
