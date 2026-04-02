@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Bird, Dog, Info } from 'lucide-react';
+import { Bird, Activity, Info } from 'lucide-react';
 import { FlockRowActions } from './FlockActions';
 import { formatLivestockType } from '@/lib/utils/growth-utils';
 
@@ -15,6 +15,7 @@ export function LivestockTable({ initialBatches, houses }: LivestockTableProps) 
 
   const filteredBatches = initialBatches.filter((batch: any) => {
     if (filter === 'ALL') return true;
+    if (!batch.type) return false;
     if (filter === 'POULTRY') return batch.type.startsWith('POULTRY');
     return batch.type === 'CATTLE';
   });
@@ -39,7 +40,7 @@ export function LivestockTable({ initialBatches, houses }: LivestockTableProps) 
       <div className="flex gap-3 bg-white p-2 rounded-2xl border border-gray-100 shadow-sm w-fit">
         <TabButton value="ALL" label="All Species" icon={Info} />
         <TabButton value="POULTRY" label="Poultry" icon={Bird} />
-        <TabButton value="CATTLE" label="Cattle" icon={Dog} />
+        <TabButton value="CATTLE" label="Cattle" icon={Activity} />
       </div>
 
       <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
@@ -59,7 +60,7 @@ export function LivestockTable({ initialBatches, houses }: LivestockTableProps) 
             {filteredBatches.map((batch: any) => (
               <tr key={batch.id} className="hover:bg-gray-50/80 transition-all group">
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-700">
-                   {batch.numericId ? `BTCH-${batch.numericId.toString().padStart(3, '0')}` : `BTCH-${batch.id.slice(-4)}`}
+                   {batch.numericId ? `BTCH-${batch.numericId.toString().padStart(3, '0')}` : `BTCH-${String(batch.id || '').slice(-4)}`}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-bold text-gray-900">{formatLivestockType(batch.type)}</div>
@@ -69,9 +70,9 @@ export function LivestockTable({ initialBatches, houses }: LivestockTableProps) 
                   {batch.house?.name || `Unit ${batch.houseId}`}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">
-                  {batch.currentCount.toLocaleString()}
+                  {batch.currentCount?.toLocaleString() || '0'}
                   <span className="text-gray-400 font-normal text-xs ml-1">
-                    {batch.type.startsWith('POULTRY') ? 'birds' : 'head'}
+                    {batch.type?.startsWith('POULTRY') ? 'birds' : 'head'}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">

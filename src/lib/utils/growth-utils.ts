@@ -50,7 +50,8 @@ export function calculateGrowthPerformance(
 /**
  * Normalizes livestock type names for display.
  */
-export function formatLivestockType(type: LivestockType): string {
-  return type.replace(/_/g, ' ').toLowerCase()
+export function formatLivestockType(type: LivestockType | string | null | undefined): string {
+  if (!type) return 'Unknown';
+  return String(type).replace(/_/g, ' ').toLowerCase()
     .replace(/\b\w/g, c => c.toUpperCase());
 }
