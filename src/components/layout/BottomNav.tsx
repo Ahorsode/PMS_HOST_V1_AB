@@ -13,13 +13,14 @@ export const BottomNav = ({ role = 'OWNER', permissions }: { role?: string, perm
 
   // Mobile navigation items
   const allNavItems: { name: string; icon: React.ElementType; href: string; roles: string[] }[] = [
-    { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', roles: ['OWNER', 'MANAGER', 'WORKER', 'ACCOUNTANT', 'FINANCE_OFFICER', 'CASHIER'] },
-    { name: 'Livestock', icon: PawPrint, href: '/dashboard/livestock', roles: ['OWNER', 'MANAGER', 'WORKER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
-    { name: 'Houses', icon: ThermometerSun, href: '/dashboard/houses', roles: ['OWNER', 'MANAGER', 'WORKER', 'ACCOUNTANT'] },
+    { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', roles: ['OWNER', 'MANAGER', 'WORKER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
+    { name: 'Livestock', icon: PawPrint, href: '/dashboard/flocks', roles: ['OWNER', 'MANAGER', 'WORKER'] },
+    { name: 'Houses', icon: ThermometerSun, href: '/dashboard/houses', roles: ['OWNER', 'MANAGER'] },
     { name: 'Eggs', icon: Egg, href: '/dashboard/eggs', roles: ['OWNER', 'MANAGER', 'WORKER'] },
-    { name: 'Sales', icon: Banknote, href: '/dashboard/sales', roles: ['OWNER', 'MANAGER', 'ACCOUNTANT', 'FINANCE_OFFICER', 'CASHIER'] },
-    { name: 'Mortality', icon: XCircle, href: '/dashboard/mortality', roles: ['OWNER', 'MANAGER', 'WORKER'] },
     { name: 'Feeding', icon: Wheat, href: '/dashboard/feed', roles: ['OWNER', 'MANAGER', 'WORKER'] },
+    { name: 'Mortality', icon: XCircle, href: '/dashboard/mortality', roles: ['OWNER', 'MANAGER', 'WORKER'] },
+    { name: 'Sales', icon: Banknote, href: '/dashboard/sales', roles: ['OWNER', 'MANAGER', 'CASHIER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
+    { name: 'Customers', icon: Users, href: '/dashboard/sales/customers', roles: ['OWNER', 'MANAGER', 'CASHIER', 'ACCOUNTANT'] },
     { name: 'Finance', icon: Wallet, href: '/dashboard/finance', roles: ['OWNER', 'MANAGER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
     { name: 'Team', icon: Users, href: '/dashboard/team', roles: ['OWNER', 'MANAGER'] },
     { name: 'Settings', icon: Settings, href: '/dashboard/settings', roles: ['OWNER', 'MANAGER'] },
@@ -27,9 +28,10 @@ export const BottomNav = ({ role = 'OWNER', permissions }: { role?: string, perm
 
   const navItems = allNavItems.filter(item => {
     if (item.roles.includes(role)) return true;
-    if (role === 'WORKER' && permissions) {
+    if (permissions) {
       if ((item.name === 'Finance' || item.name === 'Sales') && permissions.canViewFinance) return true;
       if (item.name === 'Livestock' && permissions.canViewBatches) return true;
+      if (item.name === 'Inventory' && permissions.canViewInventory) return true;
     }
     return false;
   });
@@ -39,7 +41,7 @@ export const BottomNav = ({ role = 'OWNER', permissions }: { role?: string, perm
       initial={{ y: 100 }}
       animate={{ y: 0 }}
       transition={{ type: "spring", stiffness: 260, damping: 20 }}
-      className="fixed bottom-0 left-0 right-0 z-50 md:hidden pb-safe"
+      className="fixed bottom-0 left-0 right-0 z-40 md:hidden pb-safe"
     >
       <div className="bg-[#0a1510]/85 backdrop-blur-2xl mx-4 mb-4 mt-2 px-2 py-2 rounded-3xl flex items-center gap-1 overflow-x-auto custom-scrollbar border border-emerald-900/40 shadow-[0_-4px_30px_rgba(0,0,0,0.6),0_8px_32px_rgba(0,0,0,0.5)] snap-x">
         {navItems.map((item) => {

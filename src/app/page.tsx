@@ -162,7 +162,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold mb-4 tracking-tight">Tailored for Your Market Focus</h2>
-            <p className="text-green-200 text-lg max-w-2xl mx-auto font-medium">Whether you&apos;re raising birds for meat or eggs, AgriTech adapts to your specific production cycles dynamically.</p>
+            <p className="text-green-200 text-lg max-w-2xl mx-auto font-medium">From poultry to path-breaking cattle management, AgriTech adapts to your specific production cycles dynamically.</p>
           </div>
           
           <div className="grid md:grid-cols-2 gap-8">
@@ -171,12 +171,12 @@ export default function LandingPage() {
                 <div className="p-4 bg-white/5 rounded-2xl text-amber-400 group-hover:bg-amber-500 group-hover:text-white transition-colors">
                   <TrendingUp className="w-8 h-8" />
                 </div>
-                <h3 className="text-3xl font-bold tracking-tight text-white group-hover:text-amber-400 transition-colors">Broiler Operations</h3>
+                <h3 className="text-3xl font-bold tracking-tight text-white group-hover:text-amber-400 transition-colors">Specialized Fattening</h3>
               </div>
               <ul className="space-y-5 text-green-100 font-medium">
-                <li className="flex items-start"><ArrowRight className="w-5 h-5 mr-4 text-amber-400 mt-0.5" /> Rapid 42-day cycle tracking with daily weight gain predictions.</li>
-                <li className="flex items-start"><ArrowRight className="w-5 h-5 mr-4 text-amber-400 mt-0.5" /> Advanced lighting and climate control integration for optimal FCR.</li>
-                <li className="flex items-start"><ArrowRight className="w-5 h-5 mr-4 text-amber-400 mt-0.5" /> Slaughterhouse scheduling and harvest readiness analytics.</li>
+                <li className="flex items-start"><ArrowRight className="w-5 h-5 mr-4 text-amber-400 mt-0.5" /> Rapid cycle tracking with daily weight gain predictions.</li>
+                <li className="flex items-start"><ArrowRight className="w-5 h-5 mr-4 text-amber-400 mt-0.5" /> Advanced lighting and climate control integration for optimal feed conversion.</li>
+                <li className="flex items-start"><ArrowRight className="w-5 h-5 mr-4 text-amber-400 mt-0.5" /> Market readiness and harvest scheduling analytics.</li>
               </ul>
             </div>
             
@@ -185,12 +185,12 @@ export default function LandingPage() {
                 <div className="p-4 bg-white/5 rounded-2xl text-white group-hover:bg-white group-hover:text-green-900 transition-colors">
                   <Activity className="w-8 h-8" />
                 </div>
-                <h3 className="text-3xl font-bold tracking-tight text-white">Layer Operations</h3>
+                <h3 className="text-3xl font-bold tracking-tight text-white">Production Cycles</h3>
               </div>
               <ul className="space-y-5 text-green-100 font-medium">
-                <li className="flex items-start"><ArrowRight className="w-5 h-5 mr-4 text-white mt-0.5" /> Long-term 70+ week tracking including pullet rearing phase.</li>
-                <li className="flex items-start"><ArrowRight className="w-5 h-5 mr-4 text-white mt-0.5" /> Daily egg production counting, grading percentages, and yield metrics.</li>
-                <li className="flex items-start"><ArrowRight className="w-5 h-5 mr-4 text-white mt-0.5" /> Molting schedules and layer age-productivity drop-off alerts.</li>
+                <li className="flex items-start"><ArrowRight className="w-5 h-5 mr-4 text-white mt-0.5" /> Long-term lifecycle tracking across breeding and rearing phases.</li>
+                <li className="flex items-start"><ArrowRight className="w-5 h-5 mr-4 text-white mt-0.5" /> Daily production counting, grading percentages, and yield metrics.</li>
+                <li className="flex items-start"><ArrowRight className="w-5 h-5 mr-4 text-white mt-0.5" /> Critical event scheduling and age-productivity drop-off alerts.</li>
               </ul>
             </div>
           </div>
@@ -201,8 +201,8 @@ export default function LandingPage() {
       <section className="py-20 bg-amber-500 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] animate-pulse"></div>
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
-          <h2 className="text-4xl font-extrabold text-white mb-6 drop-shadow-sm">Ready to Optimize Your Flock?</h2>
-          <p className="text-amber-100 text-xl font-medium mb-10">Join thousands of farmers streamlining their workflow from hatch to harvest.</p>
+          <h2 className="text-4xl font-extrabold text-white mb-6 drop-shadow-sm">Ready to Optimize Your Lifestyle?</h2>
+          <p className="text-amber-100 text-xl font-medium mb-10">Join thousands of farmers streamlining their workflow from birth to harvest.</p>
           <Link href="/dashboard" className="bg-white text-amber-600 px-10 py-4 rounded-full font-extrabold text-xl shadow-xl hover:shadow-2xl hover:bg-gray-50 transition-all hover:-translate-y-1 inline-block">
             Start Your First Batch Today
           </Link>

@@ -78,7 +78,7 @@ export default function HousesPage({ houses }: { houses: any[] }) {
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500 font-medium">Capacity</span>
-                  <span className="font-bold text-gray-900">{house.capacity.toLocaleString()} birds</span>
+                  <span className="font-bold text-gray-900">{house.capacity.toLocaleString()} livestock</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500 font-medium">Status</span>

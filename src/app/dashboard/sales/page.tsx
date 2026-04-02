@@ -58,17 +58,18 @@ export default async function SalesPage() {
   const customers = customersRaw as unknown as Customer[];
 
   const totalRevenue = orders.reduce((sum: number, order: Order) => sum + Number(order.totalAmount), 0);
+  const netRevenue = orders.reduce((sum: number, order: Order) => sum + (Number(order.totalAmount) - Number(order.discountAmount || 0)), 0);
   const pendingOrders = orders.filter((o: Order) => o.status === 'PENDING').length;
 
   const stats = [
     { name: 'Total Revenue', value: formatCurrency(totalRevenue), icon: Banknote, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+    { name: 'Net Revenue', value: formatCurrency(netRevenue), icon: TrendingUp, color: 'text-purple-400', bg: 'bg-purple-500/10' },
     { name: 'Active Orders', value: orders.length, icon: ShoppingCart, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-    { name: 'Customers', value: customers.length, icon: Users, color: 'text-purple-400', bg: 'bg-purple-500/10' },
     { name: 'Pending', value: pendingOrders, icon: Clock, color: 'text-amber-400', bg: 'bg-amber-500/10' },
   ];
 
   return (
-    <div className="max-w-[1600px] mx-auto space-y-8 px-6 py-10 relative">
+    <div className="max-w-[1600px] mx-auto space-y-8 px-4 md:px-6 py-6 md:py-10 relative">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-4xl font-black text-white tracking-tighter">Commercial <span className="text-emerald-400 italic">Hub</span></h1>
@@ -82,17 +83,17 @@ export default async function SalesPage() {
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         {stats.map((stat) => (
           <Card key={stat.name} className={`${stat.bg} border-white/5 backdrop-blur-xl`}>
-            <CardContent className="pt-6">
+            <CardContent className="pt-4 md:pt-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-widest text-white/40 mb-1">{stat.name}</p>
-                  <p className="text-3xl font-black text-white tracking-tight">{stat.value}</p>
+                  <p className="text-xl md:text-3xl font-black text-white tracking-tight">{stat.value}</p>
                 </div>
-                <div className={`p-3 rounded-2xl ${stat.bg} border border-white/10`}>
-                  <stat.icon className={`w-6 h-6 ${stat.color}`} />
+                <div className={`p-2 md:p-3 rounded-2xl ${stat.bg} border border-white/10`}>
+                  <stat.icon className={`w-4 h-4 md:w-6 md:h-6 ${stat.color}`} />
                 </div>
               </div>
             </CardContent>
@@ -102,16 +103,17 @@ export default async function SalesPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Orders Table */}
-        <div className="lg:col-span-2 bg-white/5 rounded-[2.5rem] border border-white/10 overflow-hidden backdrop-blur-md shadow-2xl">
-          <div className="p-8 border-b border-white/5 flex justify-between items-center">
-             <h3 className="text-xl font-black text-white tracking-tight flex items-center gap-3">
+        <div className="lg:col-span-2 bg-white/5 rounded-[1.5rem] md:rounded-[2.5rem] border border-white/10 overflow-hidden backdrop-blur-md shadow-2xl">
+          <div className="p-4 md:p-8 border-b border-white/5 flex justify-between items-center">
+             <h3 className="text-lg md:text-xl font-black text-white tracking-tight flex items-center gap-3">
                <Clock className="w-5 h-5 text-emerald-400" /> Recent Orders
              </h3>
              <span className="text-[10px] font-black uppercase bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/20 tracking-widest">
                {orders.length} TOTAL
              </span>
           </div>
-          <div className="overflow-x-auto">
+          
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-white/5">
@@ -162,6 +164,38 @@ export default async function SalesPage() {
                 )}
               </tbody>
             </table>
+          </div>
+
+          <div className="block md:hidden p-4 space-y-4">
+            {orders.map((order: Order) => (
+              <div key={order.id} className="bg-black/20 rounded-2xl p-4 border border-white/5 flex flex-col space-y-3">
+                 <div className="flex justify-between items-center">
+                   <span className="text-white font-black text-sm tracking-tighter uppercase tabular-nums">ORD-{order.id.toString().padStart(4, '0')}</span>
+                   <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
+                        order.status === 'COMPLETED' || order.status === 'PAID'
+                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                          : order.status === 'PENDING'
+                            ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                            : 'bg-red-500/10 text-red-400 border-red-500/20'
+                      }`}>
+                     {order.status}
+                   </span>
+                 </div>
+                 <div className="flex flex-col">
+                    <span className="text-white/90 font-bold text-xs">{order.customer.name}</span>
+                    <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-0.5">{order.customer.phone || 'No Phone'}</span>
+                 </div>
+                 <div className="flex justify-between items-center pt-3 border-t border-white/5">
+                    <span className="text-emerald-400 font-black text-sm">{formatCurrency(Number(order.totalAmount))}</span>
+                    <div className="flex justify-end"><SalesRowActions order={order} /></div>
+                 </div>
+              </div>
+            ))}
+            {orders.length === 0 && (
+              <div className="py-10 text-center text-white/40 font-bold italic tracking-tight">
+                No sales records found.
+              </div>
+            )}
           </div>
         </div>
 

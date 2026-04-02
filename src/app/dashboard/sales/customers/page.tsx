@@ -65,58 +65,58 @@ export default async function CustomersPage() {
       </div>
 
       {/* CRM Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
           <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
-             <CardContent className="pt-8">
-                <div className="flex items-center gap-4">
-                   <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/10">
-                     <Users className="w-6 h-6 text-emerald-400" />
+             <CardContent className="pt-4 md:pt-8">
+                <div className="flex items-center gap-3 md:gap-4">
+                   <div className="p-2 md:p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/10">
+                     <Users className="w-4 h-4 md:w-6 md:h-6 text-emerald-400" />
                    </div>
                    <div>
-                     <p className="text-2xl font-black text-white">{customerStats.length}</p>
-                     <p className="text-[10px] font-black uppercase text-white/40 tracking-widest">Total Profiles</p>
+                     <p className="text-xl md:text-2xl font-black text-white">{customerStats.length}</p>
+                     <p className="text-[9px] md:text-[10px] font-black uppercase text-white/40 tracking-widest">Total Profiles</p>
                    </div>
                 </div>
              </CardContent>
           </Card>
 
           <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
-             <CardContent className="pt-8">
-                <div className="flex items-center gap-4">
-                   <div className="p-3 rounded-2xl bg-purple-500/10 border border-purple-500/10">
-                     <Star className="w-6 h-6 text-purple-400" />
+             <CardContent className="pt-4 md:pt-8">
+                <div className="flex items-center gap-3 md:gap-4">
+                   <div className="p-2 md:p-3 rounded-2xl bg-purple-500/10 border border-purple-500/10">
+                     <Star className="w-4 h-4 md:w-6 md:h-6 text-purple-400" />
                    </div>
                    <div>
-                     <p className="text-2xl font-black text-white">{vipClients}</p>
-                     <p className="text-[10px] font-black uppercase text-white/40 tracking-widest">VIP Clients</p>
+                     <p className="text-xl md:text-2xl font-black text-white">{vipClients}</p>
+                     <p className="text-[9px] md:text-[10px] font-black uppercase text-white/40 tracking-widest">VIP Clients</p>
                    </div>
                 </div>
              </CardContent>
           </Card>
 
           <Card className="bg-white/5 border-white/10 backdrop-blur-xl">
-             <CardContent className="pt-8">
-                <div className="flex items-center gap-4">
-                   <div className="p-3 rounded-2xl bg-blue-500/10 border border-blue-500/10">
-                     <TrendingUp className="w-6 h-6 text-blue-400" />
+             <CardContent className="pt-4 md:pt-8">
+                <div className="flex items-center gap-3 md:gap-4">
+                   <div className="p-2 md:p-3 rounded-2xl bg-blue-500/10 border border-blue-500/10">
+                     <TrendingUp className="w-4 h-4 md:w-6 md:h-6 text-blue-400" />
                    </div>
                    <div>
-                     <p className="text-2xl font-black text-white">{formatCurrency(totalValue)}</p>
-                     <p className="text-[10px] font-black uppercase text-white/40 tracking-widest">Portfolio Value</p>
+                     <p className="text-xl md:text-2xl font-black text-white">{formatCurrency(totalValue)}</p>
+                     <p className="text-[9px] md:text-[10px] font-black uppercase text-white/40 tracking-widest">Portfolio Value</p>
                    </div>
                 </div>
              </CardContent>
           </Card>
 
           <Card className="bg-red-500/5 border-red-500/20 backdrop-blur-xl">
-             <CardContent className="pt-8">
-                <div className="flex items-center gap-4">
-                   <div className="p-3 rounded-2xl bg-red-500/10 border border-red-500/10">
-                     <AlertCircle className="w-6 h-6 text-red-400" />
+             <CardContent className="pt-4 md:pt-8">
+                <div className="flex items-center gap-3 md:gap-4">
+                   <div className="p-2 md:p-3 rounded-2xl bg-red-500/10 border border-red-500/10">
+                     <AlertCircle className="w-4 h-4 md:w-6 md:h-6 text-red-400" />
                    </div>
                    <div>
-                     <p className="text-2xl font-black text-red-400">{formatCurrency(totalOwed)}</p>
-                     <p className="text-[10px] font-black uppercase text-red-500/40 tracking-widest">Total Outstanding</p>
+                     <p className="text-xl md:text-2xl font-black text-red-400">{formatCurrency(totalOwed)}</p>
+                     <p className="text-[9px] md:text-[10px] font-black uppercase text-red-500/40 tracking-widest">Total Outstanding</p>
                    </div>
                 </div>
              </CardContent>

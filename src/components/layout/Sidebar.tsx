@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import { motion } from 'framer-motion';
 import { 
-  LayoutDashboard, Bird, Egg, ThermometerSun, 
+  LayoutDashboard, Bird, PawPrint, Egg, ThermometerSun, 
   Wheat, Settings, Users, XCircle, Banknote,
   LogOut, Wallet
 } from 'lucide-react';
@@ -20,7 +20,7 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
       name: 'Operations',
       items: [
         { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', roles: ['OWNER', 'MANAGER', 'WORKER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
-        { name: 'Flocks', icon: Bird, href: '/dashboard/flocks', roles: ['OWNER', 'MANAGER', 'WORKER'] },
+        { name: 'Livestock', icon: PawPrint, href: '/dashboard/flocks', roles: ['OWNER', 'MANAGER', 'WORKER'] },
         { name: 'Houses', icon: ThermometerSun, href: '/dashboard/houses', roles: ['OWNER', 'MANAGER'] },
         { name: 'Eggs', icon: Egg, href: '/dashboard/eggs', roles: ['OWNER', 'MANAGER', 'WORKER'] },
         { name: 'Feeding', icon: Wheat, href: '/dashboard/feed', roles: ['OWNER', 'MANAGER', 'WORKER'] },
@@ -66,7 +66,7 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
               // Permission overrides
               if (permissions) {
                 if ((item.name === 'Finance' || item.name === 'Sales') && permissions.canViewFinance) return true;
-                if (item.name === 'Flocks' && permissions.canViewBatches) return true;
+                if (item.name === 'Livestock' && permissions.canViewBatches) return true;
                 if (item.name === 'Inventory' && permissions.canViewInventory) return true;
               }
               return false;
