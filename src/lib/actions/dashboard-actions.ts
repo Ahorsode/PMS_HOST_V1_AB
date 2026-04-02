@@ -141,7 +141,7 @@ export async function getDashboardStats() {
           lte: new Date(new Date().getTime() + 3 * 24 * 60 * 60 * 1000) // Next 3 days
         }
       },
-      include: { livestock: true }
+      include: { batch: true }
     })
 
     const pendingMedications = await tx.medicationSchedule.findMany({
@@ -149,7 +149,7 @@ export async function getDashboardStats() {
         farmId: activeFarmId,
         status: 'PENDING'
       },
-      include: { livestock: true }
+      include: { batch: true }
     })
 
     const batchesNeedingEggs = await tx.livestock.findMany({
@@ -170,13 +170,13 @@ export async function getDashboardStats() {
       ...upcomingVaccinations.map((v: any) => ({
         type: 'VACCINE',
         title: 'Upcoming Vaccination',
-        message: `${v.vaccineName} for ${v.livestock.batchName || v.batchId}`,
+        message: `${v.vaccineName} for ${v.batch.batchName || v.batchId}`,
         severity: 'warning'
       })),
       ...pendingMedications.map((m: any) => ({
         type: 'MEDICATION',
         title: 'Medication Due',
-        message: `${m.medicationName} for ${m.livestock.batchName || m.batchId}`,
+        message: `${m.medicationName} for ${m.batch.batchName || m.batchId}`,
         severity: 'error'
       })),
       ...batchesNeedingEggs.map((b: any) => ({
@@ -677,7 +677,7 @@ export async function getAllEggProduction() {
     return await tx.eggProduction.findMany({
       where: { farmId: activeFarmId },
       include: {
-        livestock: true,
+        batch: true,
       },
       orderBy: {
         logDate: 'desc',
@@ -698,7 +698,7 @@ export async function getAllFeedingLogs() {
     const logs = await tx.feedingLog.findMany({
       where: { farmId: activeFarmId },
       include: {
-        livestock: true,
+        batch: true,
         inventory: true,
       },
       orderBy: {
@@ -781,7 +781,7 @@ export async function getAllMortalityLogs() {
     return await tx.mortality.findMany({
       where: { farmId: activeFarmId },
       include: {
-        livestock: true,
+        batch: true,
       },
       orderBy: {
         logDate: 'desc',
