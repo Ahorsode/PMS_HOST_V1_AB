@@ -78,7 +78,7 @@ export const FlockDetailClient = ({ batch }: FlockDetailClientProps) => {
     setIsSavingVacc(true);
     try {
       const result = await createVaccinationSchedule({
-        batchId: batch.id,
+        livestockId: batch.id,
         vaccineName: vaccName,
         scheduledDate: new Date(vaccDate),
         notes: vaccNotes || undefined,

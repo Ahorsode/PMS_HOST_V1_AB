@@ -62,7 +62,7 @@ export function SalesRowActions({ order }: { order: any }) {
 
   const handleDownloadInvoice = async () => {
     toast.info('Generating PDF...');
-    const res = await generateInvoicePDF(order.id);
+    const res = await generateInvoicePDF(order.id) as any;
     if (res.success && res.pdfBase64) {
       const link = document.createElement('a');
       link.href = `data:application/pdf;base64,${res.pdfBase64}`;

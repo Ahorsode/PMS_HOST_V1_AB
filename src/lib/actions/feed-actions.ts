@@ -104,3 +104,62 @@ export async function getConsumptionEfficiency() {
     }
   })
 }
+
+export async function createFeedingLog(data: any) {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) throw new Error('No active farm selected')
+
+  try {
+    const log = await prisma.feedingLog.create({
+      data: {
+        batchId: data.batchId,
+        feedTypeId: data.feedTypeId,
+        amountConsumed: data.amountConsumed,
+        logDate: new Date(data.logDate),
+        farmId: activeFarmId,
+        userId: userId || 'user_placeholder'
+      }
+    })
+    revalidatePath('/dashboard/feed')
+    return { success: true, log }
+  } catch (error) {
+    console.error('Error creating feeding log:', error)
+    return { success: false, error: 'Failed to create feeding log' }
+  }
+}
+
+export async function updateFeedingLog(id: number, data: any) {
+  const { activeFarmId } = await getAuthContext()
+  if (!activeFarmId) throw new Error('No active farm selected')
+
+  try {
+    await prisma.feedingLog.update({
+      where: { id },
+      data: {
+        amountConsumed: data.amountConsumed,
+        feedTypeId: data.feedTypeId,
+      }
+    })
+    revalidatePath('/dashboard/feed')
+    return { success: true }
+  } catch (error) {
+    console.error('Error updating feeding log:', error)
+    return { success: false, error: 'Failed to update feeding log' }
+  }
+}
+
+export async function deleteFeedingLog(id: number, data?: any) {
+  const { activeFarmId } = await getAuthContext()
+  if (!activeFarmId) throw new Error('No active farm selected')
+
+  try {
+    await prisma.feedingLog.delete({
+      where: { id }
+    })
+    revalidatePath('/dashboard/feed')
+    return { success: true }
+  } catch (error) {
+    console.error('Error deleting feeding log:', error)
+    return { success: false, error: 'Failed to delete feeding log' }
+  }
+}

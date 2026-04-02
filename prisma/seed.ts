@@ -57,11 +57,13 @@ async function main() {
   })
 
   // 4. Create a Broiler Batch
-  const batch = await prisma.batch.upsert({
+  const batch = await prisma.livestock.upsert({
     where: { id: 1 },
     update: {},
     create: {
       houseId: house1.id,
+      batchName: 'Broiler Batch 1',
+      type: 'POULTRY_BROILER',
       breedType: 'Broiler',
       initialCount: 5000,
       currentCount: 4950,

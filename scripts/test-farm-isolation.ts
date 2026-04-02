@@ -7,7 +7,7 @@ async function testIsolation() {
   try {
     // 0. Cleanup any previous failed runs
     console.log('Pre-test cleanup...')
-    await prisma.batch.deleteMany({ where: { farmId: { in: [1001, 1002] } } })
+    await prisma.livestock.deleteMany({ where: { farmId: { in: [1001, 1002] } } })
     await prisma.house.deleteMany({ where: { farmId: { in: [1001, 1002] } } })
     await prisma.farmMember.deleteMany({ where: { farmId: { in: [1001, 1002] } } })
     await prisma.farm.deleteMany({ where: { id: { in: [1001, 1002] } } })
@@ -69,12 +69,14 @@ async function testIsolation() {
 
     // 4. Add Data to Farm A
     console.log('Creating data in Farm A...')
-    const batchA = await prisma.batch.create({
+    const batchA = await prisma.livestock.create({
       data: {
         farmId: farmA.id,
         userId: userA.id,
         houseId: houseA.id,
-        breedType: 'Test Batch A',
+        batchName: 'Test Batch A',
+        type: 'POULTRY_BROILER',
+        breedType: 'Test Breed A',
         initialCount: 500,
         currentCount: 500,
         arrivalDate: new Date(),
@@ -92,7 +94,7 @@ async function testIsolation() {
     await prisma.$executeRawUnsafe(`SET app.current_farm_id = '1002';`)
 
     console.log('Attempting to find batches for User B...')
-    const visibleBatchesForB = await prisma.batch.findMany()
+    const visibleBatchesForB = await prisma.livestock.findMany()
     console.log(`Found ${visibleBatchesForB.length} batches visible to User B.`)
 
     const foundAInB = visibleBatchesForB.some((b: any) => b.id === batchA.id)
@@ -107,7 +109,7 @@ async function testIsolation() {
     console.log('\nCleaning up test data...')
     await prisma.$executeRawUnsafe(`RESET app.current_farm_id;`)
     await prisma.$executeRawUnsafe(`RESET app.current_user_id;`)
-    await prisma.batch.deleteMany({ where: { farmId: { in: [1001, 1002] } } })
+    await prisma.livestock.deleteMany({ where: { farmId: { in: [1001, 1002] } } })
     await prisma.house.deleteMany({ where: { farmId: { in: [1001, 1002] } } })
     await prisma.farmMember.deleteMany({ where: { farmId: { in: [1001, 1002] } } })
     await prisma.farm.deleteMany({ where: { id: { in: [1001, 1002] } } })

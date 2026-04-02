@@ -1,0 +1,16 @@
+﻿scripts/test-farm-isolation.ts(10,18): error TS2339: Property 'batch' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+scripts/test-farm-isolation.ts(72,33): error TS2339: Property 'batch' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+scripts/test-farm-isolation.ts(95,45): error TS2339: Property 'batch' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+scripts/test-farm-isolation.ts(110,18): error TS2339: Property 'batch' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'.
+src/app/dashboard/feed/FeedForm.tsx(7,10): error TS2305: Module '"@/lib/actions/feed-actions"' has no exported member 'createFeedingLog'.
+src/app/dashboard/feed/FeedForm.tsx(7,28): error TS2305: Module '"@/lib/actions/feed-actions"' has no exported member 'updateFeedingLog'.
+src/app/dashboard/feed/FeedForm.tsx(7,46): error TS2305: Module '"@/lib/actions/feed-actions"' has no exported member 'deleteFeedingLog'.
+src/app/dashboard/flocks/[id]/FlockDetailClient.tsx(81,9): error TS2353: Object literal may only specify known properties, and 'batchId' does not exist in type '{ livestockId: number; vaccineName: string; scheduledDate: Date; notes?: string | undefined; }'.
+src/app/dashboard/sales/page.tsx(52,5): error TS18048: 'prisma' is possibly 'undefined'.
+src/app/dashboard/sales/page.tsx(53,5): error TS18048: 'prisma' is possibly 'undefined'.
+src/app/dashboard/sales/SalesActions.tsx(66,9): error TS18046: 'res' is of type 'unknown'.
+src/app/dashboard/sales/SalesActions.tsx(66,24): error TS18046: 'res' is of type 'unknown'.
+src/app/dashboard/sales/SalesActions.tsx(68,50): error TS18046: 'res' is of type 'unknown'.
+src/app/dashboard/sales/SalesActions.tsx(69,23): error TS18046: 'res' is of type 'unknown'.
+src/app/dashboard/team/page.tsx(320,21): error TS2322: Type 'boolean | null' is not assignable to type 'boolean | undefined'.
+  Type 'null' is not assignable to type 'boolean | undefined'.

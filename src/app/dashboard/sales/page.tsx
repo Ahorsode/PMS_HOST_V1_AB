@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { formatCurrency } from '@/lib/utils';
 import { Banknote, ShoppingCart, Users, TrendingUp, Clock, CheckCircle2 } from 'lucide-react';
 import { redirect } from 'next/navigation';
+import prisma from '@/lib/db';
 import { getAuthContext, hasPermission } from '@/lib/auth-utils';
 import { SalesRowActions, SalesActionsHeader } from './SalesActions';
 

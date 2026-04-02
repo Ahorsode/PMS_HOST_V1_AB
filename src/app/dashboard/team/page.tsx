@@ -317,7 +317,7 @@ export default function TeamPage() {
                   />
                   <Button 
                     type="submit" 
-                    disabled={isInviting || (limitCheck && !limitCheck.canAdd)}
+                    disabled={!!(isInviting || (limitCheck && !limitCheck.canAdd))}
                     className="w-full py-6 mt-4"
                   >
                     {isInviting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Send Invitation'}
