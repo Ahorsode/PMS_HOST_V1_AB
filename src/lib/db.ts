@@ -12,9 +12,11 @@ const prismaClientSingleton = () => {
           // We only inject if it's a model that has farmId (most do now)
           // and if the operation supports 'where'
           const modelsWithFarmId = [
-            'House', 'Batch', 'Inventory', 'FeedingLog', 
+            'House', 'Livestock', 'Inventory', 'FeedingLog', 
             'HealthRecord', 'EggProduction', 'Mortality', 
-            'WeightRecord', 'Sale', 'SaleItem'
+            'WeightRecord', 'Sale', 'SaleItem',
+            'Subscription', 'Customer', 'Order', 'FeedFormulation',
+            'FeedFormulationIngredient'
           ];
 
           if (modelsWithFarmId.includes(model)) {

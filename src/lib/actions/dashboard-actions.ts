@@ -6,6 +6,7 @@ import { getAuthContext } from '@/lib/auth-utils'
 import bcrypt from 'bcryptjs'
 import { redirect } from 'next/navigation'
 import { checkWorkerPermissions } from './staff-actions'
+import { LivestockType } from '@prisma/client'
 
 export async function getDashboardStats() {
   const { userId, activeFarmId } = await getAuthContext()
@@ -16,7 +17,7 @@ export async function getDashboardStats() {
   const canViewBatches = await checkWorkerPermissions('batches', 'view')
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    const totalBirds = await tx.batch.aggregate({
+    const totalBirds = await tx.livestock.aggregate({
       where: { status: 'active', farmId: activeFarmId },
       _sum: { currentCount: true }
     })
@@ -31,7 +32,7 @@ export async function getDashboardStats() {
       _sum: { count: true }
     })
 
-    const totalInitialBirds = await tx.batch.aggregate({
+    const totalInitialBirds = await tx.livestock.aggregate({
       where: { farmId: activeFarmId },
       _sum: { initialCount: true }
     })
@@ -51,7 +52,7 @@ export async function getDashboardStats() {
       }
     })
 
-    const activeBatches = await tx.batch.findMany({
+    const activeBatches = await tx.livestock.findMany({
       where: { status: 'active', farmId: activeFarmId },
       include: {
         house: true,
@@ -140,7 +141,7 @@ export async function getDashboardStats() {
           lte: new Date(new Date().getTime() + 3 * 24 * 60 * 60 * 1000) // Next 3 days
         }
       },
-      include: { batch: true }
+      include: { livestock: true }
     })
 
     const pendingMedications = await tx.medicationSchedule.findMany({
@@ -148,10 +149,10 @@ export async function getDashboardStats() {
         farmId: activeFarmId,
         status: 'PENDING'
       },
-      include: { batch: true }
+      include: { livestock: true }
     })
 
-    const batchesNeedingEggs = await tx.batch.findMany({
+    const batchesNeedingEggs = await tx.livestock.findMany({
       where: {
         farmId: activeFarmId,
         status: 'active',
@@ -169,19 +170,19 @@ export async function getDashboardStats() {
       ...upcomingVaccinations.map((v: any) => ({
         type: 'VACCINE',
         title: 'Upcoming Vaccination',
-        message: `${v.vaccineName} for Flock ${v.batch.id}`,
+        message: `${v.vaccineName} for ${v.livestock.batchName || v.batchId}`,
         severity: 'warning'
       })),
       ...pendingMedications.map((m: any) => ({
         type: 'MEDICATION',
         title: 'Medication Due',
-        message: `${m.medicationName} for Flock ${m.batch.id}`,
+        message: `${m.medicationName} for ${m.livestock.batchName || m.batchId}`,
         severity: 'error'
       })),
       ...batchesNeedingEggs.map((b: any) => ({
         type: 'EGGS',
         title: 'Egg Collection Due',
-        message: `Flock ${b.id} needs collection`,
+        message: `Flock ${b.batchName || b.id} needs collection`,
         severity: 'info'
       }))
     ]
@@ -201,14 +202,16 @@ export async function getDashboardStats() {
       revenueTrendData,
       mortalityTrendData,
       activeBatches: activeBatches.map((batch: any) => ({
-        id: `FLK-${batch.id.toString().padStart(3, '0')}`,
+        id: batch.batchName || `FLK-${batch.id.toString().padStart(3, '0')}`,
         numericId: batch.id,
+        type: batch.type,
         breed: batch.breedType || 'Unknown',
         quantity: batch.currentCount,
         hatchDate: batch.arrivalDate.toISOString(),
         status: batch.status,
         houseNumber: batch.house?.name || 'N/A'
       })),
+      productivityIndex: 94.2, // Mocked for initial launch, would compute via growth-utils
       canViewFinance,
       canViewInventory,
       canViewBatches
@@ -225,6 +228,8 @@ export async function createBatch(data: {
   breedType: string
   initialCount: number
   arrivalDate: string
+  batchName?: string
+  type?: LivestockType
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
@@ -233,10 +238,12 @@ export async function createBatch(data: {
   if (!hasAccess) throw new Error('Unauthorized')
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    const batch = await tx.batch.create({
+    const batch = await tx.livestock.create({
       data: {
         houseId: data.houseId,
         farmId: activeFarmId,
+        batchName: data.batchName || 'New Batch',
+        type: data.type || LivestockType.POULTRY_BROILER,
         breedType: data.breedType,
         initialCount: data.initialCount,
         currentCount: data.initialCount,
@@ -248,8 +255,8 @@ export async function createBatch(data: {
     revalidatePath('/dashboard')
     return { success: true, batch }
   }).catch((error: any) => {
-    console.error('Error creating batch:', error)
-    return { success: false, error: 'Failed to create batch' }
+    console.error('Error creating livestock:', error)
+    return { success: false, error: 'Failed to create livestock' }
   })
 }
 
@@ -258,6 +265,7 @@ export async function logFeeding(data: {
   batchId: number
   feedTypeId: number
   amountConsumed: number
+  formulationId?: number
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
@@ -272,7 +280,8 @@ export async function logFeeding(data: {
           batchId: data.batchId,
           farmId: activeFarmId,
           feedTypeId: data.feedTypeId,
-          amountConsumed: data.amountConsumed
+          amountConsumed: data.amountConsumed,
+          formulationId: data.formulationId
         }
       })
 
@@ -314,7 +323,7 @@ export async function getAllBatches() {
   if (!activeFarmId) return []
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    const batches = await tx.batch.findMany({
+    const batches = await tx.livestock.findMany({
       where: { farmId: activeFarmId },
       include: {
         house: true,
@@ -346,7 +355,7 @@ export async function updateBatchStatus(id: number, status: string) {
   if (!hasAccess) throw new Error('Unauthorized')
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    const batch = await tx.batch.update({
+    const batch = await tx.livestock.update({
       where: { id, farmId: activeFarmId },
       data: { status },
     })
@@ -380,7 +389,7 @@ export async function logProduction(data: {
           batchId: data.batchId,
           farmId: activeFarmId,
           eggsCollected: data.eggsCollected,
-          damagedEggs: data.damagedEggs,
+          unusableCount: data.damagedEggs,
           logDate: new Date(),
           userId: userId
         }
@@ -400,7 +409,7 @@ export async function logProduction(data: {
       })
 
       // Update current count in batch
-      await tx.batch.update({
+      await tx.livestock.update({
         where: { id: data.batchId, farmId: activeFarmId },
         data: {
           currentCount: {
@@ -668,7 +677,7 @@ export async function getAllEggProduction() {
     return await tx.eggProduction.findMany({
       where: { farmId: activeFarmId },
       include: {
-        batch: true,
+        livestock: true,
       },
       orderBy: {
         logDate: 'desc',
@@ -689,7 +698,7 @@ export async function getAllFeedingLogs() {
     const logs = await tx.feedingLog.findMany({
       where: { farmId: activeFarmId },
       include: {
-        batch: true,
+        livestock: true,
         inventory: true,
       },
       orderBy: {
@@ -772,7 +781,7 @@ export async function getAllMortalityLogs() {
     return await tx.mortality.findMany({
       where: { farmId: activeFarmId },
       include: {
-        batch: true,
+        livestock: true,
       },
       orderBy: {
         logDate: 'desc',
@@ -790,7 +799,7 @@ export async function getBatchDetails(id: number) {
   if (!activeFarmId) return null
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    const batch = await tx.batch.findUnique({
+    const batch = await tx.livestock.findUnique({
       where: { id, farmId: activeFarmId },
       include: {
         house: true,

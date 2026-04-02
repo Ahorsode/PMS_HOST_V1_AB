@@ -7,6 +7,8 @@ import { getAuthContext } from "@/lib/auth-utils";
 export async function updateFarmSettings(data: {
   eggRecordReminderTime?: string;
   feedRecordReminderTime?: string;
+  currency?: string;
+  growthTargetStandard?: number;
 }) {
   const { activeFarmId } = await getAuthContext();
   if (!activeFarmId) throw new Error("No active farm found");
@@ -38,7 +40,7 @@ export async function updateReorderLevel(inventoryId: number, reorderLevel: numb
 }
 
 export async function createVaccinationSchedule(data: {
-  batchId: number;
+  livestockId: number;
   vaccineName: string;
   scheduledDate: Date;
   notes?: string;
@@ -47,15 +49,20 @@ export async function createVaccinationSchedule(data: {
   if (!activeFarmId) throw new Error("No active farm found");
 
   const schedule = await prisma.vaccinationSchedule.create({
-    data,
+    data: {
+      batchId: data.livestockId,
+      vaccineName: data.vaccineName,
+      scheduledDate: data.scheduledDate,
+      notes: data.notes
+    },
   });
 
-  revalidatePath(`/dashboard/batches/${data.batchId}`);
+  revalidatePath(`/dashboard/livestock/${data.livestockId}`);
   return schedule;
 }
 
 export async function createMedicationSchedule(data: {
-  batchId: number;
+  livestockId: number;
   medicationName: string;
   scheduledDate: Date;
   notes?: string;
@@ -64,10 +71,15 @@ export async function createMedicationSchedule(data: {
   if (!activeFarmId) throw new Error("No active farm found");
 
   const schedule = await prisma.medicationSchedule.create({
-    data,
+    data: {
+      batchId: data.livestockId,
+      medicationName: data.medicationName,
+      scheduledDate: data.scheduledDate,
+      notes: data.notes
+    },
   });
 
-  revalidatePath(`/dashboard/batches/${data.batchId}`);
+  revalidatePath(`/dashboard/livestock/${data.livestockId}`);
   return schedule;
 }
 
@@ -78,4 +90,37 @@ export async function getFarmSettings() {
   return prisma.farmSettings.findUnique({
     where: { farmId: activeFarmId },
   });
+}
+export async function getGrowthStandards(type?: any) {
+  return await prisma.growthStandards.findMany({
+    where: type ? { livestockType: type } : {}
+  });
+}
+
+export async function getMonthlyProductionSummary() {
+  const { activeFarmId } = await getAuthContext();
+  if (!activeFarmId) return null;
+
+  const thirtyDaysAgo = new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000);
+
+  const [eggs, expenses, sales] = await Promise.all([
+    prisma.eggProduction.aggregate({
+      where: { farmId: activeFarmId, logDate: { gte: thirtyDaysAgo } },
+      _sum: { eggsCollected: true }
+    }),
+    prisma.expense.aggregate({
+      where: { farmId: activeFarmId, expenseDate: { gte: thirtyDaysAgo } },
+      _sum: { amount: true }
+    }),
+    prisma.order.aggregate({
+      where: { farmId: activeFarmId, orderDate: { gte: thirtyDaysAgo }, status: 'PAID' },
+      _sum: { totalAmount: true }
+    })
+  ]);
+
+  return {
+    eggs: eggs._sum.eggsCollected || 0,
+    expenses: Number(expenses._sum.amount) || 0,
+    revenue: Number(sales._sum.totalAmount) || 0
+  };
 }

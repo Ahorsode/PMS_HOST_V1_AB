@@ -15,8 +15,7 @@ async function getUserId() {
 export async function createEggProduction(data: {
   batchId: number
   eggsCollected: number
-  damagedEggs?: number
-  crackedEggs?: number
+  unusableCount?: number
   logDate: string
 }) {
   const { userId, activeFarmId } = await getAuthContext()
@@ -31,8 +30,7 @@ export async function createEggProduction(data: {
         batchId: data.batchId,
         farmId: activeFarmId,
         eggsCollected: data.eggsCollected,
-        damagedEggs: data.damagedEggs || 0,
-        crackedEggs: data.crackedEggs || 0,
+        unusableCount: data.unusableCount || 0,
         logDate: new Date(data.logDate),
         userId: userId
       }
@@ -47,8 +45,7 @@ export async function createEggProduction(data: {
 
 export async function updateEggProduction(id: number, data: {
   eggsCollected?: number
-  damagedEggs?: number
-  crackedEggs?: number
+  unusableCount?: number
   logDate?: string
 }) {
   const { userId, activeFarmId } = await getAuthContext()

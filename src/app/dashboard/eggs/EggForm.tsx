@@ -8,7 +8,7 @@ import { createEggProduction, updateEggProduction, deleteEggProduction } from '@
 import { useRouter } from 'next/navigation';
 
 interface EggFormProps {
-  batches: { id: number; breedType: string }[];
+  batches: { id: number; batchName: string; livestockType: string }[];
   log?: any;
   mode: 'create' | 'edit' | 'delete';
   onClose: () => void;
@@ -21,8 +21,8 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
   const [formData, setFormData] = useState({
     batchId: log?.batchId || defaultBatchId || (batches[0]?.id || 0),
     eggsCollected: log?.eggsCollected || 0,
-    damagedEggs: log?.damagedEggs || 0,
-    crackedEggs: log?.crackedEggs || 0,
+    unusableCount: log?.unusableCount || 0,
+    qualityGrade: log?.qualityGrade || 'GRADE_A',
     logDate: log?.logDate ? new Date(log.logDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
   });
 
@@ -35,14 +35,12 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
           ...formData,
           batchId: Number(formData.batchId),
           eggsCollected: Number(formData.eggsCollected),
-          damagedEggs: Number(formData.damagedEggs),
-          crackedEggs: Number(formData.crackedEggs),
+          unusableCount: Number(formData.unusableCount),
         });
       } else if (mode === 'edit') {
         await updateEggProduction(log.id, {
           eggsCollected: Number(formData.eggsCollected),
-          damagedEggs: Number(formData.damagedEggs),
-          crackedEggs: Number(formData.crackedEggs),
+          unusableCount: Number(formData.unusableCount),
           logDate: formData.logDate,
         });
       } else if (mode === 'delete') {
@@ -73,34 +71,40 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
     <form onSubmit={handleSubmit} className="space-y-4">
       {mode === 'create' && (
         <Select
-          label="Batch"
-          options={batches.map(b => ({ label: `FLK-${b.id.toString().padStart(3, '0')} (${b.breedType})`, value: b.id }))}
+          label="Livestock"
+          options={batches.map(b => ({ label: `${b.batchName} (${b.livestockType})`, value: b.id }))}
           value={formData.batchId}
           onChange={(e) => setFormData({ ...formData, batchId: Number(e.target.value) })}
           required
         />
       )}
-      <Input
-        label="Eggs Collected"
-        type="number"
-        value={formData.eggsCollected}
-        onChange={(e) => setFormData({ ...formData, eggsCollected: Number(e.target.value) })}
-        required
-      />
       <div className="grid grid-cols-2 gap-4">
         <Input
-          label="Damaged Eggs"
+          label="Total Eggs Collected"
           type="number"
-          value={formData.damagedEggs}
-          onChange={(e) => setFormData({ ...formData, damagedEggs: Number(e.target.value) })}
+          value={formData.eggsCollected}
+          onChange={(e) => setFormData({ ...formData, eggsCollected: Number(e.target.value) })}
+          required
         />
-        <Input
-          label="Cracked Eggs"
-          type="number"
-          value={formData.crackedEggs}
-          onChange={(e) => setFormData({ ...formData, crackedEggs: Number(e.target.value) })}
+        <Select
+          label="Quality Grade"
+          options={[
+            { label: 'Grade A (Premium)', value: 'GRADE_A' },
+            { label: 'Grade B (Standard)', value: 'GRADE_B' },
+            { label: 'Grade C (Industrial)', value: 'GRADE_C' },
+            { label: 'Dirty/Stained', value: 'DIRTY' },
+            { label: 'Leaker', value: 'LEAKER' },
+          ]}
+          value={formData.qualityGrade}
+          onChange={(e) => setFormData({ ...formData, qualityGrade: e.target.value })}
         />
       </div>
+      <Input
+        label="Unusable Eggs (Damaged/Cracked)"
+        type="number"
+        value={formData.unusableCount}
+        onChange={(e) => setFormData({ ...formData, unusableCount: Number(e.target.value) })}
+      />
       <Input
         label="Log Date"
         type="date"

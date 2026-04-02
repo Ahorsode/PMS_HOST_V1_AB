@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Users, Mail, Shield, UserPlus, Loader2, CheckCircle2, XCircle, Trash2, ShieldCheck, UserCheck, Settings } from 'lucide-react';
+import { Users, Mail, Shield, UserPlus, Loader2, CheckCircle2, XCircle, Trash2, ShieldCheck, UserCheck, Settings, AlertCircle } from 'lucide-react';
 import { inviteWorker, getFarmMembers, deleteMember, deleteInvitation, updateWorkerPermissions } from '@/lib/actions/staff-actions';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
@@ -21,6 +21,7 @@ export default function TeamPage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: number, type: 'member' | 'invite' } | null>(null);
   const [permissionTarget, setPermissionTarget] = useState<any>(null);
+  const [limitCheck, setLimitCheck] = useState<{ canAdd: boolean, limit: number, current: number } | null>(null);
 
   useEffect(() => {
     loadTeam();
@@ -34,6 +35,7 @@ export default function TeamPage() {
         setMembers(data.members || []);
         setInvitations(data.invitations || []);
         setCurrentUserRole(data.currentUserRole || 'WORKER');
+        setLimitCheck(data.limitCheck || null);
       }
     } catch (err) {
       console.error(err);
@@ -241,6 +243,42 @@ export default function TeamPage() {
         </div>
 
         <div className="space-y-8">
+          {limitCheck && (currentUserRole === 'OWNER' || currentUserRole === 'MANAGER') && (
+            <Card className="rounded-[2.5rem] border border-white/10 bg-white/5 backdrop-blur-xl overflow-hidden shadow-2xl">
+              <CardContent className="p-8">
+                <div className="flex justify-between items-end mb-4">
+                  <div>
+                    <h3 className="text-white font-black text-xl italic tracking-tight">Capacity Gauge</h3>
+                    <p className="text-white/50 text-[10px] font-black uppercase tracking-widest mt-1">Worker Limit</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-3xl font-black text-emerald-400">{limitCheck.current}</span>
+                    <span className="text-white/40 font-black text-lg mx-1">/</span>
+                    <span className="text-white font-bold">{limitCheck.limit >= 1000 ? '∞' : limitCheck.limit}</span>
+                  </div>
+                </div>
+                
+                {/* Progress Bar */}
+                <div className="h-3 w-full bg-white/10 rounded-full overflow-hidden mb-4 relative shadow-inner">
+                  <div 
+                    className={`h-full rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(16,185,129,0.5)] ${limitCheck.canAdd ? 'bg-gradient-to-r from-emerald-400 to-teal-500' : 'bg-gradient-to-r from-rose-400 to-red-500'}`}
+                    style={{ width: `${Math.min((limitCheck.current / limitCheck.limit) * 100, 100)}%` }}
+                  ></div>
+                </div>
+
+                {!limitCheck.canAdd && (
+                  <div className="bg-rose-500/10 border border-rose-500/20 p-4 rounded-2xl flex items-start gap-3 mt-6 animate-in fade-in slide-in-from-bottom-2">
+                    <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-rose-400 font-bold text-sm tracking-tight">Subscription Limit Reached</p>
+                      <p className="text-rose-400/70 text-xs mt-1 leading-relaxed">Upgrade your tier to invite addition personnel to this farm.</p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
           {(currentUserRole === 'OWNER' || currentUserRole === 'MANAGER') && (
             <Card className="rounded-[2.5rem] border border-white/10 bg-emerald-500/5 backdrop-blur-xl text-white overflow-hidden relative shadow-2xl border-dashed">
               <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
@@ -279,7 +317,7 @@ export default function TeamPage() {
                   />
                   <Button 
                     type="submit" 
-                    disabled={isInviting}
+                    disabled={isInviting || (limitCheck && !limitCheck.canAdd)}
                     className="w-full py-6 mt-4"
                   >
                     {isInviting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Send Invitation'}

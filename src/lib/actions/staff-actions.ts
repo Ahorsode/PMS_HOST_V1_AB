@@ -3,6 +3,7 @@
 import prisma from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { getAuthContext, normalizePhoneNumber } from '@/lib/auth-utils'
+import { canAddWorker } from '@/lib/subscription-utils'
 import { Role } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 
@@ -10,10 +11,18 @@ import bcrypt from 'bcryptjs'
  * Invites a worker to a farm.
  * Only the Absolute Owner (creator) or a Manager can invite others.
  */
-export async function inviteWorker(data: { emailOrPhone: string, role: 'OWNER' | 'MANAGER' | 'WORKER' }) {
+export async function inviteWorker(data: { 
+  emailOrPhone: string, 
+  role: 'OWNER' | 'MANAGER' | 'WORKER' | 'ACCOUNTANT' | 'FINANCE_OFFICER' | 'CASHIER' 
+}) {
   try {
     const { userId, activeFarmId } = await getAuthContext()
     if (!activeFarmId) throw new Error('No active farm selected')
+    
+    const limitCheck = await canAddWorker(activeFarmId)
+    if (!limitCheck.canAdd) {
+      return { success: false, error: `Subscription limit reached. You can only have ${limitCheck.limit} workers.` }
+    }
     
     return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
       // 1. Fetch Farm to check ownership
@@ -207,11 +216,14 @@ export async function getFarmMembers() {
       }
     })
     
+    const limitCheck = await canAddWorker(activeFarmId);
+    
     return { 
       members: membersWithContext, 
       invitations, 
       isAbsoluteOwner,
-      currentUserRole: isAbsoluteOwner ? 'OWNER' : (members.find((m: any) => m.userId === userId)?.role || 'WORKER')
+      currentUserRole: isAbsoluteOwner ? 'OWNER' : (members.find((m: any) => m.userId === userId)?.role || 'WORKER'),
+      limitCheck
     }
   })
 }
@@ -417,6 +429,18 @@ export async function checkWorkerPermissions(module: 'finance' | 'inventory' | '
     
     // 4. Fallback to Role Defaults
     if (membership.role === 'MANAGER') return true
+    
+    // Role-specific defaults
+    if (membership.role === 'ACCOUNTANT' || membership.role === 'FINANCE_OFFICER') {
+      if (module === 'finance') return true
+      return action === 'view' // Can view other modules but not edit
+    }
+    
+    if (membership.role === 'CASHIER') {
+      if (module === 'finance') return true // Can log sales
+      return false // Cannot see other modules
+    }
+    
     if (membership.role === 'WORKER') return action === 'view'
     
     return false

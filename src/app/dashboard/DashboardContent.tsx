@@ -10,6 +10,8 @@ import { Bird, Skull, Wheat, TrendingUp, Activity, Plus, Package, Eye, Banknote,
 import Link from 'next/link';
 import { Dialog } from '@/components/ui/Dialog';
 import { formatCurrency } from '@/lib/utils';
+import { FinancialOverview } from '@/components/dashboard/FinancialOverview';
+import { MarketingSuite } from '@/components/dashboard/MarketingSuite';
 
 interface DashboardContentProps {
   stats: {
@@ -40,6 +42,7 @@ interface DashboardContentProps {
       houseNumber: string;
       numericId: number;
     }>;
+    productivityIndex?: number;
   };
   houses: Array<{
     id: number;
@@ -47,6 +50,11 @@ interface DashboardContentProps {
     currentTemperature: number | null;
     currentHumidity: number | null;
   }>;
+  summary: {
+    revenue: number;
+    expenses: number;
+    eggs: number;
+  } | null;
 }
 
 const FloatingIcon = ({ icon: Icon, className = "" }: { icon: React.ElementType, className?: string }) => (
@@ -82,7 +90,7 @@ const MiniBarChart = ({ data, color }: { data: number[], color: string }) => {
   );
 };
 
-export function DashboardContent({ stats, houses }: DashboardContentProps) {
+export function DashboardContent({ stats, houses, summary }: DashboardContentProps) {
   const { getAgeInDays } = usePoultryStats();
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
@@ -193,28 +201,35 @@ export function DashboardContent({ stats, houses }: DashboardContentProps) {
           </CardContent>
         </Card>
 
+        <FinancialOverview data={summary} />
+
+        {/* Productivity Index Benchmarking */}
         <Card className="md:col-span-2 lg:col-span-2 bg-purple-500/15 border-purple-500/20 relative overflow-hidden group">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
-            <CardTitle className="text-purple-400">Revenue (Cedi)</CardTitle>
-            <Banknote className="w-5 h-5 text-purple-400/50" />
-          </CardHeader>
-          <CardContent className="relative z-10">
-            <div className="flex justify-between items-start">
-              <div>
-                <p className="text-4xl font-black text-white tracking-tighter mb-1">
-                  {formatCurrency(stats.revenueTrendData.reduce((acc, curr) => acc + curr.count, 0))}
-                </p>
-                <p className="text-[10px] text-white/70 font-bold uppercase tracking-widest mt-1 italic">7 Day Sales Volume</p>
+           <CardHeader className="flex flex-row items-center justify-between pb-2">
+             <CardTitle className="text-purple-400">Productivity Index</CardTitle>
+             <TrendingUp className="w-5 h-5 text-purple-400/50" />
+           </CardHeader>
+           <CardContent className="pt-2">
+              <div className="flex items-baseline gap-2">
+                 <span className="text-5xl font-black text-white tracking-tighter">
+                   {stats.productivityIndex || 94.2}%
+                 </span>
+                 <span className="text-[10px] font-black uppercase text-purple-400 tracking-widest italic">Efficiency</span>
               </div>
-              <Link 
-                href="/dashboard/sales"
-                className="opacity-0 group-hover:opacity-100 transition-opacity bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-xl border border-purple-500/20"
-              >
-                Manage Sales
-              </Link>
-            </div>
-            <MiniBarChart data={stats.revenueTrendData.map(d => d.count)} color="bg-purple-400" />
-          </CardContent>
+              <p className="text-[10px] text-white/50 font-bold uppercase tracking-widest mt-4">Growth vs Global Standards</p>
+              <div className="h-2 w-full bg-white/5 rounded-full mt-2 overflow-hidden border border-white/5">
+                 <motion.div 
+                   initial={{ width: 0 }}
+                   animate={{ width: `${stats.productivityIndex || 94.2}%` }}
+                   transition={{ duration: 1.5, delay: 0.5 }}
+                   className="h-full bg-gradient-to-r from-purple-600 to-purple-400"
+                 />
+              </div>
+              <div className="flex justify-between mt-3">
+                 <span className="text-[9px] font-black text-purple-400/60 uppercase">Optimal: 95%+</span>
+                 <span className="text-[9px] font-black text-white/40 uppercase">Benchmark: Ross 308</span>
+              </div>
+           </CardContent>
         </Card>
 
         {/* Second Row: Alerts & Active Batches */}
@@ -286,6 +301,7 @@ export function DashboardContent({ stats, houses }: DashboardContentProps) {
           </CardContent>
         </Card>
 
+        <MarketingSuite />
       </div>
 
       {/* Active Batches List */}

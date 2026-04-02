@@ -76,3 +76,15 @@ export async function deleteInventoryItem(id: number) {
     return { success: false, error: 'Failed to delete item' }
   })
 }
+
+export async function getAllInventory() {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return []
+
+  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    return await tx.inventory.findMany({
+      where: { farmId: activeFarmId },
+      orderBy: { itemName: 'asc' }
+    })
+  })
+}

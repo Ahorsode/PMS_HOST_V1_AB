@@ -3,6 +3,7 @@ import { getDashboardStats } from '@/lib/actions/dashboard-actions';
 import { DashboardContent } from './DashboardContent';
 import prisma from '@/lib/db';
 import { getAuthContext } from '@/lib/auth-utils';
+import { getMonthlyProductionSummary } from '@/lib/actions/preference-actions';
 import { PullToRefresh } from '@/components/layout/PullToRefresh';
 
 export default async function DashboardPage() {
@@ -35,9 +36,11 @@ export default async function DashboardPage() {
       currentHumidity: house.currentHumidity ? Number(house.currentHumidity) : null,
     }));
     
+    const summary = await getMonthlyProductionSummary();
+    
     return (
       <PullToRefresh>
-        <DashboardContent stats={stats} houses={houses as any} />
+        <DashboardContent stats={stats} houses={houses as any} summary={summary} />
       </PullToRefresh>
     );
   } catch (error) {

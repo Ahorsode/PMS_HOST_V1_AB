@@ -33,8 +33,11 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
   // Preference states
   const [eggReminderTime, setEggReminderTime] = useState('18:00');
   const [feedReminderTime, setFeedReminderTime] = useState('18:00');
+  const [currency, setCurrency] = useState('GHS');
+  const [growthTarget, setGrowthTarget] = useState<number | undefined>();
   const [reorderLevels, setReorderLevels] = useState<Record<number, number>>({});
   const [isLoadingPrefs, setIsLoadingPrefs] = useState(false);
+  const [growthStandards, setGrowthStandards] = useState<any[]>([]);
 
   useEffect(() => {
     if (activeTab === 'preferences' || activeTab === 'notifications') {
@@ -58,7 +61,13 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
       if (settings) {
         setEggReminderTime(settings.eggRecordReminderTime || '18:00');
         setFeedReminderTime(settings.feedRecordReminderTime || '18:00');
+        setCurrency(settings.currency || 'GHS');
+        setGrowthTarget(settings.growthTargetStandard ?? undefined);
       }
+      
+      const { getGrowthStandards } = await import('@/lib/actions/preference-actions');
+      const standards = await getGrowthStandards();
+      setGrowthStandards(standards);
     } catch (err) {
       console.error('Failed to load preferences', err);
     } finally {
@@ -97,6 +106,8 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
       await updateFarmSettings({
         eggRecordReminderTime: eggReminderTime,
         feedRecordReminderTime: feedReminderTime,
+        currency,
+        growthTargetStandard: growthTarget
       });
       setMessage({ type: 'success', text: 'Reminder times saved!' });
     } catch (err) {
@@ -233,15 +244,34 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
                     />
                   </div>
 
-                  <div className="p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 space-y-3">
-                    <p className="text-sm font-black text-emerald-400 uppercase tracking-widest">🌾 Feed Consumption Reminder</p>
-                    <p className="text-xs text-white/50">Alert if no feed log is recorded by this time each day.</p>
-                    <input
-                      type="time"
-                      value={feedReminderTime}
-                      onChange={e => setFeedReminderTime(e.target.value)}
-                      className="bg-black/40 border border-white/10 text-white rounded-xl px-4 py-2 text-sm font-bold focus:outline-none focus:border-emerald-400/60 focus:ring-1 focus:ring-emerald-400/30"
-                    />
+                  <div className="p-5 rounded-2xl bg-purple-500/10 border border-purple-500/20 space-y-3">
+                    <p className="text-sm font-black text-purple-400 uppercase tracking-widest">💰 Farm Currency</p>
+                    <p className="text-xs text-white/50">Used for sales, orders, and financial reporting.</p>
+                    <select
+                      value={currency}
+                      onChange={e => setCurrency(e.target.value)}
+                      className="bg-black/40 border border-white/10 text-white rounded-xl px-4 py-2 text-sm font-bold focus:outline-none focus:border-purple-400/60 focus:ring-1 focus:ring-purple-400/30"
+                    >
+                      <option value="GHS">Ghanaian Cedi (GHS)</option>
+                      <option value="USD">US Dollar (USD)</option>
+                      <option value="NGN">Nigerian Naira (NGN)</option>
+                      <option value="KES">Kenyan Shilling (KES)</option>
+                    </select>
+                  </div>
+
+                  <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/20 space-y-3">
+                    <p className="text-sm font-black text-amber-400 uppercase tracking-widest">📊 Default Growth Target</p>
+                    <p className="text-xs text-white/50">Benchmark flock performance against industry standards.</p>
+                    <select
+                      value={growthTarget || ''}
+                      onChange={e => setGrowthTarget(Number(e.target.value))}
+                      className="bg-black/40 border border-white/10 text-white rounded-xl px-4 py-2 text-sm font-bold focus:outline-none focus:border-amber-400/60 focus:ring-1 focus:ring-amber-400/30 w-full"
+                    >
+                      <option value="">Select a Standard...</option>
+                      {growthStandards.map(s => (
+                        <option key={s.id} value={s.id}>{s.name} ({s.livestockType})</option>
+                      ))}
+                    </select>
                   </div>
 
                   <Button onClick={handleSaveReminders} isLoading={isSavingPrefs} className="w-full">

@@ -3,117 +3,104 @@
 import prisma from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
-import { checkWorkerPermissions } from './staff-actions'
+import { FeedType, LivestockType } from '@prisma/client'
 
-export async function createFeedingLog(data: {
-  batchId: number
-  feedTypeId: number
-  amountConsumed: number
-  logDate: string
+export async function createFeedFormulation(data: {
+  name: string
+  type: FeedType
+  targetLivestock?: LivestockType
+  ingredients: { inventoryId: number; percentage: number }[]
 }) {
   const { userId, activeFarmId } = await getAuthContext()
-  if (!activeFarmId) return { success: false, error: 'No active farm selected' }
+  if (!activeFarmId) throw new Error('No active farm selected')
 
-  const hasEditAccess = await checkWorkerPermissions('inventory', 'edit')
-  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Inventory Permission' }
-
-  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    const log = await tx.feedingLog.create({
+  try {
+    const formulation = await prisma.feedFormulation.create({
       data: {
-        batchId: data.batchId,
         farmId: activeFarmId,
-        feedTypeId: data.feedTypeId,
-        amountConsumed: data.amountConsumed,
-        logDate: new Date(data.logDate),
-        userId: userId
-      }
-    })
-
-    // Update inventory
-    await tx.inventory.update({
-      where: { id: data.feedTypeId, farmId: activeFarmId },
-      data: {
-        stockLevel: {
-          decrement: data.amountConsumed
+        name: data.name,
+        type: data.type,
+        targetLivestock: data.targetLivestock,
+        ingredients: {
+          create: data.ingredients.map(i => ({
+            inventoryId: i.inventoryId,
+            percentage: i.percentage,
+            quantity: 0,
+            unit: 'kg'
+          }))
         }
       }
     })
-
     revalidatePath('/dashboard/feed')
-    return { success: true, log }
-  }).catch((error: any) => {
-    console.error('Error creating feeding log:', error)
-    return { success: false, error: 'Failed to create log' }
+    return { success: true, formulation }
+  } catch (error: any) {
+    console.error('Error creating feed formulation:', error)
+    return { success: false, error: 'Failed to create formulation' }
+  }
+}
+
+export async function getAllFeedFormulations() {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return []
+
+  return await prisma.feedFormulation.findMany({
+    where: { farmId: activeFarmId },
+    include: {
+      ingredients: {
+        include: { inventory: true }
+      }
+    }
   })
 }
 
-export async function updateFeedingLog(id: number, data: {
-  amountConsumed: number
-  oldAmount: number
-  feedTypeId: number
-}) {
+export async function deleteFeedFormulation(id: number) {
   const { userId, activeFarmId } = await getAuthContext()
-  if (!activeFarmId) return { success: false, error: 'No active farm selected' }
+  if (!activeFarmId) throw new Error('No active farm selected')
 
-  const hasEditAccess = await checkWorkerPermissions('inventory', 'edit')
-  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Inventory Permission' }
-
-  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    const log = await tx.feedingLog.update({
-      where: { id, farmId: activeFarmId },
-      data: {
-        amountConsumed: data.amountConsumed
-      }
-    })
-
-    // Adjust inventory
-    const difference = data.amountConsumed - data.oldAmount
-    await tx.inventory.update({
-      where: { id: data.feedTypeId, farmId: activeFarmId },
-      data: {
-        stockLevel: {
-          decrement: difference
-        }
-      }
-    })
-
-    revalidatePath('/dashboard/feed')
-    return { success: true, log }
-  }).catch((error: any) => {
-    console.error('Error updating feeding log:', error)
-    return { success: false, error: 'Failed to update log' }
-  })
-}
-
-export async function deleteFeedingLog(id: number, data: {
-  amountConsumed: number
-  feedTypeId: number
-}) {
-  const { userId, activeFarmId } = await getAuthContext()
-  if (!activeFarmId) return { success: false, error: 'No active farm selected' }
-
-  const hasEditAccess = await checkWorkerPermissions('inventory', 'edit')
-  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Inventory Permission' }
-
-  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    await tx.feedingLog.delete({
+  try {
+    await prisma.feedFormulation.delete({
       where: { id, farmId: activeFarmId }
     })
-
-    // Restore inventory
-    await tx.inventory.update({
-      where: { id: data.feedTypeId, farmId: activeFarmId },
-      data: {
-        stockLevel: {
-          increment: data.amountConsumed
-        }
-      }
-    })
-
     revalidatePath('/dashboard/feed')
     return { success: true }
-  }).catch((error: any) => {
-    console.error('Error deleting feeding log:', error)
-    return { success: false, error: 'Failed to delete log' }
+  } catch (error) {
+    console.error('Error deleting formulation:', error)
+    return { success: false, error: 'Failed to delete formulation' }
+  }
+}
+
+export async function getConsumptionEfficiency() {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return []
+
+  const result = await prisma.livestock.findMany({
+    where: { farmId: activeFarmId, status: 'active' },
+    include: {
+      feedingLogs: true,
+      weightRecords: {
+        orderBy: { logDate: 'desc' },
+        take: 2
+      }
+    }
+  })
+
+  return result.map(l => {
+    const totalFeed = l.feedingLogs.reduce((sum, f) => sum + Number(f.amountConsumed), 0)
+    const weights = l.weightRecords
+    let weightGain = 0
+    if (weights.length >= 2) {
+      weightGain = Number(weights[0].averageWeight) - Number(weights[1].averageWeight)
+    }
+    
+    // Feed Conversion Ratio (FCR)
+    const fcr = weightGain > 0 ? (totalFeed / (weightGain * l.currentCount)) : 0
+
+    return {
+      id: l.id,
+      name: l.batchName || `Batch ${l.id}`,
+      totalFeed,
+      fcr: fcr.toFixed(2),
+      currentWeight: weights[0]?.averageWeight || 0
+    }
   })
 }

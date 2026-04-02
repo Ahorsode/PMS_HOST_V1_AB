@@ -8,34 +8,41 @@ import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, Bird, Egg, ThermometerSun, 
   Wheat, Settings, Users, XCircle, Banknote,
-  ChevronRight, LogOut, Wallet
+  LogOut, Wallet
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permissions?: any }) => {
   const pathname = usePathname();
 
-  const allNavItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', roles: ['OWNER', 'MANAGER', 'WORKER'] },
-    { name: 'Flocks', icon: Bird, href: '/dashboard/flocks', roles: ['OWNER', 'MANAGER'] },
-    { name: 'Houses', icon: ThermometerSun, href: '/dashboard/houses', roles: ['OWNER', 'MANAGER'] },
-    { name: 'Eggs', icon: Egg, href: '/dashboard/eggs', roles: ['OWNER', 'MANAGER'] },
-    { name: 'Sales', icon: Banknote, href: '/dashboard/sales', roles: ['OWNER', 'MANAGER'] },
-    { name: 'Mortality', icon: XCircle, href: '/dashboard/mortality', roles: ['OWNER', 'MANAGER', 'WORKER'] },
-    { name: 'Feeding', icon: Wheat, href: '/dashboard/feed', roles: ['OWNER', 'MANAGER', 'WORKER'] },
-    { name: 'Finance', icon: Wallet, href: '/dashboard/finance', roles: ['OWNER', 'MANAGER'] },
-    { name: 'Team', icon: Users, href: '/dashboard/team', roles: ['OWNER', 'MANAGER'] },
-    { name: 'Settings', icon: Settings, href: '/dashboard/settings', roles: ['OWNER', 'MANAGER'] },
-  ];
-
-  const navItems = allNavItems.filter(item => {
-    if (item.roles.includes(role)) return true;
-    if (role === 'WORKER' && permissions) {
-      if ((item.name === 'Finance' || item.name === 'Sales') && permissions.canViewFinance) return true;
-      if (item.name === 'Flocks' && permissions.canViewBatches) return true;
+  const categories = [
+    {
+      name: 'Operations',
+      items: [
+        { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', roles: ['OWNER', 'MANAGER', 'WORKER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
+        { name: 'Flocks', icon: Bird, href: '/dashboard/flocks', roles: ['OWNER', 'MANAGER', 'WORKER'] },
+        { name: 'Houses', icon: ThermometerSun, href: '/dashboard/houses', roles: ['OWNER', 'MANAGER'] },
+        { name: 'Eggs', icon: Egg, href: '/dashboard/eggs', roles: ['OWNER', 'MANAGER', 'WORKER'] },
+        { name: 'Feeding', icon: Wheat, href: '/dashboard/feed', roles: ['OWNER', 'MANAGER', 'WORKER'] },
+        { name: 'Mortality', icon: XCircle, href: '/dashboard/mortality', roles: ['OWNER', 'MANAGER', 'WORKER'] },
+      ]
+    },
+    {
+      name: 'Commercial',
+      items: [
+        { name: 'Sales', icon: Banknote, href: '/dashboard/sales', roles: ['OWNER', 'MANAGER', 'CASHIER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
+        { name: 'Customers', icon: Users, href: '/dashboard/sales/customers', roles: ['OWNER', 'MANAGER', 'CASHIER', 'ACCOUNTANT'] },
+        { name: 'Finance', icon: Wallet, href: '/dashboard/finance', roles: ['OWNER', 'MANAGER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
+      ]
+    },
+    {
+      name: 'Governance',
+      items: [
+        { name: 'Team', icon: Users, href: '/dashboard/team', roles: ['OWNER', 'MANAGER'] },
+        { name: 'Settings', icon: Settings, href: '/dashboard/settings', roles: ['OWNER', 'MANAGER'] },
+      ]
     }
-    return false;
-  });
+  ];
 
   return (
     <aside className="hidden md:block fixed left-6 top-6 bottom-6 w-20 hover:w-64 group transition-all duration-500 ease-out z-50">
@@ -52,30 +59,52 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 space-y-3 overflow-y-auto custom-scrollbar overflow-x-hidden">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href;
+        <nav className="flex-1 px-4 space-y-8 overflow-y-auto custom-scrollbar overflow-x-hidden">
+          {categories.map((category) => {
+            const visibleItems = category.items.filter(item => {
+              if (item.roles.includes(role)) return true;
+              // Permission overrides
+              if (permissions) {
+                if ((item.name === 'Finance' || item.name === 'Sales') && permissions.canViewFinance) return true;
+                if (item.name === 'Flocks' && permissions.canViewBatches) return true;
+                if (item.name === 'Inventory' && permissions.canViewInventory) return true;
+              }
+              return false;
+            });
+
+            if (visibleItems.length === 0) return null;
+
             return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={cn(
-                  "relative flex items-center h-12 rounded-2xl transition-all duration-300 group/item overflow-hidden",
-                  isActive 
-                    ? "bg-emerald-500/20 text-emerald-400 shadow-[inset_0_0_20px_rgba(16,185,129,0.1)] border border-emerald-500/20" 
-                    : "text-white/60 hover:text-white hover:bg-white/15"
-                )}
-              >
-                <div className="w-12 h-12 flex items-center justify-center shrink-0">
-                  <item.icon className={cn("w-6 h-6 transition-all duration-300 group-hover/item:scale-110", isActive ? "text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]" : "text-white/40 group-hover/item:text-white")} />
-                </div>
-                <span className={cn(
-                  "ml-1 font-bold text-sm tracking-tight opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap",
-                  isActive ? "text-emerald-400" : "text-white/60 group-hover:text-white"
-                )}>
-                  {item.name}
-                </span>
-              </Link>
+              <div key={category.name} className="space-y-2">
+                <p className="px-4 text-[10px] font-black uppercase tracking-[0.2em] text-white/20 group-hover:opacity-100 opacity-0 transition-opacity">
+                  {category.name}
+                </p>
+                {visibleItems.map((item) => {
+                  const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={cn(
+                        "relative flex items-center h-12 rounded-2xl transition-all duration-300 group/item overflow-hidden",
+                        isActive 
+                          ? "bg-emerald-500/20 text-emerald-400 shadow-[inset_0_0_20px_rgba(16,185,129,0.1)] border border-emerald-500/20" 
+                          : "text-white/60 hover:text-white hover:bg-white/15"
+                      )}
+                    >
+                      <div className="w-12 h-12 flex items-center justify-center shrink-0">
+                        <item.icon className={cn("w-6 h-6 transition-all duration-300 group-hover/item:scale-110", isActive ? "text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]" : "text-white/40 group-hover/item:text-white")} />
+                      </div>
+                      <span className={cn(
+                        "ml-1 font-bold text-sm tracking-tight opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap",
+                        isActive ? "text-emerald-400" : "text-white/60 group-hover:text-white"
+                      )}>
+                        {item.name}
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
             );
           })}
         </nav>
@@ -87,12 +116,12 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
               onClick={() => signOut({ callbackUrl: '/login' })}
               className="flex items-center group-hover:bg-red-500/10 rounded-2xl p-2 transition-all cursor-pointer group/logout"
             >
-              <div className="w-10 h-10 rounded-xl bg-emerald-400/20 flex items-center justify-center text-emerald-400 font-bold shrink-0 group-hover:bg-red-500/20 group-hover:text-red-400 transition-colors">
-                U
+              <div className="w-10 h-10 rounded-xl bg-emerald-400/20 flex items-center justify-center text-emerald-400 font-bold shrink-0 group-hover:bg-red-500/20 group-hover:text-red-400 transition-colors uppercase">
+                {role.charAt(0)}
               </div>
               <div className="ml-3 overflow-hidden opacity-0 group-hover:opacity-100 transition-all duration-300">
-                <p className="text-xs font-black text-white truncate">Profile</p>
-                <p className="text-[10px] text-white/40 font-bold uppercase tracking-wider">{role}</p>
+                <p className="text-xs font-black text-white truncate">Sign Out</p>
+                <p className="text-[10px] text-white/40 font-bold uppercase tracking-wider">{role.toLowerCase()}</p>
               </div>
               <LogOut className="ml-auto w-5 h-5 text-white/20 group-hover/logout:text-red-400 transition-colors opacity-0 group-hover:opacity-100 mr-2" />
             </div>

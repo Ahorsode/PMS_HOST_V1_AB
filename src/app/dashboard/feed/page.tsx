@@ -1,163 +1,191 @@
-import React from 'react';
-import { getAllBatches, getAllInventory, getAllFeedingLogs } from '@/lib/actions/dashboard-actions';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Wheat, History, Inbox, Scale } from 'lucide-react';
-import { FeedActionsHeader, FeedLogActions, InventoryActions } from './FeedActions';
-import { formatDate } from '@/lib/utils';
+'use client'
 
-import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
-import { redirect } from 'next/navigation';
-import { getAuthContext } from '@/lib/auth-utils';
+import { useState, useEffect } from 'react'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
+import { 
+  TrendingUp, 
+  Package, 
+  Beaker, 
+  Plus, 
+  ArrowRight,
+  Database
+} from 'lucide-react'
+import { FeedFormulationForm } from './FeedFormulationForm'
+import { getAllFeedFormulations, getConsumptionEfficiency } from '@/lib/actions/feed-actions'
+import { getAllInventory } from '@/lib/actions/inventory-actions'
 
-export default async function FeedPage() {
-  const { activeFarmId } = await getAuthContext();
-  
-  if (!activeFarmId) {
-    redirect('/dashboard');
+export default function FeedDashboard() {
+  const [formulations, setFormulations] = useState<any[]>([])
+  const [efficiency, setEfficiency] = useState<any[]>([])
+  const [inventory, setInventory] = useState<any[]>([])
+  const [showForm, setShowForm] = useState(false)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  const loadData = async () => {
+    setLoading(true)
+    const [fRes, eRes, iRes] = await Promise.all([
+      getAllFeedFormulations(),
+      getConsumptionEfficiency(),
+      getAllInventory()
+    ])
+    setFormulations(fRes)
+    setEfficiency(eRes)
+    setInventory(iRes)
+    setLoading(false)
   }
-
-  // Only redirect on explicit permission denial — errors/exceptions should not cause a redirect
-  try {
-    const hasAccess = await checkWorkerPermissions('inventory', 'view');
-    if (hasAccess === false) {
-      redirect('/dashboard/unauthorized');
-    }
-  } catch (e) {
-    // Permission check failed (e.g. DB error) - allow access rather than blocking
-    console.error('[FeedPage] Permission check error, allowing access:', e);
-  }
-
-  const [batches, inventory, feedingLogs] = await Promise.all([
-    getAllBatches(),
-    getAllInventory(),
-    getAllFeedingLogs()
-  ]);
-
-  const activeBatches = batches.filter((b: any) => b.status === 'active');
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 px-4 py-8">
-      <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+    <div className="p-6 space-y-8 animate-in fade-in duration-700">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">Feed & Nutrition</h2>
-          <p className="text-gray-500 mt-1">Manage Feed stocks and daily nutrition logs.</p>
+          <h1 className="text-4xl font-black text-gray-900 tracking-tight">Feed Management</h1>
+          <p className="text-gray-500 font-medium">Formulation builder & consumption efficiency analytics</p>
         </div>
-        <FeedActionsHeader batches={activeBatches} inventory={inventory} />
-      </div>
+        <Button 
+          onClick={() => setShowForm(!showForm)} 
+          className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 shadow-lg shadow-emerald-200"
+        >
+          {showForm ? <Package className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+          {showForm ? 'View Formulations' : 'Create Formulation'}
+        </Button>
+      </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <Card className="rounded-2xl border-none shadow-xl shadow-gray-200/50">
-            <CardHeader className="bg-gray-50/50 rounded-t-2xl border-b border-gray-100">
-              <CardTitle className="flex items-center text-gray-800">
-                <Wheat className="w-5 h-5 mr-3 text-amber-600" />
-                Current Inventory
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {inventory.map((item: any) => (
-                  <div key={item.id} className="p-5 rounded-2xl border border-gray-100 bg-white hover:border-amber-100 hover:shadow-lg transition-all relative group">
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="font-bold text-gray-900 text-lg">{item.itemName}</span>
-                      {Number(item.stockLevel) <= (item.reorderLevel ?? 500) && (
-                        <span className="text-[10px] bg-red-100 text-red-700 px-2.5 py-1 rounded-full font-black uppercase tracking-widest border border-red-200 animate-pulse shadow-sm shadow-red-100">Low Stock</span>
-                      )}
-                    </div>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-3xl font-extrabold text-gray-900">{Number(item.stockLevel).toLocaleString()}</span>
-                      <span className="text-sm text-gray-400 font-medium uppercase tracking-tight">{item.unit}</span>
-                    </div>
-                    <div className="mt-3 flex justify-between items-end">
-                      <div className="text-xs text-gray-400 font-medium bg-gray-50 px-2 py-1 rounded inline-block">
-                        {item.category?.toUpperCase()}
-                      </div>
-                      <div className="opacity-100 lg:opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-1 group-hover:translate-y-0">
-                        <InventoryActions item={item} />
-                      </div>
-                    </div>
-                  </div>
-                ))}
+      {showForm ? (
+        <FeedFormulationForm 
+          inventoryItems={inventory} 
+          onSuccess={() => {
+            setShowForm(false)
+            loadData()
+          }} 
+        />
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Efficiency Report */}
+          <div className="lg:col-span-2 space-y-6">
+            <Card className="border-none bg-emerald-950 text-white overflow-hidden relative group">
+              <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                <TrendingUp size={120} />
               </div>
-              {inventory.length === 0 && (
-                <div className="py-12 text-center bg-gray-50/50 rounded-xl border-2 border-dashed border-gray-200">
-                  <Inbox className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-400 font-medium">No inventory items found.</p>
+              <CardHeader>
+                <CardTitle className="text-emerald-100 flex items-center gap-2">
+                  <TrendingUp className="w-6 h-6" />
+                  Consumption Efficiency (FCR)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {efficiency.length > 0 ? efficiency.map((eff) => (
+                    <div key={eff.id} className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10">
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="font-bold text-emerald-300">{eff.name}</span>
+                        <span className="text-xs font-black bg-emerald-500/20 px-2 py-1 rounded text-emerald-200 uppercase tracking-widest">
+                          Active
+                        </span>
+                      </div>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-3xl font-black">{eff.fcr}</span>
+                        <span className="text-xs font-bold text-emerald-400">FCR</span>
+                      </div>
+                      <div className="mt-4 flex justify-between text-xs font-medium text-emerald-200/60 uppercase">
+                        <span>Feed: {eff.totalFeed}kg</span>
+                        <span>Weight: {eff.currentWeight}kg</span>
+                      </div>
+                    </div>
+                  )) : (
+                    <div className="col-span-2 p-8 text-center text-emerald-300/40 border-2 border-dashed border-emerald-800 rounded-3xl">
+                      No efficiency data available. Log weights and feedings.
+                    </div>
+                  )}
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
-            <div className="bg-gray-50/50 px-6 py-4 border-b border-gray-100 flex items-center gap-2">
-              <History className="w-4 h-4 text-gray-500" />
-              <h3 className="font-bold text-gray-800 italic">Recent Feeding Logs</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+               <Card className="bg-white/50 border-white shadow-sm rounded-3xl h-full border-2">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="p-3 bg-amber-100 rounded-2xl text-amber-600">
+                        <Database className="w-6 h-6" />
+                      </div>
+                      <h3 className="font-bold text-gray-900 border-none">Active Formulations</h3>
+                    </div>
+                    <div className="space-y-3">
+                      {formulations.slice(0, 3).map(f => (
+                        <div key={f.id} className="flex justify-between items-center p-3 hover:bg-white rounded-xl transition-colors cursor-pointer group">
+                          <div>
+                            <p className="font-bold text-gray-800">{f.name}</p>
+                            <p className="text-[10px] font-black text-gray-400 uppercase tracking-tighter">{f.type}</p>
+                          </div>
+                          <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+               </Card>
+
+               <Card className="bg-white/50 border-white shadow-sm rounded-3xl h-full border-2">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-4 mb-4">
+                      <div className="p-3 bg-emerald-100 rounded-2xl text-emerald-600">
+                        <Beaker className="w-6 h-6" />
+                      </div>
+                      <h3 className="font-bold text-gray-900 border-none">Inventory Check</h3>
+                    </div>
+                    <div className="space-y-2">
+                       {inventory.slice(0, 4).map(item => (
+                         <div key={item.id} className="flex justify-between items-center bg-white p-3 rounded-xl border border-gray-100">
+                           <span className="text-sm font-bold text-gray-700">{item.itemName}</span>
+                           <span className={`text-xs font-black px-2 py-1 rounded ${item.stockLevel < 100 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500'}`}>
+                              {Number(item.stockLevel).toLocaleString()} {item.unit}
+                           </span>
+                         </div>
+                       ))}
+                    </div>
+                  </CardContent>
+               </Card>
             </div>
-            <table className="min-w-full divide-y divide-gray-100">
-              <thead>
-                <tr className="bg-gray-50/30">
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Date</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Batch</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Feed Type</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Amount</th>
-                  <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-widest">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {feedingLogs.map((log: any) => (
-                  <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">
-                      {formatDate(log.logDate)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">
-                      FLK-{log.batchId?.toString().padStart(3, '0')}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                      {log.inventory?.itemName || 'N/A'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-amber-700 font-bold text-lg italic">
-                      {Number(log.amountConsumed).toLocaleString()} <span className="text-xs font-normal text-gray-400 ml-1">kg</span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <FeedLogActions log={log} batches={activeBatches} inventory={inventory} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {feedingLogs.length === 0 && (
-              <div className="py-20 text-center">
-                <History className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-                <p className="text-gray-400 font-medium italic">No feeding logs recorded yet.</p>
-              </div>
-            )}
+          </div>
+
+          {/* Right Pillar: Recent History */}
+          <div>
+             <Card className="bg-white/80 border-white shadow-xl rounded-[2.5rem] h-full border-t border-l">
+                <CardHeader>
+                  <CardTitle className="text-gray-900 border-none">Ingredient Usage</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                   {formulations.map(f => (
+                     <div key={f.id} className="p-4 rounded-3xl bg-gray-50/50 border border-gray-100">
+                        <div className="flex justify-between items-center mb-4">
+                          <h4 className="font-black text-sm uppercase tracking-widest text-emerald-800">{f.name}</h4>
+                        </div>
+                        <div className="space-y-2">
+                           {f.ingredients.map((ing: any) => (
+                             <div key={ing.id} className="space-y-1">
+                               <div className="flex justify-between text-[10px] font-black text-gray-400">
+                                 <span>{ing.inventory.itemName}</span>
+                                 <span>{ing.percentage}%</span>
+                               </div>
+                               <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                 <div 
+                                  className="h-full bg-emerald-500 rounded-full" 
+                                  style={{ width: `${ing.percentage}%` }}
+                                 />
+                               </div>
+                             </div>
+                           ))}
+                        </div>
+                     </div>
+                   ))}
+                </CardContent>
+             </Card>
           </div>
         </div>
-
-        <div className="space-y-6">
-          <Card className="rounded-2xl border-none shadow-xl shadow-gray-200/50 bg-green-950 text-white overflow-hidden relative">
-            <div className="absolute top-0 right-0 p-8 opacity-10">
-              <Scale className="w-32 h-32" />
-            </div>
-            <CardContent className="pt-8 pb-8 px-6 relative z-10">
-              <h3 className="text-2xl font-black mb-2 tracking-tight">Nutrition Guide</h3>
-              <p className="text-green-300 text-sm mb-8 leading-relaxed">
-                Proper nutrition is key to flock health. Ensure you're following the recommended feed schedules for your breeds.
-              </p>
-              <div className="space-y-3">
-                <div className="p-3 bg-white/5 border border-white/10 rounded-xl flex justify-between items-center">
-                  <span className="text-xs font-bold text-green-200">Layers</span>
-                  <span className="text-xs font-medium">110g / bird / day</span>
-                </div>
-                <div className="p-3 bg-white/5 border border-white/10 rounded-xl flex justify-between items-center">
-                  <span className="text-xs font-bold text-green-200">Broilers</span>
-                  <span className="text-xs font-medium">AD LIBITUM</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      )}
     </div>
-  );
+  )
 }

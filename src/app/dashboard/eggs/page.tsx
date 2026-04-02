@@ -10,7 +10,7 @@ export default async function EggsPage() {
     getAllEggProduction()
   ]);
   
-  const layerBatches = batches.filter((b: any) => b.breedType === 'Layer' && b.status === 'active');
+  const layerBatches = batches.filter((b: any) => b.type === 'POULTRY_LAYER' && b.status === 'active');
 
   const todayTotal = productionHistory
     .filter((log: any) => new Date(log.logDate).toDateString() === new Date().toDateString())
@@ -55,9 +55,9 @@ export default async function EggsPage() {
                           {batch.id}
                         </div>
                         <div>
-                          <span className="font-bold text-gray-900">FLK-{batch.id.toString().padStart(3, '0')}</span>
+                          <span className="font-bold text-gray-900">{batch.batchName || `FLK-${batch.id.toString().padStart(3, '0')}`}</span>
                           <p className="text-xs text-gray-500 font-medium">
-                            {batch.house?.name || `House ${batch.houseId}`} • {batch.currentCount.toLocaleString()} birds
+                            {batch.house?.name || `House ${batch.houseId}`} • {batch.currentCount.toLocaleString()} {batch.type?.toLowerCase().includes('poultry') ? 'birds' : 'animals'}
                           </p>
                         </div>
                       </div>
@@ -76,10 +76,11 @@ export default async function EggsPage() {
             <table className="min-w-full divide-y divide-gray-100">
               <thead>
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Date</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Batch</th>
+                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Date</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Livestock</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Grade</th>
                   <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Collected</th>
-                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Losses</th>
+                  <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Unusable</th>
                   <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-widest">Actions</th>
                 </tr>
               </thead>
@@ -90,13 +91,18 @@ export default async function EggsPage() {
                       {formatDate(log.logDate)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">
-                      FLK-{log.batchId?.toString().padStart(3, '0')}
+                      {log.livestock?.batchName || `FLK-${log.batchId?.toString().padStart(3, '0')}`}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="px-2 py-1 text-[10px] font-bold bg-amber-100 text-amber-700 rounded-lg">
+                        {log.qualityGrade?.replace('_', ' ') || 'GRADE A'}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-green-700 font-bold">
                       {log.eggsCollected} <span className="text-xs font-normal text-gray-400">eggs</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600">
-                      {(log.damagedEggs || 0) + (log.crackedEggs || 0)}
+                      {log.unusableCount || 0}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <EggLogActions log={log} batches={layerBatches} />
