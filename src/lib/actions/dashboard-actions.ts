@@ -315,6 +315,7 @@ export async function updateBatchFinancials(id: number, data: {
 
     revalidatePath('/dashboard')
     revalidatePath('/dashboard/accounting')
+    revalidatePath('/dashboard/finance')
     return { success: true }
   }).catch((error: any) => {
     console.error('Error updating financials:', error)
