@@ -112,7 +112,8 @@ export default function TeamPage() {
     const configs: any = {
       OWNER: { class: 'bg-purple-50 text-purple-700 border-purple-100', icon: ShieldCheck },
       MANAGER: { class: 'bg-blue-50 text-blue-700 border-blue-100', icon: Shield },
-      WORKER: { class: 'bg-green-50 text-green-700 border-green-100', icon: UserCheck }
+      WORKER: { class: 'bg-green-50 text-green-700 border-green-100', icon: UserCheck },
+      ACCOUNTANT: { class: 'bg-emerald-50 text-emerald-700 border-emerald-100', icon: ShieldCheck }
     };
     const config = configs[role] || { class: 'bg-gray-50 text-gray-700 border-gray-100', icon: Users };
     const Icon = config.icon;
@@ -311,7 +312,8 @@ export default function TeamPage() {
                     name="role"
                     options={[
                       { label: 'Worker', value: 'WORKER' },
-                      { label: 'Manager', value: 'MANAGER' }
+                      { label: 'Manager', value: 'MANAGER' },
+                      { label: 'Accountant', value: 'ACCOUNTANT' }
                     ]}
                     defaultValue="WORKER"
                   />
@@ -342,6 +344,10 @@ export default function TeamPage() {
               <div className="p-5 bg-white/5 rounded-3xl border border-white/5 group hover:bg-white/[0.08] transition-all">
                 <p className="font-black text-[10px] uppercase tracking-widest text-emerald-400 mb-2 italic">Worker</p>
                 <p className="text-xs text-white/50 leading-relaxed font-bold tracking-tight">Limited to data entry (feeding, mortality logs). Can only view their own activity records.</p>
+              </div>
+              <div className="p-5 bg-white/5 rounded-3xl border border-white/5 group hover:bg-white/[0.08] transition-all">
+                <p className="font-black text-[10px] uppercase tracking-widest text-emerald-500 mb-2 italic">Accountant</p>
+                <p className="text-xs text-white/50 leading-relaxed font-bold tracking-tight">Exclusive access to Finance and Sales modules. Handles commercial initialization and P&L reporting.</p>
               </div>
             </div>
           </Card>

@@ -25,7 +25,14 @@ interface SettingsContentProps {
 export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'farm');
+  const activeTabFromUrl = searchParams.get('tab') || 'farm';
+  const [activeTab, setActiveTab] = useState(activeTabFromUrl);
+
+  useEffect(() => {
+    if (activeTabFromUrl && activeTabFromUrl !== activeTab) {
+      setActiveTab(activeTabFromUrl);
+    }
+  }, [activeTabFromUrl]);
 
   const [isUpdatingFarm, setIsUpdatingFarm] = useState(false);
   const [isAddingHouse, setIsAddingHouse] = useState(false);

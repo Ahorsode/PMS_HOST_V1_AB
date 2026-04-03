@@ -9,7 +9,7 @@ import { Plus, Edit2, Trash2, Skull } from 'lucide-react';
 import { createBatch, updateBatch, deleteBatch, logMortality } from '@/lib/actions/batch-actions';
 import { useRouter } from 'next/navigation';
 
-interface FlockActionsProps {
+interface LivestockFormProps {
   houses: { id: number; name: string }[];
   batch?: any;
   mode: 'create' | 'edit' | 'delete' | 'mortality';
@@ -32,7 +32,7 @@ const MORTALITY_REASONS: Record<string, string[]> = {
   "Other": ["Other"]
 };
 
-export const FlockForm = ({ houses, batch, mode, onClose }: FlockActionsProps) => {
+export const LivestockForm = ({ houses, batch, mode, onClose }: LivestockFormProps) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -142,7 +142,7 @@ export const FlockForm = ({ houses, batch, mode, onClose }: FlockActionsProps) =
             label="Incident Details"
             value={formData.reason}
             onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-            placeholder="Briefly describe the incident..."
+            placeholder="Briefly describe the mortality incident..."
           />
         </>
       ) : (

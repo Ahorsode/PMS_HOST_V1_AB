@@ -152,7 +152,7 @@ export function DashboardContent({ stats, houses, summary, role }: DashboardCont
          <div>
             <h1 className="text-4xl font-black text-white tracking-tighter">Farm <span className="text-emerald-400 italic">Overview</span></h1>
             <p className="text-white/70 font-bold uppercase tracking-widest text-[10px] mt-2 flex items-center gap-2 mb-2">
-               <Activity className="w-3 h-3" /> Live Operations Tracking
+               <Activity className="w-3 h-3" /> Live Operations Tracking • {stats.activeBatches.length} Units Active
             </p>
          </div>
          <div className="flex items-center gap-4">
@@ -352,7 +352,7 @@ export function DashboardContent({ stats, houses, summary, role }: DashboardCont
           {/* Active Units List */}
           <div className="mt-8 space-y-4">
              <div className="flex items-center justify-between px-4">
-                <h3 className="text-white font-black text-2xl tracking-tighter">Active <span className="text-emerald-400 italic">Units</span></h3>
+                <h3 className="text-white font-black text-2xl tracking-tighter">Active <span className="text-emerald-400 italic">Livestock Units</span></h3>
                 <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent mx-6" />
              </div>
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -366,7 +366,7 @@ export function DashboardContent({ stats, houses, summary, role }: DashboardCont
                      <div className="flex justify-between items-start mb-6">
                         <div className="space-y-1">
                            <div className="flex items-center gap-2 mb-2">
-                              <span className="text-emerald-400 font-black text-[10px] uppercase tracking-tighter bg-emerald-500/20 px-2 py-0.5 rounded-lg border border-emerald-500/20">{batch.id}</span>
+                              <span className="text-emerald-400 font-black text-[10px] uppercase tracking-tighter bg-emerald-500/20 px-2 py-0.5 rounded-lg border border-emerald-500/20">{batch.batchName || `UNIT-${batch.numericId}`}</span>
                               <span className="text-white/40 font-bold text-[10px] uppercase tracking-widest">House #{batch.houseNumber}</span>
                            </div>
                            <h4 className="text-white font-black text-2xl tracking-tight capitalize">{formatLivestockType(batch.type)} - {batch.breed}</h4>

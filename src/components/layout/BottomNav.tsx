@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, PawPrint, XCircle, User, Egg, ThermometerSun, Banknote, Wheat, Wallet, Users, Settings } from 'lucide-react';
+import { LayoutDashboard, PawPrint, XCircle, User, Egg, ThermometerSun, Banknote, Wheat, Wallet, Users, Settings, Crown, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { signOut } from 'next-auth/react';
 
@@ -21,19 +21,30 @@ export const BottomNav = ({ role = 'OWNER', permissions }: { role?: string, perm
     { name: 'Mortality', icon: XCircle, href: '/dashboard/mortality', roles: ['OWNER', 'MANAGER', 'WORKER'] },
     { name: 'Sales', icon: Banknote, href: '/dashboard/sales', roles: ['OWNER', 'MANAGER', 'CASHIER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
     { name: 'Customers', icon: Users, href: '/dashboard/sales/customers', roles: ['OWNER', 'MANAGER', 'CASHIER', 'ACCOUNTANT'] },
-    { name: 'Finance', icon: Wallet, href: '/dashboard/finance', roles: ['OWNER', 'MANAGER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
+    { name: 'Finance Hub', icon: Wallet, href: '/dashboard/finance', roles: ['OWNER', 'MANAGER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
+    { name: 'My Profile', icon: User, href: '/dashboard/profile', roles: ['OWNER', 'MANAGER', 'WORKER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
+    { name: 'Upgrade Packages', icon: Crown, href: '/dashboard/settings?tab=billing', roles: ['OWNER', 'MANAGER'] },
     { name: 'Team', icon: Users, href: '/dashboard/team', roles: ['OWNER', 'MANAGER'] },
     { name: 'Settings', icon: Settings, href: '/dashboard/settings', roles: ['OWNER', 'MANAGER'] },
   ];
 
   const navItems = allNavItems.filter(item => {
-    if (item.roles.includes(role)) return true;
+    // Basic role check
+    if (!item.roles.includes(role)) return false;
+    
+    // Explicit Accountant Restrictions (matching Sidebar.tsx)
+    if (role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER') {
+        const allowedForAccountant = ['Dashboard', 'Sales', 'Customers', 'Finance Hub', 'My Profile'];
+        return allowedForAccountant.includes(item.name);
+    }
+    
+    // Permission overrides for workers
     if (permissions) {
-      if ((item.name === 'Finance' || item.name === 'Sales') && permissions.canViewFinance) return true;
+      if ((item.name === 'Finance Hub' || item.name === 'Sales') && permissions.canViewFinance) return true;
       if (item.name === 'Livestock' && permissions.canViewBatches) return true;
       if (item.name === 'Inventory' && permissions.canViewInventory) return true;
     }
-    return false;
+    return true;
   });
 
   return (
@@ -65,18 +76,18 @@ export const BottomNav = ({ role = 'OWNER', permissions }: { role?: string, perm
                 />
               )}
               <item.icon className={cn("w-6 h-6 z-10", isActive && "drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]")} />
-              <span className="text-[10px] font-bold mt-1 z-10">{item.name}</span>
+              <span className="text-[10px] font-bold mt-1 z-10 whitespace-nowrap">{item.name}</span>
             </Link>
           );
         })}
         
-        {/* Profile / Logout Button mapping */}
+        {/* Logout Button */}
         <button
           onClick={() => signOut({ callbackUrl: '/login' })}
-          className="relative flex flex-col items-center justify-center min-w-[4.5rem] shrink-0 snap-center h-14 rounded-2xl transition-all duration-300 text-white/60 hover:text-white"
+          className="relative flex flex-col items-center justify-center min-w-[4.5rem] shrink-0 snap-center h-14 rounded-2xl transition-all duration-300 text-red-400/60 hover:text-red-400"
         >
-          <User className="w-6 h-6 z-10" />
-          <span className="text-[10px] font-bold mt-1 z-10">Profile</span>
+          <LogOut className="w-6 h-6 z-10" />
+          <span className="text-[10px] font-bold mt-1 z-10">Sign Out</span>
         </button>
       </div>
     </motion.div>

@@ -27,7 +27,7 @@ export default async function FlocksAnalyticsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <MetricBox title="Total Active Birds" value={totalBirds.toLocaleString()} icon={Bird} color="text-emerald-400" bgColor="bg-emerald-500/10" />
+        <MetricBox title="Total Population" value={totalBirds.toLocaleString()} icon={Bird} color="text-emerald-400" bgColor="bg-emerald-500/10" />
         <MetricBox title="Historical Mortality" value={totalMortality.toLocaleString()} icon={Skull} color="text-red-400" bgColor="bg-red-500/10" />
         <MetricBox title="Active Units" value={activeBatches.length.toString()} icon={TrendingUp} color="text-blue-400" bgColor="bg-blue-500/10" />
         <MetricBox title="Overall Health" value="98.2%" icon={Activity} color="text-emerald-400" bgColor="bg-emerald-500/10" />

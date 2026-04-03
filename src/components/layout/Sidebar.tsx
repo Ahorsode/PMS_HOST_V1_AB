@@ -28,18 +28,18 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
       ]
     },
     {
-      name: 'Commercial',
+      name: 'Commercial Hub',
       items: [
         { name: 'Sales', icon: Banknote, href: '/dashboard/sales', roles: ['OWNER', 'MANAGER', 'CASHIER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
         { name: 'Customers', icon: Users, href: '/dashboard/sales/customers', roles: ['OWNER', 'MANAGER', 'CASHIER', 'ACCOUNTANT'] },
-        { name: 'Finance', icon: Wallet, href: '/dashboard/finance', roles: ['OWNER', 'MANAGER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
+        { name: 'Finance Control', icon: Wallet, href: '/dashboard/finance', roles: ['OWNER', 'MANAGER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
       ]
     },
     {
       name: 'Governance',
       items: [
-        { name: 'Profile', icon: Users, href: '/dashboard/profile', roles: ['OWNER', 'MANAGER', 'WORKER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
-        { name: 'Team', icon: Users, href: '/dashboard/team', roles: ['OWNER', 'MANAGER'] },
+        { name: 'My Profile', icon: Users, href: '/dashboard/profile', roles: ['OWNER', 'MANAGER', 'WORKER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
+        { name: 'Team Management', icon: Users, href: '/dashboard/team', roles: ['OWNER', 'MANAGER'] },
         { name: 'License Upgrade', icon: Crown, href: '/dashboard/settings?tab=billing', roles: ['OWNER', 'MANAGER'] },
         { name: 'Settings', icon: Settings, href: '/dashboard/settings', roles: ['OWNER', 'MANAGER'] },
       ]
@@ -111,21 +111,36 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
           })}
         </nav>
 
-        {/* Footer Profile */}
-        <div className="mt-auto px-4 w-full pb-2 flex-shrink-0">
-           <div className="h-px bg-white/20 mb-6 group-hover:block hidden" />
-            <div 
-              onClick={() => signOut({ callbackUrl: '/login' })}
-              className="flex items-center group-hover:bg-red-500/10 rounded-2xl p-2 transition-all cursor-pointer group/logout"
+        {/* Footer Actions */}
+        <div className="mt-auto px-4 w-full pb-4 space-y-2 flex-shrink-0">
+            <div className="h-px bg-white/10 mb-4 group-hover:block hidden" />
+            
+            {/* Profile Action */}
+            <Link 
+              href="/dashboard/profile"
+              className="flex items-center hover:bg-white/5 rounded-2xl p-2 transition-all cursor-pointer group/profile"
             >
-              <div className="w-10 h-10 rounded-xl bg-emerald-400/20 flex items-center justify-center text-emerald-400 font-bold shrink-0 group-hover:bg-red-500/20 group-hover:text-red-400 transition-colors uppercase">
+              <div className="w-10 h-10 rounded-xl bg-emerald-400/10 flex items-center justify-center text-emerald-400 font-black shrink-0 group-hover/profile:bg-emerald-400/20 transition-colors uppercase">
                 {role.charAt(0)}
               </div>
               <div className="ml-3 overflow-hidden opacity-0 group-hover:opacity-100 transition-all duration-300">
-                <p className="text-xs font-black text-white truncate">Sign Out</p>
+                <p className="text-xs font-black text-white truncate">My Profile</p>
                 <p className="text-[10px] text-white/40 font-bold uppercase tracking-wider">{role.toLowerCase()}</p>
               </div>
-              <LogOut className="ml-auto w-5 h-5 text-white/20 group-hover/logout:text-red-400 transition-colors opacity-0 group-hover:opacity-100 mr-2" />
+            </Link>
+
+            {/* Logout Action */}
+            <div 
+              onClick={() => signOut({ callbackUrl: '/login' })}
+              className="flex items-center hover:bg-red-500/10 rounded-2xl p-2 transition-all cursor-pointer group/logout"
+            >
+              <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white/40 shrink-0 group-hover/logout:bg-red-500/20 group-hover/logout:text-red-400 transition-colors">
+                <LogOut className="w-5 h-5" />
+              </div>
+              <div className="ml-3 overflow-hidden opacity-0 group-hover:opacity-100 transition-all duration-300">
+                <p className="text-xs font-black text-white group-hover/logout:text-red-400 transition-colors">Sign Out</p>
+                <p className="text-[10px] text-white/40 font-bold uppercase tracking-wider">End Session</p>
+              </div>
             </div>
         </div>
       </div>

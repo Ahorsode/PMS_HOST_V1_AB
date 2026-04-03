@@ -61,11 +61,9 @@ export function FinancialInitializationModal({ isOpen, onClose, batchId, batchNa
       isOpen={isOpen} 
       onOpenChange={(open) => !open && onClose()} 
       title={`Financial Initialization: ${batchName}`}
+      description="Initialize the investment costs for this livestock unit. These will be recorded as farm expenses for accurate P&L reporting."
     >
       <div className="space-y-6 pt-4">
-        <p className="text-sm text-white/60">
-          Initialize the investment costs for this livestock unit. These will be recorded as farm expenses for accurate P&L reporting.
-        </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
