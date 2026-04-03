@@ -123,7 +123,7 @@ export function PermissionsModal({ isOpen, onClose, staffName, initialPermission
                   <div className="space-y-3 sm:space-y-4">
                     <PermissionRow title="Finance" viewKey="canViewFinance" editKey="canEditFinance" icon={Database} />
                     <PermissionRow title="Inventory" viewKey="canViewInventory" editKey="canEditInventory" icon={LayoutDashboard} />
-                    <PermissionRow title="Batches" viewKey="canViewBatches" editKey="canEditBatches" icon={Settings} />
+                    <PermissionRow title="Livestock Units" viewKey="canViewBatches" editKey="canEditBatches" icon={Settings} />
                   </div>
 
                   {/* Warning Note for small screens */}

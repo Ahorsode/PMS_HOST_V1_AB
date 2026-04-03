@@ -37,8 +37,10 @@ export const FlockForm = ({ houses, batch, mode, onClose }: FlockActionsProps) =
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     houseId: batch?.houseId || (houses[0]?.id || 0),
+    batchName: batch?.batchName || '',
     breedType: batch?.breedType || '',
     initialCount: batch?.initialCount || '',
+    growthTargetOverride: batch?.growthTargetOverride || '',
     arrivalDate: batch?.arrivalDate ? new Date(batch.arrivalDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
     status: batch?.status || 'active',
     mortalityCount: '',
@@ -54,6 +56,7 @@ export const FlockForm = ({ houses, batch, mode, onClose }: FlockActionsProps) =
       if (mode === 'create') {
         await createBatch({
           houseId: Number(formData.houseId),
+          batchName: formData.batchName,
           breedType: formData.breedType,
           initialCount: Number(formData.initialCount) || 0,
           arrivalDate: formData.arrivalDate,
@@ -61,7 +64,9 @@ export const FlockForm = ({ houses, batch, mode, onClose }: FlockActionsProps) =
       } else if (mode === 'edit') {
         await updateBatch(batch.id, {
           houseId: Number(formData.houseId),
+          batchName: formData.batchName,
           breedType: formData.breedType,
+          growthTargetOverride: formData.growthTargetOverride,
           initialCount: Number(formData.initialCount) || 0,
           arrivalDate: formData.arrivalDate,
           status: formData.status,
@@ -90,10 +95,10 @@ export const FlockForm = ({ houses, batch, mode, onClose }: FlockActionsProps) =
   if (mode === 'delete') {
     return (
       <div className="space-y-4">
-        <p className="text-gray-600">Are you sure you want to delete this batch? This action cannot be undone.</p>
+        <p className="text-gray-600 font-bold">Are you sure you want to decommission this livestock unit? This action cannot be undone.</p>
         <div className="flex justify-end gap-3">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button variant="danger" onClick={handleSubmit} isLoading={isLoading}>Delete Batch</Button>
+          <Button variant="danger" onClick={handleSubmit} isLoading={isLoading}>Delete Unit</Button>
         </div>
       </div>
     );
@@ -109,6 +114,7 @@ export const FlockForm = ({ houses, batch, mode, onClose }: FlockActionsProps) =
             value={formData.mortalityCount}
             onChange={(e) => setFormData({ ...formData, mortalityCount: e.target.value })}
             required
+            placeholder="How many were lost?"
           />
           <Select
             label="Main Category"
@@ -133,47 +139,80 @@ export const FlockForm = ({ houses, batch, mode, onClose }: FlockActionsProps) =
             />
           )}
           <Input
-            label="Additional Details (Optional)"
+            label="Incident Details"
             value={formData.reason}
             onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-            placeholder="Write more about the dead flock..."
+            placeholder="Briefly describe the incident..."
           />
         </>
       ) : (
         <>
-          <Select
-            label="House"
-            options={houses.map(h => ({ label: h.name, value: h.id }))}
-            value={formData.houseId}
-            onChange={(e) => setFormData({ ...formData, houseId: Number(e.target.value) })}
-            required
-          />
-          <Input
-            label="Breed Type"
-            value={formData.breedType}
-            onChange={(e) => setFormData({ ...formData, breedType: e.target.value })}
-            required
-          />
-          <Input
-            label="Initial Count"
-            type="number"
-            value={formData.initialCount}
-            onChange={(e) => setFormData({ ...formData, initialCount: e.target.value })}
-            required
-          />
-          <Input
-            label="Arrival Date"
-            type="date"
-            value={formData.arrivalDate}
-            onChange={(e) => setFormData({ ...formData, arrivalDate: e.target.value })}
-            required
-          />
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Unit Identity / Name"
+              value={formData.batchName}
+              onChange={(e) => setFormData({ ...formData, batchName: e.target.value })}
+              required
+              placeholder="e.g. Batch Q1"
+            />
+            <Select
+              label="House Assignment"
+              options={houses.map(h => ({ label: h.name, value: h.id }))}
+              value={formData.houseId}
+              onChange={(e) => setFormData({ ...formData, houseId: Number(e.target.value) })}
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+             <Input
+               label="Breed Type"
+               value={formData.breedType}
+               onChange={(e) => setFormData({ ...formData, breedType: e.target.value })}
+               required
+               placeholder="e.g. Ross 308"
+             />
+             {mode === 'edit' && (
+                <Select
+                  label="Benchmark Override"
+                  options={[
+                    { label: 'Default (From Breed)', value: '' },
+                    { label: 'Ross 308 (Meat)', value: 'Ross 308' },
+                    { label: 'Cobb 500 (Meat)', value: 'Cobb 500' },
+                    { label: 'ISA Brown (Eggs)', value: 'ISA Brown' },
+                    { label: 'Lohmann (Eggs)', value: 'Lohmann' },
+                    { label: 'Ankole (Cattle)', value: 'Ankole' },
+                  ]}
+                  value={formData.growthTargetOverride}
+                  onChange={(e) => setFormData({ ...formData, growthTargetOverride: e.target.value })}
+                />
+             )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Initial Quantity"
+              type="number"
+              value={formData.initialCount}
+              onChange={(e) => setFormData({ ...formData, initialCount: e.target.value })}
+              required
+              placeholder="e.g. 1000"
+            />
+            <Input
+              label="Arrival Date"
+              type="date"
+              value={formData.arrivalDate}
+              onChange={(e) => setFormData({ ...formData, arrivalDate: e.target.value })}
+              required
+            />
+          </div>
+
           {mode === 'edit' && (
             <Select
-              label="Status"
+              label="Operational Status"
               options={[
-                { label: 'Active', value: 'active' },
-                { label: 'Completed', value: 'completed' },
+                { label: 'Active (Ongoing)', value: 'active' },
+                { label: 'Completed (Decommissioned)', value: 'completed' },
               ]}
               value={formData.status}
               onChange={(e) => setFormData({ ...formData, status: e.target.value })}
@@ -181,10 +220,10 @@ export const FlockForm = ({ houses, batch, mode, onClose }: FlockActionsProps) =
           )}
         </>
       )}
-      <div className="flex justify-end gap-3 pt-4">
-        <Button variant="outline" type="button" onClick={onClose}>Cancel</Button>
-        <Button type="submit" isLoading={isLoading}>
-          {mode === 'create' ? 'Create Batch' : mode === 'edit' ? 'Update Batch' : 'Save'}
+      <div className="flex justify-end gap-3 pt-6 border-t border-gray-100 italic font-medium text-[10px] uppercase text-gray-400">
+        <Button variant="outline" type="button" onClick={onClose} className="h-10 px-8 rounded-xl border-gray-200">Cancel</Button>
+        <Button type="submit" isLoading={isLoading} className="h-10 px-8 rounded-xl bg-emerald-600 hover:bg-emerald-700">
+          {mode === 'create' ? 'Register Unit' : mode === 'edit' ? 'Apply changes' : 'Log mortality'}
         </Button>
       </div>
     </form>

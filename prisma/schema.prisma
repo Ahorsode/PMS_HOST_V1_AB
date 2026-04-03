@@ -142,6 +142,10 @@ model Livestock {
   updatedAt        DateTime              @updatedAt
   userId           String                @default("user_placeholder")
   metadata         Json?                 // Type-specific data (e.g. Batch #, Tag ID)
+  initialCostActual    Decimal?          @db.Decimal(10, 2)
+  initialCostCarriage  Decimal?          @db.Decimal(10, 2)
+  initialCostOther     Json?             // List of { label: string, amount: number }
+  growthTargetOverride String?           // e.g. "Ross 308", "Cobb 500"
   
   house            House                 @relation(fields: [houseId], references: [id])
   farm             Farm                  @relation(fields: [farmId], references: [id])

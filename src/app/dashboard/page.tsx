@@ -38,9 +38,15 @@ export default async function DashboardPage() {
     
     const summary = await getMonthlyProductionSummary();
     
+    // Fetch membership to get role
+    const membership = await prisma.farmMember.findUnique({
+      where: { farmId_userId: { farmId: activeFarmId, userId } }
+    });
+    const role = userId === (await prisma.farm.findUnique({ where: { id: activeFarmId } }))?.userId ? 'OWNER' : membership?.role || 'WORKER';
+    
     return (
       <PullToRefresh>
-        <DashboardContent stats={stats} houses={houses as any} summary={summary} />
+        <DashboardContent stats={stats} houses={houses as any} summary={summary} role={role as any} />
       </PullToRefresh>
     );
   } catch (error) {

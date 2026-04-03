@@ -12,10 +12,13 @@ import { Dialog } from '@/components/ui/Dialog';
 import { formatCurrency } from '@/lib/utils';
 import { FinancialOverview } from '@/components/dashboard/FinancialOverview';
 import { MarketingSuite } from '@/components/dashboard/MarketingSuite';
-import { LivestockType } from '@prisma/client';
+import { LivestockType, Role } from '@prisma/client';
 import { formatLivestockType } from '@/lib/utils/growth-utils';
+import { AccountantDashboard } from '@/components/dashboard/AccountantDashboard';
+import { WorkerDashboard } from '@/components/dashboard/WorkerDashboard';
 
 interface DashboardContentProps {
+  role: Role;
   stats: {
     totalBirds: number;
     mortalityRate: string;
@@ -93,7 +96,7 @@ const MiniBarChart = ({ data, color }: { data: number[], color: string }) => {
   );
 };
 
-export function DashboardContent({ stats, houses, summary }: DashboardContentProps) {
+export function DashboardContent({ stats, houses, summary, role }: DashboardContentProps) {
   const { getAgeInDays, formatAge, getUnitBySpecies } = useLivestockStats();
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
@@ -104,6 +107,14 @@ export function DashboardContent({ stats, houses, summary }: DashboardContentPro
     return { days: daysDiff, percent, target };
   };
 
+  if (role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER') {
+    return <AccountantDashboard summary={summary} stats={stats} />;
+  }
+
+  if (role === 'WORKER' || role === 'CASHIER') {
+    return <WorkerDashboard stats={stats} houses={houses} />;
+  }
+
   const renderZeroState = () => (
     <div className="flex flex-col items-center justify-center py-24 px-6 text-center bg-white/5 backdrop-blur-md rounded-[3rem] border border-white/10 shadow-2xl relative overflow-hidden group">
       <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-50 group-hover:opacity-100 transition-opacity" />
@@ -113,13 +124,13 @@ export function DashboardContent({ stats, houses, summary }: DashboardContentPro
         </div>
         <h2 className="text-5xl font-black text-white tracking-tighter mb-4">Welcome to your <span className="text-emerald-400 italic">Agri-ERP</span></h2>
         <p className="text-xl text-white/60 font-medium mb-12 leading-relaxed">
-          Your digital agriculture command center is ready. Add your first <span className="text-white font-black italic">Batch</span> (Cattle, Poultry, or Pigs) to begin tracking precision performance.
+          Your digital agriculture command center is ready. Add your first <span className="text-white font-black italic">Unit</span> (Cattle, Poultry, or Pigs) to begin tracking precision performance.
         </p>
         <button 
           onClick={() => setIsRegisterModalOpen(true)}
           className="bg-emerald-500 hover:bg-emerald-400 text-[#064e3b] px-12 py-5 rounded-3xl font-black uppercase tracking-widest text-sm transition-all shadow-[0_0_40px_rgba(16,185,129,0.3)] hover:shadow-[0_0_60px_rgba(16,185,129,0.5)] hover:-translate-y-1 active:translate-y-0 border-b-4 border-emerald-600 active:border-b-0"
         >
-          Add First Batch Today
+          Add First Unit Today
         </button>
       </div>
       
@@ -150,7 +161,7 @@ export function DashboardContent({ stats, houses, summary }: DashboardContentPro
               className="flex items-center gap-2 bg-emerald-500 text-[#064e3b] px-5 py-2.5 rounded-2xl font-black uppercase tracking-widest text-[11px] transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] border border-emerald-400/50"
             >
               <Plus className="w-4 h-4" />
-              Register Batch
+              Register Unit
             </button>
          </div>
       </header>
@@ -266,7 +277,7 @@ export function DashboardContent({ stats, houses, summary }: DashboardContentPro
                </CardContent>
             </Card>
 
-            {/* Second Row: Alerts & Active Batches */}
+            {/* Second Row: Alerts & Active Units */}
             <Card className="md:col-span-2 lg:col-span-2 bg-amber-500/15 border-amber-500/20 h-[380px] flex flex-col">
               <CardHeader className="flex flex-row items-center justify-between pb-2 shrink-0">
                 <CardTitle className="text-amber-400">Alerts & Reminders</CardTitle>
@@ -338,10 +349,10 @@ export function DashboardContent({ stats, houses, summary }: DashboardContentPro
             <MarketingSuite />
           </div>
 
-          {/* Active Batches List */}
+          {/* Active Units List */}
           <div className="mt-8 space-y-4">
              <div className="flex items-center justify-between px-4">
-                <h3 className="text-white font-black text-2xl tracking-tighter">Active <span className="text-emerald-400 italic">Batches</span></h3>
+                <h3 className="text-white font-black text-2xl tracking-tighter">Active <span className="text-emerald-400 italic">Units</span></h3>
                 <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent mx-6" />
              </div>
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -399,7 +410,7 @@ export function DashboardContent({ stats, houses, summary }: DashboardContentPro
                        className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-black text-sm transition-all"
                      >
                         <Eye className="w-4 h-4" />
-                        MANAGE BATCH
+                        MANAGE UNIT
                      </Link>
                    </div>
                  );
@@ -412,7 +423,7 @@ export function DashboardContent({ stats, houses, summary }: DashboardContentPro
       <Dialog 
         isOpen={isRegisterModalOpen} 
         onOpenChange={setIsRegisterModalOpen}
-        title="Register New Batch"
+        title="Register New Unit"
       >
         <div className="p-1">
           <RegisterBatchForm houses={houses} onSuccess={() => setIsRegisterModalOpen(false)} />

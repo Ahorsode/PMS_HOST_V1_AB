@@ -2,12 +2,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Home, Settings as SettingsIcon, Bell, Shield, Plus, Loader2, Save, CheckCircle2 } from 'lucide-react';
+import { Home, Settings as SettingsIcon, Bell, Shield, Plus, Loader2, Save, CheckCircle2, Crown } from 'lucide-react';
 import { updateFarmInfo, createHouse } from '@/lib/actions/dashboard-actions';
 import { updateFarmSettings, getFarmSettings } from '@/lib/actions/preference-actions';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 interface InventoryItem {
   id: number;
@@ -23,12 +23,19 @@ interface SettingsContentProps {
 }
 
 export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) {
-  const [activeTab, setActiveTab] = useState('farm');
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'farm');
+
   const [isUpdatingFarm, setIsUpdatingFarm] = useState(false);
   const [isAddingHouse, setIsAddingHouse] = useState(false);
   const [isSavingPrefs, setIsSavingPrefs] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
-  const router = useRouter();
+  
+  // Subscription Simulation states
+  const [billingStep, setBillingStep] = useState(1);
+  const [selectedPlan, setSelectedPlan] = useState('PRO');
+  const [isUpgrading, setIsUpgrading] = useState(false);
 
   // Preference states
   const [eggReminderTime, setEggReminderTime] = useState('18:00');
@@ -128,15 +135,35 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
     }
   };
 
+  const handleUpgrade = async () => {
+    setIsUpgrading(true);
+    await new Promise(r => setTimeout(r, 2000));
+    setBillingStep(3);
+    setIsUpgrading(false);
+  };
+
   const tabs = [
     { id: 'farm', label: 'Farm Info', icon: Home },
     { id: 'notifications', label: 'Reminders', icon: Bell },
     { id: 'preferences', label: 'Stock Levels', icon: SettingsIcon },
+    { id: 'billing', label: 'License & Billing', icon: Crown },
     { id: 'security', label: 'Security', icon: Shield },
   ];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* Confetti Animation Style */}
+      <style jsx global>{`
+        @keyframes confetti-fall {
+          0% { transform: translateY(-100%) rotate(0deg); opacity: 1; }
+          100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        .confetti {
+          position: fixed; top: -10px; width: 10px; height: 10px;
+          animation: confetti-fall 3s linear infinite; z-index: 100;
+        }
+      `}</style>
+
       <div className="md:col-span-1 space-y-2">
         {tabs.map((tab) => (
           <button
@@ -331,6 +358,112 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
                 </div>
               )}
             </CardContent>
+          </Card>
+        )}
+
+        {/* ---- BILLING TAB ([SUBSCRIPTION SIMULATION]) ---- */}
+        {activeTab === 'billing' && (
+          <Card className="border-emerald-500/20 bg-emerald-500/5 relative overflow-hidden">
+             {billingStep === 3 && (
+               <>
+                 <div className="confetti bg-emerald-500" style={{left: '10%'}} />
+                 <div className="confetti bg-amber-500" style={{left: '30%', animationDelay: '0.5s'}} />
+                 <div className="confetti bg-blue-500" style={{left: '50%', animationDelay: '1.2s'}} />
+                 <div className="confetti bg-pink-500" style={{left: '70%', animationDelay: '0.8s'}} />
+                 <div className="confetti bg-emerald-500" style={{left: '90%', animationDelay: '1.5s'}} />
+               </>
+             )}
+             <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-emerald-400">
+                   <Crown className="w-5 h-5" /> Enterprise License Management
+                </CardTitle>
+             </CardHeader>
+             <CardContent>
+                <div className="mb-8">
+                   <div className="flex justify-between items-center mb-6">
+                      {[1, 2, 3].map(step => (
+                        <div key={step} className="flex items-center">
+                           <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-xs border-2 transition-all ${
+                              billingStep >= step ? 'bg-emerald-500 border-emerald-500 text-black' : 'border-white/10 text-white/40'
+                           }`}>
+                              {step}
+                           </div>
+                           {step < 3 && <div className={`w-12 h-0.5 mx-2 ${billingStep > step ? 'bg-emerald-500' : 'bg-white/10'}`} />}
+                        </div>
+                      ))}
+                   </div>
+                </div>
+
+                {billingStep === 1 && (
+                  <div className="space-y-6">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {['STARTER', 'PRO', 'ENTERPRISE'].map(plan => (
+                          <div 
+                            key={plan}
+                            onClick={() => setSelectedPlan(plan)}
+                            className={`p-6 rounded-3xl border-2 cursor-pointer transition-all ${
+                              selectedPlan === plan ? 'border-emerald-500 bg-emerald-500/10' : 'border-white/5 bg-black/20 hover:border-white/20'
+                            }`}
+                          >
+                             <div className="flex justify-between items-start mb-4">
+                                <p className="font-black tracking-widest text-xs opacity-60">{plan}</p>
+                                {selectedPlan === plan && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                             </div>
+                             <p className="text-2xl font-black text-white">{plan === 'STARTER' ? '$45' : plan === 'PRO' ? '$120' : '$450'}<span className="text-xs font-medium text-white/40">/month</span></p>
+                             <ul className="mt-4 space-y-2">
+                                <li className="text-[10px] text-white/60 flex items-center gap-2"><CheckCircle2 className="w-3 h-3" /> Full Inventory Tracking</li>
+                                <li className="text-[10px] text-white/60 flex items-center gap-2"><CheckCircle2 className="w-3 h-3" /> Financial Terminal Access</li>
+                             </ul>
+                          </div>
+                        ))}
+                     </div>
+                     <Button onClick={() => setBillingStep(2)} className="w-full h-14 rounded-3xl bg-emerald-600 font-black uppercase tracking-widest">
+                        Proceed to Payment
+                     </Button>
+                  </div>
+                )}
+
+                {billingStep === 2 && (
+                  <div className="space-y-6 py-4">
+                     <div className="p-6 rounded-3xl bg-black/40 border border-white/10 space-y-4">
+                        <Input label="Card Number" placeholder="**** **** **** 4242" defaultValue="4242 4242 4242 4242" />
+                        <div className="grid grid-cols-2 gap-4">
+                           <Input label="Expiry" placeholder="MM/YY" defaultValue="12/26" />
+                           <Input label="CVC" placeholder="***" defaultValue="123" />
+                        </div>
+                     </div>
+                     <div className="flex gap-4">
+                        <Button variant="outline" onClick={() => setBillingStep(1)} className="flex-1 h-12 rounded-2xl">Back</Button>
+                        <Button 
+                          onClick={handleUpgrade} 
+                          isLoading={isUpgrading}
+                          className="flex-3 h-12 rounded-2xl bg-emerald-600 font-black uppercase tracking-widest"
+                        >
+                          Confirm & Pay
+                        </Button>
+                     </div>
+                  </div>
+                )}
+
+                {billingStep === 3 && (
+                  <div className="text-center py-12 space-y-6">
+                     <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mx-auto shadow-[0_0_50px_rgba(16,185,129,0.4)]">
+                        <Crown className="w-10 h-10 text-black" />
+                     </div>
+                     <div className="space-y-1">
+                        <h2 className="text-3xl font-black text-white tracking-tighter">UPGRADE SUCCESSFUL!</h2>
+                        <p className="text-emerald-400 font-bold uppercase tracking-[0.3em] text-[10px]">Your Enterprise journey begins now</p>
+                     </div>
+                     <p className="text-white/60 text-sm max-w-xs mx-auto">Your billing cycle has been updated. You now have full access to all premium Agri-ERP features.</p>
+                     <Button 
+                        onClick={() => { setBillingStep(1); setActiveTab('farm'); }} 
+                        className="w-full h-14 rounded-3xl bg-white text-black font-black uppercase tracking-widest hover:bg-gray-200"
+                     >
+                        Return to Dashboard
+                     </Button>
+                  </div>
+                )}
+             </CardContent>
           </Card>
         )}
 

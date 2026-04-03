@@ -431,9 +431,9 @@ export async function checkWorkerPermissions(module: 'finance' | 'inventory' | '
     if (membership.role === 'MANAGER') return true
     
     // Role-specific defaults
+    // Role-specific defaults: Accountant has EXCLUSIVE access to finance only
     if (membership.role === 'ACCOUNTANT' || membership.role === 'FINANCE_OFFICER') {
-      if (module === 'finance') return true
-      return action === 'view' // Can view other modules but not edit
+      return module === 'finance'
     }
     
     if (membership.role === 'CASHIER') {

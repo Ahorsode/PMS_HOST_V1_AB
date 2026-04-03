@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, Bird, PawPrint, Egg, ThermometerSun, 
   Wheat, Settings, Users, XCircle, Banknote,
-  LogOut, Wallet
+  LogOut, Wallet, Crown
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -38,7 +38,9 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
     {
       name: 'Governance',
       items: [
+        { name: 'Profile', icon: Users, href: '/dashboard/profile', roles: ['OWNER', 'MANAGER', 'WORKER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
         { name: 'Team', icon: Users, href: '/dashboard/team', roles: ['OWNER', 'MANAGER'] },
+        { name: 'License Upgrade', icon: Crown, href: '/dashboard/settings?tab=billing', roles: ['OWNER', 'MANAGER'] },
         { name: 'Settings', icon: Settings, href: '/dashboard/settings', roles: ['OWNER', 'MANAGER'] },
       ]
     }

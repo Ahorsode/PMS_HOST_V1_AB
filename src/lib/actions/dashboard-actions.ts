@@ -253,10 +253,93 @@ export async function createBatch(data: {
       }
     })
     revalidatePath('/dashboard')
-    return { success: true, batch }
+    revalidatePath('/dashboard/flocks')
+    return { success: true, id: batch.id }
   }).catch((error: any) => {
     console.error('Error creating livestock:', error)
     return { success: false, error: 'Failed to create livestock' }
+  })
+}
+
+/**
+ * Updates the initial investment financials for a livestock unit.
+ * This is triggered after batch creation as per the new financial control flow.
+ */
+export async function updateBatchFinancials(id: number, data: {
+  actualCost: number
+  carriageInward: number
+  otherExpenses: Array<{ label: string, amount: number }>
+}) {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) throw new Error('No active farm selected')
+
+  const hasAccess = await checkWorkerPermissions('finance', 'edit')
+  if (!hasAccess) throw new Error('Unauthorized: Finance edit required')
+
+  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    const batch = await tx.livestock.update({
+      where: { id, farmId: activeFarmId },
+      data: {
+        initialCostActual: data.actualCost,
+        initialCostCarriage: data.carriageInward,
+        initialCostOther: data.otherExpenses as any
+      }
+    })
+
+    // Also record these as actual expenses for the farm
+    // This ensures they show up correctly in the P&L
+    const allExpenses = [
+      { category: 'EQUIPMENT', amount: data.actualCost, description: `Initial cost for ${batch.batchName}` },
+      { category: 'MAINTENANCE', amount: data.carriageInward, description: `Carriage for ${batch.batchName}` },
+      ...data.otherExpenses.map(e => ({ 
+        category: 'OTHER', 
+        amount: e.amount, 
+        description: `${e.label} (Initial for ${batch.batchName})` 
+      }))
+    ].filter(e => e.amount > 0)
+
+    for (const exp of allExpenses) {
+      await tx.expense.create({
+        data: {
+          farmId: activeFarmId,
+          userId: userId,
+          amount: exp.amount,
+          category: exp.category as any,
+          description: exp.description,
+          expenseDate: batch.arrivalDate
+        }
+      })
+    }
+
+    revalidatePath('/dashboard')
+    revalidatePath('/dashboard/accounting')
+    return { success: true }
+  }).catch((error: any) => {
+    console.error('Error updating financials:', error)
+    return { success: false, error: 'Failed to update financials' }
+  })
+}
+
+/**
+ * Overrides the growth target standard for a specific batch.
+ */
+export async function updateGrowthTarget(id: number, target: string) {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) throw new Error('No active farm selected')
+
+  const hasAccess = await checkWorkerPermissions('batches', 'edit')
+  if (!hasAccess) throw new Error('Unauthorized')
+
+  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    await tx.livestock.update({
+      where: { id, farmId: activeFarmId },
+      data: { growthTargetOverride: target }
+    })
+    revalidatePath('/dashboard/flocks')
+    return { success: true }
+  }).catch((error: any) => {
+    console.error('Error updating growth target:', error)
+    return { success: false, error: 'Failed' }
   })
 }
 

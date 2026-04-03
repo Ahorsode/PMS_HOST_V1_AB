@@ -10,6 +10,7 @@ export async function createBatch(data: {
   breedType: string
   initialCount: number
   arrivalDate: string
+  batchName?: string
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
@@ -23,6 +24,7 @@ export async function createBatch(data: {
         houseId: data.houseId,
         farmId: activeFarmId,
         breedType: data.breedType,
+        batchName: data.batchName || `Unit ${new Date().getTime()}`,
         initialCount: data.initialCount,
         currentCount: data.initialCount,
         arrivalDate: new Date(data.arrivalDate),
@@ -45,6 +47,8 @@ export async function updateBatch(id: number, data: {
   currentCount?: number
   arrivalDate?: string
   status?: string
+  batchName?: string
+  growthTargetOverride?: string
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }

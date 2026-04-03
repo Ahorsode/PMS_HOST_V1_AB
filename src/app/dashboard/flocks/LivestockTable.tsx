@@ -47,9 +47,9 @@ export function LivestockTable({ initialBatches, houses }: LivestockTableProps) 
         <table className="min-w-full divide-y divide-gray-100">
           <thead>
             <tr className="bg-gray-50/50">
-              <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Batch ID</th>
-              <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Type & Breed</th>
-              <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Unit / House</th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Unit Name / Identity</th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Type & Species</th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Growth Benchmark</th>
               <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Quantity</th>
               <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Arrival Date</th>
               <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Status</th>
@@ -59,15 +59,18 @@ export function LivestockTable({ initialBatches, houses }: LivestockTableProps) 
           <tbody className="bg-white divide-y divide-gray-50">
             {filteredBatches.map((batch: any) => (
               <tr key={batch.id} className="hover:bg-gray-50/80 transition-all group">
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-700">
-                   {batch.numericId ? `BTCH-${batch.numericId.toString().padStart(3, '0')}` : `BTCH-${String(batch.id || '').slice(-4)}`}
+                <td className="px-6 py-4 whitespace-nowrap">
+                   <div className="text-sm font-black text-emerald-700 uppercase tracking-tight">{batch.batchName || `Unit #${batch.id}`}</div>
+                   <div className="text-[10px] text-gray-400 font-bold">ID: {batch.numericId || batch.id}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="text-sm font-bold text-gray-900">{formatLivestockType(batch.type)}</div>
                   <div className="text-xs text-gray-500 font-medium">{batch.breedType}</div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">
-                  {batch.house?.name || `Unit ${batch.houseId}`}
+                  <span className="bg-purple-50 text-purple-700 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border border-purple-100 italic">
+                    {batch.growthTargetOverride || batch.breedType || 'Standard'}
+                  </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">
                   {batch.currentCount?.toLocaleString() || '0'}
@@ -97,8 +100,8 @@ export function LivestockTable({ initialBatches, houses }: LivestockTableProps) 
         {filteredBatches.length === 0 && (
           <div className="py-24 text-center">
             <Bird className="w-12 h-12 text-gray-200 mx-auto mb-4" />
-            <p className="text-gray-400 font-bold text-lg">No {filter !== 'ALL' ? filter.toLowerCase() : ''} batches found.</p>
-            <p className="text-gray-400 text-sm">Register a new batch to start tracking performance.</p>
+            <p className="text-gray-400 font-bold text-lg">No {filter !== 'ALL' ? filter.toLowerCase() : 'livestock'} units found.</p>
+            <p className="text-gray-400 text-sm">Register a new livestock unit to start tracking performance.</p>
           </div>
         )}
       </div>
