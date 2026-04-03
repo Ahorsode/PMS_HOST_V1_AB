@@ -23,7 +23,7 @@ export const BottomNav = ({ role = 'OWNER', permissions }: { role?: string, perm
     { name: 'Customers', icon: Users, href: '/dashboard/sales/customers', roles: ['OWNER', 'MANAGER', 'CASHIER', 'ACCOUNTANT'] },
     { name: 'Finance Hub', icon: Wallet, href: '/dashboard/finance', roles: ['OWNER', 'MANAGER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
     { name: 'My Profile', icon: User, href: '/dashboard/profile', roles: ['OWNER', 'MANAGER', 'WORKER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
-    { name: 'Upgrade Packages', icon: Crown, href: '/dashboard/settings?tab=billing', roles: ['OWNER', 'MANAGER'] },
+    { name: 'License Upgrade', icon: Crown, href: '/dashboard/license-upgrade', roles: ['OWNER', 'MANAGER'] },
     { name: 'Team', icon: Users, href: '/dashboard/team', roles: ['OWNER', 'MANAGER'] },
     { name: 'Settings', icon: Settings, href: '/dashboard/settings', roles: ['OWNER', 'MANAGER'] },
   ];

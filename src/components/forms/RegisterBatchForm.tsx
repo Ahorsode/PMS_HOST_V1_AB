@@ -12,10 +12,12 @@ import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
 
 import { FinancialInitializationModal } from '@/components/modals/FinancialInitializationModal';
+import { LivestockType } from '@prisma/client';
 
 const formSchema = z.object({
   batchName: z.string().min(2, "Unit Name is required"),
-  breed: z.enum(["Broiler", "Layer"]),
+  type: z.nativeEnum(LivestockType),
+  breed: z.string().min(1, "Breed is required"),
   initialQuantity: z.number().min(1, "Quantity must be at least 1"),
   hatchDate: z.string().min(1, "Arrival date is required"),
   houseId: z.string().min(1, "House selection is required"),
@@ -43,13 +45,17 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      type: LivestockType.POULTRY_BROILER,
       breed: "Broiler",
     },
   });
+
+  const selectedType = watch("type");
 
   if (houses.length === 0) {
     return (
@@ -64,10 +70,34 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
   }
 
   const houseOptions = houses.map(h => ({ label: h.name, value: h.id.toString() }));
-  const breedOptions = [
-    { label: "Broiler (Meat Production)", value: "Broiler" },
-    { label: "Layer (Egg Production)", value: "Layer" }
+  
+  const speciesOptions = [
+    { label: "Poultry (Meat)", value: LivestockType.POULTRY_BROILER },
+    { label: "Poultry (Eggs)", value: LivestockType.POULTRY_LAYER },
+    { label: "Cattle / Livestock", value: LivestockType.CATTLE },
+    { label: "Sheep / Goat", value: LivestockType.SHEEP_GOAT },
+    { label: "Pig / Swine", value: LivestockType.PIG },
+    { label: "Other / Generic", value: LivestockType.OTHER },
   ];
+
+  const breedOptions = selectedType === LivestockType.POULTRY_BROILER 
+    ? [
+        { label: "Ross 308 (Standard)", value: "Ross 308" },
+        { label: "Cobb 500 (Efficient)", value: "Cobb 500" },
+        { label: "Hubbard (Hardy)", value: "Hubbard" },
+        { label: "Other Breed", value: "Other" }
+      ]
+    : selectedType === LivestockType.POULTRY_LAYER
+    ? [
+        { label: "Isa Brown (Standard)", value: "Isa Brown" },
+        { label: "Leghorn (White Eggs)", value: "Leghorn" },
+        { label: "Lohmann (High Yield)", value: "Lohmann" },
+        { label: "Other Breed", value: "Other" }
+      ]
+    : [
+        { label: "No Preference / Standard", value: "Standard" },
+        { label: "Specific Breed / Variety", value: "Other" }
+      ];
 
   const onSubmit = async (data: FormValues) => {
     setIsSubmitting(true);
@@ -78,6 +108,7 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
         initialCount: data.initialQuantity,
         arrivalDate: data.hatchDate,
         batchName: data.batchName,
+        type: data.type,
       });
 
       if (result.success && result.id) {
@@ -112,14 +143,21 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
           />
 
           <Select
-            label="Livestock Breed"
+            label="Livestock Category"
+            options={speciesOptions}
+            {...register("type")}
+            error={errors.type?.message}
+          />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Select
+            label="Primary Breed / Specie"
             options={breedOptions}
             {...register("breed")}
             error={errors.breed?.message}
           />
-        </div>
 
-        <div className="grid grid-cols-2 gap-4">
           <Input
             label="Initial Quantity"
             type="number"
@@ -127,6 +165,7 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
             {...register("initialQuantity", { valueAsNumber: true })}
             error={errors.initialQuantity?.message}
           />
+        </div>
 
           <Select
             label="Farm House"
@@ -134,7 +173,6 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
             {...register("houseId")}
             error={errors.houseId?.message}
           />
-        </div>
 
         <Input
           label="Arrival / Hatch Date"

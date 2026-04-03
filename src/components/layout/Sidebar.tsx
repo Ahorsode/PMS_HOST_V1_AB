@@ -38,9 +38,8 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
     {
       name: 'Governance',
       items: [
-        { name: 'My Profile', icon: Users, href: '/dashboard/profile', roles: ['OWNER', 'MANAGER', 'WORKER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
         { name: 'Team Management', icon: Users, href: '/dashboard/team', roles: ['OWNER', 'MANAGER'] },
-        { name: 'License Upgrade', icon: Crown, href: '/dashboard/settings?tab=billing', roles: ['OWNER', 'MANAGER'] },
+        { name: 'License Upgrade', icon: Crown, href: '/dashboard/license-upgrade', roles: ['OWNER', 'MANAGER'] },
         { name: 'Settings', icon: Settings, href: '/dashboard/settings', roles: ['OWNER', 'MANAGER'] },
       ]
     }

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { User, Mail, Shield, Building, Crown, Calendar, Settings as SettingsIcon } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
+import { EditProfileButton } from '@/components/profile/EditProfileButton';
 
 export default async function ProfilePage() {
   const { userId, activeFarmId } = await getAuthContext();
@@ -49,11 +50,13 @@ export default async function ProfilePage() {
             </div>
 
             <div className="flex flex-col gap-3 w-full md:w-auto">
-               <Button asChild className="bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-2xl h-12 px-6 backdrop-blur-md">
-                  <Link href="/dashboard/settings">
-                     <SettingsIcon className="w-4 h-4 mr-2" /> Edit Profile
-                  </Link>
-               </Button>
+               <EditProfileButton 
+                 initialData={{
+                   firstname: user?.firstname || '',
+                   middleName: user?.middleName || '',
+                   surname: user?.surname || ''
+                 }} 
+               />
             </div>
          </div>
       </div>
@@ -84,7 +87,7 @@ export default async function ProfilePage() {
                </div>
 
                <Button asChild className="w-full bg-emerald-600 hover:bg-emerald-500 text-black font-black uppercase tracking-widest rounded-2xl h-14">
-                  <Link href="/dashboard/settings?tab=billing">Manage Subscription</Link>
+                  <Link href="/dashboard/license-upgrade">Manage Subscription</Link>
                </Button>
             </CardContent>
          </Card>

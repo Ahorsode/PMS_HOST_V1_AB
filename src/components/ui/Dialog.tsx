@@ -67,7 +67,7 @@ export const Dialog = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => onOpenChange(false)}
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/90 backdrop-blur-md"
           />
 
           {/* Dialog Content */}
@@ -80,7 +80,7 @@ export const Dialog = ({
             aria-labelledby={title ? dialogId : undefined}
             aria-describedby={description ? descriptionId : undefined}
             className={cn(
-              "relative w-full max-w-xl bg-[#0f1115] border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden glass-morphism",
+              "relative w-full max-w-xl bg-[#0f1115] border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden backdrop-blur-3xl",
               className
             )}
           >

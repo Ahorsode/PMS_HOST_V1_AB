@@ -565,6 +565,7 @@ enum LivestockType {
   CATTLE
   SHEEP_GOAT
   PIG
+  OTHER
 }
 
 enum Role {
