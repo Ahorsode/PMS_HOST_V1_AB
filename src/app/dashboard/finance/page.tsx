@@ -35,6 +35,8 @@ interface Expense {
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
 import { redirect } from 'next/navigation';
 import { getAuthContext } from '@/lib/auth-utils';
+import prisma from '@/lib/db';
+import { MissingCostPrompt } from '@/components/finance/MissingCostPrompt';
 
 export default async function FinancePage() {
   const { activeFarmId } = await getAuthContext();
@@ -47,6 +49,24 @@ export default async function FinancePage() {
   if (!hasAccess) {
     redirect('/dashboard/unauthorized');
   }
+
+  // Check for active batches with missing costs
+  const missingCostBatches = await (prisma.livestock as any).findMany({
+    where: {
+      farmId: activeFarmId,
+      status: 'active',
+      OR: [
+        { initialCostActual: null },
+        { initialCostActual: 0 }
+      ]
+    },
+    select: {
+      id: true,
+      batchName: true,
+      initialCount: true,
+      type: true
+    }
+  });
 
   const sales = (await getAllSales()) as Sale[];
   const expensesData = await getExpenses();
@@ -67,6 +87,10 @@ export default async function FinancePage() {
           <FinanceActions />
         </div>
       </div>
+
+      {missingCostBatches.length > 0 && (
+        <MissingCostPrompt batches={missingCostBatches} />
+      )}
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

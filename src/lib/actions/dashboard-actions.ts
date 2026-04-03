@@ -7,6 +7,7 @@ import bcrypt from 'bcryptjs'
 import { redirect } from 'next/navigation'
 import { checkWorkerPermissions } from './staff-actions'
 import { LivestockType } from '@prisma/client'
+import { signOut } from '@/auth'
 
 export async function getDashboardStats() {
   const { userId, activeFarmId } = await getAuthContext()
@@ -730,25 +731,72 @@ function splitName(name: string) {
   };
 }
 
-export async function updateProfile(data: { firstname: string; surname: string }) {
+export async function updateProfile(data: { firstname: string; surname: string; newPassword?: string }) {
   const { userId } = await getAuthContext()
   if (!userId) return { success: false, error: 'Unauthorized' }
 
   try {
+    const updateData: any = {
+      firstname: data.firstname.trim(),
+      surname: data.surname.trim(),
+      middleName: (data as any).middleName?.trim(),
+      name: `${data.firstname.trim()} ${(data as any).middleName ? (data as any).middleName.trim() + ' ' : ''}${data.surname.trim()}`,
+    };
+
+    if (data.newPassword) {
+      updateData.password = await bcrypt.hash(data.newPassword, 10);
+      updateData.mustChangePassword = false;
+    }
+
     await prisma.user.update({
       where: { id: userId },
-      data: {
-        firstname: data.firstname.trim(),
-        surname: data.surname.trim(),
-        middleName: (data as any).middleName?.trim(),
-        name: `${data.firstname.trim()} ${(data as any).middleName ? (data as any).middleName.trim() + ' ' : ''}${data.surname.trim()}`,
-      }
+      data: updateData
     })
     revalidatePath('/dashboard')
+    revalidatePath('/dashboard/profile')
     return { success: true }
   } catch (error) {
     console.error('Error updating profile:', error)
     return { success: false, error: 'Failed to update profile' }
+  }
+}
+
+/**
+ * Updates the user's password.
+ * Verifies current password before applying changes.
+ */
+export async function updatePassword(data: { current: string; new: string }) {
+  const { userId } = await getAuthContext()
+  if (!userId) return { success: false, error: 'Unauthorized' }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { password: true }
+    })
+
+    if (!user || !user.password) {
+      return { success: false, error: 'User account issue' }
+    }
+
+    const isValid = await bcrypt.compare(data.current, user.password)
+    if (!isValid) {
+      return { success: false, error: 'Current password is incorrect' }
+    }
+
+    const hashedPassword = await bcrypt.hash(data.new, 10)
+    await prisma.user.update({
+      where: { id: userId },
+      data: { 
+        password: hashedPassword,
+        mustChangePassword: false 
+      }
+    })
+
+    return { success: true }
+  } catch (error) {
+    console.error('Error updating password:', error)
+    return { success: false, error: 'Failed to update password' }
   }
 }
 
