@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Skull, Plus } from 'lucide-react';
 import { Dialog } from '@/components/ui/Dialog';
-import { FlockForm } from '../flocks/FlockForm';
+import { LivestockForm } from '../flocks/FlockForm';
 
 interface QuickMortalityLoggerProps {
   activeBatches: any[];
@@ -26,8 +26,8 @@ export function QuickMortalityLogger({ activeBatches }: QuickMortalityLoggerProp
             <CardContent className="p-4">
               <div className="flex justify-between items-start mb-3">
                 <div>
-                  <p className="text-[10px] font-black text-red-600 uppercase tracking-widest leading-none mb-1">Active Batch</p>
-                  <h4 className="font-bold text-gray-900">FLK-{batch.id.toString().padStart(3, '0')}</h4>
+                  <p className="text-[10px] font-black text-red-600 uppercase tracking-widest leading-none mb-1">Active Unit</p>
+                  <h4 className="font-bold text-gray-900">{batch.batchName || `UNT-${batch.id.toString().padStart(3, '0')}`}</h4>
                 </div>
                 <button 
                   onClick={() => setSelectedBatch(batch)}
@@ -45,7 +45,7 @@ export function QuickMortalityLogger({ activeBatches }: QuickMortalityLoggerProp
         ))}
         {activeBatches.length === 0 && (
           <div className="col-span-full py-8 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-100 italic text-gray-400 text-sm">
-            No active batches to log mortality for.
+            No active units to log mortality for.
           </div>
         )}
       </div>
@@ -53,13 +53,13 @@ export function QuickMortalityLogger({ activeBatches }: QuickMortalityLoggerProp
       <Dialog 
         isOpen={!!selectedBatch} 
         onOpenChange={(open) => !open && setSelectedBatch(null)} 
-        title={`Log Mortality: FLK-${selectedBatch?.id.toString().padStart(3, '0')}`}
+        title={`Log Mortality: ${selectedBatch?.batchName || `UNT-${selectedBatch?.id.toString().padStart(3, '0')}`}`}
       >
         {selectedBatch && (
           <div className="p-2">
-             <FlockForm 
+             <LivestockForm 
                batch={selectedBatch} 
-               houses={[]} // Not needed for mortality mode in FlockForm
+               houses={[]} // Not needed for mortality mode in LivestockForm
                mode="mortality" 
                onClose={() => setSelectedBatch(null)} 
              />
