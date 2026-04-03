@@ -19,7 +19,8 @@ import {
   Syringe,
   Plus,
   CheckCircle2,
-  Circle
+  Circle,
+  Banknote
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { logWeight } from '@/lib/actions/dashboard-actions';
@@ -371,6 +372,43 @@ export const FlockDetailClient = ({ batch }: FlockDetailClientProps) => {
                  <MetaItem label="Status" value={batch.status.toUpperCase()} />
               </div>
            </Card>
+
+           {/* Initial Investment */}
+           {batch.initialCostActual > 0 && (
+             <Card className="rounded-[2.5rem] bg-emerald-500/5 border-emerald-500/10 backdrop-blur-xl p-8 shadow-2xl">
+                <h4 className="text-emerald-400 font-black italic uppercase text-[10px] tracking-widest mb-6 border-b border-emerald-500/10 pb-2 flex items-center gap-2">
+                  <Banknote className="w-3.5 h-3.5" /> Initial Investment
+                </h4>
+                <div className="space-y-4">
+                   <div className="flex justify-between items-center">
+                     <span className="text-white/40 text-xs font-bold">Purchase Cost</span>
+                     <span className="text-white font-black text-sm">GH₵ {batch.initialCostActual.toLocaleString()}</span>
+                   </div>
+                   {batch.initialCostCarriage > 0 && (
+                     <div className="flex justify-between items-center">
+                       <span className="text-white/40 text-xs font-bold">Transport / Carriage</span>
+                       <span className="text-white font-black text-sm">GH₵ {batch.initialCostCarriage.toLocaleString()}</span>
+                     </div>
+                   )}
+                   {batch.initialCostOther?.map((expense: any, idx: number) => (
+                     <div key={idx} className="flex justify-between items-center">
+                       <span className="text-white/40 text-xs font-bold">{expense.label}</span>
+                       <span className="text-white font-black text-sm">GH₵ {Number(expense.amount).toLocaleString()}</span>
+                     </div>
+                   ))}
+                   <div className="pt-4 mt-2 border-t border-emerald-500/10 flex justify-between items-center">
+                     <span className="text-emerald-400 text-xs font-black uppercase tracking-wider">Total</span>
+                     <span className="text-emerald-400 font-black text-lg">
+                       GH₵ {(
+                         batch.initialCostActual + 
+                         batch.initialCostCarriage + 
+                         (batch.initialCostOther?.reduce((sum: number, e: any) => sum + Number(e.amount), 0) || 0)
+                       ).toLocaleString()}
+                     </span>
+                   </div>
+                </div>
+             </Card>
+           )}
         </div>
       </div>
     </div>

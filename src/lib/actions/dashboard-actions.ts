@@ -976,7 +976,10 @@ export async function getBatchDetails(id: number) {
         ...rec,
         averageWeight: Number(rec.averageWeight)
       })),
-      vaccinations: (batch as any).vaccinations || []
+      vaccinations: (batch as any).vaccinations || [],
+      initialCostActual: batch.initialCostActual ? Number(batch.initialCostActual) : 0,
+      initialCostCarriage: batch.initialCostCarriage ? Number(batch.initialCostCarriage) : 0,
+      initialCostOther: (batch.initialCostOther as any) || []
     }
   }).catch((error: any) => {
     console.error('Error fetching batch details:', error)
