@@ -31,6 +31,7 @@ export async function createEggProduction(data: {
         farmId: activeFarmId,
         eggsCollected: data.eggsCollected,
         unusableCount: data.unusableCount || 0,
+        eggsRemaining: data.eggsCollected - (data.unusableCount || 0),
         logDate: new Date(data.logDate),
         userId: userId
       }

@@ -90,7 +90,7 @@ export async function updateOrderStatus(id: number, status: string) {
   try {
     const order = await prisma.order.findUnique({
       where: { id, farmId: activeFarmId },
-      include: { items: true }
+      include: { items: { include: { inventory: true } } }
     })
 
     if (!order) throw new Error('Order not found')
@@ -116,6 +116,24 @@ export async function updateOrderStatus(id: number, status: string) {
               where: { id: item.inventoryId },
               data: { stockLevel: { decrement: item.quantity } }
             })
+
+            // FIFO for Eggs: Deduct from oldest production logs first
+            if (item.inventory?.category === 'EGGS') {
+              let qtyToDeduct = item.quantity
+              const productions = await tx.eggProduction.findMany({
+                where: { farmId: activeFarmId, eggsRemaining: { gt: 0 } },
+                orderBy: { logDate: 'asc' }
+              })
+              for (const prod of productions) {
+                if (qtyToDeduct <= 0) break
+                const take = Math.min(prod.eggsRemaining, qtyToDeduct)
+                await tx.eggProduction.update({
+                  where: { id: prod.id },
+                  data: { eggsRemaining: { decrement: take } }
+                })
+                qtyToDeduct -= take
+              }
+            }
           }
           if (item.livestockId) {
             await tx.livestock.update({
@@ -134,6 +152,27 @@ export async function updateOrderStatus(id: number, status: string) {
               where: { id: item.inventoryId },
               data: { stockLevel: { increment: item.quantity } }
             })
+
+            // LIFO Restoration for Eggs: Add back to newest production logs
+            if (item.inventory?.category === 'EGGS') {
+              let qtyToRestore = item.quantity
+              const productions = await tx.eggProduction.findMany({
+                where: { farmId: activeFarmId },
+                orderBy: { logDate: 'desc' }
+              })
+              for (const prod of productions) {
+                if (qtyToRestore <= 0) break
+                const maxHold = prod.eggsCollected - prod.unusableCount
+                const canAdd = maxHold - prod.eggsRemaining
+                if (canAdd <= 0) continue
+                const add = Math.min(canAdd, qtyToRestore)
+                await tx.eggProduction.update({
+                  where: { id: prod.id },
+                  data: { eggsRemaining: { increment: add } }
+                })
+                qtyToRestore -= add
+              }
+            }
           }
           if (item.livestockId) {
             await tx.livestock.update({
@@ -170,7 +209,7 @@ export async function deleteOrder(id: number) {
   try {
     const order = await prisma.order.findUnique({
       where: { id, farmId: activeFarmId },
-      include: { items: true }
+      include: { items: { include: { inventory: true } } }
     })
 
     if (!order) throw new Error('Order not found')
@@ -184,6 +223,27 @@ export async function deleteOrder(id: number) {
               where: { id: item.inventoryId },
               data: { stockLevel: { increment: item.quantity } }
             })
+
+            // LIFO Restoration for Eggs
+            if (item.inventory?.category === 'EGGS') {
+              let qtyToRestore = item.quantity
+              const productions = await tx.eggProduction.findMany({
+                where: { farmId: activeFarmId },
+                orderBy: { logDate: 'desc' }
+              })
+              for (const prod of productions) {
+                if (qtyToRestore <= 0) break
+                const maxHold = prod.eggsCollected - prod.unusableCount
+                const canAdd = maxHold - prod.eggsRemaining
+                if (canAdd <= 0) continue
+                const add = Math.min(canAdd, qtyToRestore)
+                await tx.eggProduction.update({
+                  where: { id: prod.id },
+                  data: { eggsRemaining: { increment: add } }
+                })
+                qtyToRestore -= add
+              }
+            }
           }
           if (item.livestockId) {
             await tx.livestock.update({

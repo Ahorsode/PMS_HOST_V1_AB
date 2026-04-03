@@ -234,6 +234,7 @@ model EggProduction {
   farmId        Int       @default(1)
   qualityGrade  String?
   unusableCount Int       @default(0)
+  eggsRemaining Int       @default(0)
   batch         Livestock @relation(fields: [batchId], references: [id])
   farm          Farm      @relation(fields: [farmId], references: [id])
 

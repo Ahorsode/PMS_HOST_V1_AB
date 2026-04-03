@@ -10,7 +10,7 @@ export type Feature =
   | 'WORKER_LIMIT';
 
 const TIER_MAPPING: Record<SubscriptionTier, Feature[]> = {
-  BASIC: [],
+  BASIC: ['PDF_INVOICES'],
   STANDARD: ['PDF_INVOICES', 'CRM', 'WORKER_LIMIT'],
   PREMIUM: [
     'PDF_INVOICES', 
