@@ -27,7 +27,7 @@ export async function createOrder(data: {
       const order = await tx.order.create({
         data: {
           farmId: activeFarmId,
-          customerId: data.customerId ?? undefined,
+          customerId: data.customerId || undefined,
           totalAmount,
           discountAmount: discount,
           items: {
@@ -59,6 +59,7 @@ export async function createOrder(data: {
 
     revalidatePath('/dashboard/orders')
     revalidatePath('/dashboard/sales')
+    revalidatePath('/dashboard')
     return { success: true, order: result }
   } catch (error) {
     console.error('Error creating order:', error)
@@ -77,7 +78,8 @@ export async function getAllOrders() {
       customer: true,
       items: true
     },
-    orderBy: { orderDate: 'desc' }
+    orderBy: { orderDate: 'desc' },
+    take: 50 // Limit to avoid massive payloads
   })
 }
 

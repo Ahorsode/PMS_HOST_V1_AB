@@ -117,22 +117,37 @@ export function AccountantDashboard({ summary, stats }: AccountantDashboardProps
             <CardTitle>Audit Trail - Financials</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-             {[1, 2, 3].map((_, i) => (
-               <div key={i} className="flex items-center justify-between p-4 bg-black/20 rounded-2xl border border-white/5 group hover:bg-white/5 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-emerald-500/20 rounded-xl flex items-center justify-center border border-emerald-500/20">
-                       <Banknote className="w-5 h-5 text-emerald-400" />
+             {(() => {
+               const combined = [
+                 ...(stats.recentOrders || []).map((o: any) => ({ ...o, type: 'ORDER', date: new Date(o.orderDate) })),
+                 ...(stats.recentSales || []).map((s: any) => ({ ...s, type: 'SALE', date: new Date(s.saleDate) }))
+               ].sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 5);
+
+               if (combined.length === 0) {
+                 return <div className="text-center py-8 text-white/40 italic font-bold">No recent financial events.</div>;
+               }
+
+               return combined.map((item: any, i: number) => (
+                 <div key={i} className="flex items-center justify-between p-4 bg-black/20 rounded-2xl border border-white/5 group hover:bg-white/5 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-emerald-500/20 rounded-xl flex items-center justify-center border border-emerald-500/20">
+                         <Banknote className="w-5 h-5 text-emerald-400" />
+                      </div>
+                      <div>
+                        <p className="text-white font-bold text-sm tracking-tight">
+                          {item.type === 'ORDER' ? `Order #${item.id}` : `Sale #${item.id}`} - {item.customerName || 'Walk-in'}
+                        </p>
+                        <p className="text-[9px] text-white/40 uppercase font-black">
+                          {item.date.toLocaleDateString()} • {item.status || 'Verified'}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-white font-bold text-sm tracking-tight">Bulk Egg Sale - Order #4402</p>
-                      <p className="text-[9px] text-white/40 uppercase font-black">2 hours ago • Verified by System</p>
+                    <div className="text-right">
+                      <p className="text-emerald-400 font-black text-lg">+ {formatCurrency(item.totalAmount)}</p>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-emerald-400 font-black text-lg">+ {formatCurrency(450)}</p>
-                  </div>
-               </div>
-             ))}
+                 </div>
+               ));
+             })()}
           </CardContent>
         </Card>
       </div>

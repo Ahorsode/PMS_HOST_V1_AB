@@ -103,7 +103,7 @@ export async function getMonthlyProductionSummary() {
 
   const thirtyDaysAgo = new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  const [eggs, expenses, sales] = await Promise.all([
+  const [eggs, expenses, orders, sales] = await Promise.all([
     prisma.eggProduction.aggregate({
       where: { farmId: activeFarmId, logDate: { gte: thirtyDaysAgo } },
       _sum: { eggsCollected: true }
@@ -113,14 +113,20 @@ export async function getMonthlyProductionSummary() {
       _sum: { amount: true }
     }),
     prisma.order.aggregate({
-      where: { farmId: activeFarmId, orderDate: { gte: thirtyDaysAgo }, status: 'PAID' },
+      where: { farmId: activeFarmId, orderDate: { gte: thirtyDaysAgo } },
+      _sum: { totalAmount: true }
+    }),
+    prisma.sale.aggregate({
+      where: { farmId: activeFarmId, saleDate: { gte: thirtyDaysAgo } },
       _sum: { totalAmount: true }
     })
   ]);
 
+  const totalRevenue = (Number(orders._sum.totalAmount) || 0) + (Number(sales._sum.totalAmount) || 0);
+
   return {
     eggs: eggs._sum.eggsCollected || 0,
     expenses: Number(expenses._sum.amount) || 0,
-    revenue: Number(sales._sum.totalAmount) || 0
+    revenue: totalRevenue
   };
 }

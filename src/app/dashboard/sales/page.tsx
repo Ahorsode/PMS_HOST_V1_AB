@@ -25,7 +25,7 @@ interface Order {
   customer: {
     name: string;
     phone: string | null;
-  };
+  } | null;
   items: OrderItem[];
 }
 
@@ -132,8 +132,8 @@ export default async function SalesPage() {
                     </td>
                     <td className="px-8 py-6">
                       <div className="flex flex-col">
-                        <span className="text-white/90 font-bold text-xs">{order.customer.name}</span>
-                        <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-0.5">{order.customer.phone || 'No Phone'}</span>
+                        <span className="text-white/90 font-bold text-xs">{order.customer?.name || 'Walk-in Customer'}</span>
+                        <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-0.5">{order.customer?.phone || 'No Phone'}</span>
                       </div>
                     </td>
                     <td className="px-8 py-6">
@@ -182,8 +182,8 @@ export default async function SalesPage() {
                    </span>
                  </div>
                  <div className="flex flex-col">
-                    <span className="text-white/90 font-bold text-xs">{order.customer.name}</span>
-                    <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-0.5">{order.customer.phone || 'No Phone'}</span>
+                    <span className="text-white/90 font-bold text-xs">{order.customer?.name || 'Walk-in Customer'}</span>
+                    <span className="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-0.5">{order.customer?.phone || 'No Phone'}</span>
                  </div>
                  <div className="flex justify-between items-center pt-3 border-t border-white/5">
                     <span className="text-emerald-400 font-black text-sm">{formatCurrency(Number(order.totalAmount))}</span>

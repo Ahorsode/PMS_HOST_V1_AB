@@ -109,8 +109,20 @@ export async function getDashboardStats() {
       orderBy: { logDate: 'asc' }
     })
 
-    // Helper to format Date to YYYY-MM-DD
-    const formatDate = (date: Date) => date.toISOString().split('T')[0]
+    const recentOrders = canViewFinance ? await tx.order.findMany({
+      where: { orderDate: { gte: sevenDaysAgo }, farmId: activeFarmId },
+      orderBy: { orderDate: 'asc' }
+    }) : []
+
+    // Helper to format Date to YYYY-MM-DD safely
+    const formatDate = (date: any) => {
+      if (!date || !(date instanceof Date)) return '';
+      try {
+        return date.toISOString().split('T')[0]
+      } catch (e) {
+        return '';
+      }
+    }
 
     // Generate last 7 days labels
     const trendDates = Array.from({length: 7}).map((_, i) => {
@@ -130,8 +142,9 @@ export async function getDashboardStats() {
     })
 
     const revenueTrendData = canViewFinance ? trendDates.map(date => {
-      const dayTotal = recentSales.filter((s: any) => formatDate(s.saleDate) === date).reduce((sum: number, s: any) => sum + Number(s.totalAmount), 0)
-      return { date, count: dayTotal }
+      const saleTotal = recentSales.filter((s: any) => formatDate(s.saleDate) === date).reduce((sum: number, s: any) => sum + Number(s.totalAmount), 0)
+      const orderTotal = recentOrders.filter((o: any) => formatDate(o.orderDate) === date).reduce((sum: number, o: any) => sum + Number(o.totalAmount), 0)
+      return { date, count: saleTotal + orderTotal }
     }) : []
 
     const mortalityTrendData = trendDates.map(date => {
@@ -223,7 +236,17 @@ export async function getDashboardStats() {
       productivityIndex: 94.2, // Mocked for initial launch, would compute via growth-utils
       canViewFinance,
       canViewInventory,
-      canViewBatches
+      canViewBatches,
+      recentOrders: recentOrders.map((o: any) => ({
+        ...o,
+        totalAmount: Number(o.totalAmount),
+        customerName: o.customer?.name || 'Walk-in'
+      })),
+      recentSales: recentSales.map((s: any) => ({
+        ...s,
+        totalAmount: Number(s.totalAmount),
+        customerName: s.customer?.name || 'Walk-in'
+      }))
     }
   }).catch((error: any) => {
     console.error('Error fetching dashboard stats:', error)
