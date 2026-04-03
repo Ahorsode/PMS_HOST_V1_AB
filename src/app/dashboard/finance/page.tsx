@@ -69,8 +69,7 @@ export default async function FinancePage() {
   });
 
   const sales = (await getAllSales()) as Sale[];
-  const expensesData = await getExpenses();
-  const expenses = (expensesData.expenses || []) as Expense[];
+  const expenses = (await getExpenses()) as Expense[];
 
   const totalSales = sales.reduce((acc: number, sale: Sale) => acc + Number(sale.totalAmount || 0), 0);
   const totalExpenses = expenses.reduce((acc: number, exp: Expense) => acc + Number(exp.amount || 0), 0);
