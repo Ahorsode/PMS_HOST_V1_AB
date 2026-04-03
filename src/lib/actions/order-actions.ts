@@ -192,15 +192,15 @@ export async function deleteOrder(id: number) {
         }
       }
 
-      // 2. Reduce Customer Balance (only if it hasn't been PAID yet, or always if we want to reverse the whole liability)
-      // If the order was PENDING/PAID, it contributed to total spent or balance.
-      // For now, reverse the debt if it's not fully processed.
-      await tx.customer.update({
-        where: { id: order.customerId },
-        data: {
-          balanceOwed: { decrement: Number(order.totalAmount) }
-        }
-      })
+      // 2. Reduce Customer Balance if exists
+      if (order.customerId) {
+        await tx.customer.update({
+          where: { id: order.customerId },
+          data: {
+            balanceOwed: { decrement: Number(order.totalAmount) }
+          }
+        })
+      }
 
       // 3. Delete Order Items then Order
       await tx.orderItem.deleteMany({ where: { orderId: id } })
