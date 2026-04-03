@@ -40,6 +40,7 @@ interface DashboardContentProps {
     }>;
     activeBatches: Array<{
       id: string;
+      batchName: string | null;
       breed: string;
       quantity: number;
       hatchDate: string;

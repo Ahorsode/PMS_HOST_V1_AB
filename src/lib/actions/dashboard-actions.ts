@@ -202,7 +202,8 @@ export async function getDashboardStats() {
       revenueTrendData,
       mortalityTrendData,
       activeBatches: activeBatches.map((batch: any) => ({
-        id: batch.batchName || `FLK-${batch.id.toString().padStart(3, '0')}`,
+        id: `FLK-${batch.id.toString().padStart(3, '0')}`,
+        batchName: batch.batchName,
         numericId: batch.id,
         type: batch.type,
         breed: batch.breedType || 'Unknown',
