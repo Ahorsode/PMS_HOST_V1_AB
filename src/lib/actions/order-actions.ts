@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { getAuthContext, hasPermission } from '@/lib/auth-utils'
 
 export async function createOrder(data: {
-  customerId: number
+  customerId?: number
   discountAmount?: number
   items: { 
     description: string; 
@@ -27,7 +27,7 @@ export async function createOrder(data: {
       const order = await tx.order.create({
         data: {
           farmId: activeFarmId,
-          customerId: data.customerId,
+          customerId: data.customerId ?? undefined,
           totalAmount,
           discountAmount: discount,
           items: {
@@ -40,16 +40,19 @@ export async function createOrder(data: {
               livestockId: i.livestockId
             }))
           }
-        }
+        } as any
       })
 
-      // Increment Customer's balance owed if status is PENDING (default)
-      await tx.customer.update({
-        where: { id: data.customerId, farmId: activeFarmId },
-        data: {
-          balanceOwed: { increment: totalAmount }
-        }
-      })
+
+      // Only update customer balance if a customer is linked
+      if (data.customerId) {
+        await tx.customer.update({
+          where: { id: data.customerId, farmId: activeFarmId },
+          data: {
+            balanceOwed: { increment: totalAmount }
+          }
+        })
+      }
 
       return order
     })
@@ -62,6 +65,7 @@ export async function createOrder(data: {
     return { success: false, error: 'Failed to create order' }
   }
 }
+
 
 export async function getAllOrders() {
   const { userId, activeFarmId } = await getAuthContext()

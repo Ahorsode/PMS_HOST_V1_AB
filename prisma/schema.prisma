@@ -515,7 +515,7 @@ model Customer {
 model Order {
   id             Int         @id @default(autoincrement())
   farmId         Int
-  customerId     Int
+  customerId     Int?
   totalAmount    Decimal     @db.Decimal(10, 2)
   currency       String      @default("USD")
   status         String      @default("PENDING")
@@ -524,11 +524,12 @@ model Order {
   updatedAt      DateTime    @updatedAt
   discountAmount Decimal     @default(0) @db.Decimal(10, 2)
   items          OrderItem[]
-  customer       Customer    @relation(fields: [customerId], references: [id])
+  customer       Customer?   @relation(fields: [customerId], references: [id])
   farm           Farm        @relation(fields: [farmId], references: [id])
 
   @@map("orders")
 }
+
 
 model OrderItem {
   id          Int        @id @default(autoincrement())
