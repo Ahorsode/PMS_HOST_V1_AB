@@ -95,9 +95,8 @@ export default function SignUpPage() {
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ type: "spring", delay: 0.2, bounce: 0.5 }}
-                    className="w-20 h-20 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-3xl flex items-center justify-center shadow-lg shadow-emerald-500/20"
                   >
-                    <Bird className="w-10 h-10 text-white" />
+                    <img src="/logo.png" alt="Agri-ERP Logo" className="w-20 h-20 rounded-3xl object-cover shadow-lg shadow-emerald-500/20" />
                   </motion.div>
                   
                   <div className="space-y-2">
@@ -218,8 +217,8 @@ export default function SignUpPage() {
               animate={{ opacity: 1, scale: 1 }}
               className="flex flex-col items-center justify-center text-center space-y-6"
             >
-              <div className="w-32 h-32 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_100px_rgba(16,185,129,0.4)]">
-                <Bird className="w-16 h-16 text-white" />
+              <div className="w-32 h-32 rounded-[3rem] flex items-center justify-center shadow-[0_0_100px_rgba(16,185,129,0.4)]">
+                <img src="/logo.png" alt="Agri-ERP Logo" className="w-32 h-32 object-cover rounded-[3rem]" />
               </div>
               <h2 className="text-3xl font-black text-white tracking-tighter">Welcome Aboard!</h2>
               <Loader2 className="w-6 h-6 text-emerald-400 animate-spin" />

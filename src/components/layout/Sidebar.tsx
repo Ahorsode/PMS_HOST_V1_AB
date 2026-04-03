@@ -51,9 +51,11 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
         
         {/* Logo Section */}
         <div className="px-6 mb-10 flex items-center flex-shrink-0">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20 shrink-0 mx-auto group-hover:mx-0">
-            <Bird className="text-white w-6 h-6" />
-          </div>
+          <img 
+            src="/logo.png" 
+            alt="Agri-ERP Logo" 
+            className="w-12 h-12 rounded-2xl object-cover shadow-lg shadow-emerald-500/20 shrink-0 mx-auto group-hover:mx-0"
+          />
           <span className="ml-4 font-black text-xl tracking-tighter text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
             Agri<span className="text-emerald-400 text-shadow-glow">Tech</span>
           </span>

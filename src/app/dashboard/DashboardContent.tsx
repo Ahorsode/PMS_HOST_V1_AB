@@ -217,8 +217,8 @@ export function DashboardContent({ stats, houses, summary, role }: DashboardCont
                   </div>
                 </div>
                 
-                <div className="absolute -top-10 -right-10 opacity-10 -z-10">
-                   <Bird className="w-64 h-64" />
+                <div className="absolute -top-10 -right-10 opacity-10 -z-10 blend-modes mix-blend-screen">
+                   <img src="/logo.png" alt="" className="w-64 h-64 rounded-[3rem] object-cover grayscale" />
                 </div>
               </CardContent>
             </Card>
