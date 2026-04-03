@@ -173,6 +173,7 @@ model Inventory {
   stockLevel                 Decimal                     @db.Decimal(10, 2)
   unit                       String
   category                   String?
+  costPerUnit                Decimal?                    @db.Decimal(10, 2)
   userId                     String                      @default("user_placeholder")
   createdAt                  DateTime                    @default(now())
   updatedAt                  DateTime                    @updatedAt
@@ -187,6 +188,7 @@ model Inventory {
   @@index([farmId])
   @@map("inventory")
 }
+
 
 model FeedingLog {
   id             Int              @id @default(autoincrement())

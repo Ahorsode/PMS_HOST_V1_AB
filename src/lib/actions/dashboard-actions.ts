@@ -28,6 +28,13 @@ export async function getDashboardStats() {
       _sum: { eggsCollected: true }
     })
 
+    // Live egg inventory stock (separate from production totals)
+    const eggInventoryItem = await tx.inventory.findFirst({
+      where: { farmId: activeFarmId, category: 'EGGS' },
+      select: { stockLevel: true }
+    })
+    const eggInventoryStock = eggInventoryItem ? Number(eggInventoryItem.stockLevel) : 0
+
     const mortalityData = await tx.mortality.aggregate({
       where: { farmId: activeFarmId },
       _sum: { count: true }
@@ -193,7 +200,7 @@ export async function getDashboardStats() {
       mortalityRate: mortalityRate.toFixed(2),
       overallDead: mortalityData._sum.count || 0,
       todayDead: todayMortality._sum.count || 0,
-      totalEggs: eggsData._sum.eggsCollected || 0,
+      totalEggs: eggInventoryStock,
       todayEggs: todayEggs._sum.eggsCollected || 0,
       lowFeedAlertsCount: lowFeedAlerts.length,
       lowFeedItems: lowFeedAlerts.map((i: any) => ({ name: i.itemName, stockLevel: Number(i.stockLevel), category: i.category })),

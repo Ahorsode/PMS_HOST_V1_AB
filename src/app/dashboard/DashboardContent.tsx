@@ -278,7 +278,39 @@ export function DashboardContent({ stats, houses, summary, role }: DashboardCont
                </CardContent>
             </Card>
 
-            {/* Second Row: Alerts & Active Units */}
+            {/* Egg Stock Inventory Card */}
+            <Card className="md:col-span-2 lg:col-span-2 bg-amber-500/15 border-amber-500/20 relative overflow-hidden group">
+               <CardHeader className="flex flex-row items-center justify-between pb-2">
+                 <CardTitle className="text-amber-400 flex items-center gap-2">
+                   <Package className="w-4 h-4" /> Egg Stock
+                 </CardTitle>
+                 <Link href="/dashboard/inventory" className="text-[9px] font-black uppercase tracking-widest text-amber-400/50 hover:text-amber-400 transition-colors">
+                   View Hub →
+                 </Link>
+               </CardHeader>
+               <CardContent className="pt-2">
+                 {(() => {
+                   const raw = stats.totalEggs || 0;
+                   const crates = Math.floor(raw / 30);
+                   const rem = raw % 30;
+                   return (
+                     <>
+                       <div className="flex items-baseline gap-2">
+                         <span className="text-5xl font-black text-white tracking-tighter">{crates}</span>
+                         <span className="text-xl font-bold text-amber-400/70">crates</span>
+                       </div>
+                       {rem > 0 && (
+                         <p className="text-amber-400 text-sm font-semibold mt-1">+ {rem} remainder</p>
+                       )}
+                       <p className="text-[10px] text-white/40 uppercase tracking-widest font-black mt-3">{raw.toLocaleString()} eggs in stock</p>
+                     </>
+                   );
+                 })()}
+                 <div className="absolute -bottom-4 -right-4 w-20 h-20 rounded-full bg-amber-500/10 blur-xl" />
+               </CardContent>
+            </Card>
+
+
             <Card className="md:col-span-2 lg:col-span-2 bg-amber-500/15 border-amber-500/20 h-[380px] flex flex-col">
               <CardHeader className="flex flex-row items-center justify-between pb-2 shrink-0">
                 <CardTitle className="text-amber-400">Alerts & Reminders</CardTitle>

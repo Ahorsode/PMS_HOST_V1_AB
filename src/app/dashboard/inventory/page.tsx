@@ -40,6 +40,7 @@ type InventoryItem = {
   stockLevel: number;
   unit: string;
   category: string;
+  costPerUnit?: number | null;
 };
 
 type FormState = {
@@ -48,7 +49,9 @@ type FormState = {
   unit: string;
   category: string;
   bagQty?: string;
+  costPerUnit: string;
 };
+
 
 /* ───────────────────── main component ───────────────────── */
 export default function InventoryPage() {
@@ -59,7 +62,7 @@ export default function InventoryPage() {
   const [isPending, startTransition] = useTransition();
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
   const [form, setForm] = useState<FormState>({
-    itemName: '', stockLevel: '', unit: 'bags', category: 'FEED'
+    itemName: '', stockLevel: '', unit: 'bags', category: 'FEED', costPerUnit: ''
   });
 
   const fetchItems = async () => {
@@ -78,7 +81,7 @@ export default function InventoryPage() {
 
   const openAdd = () => {
     setEditing(null);
-    setForm({ itemName: '', stockLevel: '', unit: 'bags', category: 'FEED' });
+    setForm({ itemName: '', stockLevel: '', unit: 'bags', category: 'FEED', costPerUnit: '' });
     setShowForm(true);
   };
 
@@ -88,7 +91,8 @@ export default function InventoryPage() {
       itemName: item.itemName,
       stockLevel: String(item.stockLevel),
       unit: item.unit,
-      category: item.category
+      category: item.category,
+      costPerUnit: item.costPerUnit != null ? String(item.costPerUnit) : ''
     });
     setShowForm(true);
   };
@@ -106,6 +110,7 @@ export default function InventoryPage() {
           stockLevel: stockNum,
           unit: form.unit,
           category: form.category,
+          ...(form.costPerUnit ? { costPerUnit: parseFloat(form.costPerUnit) } : {}),
         });
       } else {
         res = await createInventoryItem({
@@ -113,6 +118,7 @@ export default function InventoryPage() {
           stockLevel: stockNum,
           unit: form.unit,
           category: form.category,
+          ...(form.costPerUnit ? { costPerUnit: parseFloat(form.costPerUnit) } : {}),
         });
       }
       if (res?.success) {
@@ -230,11 +236,13 @@ export default function InventoryPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-white/10">
-                      <th className="text-left px-5 py-3 text-white/40 font-semibold text-xs uppercase tracking-wider">Item</th>
-                      <th className="text-right px-5 py-3 text-white/40 font-semibold text-xs uppercase tracking-wider">Stock</th>
-                      <th className="text-right px-5 py-3 text-white/40 font-semibold text-xs uppercase tracking-wider">Unit</th>
-                      <th className="px-5 py-3" />
-                    </tr>
+                        <th className="text-left px-5 py-3 text-white/40 font-semibold text-xs uppercase tracking-wider">Item</th>
+                        <th className="text-right px-5 py-3 text-white/40 font-semibold text-xs uppercase tracking-wider">Stock</th>
+                        <th className="text-right px-5 py-3 text-white/40 font-semibold text-xs uppercase tracking-wider">Cost/Unit</th>
+                        <th className="text-right px-5 py-3 text-white/40 font-semibold text-xs uppercase tracking-wider">Unit</th>
+                        <th className="px-5 py-3" />
+                      </tr>
+
                   </thead>
                   <tbody>
                     {catItems.map((item, idx) => (
@@ -247,6 +255,11 @@ export default function InventoryPage() {
                             item.stockLevel.toLocaleString()
                           )}
                           {item.stockLevel <= 5 && <TrendingDown className="inline w-3 h-3 ml-1 text-red-400" />}
+                        </td>
+                        <td className="px-5 py-3 text-right text-white/50 text-xs">
+                          {item.costPerUnit != null ? (
+                            <span className="text-amber-400 font-bold">GHS {Number(item.costPerUnit).toFixed(2)}</span>
+                          ) : <span className="text-white/20">—</span>}
                         </td>
                         <td className="px-5 py-3 text-right text-white/50">{item.unit}</td>
                         <td className="px-5 py-3 text-right">
@@ -366,6 +379,20 @@ export default function InventoryPage() {
                   />
                 </div>
               )}
+
+              {/* Cost per unit */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-white/50 uppercase tracking-wider">Cost Per Unit (GHS)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={form.costPerUnit}
+                  onChange={e => setForm(p => ({ ...p, costPerUnit: e.target.value }))}
+                  placeholder="0.00"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-amber-400 text-sm font-bold placeholder-white/20 focus:outline-none focus:border-amber-500/50"
+                />
+              </div>
 
               <motion.button
                 whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}

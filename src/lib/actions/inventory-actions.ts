@@ -10,6 +10,7 @@ export async function createInventoryItem(data: {
   stockLevel: number
   unit: string
   category?: string
+  costPerUnit?: number
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
@@ -26,6 +27,7 @@ export async function createInventoryItem(data: {
       }
     })
     revalidatePath('/dashboard/inventory')
+    revalidatePath('/dashboard')
     return { success: true, item: { ...item, stockLevel: Number(item.stockLevel) } }
   }).catch((error: any) => {
     console.error('Error creating inventory item:', error)
@@ -38,6 +40,7 @@ export async function updateInventoryItem(id: number, data: {
   stockLevel?: number
   unit?: string
   category?: string
+  costPerUnit?: number
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
@@ -51,6 +54,7 @@ export async function updateInventoryItem(id: number, data: {
       data
     })
     revalidatePath('/dashboard/inventory')
+    revalidatePath('/dashboard')
     return { success: true, item: { ...item, stockLevel: Number(item.stockLevel) } }
   }).catch((error: any) => {
     console.error('Error updating inventory item:', error)
@@ -87,4 +91,15 @@ export async function getAllInventory() {
       orderBy: { itemName: 'asc' }
     })
   })
+}
+
+/** Returns the current stock level of the Eggs inventory item for the active farm */
+export async function getEggInventoryStock(): Promise<number> {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return 0
+
+  const eggItem = await prisma.inventory.findFirst({
+    where: { farmId: activeFarmId, category: 'EGGS' }
+  })
+  return eggItem ? Number(eggItem.stockLevel) : 0
 }
