@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Shield, ShieldCheck, Database, LayoutDashboard, Settings } from 'lucide-react';
+import { X, Shield, ShieldCheck, Database, LayoutDashboard, Settings, Egg, Wheat, ThermometerSun, XCircle, Users, Banknote } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 
 interface PermissionsModalProps {
@@ -16,6 +16,20 @@ interface PermissionsModalProps {
     canEditInventory: boolean;
     canViewBatches: boolean;
     canEditBatches: boolean;
+    canViewSales: boolean;
+    canEditSales: boolean;
+    canViewEggs: boolean;
+    canEditEggs: boolean;
+    canViewFeeding: boolean;
+    canEditFeeding: boolean;
+    canViewHouses: boolean;
+    canEditHouses: boolean;
+    canViewMortality: boolean;
+    canEditMortality: boolean;
+    canViewCustomers: boolean;
+    canEditCustomers: boolean;
+    canViewTeam: boolean;
+    canEditTeam: boolean;
   };
   onSave: (permissions: any) => Promise<void>;
   isLoading: boolean;
@@ -29,6 +43,20 @@ export function PermissionsModal({ isOpen, onClose, staffName, initialPermission
     canEditInventory: initialPermissions?.canEditInventory || false,
     canViewBatches: initialPermissions?.canViewBatches || false,
     canEditBatches: initialPermissions?.canEditBatches || false,
+    canViewSales: initialPermissions?.canViewSales || false,
+    canEditSales: initialPermissions?.canEditSales || false,
+    canViewEggs: initialPermissions?.canViewEggs || false,
+    canEditEggs: initialPermissions?.canEditEggs || false,
+    canViewFeeding: initialPermissions?.canViewFeeding || false,
+    canEditFeeding: initialPermissions?.canEditFeeding || false,
+    canViewHouses: initialPermissions?.canViewHouses || false,
+    canEditHouses: initialPermissions?.canEditHouses || false,
+    canViewMortality: initialPermissions?.canViewMortality || false,
+    canEditMortality: initialPermissions?.canEditMortality || false,
+    canViewCustomers: initialPermissions?.canViewCustomers || false,
+    canEditCustomers: initialPermissions?.canEditCustomers || false,
+    canViewTeam: initialPermissions?.canViewTeam || false,
+    canEditTeam: initialPermissions?.canEditTeam || false,
   });
 
   const handleToggle = (key: keyof typeof permissions) => {
@@ -120,10 +148,34 @@ export function PermissionsModal({ isOpen, onClose, staffName, initialPermission
                     </p>
                   </div>
                   
-                  <div className="space-y-3 sm:space-y-4">
-                    <PermissionRow title="Finance" viewKey="canViewFinance" editKey="canEditFinance" icon={Database} />
-                    <PermissionRow title="Inventory" viewKey="canViewInventory" editKey="canEditInventory" icon={LayoutDashboard} />
-                    <PermissionRow title="Livestock Units" viewKey="canViewBatches" editKey="canEditBatches" icon={Settings} />
+                  <div className="space-y-6">
+                    <div>
+                      <p className="px-1 text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3 ml-2">Commercial Hub</p>
+                      <div className="space-y-3 sm:space-y-4">
+                        <PermissionRow title="Finance" viewKey="canViewFinance" editKey="canEditFinance" icon={Database} />
+                        <PermissionRow title="Sales" viewKey="canViewSales" editKey="canEditSales" icon={Banknote} />
+                        <PermissionRow title="Customers" viewKey="canViewCustomers" editKey="canEditCustomers" icon={Users} />
+                        <PermissionRow title="Inventory" viewKey="canViewInventory" editKey="canEditInventory" icon={LayoutDashboard} />
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="px-1 text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3 ml-2 mt-4">Operations</p>
+                      <div className="space-y-3 sm:space-y-4">
+                        <PermissionRow title="Livestock Units" viewKey="canViewBatches" editKey="canEditBatches" icon={Settings} />
+                        <PermissionRow title="Houses" viewKey="canViewHouses" editKey="canEditHouses" icon={ThermometerSun} />
+                        <PermissionRow title="Eggs" viewKey="canViewEggs" editKey="canEditEggs" icon={Egg} />
+                        <PermissionRow title="Feeding" viewKey="canViewFeeding" editKey="canEditFeeding" icon={Wheat} />
+                        <PermissionRow title="Mortality" viewKey="canViewMortality" editKey="canEditMortality" icon={XCircle} />
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="px-1 text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3 ml-2 mt-4">Governance</p>
+                      <div className="space-y-3 sm:space-y-4">
+                        <PermissionRow title="Team Management" viewKey="canViewTeam" editKey="canEditTeam" icon={Shield} />
+                      </div>
+                    </div>
                   </div>
 
                   {/* Warning Note for small screens */}

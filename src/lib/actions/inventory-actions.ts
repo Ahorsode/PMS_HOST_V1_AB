@@ -25,7 +25,7 @@ export async function createInventoryItem(data: {
         farmId: activeFarmId
       }
     })
-    revalidatePath('/dashboard/feed')
+    revalidatePath('/dashboard/inventory')
     return { success: true, item: { ...item, stockLevel: Number(item.stockLevel) } }
   }).catch((error: any) => {
     console.error('Error creating inventory item:', error)
@@ -50,7 +50,7 @@ export async function updateInventoryItem(id: number, data: {
       where: { id, farmId: activeFarmId },
       data
     })
-    revalidatePath('/dashboard/feed')
+    revalidatePath('/dashboard/inventory')
     return { success: true, item: { ...item, stockLevel: Number(item.stockLevel) } }
   }).catch((error: any) => {
     console.error('Error updating inventory item:', error)
@@ -69,7 +69,7 @@ export async function deleteInventoryItem(id: number) {
     await tx.inventory.delete({
       where: { id, farmId: activeFarmId }
     })
-    revalidatePath('/dashboard/feed')
+    revalidatePath('/dashboard/inventory')
     return { success: true }
   }).catch((error: any) => {
     console.error('Error deleting inventory item:', error)

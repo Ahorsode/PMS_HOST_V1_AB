@@ -28,7 +28,25 @@ export async function createSale(data: {
         }
       }
     })
+
+    // Deduct egg inventory for any item whose description contains "egg"
+    const eggItems = data.items.filter(i => /egg/i.test(i.description))
+    if (eggItems.length > 0) {
+      const totalEggsSold = eggItems.reduce((s, i) => s + i.quantity, 0)
+      const eggInventory = await tx.inventory.findFirst({
+        where: { farmId: activeFarmId, category: 'EGGS', itemName: 'Eggs' }
+      })
+      if (eggInventory) {
+        const newLevel = Math.max(0, Number(eggInventory.stockLevel) - totalEggsSold)
+        await tx.inventory.update({
+          where: { id: eggInventory.id },
+          data: { stockLevel: newLevel }
+        })
+      }
+    }
+
     revalidatePath('/dashboard/sales')
+    revalidatePath('/dashboard/inventory')
     return { success: true, sale: { ...sale, totalAmount: Number(sale.totalAmount) } }
   }).catch((error: any) => {
     console.error('Error creating sale:', error)

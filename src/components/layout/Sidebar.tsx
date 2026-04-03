@@ -33,6 +33,7 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
         { name: 'Sales', icon: Banknote, href: '/dashboard/sales', roles: ['OWNER', 'MANAGER', 'CASHIER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
         { name: 'Customers', icon: Users, href: '/dashboard/sales/customers', roles: ['OWNER', 'MANAGER', 'CASHIER', 'ACCOUNTANT'] },
         { name: 'Finance Control', icon: Wallet, href: '/dashboard/finance', roles: ['OWNER', 'MANAGER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
+        { name: 'Inventory', icon: LayoutDashboard, href: '/dashboard/inventory', roles: ['OWNER', 'MANAGER', 'ACCOUNTANT'] },
       ]
     },
     {
@@ -68,9 +69,16 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
               if (item.roles.includes(role)) return true;
               // Permission overrides
               if (permissions) {
-                if ((item.name === 'Finance' || item.name === 'Sales') && permissions.canViewFinance) return true;
+                if (item.name === 'Finance Control' && permissions.canViewFinance) return true;
                 if (item.name === 'Livestock' && permissions.canViewBatches) return true;
                 if (item.name === 'Inventory' && permissions.canViewInventory) return true;
+                if (item.name === 'Sales' && permissions.canViewSales) return true;
+                if (item.name === 'Eggs' && permissions.canViewEggs) return true;
+                if (item.name === 'Feeding' && permissions.canViewFeeding) return true;
+                if (item.name === 'Houses' && permissions.canViewHouses) return true;
+                if (item.name === 'Mortality' && permissions.canViewMortality) return true;
+                if (item.name === 'Customers' && permissions.canViewCustomers) return true;
+                if (item.name === 'Team Management' && permissions.canViewTeam) return true;
               }
               return false;
             });

@@ -297,6 +297,20 @@ export async function updateWorkerPermissions(
     canEditInventory?: boolean
     canViewBatches?: boolean
     canEditBatches?: boolean
+    canViewSales?: boolean
+    canEditSales?: boolean
+    canViewEggs?: boolean
+    canEditEggs?: boolean
+    canViewFeeding?: boolean
+    canEditFeeding?: boolean
+    canViewHouses?: boolean
+    canEditHouses?: boolean
+    canViewMortality?: boolean
+    canEditMortality?: boolean
+    canViewCustomers?: boolean
+    canEditCustomers?: boolean
+    canViewTeam?: boolean
+    canEditTeam?: boolean
   }
 ) {
   const { userId, activeFarmId } = await getAuthContext()
@@ -341,6 +355,20 @@ export async function updateWorkerPermissions(
           canEditInventory: permissions.canEditInventory ?? false,
           canViewBatches: permissions.canViewBatches ?? false,
           canEditBatches: permissions.canEditBatches ?? false,
+          canViewSales: permissions.canViewSales ?? false,
+          canEditSales: permissions.canEditSales ?? false,
+          canViewEggs: permissions.canViewEggs ?? false,
+          canEditEggs: permissions.canEditEggs ?? false,
+          canViewFeeding: permissions.canViewFeeding ?? false,
+          canEditFeeding: permissions.canEditFeeding ?? false,
+          canViewHouses: permissions.canViewHouses ?? false,
+          canEditHouses: permissions.canEditHouses ?? false,
+          canViewMortality: permissions.canViewMortality ?? false,
+          canEditMortality: permissions.canEditMortality ?? false,
+          canViewCustomers: permissions.canViewCustomers ?? false,
+          canEditCustomers: permissions.canEditCustomers ?? false,
+          canViewTeam: permissions.canViewTeam ?? false,
+          canEditTeam: permissions.canEditTeam ?? false,
         },
         update: {
           ...permissions
@@ -351,7 +379,14 @@ export async function updateWorkerPermissions(
       const fields = [
         'canViewFinance', 'canEditFinance', 
         'canViewInventory', 'canEditInventory', 
-        'canViewBatches', 'canEditBatches'
+        'canViewBatches', 'canEditBatches',
+        'canViewSales', 'canEditSales',
+        'canViewEggs', 'canEditEggs',
+        'canViewFeeding', 'canEditFeeding',
+        'canViewHouses', 'canEditHouses',
+        'canViewMortality', 'canEditMortality',
+        'canViewCustomers', 'canEditCustomers',
+        'canViewTeam', 'canEditTeam'
       ]
 
       for (const field of fields) {

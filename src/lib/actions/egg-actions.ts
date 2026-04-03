@@ -35,7 +35,27 @@ export async function createEggProduction(data: {
         userId: userId
       }
     })
+
+    // Auto-sync usable eggs into Inventory
+    const usableEggs = data.eggsCollected - (data.unusableCount || 0)
+    if (usableEggs > 0) {
+      const existing = await tx.inventory.findFirst({
+        where: { farmId: activeFarmId, category: 'EGGS', itemName: 'Eggs' }
+      })
+      if (existing) {
+        await tx.inventory.update({
+          where: { id: existing.id },
+          data: { stockLevel: { increment: usableEggs } }
+        })
+      } else {
+        await tx.inventory.create({
+          data: { farmId: activeFarmId, userId, itemName: 'Eggs', stockLevel: usableEggs, unit: 'eggs', category: 'EGGS' }
+        })
+      }
+    }
+
     revalidatePath('/dashboard/eggs')
+    revalidatePath('/dashboard/inventory')
     return { success: true, log }
   }).catch((error: any) => {
     console.error('Error creating egg production log:', error)
