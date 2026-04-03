@@ -38,7 +38,7 @@ export async function generateInvoicePDF(orderId: number) {
         resolve({
           success: true,
           pdfBase64: result.toString('base64'),
-          filename: `Invoice_${order.id}_${order.customer.name.replace(/\s+/g, '_')}.pdf`
+          filename: `Invoice_${order.id}_${order.customer?.name?.replace(/\s+/g, '_') ?? 'WalkIn'}.pdf`
         })
       })
 
@@ -54,9 +54,13 @@ export async function generateInvoicePDF(orderId: number) {
 
       // Customer Info
       doc.fillColor('#000000').fontSize(12).text('BILL TO:', 50, 140)
-      doc.fontSize(10).text(order.customer.name, 50, 155)
-      if (order.customer.phone) doc.text(`Phone: ${order.customer.phone}`, 50, 170)
-      if (order.customer.address) doc.text(`Address: ${order.customer.address}`, 50, 185)
+      if (order.customer) {
+        doc.fontSize(10).text(order.customer.name, 50, 155)
+        if (order.customer.phone) doc.text(`Phone: ${order.customer.phone}`, 50, 170)
+        if (order.customer.address) doc.text(`Address: ${order.customer.address}`, 50, 185)
+      } else {
+        doc.fontSize(10).text('Walk-in Customer', 50, 155)
+      }
       doc.moveDown()
 
       // Items Table Header
