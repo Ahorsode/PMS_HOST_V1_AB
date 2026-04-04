@@ -1,3 +1,0 @@
-﻿c580d72 Fixed components
-c53157e Fix the sales and flock button that leads to the dashboard
-43daef2 Fix the sales and flock button that leads to the dashboard
