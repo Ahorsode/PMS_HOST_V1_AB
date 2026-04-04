@@ -20,29 +20,28 @@ export default async function DashboardPage() {
   }
 
   try {
-    const stats = await getDashboardStats();
-    
-    // Use $withFarmContext for direct queries
-    const housesRaw = await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-      return await tx.house.findMany({
-        where: { farmId: activeFarmId }
-      });
-    });
+    const [stats, housesRaw, summary, membership, farm] = await Promise.all([
+      getDashboardStats(),
+      (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+        return await tx.house.findMany({
+          where: { farmId: activeFarmId }
+        });
+      }),
+      getMonthlyProductionSummary(),
+      prisma.farmMember.findUnique({
+        where: { farmId_userId: { farmId: activeFarmId, userId } }
+      }),
+      prisma.farm.findUnique({ where: { id: activeFarmId } })
+    ]);
+
+    const role = userId === farm?.userId ? 'OWNER' : membership?.role || 'WORKER';
     
     // Serialize Decimal objects to numbers for Client Components
-    const houses = housesRaw.map((house: { id: number; name: string; currentTemperature: any; currentHumidity: any }) => ({
+    const houses = (housesRaw as any[]).map((house: { id: number; name: string; currentTemperature: any; currentHumidity: any }) => ({
       ...house,
       currentTemperature: house.currentTemperature ? Number(house.currentTemperature) : null,
       currentHumidity: house.currentHumidity ? Number(house.currentHumidity) : null,
     }));
-    
-    const summary = await getMonthlyProductionSummary();
-    
-    // Fetch membership to get role
-    const membership = await prisma.farmMember.findUnique({
-      where: { farmId_userId: { farmId: activeFarmId, userId } }
-    });
-    const role = userId === (await prisma.farm.findUnique({ where: { id: activeFarmId } }))?.userId ? 'OWNER' : membership?.role || 'WORKER';
     
     return (
       <PullToRefresh>

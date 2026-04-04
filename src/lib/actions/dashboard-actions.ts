@@ -18,59 +18,6 @@ export async function getDashboardStats() {
   const canViewBatches = await checkWorkerPermissions('batches', 'view')
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    const totalBirds = await tx.livestock.aggregate({
-      where: { status: 'active', farmId: activeFarmId },
-      _sum: { currentCount: true }
-    })
-
-    const eggsData = await tx.eggProduction.aggregate({
-      where: { farmId: activeFarmId },
-      _sum: { eggsCollected: true }
-    })
-
-    // Live egg inventory stock (separate from production totals)
-    const eggInventoryItem = await tx.inventory.findFirst({
-      where: { farmId: activeFarmId, category: 'EGGS' },
-      select: { stockLevel: true }
-    })
-    const eggInventoryStock = eggInventoryItem ? Number(eggInventoryItem.stockLevel) : 0
-
-    const mortalityData = await tx.mortality.aggregate({
-      where: { farmId: activeFarmId },
-      _sum: { count: true }
-    })
-
-    const totalInitialBirds = await tx.livestock.aggregate({
-      where: { farmId: activeFarmId },
-      _sum: { initialCount: true }
-    })
-
-    const mortalityRate = totalInitialBirds._sum.initialCount 
-      ? (Number(mortalityData._sum.count || 0) / Number(totalInitialBirds._sum.initialCount)) * 100 
-      : 0
-
-    const lowFeedThreshold = 500 // kg
-    const lowFeedAlerts = await tx.inventory.findMany({
-      where: {
-        farmId: activeFarmId,
-        category: 'feed',
-        stockLevel: {
-          lt: lowFeedThreshold
-        }
-      }
-    })
-
-    const activeBatches = await tx.livestock.findMany({
-      where: { status: 'active', farmId: activeFarmId },
-      include: {
-        house: true,
-        eggProduction: {
-          orderBy: { logDate: 'desc' },
-          take: 1
-        }
-      }
-    })
-
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
@@ -78,41 +25,107 @@ export async function getDashboardStats() {
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6)
     sevenDaysAgo.setHours(0, 0, 0, 0)
 
-    const todayMortality = await tx.mortality.aggregate({
-      where: { logDate: { gte: today }, farmId: activeFarmId },
-      _sum: { count: true }
-    })
+    const [
+      totalBirds,
+      eggsData,
+      eggInventoryItem,
+      mortalityData,
+      totalInitialBirds,
+      lowFeedAlerts,
+      activeBatches,
+      todayMortality,
+      todayEggs,
+      recentEggs,
+      recentFeed,
+      recentSales,
+      recentMortality,
+      recentOrders
+    ] = await Promise.all([
+      tx.livestock.aggregate({
+        where: { status: 'active', farmId: activeFarmId },
+        _sum: { currentCount: true }
+      }),
+      tx.eggProduction.aggregate({
+        where: { farmId: activeFarmId },
+        _sum: { eggsCollected: true }
+      }),
+      tx.inventory.findFirst({
+        where: { farmId: activeFarmId, category: 'EGGS' },
+        select: { stockLevel: true }
+      }),
+      tx.mortality.aggregate({
+        where: { farmId: activeFarmId },
+        _sum: { count: true }
+      }),
+      tx.livestock.aggregate({
+        where: { farmId: activeFarmId },
+        _sum: { initialCount: true }
+      }),
+      tx.inventory.findMany({
+        where: {
+          farmId: activeFarmId,
+          category: 'feed',
+          stockLevel: { lt: 500 }
+        },
+        select: { itemName: true, stockLevel: true, unit: true }
+      }),
+      tx.livestock.findMany({
+        where: { status: 'active', farmId: activeFarmId },
+        select: {
+          id: true,
+          batchName: true,
+          currentCount: true,
+          hatchDate: true,
+          breed: true,
+          type: true,
+          house: { select: { name: true } },
+          eggProduction: {
+            orderBy: { logDate: 'desc' },
+            take: 1,
+            select: { eggsCollected: true, logDate: true }
+          }
+        }
+      }),
+      tx.mortality.aggregate({
+        where: { logDate: { gte: today }, farmId: activeFarmId },
+        _sum: { count: true }
+      }),
+      tx.eggProduction.aggregate({
+        where: { logDate: { gte: today }, farmId: activeFarmId },
+        _sum: { eggsCollected: true }
+      }),
+      tx.eggProduction.findMany({
+        where: { logDate: { gte: sevenDaysAgo }, farmId: activeFarmId },
+        orderBy: { logDate: 'asc' },
+        select: { logDate: true, eggsCollected: true }
+      }),
+      tx.feedingLog.findMany({
+        where: { logDate: { gte: sevenDaysAgo }, farmId: activeFarmId },
+        orderBy: { logDate: 'asc' },
+        select: { logDate: true, amountConsumed: true }
+      }),
+      canViewFinance ? tx.sale.findMany({
+        where: { saleDate: { gte: sevenDaysAgo }, farmId: activeFarmId },
+        orderBy: { saleDate: 'asc' },
+        select: { saleDate: true, totalAmount: true }
+      }) : Promise.resolve([]),
+      tx.mortality.findMany({
+        where: { logDate: { gte: sevenDaysAgo }, farmId: activeFarmId },
+        orderBy: { logDate: 'asc' },
+        select: { logDate: true, count: true }
+      }),
+      canViewFinance ? tx.order.findMany({
+        where: { orderDate: { gte: sevenDaysAgo }, farmId: activeFarmId },
+        orderBy: { orderDate: 'asc' },
+        select: { orderDate: true, totalAmount: true }
+      }) : Promise.resolve([])
+    ])
 
-    const todayEggs = await tx.eggProduction.aggregate({
-      where: { logDate: { gte: today }, farmId: activeFarmId },
-      _sum: { eggsCollected: true }
-    })
-
-    // Fetch raw data for last 7 days for trends
-    const recentEggs = await tx.eggProduction.findMany({
-      where: { logDate: { gte: sevenDaysAgo }, farmId: activeFarmId },
-      orderBy: { logDate: 'asc' }
-    })
+    const eggInventoryStock = eggInventoryItem ? Number(eggInventoryItem.stockLevel) : 0
     
-    const recentFeed = await tx.feedingLog.findMany({
-      where: { logDate: { gte: sevenDaysAgo }, farmId: activeFarmId },
-      orderBy: { logDate: 'asc' }
-    })
-
-    const recentSales = canViewFinance ? await tx.sale.findMany({
-      where: { saleDate: { gte: sevenDaysAgo }, farmId: activeFarmId },
-      orderBy: { saleDate: 'asc' }
-    }) : []
-
-    const recentMortality = await tx.mortality.findMany({
-      where: { logDate: { gte: sevenDaysAgo }, farmId: activeFarmId },
-      orderBy: { logDate: 'asc' }
-    })
-
-    const recentOrders = canViewFinance ? await tx.order.findMany({
-      where: { orderDate: { gte: sevenDaysAgo }, farmId: activeFarmId },
-      orderBy: { orderDate: 'asc' }
-    }) : []
+    const mortalityRate = totalInitialBirds._sum.initialCount 
+      ? (Number(mortalityData._sum.count || 0) / Number(totalInitialBirds._sum.initialCount)) * 100 
+      : 0
 
     // Helper to format Date to YYYY-MM-DD safely
     const formatDate = (date: any) => {
@@ -426,7 +439,13 @@ export async function getHouses() {
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     return await tx.house.findMany({
-      where: { farmId: activeFarmId }
+      where: { farmId: activeFarmId },
+      select: {
+        id: true,
+        name: true,
+        currentTemperature: true,
+        currentHumidity: true
+      }
     })
   }).catch((error: any) => {
     console.error('Error fetching houses:', error)
@@ -1112,10 +1131,25 @@ export async function getGlobalFlockStats() {
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const batches = await tx.batch.findMany({
       where: { farmId: activeFarmId },
-      include: {
-        mortalityRecords: true,
-        feedingLogs: true,
-        eggProduction: true,
+      select: {
+        id: true,
+        batchName: true,
+        breedType: true,
+        initialCount: true,
+        currentCount: true,
+        status: true,
+        house: {
+          select: { name: true }
+        },
+        mortalityRecords: {
+          select: { count: true }
+        },
+        feedingLogs: {
+          select: { amountConsumed: true }
+        },
+        eggProduction: {
+          select: { eggsCollected: true }
+        }
       }
     })
 

@@ -1,21 +1,33 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import { HealthBadge } from '@/components/ui/HealthBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { RegisterBatchForm } from '@/components/forms/RegisterBatchForm';
 import { useLivestockStats } from '@/hooks/useLivestockStats';
 import { motion } from 'framer-motion';
 import { Bird, Skull, Wheat, TrendingUp, Activity, Plus, Package, Eye, Banknote, Syringe } from 'lucide-react';
 import Link from 'next/link';
 import { Dialog } from '@/components/ui/Dialog';
 import { formatCurrency } from '@/lib/utils';
-import { FinancialOverview } from '@/components/dashboard/FinancialOverview';
-import { MarketingSuite } from '@/components/dashboard/MarketingSuite';
 import { LivestockType, Role } from '@prisma/client';
 import { formatLivestockType } from '@/lib/utils/growth-utils';
-import { AccountantDashboard } from '@/components/dashboard/AccountantDashboard';
-import { WorkerDashboard } from '@/components/dashboard/WorkerDashboard';
+import dynamic from 'next/dynamic';
+
+const RegisterBatchForm = dynamic(() => import('@/components/forms/RegisterBatchForm').then(mod => mod.RegisterBatchForm), {
+  loading: () => <div className="h-96 w-full animate-pulse bg-white/5 rounded-3xl" />
+});
+const FinancialOverview = dynamic(() => import('@/components/dashboard/FinancialOverview').then(mod => mod.FinancialOverview), {
+  loading: () => <div className="h-32 w-full animate-pulse bg-white/5 rounded-3xl" />
+});
+const MarketingSuite = dynamic(() => import('@/components/dashboard/MarketingSuite').then(mod => mod.MarketingSuite), {
+  loading: () => <div className="h-64 w-full animate-pulse bg-white/5 rounded-3xl" />
+});
+const AccountantDashboard = dynamic(() => import('@/components/dashboard/AccountantDashboard').then(mod => mod.AccountantDashboard), {
+  loading: () => <div className="h-screen w-full animate-pulse bg-white/5 rounded-3xl" />
+});
+const WorkerDashboard = dynamic(() => import('@/components/dashboard/WorkerDashboard').then(mod => mod.WorkerDashboard), {
+  loading: () => <div className="h-screen w-full animate-pulse bg-white/5 rounded-3xl" />
+});
 
 interface DashboardContentProps {
   role: Role;
@@ -211,7 +223,7 @@ export function DashboardContent({ stats, houses, summary, role }: DashboardCont
                         </div>
                      </div>
                      <div className="mt-4 pt-4 border-t border-white/5">
-                        <MiniBarChart data={stats.mortalityTrendData.map(d => d.count)} color="bg-red-400" />
+                        <MiniBarChart data={stats.mortalityTrendData.map((d: { count: number }) => d.count)} color="bg-red-400" />
                         <p className="text-[8px] text-center text-red-400/50 uppercase tracking-widest mt-2 font-black">7 Day Mortality Trend</p>
                      </div>
                   </div>
@@ -240,12 +252,14 @@ export function DashboardContent({ stats, houses, summary, role }: DashboardCont
                      <p className="text-[10px] text-white/70 font-bold uppercase tracking-widest mt-1 italic">Total Stock</p>
                    </div>
                 </div>
-                <MiniBarChart data={stats.eggTrendData.map(d => d.count)} color="bg-blue-400" />
+                <MiniBarChart data={stats.eggTrendData.map((d: { count: number }) => d.count)} color="bg-blue-400" />
                 <p className="text-[8px] text-center text-white/40 uppercase tracking-widest mt-2">7 Day Trend</p>
               </CardContent>
             </Card>
 
-            <FinancialOverview data={summary} />
+            <Suspense fallback={<div className="md:col-span-2 lg:col-span-2 bg-white/5 h-32 rounded-3xl animate-pulse" />}>
+              <FinancialOverview data={summary} />
+            </Suspense>
 
             {/* Productivity Index Benchmarking */}
             <Card className="md:col-span-2 lg:col-span-2 bg-purple-500/15 border-purple-500/20 relative overflow-hidden group">
@@ -257,7 +271,7 @@ export function DashboardContent({ stats, houses, summary, role }: DashboardCont
                   <div className="flex items-baseline gap-2">
                      <span className="text-5xl font-black text-white tracking-tighter">
                        {stats.activeBatches.length > 0
-                         ? (stats.activeBatches.reduce((acc, batch) => acc + getGrowthProgress(batch.hatchDate, batch.breed).percent, 0) / stats.activeBatches.length).toFixed(1)
+                         ? (stats.activeBatches.reduce((acc: number, batch: any) => acc + getGrowthProgress(batch.hatchDate, batch.breed).percent, 0) / stats.activeBatches.length).toFixed(1)
                          : stats.productivityIndex || 94.2}%
                      </span>
                      <span className="text-[10px] font-black uppercase text-purple-400 tracking-widest italic">Efficiency</span>
@@ -266,7 +280,7 @@ export function DashboardContent({ stats, houses, summary, role }: DashboardCont
                   <div className="h-2 w-full bg-white/5 rounded-full mt-2 overflow-hidden border border-white/5">
                      <motion.div 
                        initial={{ width: 0 }}
-                       animate={{ width: `${stats.activeBatches.length > 0 ? (stats.activeBatches.reduce((acc, batch) => acc + getGrowthProgress(batch.hatchDate, batch.breed).percent, 0) / stats.activeBatches.length) : (stats.productivityIndex || 94.2)}%` }}
+                       animate={{ width: `${stats.activeBatches.length > 0 ? (stats.activeBatches.reduce((acc: number, batch: any) => acc + getGrowthProgress(batch.hatchDate, batch.breed).percent, 0) / stats.activeBatches.length) : (stats.productivityIndex || 94.2)}%` }}
                        transition={{ duration: 1.5, delay: 0.5 }}
                        className="h-full bg-gradient-to-r from-purple-600 to-purple-400"
                      />
@@ -317,7 +331,7 @@ export function DashboardContent({ stats, houses, summary, role }: DashboardCont
                 <Activity className="w-5 h-5 text-amber-400/50 flex-shrink-0" />
               </CardHeader>
               <CardContent className="flex-1 overflow-y-auto custom-scrollbar space-y-3 mt-2 pr-2">
-                {stats.alerts.map((alert, idx) => {
+                {stats.alerts.map((alert: any, idx: number) => {
                   const Icon = alert.type === 'VACCINE' ? Syringe : 
                                alert.type === 'MEDICATION' ? Activity : 
                                alert.type === 'EGGS' ? Package : Wheat;
@@ -341,7 +355,7 @@ export function DashboardContent({ stats, houses, summary, role }: DashboardCont
                   );
                 })}
 
-                {stats.lowFeedItems.map((item, idx) => (
+                {stats.lowFeedItems.map((item: any, idx: number) => (
                    <div key={`feed-${idx}`} className="flex items-center gap-3 bg-red-500/15 p-3 rounded-2xl border border-red-500/20">
                       <Wheat className="w-5 h-5 text-red-500 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
@@ -368,18 +382,20 @@ export function DashboardContent({ stats, houses, summary, role }: DashboardCont
               <CardContent className="flex-1 flex flex-col justify-between pt-2 relative z-10">
                  <div>
                     <p className="text-4xl font-black text-white tracking-tighter">
-                      {stats.feedTrendData.reduce((sum, d) => sum + d.count, 0).toLocaleString()} <span className="text-lg">kg</span>
+                      {stats.feedTrendData.reduce((sum: number, d: { count: number }) => sum + d.count, 0).toLocaleString()} <span className="text-lg">kg</span>
                     </p>
                     <p className="text-[10px] text-white/70 font-bold uppercase tracking-widest mt-1 italic">Weekly Consumption</p>
                  </div>
                  <div>
-                   <MiniBarChart data={stats.feedTrendData.map(d => d.count)} color="bg-emerald-400" />
+                   <MiniBarChart data={stats.feedTrendData.map((d: { count: number }) => d.count)} color="bg-emerald-400" />
                    <p className="text-[8px] text-center text-white/40 uppercase tracking-widest mt-2">Daily Breakdown (Last 7 Days)</p>
                  </div>
               </CardContent>
             </Card>
 
-            <MarketingSuite />
+            <Suspense fallback={<div className="md:col-span-1 lg:col-span-2 bg-white/5 h-64 rounded-3xl animate-pulse" />}>
+              <MarketingSuite />
+            </Suspense>
           </div>
 
           {/* Active Units List */}
@@ -389,7 +405,7 @@ export function DashboardContent({ stats, houses, summary, role }: DashboardCont
                 <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent mx-6" />
              </div>
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-               {stats.activeBatches.map((batch) => {
+               {stats.activeBatches.map((batch: any) => {
                  const progress = getGrowthProgress(batch.hatchDate, batch.breed);
                  const unit = getUnitBySpecies(batch.type);
                  const formattedAge = formatAge(batch.hatchDate, batch.type);

@@ -162,6 +162,8 @@ model Livestock {
   vaccinations         VaccinationSchedule[]
   weightRecords        WeightRecord[]
 
+  @@index([status])
+  @@index([type])
   @@index([userId])
   @@index([farmId])
   @@map("batches")
@@ -205,6 +207,7 @@ model FeedingLog {
   formulation    FeedFormulation? @relation(fields: [formulationId], references: [id])
   user           User?            @relation(fields: [userId], references: [id])
 
+  @@index([batchId, logDate])
   @@index([userId])
   @@index([farmId])
   @@map("daily_feeding_logs")
@@ -238,6 +241,7 @@ model EggProduction {
   batch         Livestock @relation(fields: [batchId], references: [id])
   farm          Farm      @relation(fields: [farmId], references: [id])
 
+  @@index([batchId, logDate])
   @@index([userId])
   @@index([farmId])
   @@map("egg_production")
@@ -257,6 +261,7 @@ model Mortality {
   batch       Livestock @relation(fields: [batchId], references: [id])
   farm        Farm      @relation(fields: [farmId], references: [id])
 
+  @@index([batchId, logDate])
   @@index([userId])
   @@index([farmId])
   @@map("mortality")
@@ -290,6 +295,7 @@ model Sale {
   items        SaleItem[]
   farm         Farm       @relation(fields: [farmId], references: [id])
 
+  @@index([saleDate, status])
   @@index([userId])
   @@index([farmId])
   @@map("sales")
@@ -418,6 +424,7 @@ model Expense {
   farm        Farm            @relation(fields: [farmId], references: [id], onDelete: Cascade)
   user        User            @relation(fields: [userId], references: [id])
 
+  @@index([expenseDate, category])
   @@index([farmId])
   @@index([userId])
   @@index([batch_id])
@@ -528,6 +535,7 @@ model Order {
   customer       Customer?   @relation(fields: [customerId], references: [id])
   farm           Farm        @relation(fields: [farmId], references: [id])
 
+  @@index([orderDate, status])
   @@map("orders")
 }
 

@@ -1,4 +1,5 @@
 import React from 'react';
+export const revalidate = 3600; // Cache for 1 hour
 import { getGlobalFlockStats } from '@/lib/actions/dashboard-actions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Bird, Skull, Wheat, TrendingUp, Activity, ChevronRight } from 'lucide-react';
