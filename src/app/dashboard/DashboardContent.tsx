@@ -193,7 +193,7 @@ export function DashboardContent({ stats, houses, summary, role }: DashboardCont
               </CardHeader>
               <CardContent className="flex flex-col h-full relative z-10 pt-4 pb-6">
                 <div className="mt-2">
-                   <span className="text-7xl font-black text-white tracking-tighter">{stats.totalBirds.toLocaleString()}</span>
+                   <span className="text-7xl font-black text-white tracking-tighter">{(stats?.totalBirds || 0).toLocaleString()}</span>
                    <div className="text-emerald-400 font-black text-xl mt-1 italic">Active Livestock</div>
                 </div>
                 
@@ -244,11 +244,11 @@ export function DashboardContent({ stats, houses, summary, role }: DashboardCont
               <CardContent className="relative z-10">
                 <div className="flex justify-between items-end border-b border-white/5 pb-4 mb-2">
                    <div>
-                     <p className="text-4xl font-black text-white tracking-tighter">{stats.todayEggs.toLocaleString()}</p>
+                     <p className="text-4xl font-black text-white tracking-tighter">{(stats?.todayEggs || 0).toLocaleString()}</p>
                      <p className="text-[10px] text-white/70 font-bold uppercase tracking-widest mt-1 italic">Collected (Crates)</p>
                    </div>
                    <div className="text-right">
-                     <p className="text-2xl font-black text-white tracking-tighter">{stats.totalEggs.toLocaleString()}</p>
+                     <p className="text-2xl font-black text-white tracking-tighter">{(stats?.totalEggs || 0).toLocaleString()}</p>
                      <p className="text-[10px] text-white/70 font-bold uppercase tracking-widest mt-1 italic">Total Stock</p>
                    </div>
                 </div>
@@ -380,9 +380,9 @@ export function DashboardContent({ stats, houses, summary, role }: DashboardCont
                 <Wheat className="w-5 h-5 text-emerald-400/50" />
               </CardHeader>
               <CardContent className="flex-1 flex flex-col justify-between pt-2 relative z-10">
-                 <div>
+                  <div>
                     <p className="text-4xl font-black text-white tracking-tighter">
-                      {stats.feedTrendData.reduce((sum: number, d: { count: number }) => sum + d.count, 0).toLocaleString()} <span className="text-lg">kg</span>
+                      {(stats.feedTrendData?.reduce((sum: number, d: { count: number }) => sum + (d.count || 0), 0) || 0).toLocaleString()} <span className="text-lg">kg</span>
                     </p>
                     <p className="text-[10px] text-white/70 font-bold uppercase tracking-widest mt-1 italic">Weekly Consumption</p>
                  </div>
@@ -431,7 +431,7 @@ export function DashboardContent({ stats, houses, summary, role }: DashboardCont
                      <div className="grid grid-cols-2 gap-4 mb-6 bg-black/40 p-4 rounded-2xl">
                         <div className="flex flex-col">
                            <span className="text-white/40 text-[9px] font-bold uppercase tracking-widest mb-1">Quantity/Weight ({unit})</span>
-                           <span className="text-white font-black text-xl tracking-tight leading-none">{batch.quantity.toLocaleString()}</span>
+                           <span className="text-white font-black text-xl tracking-tight leading-none">{(batch.quantity || 0).toLocaleString()}</span>
                         </div>
                         <div className="flex flex-col items-end">
                            <span className="text-white/40 text-[9px] font-bold uppercase tracking-widest mb-1">Growth Target</span>

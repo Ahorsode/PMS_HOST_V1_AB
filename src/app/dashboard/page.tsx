@@ -53,8 +53,8 @@ export default async function DashboardPage() {
       <div className="p-8 text-center bg-red-50 rounded-lg border border-red-200">
         <h2 className="text-xl font-bold text-red-800 mb-2">Database Connection Error</h2>
         <p className="text-red-600">
-          The dashboard is currently unavailable as it cannot connect to the database. 
-          Please ensure PostgreSQL is running at localhost:5432.
+          The dashboard is currently unavailable due to an issue connecting to the database or retrieving data. 
+          Please check your connection and ensure the database schema is up-to-date.
         </p>
       </div>
     );

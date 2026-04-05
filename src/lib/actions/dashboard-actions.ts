@@ -75,8 +75,8 @@ export async function getDashboardStats() {
           id: true,
           batchName: true,
           currentCount: true,
-          hatchDate: true,
-          breed: true,
+          arrivalDate: true,
+          breedType: true,
           type: true,
           house: { select: { name: true } },
           eggProduction: {
@@ -241,8 +241,8 @@ export async function getDashboardStats() {
         numericId: batch.id,
         type: batch.type,
         breed: batch.breedType || 'Unknown',
-        quantity: batch.currentCount,
-        hatchDate: batch.arrivalDate.toISOString(),
+        quantity: batch.currentCount || 0, // Fallback to 0 if undefined
+        hatchDate: batch.arrivalDate ? batch.arrivalDate.toISOString() : new Date().toISOString(),
         status: batch.status,
         houseNumber: batch.house?.name || 'N/A'
       })),
@@ -1129,7 +1129,7 @@ export async function getGlobalFlockStats() {
   if (!activeFarmId) return []
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    const batches = await tx.batch.findMany({
+    const batches = await tx.livestock.findMany({
       where: { farmId: activeFarmId },
       select: {
         id: true,
