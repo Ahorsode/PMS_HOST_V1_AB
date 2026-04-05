@@ -14,7 +14,7 @@ export default function GoogleButton({ onClick, label }: GoogleButtonProps) {
       whileHover={{ scale: 1.02, y: -2 }}
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className="group relative flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl border border-white/10 bg-white px-6 py-4 text-sm font-semibold text-black transition-all hover:bg-white/90"
+      className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-md border border-white/10 bg-white px-5 py-3 text-sm font-semibold text-black transition-all hover:bg-white/90"
       style={{
         boxShadow: "0 10px 30px -10px rgba(255, 255, 255, 0.2)"
       }}

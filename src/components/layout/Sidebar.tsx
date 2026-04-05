@@ -48,22 +48,22 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
 
   return (
     <aside className="hidden md:block fixed left-6 top-6 bottom-6 w-20 hover:w-64 group transition-all duration-500 ease-out z-50">
-      <div className="h-full glass-pill rounded-[2.5rem] flex flex-col items-stretch pt-8 pb-4 overflow-hidden">
+      <div className="h-full glass-pill rounded-lg flex flex-col items-stretch pt-7 pb-3 overflow-hidden">
         
         {/* Logo Section */}
-        <div className="px-6 mb-10 flex items-center flex-shrink-0">
+        <div className="px-5 mb-9 flex items-center flex-shrink-0">
           <img 
             src="/logo.png" 
             alt="Agri-ERP Logo" 
-            className="w-12 h-12 rounded-2xl object-cover shadow-lg shadow-emerald-500/20 shrink-0 mx-auto group-hover:mx-0"
+            className="w-12 h-12 rounded-md object-cover shadow-lg shadow-emerald-500/20 shrink-0 mx-auto group-hover:mx-0"
           />
-          <span className="ml-4 font-black text-xl tracking-tighter text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+          <span className="ml-3 font-bold text-xl tracking-normal text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
             Agri<span className="text-emerald-400 text-shadow-glow">Tech</span>
           </span>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 space-y-8 overflow-y-auto custom-scrollbar overflow-x-hidden">
+        <nav className="flex-1 px-3 space-y-7 overflow-y-auto custom-scrollbar overflow-x-hidden">
           {categories.map((category) => {
             const visibleItems = category.items.filter(item => {
               if (item.roles.includes(role)) return true;
@@ -87,7 +87,7 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
 
             return (
               <div key={category.name} className="space-y-2">
-                <p className="px-4 text-[10px] font-black uppercase tracking-[0.2em] text-white/20 group-hover:opacity-100 opacity-0 transition-opacity">
+                <p className="px-3 text-xs font-bold uppercase tracking-[0.2em] text-white/20 group-hover:opacity-100 opacity-0 transition-opacity">
                   {category.name}
                 </p>
                 {visibleItems.map((item) => {
@@ -97,18 +97,18 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
                       key={item.name}
                       href={item.href}
                       className={cn(
-                        "relative flex items-center h-12 rounded-2xl transition-all duration-300 group/item overflow-hidden",
+                        "relative flex items-center h-12 rounded-md transition-all duration-300 group/item overflow-hidden",
                         isActive 
                           ? "bg-emerald-500/20 text-emerald-400 shadow-[inset_0_0_20px_rgba(16,185,129,0.1)] border border-emerald-500/20" 
-                          : "text-white/60 hover:text-white hover:bg-white/15"
+                          : "text-white/80 hover:text-white hover:bg-white/15"
                       )}
                     >
                       <div className="w-12 h-12 flex items-center justify-center shrink-0">
-                        <item.icon className={cn("w-6 h-6 transition-all duration-300 group-hover/item:scale-110", isActive ? "text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]" : "text-white/40 group-hover/item:text-white")} />
+                        <item.icon className={cn("w-6 h-6 transition-all duration-300 group-hover/item:scale-110", isActive ? "text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]" : "text-white/70 group-hover/item:text-white")} />
                       </div>
                       <span className={cn(
-                        "ml-1 font-bold text-sm tracking-tight opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap",
-                        isActive ? "text-emerald-400" : "text-white/60 group-hover:text-white"
+                        "ml-1 font-bold text-sm tracking-normal opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap",
+                        isActive ? "text-emerald-400" : "text-white/80 group-hover:text-white"
                       )}>
                         {item.name}
                       </span>
@@ -121,34 +121,34 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
         </nav>
 
         {/* Footer Actions */}
-        <div className="mt-auto px-4 w-full pb-4 space-y-2 flex-shrink-0">
-            <div className="h-px bg-white/10 mb-4 group-hover:block hidden" />
+        <div className="mt-auto px-3 w-full pb-3 space-y-2 flex-shrink-0">
+            <div className="h-px bg-white/10 mb-3 group-hover:block hidden" />
             
             {/* Profile Action */}
             <Link 
               href="/dashboard/profile"
-              className="flex items-center hover:bg-white/5 rounded-2xl p-2 transition-all cursor-pointer group/profile"
+              className="flex items-center hover:bg-white/5 rounded-md p-2 transition-all cursor-pointer group/profile"
             >
-              <div className="w-10 h-10 rounded-xl bg-emerald-400/10 flex items-center justify-center text-emerald-400 font-black shrink-0 group-hover/profile:bg-emerald-400/20 transition-colors uppercase">
+              <div className="w-10 h-10 rounded-md bg-emerald-400/10 flex items-center justify-center text-emerald-400 font-bold shrink-0 group-hover/profile:bg-emerald-400/20 transition-colors uppercase">
                 {role.charAt(0)}
               </div>
-              <div className="ml-3 overflow-hidden opacity-0 group-hover:opacity-100 transition-all duration-300">
-                <p className="text-xs font-black text-white truncate">My Profile</p>
-                <p className="text-[10px] text-white/40 font-bold uppercase tracking-wider">{role.toLowerCase()}</p>
+              <div className="ml-2 overflow-hidden opacity-0 group-hover:opacity-100 transition-all duration-300">
+                <p className="text-xs font-bold text-white truncate">My Profile</p>
+                <p className="text-xs text-white/70 font-bold uppercase tracking-wider">{role.toLowerCase()}</p>
               </div>
             </Link>
 
             {/* Logout Action */}
             <div 
               onClick={() => signOut({ callbackUrl: '/login' })}
-              className="flex items-center hover:bg-red-500/10 rounded-2xl p-2 transition-all cursor-pointer group/logout"
+              className="flex items-center hover:bg-red-500/10 rounded-md p-2 transition-all cursor-pointer group/logout"
             >
-              <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-white/40 shrink-0 group-hover/logout:bg-red-500/20 group-hover/logout:text-red-400 transition-colors">
+              <div className="w-10 h-10 rounded-md bg-white/10 flex items-center justify-center text-white/70 shrink-0 group-hover/logout:bg-red-500/20 group-hover/logout:text-red-400 transition-colors">
                 <LogOut className="w-5 h-5" />
               </div>
-              <div className="ml-3 overflow-hidden opacity-0 group-hover:opacity-100 transition-all duration-300">
-                <p className="text-xs font-black text-white group-hover/logout:text-red-400 transition-colors">Sign Out</p>
-                <p className="text-[10px] text-white/40 font-bold uppercase tracking-wider">End Session</p>
+              <div className="ml-2 overflow-hidden opacity-0 group-hover:opacity-100 transition-all duration-300">
+                <p className="text-xs font-bold text-white group-hover/logout:text-red-400 transition-colors">Sign Out</p>
+                <p className="text-xs text-white/70 font-bold uppercase tracking-wider">End Session</p>
               </div>
             </div>
         </div>

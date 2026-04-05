@@ -63,11 +63,11 @@ export function FinancialInitializationModal({ isOpen, onClose, batchId, batchNa
       title={`Financial Initialization: ${batchName}`}
       description="Initialize the investment costs for this livestock unit. These will be recorded as farm expenses for accurate P&L reporting."
     >
-      <div className="space-y-6 pt-4">
+      <div className="space-y-5 pt-3">
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-emerald-400 flex items-center gap-2">
+            <label className="text-xs font-bold uppercase tracking-widest text-emerald-400 flex items-center gap-2">
                <Banknote className="w-3 h-3" /> Actual Unit Cost
             </label>
             <input 
@@ -75,11 +75,11 @@ export function FinancialInitializationModal({ isOpen, onClose, batchId, batchNa
               value={actualCost}
               onChange={(e) => setActualCost(Number(e.target.value))}
               placeholder="0.00"
-              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:border-emerald-500/50 transition-colors outline-none"
+              className="w-full bg-black/60 border border-white/10 rounded-md px-3 py-2 text-white font-bold focus:border-emerald-500/50 transition-colors outline-none"
             />
           </div>
           <div className="space-y-2">
-            <label className="text-[10px] font-black uppercase tracking-widest text-blue-400 flex items-center gap-2">
+            <label className="text-xs font-bold uppercase tracking-widest text-blue-400 flex items-center gap-2">
                <Truck className="w-3 h-3" /> Carriage / Transport
             </label>
             <input 
@@ -87,14 +87,14 @@ export function FinancialInitializationModal({ isOpen, onClose, batchId, batchNa
               value={carriageCost}
               onChange={(e) => setCarriageCost(Number(e.target.value))}
               placeholder="0.00"
-              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white font-bold focus:border-blue-500/50 transition-colors outline-none"
+              className="w-full bg-black/60 border border-white/10 rounded-md px-3 py-2 text-white font-bold focus:border-blue-500/50 transition-colors outline-none"
             />
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="flex justify-between items-center">
-            <label className="text-[10px] font-black uppercase tracking-widest text-purple-400 flex items-center gap-2">
+            <label className="text-xs font-bold uppercase tracking-widest text-purple-400 flex items-center gap-2">
                Other Direct Expenses
             </label>
             <button 
@@ -105,49 +105,49 @@ export function FinancialInitializationModal({ isOpen, onClose, batchId, batchNa
             </button>
           </div>
 
-          <div className="space-y-3 max-h-[200px] overflow-y-auto custom-scrollbar pr-2">
+          <div className="space-y-2 max-h-[200px] overflow-y-auto custom-scrollbar pr-2">
              {otherExpenses.map((exp, idx) => (
                <div key={idx} className="flex gap-2 items-center">
                   <input 
                     placeholder="Expense Label (e.g. Agent Fee)"
                     value={exp.label}
                     onChange={(e) => updateOtherExpense(idx, 'label', e.target.value)}
-                    className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-white font-bold"
+                    className="flex-1 bg-black/60 border border-white/10 rounded-md px-3 py-2 text-xs text-white font-bold"
                   />
                   <input 
                     type="number"
                     placeholder="0.00"
                     value={exp.amount}
                     onChange={(e) => updateOtherExpense(idx, 'amount', Number(e.target.value))}
-                    className="w-24 bg-black/40 border border-white/10 rounded-xl px-4 py-2 text-xs text-white font-bold"
+                    className="w-24 bg-black/60 border border-white/10 rounded-md px-3 py-2 text-xs text-white font-bold"
                   />
                   <button 
                     onClick={() => removeOtherExpense(idx)}
-                    className="p-2 text-red-400 hover:bg-red-500/10 rounded-xl transition-all"
+                    className="p-2 text-red-400 hover:bg-red-500/10 rounded-md transition-all"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
                </div>
              ))}
              {otherExpenses.length === 0 && (
-               <div className="text-center py-4 border border-dashed border-white/10 rounded-2xl text-white/30 text-[10px] uppercase font-black">
+               <div className="text-center py-3 border border-dashed border-white/10 rounded-md text-white/70 text-xs uppercase font-bold">
                   No additional expenses
                </div>
              )}
           </div>
         </div>
 
-        <div className="flex gap-3 pt-4">
+        <div className="flex gap-2 pt-3">
           <button 
             onClick={onClose}
-            className="flex-1 py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
+            className="flex-1 py-3 rounded-md bg-white/10 border border-white/10 text-white font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
           >
             Skip for Now
           </button>
           <button 
             onClick={handleSave}
             disabled={isSubmitting}
-            className="flex-1 py-4 rounded-2xl bg-emerald-500 text-[#064e3b] font-black text-xs uppercase tracking-widest hover:bg-emerald-400 transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] disabled:opacity-50"
+            className="flex-1 py-3 rounded-md bg-emerald-500 text-[#064e3b] font-bold text-xs uppercase tracking-widest hover:bg-emerald-400 transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] disabled:opacity-50"
           >
             {isSubmitting ? 'Saving...' : 'Save Initial Costs'}
           </button>

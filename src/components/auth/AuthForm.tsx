@@ -56,7 +56,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-6">
+    <div className="relative min-h-screen flex items-center justify-center p-5">
       <AnimatePresence>
         {isLoading && <LoadingOverlay />}
       </AnimatePresence>
@@ -69,8 +69,8 @@ export default function AuthForm({ mode }: AuthFormProps) {
           exit={{ opacity: 0, x: mode === "login" ? 20 : -20 }}
           transition={{ type: "spring", stiffness: 300, damping: 30 }}
         >
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold tracking-tight text-white mb-2">
+          <div className="text-center mb-7">
+            <h1 className="text-4xl font-bold tracking-normal text-white mb-2">
               {mode === "login" ? "Welcome Back" : "Start Your Farm"}
             </h1>
             <p className="text-gray-400">
@@ -80,7 +80,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3">
             <AnimatePresence mode="popLayout">
               {mode === "signup" && (
                 <motion.div
@@ -88,7 +88,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                   animate={{ opacity: 1, height: "auto", marginBottom: 24 }}
                   exit={{ opacity: 0, height: 0, marginBottom: 0 }}
                   transition={{ duration: 0.3 }}
-                  className="space-y-4"
+                  className="space-y-3"
                 >
                   <FloatingInput
                     label="Full Name"
@@ -134,18 +134,18 @@ export default function AuthForm({ mode }: AuthFormProps) {
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
               type="submit"
-              className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl font-bold transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] active:shadow-none"
+              className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-md font-bold transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] active:shadow-none"
             >
               {mode === "login" ? "Sign In" : "Create Account"}
             </motion.button>
           </form>
 
-          <div className="relative my-8">
+          <div className="relative my-7">
             <div className="absolute inset-0 flex items-center">
               <span className="w-full border-t border-white/10"></span>
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-[#121212]/50 backdrop-blur-md px-4 text-gray-500">Or continue with</span>
+              <span className="bg-[#121212]/50 backdrop-blur-md px-3 text-gray-500">Or continue with</span>
             </div>
           </div>
 
@@ -154,7 +154,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
             label={mode === "login" ? "Google" : "Sign up with Google"} 
           />
 
-          <div className="mt-8 text-center text-sm text-gray-400">
+          <div className="mt-7 text-center text-sm text-gray-400">
             {mode === "login" ? (
               <>
                 Don't have an account?{" "}

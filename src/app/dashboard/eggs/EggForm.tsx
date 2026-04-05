@@ -57,9 +57,9 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
 
   if (mode === 'delete') {
     return (
-      <div className="space-y-4">
+      <div className="space-y-3">
         <p className="text-white/70 font-medium">Are you sure you want to delete this log? This action cannot be undone.</p>
-        <div className="flex justify-end gap-3">
+        <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button variant="danger" onClick={handleSubmit} isLoading={isLoading}>Delete Log</Button>
         </div>
@@ -68,7 +68,7 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-3">
       {mode === 'create' && (
         <Select
           label="Livestock"
@@ -78,7 +78,7 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
           required
         />
       )}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         <Input
           label="Total Eggs Collected"
           type="number"
@@ -112,7 +112,7 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
         onChange={(e) => setFormData({ ...formData, logDate: e.target.value })}
         required
       />
-      <div className="flex justify-end gap-3 pt-4">
+      <div className="flex justify-end gap-2 pt-3">
         <Button variant="outline" type="button" onClick={onClose}>Cancel</Button>
         <Button type="submit" isLoading={isLoading}>
           {mode === 'create' ? 'Save Log' : mode === 'edit' ? 'Update Log' : 'Save'}

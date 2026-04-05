@@ -51,9 +51,9 @@ export default async function DashboardLayout({
 
   if (!farm && dbUser?.role !== 'OWNER') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black/20 backdrop-blur-xl text-white p-8">
-        <div className="glass-morphism p-12 rounded-3xl text-center max-w-md">
-           <h2 className="text-2xl font-black mb-4 uppercase tracking-widest text-emerald-400">Access Restricted</h2>
+      <div className="min-h-screen flex items-center justify-center bg-black/20 backdrop-blur-xl text-white p-7">
+        <div className="glass-morphism p-11 rounded-lg text-center max-w-md">
+           <h2 className="text-2xl font-bold mb-3 uppercase tracking-widest text-emerald-400">Access Restricted</h2>
            <p className="opacity-70 leading-relaxed font-medium">You are not currently linked to any farm. Please contact your administrator to receive an invitation.</p>
         </div>
       </div>
@@ -81,8 +81,8 @@ export default async function DashboardLayout({
 
   return (
     <SidebarWrapper role={dbUser?.role as any} permissions={userPermissions}>
-      <div className="md:hidden sticky top-[-1.5rem] z-40 -mx-4 mb-6 px-4 py-3 bg-[#0a0a0a]/80 backdrop-blur-xl border-b border-white/10 flex items-center justify-between">
-        <h1 className="text-sm font-black text-emerald-400 tracking-widest uppercase truncate">
+      <div className="md:hidden sticky top-[-1.5rem] z-40 -mx-4 mb-5 px-3 py-2 bg-[#0a0a0a]/80 backdrop-blur-xl border-b border-white/10 flex items-center justify-between">
+        <h1 className="text-sm font-bold text-emerald-400 tracking-widest uppercase truncate">
           {farm?.name || "My Farm"}
         </h1>
       </div>

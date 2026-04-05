@@ -13,10 +13,10 @@ export const FeedActionsHeader = ({ batches, inventory }: { batches: any[], inve
   const [openItem, setOpenItem] = useState(false);
 
   return (
-    <div className="flex gap-3">
+    <div className="flex gap-2">
       <Link 
         href="/dashboard/feed/analytics"
-        className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl hover:bg-emerald-500/20 transition-all font-black uppercase text-xs tracking-widest group"
+        className="flex items-center gap-2 px-3 py-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-md hover:bg-emerald-500/20 transition-all font-bold uppercase text-xs tracking-widest group"
       >
         <Eye className="w-4 h-4 group-hover:scale-110 transition-transform" />
         Indept Management
@@ -67,7 +67,7 @@ export const InventoryActions = ({ item }: { item: any }) => {
     <div className="flex items-center gap-2">
       <Link 
         href={`/dashboard/feed/inventory/${item.id}`}
-        className="flex items-center gap-1.5 px-2 py-1 text-[10px] font-black uppercase tracking-tighter text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/20 transition-all"
+        className="flex items-center gap-1.5 px-2 py-1 text-xs font-bold uppercase tracking-normal text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/20 transition-all"
         title="Indept Management"
       >
         <Eye className="h-3 w-3" />

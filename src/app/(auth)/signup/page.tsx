@@ -73,10 +73,10 @@ export default function SignUpPage() {
   };
 
   return (
-    <main className="relative min-h-screen bg-[#0a0a0a] flex items-center justify-center overflow-hidden py-10">
+    <main className="relative min-h-screen bg-[#0a0a0a] flex items-center justify-center overflow-hidden py-9">
       <Background3D />
       
-      <div className="relative z-10 w-full max-w-md px-6">
+      <div className="relative z-10 w-full max-w-md px-5">
         <AnimatePresence mode="wait">
           {!success ? (
             <motion.div
@@ -89,26 +89,26 @@ export default function SignUpPage() {
             >
               <div className="absolute inset-0 bg-emerald-500/20 blur-[100px] rounded-full pointer-events-none" />
 
-              <div className="relative bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-10 shadow-2xl overflow-hidden group">
-                <div className="flex flex-col items-center text-center space-y-6">
+              <div className="relative bg-white/10 backdrop-blur-2xl border border-white/10 rounded-lg p-9 shadow-2xl overflow-hidden group">
+                <div className="flex flex-col items-center text-center space-y-5">
                   <motion.div 
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ type: "spring", delay: 0.2, bounce: 0.5 }}
                   >
-                    <img src="/logo.png" alt="Agri-ERP Logo" className="w-20 h-20 rounded-3xl object-cover shadow-lg shadow-emerald-500/20" />
+                    <img src="/logo.png" alt="Agri-ERP Logo" className="w-20 h-20 rounded-lg object-cover shadow-lg shadow-emerald-500/20" />
                   </motion.div>
                   
                   <div className="space-y-2">
-                    <h1 className="text-4xl font-black text-white tracking-tighter">Join Us</h1>
-                    <p className="text-white/50 font-medium">Create your poultry farm account</p>
+                    <h1 className="text-4xl font-bold text-white tracking-normal">Join Us</h1>
+                    <p className="text-white/70 font-medium">Create your poultry farm account</p>
                   </div>
 
-                  <form onSubmit={handleSubmit} className="w-full space-y-4 mt-4">
-                    <div className="grid grid-cols-2 gap-4">
+                  <form onSubmit={handleSubmit} className="w-full space-y-3 mt-3">
+                    <div className="grid grid-cols-2 gap-3">
                       <div className="relative group/input">
-                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                          <User className="w-4 h-4 text-white/30 group-focus-within/input:text-emerald-400 transition-colors" />
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <User className="w-4 h-4 text-white/70 group-focus-within/input:text-emerald-400 transition-colors" />
                         </div>
                         <input
                           type="text"
@@ -116,7 +116,7 @@ export default function SignUpPage() {
                           value={formData.firstname}
                           onChange={handleChange}
                           placeholder="First"
-                          className="w-full h-12 pl-10 pr-4 bg-black/40 border border-white/10 rounded-xl text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
+                          className="w-full h-12 pl-9 pr-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
                         />
                       </div>
                       <div className="relative group/input">
@@ -126,14 +126,14 @@ export default function SignUpPage() {
                           value={formData.surname}
                           onChange={handleChange}
                           placeholder="Surname"
-                          className="w-full h-12 px-4 bg-black/40 border border-white/10 rounded-xl text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
+                          className="w-full h-12 px-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
                         />
                       </div>
                     </div>
 
                     <div className="relative group/input">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <Mail className="w-4 h-4 text-white/30 group-focus-within/input:text-emerald-400 transition-colors" />
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Mail className="w-4 h-4 text-white/70 group-focus-within/input:text-emerald-400 transition-colors" />
                       </div>
                       <input
                         type="email"
@@ -141,13 +141,13 @@ export default function SignUpPage() {
                         value={formData.email}
                         onChange={handleChange}
                         placeholder="Email Address (Optional)"
-                        className="w-full h-12 pl-10 pr-4 bg-black/40 border border-white/10 rounded-xl text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
+                        className="w-full h-12 pl-9 pr-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
                       />
                     </div>
 
                     <div className="relative group/input">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <Phone className="w-4 h-4 text-white/30 group-focus-within/input:text-emerald-400 transition-colors" />
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Phone className="w-4 h-4 text-white/70 group-focus-within/input:text-emerald-400 transition-colors" />
                       </div>
                       <input
                         type="tel"
@@ -156,13 +156,13 @@ export default function SignUpPage() {
                         onChange={handleChange}
                         placeholder="+233 54 000 0000"
                         required
-                        className="w-full h-12 pl-10 pr-4 bg-black/40 border border-white/10 rounded-xl text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
+                        className="w-full h-12 pl-9 pr-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
                       />
                     </div>
 
                     <div className="relative group/input">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <Lock className="w-4 h-4 text-white/30 group-focus-within/input:text-emerald-400 transition-colors" />
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <Lock className="w-4 h-4 text-white/70 group-focus-within/input:text-emerald-400 transition-colors" />
                       </div>
                       <input
                         type="password"
@@ -171,7 +171,7 @@ export default function SignUpPage() {
                         onChange={handleChange}
                         placeholder="Create Password"
                         required
-                        className="w-full h-12 pl-10 pr-4 bg-black/40 border border-white/10 rounded-xl text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
+                        className="w-full h-12 pl-9 pr-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
                       />
                     </div>
 
@@ -181,7 +181,7 @@ export default function SignUpPage() {
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
                           exit={{ opacity: 0, height: 0 }}
-                          className="text-red-400 text-[10px] font-black uppercase tracking-widest bg-red-500/10 py-2 rounded-lg border border-red-500/20"
+                          className="text-red-400 text-xs font-bold uppercase tracking-widest bg-red-500/10 py-2 rounded-lg border border-red-500/20"
                         >
                           {error}
                         </motion.p>
@@ -191,7 +191,7 @@ export default function SignUpPage() {
                     <button
                       type="submit"
                       disabled={isLoading || !formData.phoneNumber || !formData.password}
-                      className="w-full h-14 bg-white hover:bg-gray-100 text-black rounded-2xl font-black text-lg transition-all shadow-xl hover:scale-[1.02] active:scale-95 disabled:opacity-50 flex items-center justify-center group/btn"
+                      className="w-full h-14 bg-white hover:bg-gray-100 text-black rounded-md font-bold text-lg transition-all shadow-xl hover:scale-[1.02] active:scale-95 disabled:opacity-50 flex items-center justify-center group/btn"
                     >
                       {isLoading ? (
                         <Loader2 className="w-6 h-6 animate-spin" />
@@ -204,7 +204,7 @@ export default function SignUpPage() {
                     </button>
                   </form>
                   
-                  <p className="text-white/40 text-xs font-bold pt-4">
+                  <p className="text-white/70 text-xs font-bold pt-3">
                     Already have an account? <button onClick={() => router.push('/login')} className="text-emerald-400 hover:underline">Log In</button>
                   </p>
                 </div>
@@ -215,12 +215,12 @@ export default function SignUpPage() {
               key="success-animation"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="flex flex-col items-center justify-center text-center space-y-6"
+              className="flex flex-col items-center justify-center text-center space-y-5"
             >
-              <div className="w-32 h-32 rounded-[3rem] flex items-center justify-center shadow-[0_0_100px_rgba(16,185,129,0.4)]">
-                <img src="/logo.png" alt="Agri-ERP Logo" className="w-32 h-32 object-cover rounded-[3rem]" />
+              <div className="w-32 h-32 rounded-lg flex items-center justify-center shadow-[0_0_100px_rgba(16,185,129,0.4)]">
+                <img src="/logo.png" alt="Agri-ERP Logo" className="w-32 h-32 object-cover rounded-lg" />
               </div>
-              <h2 className="text-3xl font-black text-white tracking-tighter">Welcome Aboard!</h2>
+              <h2 className="text-3xl font-bold text-white tracking-normal">Welcome Aboard!</h2>
               <Loader2 className="w-6 h-6 text-emerald-400 animate-spin" />
             </motion.div>
           )}

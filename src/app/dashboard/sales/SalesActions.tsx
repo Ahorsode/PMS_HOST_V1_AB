@@ -20,7 +20,7 @@ export function SalesActionsHeader({ customers, inventory, livestock }: {
     <>
       <button 
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2 bg-emerald-500 text-[#064e3b] px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-[11px] transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] border border-emerald-400/50 hover:scale-105"
+        className="flex items-center gap-2 bg-emerald-500 text-[#064e3b] px-5 py-2 rounded-md font-bold uppercase tracking-widest text-[11px] transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] border border-emerald-400/50 hover:scale-105"
       >
         <Plus className="w-4 h-4" />
         Record New Order
@@ -96,7 +96,7 @@ export function SalesRowActions({ order }: { order: any }) {
       <button 
         onClick={handleDownloadInvoice}
         title="Download Invoice"
-        className="p-2.5 rounded-xl hover:bg-blue-500/10 text-blue-500/40 hover:text-blue-400 transition-all border border-transparent hover:border-blue-500/20"
+        className="p-2.5 rounded-md hover:bg-blue-500/10 text-blue-500/40 hover:text-blue-400 transition-all border border-transparent hover:border-blue-500/20"
       >
         <FileDown className="w-4 h-4" />
       </button>
@@ -105,7 +105,7 @@ export function SalesRowActions({ order }: { order: any }) {
         <button 
           onClick={() => setIsPaymentOpen(true)}
           title="Record Payment"
-          className="p-2.5 rounded-xl hover:bg-emerald-500/10 text-emerald-500/40 hover:text-emerald-400 transition-all border border-transparent hover:border-emerald-500/20"
+          className="p-2.5 rounded-md hover:bg-emerald-500/10 text-emerald-500/40 hover:text-emerald-400 transition-all border border-transparent hover:border-emerald-500/20"
         >
           <CreditCard className="w-4 h-4" />
         </button>
@@ -116,7 +116,7 @@ export function SalesRowActions({ order }: { order: any }) {
           onClick={() => handleStatusUpdate('COMPLETED')}
           disabled={isUpdating}
           title="Mark as Completed"
-          className="p-2.5 rounded-xl hover:bg-emerald-500/10 text-emerald-500/40 hover:text-emerald-400 transition-all border border-transparent hover:border-emerald-500/20"
+          className="p-2.5 rounded-md hover:bg-emerald-500/10 text-emerald-500/40 hover:text-emerald-400 transition-all border border-transparent hover:border-emerald-500/20"
         >
           <CheckCircle2 className="w-4 h-4" />
         </button>
@@ -127,7 +127,7 @@ export function SalesRowActions({ order }: { order: any }) {
           onClick={() => handleStatusUpdate('CANCELLED')}
           disabled={isUpdating}
           title="Cancel Order"
-          className="p-2.5 rounded-xl hover:bg-red-500/10 text-red-500/40 hover:text-red-400 transition-all border border-transparent hover:border-red-500/20"
+          className="p-2.5 rounded-md hover:bg-red-500/10 text-red-500/40 hover:text-red-400 transition-all border border-transparent hover:border-red-500/20"
         >
           <XCircle className="w-4 h-4" />
         </button>
@@ -138,20 +138,20 @@ export function SalesRowActions({ order }: { order: any }) {
         onOpenChange={setIsPaymentOpen}
         title="Record Payment"
       >
-        <form onSubmit={handleRecordPayment} className="space-y-6">
-           <div className="p-6 bg-emerald-500/5 rounded-2xl border border-emerald-500/10 mb-4">
-              <p className="text-[10px] font-black uppercase text-emerald-400/60 tracking-widest mb-1">Customer Owed Balance</p>
-              <p className="text-2xl font-black text-white italic tracking-tighter">GHS {Number(order.customer?.balanceOwed || 0).toLocaleString()}</p>
+        <form onSubmit={handleRecordPayment} className="space-y-5">
+           <div className="p-5 bg-emerald-500/10 rounded-md border border-emerald-500/10 mb-3">
+              <p className="text-xs font-bold uppercase text-emerald-400/60 tracking-widest mb-1">Customer Owed Balance</p>
+              <p className="text-2xl font-bold text-white italic tracking-normal">GHS {Number(order.customer?.balanceOwed || 0).toLocaleString()}</p>
            </div>
 
            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase text-white/40 tracking-widest px-1">Payment Amount (GHS)</label>
+              <label className="text-xs font-bold uppercase text-white/70 tracking-widest px-1">Payment Amount (GHS)</label>
               <input 
                 type="number"
                 step="0.01"
                 value={paymentAmount}
                 onChange={(e) => setPaymentAmount(Number(e.target.value))}
-                className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white font-bold outline-none focus:border-emerald-500/50 transition-all"
+                className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-bold outline-none focus:border-emerald-500/50 transition-all"
                 required
               />
            </div>
@@ -159,7 +159,7 @@ export function SalesRowActions({ order }: { order: any }) {
            <button 
              type="submit"
              disabled={isUpdating}
-             className="w-full flex items-center justify-center gap-3 bg-emerald-500 text-[#064e3b] px-6 py-4 rounded-xl font-black uppercase tracking-widest text-[11px] transition-all hover:scale-105"
+             className="w-full flex items-center justify-center gap-2 bg-emerald-500 text-[#064e3b] px-5 py-3 rounded-md font-bold uppercase tracking-widest text-[11px] transition-all hover:scale-105"
            >
              {isUpdating ? 'Recording...' : 'Record Payment & Settle Order'}
            </button>

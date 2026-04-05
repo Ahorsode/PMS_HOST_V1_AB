@@ -8,7 +8,7 @@ export const Card = ({ children, className = '', interactive = false }: { childr
   return (
     <div
       className={cn(
-        "glass-morphism rounded-[2rem] overflow-hidden relative group",
+        "glass-morphism rounded-lg overflow-hidden relative group",
         interactive && "cursor-pointer",
         className
       )}
@@ -17,25 +17,25 @@ export const Card = ({ children, className = '', interactive = false }: { childr
         {children}
       </div>
       {/* Subtle Inner Glow */}
-      <div className="absolute inset-0 rounded-[2rem] border border-white/5 pointer-events-none transition-colors duration-500" />
+      <div className="absolute inset-0 rounded-lg border border-white/5 pointer-events-none transition-colors duration-500" />
     </div>
   );
 };
 
 export const CardHeader = ({ children, className = '' }: { children: React.ReactNode, className?: string }) => (
-  <div className={cn("p-8 pb-0", className)}>
+  <div className={cn("p-7 pb-0", className)}>
     {children}
   </div>
 );
 
 export const CardTitle = ({ children, className = '' }: { children: React.ReactNode, className?: string }) => (
-  <h3 className={cn("font-black tracking-tight text-white uppercase italic text-sm opacity-80", className)}>
+  <h3 className={cn("font-bold tracking-normal text-white uppercase italic text-sm opacity-80", className)}>
     {children}
   </h3>
 );
 
 export const CardContent = ({ children, className = '' }: { children: React.ReactNode, className?: string }) => (
-  <div className={cn("p-8 pt-4", className)}>
+  <div className={cn("p-7 pt-3", className)}>
     {children}
   </div>
 );

@@ -38,28 +38,28 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="max-w-md w-full space-y-12 relative z-10">
-        <div className="text-center space-y-4">
-          <h1 className="text-5xl font-black text-white tracking-tighter italic">Welcome to <span className="text-emerald-400">Agri-ERP</span></h1>
+    <div className="min-h-screen flex items-center justify-center p-3">
+      <div className="max-w-md w-full space-y-11 relative z-10">
+        <div className="text-center space-y-3">
+          <h1 className="text-5xl font-bold text-white tracking-normal italic">Welcome to <span className="text-emerald-400">Agri-ERP</span></h1>
           <p className="text-sm text-white/70 font-bold uppercase tracking-widest italic">
             Let's get your farm set up to start tracking your operations.
           </p>
         </div>
 
-        <Card className="glass-morphism border-none shadow-2xl rounded-[2.5rem] p-4">
+        <Card className="glass-morphism border-none shadow-2xl rounded-lg p-3">
           <CardHeader>
-            <CardTitle className="text-2xl italic tracking-tighter">Farm Profile</CardTitle>
+            <CardTitle className="text-2xl italic tracking-normal">Farm Profile</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-8">
+            <form onSubmit={handleSubmit} className="space-y-7">
               {error && (
-                <div className="p-4 bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-2xl font-bold backdrop-blur-md">
+                <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-md font-bold backdrop-blur-md">
                   {error}
                 </div>
               )}
 
-              <div className="space-y-6">
+              <div className="space-y-5">
                 <Input 
                   label="Farm Name"
                   name="name"
@@ -82,7 +82,7 @@ export default function OnboardingPage() {
                 />
               </div>
 
-              <div className="pt-4">
+              <div className="pt-3">
                 <Button
                   type="submit"
                   isLoading={isLoading}

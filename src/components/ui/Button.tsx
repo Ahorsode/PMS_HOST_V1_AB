@@ -33,19 +33,19 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     };
 
     const variants = {
-      primary: 'bg-gradient-to-br from-emerald-400 to-teal-600 text-white shadow-lg shadow-emerald-500/20 active:shadow-none font-black uppercase tracking-widest text-[10px]',
+      primary: 'bg-gradient-to-br from-emerald-400 to-teal-600 text-white shadow-lg shadow-emerald-500/20 active:shadow-none font-bold uppercase tracking-widest text-xs',
       secondary: 'bg-white/10 text-white hover:bg-white/20 border border-white/10 backdrop-blur-md font-bold',
       outline: 'border-2 border-emerald-500/30 bg-transparent hover:bg-emerald-500/10 text-emerald-400 font-bold',
       danger: 'bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 font-bold',
-      ghost: 'bg-transparent hover:bg-white/5 text-white/60 hover:text-white',
-      glass: 'glass-morphism text-white hover:bg-white/10 font-black tracking-tighter'
+      ghost: 'bg-transparent hover:bg-white/5 text-white/80 hover:text-white',
+      glass: 'glass-morphism text-white hover:bg-white/10 font-bold tracking-normal'
     };
 
     const sizes = {
-      sm: 'min-h-[44px] px-4 text-xs rounded-xl py-2',
-      md: 'min-h-[44px] h-11 px-6 text-sm rounded-2xl',
-      lg: 'min-h-[56px] h-14 px-10 text-base rounded-[1.5rem]',
-      icon: 'w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl',
+      sm: 'min-h-[44px] px-3 text-xs rounded-md py-2',
+      md: 'min-h-[44px] h-11 px-5 text-sm rounded-md',
+      lg: 'min-h-[56px] h-14 px-9 text-base rounded-[1.5rem]',
+      icon: 'w-11 h-11 min-w-[44px] min-h-[44px] rounded-md',
     };
 
     if (asChild) {

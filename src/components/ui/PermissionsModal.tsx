@@ -101,23 +101,23 @@ export function PermissionsModal({ isOpen, onClose, staffName, initialPermission
   };
 
   const PermissionRow = ({ title, viewKey, editKey, icon: Icon }: { title: string, viewKey: keyof typeof permissions, editKey: keyof typeof permissions, icon: any }) => (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl mb-3 gap-4 sm:gap-0">
-      <div className="flex items-center gap-3">
-        <div className="p-2 bg-white/10 rounded-xl">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 bg-white/10 border border-white/10 rounded-md mb-2 gap-3 sm:gap-0">
+      <div className="flex items-center gap-2">
+        <div className="p-2 bg-white/10 rounded-md">
           <Icon className="w-5 h-5 text-emerald-400" />
         </div>
         <div>
           <h4 className="text-white font-bold">{title}</h4>
-          <p className="text-white/50 text-[10px] uppercase tracking-widest font-black">Module Access</p>
+          <p className="text-white/70 text-xs uppercase tracking-widest font-bold">Module Access</p>
         </div>
       </div>
-      <div className="flex items-center gap-6 sm:gap-4 w-full sm:w-auto justify-around sm:justify-end border-t border-white/5 pt-3 sm:pt-0 sm:border-0 mt-1 sm:mt-0">
+      <div className="flex items-center gap-5 sm:gap-4 w-full sm:w-auto justify-around sm:justify-end border-t border-white/5 pt-2 sm:pt-0 sm:border-0 mt-1 sm:mt-0">
         <div className="flex flex-col items-center">
-          <span className="text-[10px] text-white/50 mb-1 font-black uppercase">View</span>
+          <span className="text-xs text-white/70 mb-1 font-bold uppercase">View</span>
           <ToggleSwitch checked={permissions[viewKey]} onChange={() => handleToggle(viewKey)} disabled={isLoading} />
         </div>
         <div className="flex flex-col items-center">
-          <span className="text-[10px] text-white/50 mb-1 font-black uppercase">Edit</span>
+          <span className="text-xs text-white/70 mb-1 font-bold uppercase">Edit</span>
           <ToggleSwitch checked={permissions[editKey]} onChange={() => handleToggle(editKey)} disabled={isLoading} />
         </div>
       </div>
@@ -135,47 +135,47 @@ export function PermissionsModal({ isOpen, onClose, staffName, initialPermission
             className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100]"
             onClick={isLoading ? undefined : onClose}
           />
-          <div className="fixed inset-0 z-[101] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[101] flex items-center justify-center p-3">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="w-full max-w-lg overflow-hidden flex flex-col"
             >
-              <div className="bg-[#0a0a0a] border border-white/10 rounded-[2.5rem] shadow-2xl flex flex-col max-h-[90vh] glass-morphism">
+              <div className="bg-[#0a0a0a] border border-white/10 rounded-lg shadow-2xl flex flex-col max-h-[90vh] glass-morphism">
                 {/* Header - Sticky */}
-                <div className="p-5 sm:p-8 border-b border-white/10 flex items-center justify-between bg-white/5 flex-shrink-0">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 sm:p-2.5 bg-blue-500/20 rounded-2xl border border-blue-500/30">
+                <div className="p-4 sm:p-8 border-b border-white/10 flex items-center justify-between bg-white/10 flex-shrink-0">
+                  <div className="flex items-center gap-2">
+                    <div className="p-2 sm:p-2.5 bg-blue-500/20 rounded-md border border-blue-500/30">
                       <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400" />
                     </div>
                     <div>
-                      <h3 className="text-lg sm:text-xl font-black text-white tracking-tight">Access Control</h3>
-                      <p className="text-blue-400 text-[10px] sm:text-xs font-bold uppercase tracking-widest">{staffName}</p>
+                      <h3 className="text-lg sm:text-xl font-bold text-white tracking-normal">Access Control</h3>
+                      <p className="text-blue-400 text-xs sm:text-xs font-bold uppercase tracking-widest">{staffName}</p>
                     </div>
                   </div>
                   <button 
                     onClick={onClose}
                     disabled={isLoading}
-                    className="p-2 text-white/50 hover:text-white hover:bg-white/10 rounded-full transition-all"
+                    className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all"
                   >
                     <X className="w-5 h-5" />
                   </button>
                 </div>
                 
                 {/* Scrollable Content */}
-                <div className="p-5 sm:p-8 overflow-y-auto scrollbar-hide flex-grow custom-scrollbar">
-                  <div className="space-y-1 mb-6">
-                    <p className="text-white/40 text-[11px] sm:text-xs font-medium leading-relaxed">
+                <div className="p-4 sm:p-8 overflow-y-auto scrollbar-hide flex-grow custom-scrollbar">
+                  <div className="space-y-1 mb-5">
+                    <p className="text-white/70 text-[11px] sm:text-xs font-medium leading-relaxed">
                       Configure individual access rights for this staff member. 
                       Changes are logged for security auditing.
                     </p>
                   </div>
                   
-                  <div className="space-y-6">
+                  <div className="space-y-5">
                     <div>
-                      <p className="px-1 text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3 ml-2">Commercial Hub</p>
-                      <div className="space-y-3 sm:space-y-4">
+                      <p className="px-1 text-xs font-bold uppercase tracking-[0.2em] text-white/70 mb-2 ml-2">Commercial Hub</p>
+                      <div className="space-y-2 sm:space-y-4">
                         <PermissionRow title="Finance" viewKey="canViewFinance" editKey="canEditFinance" icon={Database} />
                         <PermissionRow title="Sales" viewKey="canViewSales" editKey="canEditSales" icon={Banknote} />
                         <PermissionRow title="Customers" viewKey="canViewCustomers" editKey="canEditCustomers" icon={Users} />
@@ -184,8 +184,8 @@ export function PermissionsModal({ isOpen, onClose, staffName, initialPermission
                     </div>
 
                     <div>
-                      <p className="px-1 text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3 ml-2 mt-4">Operations</p>
-                      <div className="space-y-3 sm:space-y-4">
+                      <p className="px-1 text-xs font-bold uppercase tracking-[0.2em] text-white/70 mb-2 ml-2 mt-3">Operations</p>
+                      <div className="space-y-2 sm:space-y-4">
                         <PermissionRow title="Livestock Units" viewKey="canViewBatches" editKey="canEditBatches" icon={Settings} />
                         <PermissionRow title="Houses" viewKey="canViewHouses" editKey="canEditHouses" icon={ThermometerSun} />
                         <PermissionRow title="Eggs" viewKey="canViewEggs" editKey="canEditEggs" icon={Egg} />
@@ -195,36 +195,36 @@ export function PermissionsModal({ isOpen, onClose, staffName, initialPermission
                     </div>
 
                     <div>
-                      <p className="px-1 text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-3 ml-2 mt-4">Governance</p>
-                      <div className="space-y-3 sm:space-y-4">
+                      <p className="px-1 text-xs font-bold uppercase tracking-[0.2em] text-white/70 mb-2 ml-2 mt-3">Governance</p>
+                      <div className="space-y-2 sm:space-y-4">
                         <PermissionRow title="Team Management" viewKey="canViewTeam" editKey="canEditTeam" icon={Shield} />
                       </div>
                     </div>
                   </div>
 
                   {/* Warning Note for small screens */}
-                  <div className="mt-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl">
-                     <p className="text-[10px] text-amber-400 font-black uppercase tracking-widest mb-1"> Security Policy </p>
-                     <p className="text-white/60 text-[11px] leading-relaxed font-bold italic">
+                  <div className="mt-5 p-3 bg-amber-500/10 border border-amber-500/20 rounded-md">
+                     <p className="text-xs text-amber-400 font-bold uppercase tracking-widest mb-1"> Security Policy </p>
+                     <p className="text-white/80 text-[11px] leading-relaxed font-bold italic">
                         Owners bypass all checks. Managers are unrestricted by default unless limited here.
                      </p>
                   </div>
                 </div>
 
                 {/* Footer - Sticky */}
-                <div className="p-5 sm:p-8 border-t border-white/10 flex flex-col sm:flex-row justify-end gap-3 bg-white/5 flex-shrink-0">
+                <div className="p-4 sm:p-8 border-t border-white/10 flex flex-col sm:flex-row justify-end gap-2 bg-white/10 flex-shrink-0">
                   <Button 
                     variant="outline" 
                     onClick={onClose} 
                     disabled={isLoading}
-                    className="w-full sm:w-auto rounded-xl border-white/10 hover:bg-white/5 text-[11px] uppercase font-black"
+                    className="w-full sm:w-auto rounded-md border-white/10 hover:bg-white/5 text-[11px] uppercase font-bold"
                   >
                     Discard
                   </Button>
                   <Button 
                     onClick={() => onSave(permissions)} 
                     isLoading={isLoading}
-                    className="w-full sm:w-auto rounded-xl bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)]"
+                    className="w-full sm:w-auto rounded-md bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)]"
                   >
                     Save & Apply
                   </Button>

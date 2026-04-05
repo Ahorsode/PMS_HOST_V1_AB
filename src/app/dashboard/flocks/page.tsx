@@ -26,11 +26,11 @@ export default async function FlocksPage() {
   ]);
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8 px-4 py-8">
-      <div className="flex justify-between items-center bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+    <div className="max-w-7xl mx-auto space-y-7 px-3 py-7">
+      <div className="flex justify-between items-center bg-white p-7 rounded-lg shadow-sm border border-gray-100">
         <div>
-          <h1 className="text-4xl font-black text-gray-900 tracking-tighter">Livestock <span className="text-emerald-600 italic tracking-tighter">Management</span></h1>
-          <p className="text-gray-500 font-bold uppercase tracking-widest text-[10px] mt-2 flex items-center gap-2">
+          <h1 className="text-4xl font-bold text-gray-900 tracking-normal">Livestock <span className="text-emerald-600 italic tracking-normal">Management</span></h1>
+          <p className="text-gray-500 font-bold uppercase tracking-widest text-xs mt-2 flex items-center gap-2">
             <Bird className="w-4 h-4 text-emerald-600" /> Lifecycle & Performance Tracking
           </p>
         </div>

@@ -36,7 +36,7 @@ export function CustomerActionsHeader() {
     <>
       <button 
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2 bg-emerald-500 text-[#064e3b] px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-[11px] transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] border border-emerald-400/50 hover:scale-105"
+        className="flex items-center gap-2 bg-emerald-500 text-[#064e3b] px-5 py-2 rounded-md font-bold uppercase tracking-widest text-[11px] transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] border border-emerald-400/50 hover:scale-105"
       >
         <UserPlus className="w-4 h-4" />
         New Profile
@@ -47,43 +47,43 @@ export function CustomerActionsHeader() {
         onOpenChange={setIsOpen}
         title="Add Distribution Partner"
       >
-        <form onSubmit={handleSubmit} className="space-y-6 pt-2">
-           <div className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-5 pt-2">
+           <div className="space-y-3">
               <div className="space-y-1">
-                 <label className="text-[10px] font-black uppercase text-white/40 tracking-widest px-1">Full Name *</label>
+                 <label className="text-xs font-bold uppercase text-white/70 tracking-widest px-1">Full Name *</label>
                  <input 
                    name="name"
                    required
-                   className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white font-bold outline-none focus:border-emerald-500/50 transition-all"
+                   className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-bold outline-none focus:border-emerald-500/50 transition-all"
                    placeholder="e.g. John Doe / Kumasi Allied Feed"
                  />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                  <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase text-white/40 tracking-widest px-1">Phone Number</label>
+                    <label className="text-xs font-bold uppercase text-white/70 tracking-widest px-1">Phone Number</label>
                     <input 
                       name="phone"
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white font-bold outline-none focus:border-emerald-500/50 transition-all"
+                      className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-bold outline-none focus:border-emerald-500/50 transition-all"
                       placeholder="+233..."
                     />
                  </div>
                  <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase text-white/40 tracking-widest px-1">Email Address</label>
+                    <label className="text-xs font-bold uppercase text-white/70 tracking-widest px-1">Email Address</label>
                     <input 
                       name="email"
                       type="email"
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white font-bold outline-none focus:border-emerald-500/50 transition-all"
+                      className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-bold outline-none focus:border-emerald-500/50 transition-all"
                       placeholder="client@growth.com"
                     />
                  </div>
               </div>
 
               <div className="space-y-1">
-                 <label className="text-[10px] font-black uppercase text-white/40 tracking-widest px-1">Location / Address</label>
+                 <label className="text-xs font-bold uppercase text-white/70 tracking-widest px-1">Location / Address</label>
                  <textarea 
                    name="address"
-                   className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white font-bold outline-none focus:border-emerald-500/50 transition-all h-24"
+                   className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-bold outline-none focus:border-emerald-500/50 transition-all h-24"
                    placeholder="Global shipping or warehouse location"
                  />
               </div>
@@ -92,7 +92,7 @@ export function CustomerActionsHeader() {
            <button 
              type="submit"
              disabled={isSubmitting}
-             className="w-full bg-emerald-500 text-[#064e3b] py-5 rounded-2xl font-black uppercase tracking-widest text-xs transition-all hover:scale-[1.01] active:scale-[0.99] shadow-xl shadow-emerald-500/20"
+             className="w-full bg-emerald-500 text-[#064e3b] py-4 rounded-md font-bold uppercase tracking-widest text-xs transition-all hover:scale-[1.01] active:scale-[0.99] shadow-xl shadow-emerald-500/20"
            >
              {isSubmitting ? 'Expanding Network...' : 'Create Partner Profile'}
            </button>

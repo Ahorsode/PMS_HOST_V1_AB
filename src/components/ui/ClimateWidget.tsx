@@ -26,7 +26,7 @@ export const ClimateWidget: React.FC<ClimateWidgetProps> = ({ currentClimate }) 
   };
 
   return (
-    <div className={`flex items-center space-x-4 border px-4 py-2 rounded-lg shadow-sm transition-colors ${getStatusColor()}`}>
+    <div className={`flex items-center space-x-3 border px-3 py-2 rounded-lg shadow-sm transition-colors ${getStatusColor()}`}>
       <div className="flex items-center space-x-1">
         <ThermometerSun className="w-5 h-5" />
         <span className="font-semibold">{temperature.toFixed(1)}°C</span>

@@ -10,7 +10,7 @@ export default async function DashboardPage() {
   const { userId, activeFarmId } = await getAuthContext();
   if (!activeFarmId) {
     return (
-      <div className="p-8 text-center bg-yellow-50 rounded-lg border border-yellow-200">
+      <div className="p-7 text-center bg-yellow-50 rounded-lg border border-yellow-200">
         <h2 className="text-xl font-bold text-yellow-800 mb-2">No Active Farm</h2>
         <p className="text-yellow-600">
           You are not currently linked to an active farm. Please create or join a farm to view the dashboard.
@@ -50,7 +50,7 @@ export default async function DashboardPage() {
     );
   } catch (error) {
     return (
-      <div className="p-8 text-center bg-red-50 rounded-lg border border-red-200">
+      <div className="p-7 text-center bg-red-50 rounded-lg border border-red-200">
         <h2 className="text-xl font-bold text-red-800 mb-2">Database Connection Error</h2>
         <p className="text-red-600">
           The dashboard is currently unavailable due to an issue connecting to the database or retrieving data. 

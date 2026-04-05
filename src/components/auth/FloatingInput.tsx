@@ -31,10 +31,10 @@ export default function FloatingInput({ label, error, className, ...props }: Flo
   const isFloating = isFocused || value !== "";
 
   return (
-    <div className="relative mb-6">
+    <div className="relative mb-5">
       <div className={cn(
-        "group relative rounded-2xl border transition-all duration-300",
-        isFocused ? "border-blue-500 ring-4 ring-blue-500/10" : "border-white/10 bg-white/5 hover:border-white/20",
+        "group relative rounded-md border transition-all duration-300",
+        isFocused ? "border-blue-500 ring-4 ring-blue-500/10" : "border-white/10 bg-white/10 hover:border-white/20",
         error && "border-red-500 ring-4 ring-red-500/10"
       )}>
         <label
@@ -53,7 +53,7 @@ export default function FloatingInput({ label, error, className, ...props }: Flo
           onBlur={handleBlur}
           onChange={handleChange}
           className={cn(
-            "w-full bg-transparent px-4 pb-2 pt-6 text-white outline-none focus:ring-0",
+            "w-full bg-transparent px-3 pb-2 pt-5 text-white outline-none focus:ring-0",
             className
           )}
         />
@@ -65,7 +65,7 @@ export default function FloatingInput({ label, error, className, ...props }: Flo
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="mt-1 pl-4 text-sm text-red-500"
+            className="mt-1 pl-3 text-sm text-red-500"
           >
             {error}
           </motion.p>

@@ -51,7 +51,7 @@ export const SidebarWrapper = ({
         "flex-1 flex flex-col relative z-20 h-[100dvh] overflow-hidden transition-all duration-700 ease-in-out",
         isIndeptPage ? "pl-0" : "md:pl-32"
       )}>
-        <div className="flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar pt-6 pb-36 md:pb-12 px-4 md:px-8">
+        <div className="flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar pt-5 pb-36 md:pb-12 px-3 md:px-8">
           <PageTransition>
             {children}
           </PageTransition>

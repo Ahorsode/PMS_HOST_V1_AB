@@ -16,26 +16,26 @@ export default async function MortalityPage() {
   const totalMortality = logs.reduce((acc: number, log: any) => acc + log.count, 0);
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 px-4 py-8">
-      <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+    <div className="max-w-7xl mx-auto space-y-5 px-3 py-7">
+      <div className="flex justify-between items-center bg-white p-5 rounded-md shadow-sm border border-gray-100">
         <div>
-          <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight text-red-700 uppercase italic">Mortality Logs</h2>
+          <h2 className="text-3xl font-extrabold text-gray-900 tracking-normal text-red-700 uppercase italic">Mortality Logs</h2>
           <p className="text-gray-500 mt-1">Centralized history of flock mortality records.</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="rounded-2xl border-none shadow-xl shadow-gray-200/50 bg-red-950 text-white p-6 relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-8 opacity-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <Card className="rounded-md border-none shadow-xl shadow-gray-200/50 bg-red-950 text-white p-5 relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-7 opacity-10">
             <XCircle className="w-24 h-24" />
           </div>
           <p className="text-red-300 text-sm font-bold uppercase tracking-widest mb-1">Total Deaths (History)</p>
-          <h3 className="text-4xl font-black">{totalMortality.toLocaleString()} <span className="text-xs font-normal">birds</span></h3>
-          <p className="text-red-400 text-xs mt-4 font-medium italic">Across all active & archived batches</p>
+          <h3 className="text-4xl font-bold">{totalMortality.toLocaleString()} <span className="text-xs font-normal">birds</span></h3>
+          <p className="text-red-400 text-xs mt-3 font-medium italic">Across all active & archived batches</p>
         </Card>
 
-        <Card className="rounded-2xl border-none shadow-xl shadow-gray-200/50 bg-white p-6 border-l-4 border-l-amber-500">
-          <div className="flex items-center gap-3 mb-2">
+        <Card className="rounded-md border-none shadow-xl shadow-gray-200/50 bg-white p-5 border-l-4 border-l-amber-500">
+          <div className="flex items-center gap-2 mb-2">
             <AlertTriangle className="w-5 h-5 text-amber-500" />
             <p className="text-gray-800 text-sm font-bold uppercase tracking-widest">Health Tip</p>
           </div>
@@ -46,15 +46,15 @@ export default async function MortalityPage() {
       </div>
 
       {/* Quick Logging Section */}
-      <div className="bg-white p-6 rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100">
+      <div className="bg-white p-5 rounded-md shadow-xl shadow-gray-200/50 border border-gray-100">
         <QuickMortalityLogger activeBatches={activeBatches} />
       </div>
 
-      <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
-        <div className="bg-gray-50/50 px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+      <div className="bg-white rounded-md shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
+        <div className="bg-gray-50/50 px-5 py-3 border-b border-gray-100 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <History className="w-4 h-4 text-gray-400" />
-            <h3 className="font-bold text-gray-800 italic uppercase tracking-tight">Historical Mortality Record</h3>
+            <h3 className="font-bold text-gray-800 italic uppercase tracking-normal">Historical Mortality Record</h3>
           </div>
         </div>
         {/* Desktop Table View */}
@@ -62,35 +62,35 @@ export default async function MortalityPage() {
           <table className="min-w-full divide-y divide-gray-100">
             <thead>
               <tr className="bg-gray-50/30">
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Date</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Batch</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Count</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Reason</th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-widest text-right">Actions</th>
+                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Date</th>
+                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Batch</th>
+                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Count</th>
+                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Reason</th>
+                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {logs.map((log: any) => (
                 <tr key={`desk-${log.id}`} className="hover:bg-red-50/30 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-medium">
+                  <td className="px-5 py-3 whitespace-nowrap text-sm text-gray-600 font-medium">
                     {formatDate(log.logDate)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                  <td className="px-5 py-3 whitespace-nowrap text-sm font-bold text-gray-900">
                     FLK-{log.batchId?.toString().padStart(3, '0')} ({log.batch?.breedType})
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-black italic text-lg">
+                  <td className="px-5 py-3 whitespace-nowrap text-sm text-red-600 font-bold italic text-lg">
                     {log.count}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500 font-medium">
+                  <td className="px-5 py-3 text-sm text-gray-500 font-medium">
                     <div className="flex flex-col">
                       <span className="text-gray-900 font-bold italic">{log.category} › {log.subCategory}</span>
-                      {log.reason && <span className="text-[10px] text-gray-400 mt-1">{log.reason}</span>}
+                      {log.reason && <span className="text-xs text-gray-400 mt-1">{log.reason}</span>}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-5 py-3 text-right">
                     <Link 
                       href={`/dashboard/flocks/${log.batchId}`}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-black uppercase tracking-tighter text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/20 transition-all font-mono min-h-[44px] justify-center"
+                      className="inline-flex items-center gap-1.5 px-2 py-1.5 text-xs font-bold uppercase tracking-normal text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/20 transition-all font-mono min-h-[44px] justify-center"
                     >
                       <Eye className="h-3 w-3 sm:block" />
                       <span>Explore</span>
@@ -103,18 +103,18 @@ export default async function MortalityPage() {
         </div>
 
         {/* Mobile Stacked Cards View */}
-        <div className="md:hidden flex flex-col gap-4 p-4">
+        <div className="md:hidden flex flex-col gap-3 p-3">
           {logs.map((log: any) => (
-            <div key={`mob-${log.id}`} className="bg-white border border-gray-100 p-4 rounded-3xl shadow-lg flex flex-col gap-3 relative overflow-hidden">
+            <div key={`mob-${log.id}`} className="bg-white border border-gray-100 p-3 rounded-lg shadow-lg flex flex-col gap-2 relative overflow-hidden">
               <div className="flex justify-between items-center border-b border-gray-50 pb-2">
-                <span className="text-xs font-black tracking-widest text-gray-400 uppercase">{formatDate(log.logDate)}</span>
-                <span className="text-sm font-black text-gray-800 bg-gray-50 px-3 py-1 rounded-full uppercase tracking-widest">
+                <span className="text-xs font-bold tracking-widest text-gray-400 uppercase">{formatDate(log.logDate)}</span>
+                <span className="text-sm font-bold text-gray-800 bg-gray-50 px-2 py-1 rounded-full uppercase tracking-widest">
                   FLK-{log.batchId?.toString().padStart(3, '0')}
                 </span>
               </div>
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="text-4xl font-black text-red-600 tracking-tighter">-{log.count}</h4>
+                  <h4 className="text-4xl font-bold text-red-600 tracking-normal">-{log.count}</h4>
                   <div className="flex items-center mt-1">
                     <span className="text-xs font-bold text-gray-700">{log.category}</span>
                     <span className="px-1 text-gray-300">›</span>
@@ -123,7 +123,7 @@ export default async function MortalityPage() {
                 </div>
                 <Link 
                   href={`/dashboard/flocks/${log.batchId}`}
-                  className="flex items-center justify-center min-h-[44px] px-6 text-[10px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl shadow-sm hover:bg-emerald-500/20"
+                  className="flex items-center justify-center min-h-[44px] px-5 text-xs font-bold uppercase tracking-widest text-emerald-600 bg-emerald-500/10 border border-emerald-500/20 rounded-md shadow-sm hover:bg-emerald-500/20"
                 >
                   <Eye className="w-4 h-4 mr-2" />
                   View
@@ -134,7 +134,7 @@ export default async function MortalityPage() {
         </div>
         {logs.length === 0 && (
           <div className="py-32 text-center">
-            <Activity className="w-12 h-12 text-gray-100 mx-auto mb-4" />
+            <Activity className="w-12 h-12 text-gray-100 mx-auto mb-3" />
             <p className="text-gray-400 font-medium italic">All flocks are healthy! No mortality logs recorded.</p>
           </div>
         )}

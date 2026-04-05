@@ -94,9 +94,9 @@ export const LivestockForm = ({ houses, batch, mode, onClose }: LivestockFormPro
 
   if (mode === 'delete') {
     return (
-      <div className="space-y-4">
+      <div className="space-y-3">
         <p className="text-gray-600 font-bold">Are you sure you want to decommission this livestock unit? This action cannot be undone.</p>
-        <div className="flex justify-end gap-3">
+        <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button variant="danger" onClick={handleSubmit} isLoading={isLoading}>Delete Unit</Button>
         </div>
@@ -105,7 +105,7 @@ export const LivestockForm = ({ houses, batch, mode, onClose }: LivestockFormPro
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-3">
       {mode === 'mortality' ? (
         <>
           <Input
@@ -147,7 +147,7 @@ export const LivestockForm = ({ houses, batch, mode, onClose }: LivestockFormPro
         </>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <Input
               label="Unit Identity / Name"
               value={formData.batchName}
@@ -164,7 +164,7 @@ export const LivestockForm = ({ houses, batch, mode, onClose }: LivestockFormPro
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
              <Input
                label="Breed Type"
                value={formData.breedType}
@@ -189,7 +189,7 @@ export const LivestockForm = ({ houses, batch, mode, onClose }: LivestockFormPro
              )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-3">
             <Input
               label="Initial Quantity"
               type="number"
@@ -220,9 +220,9 @@ export const LivestockForm = ({ houses, batch, mode, onClose }: LivestockFormPro
           )}
         </>
       )}
-      <div className="flex justify-end gap-3 pt-6 border-t border-gray-100 italic font-medium text-[10px] uppercase text-gray-400">
-        <Button variant="outline" type="button" onClick={onClose} className="h-10 px-8 rounded-xl border-gray-200">Cancel</Button>
-        <Button type="submit" isLoading={isLoading} className="h-10 px-8 rounded-xl bg-emerald-600 hover:bg-emerald-700">
+      <div className="flex justify-end gap-2 pt-5 border-t border-gray-100 italic font-medium text-xs uppercase text-gray-400">
+        <Button variant="outline" type="button" onClick={onClose} className="h-10 px-7 rounded-md border-gray-200">Cancel</Button>
+        <Button type="submit" isLoading={isLoading} className="h-10 px-7 rounded-md bg-emerald-600 hover:bg-emerald-700">
           {mode === 'create' ? 'Register Unit' : mode === 'edit' ? 'Apply changes' : 'Log mortality'}
         </Button>
       </div>

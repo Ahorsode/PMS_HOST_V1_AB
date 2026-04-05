@@ -16,13 +16,13 @@ interface DialogProps {
 }
 
 export const DialogTitle = ({ children, className, id }: { children: React.ReactNode, className?: string, id?: string }) => (
-  <h3 id={id} className={cn("text-xl font-black text-white tracking-tighter uppercase italic translate-y-0.5", className)}>
+  <h3 id={id} className={cn("text-xl font-bold text-white tracking-normal uppercase italic translate-y-0.5", className)}>
     {children}
   </h3>
 );
 
 export const DialogDescription = ({ children, className, id }: { children: React.ReactNode, className?: string, id?: string }) => (
-  <p id={id} className={cn("text-xs text-white/40 font-bold mt-1 tracking-tight", className)}>
+  <p id={id} className={cn("text-xs text-white/70 font-bold mt-1 tracking-normal", className)}>
     {children}
   </p>
 );
@@ -58,7 +58,7 @@ export const Dialog = ({
     <AnimatePresence>
       {isOpen && (
         <div 
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-3"
           role="presentation"
         >
           {/* Backdrop */}
@@ -80,13 +80,13 @@ export const Dialog = ({
             aria-labelledby={title ? dialogId : undefined}
             aria-describedby={description ? descriptionId : undefined}
             className={cn(
-              "relative w-full max-w-xl bg-[#0f1115] border border-white/10 rounded-[2.5rem] shadow-2xl overflow-hidden backdrop-blur-3xl",
+              "relative w-full max-w-xl bg-[#0f1115] border border-white/10 rounded-lg shadow-2xl overflow-hidden backdrop-blur-3xl",
               className
             )}
           >
             {/* Header */}
             {(title || description) && (
-              <div className="flex items-center justify-between border-b border-white/5 px-8 py-6 bg-white/[0.02]">
+              <div className="flex items-center justify-between border-b border-white/5 px-7 py-5 bg-white/[0.02]">
                 <div>
                   {title && (
                     <DialogTitle id={dialogId}>
@@ -101,7 +101,7 @@ export const Dialog = ({
                 </div>
                 <button
                   onClick={() => onOpenChange(false)}
-                  className="p-2 hover:bg-white/5 rounded-xl text-white/40 hover:text-white transition-all group"
+                  className="p-2 hover:bg-white/5 rounded-md text-white/70 hover:text-white transition-all group"
                   aria-label="Close dialog"
                 >
                   <X className="w-5 h-5 group-hover:rotate-90 transition-transform" />
@@ -113,14 +113,14 @@ export const Dialog = ({
             {!title && !description && (
               <button
                 onClick={() => onOpenChange(false)}
-                className="absolute top-6 right-8 p-2 hover:bg-white/5 rounded-xl text-white/40 hover:text-white transition-all z-10 group"
+                className="absolute top-6 right-8 p-2 hover:bg-white/5 rounded-md text-white/70 hover:text-white transition-all z-10 group"
                 aria-label="Close dialog"
               >
                 <X className="w-5 h-5 group-hover:rotate-90 transition-transform" />
               </button>
             )}
 
-            <div className="px-8 py-6 max-h-[80vh] overflow-y-auto custom-scrollbar">
+            <div className="px-7 py-5 max-h-[80vh] overflow-y-auto custom-scrollbar">
               {children}
             </div>
           </motion.div>

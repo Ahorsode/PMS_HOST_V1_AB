@@ -13,7 +13,7 @@ interface BreadcrumbsProps {
 
 export const Breadcrumbs = ({ items }: BreadcrumbsProps) => {
   return (
-    <nav className="flex items-center space-x-2 text-xs font-bold uppercase tracking-widest text-white/40 mb-6">
+    <nav className="flex items-center space-x-2 text-xs font-bold uppercase tracking-widest text-white/70 mb-5">
       <Link 
         href="/dashboard" 
         className="hover:text-emerald-400 transition-colors flex items-center gap-1 group"

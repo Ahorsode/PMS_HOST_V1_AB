@@ -59,7 +59,7 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
 
   if (houses.length === 0) {
     return (
-      <div className="p-6 text-center space-y-4">
+      <div className="p-5 text-center space-y-3">
         <p className="text-gray-400">You don't have any active farm houses yet.</p>
         <p className="text-sm text-gray-500 italic">A farm house is required before you can register a new livestock unit.</p>
         <Button asChild className="w-full bg-amber-500 hover:bg-amber-600 text-black font-semibold">
@@ -133,8 +133,8 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
 
   return (
     <div className="w-full max-w-lg">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Input
             label="Unit Name / Identity"
             placeholder="e.g., Q1-Broiler-Alpha"
@@ -150,7 +150,7 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Select
             label="Primary Breed / Specie"
             options={breedOptions}
@@ -181,9 +181,9 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
           error={errors.hatchDate?.message}
         />
 
-        <div className="border-t border-white/10 pt-4 mt-2">
-          <h3 className="text-sm font-medium text-amber-500 mb-4 italic uppercase tracking-widest text-[10px]">Optional Initial Schedule</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="border-t border-white/10 pt-3 mt-2">
+          <h3 className="text-sm font-medium text-amber-500 mb-3 italic uppercase tracking-widest text-xs">Optional Initial Schedule</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Input
               label="1st Vaccination Date"
               type="date"
@@ -197,11 +197,11 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
           </div>
         </div>
 
-        <div className="pt-4">
+        <div className="pt-3">
           <Button
             type="submit"
             isLoading={isSubmitting}
-            className="w-full bg-emerald-500 hover:bg-emerald-400 text-[#064e3b] font-black h-14 rounded-3xl uppercase tracking-widest transition-all shadow-[0_0_30px_rgba(16,185,129,0.2)]"
+            className="w-full bg-emerald-500 hover:bg-emerald-400 text-[#064e3b] font-bold h-14 rounded-lg uppercase tracking-widest transition-all shadow-[0_0_30px_rgba(16,185,129,0.2)]"
           >
             Register Unit & Continue
           </Button>

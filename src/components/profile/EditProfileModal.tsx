@@ -108,18 +108,18 @@ export function EditProfileModal({ isOpen, onOpenChange, initialData }: EditProf
       title="Edit Personal Identity"
       description="Update your legal name and account security settings."
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 pt-4">
-        <div className="flex items-center gap-4 mb-6 p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl">
-          <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 pt-3">
+        <div className="flex items-center gap-3 mb-5 p-3 bg-emerald-500/10 border border-emerald-500/10 rounded-md">
+          <div className="w-12 h-12 rounded-md bg-emerald-500/10 flex items-center justify-center">
             <Fingerprint className="w-6 h-6 text-emerald-400" />
           </div>
           <div>
-            <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest leading-tight">Identity Control</p>
-            <p className="text-sm font-medium text-white/60">Changes will be reflected across all farm records.</p>
+            <p className="text-xs font-bold text-emerald-500 uppercase tracking-widest leading-tight">Identity Control</p>
+            <p className="text-sm font-medium text-white/80">Changes will be reflected across all farm records.</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Input
             label="First Name"
             placeholder="John"
@@ -141,14 +141,14 @@ export function EditProfileModal({ isOpen, onOpenChange, initialData }: EditProf
         />
 
         {/* Password Change Toggle */}
-        <div className="pt-4 border-t border-white/5">
+        <div className="pt-3 border-t border-white/5">
            <div 
              onClick={() => setValue("changePassword", !changePasswordActive)}
-             className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5 cursor-pointer hover:bg-white/10 transition-all group"
+             className="flex items-center justify-between p-3 rounded-md bg-white/10 border border-white/5 cursor-pointer hover:bg-white/10 transition-all group"
            >
-              <div className="flex items-center gap-3">
-                 <Shield className={`w-5 h-5 ${changePasswordActive ? 'text-amber-400' : 'text-white/40 group-hover:text-white/60'}`} />
-                 <p className="text-sm font-black uppercase tracking-widest text-white/80">Change Password</p>
+              <div className="flex items-center gap-2">
+                 <Shield className={`w-5 h-5 ${changePasswordActive ? 'text-amber-400' : 'text-white/70 group-hover:text-white/60'}`} />
+                 <p className="text-sm font-bold uppercase tracking-widest text-white/80">Change Password</p>
               </div>
               <div className={`w-10 h-5 rounded-full relative transition-colors ${changePasswordActive ? 'bg-amber-500/40' : 'bg-white/10'}`}>
                  <div className={`absolute top-1 w-3 h-3 rounded-full transition-all ${changePasswordActive ? 'right-1 bg-amber-400' : 'left-1 bg-white/40'}`} />
@@ -156,13 +156,13 @@ export function EditProfileModal({ isOpen, onOpenChange, initialData }: EditProf
            </div>
 
            {changePasswordActive && (
-              <div className="mt-4 space-y-4 animate-in slide-in-from-top-2 duration-300">
+              <div className="mt-3 space-y-3 animate-in slide-in-from-top-2 duration-300">
                  <Input 
                    label="Current Password"
                    type="password"
                    {...register("currentPassword")}
                  />
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <Input 
                       label="New Password"
                       type="password"
@@ -179,19 +179,19 @@ export function EditProfileModal({ isOpen, onOpenChange, initialData }: EditProf
            )}
         </div>
 
-        <div className="pt-4 flex gap-3">
+        <div className="pt-3 flex gap-2">
           <Button
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="flex-1 rounded-2xl border-white/10 text-white/60 hover:text-white"
+            className="flex-1 rounded-md border-white/10 text-white/80 hover:text-white"
           >
             Cancel
           </Button>
           <Button
             type="submit"
             isLoading={isSubmitting}
-            className="flex-[2] bg-emerald-500 hover:bg-emerald-400 text-black font-black uppercase tracking-widest rounded-2xl h-12"
+            className="flex-[2] bg-emerald-500 hover:bg-emerald-400 text-black font-bold uppercase tracking-widest rounded-md h-12"
           >
             Save Changes
           </Button>

@@ -22,7 +22,7 @@ export default function LoadingOverlay() {
         <motion.div
           animate={{ rotateY: 360 }}
           transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
-          className="relative text-7xl select-none"
+          className="relative text-5xl select-none"
         >
           🥚
           {/* Subtle Bounce */}
@@ -40,7 +40,7 @@ export default function LoadingOverlay() {
         initial={{ y: 10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2 }}
-        className="mt-8 text-lg font-medium tracking-wide text-blue-200"
+        className="mt-7 text-lg font-medium tracking-wide text-blue-200"
       >
         Syncing with the Coop...
       </motion.p>

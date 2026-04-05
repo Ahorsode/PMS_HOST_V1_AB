@@ -44,8 +44,8 @@ export function MarketingSuite() {
       </CardHeader>
       <CardContent className="flex-1 flex flex-col pt-2 relative z-10 overflow-hidden">
         {post ? (
-          <div className="flex-1 flex flex-col gap-4 overflow-hidden">
-            <div className="flex-1 bg-black/40 p-4 rounded-3xl border border-emerald-500/10 overflow-y-auto custom-scrollbar text-sm text-emerald-100/90 whitespace-pre-wrap leading-relaxed italic">
+          <div className="flex-1 flex flex-col gap-3 overflow-hidden">
+            <div className="flex-1 bg-black/60 p-3 rounded-lg border border-emerald-500/10 overflow-y-auto custom-scrollbar text-sm text-emerald-100/90 whitespace-pre-wrap leading-relaxed italic">
               {post}
             </div>
             <div className="flex gap-2">
@@ -59,12 +59,12 @@ export function MarketingSuite() {
             </div>
           </div>
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center text-center space-y-6">
-            <div className="p-6 bg-emerald-500/10 rounded-full border border-emerald-500/20 animate-pulse">
+          <div className="flex-1 flex flex-col items-center justify-center text-center space-y-5">
+            <div className="p-5 bg-emerald-500/10 rounded-full border border-emerald-500/20 animate-pulse">
                <Sparkles size={48} className="text-emerald-400" />
             </div>
             <div>
-               <p className="text-white font-black text-lg">Generate Weekly Update</p>
+               <p className="text-white font-bold text-lg">Generate Weekly Update</p>
                <p className="text-emerald-400/60 text-xs font-medium max-w-[200px] mx-auto mt-2 italic">
                  Translate your production stats into shareable social media posts in one click.
                </p>
@@ -72,7 +72,7 @@ export function MarketingSuite() {
             <Button 
              onClick={handleGenerate} 
              disabled={loading}
-             className="bg-emerald-500 text-[#064e3b] font-black uppercase tracking-widest text-[11px] px-8 rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:scale-105 transition-transform"
+             className="bg-emerald-500 text-[#064e3b] font-bold uppercase tracking-widest text-[11px] px-7 rounded-md shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:scale-105 transition-transform"
             >
               {loading ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
               {loading ? 'Analyzing Data...' : 'Generate Post'}

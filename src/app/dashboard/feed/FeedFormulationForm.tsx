@@ -77,15 +77,15 @@ export function FeedFormulationForm({ inventoryItems, onSuccess }: FeedFormulati
   }
 
   return (
-    <Card className="border-white/20 bg-white/10 backdrop-blur-md shadow-2xl rounded-2xl overflow-hidden">
+    <Card className="border-white/20 bg-white/10 backdrop-blur-md shadow-2xl rounded-md overflow-hidden">
       <CardHeader className="bg-gradient-to-r from-emerald-600/20 to-teal-500/10 border-b border-white/10">
         <CardTitle className="flex items-center gap-2 text-emerald-950">
           <Beaker className="w-5 h-5" />
           Create New Formulation
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-6 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <CardContent className="p-5 space-y-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="space-y-2">
             <div className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Formulation Name</div>
             <Input 
@@ -100,7 +100,7 @@ export function FeedFormulationForm({ inventoryItems, onSuccess }: FeedFormulati
             <select 
               value={type} 
               onChange={(e) => setType(e.target.value as FeedType)}
-              className="w-full h-10 px-3 rounded-md bg-white/50 border border-white/30 backdrop-blur-sm"
+              className="w-full h-10 px-2 rounded-md bg-white/50 border border-white/30 backdrop-blur-sm"
             >
               {FEED_TYPES.map(t => (
                 <option key={t} value={t}>{t.replace('_', ' ')}</option>
@@ -109,7 +109,7 @@ export function FeedFormulationForm({ inventoryItems, onSuccess }: FeedFormulati
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div className="flex justify-between items-center">
             <div className="text-lg font-bold flex items-center gap-2">
               <Scale className="w-5 h-5 text-emerald-600" />
@@ -120,15 +120,15 @@ export function FeedFormulationForm({ inventoryItems, onSuccess }: FeedFormulati
             </Button>
           </div>
 
-          <div className="space-y-3">
+          <div className="space-y-2">
             {ingredients.map((ing, idx) => (
-              <div key={idx} className="flex gap-3 items-end bg-white/30 p-4 rounded-xl border border-white/20">
+              <div key={idx} className="flex gap-2 items-end bg-white/30 p-3 rounded-md border border-white/20">
                 <div className="flex-1 space-y-1">
                   <div className="text-xs uppercase font-bold text-gray-500">Ingredient Source</div>
                   <select
                     value={ing.inventoryId}
                     onChange={(e) => updateIngredient(idx, 'inventoryId', Number(e.target.value))}
-                    className="w-full h-10 px-3 rounded-md bg-white/80 border border-white/40"
+                    className="w-full h-10 px-2 rounded-md bg-white/80 border border-white/40"
                   >
                     {inventoryItems.map(item => (
                       <option key={item.id} value={item.id}>{item.itemName}</option>
@@ -157,12 +157,12 @@ export function FeedFormulationForm({ inventoryItems, onSuccess }: FeedFormulati
             ))}
           </div>
 
-          <div className={`p-4 rounded-xl flex justify-between items-center ${totalPercentage === 100 ? 'bg-emerald-100/50 border-emerald-200' : 'bg-amber-100/50 border-amber-200'} border transition-colors`}>
+          <div className={`p-3 rounded-md flex justify-between items-center ${totalPercentage === 100 ? 'bg-emerald-100/50 border-emerald-200' : 'bg-amber-100/50 border-amber-200'} border transition-colors`}>
             <div className="flex items-center gap-2">
               <AlertCircle className={`w-5 h-5 ${totalPercentage === 100 ? 'text-emerald-600' : 'text-amber-600'}`} />
               <span className="font-bold text-gray-800">Total Composition:</span>
             </div>
-            <span className={`text-xl font-black ${totalPercentage === 100 ? 'text-emerald-700' : 'text-amber-700'}`}>
+            <span className={`text-xl font-bold ${totalPercentage === 100 ? 'text-emerald-700' : 'text-amber-700'}`}>
               {totalPercentage}%
             </span>
           </div>
@@ -170,7 +170,7 @@ export function FeedFormulationForm({ inventoryItems, onSuccess }: FeedFormulati
 
         <Button 
           onClick={handleSubmit} 
-          className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg transition-all"
+          className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-md shadow-lg transition-all"
           disabled={totalPercentage !== 100}
         >
           Save Formulation

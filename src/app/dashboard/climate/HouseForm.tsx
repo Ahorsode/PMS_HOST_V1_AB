@@ -49,9 +49,9 @@ export const HouseForm = ({ house, mode, onClose }: HouseFormProps) => {
 
   if (mode === 'delete') {
     return (
-      <div className="space-y-4">
+      <div className="space-y-3">
         <p className="text-gray-600">Are you sure you want to delete this house? This action cannot be undone and may affect associated data.</p>
-        <div className="flex justify-end gap-3">
+        <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button variant="danger" onClick={handleSubmit} isLoading={isLoading}>Delete House</Button>
         </div>
@@ -60,7 +60,7 @@ export const HouseForm = ({ house, mode, onClose }: HouseFormProps) => {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-3">
       <Input
         label="House Name/Number"
         value={formData.name}
@@ -74,7 +74,7 @@ export const HouseForm = ({ house, mode, onClose }: HouseFormProps) => {
         onChange={(e) => setFormData({ ...formData, capacity: Number(e.target.value) })}
         required
       />
-      <div className="flex justify-end gap-3 pt-4">
+      <div className="flex justify-end gap-2 pt-3">
         <Button variant="outline" type="button" onClick={onClose}>Cancel</Button>
         <Button type="submit" isLoading={isLoading}>
           {mode === 'create' ? 'Create House' : mode === 'edit' ? 'Update House' : 'Save'}

@@ -54,7 +54,7 @@ export const BottomNav = ({ role = 'OWNER', permissions }: { role?: string, perm
       transition={{ type: "spring", stiffness: 260, damping: 20 }}
       className="fixed bottom-0 left-0 right-0 z-40 md:hidden pb-safe"
     >
-      <div className="bg-[#0a1510]/85 backdrop-blur-2xl mx-4 mb-4 mt-2 px-2 py-2 rounded-3xl flex items-center gap-1 overflow-x-auto custom-scrollbar border border-emerald-900/40 shadow-[0_-4px_30px_rgba(0,0,0,0.6),0_8px_32px_rgba(0,0,0,0.5)] snap-x">
+      <div className="bg-[#0a1510]/85 backdrop-blur-2xl mx-3 mb-3 mt-2 px-2 py-2 rounded-lg flex items-center gap-1 overflow-x-auto custom-scrollbar border border-emerald-900/40 shadow-[0_-4px_30px_rgba(0,0,0,0.6),0_8px_32px_rgba(0,0,0,0.5)] snap-x">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
@@ -62,21 +62,21 @@ export const BottomNav = ({ role = 'OWNER', permissions }: { role?: string, perm
               key={item.name}
               href={item.href}
               className={cn(
-                "relative flex flex-col items-center justify-center min-w-[4.5rem] shrink-0 snap-center h-14 rounded-2xl transition-all duration-300",
+                "relative flex flex-col items-center justify-center min-w-[4.5rem] shrink-0 snap-center h-14 rounded-md transition-all duration-300",
                 isActive 
                   ? "text-emerald-400" 
-                  : "text-white/60 hover:text-white"
+                  : "text-white/80 hover:text-white"
               )}
             >
               {isActive && (
                 <motion.div
                   layoutId="bottomNavBubble"
-                  className="absolute inset-0 bg-emerald-500/20 rounded-2xl border border-emerald-500/20 shadow-[inset_0_0_12px_rgba(16,185,129,0.1)]"
+                  className="absolute inset-0 bg-emerald-500/20 rounded-md border border-emerald-500/20 shadow-[inset_0_0_12px_rgba(16,185,129,0.1)]"
                   transition={{ type: "spring", stiffness: 300, damping: 25 }}
                 />
               )}
               <item.icon className={cn("w-6 h-6 z-10", isActive && "drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]")} />
-              <span className="text-[10px] font-bold mt-1 z-10 whitespace-nowrap">{item.name}</span>
+              <span className="text-xs font-bold mt-1 z-10 whitespace-nowrap">{item.name}</span>
             </Link>
           );
         })}
@@ -84,10 +84,10 @@ export const BottomNav = ({ role = 'OWNER', permissions }: { role?: string, perm
         {/* Logout Button */}
         <button
           onClick={() => signOut({ callbackUrl: '/login' })}
-          className="relative flex flex-col items-center justify-center min-w-[4.5rem] shrink-0 snap-center h-14 rounded-2xl transition-all duration-300 text-red-400/60 hover:text-red-400"
+          className="relative flex flex-col items-center justify-center min-w-[4.5rem] shrink-0 snap-center h-14 rounded-md transition-all duration-300 text-red-400/60 hover:text-red-400"
         >
           <LogOut className="w-6 h-6 z-10" />
-          <span className="text-[10px] font-bold mt-1 z-10">Sign Out</span>
+          <span className="text-xs font-bold mt-1 z-10">Sign Out</span>
         </button>
       </div>
     </motion.div>

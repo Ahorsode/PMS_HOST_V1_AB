@@ -26,7 +26,7 @@ export default function GlassCard({ children, className }: GlassCardProps) {
         duration: 0.6 
       }}
       className={cn(
-        "relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/5 p-8 shadow-2xl backdrop-blur-2xl transition-all duration-500 hover:border-white/20",
+        "relative overflow-hidden rounded-lg border border-white/10 bg-white/10 p-7 shadow-2xl backdrop-blur-2xl transition-all duration-500 hover:border-white/20",
         className
       )}
       style={{

@@ -51,9 +51,9 @@ export const InventoryForm = ({ item, mode, onClose }: InventoryFormProps) => {
 
   if (mode === 'delete') {
     return (
-      <div className="space-y-4">
+      <div className="space-y-3">
         <p className="text-white/70 font-medium">Are you sure you want to delete this item? This action cannot be undone.</p>
-        <div className="flex justify-end gap-3">
+        <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button variant="danger" onClick={handleSubmit} isLoading={isLoading}>Delete Item</Button>
         </div>
@@ -62,14 +62,14 @@ export const InventoryForm = ({ item, mode, onClose }: InventoryFormProps) => {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-3">
       <Input
         label="Item Name"
         value={formData.itemName}
         onChange={(e) => setFormData({ ...formData, itemName: e.target.value })}
         required
       />
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-3">
         <Input
           label="Stock Level"
           type="number"
@@ -97,7 +97,7 @@ export const InventoryForm = ({ item, mode, onClose }: InventoryFormProps) => {
         onChange={(e) => setFormData({ ...formData, category: e.target.value })}
         required
       />
-      <div className="flex justify-end gap-3 pt-4">
+      <div className="flex justify-end gap-2 pt-3">
         <Button variant="outline" type="button" onClick={onClose}>Cancel</Button>
         <Button type="submit" isLoading={isLoading}>
           {mode === 'create' ? 'Add Item' : mode === 'edit' ? 'Update Item' : 'Save'}

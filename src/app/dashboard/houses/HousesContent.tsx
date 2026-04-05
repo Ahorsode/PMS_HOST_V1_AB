@@ -29,10 +29,10 @@ export default function HousesPage({ houses }: { houses: any[] }) {
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 px-4 py-8">
-      <div className="flex justify-between items-center bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+    <div className="max-w-7xl mx-auto space-y-5 px-3 py-7">
+      <div className="flex justify-between items-center bg-white p-5 rounded-md shadow-sm border border-gray-100">
         <div>
-          <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight">House Management</h2>
+          <h2 className="text-3xl font-extrabold text-gray-900 tracking-normal">House Management</h2>
           <p className="text-gray-500 mt-1">Configure and manage your poultry houses.</p>
         </div>
         <Button onClick={() => setIsAdding(!isAdding)}>
@@ -47,12 +47,12 @@ export default function HousesPage({ houses }: { houses: any[] }) {
             <CardTitle>Register New House</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form onSubmit={handleSubmit} className="space-y-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <Input label="House Name / Number" name="name" placeholder="e.g. House 1" required />
                 <Input label="Capacity" name="capacity" type="number" placeholder="Max birds" required />
               </div>
-              <div className="flex justify-end gap-3 pt-4">
+              <div className="flex justify-end gap-2 pt-3">
                 <Button type="button" variant="outline" onClick={() => setIsAdding(false)}>Cancel</Button>
                 <Button type="submit" isLoading={isLoading}>Save House</Button>
               </div>
@@ -61,7 +61,7 @@ export default function HousesPage({ houses }: { houses: any[] }) {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {houses.map((house) => (
           <Card key={house.id} className="group hover:border-emerald-500 transition-all border-dashed">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -82,7 +82,7 @@ export default function HousesPage({ houses }: { houses: any[] }) {
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500 font-medium">Status</span>
-                  <span className="text-emerald-500 font-black uppercase text-[10px] tracking-widest bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">Operational</span>
+                  <span className="text-emerald-500 font-bold uppercase text-xs tracking-widest bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100">Operational</span>
                 </div>
               </div>
             </CardContent>
@@ -90,7 +90,7 @@ export default function HousesPage({ houses }: { houses: any[] }) {
         ))}
         
         {houses.length === 0 && (
-          <div className="col-span-full py-20 text-center border-2 border-dashed border-gray-100 rounded-3xl">
+          <div className="col-span-full py-16 text-center border-2 border-dashed border-gray-100 rounded-lg">
             <p className="text-gray-400 font-medium">No houses configured yet. Add your first house to manage flocks.</p>
           </div>
         )}

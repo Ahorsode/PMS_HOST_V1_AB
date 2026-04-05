@@ -13,10 +13,10 @@ export const FlockActionsHeader = ({ houses }: { houses: any[] }) => {
 
   return (
     <>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <Link 
           href="/dashboard/flocks/analytics"
-          className="flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-xl hover:bg-emerald-500/20 transition-all font-black uppercase text-xs tracking-widest group"
+          className="flex items-center gap-2 px-3 py-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-md hover:bg-emerald-500/20 transition-all font-bold uppercase text-xs tracking-widest group"
         >
           <Eye className="w-4 h-4 group-hover:scale-110 transition-transform" />
           Management Unit
@@ -40,7 +40,7 @@ export const FlockRowActions = ({ batch, houses }: { batch: any, houses: any[] }
     <div className="flex items-center gap-2">
       <Link 
         href={`/dashboard/flocks/${batch.id}`}
-        className="flex items-center gap-1.5 px-2 py-1 text-[10px] font-black uppercase tracking-tighter text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/20 transition-all"
+        className="flex items-center gap-1.5 px-2 py-1 text-xs font-bold uppercase tracking-normal text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/20 transition-all"
         title="View Management"
       >
         <Eye className="h-3 w-3" />

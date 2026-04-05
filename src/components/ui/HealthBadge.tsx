@@ -16,13 +16,13 @@ export const HealthBadge: React.FC<HealthBadgeProps> = ({ status }) => {
       case 'Critical':
         return 'bg-red-500/10 text-red-400 border-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.1)]';
       default:
-        return 'bg-white/5 text-white/60 border-white/10';
+        return 'bg-white/10 text-white/80 border-white/10';
     }
   };
 
   return (
     <span
-      className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border backdrop-blur-md transition-all duration-300 ${getBadgeStyles()}`}
+      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-bold uppercase tracking-widest border backdrop-blur-md transition-all duration-300 ${getBadgeStyles()}`}
     >
       <span className="w-1.5 h-1.5 rounded-full bg-current mr-2 animate-pulse shadow-[0_0_5px_currentColor]" />
       {status}

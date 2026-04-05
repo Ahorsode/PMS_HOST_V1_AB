@@ -45,28 +45,28 @@ export default function ProfileOnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="max-w-md w-full space-y-12 relative z-10">
-        <div className="text-center space-y-4">
-          <h1 className="text-5xl font-black text-white tracking-tighter italic">Welcome to <span className="text-emerald-400">Agri-ERP</span></h1>
+    <div className="min-h-screen flex items-center justify-center p-3">
+      <div className="max-w-md w-full space-y-11 relative z-10">
+        <div className="text-center space-y-3">
+          <h1 className="text-5xl font-bold text-white tracking-normal italic">Welcome to <span className="text-emerald-400">Agri-ERP</span></h1>
           <p className="text-sm text-white/70 font-bold uppercase tracking-widest italic">
             Please complete your profile details to continue.
           </p>
         </div>
 
-        <Card className="glass-morphism border-none shadow-2xl rounded-[2.5rem] p-4">
+        <Card className="glass-morphism border-none shadow-2xl rounded-lg p-3">
           <CardHeader>
-            <CardTitle className="text-2xl italic tracking-tighter">Your Profile</CardTitle>
+            <CardTitle className="text-2xl italic tracking-normal">Your Profile</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-8">
+            <form onSubmit={handleSubmit} className="space-y-7">
               {error && (
-                <div className="p-4 bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-2xl font-bold backdrop-blur-md">
+                <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-md font-bold backdrop-blur-md">
                   {error}
                 </div>
               )}
 
-              <div className="space-y-6">
+              <div className="space-y-5">
                 <Input 
                   label="First Name"
                   name="firstname"
@@ -80,8 +80,8 @@ export default function ProfileOnboardingPage() {
                   placeholder="e.g. Doe"
                 />
                 
-                <div className="pt-2 border-t border-white/5 space-y-6">
-                  <p className="text-xs text-white/50 italic mb-2">Since this is your first login, you can set a secure password (Optional but recommended).</p>
+                <div className="pt-2 border-t border-white/5 space-y-5">
+                  <p className="text-xs text-white/70 italic mb-2">Since this is your first login, you can set a secure password (Optional but recommended).</p>
                   <Input 
                     label="New Password"
                     name="newPassword"
@@ -97,7 +97,7 @@ export default function ProfileOnboardingPage() {
                 </div>
               </div>
 
-              <div className="pt-4">
+              <div className="pt-3">
                 <Button
                   type="submit"
                   isLoading={isLoading}
