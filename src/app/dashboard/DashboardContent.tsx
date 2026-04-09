@@ -141,7 +141,7 @@ export function DashboardContent({ stats, houses, summary, role }: DashboardCont
     return <WorkerDashboard stats={stats} houses={houses} />;
   }
 
-  if (role === 'OWNER' || role === 'MANAGER') {
+  if (role === 'OWNER') {
     return <ExecutiveDashboard stats={stats.executiveStats!} />;
   }
 
