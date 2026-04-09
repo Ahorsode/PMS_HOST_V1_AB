@@ -39,3 +39,9 @@ export const CardContent = ({ children, className = '' }: { children: React.Reac
     {children}
   </div>
 );
+
+export const CardDescription = ({ children, className = '' }: { children: React.ReactNode, className?: string }) => (
+  <p className={cn("text-xs text-white/60 font-medium tracking-tight", className)}>
+    {children}
+  </p>
+);

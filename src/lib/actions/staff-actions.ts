@@ -425,7 +425,10 @@ export async function updateWorkerPermissions(
  * Hardened contextual permission checker.
  * Identifies role based on farm membership, not global user role.
  */
-export async function checkWorkerPermissions(module: 'finance' | 'inventory' | 'batches', action: 'view' | 'edit') {
+export async function checkWorkerPermissions(
+  module: 'finance' | 'inventory' | 'batches' | 'sales' | 'eggs' | 'feeding' | 'houses' | 'mortality' | 'customers' | 'team', 
+  action: 'view' | 'edit'
+) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return false
   
@@ -460,20 +463,26 @@ export async function checkWorkerPermissions(module: 'finance' | 'inventory' | '
       if (module === 'finance') return action === 'view' ? perm.canViewFinance : perm.canEditFinance
       if (module === 'inventory') return action === 'view' ? perm.canViewInventory : perm.canEditInventory
       if (module === 'batches') return action === 'view' ? perm.canViewBatches : perm.canEditBatches
+      if (module === 'sales') return action === 'view' ? perm.canViewSales : perm.canEditSales
+      if (module === 'eggs') return action === 'view' ? perm.canViewEggs : perm.canEditEggs
+      if (module === 'feeding') return action === 'view' ? perm.canViewFeeding : perm.canEditFeeding
+      if (module === 'houses') return action === 'view' ? perm.canViewHouses : perm.canEditHouses
+      if (module === 'mortality') return action === 'view' ? perm.canViewMortality : perm.canEditMortality
+      if (module === 'customers') return action === 'view' ? perm.canViewCustomers : perm.canEditCustomers
+      if (module === 'team') return action === 'view' ? perm.canViewTeam : perm.canEditTeam
     }
     
     // 4. Fallback to Role Defaults
     if (membership.role === 'MANAGER') return true
     
     // Role-specific defaults
-    // Role-specific defaults: Accountant has EXCLUSIVE access to finance only
     if (membership.role === 'ACCOUNTANT' || membership.role === 'FINANCE_OFFICER') {
       return module === 'finance'
     }
     
     if (membership.role === 'CASHIER') {
-      if (module === 'finance') return true // Can log sales
-      return false // Cannot see other modules
+      if (module === 'finance' || module === 'sales') return true
+      return false
     }
     
     if (membership.role === 'WORKER') return action === 'view'

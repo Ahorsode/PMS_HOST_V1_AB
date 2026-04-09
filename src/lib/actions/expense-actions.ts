@@ -29,6 +29,9 @@ export async function getExpenses() {
 }
 
 export async function createExpense(data: {
+  amount: number
+  category: string
+  description?: string
   expenseDate: string
   reference?: string
   supplierId?: number

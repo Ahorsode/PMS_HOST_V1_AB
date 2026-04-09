@@ -56,7 +56,7 @@ export default async function FlocksPage() {
 
         <TabsContent value="analytics" className="mt-0">
           <BatchComparison 
-            batches={batches.map(b => ({
+            batches={batches.map((b: any) => ({
               id: b.id,
               batchName: b.batchName || `Batch #${b.id}`,
               arrivalDate: b.arrivalDate.toISOString(),
