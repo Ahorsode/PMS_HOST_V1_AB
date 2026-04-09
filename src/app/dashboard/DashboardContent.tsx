@@ -28,6 +28,9 @@ const AccountantDashboard = dynamic(() => import('@/components/dashboard/Account
 const WorkerDashboard = dynamic(() => import('@/components/dashboard/WorkerDashboard').then(mod => mod.WorkerDashboard), {
   loading: () => <div className="h-screen w-full animate-pulse bg-white/10 rounded-lg" />
 });
+const ExecutiveDashboard = dynamic(() => import('@/components/dashboard/ExecutiveDashboard').then(mod => mod.ExecutiveDashboard), {
+  loading: () => <div className="h-screen w-full animate-pulse bg-white/10 rounded-lg" />
+});
 
 interface DashboardContentProps {
   role: Role;
@@ -62,6 +65,16 @@ interface DashboardContentProps {
       type: LivestockType;
     }>;
     productivityIndex?: number;
+    executiveStats?: {
+      totalProfit: number
+      profitTrend: number
+      globalFcr: number
+      totalDebt: number
+      activeLivestock: number
+      mortalityRate: number
+      supplierDebt: number
+      customerDebt: number
+    };
   };
   houses: Array<{
     id: number;
@@ -126,6 +139,10 @@ export function DashboardContent({ stats, houses, summary, role }: DashboardCont
 
   if (role === 'WORKER' || role === 'CASHIER') {
     return <WorkerDashboard stats={stats} houses={houses} />;
+  }
+
+  if (role === 'OWNER' || role === 'MANAGER') {
+    return <ExecutiveDashboard stats={stats.executiveStats!} />;
   }
 
   const renderZeroState = () => (

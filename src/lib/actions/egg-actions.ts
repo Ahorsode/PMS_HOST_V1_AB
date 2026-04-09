@@ -14,7 +14,9 @@ async function getUserId() {
 
 export async function createEggProduction(data: {
   batchId: number
-  eggsCollected: number
+  eggsCollected?: number
+  cratesCollected?: number
+  categoryId?: number
   unusableCount?: number
   logDate: string
 }) {
@@ -25,24 +27,64 @@ export async function createEggProduction(data: {
   if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Batches Permission' }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    // Fetch farm settings for dynamic crate size
+    const settings = await tx.farmSettings.findUnique({
+      where: { farmId: activeFarmId },
+      select: { eggsPerCrate: true }
+    })
+    const eggsPerCrate = settings?.eggsPerCrate ?? 30
+
+    // Calculate total eggs from crates if needed
+    const calculatedEggs = data.eggsCollected ?? (data.cratesCollected ? Math.round(data.cratesCollected * eggsPerCrate) : 0)
+    
+    // Ensure "Unsorted" default if no categoryId provided
+    let finalCategoryId = data.categoryId
+    if (!finalCategoryId) {
+      let unsortedCategory = await tx.eggCategory.findFirst({
+        where: { farmId: activeFarmId, name: 'Unsorted' }
+      })
+      
+      if (!unsortedCategory) {
+        unsortedCategory = await tx.eggCategory.create({
+          data: {
+            farmId: activeFarmId,
+            name: 'Unsorted',
+            description: 'Default category for daily collections'
+          }
+        })
+      }
+      finalCategoryId = unsortedCategory.id
+    }
+
     const log = await tx.eggProduction.create({
       data: {
         batchId: data.batchId,
         farmId: activeFarmId,
-        eggsCollected: data.eggsCollected,
+        eggsCollected: calculatedEggs,
+        cratesCollected: data.cratesCollected,
+        categoryId: finalCategoryId,
         unusableCount: data.unusableCount || 0,
-        eggsRemaining: data.eggsCollected - (data.unusableCount || 0),
+        eggsRemaining: calculatedEggs - (data.unusableCount || 0),
         logDate: new Date(data.logDate),
         userId: userId
       }
     })
 
-    // Auto-sync usable eggs into Inventory
-    const usableEggs = data.eggsCollected - (data.unusableCount || 0)
+    // Auto-sync usable eggs into Inventory based on Category
+    const usableEggs = calculatedEggs - (data.unusableCount || 0)
     if (usableEggs > 0) {
+      const category = await tx.eggCategory.findUnique({ where: { id: finalCategoryId } })
+
+      const itemName = category ? `Eggs (${category.name})` : 'Eggs (Unsorted)'
+      
       const existing = await tx.inventory.findFirst({
-        where: { farmId: activeFarmId, category: 'EGGS', itemName: 'Eggs' }
+        where: { 
+          farmId: activeFarmId, 
+          category: 'EGGS', 
+          eggCategoryId: finalCategoryId
+        }
       })
+
       if (existing) {
         await tx.inventory.update({
           where: { id: existing.id },
@@ -50,7 +92,15 @@ export async function createEggProduction(data: {
         })
       } else {
         await tx.inventory.create({
-          data: { farmId: activeFarmId, userId, itemName: 'Eggs', stockLevel: usableEggs, unit: 'eggs', category: 'EGGS' }
+          data: { 
+            farmId: activeFarmId, 
+            userId, 
+            itemName: itemName, 
+            stockLevel: usableEggs, 
+            unit: 'eggs', 
+            category: 'EGGS',
+            eggCategoryId: finalCategoryId
+          }
         })
       }
     }

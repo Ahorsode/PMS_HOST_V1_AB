@@ -29,11 +29,9 @@ export async function getExpenses() {
 }
 
 export async function createExpense(data: {
-  amount: number
-  category: string
-  description?: string
   expenseDate: string
   reference?: string
+  supplierId?: number
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
@@ -50,7 +48,8 @@ export async function createExpense(data: {
         category: data.category as any,
         description: data.description,
         expenseDate: new Date(data.expenseDate),
-        referenceNumber: data.reference
+        referenceNumber: data.reference,
+        supplierId: data.supplierId
       }
     })
     revalidatePath('/dashboard/finance')

@@ -136,3 +136,65 @@ export async function logMortality(data: {
     return { success: false, error: 'Failed to log mortality' }
   })
 }
+
+export async function transferToIsolation(id: number, count: number) {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return { success: false, error: 'No active farm selected' }
+
+  const hasEditAccess = await checkWorkerPermissions('batches', 'edit')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized' }
+
+  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    const batch = await tx.batch.findUnique({
+      where: { id, farmId: activeFarmId }
+    })
+
+    if (!batch) return { success: false, error: 'Batch not found' }
+    if (batch.currentCount < count + batch.isolationCount) {
+       return { success: false, error: 'Not enough birds in main house to isolate' }
+    }
+
+    await tx.batch.update({
+      where: { id, farmId: activeFarmId },
+      data: {
+        isolationCount: {
+          increment: count
+        }
+      }
+    })
+
+    revalidatePath('/dashboard/flocks')
+    return { success: true }
+  })
+}
+
+export async function returnFromIsolation(id: number, count: number) {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return { success: false, error: 'No active farm selected' }
+
+  const hasEditAccess = await checkWorkerPermissions('batches', 'edit')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized' }
+
+  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    const batch = await tx.batch.findUnique({
+      where: { id, farmId: activeFarmId }
+    })
+
+    if (!batch) return { success: false, error: 'Batch not found' }
+    if (batch.isolationCount < count) {
+      return { success: false, error: 'Not enough birds in isolation to return' }
+    }
+
+    await tx.batch.update({
+      where: { id, farmId: activeFarmId },
+      data: {
+        isolationCount: {
+          decrement: count
+        }
+      }
+    })
+
+    revalidatePath('/dashboard/flocks')
+    return { success: true }
+  })
+}

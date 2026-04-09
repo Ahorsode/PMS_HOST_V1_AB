@@ -104,6 +104,8 @@ model Farm {
   userPermissions  UserPermission[]
   vaccinations     VaccinationSchedule[]
   weightRecords    WeightRecord[]
+  suppliers        Supplier[]
+  eggCategories    EggCategory[]
 
   @@index([userId])
   @@map("farms")
@@ -121,6 +123,7 @@ model House {
   updatedAt          DateTime    @updatedAt
   batches            Livestock[]
   farm               Farm        @relation(fields: [farmId], references: [id])
+  isIsolation        Boolean     @default(false)
 
   @@index([userId])
   @@index([farmId])
@@ -149,6 +152,7 @@ model Livestock {
   initialCostCarriage  Decimal?              @db.Decimal(10, 2)
   initialCostOther     Json?
   growthTargetOverride String?
+  isolationCount       Int                   @default(0)
   farm                 Farm                  @relation(fields: [farmId], references: [id])
   house                House                 @relation(fields: [houseId], references: [id])
   user                 User                  @relation(fields: [userId], references: [id])
@@ -184,6 +188,10 @@ model Inventory {
   feedingLogs                FeedingLog[]
   feedFormulationIngredients FeedFormulationIngredient[]
   farm                       Farm                        @relation(fields: [farmId], references: [id])
+  supplierId                 Int?
+  supplier                   Supplier?                   @relation(fields: [supplierId], references: [id])
+  eggCategoryId              Int?
+  eggCategory                EggCategory?                @relation(fields: [eggCategoryId], references: [id])
   orderItems                 OrderItem[]
 
   @@index([userId])
@@ -240,6 +248,9 @@ model EggProduction {
   eggsRemaining Int       @default(0)
   batch         Livestock @relation(fields: [batchId], references: [id])
   farm          Farm      @relation(fields: [farmId], references: [id])
+  categoryId    Int?
+  category      EggCategory? @relation(fields: [categoryId], references: [id])
+  cratesCollected Decimal? @db.Decimal(10, 2)
 
   @@index([batchId, logDate])
   @@index([userId])
@@ -387,6 +398,7 @@ model FarmSettings {
   updatedAt              DateTime @updatedAt
   currency               String   @default("GHS")
   growthTargetStandard   Int?     @map("growth_target_standard")
+  eggsPerCrate           Int      @default(30)
   farm                   Farm     @relation(fields: [farmId], references: [id], onDelete: Cascade)
 
   @@map("farm_settings")
@@ -422,6 +434,8 @@ model Expense {
   batch_id    Int?
   batches     Livestock?      @relation(fields: [batch_id], references: [id])
   farm        Farm            @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  supplierId  Int?
+  supplier    Supplier?       @relation(fields: [supplierId], references: [id])
   user        User            @relation(fields: [userId], references: [id])
 
   @@index([expenseDate, category])
@@ -628,4 +642,35 @@ enum FeedType {
   FINISHER
   BREEDER
   CUSTOM
+}
+
+model Supplier {
+  id          Int         @id @default(autoincrement())
+  farmId      Int
+  name        String
+  phone       String?
+  email       String?
+  address     String?
+  balanceOwed Decimal     @default(0) @db.Decimal(10, 2)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  farm        Farm        @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  expenses    Expense[]
+  inventory   Inventory[]
+
+  @@map("suppliers")
+}
+
+model EggCategory {
+  id             Int             @id @default(autoincrement())
+  farmId         Int
+  name           String
+  description    String?
+  createdAt      DateTime        @default(now())
+  farm           Farm            @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  eggProductions EggProduction[]
+  inventoryItems Inventory[]
+
+  @@unique([farmId, name])
+  @@map("egg_categories")
 }

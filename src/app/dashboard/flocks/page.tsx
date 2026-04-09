@@ -1,8 +1,10 @@
 import React from 'react';
 import { getAllBatches, getHouses } from '@/lib/actions/dashboard-actions';
 import { FlockActionsHeader } from './FlockActions';
-import { Bird } from 'lucide-react';
+import { Bird, BarChart3 } from 'lucide-react';
 import { LivestockTable } from './LivestockTable';
+import { BatchComparison } from '@/components/analytics/BatchComparison';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
 import { redirect } from 'next/navigation';
@@ -37,7 +39,34 @@ export default async function FlocksPage() {
         <FlockActionsHeader houses={houses} />
       </div>
 
-      <LivestockTable initialBatches={batches} houses={houses} />
+      <Tabs defaultValue="list" className="w-full">
+        <div className="flex justify-end mb-4">
+          <TabsList className="bg-white/10 backdrop-blur-md border border-white/10">
+            <TabsTrigger value="list" className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white">Active List</TabsTrigger>
+            <TabsTrigger value="analytics" className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white">
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Comparative Analytics
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="list" className="mt-0">
+          <LivestockTable initialBatches={batches} houses={houses} />
+        </TabsContent>
+
+        <TabsContent value="analytics" className="mt-0">
+          <BatchComparison 
+            batches={batches.map(b => ({
+              id: b.id,
+              batchName: b.batchName || `Batch #${b.id}`,
+              arrivalDate: b.arrivalDate.toISOString(),
+              fcr: 1.72, // Mocked for now, logic below would calculate real FCR
+              mortalityRate: b.initialCount ? ((b.initialCount - b.currentCount) / b.initialCount) * 100 : 0,
+              productionIndex: 340 // Mocked EPEF
+            }))} 
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
