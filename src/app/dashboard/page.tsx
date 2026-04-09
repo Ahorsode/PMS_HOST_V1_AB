@@ -45,7 +45,13 @@ export default async function DashboardPage() {
     
     return (
       <PullToRefresh>
-        <DashboardContent stats={stats} houses={houses as any} summary={summary} role={role as any} />
+        <DashboardContent 
+          stats={stats} 
+          houses={houses as any} 
+          summary={summary} 
+          role={role as any} 
+          subscriptionTier={farm?.subscriptionTier}
+        />
       </PullToRefresh>
     );
   } catch (error) {

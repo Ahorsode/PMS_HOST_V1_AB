@@ -9,7 +9,7 @@ import { Bird, Skull, Wheat, TrendingUp, Activity, Plus, Package, Eye, Banknote,
 import Link from 'next/link';
 import { Dialog } from '@/components/ui/Dialog';
 import { formatCurrency } from '@/lib/utils';
-import { LivestockType, Role } from '@prisma/client';
+import { LivestockType, Role, SubscriptionTier } from '@prisma/client';
 import { formatLivestockType } from '@/lib/utils/growth-utils';
 import dynamic from 'next/dynamic';
 
@@ -87,6 +87,7 @@ interface DashboardContentProps {
     expenses: number;
     eggs: number;
   } | null;
+  subscriptionTier?: SubscriptionTier;
 }
 
 const FloatingIcon = ({ icon: Icon, className = "" }: { icon: React.ElementType, className?: string }) => (
@@ -122,7 +123,7 @@ const MiniBarChart = ({ data, color }: { data: number[], color: string }) => {
   );
 };
 
-export function DashboardContent({ stats, houses, summary, role }: DashboardContentProps) {
+export function DashboardContent({ stats, houses, summary, role, subscriptionTier }: DashboardContentProps) {
   const { getAgeInDays, formatAge, getUnitBySpecies } = useLivestockStats();
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
@@ -141,7 +142,7 @@ export function DashboardContent({ stats, houses, summary, role }: DashboardCont
     return <WorkerDashboard stats={stats} houses={houses} />;
   }
 
-  if (role === 'OWNER') {
+  if (role === 'OWNER' && subscriptionTier === 'PREMIUM') {
     return <ExecutiveDashboard stats={stats.executiveStats!} />;
   }
 
