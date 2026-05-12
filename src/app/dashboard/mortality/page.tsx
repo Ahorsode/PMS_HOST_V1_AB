@@ -16,30 +16,30 @@ export default async function MortalityPage() {
   const totalMortality = logs.reduce((acc: number, log: any) => acc + log.count, 0);
 
   return (
-    <div className="max-w-7xl mx-auto space-y-5 px-3 py-7">
-      <div className="flex justify-between items-center bg-white p-5 rounded-md shadow-sm border border-gray-100">
+    <div className="max-w-7xl mx-auto space-y-4 md:space-y-5 px-2 md:px-3 py-4 md:py-7">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-5 rounded-md shadow-sm border border-gray-100 gap-4">
         <div>
-          <h2 className="text-3xl font-extrabold text-gray-900 tracking-normal text-red-700 uppercase italic">Mortality Logs</h2>
-          <p className="text-gray-500 mt-1">Centralized history of flock mortality records.</p>
+          <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-normal text-red-700 uppercase italic">Mortality Logs</h2>
+          <p className="text-gray-500 text-xs md:text-sm mt-1">Centralized history of flock mortality records.</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
         <Card className="rounded-md border-none shadow-xl shadow-gray-200/50 bg-red-950 text-white p-5 relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-7 opacity-10">
-            <XCircle className="w-24 h-24" />
+          <div className="absolute top-0 right-0 p-5 md:p-7 opacity-10">
+            <XCircle className="w-16 md:w-24 h-16 md:h-24" />
           </div>
-          <p className="text-red-300 text-sm font-bold uppercase tracking-widest mb-1">Total Deaths (History)</p>
-          <h3 className="text-4xl font-bold">{totalMortality.toLocaleString()} <span className="text-xs font-normal">birds</span></h3>
-          <p className="text-red-400 text-xs mt-3 font-medium italic">Across all active & archived batches</p>
+          <p className="text-red-300 text-[10px] md:text-sm font-bold uppercase tracking-widest mb-1">Total Deaths (History)</p>
+          <h3 className="text-3xl md:text-4xl font-bold">{totalMortality.toLocaleString()} <span className="text-xs font-normal">birds</span></h3>
+          <p className="text-red-400 text-[10px] md:text-xs mt-3 font-medium italic">Across all active & archived batches</p>
         </Card>
 
         <Card className="rounded-md border-none shadow-xl shadow-gray-200/50 bg-white p-5 border-l-4 border-l-amber-500">
           <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle className="w-5 h-5 text-amber-500" />
-            <p className="text-gray-800 text-sm font-bold uppercase tracking-widest">Health Tip</p>
+            <AlertTriangle className="w-4 md:w-5 h-4 md:h-5 text-amber-500" />
+            <p className="text-gray-800 text-[10px] md:text-sm font-bold uppercase tracking-widest">Health Tip</p>
           </div>
-          <p className="text-gray-500 text-sm leading-relaxed font-medium">
+          <p className="text-gray-500 text-xs md:text-sm leading-relaxed font-medium">
             Consistent mortality logging helps identify early signs of disease. If mortality exceeds 1% in 24 hours, contact a veterinarian immediately.
           </p>
         </Card>
