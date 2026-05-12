@@ -22,10 +22,14 @@ export default async function FlocksPage() {
     redirect('/dashboard/unauthorized');
   }
 
-  const [batches, houses] = await Promise.all([
+  const [rawBatches, rawHouses] = await Promise.all([
     getAllBatches(),
     getHouses()
   ]);
+
+  // Sanitize Decimal objects for Client Components
+  const batches = JSON.parse(JSON.stringify(rawBatches));
+  const houses = JSON.parse(JSON.stringify(rawHouses));
 
   return (
     <div className="max-w-7xl mx-auto space-y-5 md:space-y-7 px-2 md:px-3 py-4 md:py-7">
