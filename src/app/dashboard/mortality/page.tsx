@@ -12,7 +12,9 @@ export default async function MortalityPage() {
     getAllBatches()
   ]);
 
-  const activeBatches = batches.filter((b: any) => b.status === 'active');
+  const activeBatches = JSON.parse(JSON.stringify(
+    batches.filter((b: any) => b.status === 'active')
+  ));
   const totalMortality = logs.reduce((acc: number, log: any) => acc + log.count, 0);
 
   return (
