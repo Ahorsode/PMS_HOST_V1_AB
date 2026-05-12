@@ -15,20 +15,20 @@ interface FinancialInitializationModalProps {
 }
 
 export function FinancialInitializationModal({ isOpen, onClose, batchId, batchName }: FinancialInitializationModalProps) {
-  const [actualCost, setActualCost] = useState<number>(0);
-  const [carriageCost, setCarriageCost] = useState<number>(0);
-  const [otherExpenses, setOtherExpenses] = useState<{ label: string; amount: number }[]>([]);
+  const [actualCost, setActualCost] = useState<number | ''>(0);
+  const [carriageCost, setCarriageCost] = useState<number | ''>(0);
+  const [otherExpenses, setOtherExpenses] = useState<{ label: string; amount: number | '' }[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const addOtherExpense = () => {
-    setOtherExpenses([...otherExpenses, { label: '', amount: 0 }]);
+    setOtherExpenses([...otherExpenses, { label: '', amount: '' }]);
   };
 
   const removeOtherExpense = (index: number) => {
     setOtherExpenses(otherExpenses.filter((_, i) => i !== index));
   };
 
-  const updateOtherExpense = (index: number, field: 'label' | 'amount', value: string | number) => {
+  const updateOtherExpense = (index: number, field: 'label' | 'amount', value: string | number | '') => {
     const updated = [...otherExpenses];
     (updated[index] as any)[field] = value;
     setOtherExpenses(updated);
@@ -38,9 +38,12 @@ export function FinancialInitializationModal({ isOpen, onClose, batchId, batchNa
     setIsSubmitting(true);
     try {
       const result = await updateBatchFinancials(Number(batchId), {
-        actualCost,
-        carriageInward: carriageCost,
-        otherExpenses
+        actualCost: Number(actualCost) || 0,
+        carriageInward: Number(carriageCost) || 0,
+        otherExpenses: otherExpenses.map(exp => ({
+          ...exp,
+          amount: Number(exp.amount) || 0
+        }))
       });
 
       if (result.success) {
@@ -73,7 +76,7 @@ export function FinancialInitializationModal({ isOpen, onClose, batchId, batchNa
             <input 
               type="number" 
               value={actualCost}
-              onChange={(e) => setActualCost(Number(e.target.value))}
+              onChange={(e) => setActualCost(e.target.value === '' ? '' : Number(e.target.value))}
               placeholder="0.00"
               className="w-full bg-black/60 border border-white/10 rounded-md px-3 py-2 text-white font-bold focus:border-emerald-500/50 transition-colors outline-none"
             />
@@ -85,7 +88,7 @@ export function FinancialInitializationModal({ isOpen, onClose, batchId, batchNa
             <input 
               type="number" 
               value={carriageCost}
-              onChange={(e) => setCarriageCost(Number(e.target.value))}
+              onChange={(e) => setCarriageCost(e.target.value === '' ? '' : Number(e.target.value))}
               placeholder="0.00"
               className="w-full bg-black/60 border border-white/10 rounded-md px-3 py-2 text-white font-bold focus:border-blue-500/50 transition-colors outline-none"
             />
@@ -118,7 +121,7 @@ export function FinancialInitializationModal({ isOpen, onClose, batchId, batchNa
                     type="number"
                     placeholder="0.00"
                     value={exp.amount}
-                    onChange={(e) => updateOtherExpense(idx, 'amount', Number(e.target.value))}
+                    onChange={(e) => updateOtherExpense(idx, 'amount', e.target.value === '' ? '' : Number(e.target.value))}
                     className="w-24 bg-black/60 border border-white/10 rounded-md px-3 py-2 text-xs text-white font-bold"
                   />
                   <button 

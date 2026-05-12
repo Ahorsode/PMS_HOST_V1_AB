@@ -468,6 +468,7 @@ export async function getHouses() {
       select: {
         id: true,
         name: true,
+        capacity: true,
         currentTemperature: true,
         currentHumidity: true
       }
