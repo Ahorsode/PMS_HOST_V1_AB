@@ -119,7 +119,7 @@ export async function inviteWorker(data: {
  * Accepts an invitation.
  * Sets the user's role in the farm membership based on the invitation.
  */
-export async function acceptInvitation() {
+export async function acceptInvitation(shouldRevalidate = true) {
   const { userId } = await getAuthContext()
   
   try {
@@ -162,7 +162,7 @@ export async function acceptInvitation() {
     })
 
     if (result) {
-      revalidatePath('/dashboard/team')
+      if (shouldRevalidate) revalidatePath('/dashboard/team')
       return { success: true, membership: result }
     }
     
@@ -409,7 +409,7 @@ export async function updateWorkerPermissions(
         }
       }
 
-      revalidatePath('/dashboard/team')
+      revalidatePath('/dashboard', 'layout')
       return { success: true, permissions: updatedPerm }
     })
   } catch (error: any) {
@@ -435,7 +435,7 @@ export async function checkWorkerPermissions(
   try {
     // 1. Fetch Farm for Absolute Ownership Check
     const farm = await prisma.farm.findUnique({
-      where: { id: activeFarmId },
+      where: { id: Number(activeFarmId) },
       select: { userId: true }
     })
     if (!farm) return false
@@ -447,7 +447,7 @@ export async function checkWorkerPermissions(
     const membership = await prisma.farmMember.findUnique({
       where: {
         farmId_userId: {
-          farmId: activeFarmId,
+          farmId: Number(activeFarmId),
           userId: userId
         }
       }
@@ -456,7 +456,7 @@ export async function checkWorkerPermissions(
     
     // 3. Load Overrides
     const perm = await prisma.userPermission.findFirst({
-      where: { userId: userId, farmId: activeFarmId }
+      where: { userId: userId, farmId: Number(activeFarmId) }
     })
     
     if (perm) {
@@ -477,12 +477,11 @@ export async function checkWorkerPermissions(
     
     // Role-specific defaults
     if (membership.role === 'ACCOUNTANT' || membership.role === 'FINANCE_OFFICER') {
-      return module === 'finance'
+      return module === 'finance' || module === 'sales' || module === 'customers'
     }
     
     if (membership.role === 'CASHIER') {
-      if (module === 'finance' || module === 'sales') return true
-      return false
+      return module === 'finance' || module === 'sales'
     }
     
     if (membership.role === 'WORKER') return action === 'view'

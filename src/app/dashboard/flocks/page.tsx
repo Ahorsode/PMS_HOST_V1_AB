@@ -32,8 +32,13 @@ export default async function FlocksPage() {
   const houses = JSON.parse(JSON.stringify(rawHouses));
 
   return (
+<<<<<<< HEAD
+    <div className="max-w-7xl mx-auto space-y-7 px-3 py-7">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-7 rounded-lg shadow-sm border border-gray-100 gap-4">
+=======
     <div className="max-w-7xl mx-auto space-y-5 md:space-y-7 px-2 md:px-3 py-4 md:py-7">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-5 md:p-7 rounded-lg shadow-sm border border-gray-100 gap-4">
+>>>>>>> beafa215de498c2cd461d1d4be89b9fac486cb91
         <div>
           <h1 className="text-2xl md:text-4xl font-bold text-gray-900 tracking-normal">Livestock <span className="text-emerald-600 italic tracking-normal">Management</span></h1>
           <p className="text-gray-500 font-bold uppercase tracking-widest text-[10px] md:text-xs mt-1 md:text-2xl flex items-center gap-2">

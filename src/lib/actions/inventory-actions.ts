@@ -88,10 +88,16 @@ export async function getAllInventory() {
   if (!activeFarmId) return []
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    return await tx.inventory.findMany({
+    const items = await tx.inventory.findMany({
       where: { farmId: activeFarmId },
       orderBy: { itemName: 'asc' }
     })
+    return items.map((item: any) => ({
+      ...item,
+      stockLevel: Number(item.stockLevel),
+      reorderLevel: item.reorderLevel ? Number(item.reorderLevel) : null,
+      costPerUnit: item.costPerUnit ? Number(item.costPerUnit) : null
+    }))
   })
 }
 

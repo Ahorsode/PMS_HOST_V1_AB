@@ -495,6 +495,10 @@ export async function getAllBatches() {
     })
     return batches.map((batch: any) => ({
       ...batch,
+      carriage_inward: batch.carriage_inward ? Number(batch.carriage_inward) : null,
+      initial_actual_cost: batch.initial_actual_cost ? Number(batch.initial_actual_cost) : null,
+      initialCostActual: batch.initialCostActual ? Number(batch.initialCostActual) : null,
+      initialCostCarriage: batch.initialCostCarriage ? Number(batch.initialCostCarriage) : null,
       house: batch.house ? {
         ...batch.house,
         currentTemperature: batch.house.currentTemperature ? Number(batch.house.currentTemperature) : null,
@@ -882,7 +886,7 @@ export async function getAllEggProduction() {
   if (!activeFarmId) return []
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    return await tx.eggProduction.findMany({
+    const logs = await tx.eggProduction.findMany({
       where: { farmId: activeFarmId },
       include: {
         batch: true,
@@ -892,6 +896,16 @@ export async function getAllEggProduction() {
       },
       take: 50,
     })
+    return logs.map((log: any) => ({
+      ...log,
+      batch: log.batch ? {
+        ...log.batch,
+        carriage_inward: log.batch.carriage_inward ? Number(log.batch.carriage_inward) : null,
+        initial_actual_cost: log.batch.initial_actual_cost ? Number(log.batch.initial_actual_cost) : null,
+        initialCostActual: log.batch.initialCostActual ? Number(log.batch.initialCostActual) : null,
+        initialCostCarriage: log.batch.initialCostCarriage ? Number(log.batch.initialCostCarriage) : null,
+      } : null
+    }))
   }).catch((error: any) => {
     console.error('Error fetching egg production:', error)
     return []
@@ -917,10 +931,18 @@ export async function getAllFeedingLogs() {
     return logs.map((log: any) => ({
       ...log,
       amountConsumed: Number(log.amountConsumed),
+      batch: log.batch ? {
+        ...log.batch,
+        carriage_inward: log.batch.carriage_inward ? Number(log.batch.carriage_inward) : null,
+        initial_actual_cost: log.batch.initial_actual_cost ? Number(log.batch.initial_actual_cost) : null,
+        initialCostActual: log.batch.initialCostActual ? Number(log.batch.initialCostActual) : null,
+        initialCostCarriage: log.batch.initialCostCarriage ? Number(log.batch.initialCostCarriage) : null,
+      } : null,
       inventory: log.inventory ? {
-         ...log.inventory,
-         stockLevel: Number(log.inventory.stockLevel),
-         reorderLevel: log.inventory.reorderLevel ? Number(log.inventory.reorderLevel) : null
+        ...log.inventory,
+        stockLevel: Number(log.inventory.stockLevel),
+        reorderLevel: log.inventory.reorderLevel ? Number(log.inventory.reorderLevel) : null,
+        costPerUnit: log.inventory.costPerUnit ? Number(log.inventory.costPerUnit) : null,
       } : null
     }))
   }).catch((error: any) => {
@@ -986,7 +1008,7 @@ export async function getAllMortalityLogs() {
   if (!activeFarmId) return []
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    return await tx.mortality.findMany({
+    const logs = await tx.mortality.findMany({
       where: { farmId: activeFarmId },
       include: {
         batch: true,
@@ -996,6 +1018,16 @@ export async function getAllMortalityLogs() {
       },
       take: 50,
     })
+    return logs.map((log: any) => ({
+      ...log,
+      batch: log.batch ? {
+        ...log.batch,
+        carriage_inward: log.batch.carriage_inward ? Number(log.batch.carriage_inward) : null,
+        initial_actual_cost: log.batch.initial_actual_cost ? Number(log.batch.initial_actual_cost) : null,
+        initialCostActual: log.batch.initialCostActual ? Number(log.batch.initialCostActual) : null,
+        initialCostCarriage: log.batch.initialCostCarriage ? Number(log.batch.initialCostCarriage) : null,
+      } : null
+    }))
   }).catch((error: any) => {
     console.error('Error fetching mortality logs:', error)
     return []
@@ -1035,6 +1067,10 @@ export async function getBatchDetails(id: number) {
     // Serialize Decimals for Client Components
     return {
       ...batch,
+      carriage_inward: batch.carriage_inward ? Number(batch.carriage_inward) : null,
+      initial_actual_cost: batch.initial_actual_cost ? Number(batch.initial_actual_cost) : null,
+      initialCostActual: batch.initialCostActual ? Number(batch.initialCostActual) : null,
+      initialCostCarriage: batch.initialCostCarriage ? Number(batch.initialCostCarriage) : null,
       house: batch.house ? {
         ...batch.house,
         currentTemperature: batch.house.currentTemperature ? Number(batch.house.currentTemperature) : null,
@@ -1045,16 +1081,16 @@ export async function getBatchDetails(id: number) {
         amountConsumed: Number(log.amountConsumed),
         inventory: log.inventory ? {
           ...log.inventory,
-          stockLevel: Number(log.inventory.stockLevel)
+          stockLevel: Number(log.inventory.stockLevel),
+          reorderLevel: log.inventory.reorderLevel ? Number(log.inventory.reorderLevel) : null,
+          costPerUnit: log.inventory.costPerUnit ? Number(log.inventory.costPerUnit) : null,
         } : null
       })),
       weightRecords: batch.weightRecords.map((rec: any) => ({
         ...rec,
         averageWeight: Number(rec.averageWeight)
       })),
-      vaccinations: (batch as any).vaccinations || [],
-      initialCostActual: batch.initialCostActual ? Number(batch.initialCostActual) : 0,
-      initialCostCarriage: batch.initialCostCarriage ? Number(batch.initialCostCarriage) : 0,
+      vaccinations: batch.vaccinations || [],
       initialCostOther: (batch.initialCostOther as any) || []
     }
   }).catch((error: any) => {

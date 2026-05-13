@@ -179,7 +179,7 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
       <FloatingIcon icon={Package} className="absolute top-1/2 -right-20 w-48 h-48 pointer-events-none opacity-5" />
 
       {/* Bento Grid Header */}
-      <header className="flex items-end justify-between mb-2 px-2">
+      <header className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-2 px-2 gap-4">
          <div>
             <h1 className="text-4xl font-bold text-white tracking-normal">Farm <span className="text-emerald-400 italic">Overview</span></h1>
             <p className="text-white/70 font-bold uppercase tracking-widest text-xs mt-2 flex items-center gap-2 mb-2">

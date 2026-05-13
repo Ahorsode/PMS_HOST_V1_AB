@@ -4,17 +4,27 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Thermometer, Droplets, Wind, Home } from 'lucide-react';
 import { HouseActionsHeader, HouseCardActions } from './HouseActions';
 
+import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
+import { redirect } from 'next/navigation';
+
 export default async function ClimatePage() {
+  const hasAccess = await checkWorkerPermissions('houses', 'view');
+  const canEdit = await checkWorkerPermissions('houses', 'edit');
+
+  if (!hasAccess) {
+    redirect('/dashboard/unauthorized');
+  }
+
   const houses = await getHouses();
 
   return (
     <div className="max-w-7xl mx-auto space-y-5 px-3 py-7">
       <div className="flex justify-between items-center bg-white p-5 rounded-md shadow-sm border border-gray-100">
         <div>
-          <h2 className="text-3xl font-extrabold text-gray-900 tracking-normal">Climate Control</h2>
+          <h2 className="text-3xl font-extrabold text-gray-900 tracking-normal text-green-900 uppercase italic">Climate Control</h2>
           <p className="text-gray-500 mt-1">Monitor and manage environmental conditions in your houses.</p>
         </div>
-        <HouseActionsHeader />
+        <HouseActionsHeader canEdit={canEdit} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -28,7 +38,7 @@ export default async function ClimatePage() {
                   </div>
                   <span className="text-gray-900 font-bold">{house.name}</span>
                 </div>
-                <HouseCardActions house={house} />
+                <HouseCardActions house={house} canEdit={canEdit} />
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-5 p-5">

@@ -29,22 +29,37 @@ export const BottomNav = ({ role = 'OWNER', permissions }: { role?: string, perm
   ];
 
   const navItems = allNavItems.filter(item => {
-    // Basic role check
+    // 1. Basic role check
     if (!item.roles.includes(role)) return false;
     
-    // Explicit Accountant Restrictions (matching Sidebar.tsx)
+    // 2. Owner/Manager bypass
+    if (role === 'OWNER' || role === 'MANAGER') return true;
+
+    // 3. Explicit Permission Overrides
+    if (permissions) {
+      if (item.name === 'Finance Hub') return !!permissions.canViewFinance;
+      if (item.name === 'Sales') return !!permissions.canViewSales;
+      if (item.name === 'Livestock') return !!permissions.canViewBatches;
+      if (item.name === 'Inventory') return !!permissions.canViewInventory;
+      if (item.name === 'Eggs') return !!permissions.canViewEggs;
+      if (item.name === 'Feeding') return !!permissions.canViewFeeding;
+      if (item.name === 'Houses') return !!permissions.canViewHouses;
+      if (item.name === 'Mortality') return !!permissions.canViewMortality;
+      if (item.name === 'Customers') return !!permissions.canViewCustomers;
+      if (item.name === 'Team') return !!permissions.canViewTeam;
+      if (item.name === 'Settings') return !!permissions.canViewSettings;
+    }
+
+    // 4. Role-specific Fallbacks (Accountant/Finance/Cashier)
     if (role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER') {
         const allowedForAccountant = ['Dashboard', 'Sales', 'Customers', 'Finance Hub', 'My Profile'];
         return allowedForAccountant.includes(item.name);
     }
     
-    // Permission overrides for workers
-    if (permissions) {
-      if ((item.name === 'Finance Hub' || item.name === 'Sales') && permissions.canViewFinance) return true;
-      if (item.name === 'Livestock' && permissions.canViewBatches) return true;
-      if (item.name === 'Inventory' && permissions.canViewInventory) return true;
-    }
-    return true;
+    // Workers can view most things by default if not restricted by permissions
+    if (role === 'WORKER') return true;
+
+    return false;
   });
 
   return (

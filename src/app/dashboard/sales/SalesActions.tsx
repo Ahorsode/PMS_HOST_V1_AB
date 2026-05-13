@@ -9,12 +9,13 @@ import { recordPayment } from '@/lib/actions/payment-actions';
 import { generateInvoicePDF } from '@/lib/actions/invoice-actions';
 import { toast } from 'sonner';
 
-export function SalesActionsHeader({ customers, inventory, livestock }: { 
+export function SalesActionsHeader({ customers, inventory, livestock, initialLivestockId }: { 
   customers: any[], 
   inventory: any[],
-  livestock: any[]
+  livestock: any[],
+  initialLivestockId?: number
 }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(!!initialLivestockId);
 
   return (
     <>
@@ -36,6 +37,7 @@ export function SalesActionsHeader({ customers, inventory, livestock }: {
             customers={customers} 
             inventory={inventory}
             livestock={livestock}
+            initialLivestockId={initialLivestockId}
             onSuccess={() => setIsOpen(false)} 
           />
         </div>

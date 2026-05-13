@@ -46,12 +46,14 @@ export default async function FinancePage() {
   }
 
   const hasAccess = await checkWorkerPermissions('finance', 'view');
+  const canEdit = await checkWorkerPermissions('finance', 'edit');
+
   if (!hasAccess) {
     redirect('/dashboard/unauthorized');
   }
 
   // Check for active batches with missing costs
-  const missingCostBatches = await (prisma.livestock as any).findMany({
+  const missingCostBatches = canEdit ? await (prisma.livestock as any).findMany({
     where: {
       farmId: activeFarmId,
       status: 'active',
@@ -66,7 +68,7 @@ export default async function FinancePage() {
       initialCount: true,
       type: true
     }
-  });
+  }) : [];
 
   const sales = (await getAllSales()) as Sale[];
   const expenses = (await getExpenses()) as Expense[];
@@ -83,11 +85,11 @@ export default async function FinancePage() {
           <p className="text-white/70 text-sm font-bold uppercase tracking-widest mt-1 italic ml-1">Sales & Expenses Tracking</p>
         </div>
         <div className="flex gap-2">
-          <FinanceActions />
+          <FinanceActions canEdit={canEdit} />
         </div>
       </div>
 
-      {missingCostBatches.length > 0 && (
+      {canEdit && missingCostBatches.length > 0 && (
         <MissingCostPrompt batches={missingCostBatches} />
       )}
 

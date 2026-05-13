@@ -1,12 +1,13 @@
 'use client'
 
 import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, Skull, Eye } from 'lucide-react';
+import { Plus, Edit2, Trash2, Skull, Eye, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { LivestockForm } from './FlockForm';
 import { RegisterBatchForm } from '@/components/forms/RegisterBatchForm';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export const FlockActionsHeader = ({ houses }: { houses: any[] }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -34,6 +35,7 @@ export const FlockActionsHeader = ({ houses }: { houses: any[] }) => {
 };
 
 export const FlockRowActions = ({ batch, houses }: { batch: any, houses: any[] }) => {
+  const router = useRouter();
   const [mode, setMode] = useState<'edit' | 'delete' | 'mortality' | null>(null);
 
   return (
@@ -52,6 +54,13 @@ export const FlockRowActions = ({ batch, houses }: { batch: any, houses: any[] }
         title="Log Mortality"
       >
         <Skull className="h-4 w-4" />
+      </button>
+      <button 
+        onClick={() => router.push(`/dashboard/sales?sellBatchId=${batch.id}`)}
+        className="p-1 text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
+        title="Quick Sell"
+      >
+        <ShoppingCart className="h-4 w-4" />
       </button>
       <button 
         onClick={() => setMode('edit')}
