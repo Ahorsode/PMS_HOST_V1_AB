@@ -26,18 +26,18 @@ export function FinancialOverview({ data }: FinancialOverviewProps) {
       </CardHeader>
       <CardContent className="relative z-10 space-y-3">
         <div className="flex justify-between items-end">
-          <div className="space-y-1">
-            <p className="text-4xl font-bold text-white tracking-normal">
+          <div className="space-y-1 min-w-0">
+            <p className="text-2xl md:text-4xl font-bold text-white tracking-normal truncate">
               {formatCurrency(profit)}
             </p>
-            <p className={`text-xs font-bold uppercase tracking-widest flex items-center gap-1 ${isProfitable ? 'text-emerald-400' : 'text-red-400'}`}>
+            <p className={`text-[10px] md:text-xs font-bold uppercase tracking-widest flex items-center gap-1 ${isProfitable ? 'text-emerald-400' : 'text-red-400'} truncate`}>
               {isProfitable ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
               {isProfitable ? 'Net Profit' : 'Net Loss'}
             </p>
           </div>
-          <div className="text-right">
-             <div className="text-xs font-bold text-white/70 uppercase tracking-widest">Revenue</div>
-             <div className="text-sm font-bold text-white">{formatCurrency(data.revenue)}</div>
+          <div className="text-right min-w-0">
+             <div className="text-[10px] md:text-xs font-bold text-white/70 uppercase tracking-widest truncate">Revenue</div>
+             <div className="text-xs md:text-sm font-bold text-white truncate">{formatCurrency(data.revenue)}</div>
           </div>
         </div>
 

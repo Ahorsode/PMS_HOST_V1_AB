@@ -32,6 +32,7 @@ export default async function SettingsPage() {
     ...item,
     stockLevel: Number(item.stockLevel),
     reorderLevel: item.reorderLevel ? Number(item.reorderLevel) : undefined,
+    costPerUnit: item.costPerUnit ? Number(item.costPerUnit) : undefined,
   }));
 
   return (

@@ -965,7 +965,8 @@ export async function getAllInventory() {
     return items.map((item: any) => ({
       ...item,
       stockLevel: Number(item.stockLevel),
-      reorderLevel: item.reorderLevel ? Number(item.reorderLevel) : null
+      reorderLevel: item.reorderLevel ? Number(item.reorderLevel) : null,
+      costPerUnit: item.costPerUnit ? Number(item.costPerUnit) : null
     }))
   }).catch((error: any) => {
     console.error('Error fetching inventory:', error)
@@ -1283,6 +1284,7 @@ export async function getGlobalFeedStats() {
       ...item,
       stockLevel: Number(item.stockLevel),
       reorderLevel: item.reorderLevel ? Number(item.reorderLevel) : null,
+      costPerUnit: item.costPerUnit ? Number(item.costPerUnit) : null,
       feedingLogs: item.feedingLogs.map((log: any) => ({
         ...log,
         amountConsumed: Number(log.amountConsumed)

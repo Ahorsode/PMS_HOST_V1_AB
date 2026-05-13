@@ -13,6 +13,9 @@ import Link from 'next/link';
 
 import { FinancialInitializationModal } from '@/components/modals/FinancialInitializationModal';
 import { LivestockType } from '@prisma/client';
+import { createHouse } from '@/lib/actions/dashboard-actions';
+import { Dialog } from '@/components/ui/Dialog';
+import { toast } from 'sonner';
 
 const formSchema = z.object({
   batchName: z.string().min(2, "Unit Name is required"),
@@ -41,11 +44,15 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
   const [showFinModal, setShowFinModal] = React.useState(false);
   const [createdBatchId, setCreatedBatchId] = React.useState<string | null>(null);
   const [createdBatchName, setCreatedBatchName] = React.useState("");
+  const [showHouseModal, setShowHouseModal] = React.useState(false);
+  const [isCreatingHouse, setIsCreatingHouse] = React.useState(false);
+  const [newHouseData, setNewHouseData] = React.useState({ name: '', capacity: '' });
   
   const {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -56,6 +63,42 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
   });
 
   const selectedType = watch("type");
+  const selectedHouseId = watch("houseId");
+
+  React.useEffect(() => {
+    if (selectedHouseId === "NEW_HOUSE") {
+      setShowHouseModal(true);
+      setValue("houseId", ""); // Reset dropdown to placeholder
+    }
+  }, [selectedHouseId]);
+
+  const handleCreateHouse = async () => {
+    if (!newHouseData.name || !newHouseData.capacity) {
+      toast.error("Please fill in house name and capacity");
+      return;
+    }
+    setIsCreatingHouse(true);
+    try {
+      const res = await createHouse({
+        houseNumber: newHouseData.name,
+        capacity: parseInt(newHouseData.capacity)
+      });
+      if (res.success) {
+        toast.success("House created successfully");
+        setShowHouseModal(false);
+        setNewHouseData({ name: '', capacity: '' });
+        router.refresh();
+        // After refresh, the new house will be in the props
+        // We'll let the user select it from the updated list
+      } else {
+        toast.error(res.error || "Failed to create house");
+      }
+    } catch (e) {
+      toast.error("An unexpected error occurred");
+    } finally {
+      setIsCreatingHouse(false);
+    }
+  };
 
   if (houses.length === 0) {
     return (
@@ -170,7 +213,11 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
 
           <Select
             label="Farm House"
-            options={[{ label: "Select House Location", value: "" }, ...houseOptions]}
+            options={[
+              { label: "Select House Location", value: "" }, 
+              ...houseOptions,
+              { label: "➕ Add New House", value: "NEW_HOUSE" }
+            ]}
             {...register("houseId")}
             error={errors.houseId?.message}
           />
@@ -215,8 +262,43 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
           onClose={handleFinModalClose}
           batchId={createdBatchId}
           batchName={createdBatchName}
+          quantity={watch("initialQuantity") || 0}
         />
       )}
+
+      <Dialog
+        isOpen={showHouseModal}
+        onOpenChange={setShowHouseModal}
+        title="➕ Create New Farm House"
+        description="Add a new housing unit to your farm to accommodate this livestock unit."
+      >
+        <div className="space-y-4 pt-3">
+          <Input 
+            label="House Name / Number"
+            placeholder="e.g. House Alpha, Pen 1"
+            value={newHouseData.name}
+            onChange={e => setNewHouseData(p => ({ ...p, name: e.target.value }))}
+          />
+          <Input 
+            label="Total Capacity (Birds/Heads)"
+            type="number"
+            min="1"
+            placeholder="e.g. 500"
+            value={newHouseData.capacity}
+            onChange={e => setNewHouseData(p => ({ ...p, capacity: e.target.value }))}
+          />
+          <div className="flex gap-2 pt-2">
+             <Button variant="secondary" onClick={() => setShowHouseModal(false)} className="flex-1">Cancel</Button>
+             <Button 
+               onClick={handleCreateHouse} 
+               isLoading={isCreatingHouse}
+               className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-black font-bold"
+             >
+               Create House
+             </Button>
+          </div>
+        </div>
+      </Dialog>
     </div>
   );
 }

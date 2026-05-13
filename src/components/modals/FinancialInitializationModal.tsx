@@ -6,19 +6,23 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { Banknote, Truck, Plus, Trash2, Save, X } from 'lucide-react';
 import { updateBatchFinancials } from '@/lib/actions/dashboard-actions';
 import { toast } from 'sonner';
+import { formatCurrency } from '@/lib/utils';
 
 interface FinancialInitializationModalProps {
   isOpen: boolean;
   onClose: () => void;
   batchId: string;
   batchName: string;
+  quantity: number;
 }
 
-export function FinancialInitializationModal({ isOpen, onClose, batchId, batchName }: FinancialInitializationModalProps) {
-  const [actualCost, setActualCost] = useState<number | ''>(0);
+export function FinancialInitializationModal({ isOpen, onClose, batchId, batchName, quantity }: FinancialInitializationModalProps) {
+  const [costPerUnit, setCostPerUnit] = useState<number | ''>(0);
   const [carriageCost, setCarriageCost] = useState<number | ''>(0);
   const [otherExpenses, setOtherExpenses] = useState<{ label: string; amount: number | '' }[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const totalActualCost = (Number(costPerUnit) || 0) * quantity;
 
   const addOtherExpense = () => {
     setOtherExpenses([...otherExpenses, { label: '', amount: '' }]);
@@ -38,7 +42,7 @@ export function FinancialInitializationModal({ isOpen, onClose, batchId, batchNa
     setIsSubmitting(true);
     try {
       const result = await updateBatchFinancials(Number(batchId), {
-        actualCost: Number(actualCost) || 0,
+        actualCost: totalActualCost,
         carriageInward: Number(carriageCost) || 0,
         otherExpenses: otherExpenses.map(exp => ({
           ...exp,
@@ -67,16 +71,28 @@ export function FinancialInitializationModal({ isOpen, onClose, batchId, batchNa
       description="Initialize the investment costs for this livestock unit. These will be recorded as farm expenses for accurate P&L reporting."
     >
       <div className="space-y-5 pt-3">
+        
+        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 flex justify-between items-center">
+           <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400/70">Quantity for Unit</p>
+              <p className="text-lg font-bold text-white">{quantity.toLocaleString()} Birds / Heads</p>
+           </div>
+           <div className="text-right">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400/70">Total Actual Cost</p>
+              <p className="text-xl font-bold text-emerald-400">{formatCurrency(totalActualCost)}</p>
+           </div>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="space-y-2">
             <label className="text-xs font-bold uppercase tracking-widest text-emerald-400 flex items-center gap-2">
-               <Banknote className="w-3 h-3" /> Actual Unit Cost
+               <Banknote className="w-3 h-3" /> Cost Per Unit
             </label>
             <input 
               type="number" 
-              value={actualCost}
-              onChange={(e) => setActualCost(e.target.value === '' ? '' : Number(e.target.value))}
+              min="0"
+              value={costPerUnit}
+              onChange={(e) => setCostPerUnit(e.target.value === '' ? '' : Number(e.target.value))}
               placeholder="0.00"
               className="w-full bg-black/60 border border-white/10 rounded-md px-3 py-2 text-white font-bold focus:border-emerald-500/50 transition-colors outline-none"
             />
@@ -87,6 +103,7 @@ export function FinancialInitializationModal({ isOpen, onClose, batchId, batchNa
             </label>
             <input 
               type="number" 
+              min="0"
               value={carriageCost}
               onChange={(e) => setCarriageCost(e.target.value === '' ? '' : Number(e.target.value))}
               placeholder="0.00"
@@ -119,6 +136,7 @@ export function FinancialInitializationModal({ isOpen, onClose, batchId, batchNa
                   />
                   <input 
                     type="number"
+                    min="0"
                     placeholder="0.00"
                     value={exp.amount}
                     onChange={(e) => updateOtherExpense(idx, 'amount', e.target.value === '' ? '' : Number(e.target.value))}

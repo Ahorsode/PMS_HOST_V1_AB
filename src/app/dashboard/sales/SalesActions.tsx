@@ -151,6 +151,7 @@ export function SalesRowActions({ order }: { order: any }) {
               <input 
                 type="number"
                 step="0.01"
+                min="0"
                 value={paymentAmount}
                 onChange={(e) => setPaymentAmount(Number(e.target.value))}
                 className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-bold outline-none focus:border-emerald-500/50 transition-all"
