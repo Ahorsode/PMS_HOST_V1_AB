@@ -112,7 +112,7 @@ export const LivestockForm = ({ houses, batch, mode, onClose }: LivestockFormPro
             label="Mortality Count"
             type="number"
             value={formData.mortalityCount}
-            onChange={(e) => setFormData({ ...formData, mortalityCount: e.target.value === '' ? '' : Number(e.target.value) })}
+            onChange={(e) => setFormData({ ...formData, mortalityCount: e.target.value })}
             required
             placeholder="How many were lost?"
           />
