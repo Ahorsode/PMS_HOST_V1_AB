@@ -19,7 +19,7 @@ export async function createBatch(data: {
   if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Batches Permission' }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    const batch = await tx.batch.create({
+    const batch = await tx.livestock.create({
       data: {
         houseId: data.houseId,
         farmId: activeFarmId,
@@ -57,7 +57,7 @@ export async function updateBatch(id: number, data: {
   if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Batches Permission' }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    const batch = await tx.batch.update({
+    const batch = await tx.livestock.update({
       where: { id, farmId: activeFarmId },
       data: {
         ...data,
@@ -80,7 +80,7 @@ export async function deleteBatch(id: number) {
   if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Batches Permission' }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    await tx.batch.delete({
+    await tx.livestock.delete({
       where: { id, farmId: activeFarmId }
     })
     revalidatePath('/dashboard/flocks')
@@ -120,7 +120,7 @@ export async function logMortality(data: {
     })
     
     // Update current count in batch
-    await tx.batch.update({
+    await tx.livestock.update({
       where: { id: data.batchId, farmId: activeFarmId },
       data: {
         currentCount: {
@@ -145,7 +145,7 @@ export async function transferToIsolation(id: number, count: number) {
   if (!hasEditAccess) return { success: false, error: 'Unauthorized' }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    const batch = await tx.batch.findUnique({
+    const batch = await tx.livestock.findUnique({
       where: { id, farmId: activeFarmId }
     })
 
@@ -154,7 +154,7 @@ export async function transferToIsolation(id: number, count: number) {
        return { success: false, error: 'Not enough birds in main house to isolate' }
     }
 
-    await tx.batch.update({
+    await tx.livestock.update({
       where: { id, farmId: activeFarmId },
       data: {
         isolationCount: {
@@ -176,7 +176,7 @@ export async function returnFromIsolation(id: number, count: number) {
   if (!hasEditAccess) return { success: false, error: 'Unauthorized' }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    const batch = await tx.batch.findUnique({
+    const batch = await tx.livestock.findUnique({
       where: { id, farmId: activeFarmId }
     })
 
@@ -185,7 +185,7 @@ export async function returnFromIsolation(id: number, count: number) {
       return { success: false, error: 'Not enough birds in isolation to return' }
     }
 
-    await tx.batch.update({
+    await tx.livestock.update({
       where: { id, farmId: activeFarmId },
       data: {
         isolationCount: {

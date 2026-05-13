@@ -144,12 +144,12 @@ model Livestock {
   farmId               Int                   @default(1)
   batchName            String                @default("New Batch")
   type                 LivestockType         @default(POULTRY_BROILER)
-  carriage_inward      Decimal?              @db.Decimal(10, 2)
+  carriage_inward      Decimal?              @db.Decimal(15, 2)
   growth_target        String?
-  initial_actual_cost  Decimal?              @db.Decimal(10, 2)
+  initial_actual_cost  Decimal?              @db.Decimal(15, 2)
   initial_other_costs  Json?
-  initialCostActual    Decimal?              @db.Decimal(10, 2)
-  initialCostCarriage  Decimal?              @db.Decimal(10, 2)
+  initialCostActual    Decimal?              @db.Decimal(15, 2)
+  initialCostCarriage  Decimal?              @db.Decimal(15, 2)
   initialCostOther     Json?
   growthTargetOverride String?
   isolationCount       Int                   @default(0)
@@ -176,15 +176,15 @@ model Livestock {
 model Inventory {
   id                         Int                         @id @default(autoincrement())
   itemName                   String
-  stockLevel                 Decimal                     @db.Decimal(10, 2)
+  stockLevel                 Decimal                     @db.Decimal(15, 2)
   unit                       String
   category                   String?
-  costPerUnit                Decimal?                    @db.Decimal(10, 2)
+  costPerUnit                Decimal?                    @db.Decimal(15, 2)
   userId                     String                      @default("user_placeholder")
   createdAt                  DateTime                    @default(now())
   updatedAt                  DateTime                    @updatedAt
   farmId                     Int                         @default(1)
-  reorderLevel               Decimal?                    @default(500.00) @db.Decimal(10, 2)
+  reorderLevel               Decimal?                    @default(500.00) @db.Decimal(15, 2)
   feedingLogs                FeedingLog[]
   feedFormulationIngredients FeedFormulationIngredient[]
   farm                       Farm                        @relation(fields: [farmId], references: [id])
@@ -204,7 +204,7 @@ model FeedingLog {
   id             Int              @id @default(autoincrement())
   batchId        Int?             @map("batch_id")
   feedTypeId     Int?             @map("feed_type_id")
-  amountConsumed Decimal          @map("amount_consumed") @db.Decimal(10, 2)
+  amountConsumed Decimal          @map("amount_consumed") @db.Decimal(15, 2)
   logDate        DateTime         @default(now()) @map("log_date")
   userId         String?          @map("user_id")
   farmId         Int              @default(1)
@@ -250,7 +250,7 @@ model EggProduction {
   farm          Farm      @relation(fields: [farmId], references: [id])
   categoryId    Int?
   category      EggCategory? @relation(fields: [categoryId], references: [id])
-  cratesCollected Decimal? @db.Decimal(10, 2)
+  cratesCollected Decimal? @db.Decimal(15, 2)
 
   @@index([batchId, logDate])
   @@index([userId])
@@ -297,7 +297,7 @@ model WeightRecord {
 model Sale {
   id           Int        @id @default(autoincrement())
   customerName String?
-  totalAmount  Decimal    @db.Decimal(10, 2)
+  totalAmount  Decimal    @db.Decimal(15, 2)
   saleDate     DateTime   @default(now())
   status       String     @default("completed")
   userId       String     @default("user_placeholder")
@@ -317,8 +317,8 @@ model SaleItem {
   saleId      Int
   description String
   quantity    Int
-  unitPrice   Decimal @db.Decimal(10, 2)
-  totalPrice  Decimal @db.Decimal(10, 2)
+  unitPrice   Decimal @db.Decimal(15, 2)
+  totalPrice  Decimal @db.Decimal(15, 2)
   farmId      Int     @default(1)
   farm        Farm    @relation(fields: [farmId], references: [id])
   sale        Sale    @relation(fields: [saleId], references: [id])
@@ -425,7 +425,7 @@ model Expense {
   id          Int             @id @default(autoincrement())
   farmId      Int
   userId      String          @map("user_id")
-  amount      Decimal         @db.Decimal(10, 2)
+  amount      Decimal         @db.Decimal(15, 2)
   category    ExpenseCategory
   description String?
   expenseDate DateTime        @default(now()) @map("expense_date")
@@ -494,7 +494,7 @@ model SubscriptionPlan {
   id            Int              @id @default(autoincrement())
   name          String
   tier          SubscriptionTier
-  price         Decimal          @db.Decimal(10, 2)
+  price         Decimal          @db.Decimal(15, 2)
   currency      String           @default("USD")
   interval      String           @default("monthly")
   features      Json?
@@ -527,7 +527,7 @@ model Customer {
   address     String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  balanceOwed Decimal  @default(0) @db.Decimal(10, 2)
+  balanceOwed Decimal  @default(0) @db.Decimal(15, 2)
   farm        Farm     @relation(fields: [farmId], references: [id])
   orders      Order[]
 
@@ -538,13 +538,13 @@ model Order {
   id             Int         @id @default(autoincrement())
   farmId         Int
   customerId     Int?
-  totalAmount    Decimal     @db.Decimal(10, 2)
+  totalAmount    Decimal     @db.Decimal(15, 2)
   currency       String      @default("USD")
   status         String      @default("PENDING")
   orderDate      DateTime    @default(now())
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
-  discountAmount Decimal     @default(0) @db.Decimal(10, 2)
+  discountAmount Decimal     @default(0) @db.Decimal(15, 2)
   items          OrderItem[]
   customer       Customer?   @relation(fields: [customerId], references: [id])
   farm           Farm        @relation(fields: [farmId], references: [id])
@@ -559,8 +559,8 @@ model OrderItem {
   orderId     Int
   description String
   quantity    Int
-  unitPrice   Decimal    @db.Decimal(10, 2)
-  totalPrice  Decimal    @db.Decimal(10, 2)
+  unitPrice   Decimal    @db.Decimal(15, 2)
+  totalPrice  Decimal    @db.Decimal(15, 2)
   inventoryId Int?
   livestockId Int?
   inventory   Inventory? @relation(fields: [inventoryId], references: [id])

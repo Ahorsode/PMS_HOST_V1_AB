@@ -66,20 +66,37 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
         <nav className="flex-1 px-3 space-y-7 overflow-y-auto custom-scrollbar overflow-x-hidden">
           {categories.map((category) => {
             const visibleItems = category.items.filter(item => {
-              if (item.roles.includes(role)) return true;
-              // Permission overrides
+              // 1. Owner/Manager bypass (Absolute Creator & High Privilege)
+              if (role === 'OWNER' || role === 'MANAGER') return true;
+
+              // 2. Explicit Permission Overrides (Granting access overrides role defaults)
               if (permissions) {
-                if (item.name === 'Finance Control' && permissions.canViewFinance) return true;
-                if (item.name === 'Livestock' && permissions.canViewBatches) return true;
-                if (item.name === 'Inventory' && permissions.canViewInventory) return true;
-                if (item.name === 'Sales' && permissions.canViewSales) return true;
-                if (item.name === 'Eggs' && permissions.canViewEggs) return true;
-                if (item.name === 'Feeding' && permissions.canViewFeeding) return true;
-                if (item.name === 'Houses' && permissions.canViewHouses) return true;
-                if (item.name === 'Mortality' && permissions.canViewMortality) return true;
-                if (item.name === 'Customers' && permissions.canViewCustomers) return true;
-                if (item.name === 'Team Management' && permissions.canViewTeam) return true;
+                if (item.name === 'Finance Control') return !!permissions.canViewFinance;
+                if (item.name === 'Livestock') return !!permissions.canViewBatches;
+                if (item.name === 'Inventory') return !!permissions.canViewInventory;
+                if (item.name === 'Sales') return !!permissions.canViewSales;
+                if (item.name === 'Eggs') return !!permissions.canViewEggs;
+                if (item.name === 'Feeding') return !!permissions.canViewFeeding;
+                if (item.name === 'Houses') return !!permissions.canViewHouses;
+                if (item.name === 'Mortality') return !!permissions.canViewMortality;
+                if (item.name === 'Customers') return !!permissions.canViewCustomers;
+                if (item.name === 'Team Management') return !!permissions.canViewTeam;
               }
+
+              // 3. Role-based check (Fallback if no explicit permission override is found)
+              if (!item.roles.includes(role)) return false;
+
+              // 4. Role-specific Fallbacks
+              if (role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER') {
+                return item.name === 'Finance Control' || item.name === 'Dashboard';
+              }
+              if (role === 'CASHIER') {
+                return item.name === 'Finance Control' || item.name === 'Sales' || item.name === 'Dashboard';
+              }
+
+              // Workers can view their allowed modules by default
+              if (role === 'WORKER') return true;
+
               return false;
             });
 

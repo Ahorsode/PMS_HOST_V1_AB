@@ -43,7 +43,7 @@ export async function getAllFeedFormulations() {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return []
 
-  return await prisma.feedFormulation.findMany({
+    const formulations = await prisma.feedFormulation.findMany({
     where: { farmId: activeFarmId },
     include: {
       ingredients: {
@@ -51,6 +51,21 @@ export async function getAllFeedFormulations() {
       }
     }
   })
+
+  return formulations.map((f: any) => ({
+    ...f,
+    ingredients: f.ingredients.map((ing: any) => ({
+      ...ing,
+      quantity: Number(ing.quantity),
+      percentage: Number(ing.percentage),
+      inventory: ing.inventory ? {
+        ...ing.inventory,
+        stockLevel: Number(ing.inventory.stockLevel),
+        reorderLevel: ing.inventory.reorderLevel ? Number(ing.inventory.reorderLevel) : null,
+        costPerUnit: ing.inventory.costPerUnit ? Number(ing.inventory.costPerUnit) : null
+      } : null
+    }))
+  }))
 }
 
 export async function deleteFeedFormulation(id: number) {
@@ -100,7 +115,7 @@ export async function getConsumptionEfficiency() {
       name: l.batchName || `Batch ${l.id}`,
       totalFeed,
       fcr: fcr.toFixed(2),
-      currentWeight: weights[0]?.averageWeight || 0
+      currentWeight: weights[0]?.averageWeight ? Number(weights[0].averageWeight) : 0
     }
   })
 }

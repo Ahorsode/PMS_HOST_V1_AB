@@ -72,7 +72,7 @@ export async function getAllOrders() {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return []
 
-  return await prisma.order.findMany({
+  const orders = await prisma.order.findMany({
     where: { farmId: activeFarmId },
     include: {
       customer: true,
@@ -81,6 +81,21 @@ export async function getAllOrders() {
     orderBy: { orderDate: 'desc' },
     take: 50 // Limit to avoid massive payloads
   })
+
+  return orders.map(order => ({
+    ...order,
+    totalAmount: Number(order.totalAmount),
+    discountAmount: Number(order.discountAmount),
+    customer: order.customer ? {
+      ...order.customer,
+      balanceOwed: Number(order.customer.balanceOwed)
+    } : null,
+    items: order.items.map(item => ({
+      ...item,
+      unitPrice: Number(item.unitPrice),
+      totalPrice: Number(item.totalPrice)
+    }))
+  }))
 }
 
 export async function updateOrderStatus(id: number, status: string) {

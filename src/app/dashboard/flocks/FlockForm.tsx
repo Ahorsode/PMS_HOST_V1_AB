@@ -39,7 +39,7 @@ export const LivestockForm = ({ houses, batch, mode, onClose }: LivestockFormPro
     houseId: batch?.houseId || (houses[0]?.id || 0),
     batchName: batch?.batchName || '',
     breedType: batch?.breedType || '',
-    initialCount: batch?.initialCount || '',
+    initialCount: batch?.initialCount || '' as number | '',
     growthTargetOverride: batch?.growthTargetOverride || '',
     arrivalDate: batch?.arrivalDate ? new Date(batch.arrivalDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
     status: batch?.status || 'active',
@@ -112,7 +112,7 @@ export const LivestockForm = ({ houses, batch, mode, onClose }: LivestockFormPro
             label="Mortality Count"
             type="number"
             value={formData.mortalityCount}
-            onChange={(e) => setFormData({ ...formData, mortalityCount: e.target.value })}
+            onChange={(e) => setFormData({ ...formData, mortalityCount: e.target.value === '' ? '' : Number(e.target.value) })}
             required
             placeholder="How many were lost?"
           />
@@ -194,7 +194,7 @@ export const LivestockForm = ({ houses, batch, mode, onClose }: LivestockFormPro
               label="Initial Quantity"
               type="number"
               value={formData.initialCount}
-              onChange={(e) => setFormData({ ...formData, initialCount: e.target.value })}
+              onChange={(e) => setFormData({ ...formData, initialCount: e.target.value === '' ? '' : Number(e.target.value) })}
               required
               placeholder="e.g. 1000"
             />

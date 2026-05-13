@@ -28,24 +28,22 @@ export default async function FlocksPage() {
   ]);
 
   return (
-    <div className="max-w-7xl mx-auto space-y-5 md:space-y-7 px-2 md:px-3 py-4 md:py-7">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-5 md:p-7 rounded-lg shadow-sm border border-gray-100 gap-4">
+    <div className="max-w-7xl mx-auto space-y-7 px-3 py-7">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-7 rounded-lg shadow-sm border border-gray-100 gap-4">
         <div>
-          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 tracking-normal">Livestock <span className="text-emerald-600 italic tracking-normal">Management</span></h1>
-          <p className="text-gray-500 font-bold uppercase tracking-widest text-[10px] md:text-xs mt-1 md:text-2xl flex items-center gap-2">
-            <Bird className="w-3 h-3 md:w-4 md:h-4 text-emerald-600" /> Lifecycle & Performance Tracking
+          <h1 className="text-4xl font-bold text-gray-900 tracking-normal">Livestock <span className="text-emerald-600 italic tracking-normal">Management</span></h1>
+          <p className="text-gray-500 font-bold uppercase tracking-widest text-xs mt-2 flex items-center gap-2">
+            <Bird className="w-4 h-4 text-emerald-600" /> Lifecycle & Performance Tracking
           </p>
         </div>
-        <div className="w-full md:w-auto">
-          <FlockActionsHeader houses={houses} />
-        </div>
+        <FlockActionsHeader houses={houses} />
       </div>
 
       <Tabs defaultValue="list" className="w-full">
-        <div className="flex justify-center md:justify-end mb-4 overflow-x-auto pb-2 md:pb-0">
-          <TabsList className="bg-white/10 backdrop-blur-md border border-white/10 w-full md:w-auto">
-            <TabsTrigger value="list" className="flex-1 md:flex-none data-[state=active]:bg-emerald-500 data-[state=active]:text-white">Active List</TabsTrigger>
-            <TabsTrigger value="analytics" className="flex-1 md:flex-none data-[state=active]:bg-emerald-500 data-[state=active]:text-white">
+        <div className="flex justify-end mb-4">
+          <TabsList className="bg-white/10 backdrop-blur-md border border-white/10">
+            <TabsTrigger value="list" className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white">Active List</TabsTrigger>
+            <TabsTrigger value="analytics" className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white">
               <BarChart3 className="w-4 h-4 mr-2" />
               Comparative Analytics
             </TabsTrigger>

@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { HouseForm } from './HouseForm';
 
-export const HouseActionsHeader = () => {
+export const HouseActionsHeader = ({ canEdit = true }: { canEdit?: boolean }) => {
   const [isOpen, setIsOpen] = useState(false);
+
+  if (!canEdit) return null;
 
   return (
     <>
@@ -22,8 +24,10 @@ export const HouseActionsHeader = () => {
   );
 };
 
-export const HouseCardActions = ({ house }: { house: any }) => {
+export const HouseCardActions = ({ house, canEdit = true }: { house: any, canEdit?: boolean }) => {
   const [mode, setMode] = useState<'edit' | 'delete' | null>(null);
+
+  if (!canEdit) return null;
 
   return (
     <div className="flex items-center gap-1">
