@@ -81,6 +81,7 @@ export async function getDashboardStats() {
           arrivalDate: true,
           breedType: true,
           type: true,
+          localBatchId: true,
           house: { select: { name: true } },
           eggProduction: {
             orderBy: { logDate: 'desc' },
@@ -251,7 +252,7 @@ export async function getDashboardStats() {
       revenueTrendData,
       mortalityTrendData,
       activeBatches: activeBatches.map((batch: any) => ({
-        id: `FLK-${batch.id.toString().padStart(3, '0')}`,
+        id: `FLK-${(batch.localBatchId || batch.id).toString().padStart(3, '0')}`,
         batchName: batch.batchName,
         numericId: batch.id,
         type: batch.type,

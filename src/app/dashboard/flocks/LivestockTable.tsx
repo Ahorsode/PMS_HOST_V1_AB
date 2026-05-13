@@ -60,8 +60,8 @@ export function LivestockTable({ initialBatches, houses }: LivestockTableProps) 
             {filteredBatches.map((batch: any) => (
               <tr key={batch.id} className="hover:bg-gray-50/80 transition-all group">
                 <td className="px-5 py-3 whitespace-nowrap">
-                   <div className="text-sm font-bold text-emerald-700 uppercase tracking-normal">{batch.batchName || `Unit #${batch.id}`}</div>
-                   <div className="text-xs text-gray-400 font-bold">ID: {batch.numericId || batch.id}</div>
+                   <div className="text-sm font-bold text-emerald-700 uppercase tracking-normal">{batch.batchName || `Unit #${batch.localBatchId || batch.id}`}</div>
+                   <div className="text-xs text-gray-400 font-bold">ID: {batch.localBatchId || batch.id}</div>
                 </td>
                 <td className="px-5 py-3 whitespace-nowrap">
                   <div className="text-sm font-bold text-gray-900">{formatLivestockType(batch.type)}</div>

@@ -143,6 +143,7 @@ model Livestock {
   userId               String                @default("user_placeholder")
   farmId               Int                   @default(1)
   batchName            String                @default("New Batch")
+  localBatchId         Int?                  @map("local_batch_id")
   type                 LivestockType         @default(POULTRY_BROILER)
   carriage_inward      Decimal?              @db.Decimal(10, 2)
   growth_target        String?
