@@ -19,19 +19,11 @@ export default async function MortalityPage() {
   const totalMortality = logs.reduce((acc: number, log: any) => acc + log.count, 0);
 
   return (
-<<<<<<< HEAD
     <div className="max-w-7xl mx-auto space-y-5 px-3 py-7">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-5 rounded-md shadow-sm border border-gray-100 gap-4">
         <div>
           <h2 className="text-3xl font-extrabold text-gray-900 tracking-normal text-red-700 uppercase italic">Mortality Logs</h2>
           <p className="text-gray-500 mt-1">Centralized history of livestock mortality records.</p>
-=======
-    <div className="max-w-7xl mx-auto space-y-4 md:space-y-5 px-2 md:px-3 py-4 md:py-7">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-5 rounded-md shadow-sm border border-gray-100 gap-4">
-        <div>
-          <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-normal text-red-700 uppercase italic">Mortality Logs</h2>
-          <p className="text-gray-500 text-xs md:text-sm mt-1">Centralized history of flock mortality records.</p>
->>>>>>> beafa215de498c2cd461d1d4be89b9fac486cb91
         </div>
       </div>
 
@@ -40,15 +32,9 @@ export default async function MortalityPage() {
           <div className="absolute top-0 right-0 p-5 md:p-7 opacity-10">
             <XCircle className="w-16 md:w-24 h-16 md:h-24" />
           </div>
-<<<<<<< HEAD
           <p className="text-red-300 text-sm font-bold uppercase tracking-widest mb-1">Total Deaths (History)</p>
           <h3 className="text-4xl font-bold">{totalMortality.toLocaleString()} <span className="text-xs font-normal">livestock</span></h3>
           <p className="text-red-400 text-xs mt-3 font-medium italic">Across all active & archived batches</p>
-=======
-          <p className="text-red-300 text-[10px] md:text-sm font-bold uppercase tracking-widest mb-1">Total Deaths (History)</p>
-          <h3 className="text-3xl md:text-4xl font-bold">{totalMortality.toLocaleString()} <span className="text-xs font-normal">birds</span></h3>
-          <p className="text-red-400 text-[10px] md:text-xs mt-3 font-medium italic">Across all active & archived batches</p>
->>>>>>> beafa215de498c2cd461d1d4be89b9fac486cb91
         </Card>
 
         <Card className="rounded-md border-none shadow-xl shadow-gray-200/50 bg-white p-5 border-l-4 border-l-amber-500">
