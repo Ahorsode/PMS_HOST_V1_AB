@@ -82,6 +82,7 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
         <Input
           label="Total Eggs Collected"
           type="number"
+          min="0"
           value={formData.eggsCollected}
           onChange={(e) => setFormData({ ...formData, eggsCollected: Number(e.target.value) })}
           required
@@ -102,6 +103,7 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
       <Input
         label="Unusable Eggs (Damaged/Cracked)"
         type="number"
+        min="0"
         value={formData.unusableCount}
         onChange={(e) => setFormData({ ...formData, unusableCount: Number(e.target.value) })}
       />

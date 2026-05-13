@@ -99,7 +99,7 @@ export default function HousesPage({ houses }: { houses: any[] }) {
             <form onSubmit={handleSubmit} className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <Input label="House Name / Number" name="name" placeholder="e.g. House 1" required />
-                <Input label="Capacity" name="capacity" type="number" placeholder="Max birds" required />
+                <Input label="Capacity" name="capacity" type="number" min="0" placeholder="Max birds" required />
               </div>
               <div className="flex justify-end gap-2 pt-3">
                 <Button type="button" variant="outline" onClick={() => setIsAdding(false)}>Cancel</Button>
@@ -119,7 +119,7 @@ export default function HousesPage({ houses }: { houses: any[] }) {
             <form onSubmit={handleUpdate} className="space-y-3">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <Input label="House Name / Number" name="name" defaultValue={editingHouse.name} required />
-                <Input label="Capacity" name="capacity" type="number" defaultValue={editingHouse.capacity} required />
+                <Input label="Capacity" name="capacity" type="number" min="0" defaultValue={editingHouse.capacity} required />
               </div>
               <div className="flex justify-end gap-2 pt-3">
                 <Button type="button" variant="outline" onClick={() => setEditingHouse(null)}>Cancel</Button>

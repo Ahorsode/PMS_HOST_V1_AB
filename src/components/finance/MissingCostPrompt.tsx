@@ -111,6 +111,7 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
             label={`Purchase Cost for ${currentBatch.initialCount} units`}
             placeholder="0.00"
             type="number"
+            min="0"
             value={actualCost}
             onChange={e => setActualCost(e.target.value)}
           />
@@ -119,6 +120,7 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
             label="Carriage Inward (Transport cost)"
             placeholder="0.00"
             type="number"
+            min="0"
             value={carriageInward}
             onChange={e => setCarriageInward(e.target.value)}
           />
@@ -135,6 +137,7 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
                 <input 
                   placeholder="0.00"
                   type="number"
+                  min="0"
                   className="col-span-1 bg-white/10 border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
                   value={newExpenseAmount}
                   onChange={e => setNewExpenseAmount(e.target.value)}

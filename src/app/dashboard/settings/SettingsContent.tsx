@@ -197,6 +197,7 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
                     label="Total Capacity"
                     name="capacity"
                     type="number" 
+                    min="0"
                     defaultValue={farm?.capacity}
                     required
                   />

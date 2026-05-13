@@ -155,6 +155,7 @@ export function FeedFormulationForm({ inventoryItems, onSuccess }: FeedFormulati
                    <div className="text-[10px] uppercase font-bold text-emerald-400 tracking-widest">Number of Bags</div>
                   <Input 
                     type="number"
+                    min="0"
                     value={ing.percentage}
                     onChange={(e) => updateIngredient(idx, 'percentage', e.target.value === '' ? '' : Number(e.target.value))}
                     placeholder="0"
