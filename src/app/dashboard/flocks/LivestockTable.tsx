@@ -40,7 +40,6 @@ export function LivestockTable({ initialBatches, houses }: LivestockTableProps) 
   return (
     <div className="space-y-4 md:space-y-5">
       {/* Species Filter Tabs */}
-<<<<<<< HEAD
       <div className="flex gap-2 bg-white p-2 rounded-md border border-gray-100 shadow-sm w-fit">
         <TabButton value="ALL" label="All Species" icon={Info} />
         <TabButton value="POULTRY" label="Poultry" icon={Bird} />
@@ -54,13 +53,13 @@ export function LivestockTable({ initialBatches, houses }: LivestockTableProps) 
         <table className="min-w-full divide-y divide-gray-100">
           <thead>
             <tr className="bg-gray-50/50">
-              <th className="px-5 py-3 text-left text-xs font-bold text-white/70 uppercase tracking-widest">Unit Name / Identity</th>
-              <th className="px-5 py-3 text-left text-xs font-bold text-white/70 uppercase tracking-widest">Type & Species</th>
-              <th className="px-5 py-3 text-left text-xs font-bold text-white/70 uppercase tracking-widest">Growth Benchmark</th>
-              <th className="px-5 py-3 text-left text-xs font-bold text-white/70 uppercase tracking-widest">Quantity</th>
-              <th className="px-5 py-3 text-left text-xs font-bold text-white/70 uppercase tracking-widest">Arrival Date</th>
-              <th className="px-5 py-3 text-left text-xs font-bold text-white/70 uppercase tracking-widest">Status</th>
-              <th className="px-5 py-3 text-right text-xs font-bold text-white/70 uppercase tracking-widest">Actions</th>
+              <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Unit Name / Identity</th>
+              <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Type & Species</th>
+              <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Growth Benchmark</th>
+              <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Quantity</th>
+              <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Arrival Date</th>
+              <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Status</th>
+              <th className="px-5 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-widest">Actions</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-50">
@@ -100,72 +99,10 @@ export function LivestockTable({ initialBatches, houses }: LivestockTableProps) 
                 <td className="px-5 py-3 whitespace-nowrap text-right">
                   <FlockRowActions batch={batch} houses={houses} />
                 </td>
-=======
-      <div className="flex gap-2 bg-white p-2 rounded-md border border-gray-100 shadow-sm w-full overflow-x-auto pb-3 md:pb-2 custom-scrollbar">
-        <div className="flex gap-2 min-w-max">
-          <TabButton value="ALL" label="All Species" icon={Info} />
-          <TabButton value="POULTRY" label="Poultry" icon={Bird} />
-          <TabButton value="CATTLE" label="Cattle" icon={Activity} />
-        </div>
-      </div>
-
-      <div className="bg-white rounded-md shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto custom-scrollbar">
-          <table className="min-w-full divide-y divide-gray-100">
-            <thead>
-              <tr className="bg-gray-50/50">
-                <th className="px-3 md:px-5 py-3 text-left text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest">Unit Name / Identity</th>
-                <th className="px-3 md:px-5 py-3 text-left text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest">Type & Species</th>
-                <th className="px-3 md:px-5 py-3 text-left text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest">Growth Benchmark</th>
-                <th className="px-3 md:px-5 py-3 text-left text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest">Quantity</th>
-                <th className="px-3 md:px-5 py-3 text-left text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest hidden sm:table-cell">Arrival Date</th>
-                <th className="px-3 md:px-5 py-3 text-left text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest">Status</th>
-                <th className="px-3 md:px-5 py-3 text-right text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest">Actions</th>
->>>>>>> beafa215de498c2cd461d1d4be89b9fac486cb91
               </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-50">
-              {filteredBatches.map((batch: any) => (
-                <tr key={batch.id} className="hover:bg-gray-50/80 transition-all group">
-                  <td className="px-3 md:px-5 py-3 whitespace-nowrap">
-                     <div className="text-xs md:text-sm font-bold text-emerald-700 uppercase tracking-normal">{batch.batchName || `Unit #${batch.id}`}</div>
-                     <div className="text-[10px] text-gray-400 font-bold">ID: {batch.numericId || batch.id}</div>
-                  </td>
-                  <td className="px-3 md:px-5 py-3 whitespace-nowrap">
-                    <div className="text-xs md:text-sm font-bold text-gray-900">{formatLivestockType(batch.type)}</div>
-                    <div className="text-[10px] md:text-xs text-gray-500 font-medium">{batch.breedType}</div>
-                  </td>
-                  <td className="px-3 md:px-5 py-3 whitespace-nowrap text-sm text-gray-600 font-medium">
-                    <span className="bg-purple-50 text-purple-700 px-1.5 md:px-2.5 py-1 rounded-lg text-[10px] md:text-xs font-bold uppercase tracking-widest border border-purple-100 italic">
-                      {batch.growthTargetOverride || batch.breedType || 'Standard'}
-                    </span>
-                  </td>
-                  <td className="px-3 md:px-5 py-3 whitespace-nowrap text-xs md:text-sm text-gray-900 font-bold">
-                    {batch.currentCount?.toLocaleString() || '0'}
-                    <span className="text-gray-400 font-normal text-[10px] ml-1">
-                      {batch.type?.startsWith('POULTRY') ? 'birds' : 'head'}
-                    </span>
-                  </td>
-                  <td className="px-3 md:px-5 py-3 whitespace-nowrap text-[10px] md:text-sm text-gray-500 hidden sm:table-cell">
-                    {new Date(batch.arrivalDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                  </td>
-                  <td className="px-3 md:px-5 py-3 whitespace-nowrap">
-                    <span className={`px-2 py-0.5 md:py-1 inline-flex text-[10px] leading-5 font-bold rounded-full border shadow-sm ${
-                      batch.status === 'active' 
-                        ? 'bg-green-50 text-green-700 border-green-100' 
-                        : 'bg-gray-50 text-gray-600 border-gray-100'
-                    }`}>
-                      {batch.status.toUpperCase()}
-                    </span>
-                  </td>
-                  <td className="px-3 md:px-5 py-3 whitespace-nowrap text-right">
-                    <FlockRowActions batch={batch} houses={houses} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
         {filteredBatches.length === 0 && (
           <div className="py-12 md:py-20 text-center">
             <Bird className="w-10 h-10 md:w-12 md:h-12 text-gray-200 mx-auto mb-3" />

@@ -65,7 +65,7 @@ export default async function FlocksPage() {
             batches={batches.map((b: any) => ({
               id: b.id,
               batchName: b.batchName || `Batch #${b.id}`,
-              arrivalDate: b.arrivalDate.toISOString(),
+              arrivalDate: new Date(b.arrivalDate).toISOString(),
               fcr: 1.72, // Mocked for now, logic below would calculate real FCR
               mortalityRate: b.initialCount ? ((b.initialCount - b.currentCount) / b.initialCount) * 100 : 0,
               productionIndex: 340 // Mocked EPEF
