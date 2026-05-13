@@ -22,7 +22,7 @@ export const DialogTitle = ({ children, className, id }: { children: React.React
 );
 
 export const DialogDescription = ({ children, className, id }: { children: React.ReactNode, className?: string, id?: string }) => (
-  <p id={id} className={cn("text-xs text-white/70 font-bold mt-1 tracking-normal", className)}>
+  <p id={id} className={cn("text-xs text-white/90 font-bold mt-1 tracking-normal", className)}>
     {children}
   </p>
 );

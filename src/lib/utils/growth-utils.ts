@@ -55,3 +55,17 @@ export function formatLivestockType(type: LivestockType | string | null | undefi
   return String(type).replace(/_/g, ' ').toLowerCase()
     .replace(/\b\w/g, c => c.toUpperCase());
 }
+/**
+ * Returns the plural unit name for a livestock type.
+ */
+export function getLivestockUnit(type: LivestockType | string | null | undefined): string {
+  if (!type) return 'units';
+  const t = String(type);
+  if (t === 'POULTRY_BROILER') return 'broilers';
+  if (t === 'POULTRY_LAYER') return 'layers';
+  if (t === 'CATTLE') return 'cattle';
+  if (t === 'PIG') return 'pigs';
+  if (t === 'SHEEP_GOAT') return 'sheep/goats';
+  if (t.startsWith('POULTRY')) return 'birds';
+  return 'head';
+}

@@ -21,7 +21,7 @@ export const FeedForm = ({ batches, inventory, log, mode, onClose }: FeedFormPro
   const [formData, setFormData] = useState({
     batchId: log?.batchId || (batches[0]?.id || 0),
     feedTypeId: log?.feedTypeId || (inventory[0]?.id || 0),
-    amountConsumed: log?.amountConsumed || 0,
+    amountConsumed: log?.amountConsumed || '',
     logDate: log?.logDate ? new Date(log.logDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
   });
 
@@ -90,9 +90,10 @@ export const FeedForm = ({ batches, inventory, log, mode, onClose }: FeedFormPro
       <Input
         label="Amount Consumed (kg)"
         type="number"
+        min="0"
         step="0.01"
         value={formData.amountConsumed}
-        onChange={(e) => setFormData({ ...formData, amountConsumed: Number(e.target.value) })}
+        onChange={(e) => setFormData({ ...formData, amountConsumed: e.target.value === '' ? '' : Number(e.target.value) })}
         required
       />
       <Input

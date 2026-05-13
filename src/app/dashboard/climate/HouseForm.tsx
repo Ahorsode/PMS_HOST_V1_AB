@@ -70,6 +70,7 @@ export const HouseForm = ({ house, mode, onClose }: HouseFormProps) => {
       <Input
         label="Capacity (Birds)"
         type="number"
+        min="0"
         value={formData.capacity}
         onChange={(e) => setFormData({ ...formData, capacity: Number(e.target.value) })}
         required

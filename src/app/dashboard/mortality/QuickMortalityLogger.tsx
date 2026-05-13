@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { Skull, Plus } from 'lucide-react';
 import { Dialog } from '@/components/ui/Dialog';
 import { LivestockForm } from '../flocks/FlockForm';
+import { getLivestockUnit, formatLivestockType } from '@/lib/utils/growth-utils';
 
 interface QuickMortalityLoggerProps {
   activeBatches: any[];
@@ -37,8 +38,13 @@ export function QuickMortalityLogger({ activeBatches }: QuickMortalityLoggerProp
                 </button>
               </div>
               <div className="flex justify-between items-end">
-                <p className="text-xs text-gray-500 font-medium">{batch.breedType}</p>
-                <p className="text-sm font-bold text-gray-900">{batch.currentCount.toLocaleString()} <span className="text-xs text-gray-400 font-normal">birds</span></p>
+                <p className="text-xs text-gray-500 font-medium">{formatLivestockType(batch.type)}</p>
+                <p className="text-sm font-bold text-gray-900">
+                  {batch.currentCount.toLocaleString()} 
+                  <span className="text-xs text-gray-400 font-normal ml-1 lowercase">
+                    {getLivestockUnit(batch.type)}
+                  </span>
+                </p>
               </div>
             </CardContent>
           </Card>

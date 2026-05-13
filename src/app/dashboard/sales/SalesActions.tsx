@@ -9,12 +9,13 @@ import { recordPayment } from '@/lib/actions/payment-actions';
 import { generateInvoicePDF } from '@/lib/actions/invoice-actions';
 import { toast } from 'sonner';
 
-export function SalesActionsHeader({ customers, inventory, livestock }: { 
+export function SalesActionsHeader({ customers, inventory, livestock, initialLivestockId }: { 
   customers: any[], 
   inventory: any[],
-  livestock: any[]
+  livestock: any[],
+  initialLivestockId?: number
 }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(!!initialLivestockId);
 
   return (
     <>
@@ -36,6 +37,7 @@ export function SalesActionsHeader({ customers, inventory, livestock }: {
             customers={customers} 
             inventory={inventory}
             livestock={livestock}
+            initialLivestockId={initialLivestockId}
             onSuccess={() => setIsOpen(false)} 
           />
         </div>
@@ -149,6 +151,7 @@ export function SalesRowActions({ order }: { order: any }) {
               <input 
                 type="number"
                 step="0.01"
+                min="0"
                 value={paymentAmount}
                 onChange={(e) => setPaymentAmount(Number(e.target.value))}
                 className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-bold outline-none focus:border-emerald-500/50 transition-all"

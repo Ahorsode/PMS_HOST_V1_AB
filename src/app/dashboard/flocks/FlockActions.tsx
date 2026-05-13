@@ -1,29 +1,30 @@
 'use client'
 
 import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, Skull, Eye } from 'lucide-react';
+import { Plus, Edit2, Trash2, Skull, Eye, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { LivestockForm } from './FlockForm';
 import { RegisterBatchForm } from '@/components/forms/RegisterBatchForm';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export const FlockActionsHeader = ({ houses }: { houses: any[] }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 w-full md:w-auto">
         <Link 
           href="/dashboard/flocks/analytics"
-          className="flex items-center gap-2 px-3 py-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-md hover:bg-emerald-500/20 transition-all font-bold uppercase text-xs tracking-widest group"
+          className="flex-1 md:flex-none flex items-center justify-center gap-2 px-2 md:px-3 py-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-md hover:bg-emerald-500/20 transition-all font-bold uppercase text-[10px] md:text-xs tracking-widest group whitespace-nowrap"
         >
-          <Eye className="w-4 h-4 group-hover:scale-110 transition-transform" />
-          Management Unit
+          <Eye className="w-3 h-3 md:w-4 md:h-4 group-hover:scale-110 transition-transform" />
+          <span className="hidden xs:inline">Management</span> Unit
         </Link>
-        <Button onClick={() => setIsOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add New Unit
+        <Button onClick={() => setIsOpen(true)} className="flex-1 md:flex-none py-2 px-2 md:px-4 text-[10px] md:text-sm">
+          <Plus className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
+          Add <span className="hidden xs:inline">New</span> Unit
         </Button>
       </div>
       <Dialog isOpen={isOpen} onOpenChange={setIsOpen} title="Register New Livestock Unit">
@@ -34,6 +35,7 @@ export const FlockActionsHeader = ({ houses }: { houses: any[] }) => {
 };
 
 export const FlockRowActions = ({ batch, houses }: { batch: any, houses: any[] }) => {
+  const router = useRouter();
   const [mode, setMode] = useState<'edit' | 'delete' | 'mortality' | null>(null);
 
   return (
@@ -52,6 +54,13 @@ export const FlockRowActions = ({ batch, houses }: { batch: any, houses: any[] }
         title="Log Mortality"
       >
         <Skull className="h-4 w-4" />
+      </button>
+      <button 
+        onClick={() => router.push(`/dashboard/sales?sellBatchId=${batch.id}`)}
+        className="p-1 text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
+        title="Quick Sell"
+      >
+        <ShoppingCart className="h-4 w-4" />
       </button>
       <button 
         onClick={() => setMode('edit')}

@@ -27,6 +27,9 @@ export async function getAuthContext() {
   
   const userId = session.user.id
   let activeFarmId = (session.user as any).activeFarmId
+  if (activeFarmId && typeof activeFarmId === 'string') {
+    activeFarmId = parseInt(activeFarmId, 10);
+  }
 
   if (!activeFarmId) {
     const farm = await prisma.farm.findFirst({
@@ -74,15 +77,39 @@ export function hasPermission(role: string, permissions: any, action: string): b
     case 'VIEW_INVENTORY':
       return role === 'MANAGER' || role === 'WORKER' || !!permissions?.canViewInventory;
     case 'EDIT_INVENTORY':
-      return role === 'MANAGER' || !!permissions?.canEditInventory;
+      return role === 'MANAGER' || role === 'WORKER' || !!permissions?.canEditInventory;
     case 'VIEW_BATCHES':
       return true; // Everyone can see livestock?
     case 'EDIT_BATCHES':
       return role === 'MANAGER' || role === 'WORKER' || !!permissions?.canEditBatches;
     case 'VIEW_SALES':
-      return role === 'CASHIER' || role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER' || !!permissions?.canViewFinance;
+      return role === 'CASHIER' || role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER' || !!permissions?.canViewSales;
     case 'EDIT_SALES':
-      return role === 'CASHIER' || role === 'FINANCE_OFFICER' || !!permissions?.canEditFinance;
+      return role === 'CASHIER' || role === 'FINANCE_OFFICER' || !!permissions?.canEditSales;
+    case 'VIEW_CUSTOMERS':
+      return role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER' || role === 'CASHIER' || !!permissions?.canViewCustomers;
+    case 'EDIT_CUSTOMERS':
+      return role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER' || !!permissions?.canEditCustomers;
+    case 'VIEW_EGGS':
+      return !!permissions?.canViewEggs;
+    case 'EDIT_EGGS':
+      return !!permissions?.canEditEggs;
+    case 'VIEW_FEEDING':
+      return !!permissions?.canViewFeeding;
+    case 'EDIT_FEEDING':
+      return !!permissions?.canEditFeeding;
+    case 'VIEW_HOUSES':
+      return !!permissions?.canViewHouses;
+    case 'EDIT_HOUSES':
+      return !!permissions?.canEditHouses;
+    case 'VIEW_MORTALITY':
+      return !!permissions?.canViewMortality;
+    case 'EDIT_MORTALITY':
+      return !!permissions?.canEditMortality;
+    case 'VIEW_TEAM':
+      return !!permissions?.canViewTeam;
+    case 'EDIT_TEAM':
+      return !!permissions?.canEditTeam;
     default:
       return false;
   }

@@ -179,7 +179,7 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
       <FloatingIcon icon={Package} className="absolute top-1/2 -right-20 w-48 h-48 pointer-events-none opacity-5" />
 
       {/* Bento Grid Header */}
-      <header className="flex items-end justify-between mb-2 px-2">
+      <header className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-2 px-2 gap-4">
          <div>
             <h1 className="text-4xl font-bold text-white tracking-normal">Farm <span className="text-emerald-400 italic">Overview</span></h1>
             <p className="text-white/70 font-bold uppercase tracking-widest text-xs mt-2 flex items-center gap-2 mb-2">
@@ -210,9 +210,9 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
                 <CardTitle>Total Population</CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col h-full relative z-10 pt-3 pb-5">
-                <div className="mt-2">
-                   <span className="text-5xl font-bold text-white tracking-normal">{(stats?.totalBirds || 0).toLocaleString()}</span>
-                   <div className="text-emerald-400 font-bold text-xl mt-1 italic">Active Livestock</div>
+                <div className="mt-2 min-w-0">
+                   <p className="text-3xl md:text-5xl font-bold text-white tracking-normal truncate">{(stats?.totalBirds || 0).toLocaleString()}</p>
+                   <div className="text-emerald-400 font-bold text-sm md:text-xl mt-1 italic truncate">Active Livestock</div>
                 </div>
                 
                 <div className="flex items-center gap-2 text-emerald-400 px-3 py-2 bg-emerald-500/20 rounded-md w-fit mt-5 border border-emerald-500/20">
@@ -260,16 +260,16 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
                 <Package className="w-5 h-5 text-blue-400/50" />
               </CardHeader>
               <CardContent className="relative z-10">
-                <div className="flex justify-between items-end border-b border-white/5 pb-3 mb-2">
-                   <div>
-                     <p className="text-4xl font-bold text-white tracking-normal">{(stats?.todayEggs || 0).toLocaleString()}</p>
-                     <p className="text-xs text-white/70 font-bold uppercase tracking-widest mt-1 italic">Collected (Crates)</p>
-                   </div>
-                   <div className="text-right">
-                     <p className="text-2xl font-bold text-white tracking-normal">{(stats?.totalEggs || 0).toLocaleString()}</p>
-                     <p className="text-xs text-white/70 font-bold uppercase tracking-widest mt-1 italic">Total Stock</p>
-                   </div>
-                </div>
+                 <div className="flex justify-between items-end border-b border-white/5 pb-3 mb-2 gap-2">
+                    <div className="min-w-0">
+                      <p className="text-2xl md:text-4xl font-bold text-white tracking-normal truncate">{(stats?.todayEggs || 0).toLocaleString()}</p>
+                      <p className="text-[10px] text-white/70 font-bold uppercase tracking-widest mt-1 italic truncate">Collected (Crates)</p>
+                    </div>
+                    <div className="text-right min-w-0">
+                      <p className="text-xl md:text-2xl font-bold text-white tracking-normal truncate">{(stats?.totalEggs || 0).toLocaleString()}</p>
+                      <p className="text-[10px] text-white/70 font-bold uppercase tracking-widest mt-1 italic truncate">Total Stock</p>
+                    </div>
+                 </div>
                 <MiniBarChart data={stats.eggTrendData.map((d: { count: number }) => d.count)} color="bg-blue-400" />
                 <p className="text-[8px] text-center text-white/70 uppercase tracking-widest mt-2">7 Day Trend</p>
               </CardContent>
@@ -286,14 +286,14 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
                  <TrendingUp className="w-5 h-5 text-purple-400/50" />
                </CardHeader>
                <CardContent className="pt-2">
-                  <div className="flex items-baseline gap-2">
-                     <span className="text-5xl font-bold text-white tracking-normal">
-                       {stats.activeBatches.length > 0
-                         ? (stats.activeBatches.reduce((acc: number, batch: any) => acc + getGrowthProgress(batch.hatchDate, batch.breed).percent, 0) / stats.activeBatches.length).toFixed(1)
-                         : stats.productivityIndex || 94.2}%
-                     </span>
-                     <span className="text-xs font-bold uppercase text-purple-400 tracking-widest italic">Efficiency</span>
-                  </div>
+                   <div className="flex items-baseline gap-2 min-w-0">
+                      <span className="text-3xl md:text-5xl font-bold text-white tracking-normal truncate">
+                        {stats.activeBatches.length > 0
+                          ? (stats.activeBatches.reduce((acc: number, batch: any) => acc + getGrowthProgress(batch.hatchDate, batch.breed).percent, 0) / stats.activeBatches.length).toFixed(1)
+                          : stats.productivityIndex || 94.2}%
+                      </span>
+                      <span className="text-[10px] font-bold uppercase text-purple-400 tracking-widest italic shrink-0">Efficiency</span>
+                   </div>
                   <p className="text-xs text-white/70 font-bold uppercase tracking-widest mt-3">Growth vs Global Standards</p>
                   <div className="h-2 w-full bg-white/10 rounded-full mt-2 overflow-hidden border border-white/5">
                      <motion.div 
@@ -327,10 +327,10 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
                    const rem = raw % 30;
                    return (
                      <>
-                       <div className="flex items-baseline gap-2">
-                         <span className="text-5xl font-bold text-white tracking-normal">{crates}</span>
-                         <span className="text-xl font-bold text-amber-400/70">crates</span>
-                       </div>
+                        <div className="flex items-baseline gap-2 min-w-0">
+                          <span className="text-3xl md:text-5xl font-bold text-white tracking-normal truncate">{crates}</span>
+                          <span className="text-lg md:text-xl font-bold text-amber-400/70 shrink-0">crates</span>
+                        </div>
                        {rem > 0 && (
                          <p className="text-amber-400 text-sm font-semibold mt-1">+ {rem} remainder</p>
                        )}
@@ -436,7 +436,7 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
                               <span className="text-emerald-400 font-bold text-xs uppercase tracking-normal bg-emerald-500/20 px-2 py-0.5 rounded-lg border border-emerald-500/20">{batch.batchName || `UNIT-${batch.numericId}`}</span>
                               <span className="text-white/70 font-bold text-xs uppercase tracking-widest">House #{batch.houseNumber}</span>
                            </div>
-                           <h4 className="text-white font-bold text-2xl tracking-normal capitalize">{formatLivestockType(batch.type)} - {batch.breed}</h4>
+                           <h4 className="text-white font-bold text-lg md:text-2xl tracking-normal capitalize truncate">{formatLivestockType(batch.type)} - {batch.breed}</h4>
                            <div className="text-white/70 text-xs font-bold uppercase tracking-widest mt-1">
                               Started {new Date(batch.hatchDate).toLocaleDateString()}
                            </div>

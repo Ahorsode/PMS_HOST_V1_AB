@@ -56,7 +56,7 @@ export default async function CustomersPage() {
 
   return (
     <div className="max-w-[1600px] mx-auto space-y-7 px-5 py-9 relative">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-2">
         <div>
           <h1 className="text-4xl font-bold text-white tracking-normal">CRM <span className="text-emerald-400 italic">Network</span></h1>
           <p className="text-white/70 font-bold uppercase tracking-widest text-xs mt-2">Manage Customer Lifecycle & Relationships</p>

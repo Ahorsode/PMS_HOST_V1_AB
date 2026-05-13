@@ -32,10 +32,14 @@ export async function getAllCustomers() {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return []
 
-  return await prisma.customer.findMany({
+  const customers = await prisma.customer.findMany({
     where: { farmId: activeFarmId },
     orderBy: { name: 'asc' }
   })
+  return customers.map(c => ({
+    ...c,
+    balanceOwed: Number(c.balanceOwed)
+  }))
 }
 
 export async function getCustomerStats() {

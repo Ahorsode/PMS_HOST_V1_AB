@@ -137,10 +137,10 @@ function MetricCard({ title, value, trend, icon, description, isNegativeTrendBet
             </div>
           )}
         </div>
-        <div className="mt-4">
-          <p className="text-slate-400 text-xs font-semibold uppercase tracking-wider">{title}</p>
-          <h3 className="text-2xl font-bold text-white mt-1 tabular-nums tracking-tight">{value}</h3>
-          <p className="text-slate-500 text-[10px] mt-2 leading-relaxed">{description}</p>
+        <div className="mt-4 min-w-0">
+          <p className="text-slate-400 text-[10px] md:text-xs font-semibold uppercase tracking-wider truncate">{title}</p>
+          <h3 className="text-xl md:text-2xl font-bold text-white mt-1 tabular-nums tracking-tight truncate">{value}</h3>
+          <p className="text-slate-500 text-[10px] mt-2 leading-relaxed truncate">{description}</p>
         </div>
       </CardContent>
     </Card>

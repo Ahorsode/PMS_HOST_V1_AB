@@ -4,6 +4,8 @@ import prisma from '@/lib/db';
 import { redirect } from 'next/navigation';
 import { SidebarWrapper } from '@/components/layout/SidebarWrapper';
 import { acceptInvitation } from '@/lib/actions/staff-actions';
+import { XCircle } from 'lucide-react';
+import Link from 'next/link';
 
 export default async function DashboardLayout({
   children,
@@ -35,7 +37,7 @@ export default async function DashboardLayout({
 
   if (!farm) {
     // Check if they were invited and accept it automatically!
-    const inviteCheck = await acceptInvitation();
+    const inviteCheck = await acceptInvitation(false);
     if (inviteCheck?.success) {
       // Re-fetch everything to ensure roles and farms are populated accurately.
       dbUser = await prisma.user.findUnique({ where: { id: session.user.id } });
@@ -50,11 +52,25 @@ export default async function DashboardLayout({
   }
 
   if (!farm && dbUser?.role !== 'OWNER') {
+    const identifier = dbUser?.email || (dbUser as any)?.phoneNumber || 'your account';
     return (
       <div className="min-h-screen flex items-center justify-center bg-black/20 backdrop-blur-xl text-white p-7">
         <div className="glass-morphism p-11 rounded-lg text-center max-w-md">
-           <h2 className="text-2xl font-bold mb-3 uppercase tracking-widest text-emerald-400">Access Restricted</h2>
-           <p className="opacity-70 leading-relaxed font-medium">You are not currently linked to any farm. Please contact your administrator to receive an invitation.</p>
+           <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/30">
+              <XCircle className="w-10 h-10 text-red-500" />
+           </div>
+           <h2 className="text-2xl font-bold mb-3 uppercase tracking-widest text-red-400">Access Restricted</h2>
+           <p className="opacity-70 leading-relaxed font-medium mb-6">
+             You are not currently linked to any farm. We checked for invitations sent to <span className="text-emerald-400 font-bold underline">{identifier}</span>.
+           </p>
+           <p className="text-xs text-white/40 italic">
+             Please contact your farm administrator to verify which email or phone number was used for your invitation.
+           </p>
+           <div className="mt-8">
+              <Link href="/login" className="text-emerald-400 font-bold uppercase tracking-widest text-xs hover:underline">
+                Try Logging in with a different account
+              </Link>
+           </div>
         </div>
       </div>
     );

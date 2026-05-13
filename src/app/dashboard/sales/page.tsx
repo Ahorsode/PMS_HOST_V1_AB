@@ -1,11 +1,12 @@
 import React from 'react';
 import { getAllOrders } from '@/lib/actions/order-actions';
 import { getAllCustomers } from '@/lib/actions/customer-actions';
+import { getAllInventory } from '@/lib/actions/inventory-actions';
+import { getAllBatches } from '@/lib/actions/dashboard-actions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { formatCurrency } from '@/lib/utils';
 import { Banknote, ShoppingCart, Users, TrendingUp, Clock, CheckCircle2 } from 'lucide-react';
 import { redirect } from 'next/navigation';
-import prisma from '@/lib/db';
 import { getAuthContext, hasPermission } from '@/lib/auth-utils';
 import { SalesRowActions, SalesActionsHeader } from './SalesActions';
 
@@ -35,8 +36,10 @@ interface Customer {
   phone: string | null;
 }
 
-export default async function SalesPage() {
+export default async function SalesPage({ searchParams }: { searchParams: Promise<{ sellBatchId?: string }> }) {
   const { activeFarmId, role, permissions } = await getAuthContext();
+  const resolvedParams = await searchParams;
+  const sellBatchId = resolvedParams.sellBatchId ? Number(resolvedParams.sellBatchId) : undefined;
   
   if (!activeFarmId) {
     redirect('/dashboard');
@@ -50,8 +53,8 @@ export default async function SalesPage() {
   const [ordersRaw, customersRaw, inventory, livestock] = await Promise.all([
     getAllOrders(),
     getAllCustomers(),
-    prisma.inventory.findMany({ where: { farmId: activeFarmId } }),
-    prisma.livestock.findMany({ where: { farmId: activeFarmId } })
+    getAllInventory(),
+    getAllBatches()
   ]);
 
   const orders = ordersRaw as unknown as Order[];
@@ -79,6 +82,7 @@ export default async function SalesPage() {
           customers={customers} 
           inventory={inventory}
           livestock={livestock}
+          initialLivestockId={sellBatchId}
         />
       </div>
 
@@ -87,12 +91,12 @@ export default async function SalesPage() {
         {stats.map((stat) => (
           <Card key={stat.name} className={`${stat.bg} border-white/5 backdrop-blur-xl`}>
             <CardContent className="pt-3 md:pt-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-white/70 mb-1">{stat.name}</p>
-                  <p className="text-xl md:text-3xl font-bold text-white tracking-normal">{stat.value}</p>
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-white/70 mb-1 truncate">{stat.name}</p>
+                  <p className="text-lg md:text-2xl font-bold text-white tracking-tight truncate">{stat.value}</p>
                 </div>
-                <div className={`p-2 md:p-3 rounded-md ${stat.bg} border border-white/10`}>
+                <div className={`shrink-0 p-2 md:p-3 rounded-md ${stat.bg} border border-white/10`}>
                   <stat.icon className={`w-4 h-4 md:w-6 md:h-6 ${stat.color}`} />
                 </div>
               </div>

@@ -29,7 +29,7 @@ export const CardHeader = ({ children, className = '' }: { children: React.React
 );
 
 export const CardTitle = ({ children, className = '' }: { children: React.ReactNode, className?: string }) => (
-  <h3 className={cn("font-bold tracking-normal text-white uppercase italic text-sm opacity-80", className)}>
+  <h3 className={cn("font-bold tracking-normal text-white uppercase italic text-sm", className)}>
     {children}
   </h3>
 );
@@ -41,7 +41,7 @@ export const CardContent = ({ children, className = '' }: { children: React.Reac
 );
 
 export const CardDescription = ({ children, className = '' }: { children: React.ReactNode, className?: string }) => (
-  <p className={cn("text-xs text-white/60 font-medium tracking-tight", className)}>
+  <p className={cn("text-xs text-white/90 font-medium tracking-tight", className)}>
     {children}
   </p>
 );

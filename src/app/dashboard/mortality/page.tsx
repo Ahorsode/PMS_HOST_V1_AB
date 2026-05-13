@@ -3,6 +3,7 @@ import { getAllMortalityLogs, getAllBatches } from '@/lib/actions/dashboard-acti
 import { Card, CardContent } from '@/components/ui/Card';
 import { XCircle, Activity, History, AlertTriangle, Eye } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
+import { formatLivestockType } from '@/lib/utils/growth-utils';
 import Link from 'next/link';
 import { QuickMortalityLogger } from './QuickMortalityLogger';
 
@@ -12,34 +13,36 @@ export default async function MortalityPage() {
     getAllBatches()
   ]);
 
-  const activeBatches = batches.filter((b: any) => b.status === 'active');
+  const activeBatches = JSON.parse(JSON.stringify(
+    batches.filter((b: any) => b.status === 'active')
+  ));
   const totalMortality = logs.reduce((acc: number, log: any) => acc + log.count, 0);
 
   return (
     <div className="max-w-7xl mx-auto space-y-5 px-3 py-7">
-      <div className="flex justify-between items-center bg-white p-5 rounded-md shadow-sm border border-gray-100">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-5 rounded-md shadow-sm border border-gray-100 gap-4">
         <div>
           <h2 className="text-3xl font-extrabold text-gray-900 tracking-normal text-red-700 uppercase italic">Mortality Logs</h2>
-          <p className="text-gray-500 mt-1">Centralized history of flock mortality records.</p>
+          <p className="text-gray-500 mt-1">Centralized history of livestock mortality records.</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
         <Card className="rounded-md border-none shadow-xl shadow-gray-200/50 bg-red-950 text-white p-5 relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-7 opacity-10">
-            <XCircle className="w-24 h-24" />
+          <div className="absolute top-0 right-0 p-5 md:p-7 opacity-10">
+            <XCircle className="w-16 md:w-24 h-16 md:h-24" />
           </div>
           <p className="text-red-300 text-sm font-bold uppercase tracking-widest mb-1">Total Deaths (History)</p>
-          <h3 className="text-4xl font-bold">{totalMortality.toLocaleString()} <span className="text-xs font-normal">birds</span></h3>
+          <h3 className="text-4xl font-bold">{totalMortality.toLocaleString()} <span className="text-xs font-normal">livestock</span></h3>
           <p className="text-red-400 text-xs mt-3 font-medium italic">Across all active & archived batches</p>
         </Card>
 
         <Card className="rounded-md border-none shadow-xl shadow-gray-200/50 bg-white p-5 border-l-4 border-l-amber-500">
           <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle className="w-5 h-5 text-amber-500" />
-            <p className="text-gray-800 text-sm font-bold uppercase tracking-widest">Health Tip</p>
+            <AlertTriangle className="w-4 md:w-5 h-4 md:h-5 text-amber-500" />
+            <p className="text-gray-800 text-[10px] md:text-sm font-bold uppercase tracking-widest">Health Tip</p>
           </div>
-          <p className="text-gray-500 text-sm leading-relaxed font-medium">
+          <p className="text-gray-500 text-xs md:text-sm leading-relaxed font-medium">
             Consistent mortality logging helps identify early signs of disease. If mortality exceeds 1% in 24 hours, contact a veterinarian immediately.
           </p>
         </Card>
@@ -62,11 +65,11 @@ export default async function MortalityPage() {
           <table className="min-w-full divide-y divide-gray-100">
             <thead>
               <tr className="bg-gray-50/30">
-                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Date</th>
-                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Batch</th>
-                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Count</th>
-                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Reason</th>
-                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest text-right">Actions</th>
+                <th className="px-5 py-3 text-left text-xs font-bold text-white/70 uppercase tracking-widest">Date</th>
+                <th className="px-5 py-3 text-left text-xs font-bold text-white/70 uppercase tracking-widest">Batch</th>
+                <th className="px-5 py-3 text-left text-xs font-bold text-white/70 uppercase tracking-widest">Count</th>
+                <th className="px-5 py-3 text-left text-xs font-bold text-white/70 uppercase tracking-widest">Reason</th>
+                <th className="px-5 py-3 text-left text-xs font-bold text-white/70 uppercase tracking-widest text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -76,7 +79,7 @@ export default async function MortalityPage() {
                     {formatDate(log.logDate)}
                   </td>
                   <td className="px-5 py-3 whitespace-nowrap text-sm font-bold text-gray-900">
-                    FLK-{log.batchId?.toString().padStart(3, '0')} ({log.batch?.breedType})
+                    FLK-{log.batchId?.toString().padStart(3, '0')} ({formatLivestockType(log.batch?.type)})
                   </td>
                   <td className="px-5 py-3 whitespace-nowrap text-sm text-red-600 font-bold italic text-lg">
                     {log.count}
@@ -109,7 +112,7 @@ export default async function MortalityPage() {
               <div className="flex justify-between items-center border-b border-gray-50 pb-2">
                 <span className="text-xs font-bold tracking-widest text-gray-400 uppercase">{formatDate(log.logDate)}</span>
                 <span className="text-sm font-bold text-gray-800 bg-gray-50 px-2 py-1 rounded-full uppercase tracking-widest">
-                  FLK-{log.batchId?.toString().padStart(3, '0')}
+                  FLK-{log.batchId?.toString().padStart(3, '0')} ({formatLivestockType(log.batch?.type)})
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -135,7 +138,7 @@ export default async function MortalityPage() {
         {logs.length === 0 && (
           <div className="py-32 text-center">
             <Activity className="w-12 h-12 text-gray-100 mx-auto mb-3" />
-            <p className="text-gray-400 font-medium italic">All flocks are healthy! No mortality logs recorded.</p>
+            <p className="text-gray-400 font-medium italic">All livestock units are healthy! No mortality logs recorded.</p>
           </div>
         )}
       </div>

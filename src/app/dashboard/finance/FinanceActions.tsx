@@ -6,8 +6,10 @@ import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { ExpenseForm } from '@/components/forms/ExpenseForm';
 
-export const FinanceActions = () => {
+export const FinanceActions = ({ canEdit = true }: { canEdit?: boolean }) => {
   const [isOpen, setIsOpen] = useState(false);
+
+  if (!canEdit) return null;
 
   return (
     <>

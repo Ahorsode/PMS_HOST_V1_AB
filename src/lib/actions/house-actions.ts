@@ -29,6 +29,7 @@ export async function updateHouse(id: number, data: {
     })
     revalidatePath('/dashboard/climate')
     revalidatePath('/dashboard/settings')
+    revalidatePath('/dashboard/houses')
     return { 
       success: true, 
       house: { 
@@ -63,6 +64,7 @@ export async function deleteHouse(id: number) {
     })
     revalidatePath('/dashboard/climate')
     revalidatePath('/dashboard/settings')
+    revalidatePath('/dashboard/houses')
     return { success: true }
   }).catch((error: any) => {
     console.error('Error deleting house:', error)
