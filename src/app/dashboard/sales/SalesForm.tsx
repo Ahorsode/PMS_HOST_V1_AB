@@ -18,8 +18,8 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
     description: initialLivestockId ? (livestock.find(l => l.id === initialLivestockId)?.batchName || 'Livestock') : '',
     quantity: 1 as number | '',
     unitPrice: 0 as number | '',
-    inventoryId: undefined as number | undefined,
-    livestockId: initialLivestockId || undefined as number | undefined
+    inventoryId: undefined as number | 'PENDING' | undefined,
+    livestockId: (initialLivestockId || undefined) as number | 'PENDING' | undefined
   }]);
   const [discountValue, setDiscountValue] = useState<number | ''>(0);
   const [discountType, setDiscountType] = useState<'flat' | 'percent'>('percent');
@@ -31,8 +31,8 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
       description: '',
       quantity: 1 as number | '',
       unitPrice: 0 as number | '',
-      inventoryId: undefined,
-      livestockId: undefined
+      inventoryId: undefined as number | 'PENDING' | undefined,
+      livestockId: undefined as number | 'PENDING' | undefined
     }]);
   };
 
@@ -45,13 +45,13 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
     const newItems = [...items];
     (newItems[idx] as any)[field] = value === '' && (field === 'quantity' || field === 'unitPrice') ? '' : value;
 
-    if (field === 'livestockId' && value && value !== 'PENDING') {
+    if (field === 'livestockId' && value && (value as unknown as string) !== 'PENDING') {
       const live = livestock.find((l: any) => l.id === Number(value));
       if (live) newItems[idx].description = live.batchName;
       newItems[idx].inventoryId = undefined;
     }
 
-    if (field === 'inventoryId' && value && value !== 'PENDING') {
+    if (field === 'inventoryId' && value && (value as unknown as string) !== 'PENDING') {
       const inv = inventory.find((i: any) => i.id === Number(value));
       if (inv) newItems[idx].description = inv.itemName;
       newItems[idx].livestockId = undefined;
@@ -78,10 +78,10 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
       discountAmount: calculatedDiscount,
       items: items.map(i => ({
         description: i.description,
-        quantity: Number(i.quantity),
-        unitPrice: Number(i.unitPrice),
-        inventoryId: i.inventoryId && i.inventoryId !== 'PENDING' ? Number(i.inventoryId) : undefined,
-        livestockId: i.livestockId && i.livestockId !== 'PENDING' ? Number(i.livestockId) : undefined
+        quantity: Number(i.quantity) || 0,
+        unitPrice: Number(i.unitPrice) || 0,
+        inventoryId: i.inventoryId && (i.inventoryId as unknown as string) !== 'PENDING' ? Number(i.inventoryId) : undefined,
+        livestockId: i.livestockId && (i.livestockId as unknown as string) !== 'PENDING' ? Number(i.livestockId) : undefined
       }))
     });
     setIsSubmitting(false);
@@ -134,6 +134,7 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
             )}
             <input
               type="number"
+              min="0"
               value={discountValue}
               onChange={(e) => setDiscountValue(e.target.value === '' ? '' : Number(e.target.value))}
               placeholder="0.00"
@@ -220,13 +221,13 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
                   <>
                     <div className="grid grid-cols-1 gap-4">
                       {/* Livestock Selection Mode */}
-                      {(item.livestockId === 'PENDING' || item.livestockId) && (
+                      {((item.livestockId as unknown as string) === 'PENDING' || item.livestockId) && (
                         <div className="space-y-1">
                           <p className="text-[9px] font-black uppercase text-emerald-400 mb-1 tracking-[0.2em]">Select Livestock Unit</p>
                           <select
                             autoFocus
                             className="w-full bg-black/40 border border-emerald-500/20 rounded-lg p-3 text-white font-bold outline-none text-sm transition-all focus:border-emerald-500/50"
-                            value={item.livestockId === 'PENDING' ? '' : item.livestockId}
+                            value={(item.livestockId as unknown as string) === 'PENDING' ? '' : item.livestockId}
                             onChange={(e) => updateItem(idx, 'livestockId', e.target.value)}
                           >
                             <option value="">-- Choose a livestock batch --</option>
@@ -238,19 +239,19 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
                       )}
 
                       {/* Egg Selection Mode */}
-                      {(item.inventoryId === 'PENDING' || item.inventoryId) && (
+                      {((item.inventoryId as unknown as string) === 'PENDING' || item.inventoryId) && (
                         <div className="space-y-1">
                           <p className="text-[9px] font-black uppercase text-blue-400 mb-1 tracking-[0.2em]">Select Egg Inventory</p>
                           <select
                             autoFocus
                             className="w-full bg-black/40 border border-blue-500/20 rounded-lg p-3 text-white font-bold outline-none text-sm transition-all focus:border-blue-500/50"
-                            value={item.inventoryId === 'PENDING' ? '' : item.inventoryId}
+                            value={(item.inventoryId as unknown as string) === 'PENDING' ? '' : item.inventoryId}
                             onChange={(e) => {
                               const val = e.target.value;
                               const newItems = [...items];
                               (newItems[idx] as any).inventoryId = val ? Number(val) : 'PENDING';
                               (newItems[idx] as any).livestockId = undefined;
-                              if (val && val !== 'PENDING') {
+                              if (val && (val as unknown as string) !== 'PENDING') {
                                 const inv = inventory.find((i: any) => i.id === Number(val));
                                 if (inv) newItems[idx].description = inv.itemName;
                               }
@@ -274,7 +275,7 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
                       )}
 
                       {/* Description & Action Icons Row */}
-                      {item.livestockId !== 'PENDING' && item.inventoryId !== 'PENDING' && (
+                      {(item.livestockId as unknown as string) !== 'PENDING' && (item.inventoryId as unknown as string) !== 'PENDING' && (
                         <div className="flex items-end gap-3">
                           <div className="flex-1 space-y-1">
                             <p className="text-[9px] font-black uppercase text-white/50 mb-1 tracking-[0.2em]">Item Description</p>
@@ -319,12 +320,13 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
                     </div>
 
                     {/* Quantity & Price - Side by Side */}
-                    {item.livestockId !== 'PENDING' && item.inventoryId !== 'PENDING' && (
+                    {(item.livestockId as unknown as string) !== 'PENDING' && (item.inventoryId as unknown as string) !== 'PENDING' && (
                       <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
                         <div className="space-y-1">
                           <p className="text-[9px] font-black uppercase text-white/50 mb-1 tracking-[0.2em]">Quantity</p>
                           <input
                             type="number"
+                            min="0"
                             className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white font-bold outline-none text-sm focus:border-emerald-500/30"
                             value={item.quantity}
                             onChange={(e) => updateItem(idx, 'quantity', e.target.value === '' ? '' : Number(e.target.value))}
@@ -337,6 +339,7 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
                             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-400/40">GHS</span>
                             <input
                               type="number"
+                              min="0"
                               step="0.01"
                               className="w-full bg-white/5 border border-white/10 rounded-lg p-3 pl-12 text-emerald-400 font-bold outline-none text-sm focus:border-emerald-500/30"
                               value={item.unitPrice}

@@ -111,6 +111,7 @@ export const LivestockForm = ({ houses, batch, mode, onClose }: LivestockFormPro
           <Input
             label="Mortality Count"
             type="number"
+            min="0"
             value={formData.mortalityCount}
             onChange={(e) => setFormData({ ...formData, mortalityCount: e.target.value })}
             required
@@ -193,6 +194,7 @@ export const LivestockForm = ({ houses, batch, mode, onClose }: LivestockFormPro
             <Input
               label="Initial Quantity"
               type="number"
+              min="0"
               value={formData.initialCount}
               onChange={(e) => setFormData({ ...formData, initialCount: e.target.value === '' ? '' : Number(e.target.value) })}
               required

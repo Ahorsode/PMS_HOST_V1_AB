@@ -73,6 +73,7 @@ export const InventoryForm = ({ item, mode, onClose }: InventoryFormProps) => {
         <Input
           label="Stock Level"
           type="number"
+          min="0"
           step="0.01"
           value={formData.stockLevel}
           onChange={(e) => setFormData({ ...formData, stockLevel: Number(e.target.value) })}
