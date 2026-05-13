@@ -90,6 +90,7 @@ export const FeedForm = ({ batches, inventory, log, mode, onClose }: FeedFormPro
       <Input
         label="Amount Consumed (kg)"
         type="number"
+        min="0"
         step="0.01"
         value={formData.amountConsumed}
         onChange={(e) => setFormData({ ...formData, amountConsumed: e.target.value === '' ? '' : Number(e.target.value) })}

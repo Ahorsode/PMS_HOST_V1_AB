@@ -161,6 +161,7 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
           <Input
             label="Initial Quantity"
             type="number"
+            min="1"
             placeholder="1000"
             {...register("initialQuantity", { valueAsNumber: true })}
             error={errors.initialQuantity?.message}

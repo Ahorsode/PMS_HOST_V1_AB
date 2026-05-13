@@ -36,9 +36,10 @@ interface Customer {
   phone: string | null;
 }
 
-export default async function SalesPage({ searchParams }: { searchParams: { sellBatchId?: string } }) {
+export default async function SalesPage({ searchParams }: { searchParams: Promise<{ sellBatchId?: string }> }) {
   const { activeFarmId, role, permissions } = await getAuthContext();
-  const sellBatchId = searchParams.sellBatchId ? Number(searchParams.sellBatchId) : undefined;
+  const resolvedParams = await searchParams;
+  const sellBatchId = resolvedParams.sellBatchId ? Number(resolvedParams.sellBatchId) : undefined;
   
   if (!activeFarmId) {
     redirect('/dashboard');
