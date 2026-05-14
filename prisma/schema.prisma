@@ -36,6 +36,7 @@ model User {
   eggProductions     EggProduction[]
   mortalities        Mortality[]
   weightRecords      WeightRecord[]
+  orders             Order[]
   insertLogs         InsertLog[]
   deleteLogs         DeleteLog[]
 
@@ -578,13 +579,15 @@ model Order {
   totalAmount    Decimal     @db.Decimal(15, 2)
   currency       String      @default("USD")
   status         String      @default("PENDING")
-  orderDate      DateTime    @default(now())
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  orderDate      DateTime    @default("2024-01-01T00:00:00.000Z") @map("order_date")
+  userId         String      @default("user_placeholder") @map("user_id")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
   discountAmount Decimal     @default(0) @db.Decimal(15, 2)
   items          OrderItem[]
   customer       Customer?   @relation(fields: [customerId], references: [id])
   farm           Farm        @relation(fields: [farmId], references: [id])
+  user           User        @relation(fields: [userId], references: [id])
 
   @@index([orderDate, status])
   @@map("orders")

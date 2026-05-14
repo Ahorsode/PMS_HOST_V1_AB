@@ -27,6 +27,7 @@ export async function createOrder(data: {
       const order = await tx.order.create({
         data: {
           farmId: activeFarmId,
+          userId,
           customerId: data.customerId || undefined,
           totalAmount,
           discountAmount: discount,
