@@ -13,8 +13,8 @@ import {
   Search,
   ArrowRight,
   Eye
-} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Dialog, DialogTitle, DialogDescription } from '@/components/ui/Dialog';
 import { restoreDeletedRecord } from '@/lib/actions/audit-actions';
 import { toast } from 'sonner';
 import { WorkerStamp } from '@/components/ui/WorkerStamp';
@@ -27,6 +27,7 @@ interface AuditLogViewProps {
 export default function AuditLogView({ initialEditLogs, initialDeleteLogs }: AuditLogViewProps) {
   const [activeTab, setActiveTab] = useState<'edits' | 'deletes'>('edits');
   const [isPending, startTransition] = useTransition();
+  const [selectedLog, setSelectedLog] = useState<any>(null);
 
   const uniqueDeleteLogs = initialDeleteLogs.filter((log, index, self) =>
     index === self.findIndex((t) => (
@@ -198,7 +199,11 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs }: Aud
                             <p className="text-[10px] text-white/40 font-mono truncate max-w-[200px]" title={log.deletedDataCsv}>
                               {log.deletedDataCsv.split('\n')[1]?.slice(0, 50)}...
                             </p>
-                            <button className="text-white/40 hover:text-emerald-400 transition-colors" title="View Details">
+                            <button 
+                              onClick={() => setSelectedLog(log)}
+                              className="text-white/40 hover:text-emerald-400 transition-colors" 
+                              title="View Details"
+                            >
                               <Eye className="w-3.5 h-3.5" />
                             </button>
                           </div>
@@ -229,6 +234,45 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs }: Aud
           </Card>
         )}
       </div>
+
+      <Dialog 
+        isOpen={!!selectedLog} 
+        onOpenChange={(open) => !open && setSelectedLog(null)}
+        title="Deleted Record Details"
+        description={selectedLog ? `Entity: ${selectedLog.tableName} | Deleted: ${new Date(selectedLog.deletedAt).toLocaleString()}` : ''}
+      >
+        {selectedLog && (
+          <div className="bg-black/20 border border-white/10 p-4 rounded-md overflow-x-auto mt-4 custom-scrollbar">
+            <table className="w-full text-left text-xs text-white/90">
+              <tbody>
+                {selectedLog.deletedDataCsv.split('\n')[0].split('|').map((header: string, i: number) => {
+                  const cleanHeader = header.trim().replace(/^"|"$/g, '').replace(/_/g, ' ').toUpperCase();
+                  const value = selectedLog.deletedDataCsv.split('\n')[1]?.split('|')[i]?.trim().replace(/^'|'$/g, '').replace(/''/g, "'") || 'N/A';
+                  return (
+                    <tr key={i} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
+                      <td className="py-2 px-3 font-bold text-white/50 tracking-widest">{cleanHeader}</td>
+                      <td className="py-2 px-3 font-mono">{value === 'NULL' || value === '' ? <span className="text-white/30 italic">none</span> : value}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            <div className="flex justify-end mt-6">
+              <button
+                onClick={() => {
+                  const id = selectedLog.id;
+                  setSelectedLog(null);
+                  handleRestore(id);
+                }}
+                disabled={isPending}
+                className="bg-emerald-500 hover:bg-emerald-600 text-black px-6 py-2 rounded-md font-bold uppercase text-[10px] tracking-widest transition-all hover:scale-105 disabled:opacity-50"
+              >
+                Restore Record
+              </button>
+            </div>
+          </div>
+        )}
+      </Dialog>
     </div>
   );
 }

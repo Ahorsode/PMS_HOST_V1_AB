@@ -93,7 +93,8 @@ export async function restoreDeletedRecord(logId: number) {
     if (!log) return { success: false, error: 'Log entry not found' }
 
     // Resolve model name from table name
-    const modelName = TABLE_TO_MODEL[log.tableName] || log.tableName
+    const normalizedTableName = log.tableName.toLowerCase()
+    const modelName = TABLE_TO_MODEL[normalizedTableName] || normalizedTableName
     if (!(prisma as any)[modelName]) {
       return { success: false, error: `Invalid target table for restoration: ${log.tableName}` }
     }
@@ -125,18 +126,19 @@ export async function restoreDeletedRecord(logId: number) {
       'feed_consumed': 'feedConsumed',
       'unit_price': 'unitPrice',
       'total_amount': 'totalAmount',
+      'local_batch_id': 'localBatchId',
     }
 
     const record: any = {}
-    headers.forEach((header, i) => {
+    headers.forEach((header: string, i: number) => {
       const cleanHeader = header.trim().replace(/^"|"$/g, '')
       const propertyName = headerMap[cleanHeader] || cleanHeader
       
       let val: any = values[i] ? values[i].trim() : null
       
       if (val) {
-        // Strip single quotes from quote_literal and unescape doubled single quotes
-        val = val.replace(/^'|'$/g, '').replace(/''/g, "'")
+        // Strip both single and double quotes and unescape
+        val = val.replace(/^['"]|['"]$/g, '').replace(/''/g, "'").replace(/""/g, '"')
       }
 
       if (val === 'NULL' || val === '' || val === 'null' || val === null) {
