@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, Bird, PawPrint, Egg, ThermometerSun, 
   Wheat, Settings, Users, XCircle, Banknote,
-  LogOut, Wallet, Crown
+  LogOut, Wallet, Crown, ShieldCheck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -39,6 +39,7 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
     {
       name: 'Governance',
       items: [
+        { name: 'Audit Logs', icon: ShieldCheck, href: '/dashboard/admin/logs', roles: ['OWNER', 'MANAGER'] },
         { name: 'Team Management', icon: Users, href: '/dashboard/team', roles: ['OWNER', 'MANAGER'] },
         { name: 'License Upgrade', icon: Crown, href: '/dashboard/license-upgrade', roles: ['OWNER', 'MANAGER'] },
         { name: 'Settings', icon: Settings, href: '/dashboard/settings', roles: ['OWNER', 'MANAGER'] },
