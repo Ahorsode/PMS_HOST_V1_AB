@@ -9,6 +9,7 @@ import { Banknote, ShoppingCart, Users, TrendingUp, Clock, CheckCircle2 } from '
 import { redirect } from 'next/navigation';
 import { getAuthContext, hasPermission } from '@/lib/auth-utils';
 import { SalesRowActions, SalesActionsHeader } from './SalesActions';
+import { WorkerStamp } from '@/components/ui/WorkerStamp';
 
 interface OrderItem {
   id: number;
@@ -28,6 +29,11 @@ interface Order {
     phone: string | null;
   } | null;
   items: OrderItem[];
+  user?: {
+    firstname: string | null;
+    surname: string | null;
+    role: string;
+  } | null;
 }
 
 interface Customer {
@@ -154,7 +160,8 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                         {order.status}
                       </span>
                     </td>
-                    <td className="px-7 py-5 text-right">
+                    <td className="px-7 py-5 text-right flex items-center justify-end gap-2">
+                       <WorkerStamp user={order.user} />
                        <SalesRowActions order={order} />
                     </td>
                   </tr>

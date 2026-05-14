@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Bird, Activity, Info, Zap, Waves, LayoutGrid } from 'lucide-react';
 import { FlockRowActions } from './FlockActions';
 import { formatLivestockType, getLivestockUnit } from '@/lib/utils/growth-utils';
+import { WorkerStamp } from '@/components/ui/WorkerStamp';
 
 interface LivestockTableProps {
   initialBatches: any[];
@@ -55,7 +56,6 @@ export function LivestockTable({ initialBatches, houses }: LivestockTableProps) 
             <tr className="bg-gray-50/50">
               <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Unit Name / Identity</th>
               <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Type & Species</th>
-              <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Growth Benchmark</th>
               <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Quantity</th>
               <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Arrival Date</th>
               <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Status</th>
@@ -72,11 +72,6 @@ export function LivestockTable({ initialBatches, houses }: LivestockTableProps) 
                 <td className="px-5 py-3 whitespace-nowrap">
                   <div className="text-sm font-bold text-gray-900">{formatLivestockType(batch.type)}</div>
                   <div className="text-xs text-gray-500 font-medium">{batch.breedType}</div>
-                </td>
-                <td className="px-5 py-3 whitespace-nowrap text-sm text-gray-600 font-medium">
-                  <span className="bg-purple-50 text-purple-700 px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-widest border border-purple-100 italic">
-                    {batch.growthTargetOverride || batch.breedType || 'Standard'}
-                  </span>
                 </td>
                 <td className="px-5 py-3 whitespace-nowrap text-sm text-gray-900 font-bold">
                   {batch.currentCount?.toLocaleString() || '0'}
@@ -96,7 +91,8 @@ export function LivestockTable({ initialBatches, houses }: LivestockTableProps) 
                     {batch.status.toUpperCase()}
                   </span>
                 </td>
-                <td className="px-5 py-3 whitespace-nowrap text-right">
+                <td className="px-5 py-3 whitespace-nowrap text-right flex items-center justify-end gap-2">
+                  <WorkerStamp user={batch.user} />
                   <FlockRowActions batch={batch} houses={houses} />
                 </td>
               </tr>

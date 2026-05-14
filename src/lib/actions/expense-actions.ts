@@ -15,6 +15,15 @@ export async function getExpenses() {
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const expenses = await tx.expense.findMany({
       where: { farmId: activeFarmId },
+      include: {
+        user: {
+          select: {
+            firstname: true,
+            surname: true,
+            role: true
+          }
+        }
+      },
       orderBy: { expenseDate: 'desc' },
       take: 50
     })

@@ -6,6 +6,7 @@ import {
   Package, Plus, Trash2, Pencil, Egg, Wheat, FlaskConical,
   X, Save, AlertTriangle, ShoppingBag, TrendingDown, CheckCircle2
 } from 'lucide-react';
+import { WorkerStamp } from '@/components/ui/WorkerStamp';
 import {
   getAllInventory,
   createInventoryItem,
@@ -41,6 +42,11 @@ type InventoryItem = {
   unit: string;
   category: string;
   costPerUnit?: number | null;
+  user?: {
+    firstname: string | null;
+    surname: string | null;
+    role: string;
+  } | null;
 };
 
 type FormState = {
@@ -268,17 +274,18 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
                           ) : <span className="text-white/20">—</span>}
                         </td>
                         <td className="px-4 py-2 text-right text-white/70">{item.unit}</td>
-                        <td className="px-4 py-2 text-right">
-                          {canEdit && (
-                            <div className="flex items-center justify-end gap-2">
-                              <button onClick={() => openEdit(item)} className="p-1.5 rounded-md hover:bg-white/10 text-white/70 hover:text-white transition-colors">
-                                <Pencil className="w-4 h-4" />
-                              </button>
-                              <button onClick={() => handleDelete(item.id)} className="p-1.5 rounded-md hover:bg-red-500/20 text-white/70 hover:text-red-400 transition-colors">
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          )}
+                        <td className="px-4 py-2 text-right flex items-center justify-end gap-2">
+                           <WorkerStamp user={item.user} />
+                           {canEdit && (
+                             <>
+                               <button onClick={() => openEdit(item)} className="p-1.5 rounded-md hover:bg-white/10 text-white/70 hover:text-white transition-colors">
+                                 <Pencil className="w-4 h-4" />
+                               </button>
+                               <button onClick={() => handleDelete(item.id)} className="p-1.5 rounded-md hover:bg-red-500/20 text-white/70 hover:text-red-400 transition-colors">
+                                 <Trash2 className="w-4 h-4" />
+                               </button>
+                             </>
+                           )}
                         </td>
                       </tr>
                     ))}

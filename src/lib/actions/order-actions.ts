@@ -76,7 +76,14 @@ export async function getAllOrders() {
     where: { farmId: activeFarmId },
     include: {
       customer: true,
-      items: true
+      items: true,
+      user: {
+        select: {
+          firstname: true,
+          surname: true,
+          role: true
+        }
+      }
     },
     orderBy: { orderDate: 'desc' },
     take: 50 // Limit to avoid massive payloads

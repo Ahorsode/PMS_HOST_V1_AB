@@ -15,6 +15,7 @@ import { getAllSales } from '@/lib/actions/dashboard-actions';
 import { getExpenses } from '@/lib/actions/expense-actions';
 import { formatCurrency } from '@/lib/utils';
 import { FinanceActions } from './FinanceActions';
+import { WorkerStamp } from '@/components/ui/WorkerStamp';
 
 interface Sale {
   id: string;
@@ -22,6 +23,11 @@ interface Sale {
   customerName?: string | null;
   saleDate: Date | string;
   status: string;
+  user?: {
+    firstname: string | null;
+    surname: string | null;
+    role: string;
+  } | null;
 }
 
 interface Expense {
@@ -30,6 +36,11 @@ interface Expense {
   category: string;
   expenseDate: Date | string;
   description?: string | null;
+  user?: {
+    firstname: string | null;
+    surname: string | null;
+    role: string;
+  } | null;
 }
 
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
@@ -175,9 +186,12 @@ export default async function FinancePage() {
                         <p className="text-white/70 text-[9px] uppercase font-bold tracking-widest italic">{new Date(sale.saleDate).toLocaleDateString()}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                       <p className="text-emerald-400 font-bold text-sm">+{formatCurrency(Number(sale.totalAmount))}</p>
-                       <p className="text-white/70 text-[8px] uppercase font-bold tracking-widest">{sale.status}</p>
+                    <div className="text-right flex items-center gap-2">
+                       <div className="text-right">
+                         <p className="text-emerald-400 font-bold text-sm">+{formatCurrency(Number(sale.totalAmount))}</p>
+                         <p className="text-white/70 text-[8px] uppercase font-bold tracking-widest">{sale.status}</p>
+                       </div>
+                       <WorkerStamp user={sale.user} />
                     </div>
                   </div>
                 ))
@@ -210,9 +224,12 @@ export default async function FinancePage() {
                         <p className="text-white/70 text-[9px] uppercase font-bold tracking-widest italic">{new Date(exp.expenseDate).toLocaleDateString()}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                       <p className="text-red-400 font-bold text-sm">-{formatCurrency(Number(exp.amount))}</p>
-                       <p className="text-white/70 text-[8px] uppercase font-bold tracking-widest truncate max-w-[100px]">{exp.description || 'No description'}</p>
+                    <div className="text-right flex items-center gap-2">
+                       <div className="text-right">
+                         <p className="text-red-400 font-bold text-sm">-{formatCurrency(Number(exp.amount))}</p>
+                         <p className="text-white/70 text-[8px] uppercase font-bold tracking-widest truncate max-w-[100px]">{exp.description || 'No description'}</p>
+                       </div>
+                       <WorkerStamp user={exp.user} />
                     </div>
                   </div>
                 ))

@@ -489,6 +489,13 @@ export async function getAllBatches() {
       where: { farmId: activeFarmId },
       include: {
         house: true,
+        user: {
+          select: {
+            firstname: true,
+            surname: true,
+            role: true
+          }
+        }
       },
       orderBy: {
         arrivalDate: 'desc',
@@ -984,6 +991,13 @@ export async function getAllSales() {
       where: { farmId: activeFarmId },
       include: {
         items: true,
+        user: {
+          select: {
+            firstname: true,
+            surname: true,
+            role: true
+          }
+        }
       },
       orderBy: {
         saleDate: 'desc',
@@ -1046,16 +1060,19 @@ export async function getBatchDetails(id: number) {
       include: {
         house: true,
         feedingLogs: {
-          include: { inventory: true },
+          include: { inventory: true, user: true },
           orderBy: { logDate: 'desc' }
         },
         mortalityRecords: {
+          include: { user: true },
           orderBy: { logDate: 'desc' }
         },
         eggProduction: {
+          include: { user: true },
           orderBy: { logDate: 'desc' }
         },
         weightRecords: {
+          include: { user: true },
           orderBy: { logDate: 'desc' }
         },
         vaccinations: {

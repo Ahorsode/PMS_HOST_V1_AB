@@ -31,6 +31,13 @@ model User {
   farms              Farm[]
   sessions           Session[]
   userPermissions    UserPermission[]
+  sales              Sale[]
+  inventory          Inventory[]
+  eggProductions     EggProduction[]
+  mortalities        Mortality[]
+  weightRecords      WeightRecord[]
+  insertLogs         InsertLog[]
+  deleteLogs         DeleteLog[]
 
   @@map("users")
 }
@@ -194,10 +201,35 @@ model Inventory {
   eggCategoryId              Int?
   eggCategory                EggCategory?                @relation(fields: [eggCategoryId], references: [id])
   orderItems                 OrderItem[]
+  user                       User                        @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([farmId])
   @@map("inventory")
+}
+
+model InsertLog {
+  id          Int      @id @default(autoincrement())
+  userId      String   @map("user_id")
+  farmId      Int      @map("farm_id")
+  targetTable String   @map("target_table")
+  recordId    Int      @map("record_id")
+  insertedAt  DateTime @default(now()) @map("inserted_at")
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@map("insert_logs")
+}
+
+model DeleteLog {
+  id             Int      @id @default(autoincrement())
+  userId         String   @map("user_id")
+  farmId         Int      @map("farm_id")
+  tableName      String   @map("table_name")
+  deletedDataCsv String   @map("deleted_data_csv")
+  deletedAt      DateTime @default(now()) @map("deleted_at")
+  user           User     @relation(fields: [userId], references: [id])
+
+  @@map("delete_logs")
 }
 
 
@@ -252,6 +284,7 @@ model EggProduction {
   categoryId    Int?
   category      EggCategory? @relation(fields: [categoryId], references: [id])
   cratesCollected Decimal? @db.Decimal(15, 2)
+  user          User     @relation(fields: [userId], references: [id])
 
   @@index([batchId, logDate])
   @@index([userId])
@@ -272,6 +305,7 @@ model Mortality {
   subCategory String?   @map("sub_category")
   batch       Livestock @relation(fields: [batchId], references: [id])
   farm        Farm      @relation(fields: [farmId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
 
   @@index([batchId, logDate])
   @@index([userId])
@@ -289,6 +323,7 @@ model WeightRecord {
   createdAt     DateTime  @default(now())
   batch         Livestock @relation(fields: [batchId], references: [id])
   farm          Farm      @relation(fields: [farmId], references: [id])
+  user          User      @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([farmId])
@@ -306,6 +341,7 @@ model Sale {
   farmId       Int        @default(1)
   items        SaleItem[]
   farm         Farm       @relation(fields: [farmId], references: [id])
+  user         User       @relation(fields: [userId], references: [id])
 
   @@index([saleDate, status])
   @@index([userId])

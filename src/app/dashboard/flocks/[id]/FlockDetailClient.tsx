@@ -26,6 +26,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { logWeight } from '@/lib/actions/dashboard-actions';
 import { createVaccinationSchedule } from '@/lib/actions/preference-actions';
 import { cn } from '@/lib/utils';
+import { WorkerStamp } from '@/components/ui/WorkerStamp';
 
 interface FlockDetailClientProps {
   batch: any;
@@ -239,33 +240,36 @@ export const FlockDetailClient = ({ batch }: FlockDetailClientProps) => {
                       <div key={idx} className="relative pb-7 pl-9 group">
                          <div className="absolute left-0 top-0 w-2.5 h-2.5 -translate-x-1/2 rounded-full border-2 border-slate-900 bg-white shadow-[0_0_10px_rgba(255,255,255,0.5)] transition-transform" />
                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                            <div>
-                               <p className="text-white/70 text-[9px] font-bold uppercase tracking-widest mb-1 italic">
-                                  {new Date(item.logDate).toLocaleString()}
-                               </p>
-                               <div className="flex items-center gap-2">
-                                  <span className={cn(
-                                     "text-xs font-bold px-2 py-0.5 rounded-lg border",
-                                     item.type === 'FEED' ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
-                                     item.type === 'MORTALITY' ? "bg-red-500/10 text-red-500 border-red-500/20" :
-                                     item.type === 'EGGS' ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
-                                     "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                                  )}>
-                                     {item.type}
-                                  </span>
-                                  <span className="text-white font-bold tracking-normal text-sm">
-                                     {item.type === 'FEED' && `Logged ${item.amountConsumed}kg consumption`}
-                                     {item.type === 'MORTALITY' && (
-                                       <div className="flex flex-col">
-                                          <span>Recorded {item.count} deaths</span>
-                                          <span className="text-xs text-white/70">{item.category} › {item.subCategory}</span>
-                                       </div>
-                                     )}
-                                     {item.type === 'EGGS' && `Collected ${item.eggsCollected} eggs`}
-                                     {item.type === 'WEIGHT' && `Average weight: ${item.averageWeight}kg`}
-                                  </span>
-                               </div>
-                            </div>
+                             <div className="flex-1">
+                                <p className="text-white/70 text-[9px] font-bold uppercase tracking-widest mb-1 italic">
+                                   {new Date(item.logDate).toLocaleString()}
+                                </p>
+                                <div className="flex items-center justify-between gap-3">
+                                   <div className="flex items-center gap-2">
+                                      <span className={cn(
+                                         "text-xs font-bold px-2 py-0.5 rounded-lg border",
+                                         item.type === 'FEED' ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
+                                         item.type === 'MORTALITY' ? "bg-red-500/10 text-red-500 border-red-500/20" :
+                                         item.type === 'EGGS' ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
+                                         "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                                      )}>
+                                         {item.type}
+                                      </span>
+                                      <span className="text-white font-bold tracking-normal text-sm">
+                                         {item.type === 'FEED' && `Logged ${item.amountConsumed}kg consumption`}
+                                         {item.type === 'MORTALITY' && (
+                                           <div className="flex flex-col inline-block align-middle">
+                                              <span>Recorded {item.count} deaths</span>
+                                              <span className="text-xs text-white/70">{item.category} › {item.subCategory}</span>
+                                           </div>
+                                         )}
+                                         {item.type === 'EGGS' && `Collected ${item.eggsCollected} eggs`}
+                                         {item.type === 'WEIGHT' && `Average weight: ${item.averageWeight}kg`}
+                                      </span>
+                                   </div>
+                                   <WorkerStamp user={item.user} />
+                                </div>
+                             </div>
                          </div>
                       </div>
                     ))}
