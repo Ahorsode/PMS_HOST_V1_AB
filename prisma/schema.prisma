@@ -39,6 +39,7 @@ model User {
   orders             Order[]
   insertLogs         InsertLog[]
   deleteLogs         DeleteLog[]
+  auditLogs          AuditLog[]
 
   @@map("users")
 }
@@ -453,6 +454,7 @@ model AuditLog {
   userId        String   @map("user_id")
   farmId        Int      @map("farm_id")
   createdAt     DateTime @default(now()) @map("created_at")
+  user          User     @relation(fields: [userId], references: [id])
 
   @@index([farmId])
   @@index([userId])
