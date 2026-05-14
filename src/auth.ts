@@ -5,7 +5,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { authConfig } from './auth.config';
 import prisma from '@/lib/db';
 import bcrypt from 'bcryptjs';
-import { normalizePhoneNumber } from '@/lib/auth-utils';
+import { normalizePhoneNumber, recordUserSession } from '@/lib/auth-utils';
 
 function splitName(name: string | null | undefined) {
   if (!name) return { firstname: '', surname: '', middleName: '' };
@@ -32,6 +32,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           data: { firstname, surname, middleName } as any
         });
       }
+    },
+    async signIn({ user }) {
+      await recordUserSession(user.id, 'Web');
     }
   },
   callbacks: {

@@ -114,3 +114,30 @@ export function hasPermission(role: string, permissions: any, action: string): b
       return false;
   }
 }
+
+/**
+ * Records a user session in the database for auditing and multi-tenant tracking.
+ * Used by both the Next.js web app and external clients (Flutter Desktop/Mobile).
+ */
+export async function recordUserSession(userId: string, deviceType: string = 'Web') {
+  try {
+    const farmMember = await prisma.farmMember.findFirst({
+      where: { userId },
+      select: { farmId: true }
+    });
+
+    return await prisma.session.create({
+      data: {
+        userId,
+        farmId: farmMember?.farmId || null,
+        loginTime: new Date(),
+        deviceType,
+        sessionToken: `tracking_${Date.now()}_${userId}_${Math.random().toString(36).substring(7)}`,
+        expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
+      }
+    });
+  } catch (err) {
+    console.error('[recordUserSession] Failed to record session:', err);
+    return null;
+  }
+}

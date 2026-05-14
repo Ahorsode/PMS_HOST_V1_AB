@@ -67,6 +67,9 @@ model Session {
   id           String   @id @default(cuid())
   sessionToken String   @unique @map("session_token")
   userId       String   @map("user_id")
+  farmId       Int?     @map("farm_id")
+  loginTime    DateTime @default(now()) @map("login_time")
+  deviceType   String?  @map("device_type")
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 

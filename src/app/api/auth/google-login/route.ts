@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 import { OAuth2Client } from "google-auth-library";
 import prisma from "@/lib/db";
 import { encode } from "next-auth/jwt";
+import { recordUserSession } from "@/lib/auth-utils";
 
 const client = new OAuth2Client(process.env.AUTH_GOOGLE_ID);
 
 export async function POST(req: Request) {
   try {
     const json = await req.json();
-    const idToken = json.idToken;
+    const { idToken, deviceType } = json;
 
     if (!idToken) {
       return NextResponse.json({ error: "Missing idToken" }, { status: 400 });
@@ -58,6 +59,9 @@ export async function POST(req: Request) {
       secret,
       salt: "authjs.session-token",
     });
+    
+    // Record the session (Web if cookie set, else Desktop/Mobile from deviceType)
+    await recordUserSession(user.id, deviceType || 'Desktop');
 
     const response = NextResponse.json({ 
       success: true, 

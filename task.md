@@ -1,22 +1,21 @@
-# Tasks: Agri-ERP Transformation
+# Tasks: Poultry PMS System Finalization
 
-- [x] **Phase 1: Database Refactoring** (Completed)
-- [x] **Phase 2: Core Logic Updates** (Completed)
-- [x] **Phase 3: Specialized Production Modules** (Completed)
-    - [x] Egg Production UI with Quality Grading (A, B, C)
-    - [x] Feed Formulation Builder & consumption efficiency
-    - [x] FCR (Feed Conversion Ratio) analytics
-- [x] **Phase 4: Financial & Marketing Suite** (Completed)
-    - [x] Customer CRM & Management
-    - [x] Multi-item Order Processing logic
-    - [x] Financial Overview (Monthly P&L Tracking)
-    - [x] Social Media Post Generator (Marketing Suite)
-    - [x] Create the `WorkerStamp` component for staff attribution
-    - [x] Update `LivestockTable.tsx`: remove "Growth Benchmark" and add Worker Stamp
-    - [x] Update `SalesPage`, `FinancePage`, and `InventoryView` with Worker Stamps
-    - [x] Implement Owner-only Audit Log interface at `/dashboard/admin/logs`
-    - [x] Implement "Restore" functionality for deleted records
-- [x] **Phase 5: UI/UX Refinement & Verification** (Completed)
-    - [x] Integrated Agri-ERP widgets into glassmorphic bento grid
-    - [x] Resolved cross-component type definitions
-    - [x] Final build check & import normalization
+- [x] Fix Livestock Edit/Delete
+    - [x] Verify batches table PK
+    - [x] Apply RLS policies for UPDATE/DELETE
+    - [x] Verify frontend passes correct batch.id
+- [x] Repair Logging Systems (Insert, Delete, Audit)
+    - [x] Update logging functions with `SECURITY DEFINER`
+    - [x] Attach triggers to batches, sales, expenses, inventory
+    - [x] Verify functionality via smoke test
+- [x] Implement Session Tracking
+    - [x] Update Prisma schema for sessions
+    - [x] Add `signIn` event hook in `src/auth.ts`
+    - [x] Verify session recording
+- [x] Finalize One-Click Restore & Cross-Platform Sessions
+    - [x] Update `log_deletion()` with CSV headers
+    - [x] Create `restore_deleted_record()` function
+    - [x] Create `recordUserSession` utility
+    - [x] Update `auth.ts` and `google-login` route
+    - [x] Update `APP_BLUEPRINT.md`
+    - [x] Verify via smoke test

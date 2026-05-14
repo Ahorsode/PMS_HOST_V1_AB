@@ -43,6 +43,12 @@ This document serves as the absolute reference for the Poultry PMS ecosystem. An
 - **MANAGER**: Full access to operational modules and logs, but cannot delete the farm or change the Owner.
 - **WORKER/STAFF**: Access to Daily Records and Batch view only. No access to Finance or Admin Logs.
 
+### Session Tracking & Device Identification
+- **Web**: Standard Next.js website login.
+- **Desktop**: Flutter Desktop App (Windows/macOS).
+- **Mobile**: Flutter Mobile App (Android/iOS).
+- **Labels**: `Web`, `Desktop`, `Windows`, `macOS`, `Android`, `iOS`.
+
 ---
 
 ## 3. Module Breakdown
@@ -84,10 +90,13 @@ This document serves as the absolute reference for the Poultry PMS ecosystem. An
 - **Insert Logs**: Captured via database triggers. Records who created which entity and when.
 - **Delete Logs (The "Vault")**:
     - Captured via `BEFORE DELETE` triggers.
-    - Data Format: `|`-delimited CSV string including headers as the first row.
-    - Reliability: Ordered by `key` to ensure deterministic parsing.
+    - **Data Format**: `|`-delimited CSV string. 
+        - Row 1: Column Headers (e.g., `id|batchName|farmId`)
+        - Row 2: Values (e.g., `123|Batch-Alpha|1`)
+    - **Reliability**: Keys are sorted alphabetically to ensure deterministic parsing.
 - **Data Restoration**:
-    - **One-Click Restore**: Admin logic that parses the Delete Log CSV, strips identifiers, and re-inserts the record while maintaining original farm/user context.
+    - **One-Click Restore**: Uses the `restore_deleted_record(log_id)` PostgreSQL function.
+    - **Mechanism**: Parses the CSV header/value rows, dynamically builds an `INSERT` statement, and handles collisions with `ON CONFLICT (id) DO NOTHING`.
 
 ### Sync Methodology
 - **UI Key**: **Batch Numbers** (e.g., BATCH-001) are the primary key for user-facing interactions.
