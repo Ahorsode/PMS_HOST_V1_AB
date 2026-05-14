@@ -104,19 +104,30 @@ export const LivestockForm = ({ houses, batch, mode, onClose }: LivestockFormPro
     );
   }
 
+  const currentRemaining = batch?.currentCount || 0;
+  const isMortalityExceeded = mode === 'mortality' && Number(formData.mortalityCount) > currentRemaining;
+
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       {mode === 'mortality' ? (
         <>
-          <Input
-            label="Mortality Count"
-            type="number"
-            min="0"
-            value={formData.mortalityCount}
-            onChange={(e) => setFormData({ ...formData, mortalityCount: e.target.value })}
-            required
-            placeholder="How many were lost?"
-          />
+          <div className="space-y-1">
+            <Input
+              label="Mortality Count"
+              type="number"
+              min="0"
+              value={formData.mortalityCount}
+              onChange={(e) => setFormData({ ...formData, mortalityCount: e.target.value })}
+              required
+              placeholder="How many were lost?"
+              className={isMortalityExceeded ? "border-red-500 focus:ring-red-500" : ""}
+            />
+            <p className={`text-[11px] font-medium ${isMortalityExceeded ? "text-red-600 animate-pulse" : "text-gray-500"}`}>
+              {isMortalityExceeded 
+                ? `❌ Error: Only ${currentRemaining} birds remaining. Input exceeds population.`
+                : `Info: ${currentRemaining} birds remaining in this batch.`}
+            </p>
+          </div>
           <Select
             label="Main Category"
             options={[
@@ -224,10 +235,16 @@ export const LivestockForm = ({ houses, batch, mode, onClose }: LivestockFormPro
       )}
       <div className="flex justify-end gap-2 pt-5 border-t border-gray-100 italic font-medium text-xs uppercase text-gray-400">
         <Button variant="outline" type="button" onClick={onClose} className="h-10 px-7 rounded-md border-gray-200">Cancel</Button>
-        <Button type="submit" isLoading={isLoading} className="h-10 px-7 rounded-md bg-emerald-600 hover:bg-emerald-700">
+        <Button 
+          type="submit" 
+          isLoading={isLoading} 
+          disabled={isMortalityExceeded}
+          className={`h-10 px-7 rounded-md ${isMortalityExceeded ? "bg-gray-400 cursor-not-allowed" : "bg-emerald-600 hover:bg-emerald-700"}`}
+        >
           {mode === 'create' ? 'Register Unit' : mode === 'edit' ? 'Apply changes' : 'Log mortality'}
         </Button>
       </div>
     </form>
+
   );
 };

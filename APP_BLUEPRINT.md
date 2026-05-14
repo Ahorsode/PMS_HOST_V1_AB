@@ -51,6 +51,11 @@ This document serves as the absolute reference for the Poultry PMS ecosystem. An
 - **Lifecycle**: `active` (Current flocks) -> `completed` (Sold/Processed) -> `archived` (Historical).
 - **Tracking**: Initial Count, Current Count (Initial - Mortality), Breed Type, House Assignment.
 - **Performance**: Automated calculation of Feed Conversion Ratio (FCR) and Mortality rate.
+- **Zero-Floor Logic (STRICT)**: 
+    - **Rule**: Total Mortality must always be $\le$ Initial Quantity. 
+    - **Database**: Enforced by the `check_mortality_limit()` PostgreSQL trigger.
+    - **UI**: Real-time validation in entry forms prevents input > current remaining count.
+
 
 ### Commercial Hub
 - **Sales**: Direct sale of livestock or eggs.

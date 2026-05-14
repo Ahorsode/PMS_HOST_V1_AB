@@ -106,6 +106,16 @@ export async function logMortality(data: {
   if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Batches Permission' }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    const batch = await tx.livestock.findUnique({
+      where: { id: data.batchId, farmId: activeFarmId },
+      select: { currentCount: true }
+    })
+
+    if (!batch) return { success: false, error: 'Batch not found' }
+    if (data.count > batch.currentCount) {
+      return { success: false, error: `Insufficient livestock. Only ${batch.currentCount} birds remaining.` }
+    }
+
     const mortality = await tx.mortality.create({
       data: {
         batchId: data.batchId,
