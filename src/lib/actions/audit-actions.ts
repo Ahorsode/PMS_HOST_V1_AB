@@ -64,6 +64,21 @@ export async function getEditLogs() {
   })
 }
 
+const TABLE_TO_MODEL: Record<string, string> = {
+  'batches': 'livestock',
+  'sales': 'sale',
+  'expenses': 'expense',
+  'inventory': 'inventory',
+  'daily_feeding_logs': 'feedingLog',
+  'egg_production': 'eggProduction',
+  'mortality': 'mortality',
+  'weight_records': 'weightRecord',
+  'houses': 'house',
+  'customers': 'customer',
+  'farm_members': 'farmMember',
+  'invitations': 'invitation',
+}
+
 export async function restoreDeletedRecord(logId: number) {
   const { userId, role, activeFarmId } = await getAuthContext()
   if (!activeFarmId || role !== 'OWNER') {
@@ -77,6 +92,12 @@ export async function restoreDeletedRecord(logId: number) {
 
     if (!log) return { success: false, error: 'Log entry not found' }
 
+    // Resolve model name from table name
+    const modelName = TABLE_TO_MODEL[log.tableName] || log.tableName
+    if (!(prisma as any)[modelName]) {
+      return { success: false, error: `Invalid target table for restoration: ${log.tableName}` }
+    }
+
     // Parse CSV data
     const rows = log.deletedDataCsv.split('\n')
     if (rows.length < 2) return { success: false, error: 'Invalid log data format' }
@@ -84,9 +105,33 @@ export async function restoreDeletedRecord(logId: number) {
     const headers = rows[0].split('|')
     const values = rows[1].split('|')
 
+    // Map common snake_case DB columns to camelCase Prisma model field names
+    const headerMap: Record<string, string> = {
+      'farm_id': 'farmId',
+      'user_id': 'userId',
+      'house_id': 'houseId',
+      'batch_id': 'batchId',
+      'category_id': 'categoryId',
+      'created_at': 'createdAt',
+      'updated_at': 'updatedAt',
+      'arrival_date': 'arrivalDate',
+      'log_date': 'logDate',
+      'initial_count': 'initialCount',
+      'current_count': 'currentCount',
+      'isolation_count': 'isolationCount',
+      'death_count': 'deathCount',
+      'eggs_collected': 'eggsCollected',
+      'bad_eggs': 'badEggs',
+      'feed_consumed': 'feedConsumed',
+      'unit_price': 'unitPrice',
+      'total_amount': 'totalAmount',
+    }
+
     const record: any = {}
     headers.forEach((header, i) => {
-      let cleanHeader = header.trim().replace(/^"|"$/g, '')
+      const cleanHeader = header.trim().replace(/^"|"$/g, '')
+      const propertyName = headerMap[cleanHeader] || cleanHeader
+      
       let val: any = values[i] ? values[i].trim() : null
       
       if (val) {
@@ -96,38 +141,41 @@ export async function restoreDeletedRecord(logId: number) {
 
       if (val === 'NULL' || val === '' || val === 'null' || val === null) {
         val = null
-      } else if (!isNaN(val) && val !== '' && !val.includes('-')) {
-        // Simple numeric check, avoid dates being converted to numbers if possible
-        // But Prisma handles types well if we provide strings for some
-        val = Number(val)
       } else if (val === 'true') {
         val = true
       } else if (val === 'false') {
         val = false
+      } else if (!isNaN(Number(val)) && val !== '' && !val.includes('-') && !val.includes(':')) {
+        // Numeric value
+        val = Number(val)
+      } else if (val && (val.includes('-') || val.includes(':')) && !isNaN(Date.parse(val))) {
+        // Likely a date
+        val = new Date(val)
       }
       
-      record[cleanHeader] = val
+      record[propertyName] = val
     })
 
-    // Remove ID to let DB generate a new one if it's a serial, 
-    // or keep it if we want exact restoration.
-    // However, if we keep ID and it's already taken, it will fail.
-    // Most tables use Auto-increment ID.
-    const { id, ...dataToRestore } = record
+    // Remove ID and metadata to let DB generate fresh ones
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id, createdAt, updatedAt, deletedAt, ...dataToRestore } = record
 
-    // Handle farmId and userId to ensure context
+    // Ensure context matches current session
     dataToRestore.farmId = activeFarmId
-    dataToRestore.userId = userId // Mark restorer as current user? Or keep original?
-    // User probably wants original data back.
-
-    await (prisma as any)[log.tableName].create({
-      data: dataToRestore
+    
+    // Perform restoration in farm context
+    await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+      if (!tx[modelName]) {
+        throw new Error(`Model ${modelName} not found in transaction context`)
+      }
+      await tx[modelName].create({
+        data: dataToRestore
+      })
     })
-
-    // Optionally delete the log entry after restoration
-    // await prisma.deleteLog.delete({ where: { id: logId } })
 
     revalidatePath('/dashboard/admin/logs')
+    revalidatePath('/dashboard', 'layout')
+    
     return { success: true, message: `Successfully restored record to ${log.tableName}` }
   } catch (error: any) {
     console.error('Restoration error:', error)

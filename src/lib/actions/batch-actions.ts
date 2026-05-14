@@ -57,18 +57,35 @@ export async function updateBatch(id: number, data: {
   if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Batches Permission' }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    // 1. Fetch existing to handle count synchronization
+    const existing = await tx.livestock.findUnique({
+      where: { id, farmId: activeFarmId },
+      select: { initialCount: true, currentCount: true }
+    })
+
+    if (!existing) throw new Error('Batch not found')
+
+    const updateData: any = {
+      ...data,
+      arrivalDate: data.arrivalDate ? new Date(data.arrivalDate) : undefined,
+    }
+
+    // 2. If initialCount is being changed, synchronize currentCount
+    if (data.initialCount !== undefined && data.initialCount !== existing.initialCount) {
+      const diff = data.initialCount - existing.initialCount
+      updateData.currentCount = (existing.currentCount || 0) + diff
+    }
+
     const batch = await tx.livestock.update({
       where: { id, farmId: activeFarmId },
-      data: {
-        ...data,
-        arrivalDate: data.arrivalDate ? new Date(data.arrivalDate) : undefined,
-      }
+      data: updateData
     })
+    
     revalidatePath('/dashboard/flocks')
     return { success: true, batch }
   }).catch((error: any) => {
     console.error('Error updating batch:', error)
-    return { success: false, error: 'Failed to update batch' }
+    return { success: false, error: error.message || 'Failed to update batch' }
   })
 }
 
@@ -94,47 +111,42 @@ export async function deleteBatch(id: number) {
 export async function logMortality(data: {
   batchId: number
   count: number
-  category: string
-  subCategory: string
   reason?: string
-  logDate: string
+  logDate?: string
+  date?: string // Fallback
+  category?: string
+  subCategory?: string
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
   const hasEditAccess = await checkWorkerPermissions('batches', 'edit')
-  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Batches Permission' }
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized' }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    const batch = await tx.livestock.findUnique({
-      where: { id: data.batchId, farmId: activeFarmId },
-      select: { currentCount: true }
-    })
-
-    if (!batch) return { success: false, error: 'Batch not found' }
-    if (data.count > batch.currentCount) {
-      return { success: false, error: `Insufficient livestock. Only ${batch.currentCount} birds remaining.` }
-    }
-
+    // 1. Create Mortality record
     const mortality = await tx.mortality.create({
       data: {
         batchId: data.batchId,
         farmId: activeFarmId,
-        count: data.count,
+        deathCount: data.count,
+        reason: data.reason,
         category: data.category,
         subCategory: data.subCategory,
-        reason: data.reason,
-        logDate: new Date(data.logDate),
+        logDate: new Date(data.logDate || data.date || new Date()),
         userId: userId
       }
     })
-    
-    // Update current count in batch
+
+    // 2. Update Livestock count
     await tx.livestock.update({
       where: { id: data.batchId, farmId: activeFarmId },
       data: {
         currentCount: {
           decrement: data.count
+        },
+        deathCount: {
+          increment: data.count
         }
       }
     })
@@ -143,7 +155,7 @@ export async function logMortality(data: {
     return { success: true, mortality }
   }).catch((error: any) => {
     console.error('Error logging mortality:', error)
-    return { success: false, error: 'Failed to log mortality' }
+    return { success: false, error: error.message || 'Failed to log mortality' }
   })
 }
 
@@ -160,7 +172,7 @@ export async function transferToIsolation(id: number, count: number) {
     })
 
     if (!batch) return { success: false, error: 'Batch not found' }
-    if (batch.currentCount < count + batch.isolationCount) {
+    if ((batch.currentCount || 0) < count + (batch.isolationCount || 0)) {
        return { success: false, error: 'Not enough birds in main house to isolate' }
     }
 
@@ -175,6 +187,9 @@ export async function transferToIsolation(id: number, count: number) {
 
     revalidatePath('/dashboard/flocks')
     return { success: true }
+  }).catch((error: any) => {
+    console.error('Error transferring to isolation:', error)
+    return { success: false, error: error.message || 'Failed to transfer to isolation' }
   })
 }
 
@@ -191,7 +206,7 @@ export async function returnFromIsolation(id: number, count: number) {
     })
 
     if (!batch) return { success: false, error: 'Batch not found' }
-    if (batch.isolationCount < count) {
+    if ((batch.isolationCount || 0) < count) {
       return { success: false, error: 'Not enough birds in isolation to return' }
     }
 
@@ -206,5 +221,8 @@ export async function returnFromIsolation(id: number, count: number) {
 
     revalidatePath('/dashboard/flocks')
     return { success: true }
+  }).catch((error: any) => {
+    console.error('Error returning from isolation:', error)
+    return { success: false, error: error.message || 'Failed to return from isolation' }
   })
 }
