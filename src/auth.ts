@@ -34,7 +34,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       }
     },
     async signIn({ user }) {
-      await recordUserSession(user.id, 'Web');
+      if (user.id) {
+        await recordUserSession(user.id, 'Web');
+      }
     }
   },
   callbacks: {
