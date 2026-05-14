@@ -44,6 +44,26 @@ export async function getDeleteLogs() {
   })
 }
 
+export async function getEditLogs() {
+  const { role, activeFarmId } = await getAuthContext()
+  if (!activeFarmId || (role !== 'OWNER' && role !== 'MANAGER')) return []
+
+  return await prisma.auditLog.findMany({
+    where: { farmId: activeFarmId },
+    include: {
+      user: {
+        select: {
+          firstname: true,
+          surname: true,
+          role: true
+        }
+      }
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 100
+  })
+}
+
 export async function restoreDeletedRecord(logId: number) {
   const { userId, role, activeFarmId } = await getAuthContext()
   if (!activeFarmId || role !== 'OWNER') {

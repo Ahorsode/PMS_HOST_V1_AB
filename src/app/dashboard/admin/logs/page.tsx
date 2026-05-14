@@ -1,7 +1,7 @@
 import React from 'react';
 import { redirect } from 'next/navigation';
 import { getAuthContext } from '@/lib/auth-utils';
-import { getInsertLogs, getDeleteLogs } from '@/lib/actions/audit-actions';
+import { getEditLogs, getDeleteLogs } from '@/lib/actions/audit-actions';
 import AuditLogView from './AuditLogView';
 
 export default async function AuditLogsPage() {
@@ -16,15 +16,15 @@ export default async function AuditLogsPage() {
     redirect('/dashboard/unauthorized');
   }
 
-  const [insertLogs, deleteLogs] = await Promise.all([
-    getInsertLogs(),
+  const [editLogs, deleteLogs] = await Promise.all([
+    getEditLogs(),
     getDeleteLogs()
   ]);
 
   return (
     <div className="max-w-[1400px] mx-auto p-4 md:p-8">
       <AuditLogView 
-        initialInsertLogs={insertLogs} 
+        initialEditLogs={editLogs} 
         initialDeleteLogs={deleteLogs} 
       />
     </div>

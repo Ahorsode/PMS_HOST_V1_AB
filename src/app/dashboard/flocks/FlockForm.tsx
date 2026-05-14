@@ -8,6 +8,7 @@ import { Select } from '@/components/ui/Select';
 import { Plus, Edit2, Trash2, Skull } from 'lucide-react';
 import { createBatch, updateBatch, deleteBatch, logMortality } from '@/lib/actions/batch-actions';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 interface LivestockFormProps {
   houses: { id: number; name: string }[];
@@ -49,12 +50,13 @@ export const LivestockForm = ({ houses, batch, mode, onClose }: LivestockFormPro
     reason: '',
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e: any) => {
+    if (e && e.preventDefault) e.preventDefault();
     setIsLoading(true);
     try {
+      let res;
       if (mode === 'create') {
-        await createBatch({
+        res = await createBatch({
           houseId: Number(formData.houseId),
           batchName: formData.batchName,
           breedType: formData.breedType,
@@ -62,7 +64,7 @@ export const LivestockForm = ({ houses, batch, mode, onClose }: LivestockFormPro
           arrivalDate: formData.arrivalDate,
         });
       } else if (mode === 'edit') {
-        await updateBatch(batch.id, {
+        res = await updateBatch(batch.id, {
           houseId: Number(formData.houseId),
           batchName: formData.batchName,
           breedType: formData.breedType,
@@ -72,9 +74,9 @@ export const LivestockForm = ({ houses, batch, mode, onClose }: LivestockFormPro
           status: formData.status,
         });
       } else if (mode === 'delete') {
-        await deleteBatch(batch.id);
+        res = await deleteBatch(batch.id);
       } else if (mode === 'mortality') {
-        await logMortality({
+        res = await logMortality({
           batchId: batch.id,
           count: Number(formData.mortalityCount) || 0,
           category: formData.category,
@@ -83,10 +85,17 @@ export const LivestockForm = ({ houses, batch, mode, onClose }: LivestockFormPro
           logDate: new Date().toISOString(),
         });
       }
-      onClose();
-      router.refresh();
+
+      if (res?.success) {
+        toast.success('Operation successful');
+        onClose();
+        router.refresh();
+      } else {
+        toast.error(res?.error || 'Operation failed');
+      }
     } catch (error) {
       console.error(error);
+      toast.error('An unexpected error occurred');
     } finally {
       setIsLoading(false);
     }

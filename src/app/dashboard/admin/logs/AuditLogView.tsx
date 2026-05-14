@@ -16,14 +16,15 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { restoreDeletedRecord } from '@/lib/actions/audit-actions';
 import { toast } from 'sonner';
+import { WorkerStamp } from '@/components/ui/WorkerStamp';
 
 interface AuditLogViewProps {
-  initialInsertLogs: any[];
+  initialEditLogs: any[];
   initialDeleteLogs: any[];
 }
 
-export default function AuditLogView({ initialInsertLogs, initialDeleteLogs }: AuditLogViewProps) {
-  const [activeTab, setActiveTab] = useState<'inserts' | 'deletes'>('inserts');
+export default function AuditLogView({ initialEditLogs, initialDeleteLogs }: AuditLogViewProps) {
+  const [activeTab, setActiveTab] = useState<'edits' | 'deletes'>('edits');
   const [isPending, startTransition] = useTransition();
 
   const handleRestore = (id: number) => {
@@ -55,14 +56,14 @@ export default function AuditLogView({ initialInsertLogs, initialDeleteLogs }: A
         
         <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 backdrop-blur-md">
           <button
-            onClick={() => setActiveTab('inserts')}
+            onClick={() => setActiveTab('edits')}
             className={`px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
-              activeTab === 'inserts' 
+              activeTab === 'edits' 
                 ? 'bg-emerald-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.3)]' 
                 : 'text-white/60 hover:text-white'
             }`}
           >
-            Insertions
+            Edits
           </button>
           <button
             onClick={() => setActiveTab('deletes')}
@@ -78,15 +79,15 @@ export default function AuditLogView({ initialInsertLogs, initialDeleteLogs }: A
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        {activeTab === 'inserts' ? (
+        {activeTab === 'edits' ? (
           <Card className="bg-white/5 border-white/10 backdrop-blur-xl overflow-hidden">
             <CardHeader className="border-b border-white/5 flex flex-row items-center justify-between">
               <CardTitle className="text-white flex items-center gap-2">
-                <PlusCircle className="w-5 h-5 text-emerald-400" />
-                Resource Creations
+                <History className="w-5 h-5 text-emerald-400" />
+                Resource Modifications
               </CardTitle>
               <div className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">
-                Last 100 Records
+                Last 100 Edits
               </div>
             </CardHeader>
             <CardContent className="p-0">
@@ -96,44 +97,50 @@ export default function AuditLogView({ initialInsertLogs, initialDeleteLogs }: A
                     <tr className="bg-white/5">
                       <th className="px-6 py-3 text-[10px] font-bold text-white/50 uppercase tracking-widest">Timestamp</th>
                       <th className="px-6 py-3 text-[10px] font-bold text-white/50 uppercase tracking-widest">Worker</th>
-                      <th className="px-6 py-3 text-[10px] font-bold text-white/50 uppercase tracking-widest">Table</th>
-                      <th className="px-6 py-3 text-[10px] font-bold text-white/50 uppercase tracking-widest">Record ID</th>
+                      <th className="px-6 py-3 text-[10px] font-bold text-white/50 uppercase tracking-widest">Table / Entity</th>
+                      <th className="px-6 py-3 text-[10px] font-bold text-white/50 uppercase tracking-widest">Changes</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
-                    {initialInsertLogs.map((log) => (
+                    {initialEditLogs.map((log) => (
                       <tr key={log.id} className="hover:bg-white/5 transition-colors">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2 text-white/90 font-medium text-xs">
                             <Calendar className="w-3.5 h-3.5 text-white/30" />
-                            {new Date(log.insertedAt).toLocaleString()}
+                            {new Date(log.createdAt).toLocaleString()}
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-[10px] font-bold text-emerald-400">
-                              {log.user?.firstname?.[0]}{log.user?.surname?.[0]}
-                            </div>
-                            <div className="text-xs">
-                              <p className="text-white font-bold">{log.user?.firstname} {log.user?.surname}</p>
-                              <p className="text-[9px] text-white/40 uppercase font-bold">{log.user?.role}</p>
-                            </div>
+                          <WorkerStamp user={log.user} />
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-col gap-1">
+                            <span className="bg-white/10 text-white/70 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest border border-white/5 w-fit">
+                              {log.tableName}
+                            </span>
+                            <span className="text-[10px] font-mono text-emerald-400 font-bold">
+                              ID: #{log.recordId}
+                            </span>
                           </div>
                         </td>
                         <td className="px-6 py-4">
-                          <span className="bg-white/10 text-white/70 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest border border-white/5">
-                            {log.targetTable}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-xs font-mono text-emerald-400 font-bold">
-                          #{log.recordId}
+                          <div className="flex flex-col gap-1">
+                            <p className="text-[10px] text-white/40 uppercase font-bold tracking-wider">
+                              Attribute: <span className="text-emerald-400/80">{log.attributeName}</span>
+                            </p>
+                            <div className="flex items-center gap-2 text-[11px]">
+                              <span className="text-red-400/60 line-through truncate max-w-[100px]">{log.oldValue || 'none'}</span>
+                              <ArrowRight className="w-3 h-3 text-white/20" />
+                              <span className="text-emerald-400 font-bold truncate max-w-[100px]">{log.newValue}</span>
+                            </div>
+                          </div>
                         </td>
                       </tr>
                     ))}
-                    {initialInsertLogs.length === 0 && (
+                    {initialEditLogs.length === 0 && (
                       <tr>
                         <td colSpan={4} className="px-6 py-20 text-center text-white/30 italic text-sm">
-                          No insertion logs found.
+                          No modification logs found.
                         </td>
                       </tr>
                     )}
@@ -172,12 +179,7 @@ export default function AuditLogView({ initialInsertLogs, initialDeleteLogs }: A
                           {new Date(log.deletedAt).toLocaleString()}
                         </td>
                         <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center text-[10px] font-bold text-red-400">
-                              {log.user?.firstname?.[0]}{log.user?.surname?.[0]}
-                            </div>
-                            <span className="text-xs text-white/90 font-bold">{log.user?.firstname}</span>
-                          </div>
+                          <WorkerStamp user={log.user} />
                         </td>
                         <td className="px-6 py-4">
                           <span className="bg-red-500/10 text-red-400 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest border border-red-500/20">
