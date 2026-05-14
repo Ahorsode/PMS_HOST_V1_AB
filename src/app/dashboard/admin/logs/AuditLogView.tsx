@@ -11,7 +11,8 @@ import {
   Table, 
   ShieldCheck,
   Search,
-  ArrowRight
+  ArrowRight,
+  Eye
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { restoreDeletedRecord } from '@/lib/actions/audit-actions';
@@ -26,6 +27,12 @@ interface AuditLogViewProps {
 export default function AuditLogView({ initialEditLogs, initialDeleteLogs }: AuditLogViewProps) {
   const [activeTab, setActiveTab] = useState<'edits' | 'deletes'>('edits');
   const [isPending, startTransition] = useTransition();
+
+  const uniqueDeleteLogs = initialDeleteLogs.filter((log, index, self) =>
+    index === self.findIndex((t) => (
+      t.tableName === log.tableName && t.deletedDataCsv === log.deletedDataCsv
+    ))
+  );
 
   const handleRestore = (id: number) => {
     if (!confirm('Are you sure you want to restore this data? This will create a new record with the deleted values.')) return;
@@ -173,7 +180,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs }: Aud
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
-                    {initialDeleteLogs.map((log) => (
+                    {uniqueDeleteLogs.map((log: any) => (
                       <tr key={log.id} className="hover:bg-white/5 transition-colors group">
                         <td className="px-6 py-4 text-white/90 font-medium text-xs">
                           {new Date(log.deletedAt).toLocaleString()}
@@ -187,9 +194,14 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs }: Aud
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <p className="text-[10px] text-white/40 font-mono truncate max-w-[200px]">
-                            {log.deletedDataCsv.split('\n')[1]?.slice(0, 50)}...
-                          </p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-[10px] text-white/40 font-mono truncate max-w-[200px]" title={log.deletedDataCsv}>
+                              {log.deletedDataCsv.split('\n')[1]?.slice(0, 50)}...
+                            </p>
+                            <button className="text-white/40 hover:text-emerald-400 transition-colors" title="View Details">
+                              <Eye className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </td>
                         <td className="px-6 py-4 text-right">
                           <button
@@ -203,7 +215,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs }: Aud
                         </td>
                       </tr>
                     ))}
-                    {initialDeleteLogs.length === 0 && (
+                    {uniqueDeleteLogs.length === 0 && (
                       <tr>
                         <td colSpan={5} className="px-6 py-20 text-center text-white/30 italic text-sm">
                           No deletion logs found.
