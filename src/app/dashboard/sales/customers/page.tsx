@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation';
 import { getAuthContext, hasPermission } from '@/lib/auth-utils';
 import { CustomerActionsHeader } from './CustomerActions';
 import { checkFeature } from '@/lib/subscription-utils';
+import Link from 'next/link';
 
 interface CustomerStat {
   id: number;
@@ -40,9 +41,9 @@ export default async function CustomersPage() {
         <p className="text-white/80 mb-7 max-w-lg text-center leading-relaxed">
           The Customer Relationship Management module is a <span className="text-white font-bold">Standard</span> tier feature. Upgrade to track debtor balances, monitor VIP purchasing trends, and manage your network.
         </p>
-        <button className="bg-white text-black px-9 py-4 rounded-md font-bold uppercase tracking-widest text-[11px] hover:scale-105 transition-all shadow-[0_0_40px_rgba(255,255,255,0.2)]">
+        <Link href="/dashboard/license-upgrade" className="bg-white text-black px-9 py-4 rounded-md font-bold uppercase tracking-widest text-[11px] hover:scale-105 transition-all shadow-[0_0_40px_rgba(255,255,255,0.2)]">
           Upgrade Subscription
-        </button>
+        </Link>
       </div>
     );
   }
