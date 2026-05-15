@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { 
   BarChart, Bar, 
   XAxis, YAxis, CartesianGrid, 
-  Tooltip, Legend, ResponsiveContainer,
+  Legend, ResponsiveContainer,
   Cell, LineChart, Line, AreaChart, Area, ReferenceLine
 } from 'recharts'
 import { format } from 'date-fns'
@@ -239,46 +239,7 @@ export function BatchComparison({ batches }: BatchComparisonProps) {
                       tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 800 }}
                       tickFormatter={(value) => selectedMetric === 'mortalityRate' ? `${value}%` : value}
                     />
-                    <Tooltip 
-                      cursor={{ fill: '#f8fafc', radius: 12 }}
-                      content={({ active, payload }) => {
-                        if (active && payload && payload.length) {
-                          const data = payload[0].payload.full;
-                          const isBetter = selectedMetric === 'fcr' || selectedMetric === 'mortalityRate' 
-                            ? data[selectedMetric] < benchmarks[selectedMetric]
-                            : data[selectedMetric] > benchmarks[selectedMetric];
-                          
-                          return (
-                            <div className="bg-white/95 backdrop-blur-xl p-6 shadow-[0_20px_50px_rgba(0,0,0,0.15)] rounded-3xl border border-gray-100 min-w-[240px] animate-in zoom-in-95 duration-200">
-                              <div className="flex justify-between items-start mb-4">
-                                <p className="text-xs font-black text-gray-900 uppercase tracking-widest">{data.batchName}</p>
-                                <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase ${isBetter ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                                  {isBetter ? 'Optimal' : 'Underperforming'}
-                                </span>
-                              </div>
-                              <div className="space-y-3">
-                                <div className="flex justify-between items-end">
-                                  <span className="text-[10px] font-bold text-gray-400 uppercase">Current Value</span>
-                                  <span className="text-2xl font-black text-gray-900">
-                                    {selectedMetric === 'mortalityRate' ? `${data[selectedMetric].toFixed(1)}%` : data[selectedMetric]}
-                                  </span>
-                                </div>
-                                <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden">
-                                  <div 
-                                    className={`h-full transition-all duration-1000 ${isBetter ? 'bg-emerald-500' : 'bg-amber-500'}`} 
-                                    style={{ width: `${Math.min(data[selectedMetric] / benchmarks[selectedMetric] * 100, 100)}%` }}
-                                  />
-                                </div>
-                                <p className="text-[9px] font-medium text-gray-400 leading-relaxed italic">
-                                  {isBetter ? 'Batch is operating significantly above the industry average.' : 'Operational adjustments recommended to align with standards.'}
-                                </p>
-                              </div>
-                            </div>
-                          );
-                        }
-                        return null;
-                      }}
-                    />
+
                     {showBenchmark && (
                       <ReferenceLine 
                         y={benchmarks[selectedMetric]} 

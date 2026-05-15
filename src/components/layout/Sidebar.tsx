@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, Bird, PawPrint, Egg, ThermometerSun, 
   Wheat, Settings, Users, XCircle, Banknote,
-  LogOut, Wallet, Crown, ShieldCheck
+  LogOut, Wallet, Crown, ShieldCheck, BarChart3
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -21,6 +21,7 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
       items: [
         { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', roles: ['OWNER', 'MANAGER', 'WORKER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
         { name: 'Livestock', icon: PawPrint, href: '/dashboard/flocks', roles: ['OWNER', 'MANAGER', 'WORKER'] },
+        { name: 'Analytics', icon: BarChart3, href: '/dashboard/analytics/compare', roles: ['OWNER', 'MANAGER'] },
         { name: 'Houses', icon: ThermometerSun, href: '/dashboard/houses', roles: ['OWNER', 'MANAGER'] },
         { name: 'Eggs', icon: Egg, href: '/dashboard/eggs', roles: ['OWNER', 'MANAGER', 'WORKER'] },
         { name: 'Feeding', icon: Wheat, href: '/dashboard/feed', roles: ['OWNER', 'MANAGER', 'WORKER'] },
@@ -74,6 +75,7 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
               if (permissions) {
                 if (item.name === 'Finance Control') return !!permissions.canViewFinance;
                 if (item.name === 'Livestock') return !!permissions.canViewBatches;
+                if (item.name === 'Analytics') return !!permissions.canViewBatches;
                 if (item.name === 'Inventory') return !!permissions.canViewInventory;
                 if (item.name === 'Sales') return !!permissions.canViewSales;
                 if (item.name === 'Eggs') return !!permissions.canViewEggs;

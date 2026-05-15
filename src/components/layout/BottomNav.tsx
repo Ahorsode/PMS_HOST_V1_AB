@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, PawPrint, XCircle, User, Egg, ThermometerSun, Banknote, Wheat, Wallet, Users, Settings, Crown, LogOut, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, PawPrint, XCircle, User, Egg, ThermometerSun, Banknote, Wheat, Wallet, Users, Settings, Crown, LogOut, ShieldCheck, BarChart3 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { signOut } from 'next-auth/react';
 
@@ -15,6 +15,7 @@ export const BottomNav = ({ role = 'OWNER', permissions }: { role?: string, perm
   const allNavItems: { name: string; icon: React.ElementType; href: string; roles: string[] }[] = [
     { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', roles: ['OWNER', 'MANAGER', 'WORKER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
     { name: 'Livestock', icon: PawPrint, href: '/dashboard/flocks', roles: ['OWNER', 'MANAGER', 'WORKER'] },
+    { name: 'Analytics', icon: BarChart3, href: '/dashboard/analytics/compare', roles: ['OWNER', 'MANAGER'] },
     { name: 'Houses', icon: ThermometerSun, href: '/dashboard/houses', roles: ['OWNER', 'MANAGER'] },
     { name: 'Eggs', icon: Egg, href: '/dashboard/eggs', roles: ['OWNER', 'MANAGER', 'WORKER'] },
     { name: 'Feeding', icon: Wheat, href: '/dashboard/feed', roles: ['OWNER', 'MANAGER', 'WORKER'] },
@@ -41,6 +42,7 @@ export const BottomNav = ({ role = 'OWNER', permissions }: { role?: string, perm
       if (item.name === 'Finance Hub') return !!permissions.canViewFinance;
       if (item.name === 'Sales') return !!permissions.canViewSales;
       if (item.name === 'Livestock') return !!permissions.canViewBatches;
+      if (item.name === 'Analytics') return !!permissions.canViewBatches;
       if (item.name === 'Inventory') return !!permissions.canViewInventory;
       if (item.name === 'Eggs') return !!permissions.canViewEggs;
       if (item.name === 'Feeding') return !!permissions.canViewFeeding;
