@@ -290,8 +290,7 @@ export function BatchComparison({ batches }: BatchComparisonProps) {
                           position: 'right', 
                           fill: '#3b82f6', 
                           fontSize: 9, 
-                          fontWeight: 900,
-                          textTransform: 'uppercase'
+                          fontWeight: 900
                         }} 
                       />
                     )}
