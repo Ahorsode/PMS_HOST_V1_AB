@@ -126,13 +126,13 @@ export async function logHealthEvent(data: {
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     // 1. Create Mortality record (serves as health/mortality log)
-    const record = await tx.mortality.create({
+    const record = await tx.healthMortality.create({
       data: {
         batchId: data.batchId,
         farmId: activeFarmId,
         count: data.count,
         type: data.type,
-        isolation_room_id: data.type === 'SICK' ? data.isolationRoomId : null,
+        isolationRoomId: data.type === 'SICK' ? data.isolationRoomId : null,
         reason: data.reason,
         category: data.category,
         subCategory: data.subCategory,
@@ -262,7 +262,7 @@ export async function logMortalityInIsolation(data: {
       throw new Error('Not enough birds in isolation')
     }
 
-    await tx.mortality.create({
+    await tx.healthMortality.create({
       data: {
         batchId: data.batchId,
         farmId: activeFarmId,

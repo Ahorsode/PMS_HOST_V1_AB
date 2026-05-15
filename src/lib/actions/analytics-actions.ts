@@ -12,7 +12,7 @@ export async function getBatchAnalytics(batchId: number) {
   if (!hasAccess) throw new Error('Unauthorized')
   
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    const batch = await tx.batch.findUnique({
+    const batch = await tx.livestock.findUnique({
       where: { id: batchId, farmId: activeFarmId },
       include: {
         feedingLogs: true,
@@ -54,9 +54,10 @@ export async function getMortalityTrends(farmId: number) {
   if (!hasAccess) throw new Error('Unauthorized')
   
   return await (prisma as any).$withFarmContext(userId, targetFarmId, async (tx: any) => {
-    const mortalityData = await tx.mortality.findMany({
+    const mortalityData = await tx.healthMortality.findMany({
       where: {
-        farmId: targetFarmId
+        farmId: targetFarmId,
+        type: 'DEAD'
       },
       orderBy: { logDate: 'asc' }
     })

@@ -13,7 +13,7 @@ const prismaClientSingleton = () => {
           // and if the operation supports 'where'
           const modelsWithFarmId = [
             'House', 'Livestock', 'Inventory', 'FeedingLog', 
-            'HealthRecord', 'EggProduction', 'Mortality', 
+            'HealthRecord', 'EggProduction', 'HealthMortality', 
             'WeightRecord', 'Sale', 'SaleItem',
             'Subscription', 'Customer', 'Order', 'FeedFormulation',
             'FeedFormulationIngredient'

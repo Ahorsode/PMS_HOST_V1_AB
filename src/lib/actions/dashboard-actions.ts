@@ -56,8 +56,8 @@ export async function getDashboardStats() {
         where: { farmId: activeFarmId, category: 'EGGS' },
         select: { stockLevel: true }
       }),
-      tx.mortality.aggregate({
-        where: { farmId: activeFarmId },
+      tx.healthMortality.aggregate({
+        where: { farmId: activeFarmId, type: 'DEAD' },
         _sum: { count: true }
       }),
       tx.livestock.aggregate({
@@ -90,8 +90,8 @@ export async function getDashboardStats() {
           }
         }
       }),
-      tx.mortality.aggregate({
-        where: { logDate: { gte: today }, farmId: activeFarmId },
+      tx.healthMortality.aggregate({
+        where: { logDate: { gte: today }, farmId: activeFarmId, type: 'DEAD' },
         _sum: { count: true }
       }),
       tx.eggProduction.aggregate({
@@ -113,8 +113,8 @@ export async function getDashboardStats() {
         orderBy: { saleDate: 'asc' },
         select: { saleDate: true, totalAmount: true }
       }) : Promise.resolve([]),
-      tx.mortality.findMany({
-        where: { logDate: { gte: sevenDaysAgo }, farmId: activeFarmId },
+      tx.healthMortality.findMany({
+        where: { logDate: { gte: sevenDaysAgo }, farmId: activeFarmId, type: 'DEAD' },
         orderBy: { logDate: 'asc' },
         select: { logDate: true, count: true }
       }),
@@ -616,11 +616,12 @@ export async function logProduction(data: {
 
     // Log mortality if occurred
     if (data.mortalityCount > 0) {
-      await tx.mortality.create({
+      await tx.healthMortality.create({
         data: {
           batchId: data.batchId,
           farmId: activeFarmId,
           count: data.mortalityCount,
+          type: 'DEAD',
           logDate: new Date(),
           userId: userId
         }
@@ -1069,8 +1070,8 @@ export async function getAllMortalityLogs() {
   if (!activeFarmId) return []
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    const logs = await tx.mortality.findMany({
-      where: { farmId: activeFarmId },
+    const logs = await tx.healthMortality.findMany({
+      where: { farmId: activeFarmId, type: 'DEAD' },
       include: {
         batch: true,
       },
