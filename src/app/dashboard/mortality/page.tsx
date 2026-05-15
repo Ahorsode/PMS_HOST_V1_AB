@@ -4,6 +4,8 @@ import { Card } from '@/components/ui/Card';
 import { XCircle, Activity, History, AlertTriangle, Eye, Home, Plus, Skull } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { formatLivestockType } from '@/lib/utils/growth-utils';
+import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
+import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { QuickMortalityLogger } from './QuickMortalityLogger';
 import { InfirmaryManagement } from '../flocks/InfirmaryManagement';
@@ -11,6 +13,13 @@ import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 
 export default async function MortalityPage() {
+  const hasAccess = await checkWorkerPermissions('mortality', 'view');
+  const canEdit = await checkWorkerPermissions('mortality', 'edit');
+
+  if (!hasAccess) {
+    redirect('/dashboard/unauthorized');
+  }
+
   const [logs, batches, isolationRooms] = await Promise.all([
     getAllMortalityLogs(),
     getAllBatches(),
@@ -56,9 +65,11 @@ export default async function MortalityPage() {
       </div>
 
       {/* Quick Logger */}
-      <div className="bg-[#111827] p-6 rounded-xl shadow-xl border border-gray-800">
-        <QuickMortalityLogger activeBatches={activeBatches} />
-      </div>
+      {canEdit && (
+        <div className="bg-[#111827] p-6 rounded-xl shadow-xl border border-gray-800">
+          <QuickMortalityLogger activeBatches={activeBatches} />
+        </div>
+      )}
 
       {/* Isolation Room Management */}
       <div className="bg-[#111827] p-6 rounded-xl shadow-xl border border-gray-800">

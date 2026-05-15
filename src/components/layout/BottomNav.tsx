@@ -31,35 +31,45 @@ export const BottomNav = ({ role = 'OWNER', permissions }: { role?: string, perm
   ];
 
   const navItems = allNavItems.filter(item => {
-    // 1. Basic role check
-    if (!item.roles.includes(role)) return false;
-    
-    // 2. Owner/Manager bypass
-    if (role === 'OWNER' || role === 'MANAGER') return true;
+    // 1. Owner bypass (Absolute Creator)
+    if (role === 'OWNER') return true;
 
-    // 3. Explicit Permission Overrides
+    // 2. Explicit Permission Overrides
     if (permissions) {
-      if (item.name === 'Finance Hub') return !!permissions.canViewFinance;
-      if (item.name === 'Sales') return !!permissions.canViewSales;
-      if (item.name === 'Livestock') return !!permissions.canViewBatches;
-      if (item.name === 'Analytics') return !!permissions.canViewBatches;
-      if (item.name === 'Inventory') return !!permissions.canViewInventory;
-      if (item.name === 'Eggs') return !!permissions.canViewEggs;
-      if (item.name === 'Feeding') return !!permissions.canViewFeeding;
-      if (item.name === 'Houses') return !!permissions.canViewHouses;
-      if (item.name === 'Mortality') return !!permissions.canViewMortality;
-      if (item.name === 'Customers') return !!permissions.canViewCustomers;
-      if (item.name === 'Team') return !!permissions.canViewTeam;
-      if (item.name === 'Settings') return !!permissions.canViewSettings;
+      const permissionMap: Record<string, string[]> = {
+        'Finance Hub': ['canViewFinance', 'canEditFinance'],
+        'Sales': ['canViewSales', 'canEditSales'],
+        'Livestock': ['canViewBatches', 'canEditBatches'],
+        'Analytics': ['canViewBatches', 'canEditBatches'],
+        'Inventory': ['canViewInventory', 'canEditInventory'],
+        'Eggs': ['canViewEggs', 'canEditEggs'],
+        'Feeding': ['canViewFeeding', 'canEditFeeding'],
+        'Houses': ['canViewHouses', 'canEditHouses'],
+        'Mortality': ['canViewMortality', 'canEditMortality'],
+        'Customers': ['canViewCustomers', 'canEditCustomers'],
+        'Team': ['canViewTeam', 'canEditTeam'],
+        'Settings': ['canViewSettings', 'canEditSettings']
+      };
+
+      const keys = permissionMap[item.name];
+      if (keys) {
+        return keys.some(k => !!permissions[k]);
+      }
     }
 
-    // 4. Role-specific Fallbacks (Accountant/Finance/Cashier)
+    // 3. Role-based bypass (MANAGER default behavior)
+    if (role === 'MANAGER') return true;
+
+    // 4. Role-based membership check
+    if (!item.roles.includes(role)) return false;
+
+    // 5. Role-specific Fallbacks (Accountant/Finance/Cashier)
     if (role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER') {
         const allowedForAccountant = ['Dashboard', 'Sales', 'Customers', 'Finance Hub', 'My Profile'];
         return allowedForAccountant.includes(item.name);
     }
     
-    // Workers can view most things by default if not restricted by permissions
+    // Workers can view most things by default if not restricted by permissions above
     if (role === 'WORKER') return true;
 
     return false;

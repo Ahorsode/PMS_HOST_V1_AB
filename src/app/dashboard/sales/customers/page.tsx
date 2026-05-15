@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { formatCurrency } from '@/lib/utils';
 import { Users, UserPlus, Phone, TrendingUp, Star, AlertCircle, Lock, ArrowLeft } from 'lucide-react';
 import { redirect } from 'next/navigation';
-import { getAuthContext, hasPermission } from '@/lib/auth-utils';
+import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
 import { CustomerActionsHeader, AddPartnerBox } from './CustomerActions';
 import { checkFeature } from '@/lib/subscription-utils';
 import Link from 'next/link';
@@ -18,16 +18,17 @@ interface CustomerStat {
 }
 
 export default async function CustomersPage() {
-  const { activeFarmId, role, permissions } = await getAuthContext();
-  
-  if (!activeFarmId) {
-    redirect('/dashboard');
-  }
+  const hasAccess = await checkWorkerPermissions('customers', 'view');
+  const canEdit = await checkWorkerPermissions('customers', 'edit');
 
-  // RBAC Check
-  if (!hasPermission(role, permissions, 'VIEW_CUSTOMERS')) {
+  if (!hasAccess) {
     redirect('/dashboard/unauthorized');
   }
+
+  const { activeFarmId } = await (async () => {
+    const { getAuthContext } = await import('@/lib/auth-utils');
+    return await getAuthContext();
+  })();
 
   const hasCRM = await checkFeature(activeFarmId, 'CRM');
 
@@ -72,7 +73,7 @@ export default async function CustomersPage() {
             <p className="text-white/70 font-bold uppercase tracking-widest text-xs mt-2">Manage Customer Lifecycle & Relationships</p>
           </div>
         </div>
-        <CustomerActionsHeader />
+        <CustomerActionsHeader canEdit={canEdit} />
       </div>
 
       {/* CRM Stats Row */}
@@ -184,7 +185,7 @@ export default async function CustomersPage() {
            </Card>
           ))}
 
-          <AddPartnerBox />
+          {canEdit && <AddPartnerBox />}
       </div>
     </div>
   );

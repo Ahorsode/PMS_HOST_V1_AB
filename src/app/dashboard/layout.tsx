@@ -39,11 +39,8 @@ export default async function DashboardLayout({
     // Check if they were invited and accept it automatically!
     const inviteCheck = await acceptInvitation(false);
     if (inviteCheck?.success) {
-      // Re-fetch everything to ensure roles and farms are populated accurately.
-      dbUser = await prisma.user.findUnique({ where: { id: session.user.id } });
-      farm = await prisma.farm.findFirst({
-        where: { members: { some: { userId: session.user.id } } }
-      });
+      // Force a hard redirect to clear caches and allow DB replication to catch up
+      redirect('/dashboard');
     }
   }
 

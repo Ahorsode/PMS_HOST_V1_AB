@@ -10,7 +10,7 @@ import { updateHouse, deleteHouse } from '@/lib/actions/house-actions';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
-export default function HousesPage({ houses }: { houses: any[] }) {
+export default function HousesPage({ houses, canEdit = true }: { houses: any[], canEdit?: boolean }) {
   const [isAdding, setIsAdding] = useState(false);
   const [editingHouse, setEditingHouse] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -84,10 +84,12 @@ export default function HousesPage({ houses }: { houses: any[] }) {
           <h2 className="text-3xl font-extrabold text-gray-900 tracking-normal">House Management</h2>
           <p className="text-gray-500 mt-1">Configure and manage your poultry houses.</p>
         </div>
-        <Button onClick={() => setIsAdding(!isAdding)}>
-          <Plus className="mr-2 h-4 w-4" />
-          {isAdding ? 'Cancel' : 'Add New House'}
-        </Button>
+        {canEdit && (
+          <Button onClick={() => setIsAdding(!isAdding)}>
+            <Plus className="mr-2 h-4 w-4" />
+            {isAdding ? 'Cancel' : 'Add New House'}
+          </Button>
+        )}
       </div>
 
       {isAdding && (
@@ -138,22 +140,24 @@ export default function HousesPage({ houses }: { houses: any[] }) {
                 <Home className="w-4 h-4 text-emerald-500" />
                 {house.name}
               </CardTitle>
-              <div className="flex items-center gap-1 transition-opacity">
-                <button 
-                  onClick={() => setEditingHouse(house)}
-                  className="p-1.5 hover:bg-blue-50 rounded-md text-blue-600 transition-colors"
-                  title="Edit House"
-                >
-                  <Edit2 className="w-4 h-4" />
-                </button>
-                <button 
-                  onClick={() => handleDelete(house.id)}
-                  className="p-1.5 hover:bg-red-50 rounded-md text-red-600 transition-colors"
-                  title="Delete House"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
+              {canEdit && (
+                <div className="flex items-center gap-1 transition-opacity">
+                  <button 
+                    onClick={() => setEditingHouse(house)}
+                    className="p-1.5 hover:bg-blue-50 rounded-md text-blue-600 transition-colors"
+                    title="Edit House"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button 
+                    onClick={() => handleDelete(house.id)}
+                    className="p-1.5 hover:bg-red-50 rounded-md text-red-600 transition-colors"
+                    title="Delete House"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
             </CardHeader>
             <CardContent>
               <div className="space-y-2">

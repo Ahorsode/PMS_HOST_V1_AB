@@ -7,7 +7,7 @@ import { Dialog } from '@/components/ui/Dialog';
 import { EggForm } from './EggForm';
 import Link from 'next/link';
 
-export const EggActionsHeader = ({ batches }: { batches: any[] }) => {
+export const EggActionsHeader = ({ batches, canEdit = true }: { batches: any[], canEdit?: boolean }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -20,10 +20,12 @@ export const EggActionsHeader = ({ batches }: { batches: any[] }) => {
           <Eye className="w-4 h-4 group-hover:scale-110 transition-transform" />
           Indept Management
         </Link>
-        <Button onClick={() => setIsOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Log New Production
-        </Button>
+        {canEdit && (
+          <Button onClick={() => setIsOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Log New Production
+          </Button>
+        )}
       </div>
       <Dialog isOpen={isOpen} onOpenChange={setIsOpen} title="Log Egg Production">
         <EggForm batches={batches} mode="create" onClose={() => setIsOpen(false)} />
@@ -32,7 +34,7 @@ export const EggActionsHeader = ({ batches }: { batches: any[] }) => {
   );
 };
 
-export const EggLogActions = ({ log, batches }: { log: any, batches: any[] }) => {
+export const EggLogActions = ({ log, batches, canEdit = true }: { log: any, batches: any[], canEdit?: boolean }) => {
   const [mode, setMode] = useState<'edit' | 'delete' | null>(null);
 
   return (
@@ -45,18 +47,22 @@ export const EggLogActions = ({ log, batches }: { log: any, batches: any[] }) =>
         <Eye className="h-3 w-3" />
         <span>Indept</span>
       </Link>
-      <button 
-        onClick={() => setMode('edit')}
-        className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-      >
-        <Edit2 className="h-4 w-4" />
-      </button>
-      <button 
-        onClick={() => setMode('delete')}
-        className="p-1 text-gray-400 hover:bg-gray-100 rounded transition-colors"
-      >
-        <Trash2 className="h-4 w-4" />
-      </button>
+      {canEdit && (
+        <>
+          <button 
+            onClick={() => setMode('edit')}
+            className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+          >
+            <Edit2 className="h-4 w-4" />
+          </button>
+          <button 
+            onClick={() => setMode('delete')}
+            className="p-1 text-gray-400 hover:bg-gray-100 rounded transition-colors"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </>
+      )}
 
       <Dialog 
         isOpen={mode !== null} 
@@ -76,17 +82,19 @@ export const EggLogActions = ({ log, batches }: { log: any, batches: any[] }) =>
   );
 };
 
-export const LogProductionButton = ({ batchId, batches }: { batchId: number, batches: any[] }) => {
+export const LogProductionButton = ({ batchId, batches, canEdit = true }: { batchId: number, batches: any[], canEdit?: boolean }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
-      <button 
-        onClick={() => setIsOpen(true)}
-        className="bg-green-800 text-white px-3 py-2 rounded-md text-sm hover:bg-green-700 transition-colors"
-      >
-        Log Production
-      </button>
+      {canEdit && (
+        <button 
+          onClick={() => setIsOpen(true)}
+          className="bg-green-800 text-white px-3 py-2 rounded-md text-sm hover:bg-green-700 transition-colors"
+        >
+          Log Production
+        </button>
+      )}
       <Dialog isOpen={isOpen} onOpenChange={setIsOpen} title="Log Egg Production">
         <EggForm 
           batches={batches} 

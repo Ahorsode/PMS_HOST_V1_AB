@@ -15,6 +15,8 @@ export default async function FlocksPage() {
   }
 
   const hasAccess = await checkWorkerPermissions('batches', 'view');
+  const canEdit = await checkWorkerPermissions('batches', 'edit');
+  
   if (!hasAccess) {
     redirect('/dashboard/unauthorized');
   }
@@ -40,12 +42,12 @@ export default async function FlocksPage() {
           </p>
         </div>
         <div className="w-full md:w-auto">
-          <FlockActionsHeader houses={houses} />
+          <FlockActionsHeader houses={houses} canEdit={canEdit} />
         </div>
       </div>
 
       <div className="w-full mt-4">
-        <LivestockTable initialBatches={batches} houses={houses} isolationRooms={isolationRooms} />
+        <LivestockTable initialBatches={batches} houses={houses} isolationRooms={isolationRooms} canEdit={canEdit} />
       </div>
     </div>
   );

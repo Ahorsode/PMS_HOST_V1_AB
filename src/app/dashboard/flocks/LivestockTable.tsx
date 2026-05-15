@@ -10,9 +10,10 @@ interface LivestockTableProps {
   initialBatches: any[];
   houses: any[];
   isolationRooms: any[];
+  canEdit?: boolean;
 }
 
-export function LivestockTable({ initialBatches, houses, isolationRooms }: LivestockTableProps) {
+export function LivestockTable({ initialBatches, houses, isolationRooms, canEdit = true }: LivestockTableProps) {
   const [filter, setFilter] = useState<'ALL' | 'POULTRY' | 'CATTLE' | 'PIG' | 'SHEEP' | 'OTHER'>('ALL');
 
   const filteredBatches = initialBatches.filter((batch: any) => {
@@ -111,7 +112,7 @@ export function LivestockTable({ initialBatches, houses, isolationRooms }: Lives
                   </td>
                   <td className="px-5 py-3 whitespace-nowrap text-right flex items-center justify-end gap-2">
                     <WorkerStamp user={batch.user} />
-                    <FlockRowActions batch={batch} houses={houses} isolationRooms={isolationRooms} />
+                    <FlockRowActions batch={batch} houses={houses} isolationRooms={isolationRooms} canEdit={canEdit} />
                   </td>
                 </tr>
               ))}

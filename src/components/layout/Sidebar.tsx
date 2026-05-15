@@ -68,28 +68,41 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
         <nav className="flex-1 px-3 space-y-7 overflow-y-auto custom-scrollbar overflow-x-hidden">
           {categories.map((category) => {
             const visibleItems = category.items.filter(item => {
-              // 1. Owner/Manager bypass (Absolute Creator & High Privilege)
-              if (role === 'OWNER' || role === 'MANAGER') return true;
+              // 1. Owner bypass (Absolute Creator)
+              if (role === 'OWNER') return true;
 
-              // 2. Explicit Permission Overrides (Granting access overrides role defaults)
+              // 2. Explicit Permission Overrides
               if (permissions) {
-                if (item.name === 'Finance Control') return !!permissions.canViewFinance;
-                if (item.name === 'Livestock') return !!permissions.canViewBatches;
-                if (item.name === 'Analytics') return !!permissions.canViewBatches;
-                if (item.name === 'Inventory') return !!permissions.canViewInventory;
-                if (item.name === 'Sales') return !!permissions.canViewSales;
-                if (item.name === 'Eggs') return !!permissions.canViewEggs;
-                if (item.name === 'Feeding') return !!permissions.canViewFeeding;
-                if (item.name === 'Houses') return !!permissions.canViewHouses;
-                if (item.name === 'Mortality') return !!permissions.canViewMortality;
-                if (item.name === 'Customers') return !!permissions.canViewCustomers;
-                if (item.name === 'Team Management') return !!permissions.canViewTeam;
+                // Map item names to their respective permission keys
+                const permissionMap: Record<string, string[]> = {
+                  'Finance Control': ['canViewFinance', 'canEditFinance'],
+                  'Livestock': ['canViewBatches', 'canEditBatches'],
+                  'Analytics': ['canViewBatches', 'canEditBatches'],
+                  'Inventory': ['canViewInventory', 'canEditInventory'],
+                  'Sales': ['canViewSales', 'canEditSales'],
+                  'Eggs': ['canViewEggs', 'canEditEggs'],
+                  'Feeding': ['canViewFeeding', 'canEditFeeding'],
+                  'Houses': ['canViewHouses', 'canEditHouses'],
+                  'Mortality': ['canViewMortality', 'canEditMortality'],
+                  'Customers': ['canViewCustomers', 'canEditCustomers'],
+                  'Team Management': ['canViewTeam', 'canEditTeam'],
+                  'Settings': ['canViewSettings', 'canEditSettings']
+                };
+
+                const keys = permissionMap[item.name];
+                if (keys) {
+                  // If we have explicit permission overrides for this module, use them
+                  return keys.some(k => !!permissions[k]);
+                }
               }
 
-              // 3. Role-based check (Fallback if no explicit permission override is found)
+              // 3. Role-based bypass (MANAGER/WORKER default behaviors)
+              if (role === 'MANAGER') return true;
+              
+              // 4. Role-based membership check
               if (!item.roles.includes(role)) return false;
 
-              // 4. Role-specific Fallbacks
+              // 5. Role-specific Fallbacks (Accountant/Finance/Cashier)
               if (role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER') {
                 return item.name === 'Finance Control' || item.name === 'Dashboard';
               }
@@ -97,7 +110,7 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
                 return item.name === 'Finance Control' || item.name === 'Sales' || item.name === 'Dashboard';
               }
 
-              // Workers can view their allowed modules by default
+              // Workers can view their allowed modules by default if not restricted by permissions above
               if (role === 'WORKER') return true;
 
               return false;
