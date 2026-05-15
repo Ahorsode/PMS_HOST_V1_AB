@@ -7,8 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { formatCurrency } from '@/lib/utils';
 import { Banknote, ShoppingCart, Users, TrendingUp, Clock, CheckCircle2 } from 'lucide-react';
 import { redirect } from 'next/navigation';
-import { getAuthContext, hasPermission } from '@/lib/auth-utils';
 import { SalesRowActions, SalesActionsHeader } from './SalesActions';
+import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
 import { WorkerStamp } from '@/components/ui/WorkerStamp';
 
 interface OrderItem {
@@ -43,18 +43,15 @@ interface Customer {
 }
 
 export default async function SalesPage({ searchParams }: { searchParams: Promise<{ sellBatchId?: string }> }) {
-  const { activeFarmId, role, permissions } = await getAuthContext();
-  const resolvedParams = await searchParams;
-  const sellBatchId = resolvedParams.sellBatchId ? Number(resolvedParams.sellBatchId) : undefined;
-  
-  if (!activeFarmId) {
-    redirect('/dashboard');
-  }
+  const hasAccess = await checkWorkerPermissions('sales', 'view');
+  const canEdit = await checkWorkerPermissions('sales', 'edit');
 
-  // RBAC Check
-  if (!hasPermission(role, permissions, 'VIEW_SALES')) {
+  if (!hasAccess) {
     redirect('/dashboard/unauthorized');
   }
+
+  const resolvedParams = await searchParams;
+  const sellBatchId = resolvedParams.sellBatchId ? Number(resolvedParams.sellBatchId) : undefined;
 
   const [ordersRaw, customersRaw, inventory, livestock] = await Promise.all([
     getAllOrders(),
@@ -89,6 +86,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
           inventory={inventory}
           livestock={livestock}
           initialLivestockId={sellBatchId}
+          canEdit={canEdit}
         />
       </div>
 
@@ -162,7 +160,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                     </td>
                     <td className="px-7 py-5 text-right flex items-center justify-end gap-2">
                        <WorkerStamp user={order.user} />
-                       <SalesRowActions order={order} />
+                       <SalesRowActions order={order} canEdit={canEdit} />
                     </td>
                   </tr>
                 ))}
@@ -198,7 +196,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                  </div>
                  <div className="flex justify-between items-center pt-2 border-t border-white/5">
                     <span className="text-emerald-400 font-bold text-sm">{formatCurrency(Number(order.totalAmount))}</span>
-                    <div className="flex justify-end"><SalesRowActions order={order} /></div>
+                    <div className="flex justify-end"><SalesRowActions order={order} canEdit={canEdit} /></div>
                  </div>
               </div>
             ))}

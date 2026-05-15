@@ -3,8 +3,17 @@ import { getAllBatches, getAllEggProduction } from '@/lib/actions/dashboard-acti
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { EggActionsHeader, EggLogActions, LogProductionButton } from './EggActions';
 import { formatDate } from '@/lib/utils';
+import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
+import { redirect } from 'next/navigation';
 
 export default async function EggsPage() {
+  const hasAccess = await checkWorkerPermissions('eggs', 'view');
+  const canEdit = await checkWorkerPermissions('eggs', 'edit');
+
+  if (!hasAccess) {
+    redirect('/dashboard/unauthorized');
+  }
+
   const [batches, productionHistory] = await Promise.all([
     getAllBatches(),
     getAllEggProduction()
@@ -32,7 +41,7 @@ export default async function EggsPage() {
           <h2 className="text-3xl font-extrabold text-gray-900 tracking-normal">Egg Production</h2>
           <p className="text-gray-500 mt-1">Track daily egg yields across your layer flocks.</p>
         </div>
-        <EggActionsHeader batches={layerBatches} />
+        <EggActionsHeader batches={layerBatches} canEdit={canEdit} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
@@ -61,7 +70,7 @@ export default async function EggsPage() {
                           </p>
                         </div>
                       </div>
-                      <LogProductionButton batchId={batch.id} batches={layerBatches} />
+                      <LogProductionButton batchId={batch.id} batches={layerBatches} canEdit={canEdit} />
                     </div>
                   ))}
                 </div>
@@ -105,7 +114,7 @@ export default async function EggsPage() {
                       {log.unusableCount || 0}
                     </td>
                     <td className="px-5 py-3 whitespace-nowrap text-right">
-                      <EggLogActions log={log} batches={layerBatches} />
+                      <EggLogActions log={log} batches={layerBatches} canEdit={canEdit} />
                     </td>
                   </tr>
                 ))}

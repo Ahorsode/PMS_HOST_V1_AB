@@ -9,7 +9,7 @@ import { RegisterBatchForm } from '@/components/forms/RegisterBatchForm';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-export const FlockActionsHeader = ({ houses }: { houses: any[] }) => {
+export const FlockActionsHeader = ({ houses, canEdit = true }: { houses: any[], canEdit?: boolean }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -22,10 +22,12 @@ export const FlockActionsHeader = ({ houses }: { houses: any[] }) => {
           <Eye className="w-3 h-3 md:w-4 md:h-4 group-hover:scale-110 transition-transform" />
           <span className="hidden xs:inline">Management</span> Unit
         </Link>
-        <Button onClick={() => setIsOpen(true)} className="flex-1 md:flex-none py-2 px-2 md:px-4 text-[10px] md:text-sm">
-          <Plus className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
-          Add <span className="hidden xs:inline">New</span> Unit
-        </Button>
+        {canEdit && (
+          <Button onClick={() => setIsOpen(true)} className="flex-1 md:flex-none py-2 px-2 md:px-4 text-[10px] md:text-sm">
+            <Plus className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
+            Add <span className="hidden xs:inline">New</span> Unit
+          </Button>
+        )}
       </div>
       <Dialog isOpen={isOpen} onOpenChange={setIsOpen} title="Register New Livestock Unit">
         <RegisterBatchForm houses={houses} onSuccess={() => setIsOpen(false)} />
@@ -34,7 +36,7 @@ export const FlockActionsHeader = ({ houses }: { houses: any[] }) => {
   );
 };
 
-export const FlockRowActions = ({ batch, houses }: { batch: any, houses: any[] }) => {
+export const FlockRowActions = ({ batch, houses, canEdit = true }: { batch: any, houses: any[], canEdit?: boolean }) => {
   const router = useRouter();
   const [mode, setMode] = useState<'edit' | 'delete' | 'mortality' | null>(null);
 
@@ -48,34 +50,38 @@ export const FlockRowActions = ({ batch, houses }: { batch: any, houses: any[] }
         <Eye className="h-3 w-3" />
         <span>Manage</span>
       </Link>
-      <button 
-        onClick={() => setMode('mortality')}
-        className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
-        title="Log Mortality"
-      >
-        <Skull className="h-4 w-4" />
-      </button>
-      <button 
-        onClick={() => router.push(`/dashboard/sales?sellBatchId=${batch.id}`)}
-        className="p-1 text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
-        title="Quick Sell"
-      >
-        <ShoppingCart className="h-4 w-4" />
-      </button>
-      <button 
-        onClick={() => setMode('edit')}
-        className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-        title="Edit Unit"
-      >
-        <Edit2 className="h-4 w-4" />
-      </button>
-      <button 
-        onClick={() => setMode('delete')}
-        className="p-1 text-gray-400 hover:bg-gray-100 rounded transition-colors"
-        title="Delete Unit"
-      >
-        <Trash2 className="h-4 w-4" />
-      </button>
+      {canEdit && (
+        <>
+          <button 
+            onClick={() => setMode('mortality')}
+            className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
+            title="Log Mortality"
+          >
+            <Skull className="h-4 w-4" />
+          </button>
+          <button 
+            onClick={() => router.push(`/dashboard/sales?sellBatchId=${batch.id}`)}
+            className="p-1 text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
+            title="Quick Sell"
+          >
+            <ShoppingCart className="h-4 w-4" />
+          </button>
+          <button 
+            onClick={() => setMode('edit')}
+            className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+            title="Edit Unit"
+          >
+            <Edit2 className="h-4 w-4" />
+          </button>
+          <button 
+            onClick={() => setMode('delete')}
+            className="p-1 text-gray-400 hover:bg-gray-100 rounded transition-colors"
+            title="Delete Unit"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </>
+      )}
 
       <Dialog 
         isOpen={mode !== null} 

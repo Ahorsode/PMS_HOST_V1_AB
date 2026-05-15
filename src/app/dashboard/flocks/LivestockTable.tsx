@@ -9,9 +9,10 @@ import { WorkerStamp } from '@/components/ui/WorkerStamp';
 interface LivestockTableProps {
   initialBatches: any[];
   houses: any[];
+  canEdit?: boolean;
 }
 
-export function LivestockTable({ initialBatches, houses }: LivestockTableProps) {
+export function LivestockTable({ initialBatches, houses, canEdit = true }: LivestockTableProps) {
   const [filter, setFilter] = useState<'ALL' | 'POULTRY' | 'CATTLE' | 'PIG' | 'SHEEP' | 'OTHER'>('ALL');
 
   const filteredBatches = initialBatches.filter((batch: any) => {
@@ -93,7 +94,7 @@ export function LivestockTable({ initialBatches, houses }: LivestockTableProps) 
                 </td>
                 <td className="px-5 py-3 whitespace-nowrap text-right flex items-center justify-end gap-2">
                   <WorkerStamp user={batch.user} />
-                  <FlockRowActions batch={batch} houses={houses} />
+                  <FlockRowActions batch={batch} houses={houses} canEdit={canEdit} />
                 </td>
               </tr>
             ))}

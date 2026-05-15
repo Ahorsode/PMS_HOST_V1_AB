@@ -38,17 +38,17 @@ export const BottomNav = ({ role = 'OWNER', permissions }: { role?: string, perm
 
     // 3. Explicit Permission Overrides
     if (permissions) {
-      if (item.name === 'Finance Hub') return !!permissions.canViewFinance;
-      if (item.name === 'Sales') return !!permissions.canViewSales;
-      if (item.name === 'Livestock') return !!permissions.canViewBatches;
-      if (item.name === 'Inventory') return !!permissions.canViewInventory;
-      if (item.name === 'Eggs') return !!permissions.canViewEggs;
-      if (item.name === 'Feeding') return !!permissions.canViewFeeding;
-      if (item.name === 'Houses') return !!permissions.canViewHouses;
-      if (item.name === 'Mortality') return !!permissions.canViewMortality;
-      if (item.name === 'Customers') return !!permissions.canViewCustomers;
-      if (item.name === 'Team') return !!permissions.canViewTeam;
-      if (item.name === 'Settings') return !!permissions.canViewSettings;
+      if (item.name === 'Finance Hub') return !!permissions.canViewFinance || !!permissions.canEditFinance;
+      if (item.name === 'Sales') return !!permissions.canViewSales || !!permissions.canEditSales;
+      if (item.name === 'Livestock') return !!permissions.canViewBatches || !!permissions.canEditBatches;
+      if (item.name === 'Inventory') return !!permissions.canViewInventory || !!permissions.canEditInventory;
+      if (item.name === 'Eggs') return !!permissions.canViewEggs || !!permissions.canEditEggs;
+      if (item.name === 'Feeding') return !!permissions.canViewFeeding || !!permissions.canEditFeeding;
+      if (item.name === 'Houses') return !!permissions.canViewHouses || !!permissions.canEditHouses;
+      if (item.name === 'Mortality') return !!permissions.canViewMortality || !!permissions.canEditMortality;
+      if (item.name === 'Customers') return !!permissions.canViewCustomers || !!permissions.canEditCustomers;
+      if (item.name === 'Team') return !!permissions.canViewTeam || !!permissions.canEditTeam;
+      if (item.name === 'Settings') return !!permissions.canViewSettings || !!permissions.canEditSettings;
     }
 
     // 4. Role-specific Fallbacks (Accountant/Finance/Cashier)

@@ -9,23 +9,26 @@ import { recordPayment } from '@/lib/actions/payment-actions';
 import { generateInvoicePDF } from '@/lib/actions/invoice-actions';
 import { toast } from 'sonner';
 
-export function SalesActionsHeader({ customers, inventory, livestock, initialLivestockId }: { 
+export function SalesActionsHeader({ customers, inventory, livestock, initialLivestockId, canEdit = true }: { 
   customers: any[], 
   inventory: any[],
   livestock: any[],
-  initialLivestockId?: number
+  initialLivestockId?: number,
+  canEdit?: boolean
 }) {
   const [isOpen, setIsOpen] = useState(!!initialLivestockId);
 
   return (
     <>
-      <button 
-        onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2 bg-emerald-500 text-[#064e3b] px-5 py-2 rounded-md font-bold uppercase tracking-widest text-[11px] transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] border border-emerald-400/50 hover:scale-105"
-      >
-        <Plus className="w-4 h-4" />
-        Record New Order
-      </button>
+      {canEdit && (
+        <button 
+          onClick={() => setIsOpen(true)}
+          className="flex items-center gap-2 bg-emerald-500 text-[#064e3b] px-5 py-2 rounded-md font-bold uppercase tracking-widest text-[11px] transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] border border-emerald-400/50 hover:scale-105"
+        >
+          <Plus className="w-4 h-4" />
+          Record New Order
+        </button>
+      )}
 
       <Dialog 
         isOpen={isOpen} 
@@ -46,7 +49,7 @@ export function SalesActionsHeader({ customers, inventory, livestock, initialLiv
   );
 }
 
-export function SalesRowActions({ order }: { order: any }) {
+export function SalesRowActions({ order, canEdit = true }: { order: any, canEdit?: boolean }) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState(Number(order.totalAmount));
@@ -103,36 +106,40 @@ export function SalesRowActions({ order }: { order: any }) {
         <FileDown className="w-4 h-4" />
       </button>
 
-      {order.status === 'PENDING' && (
-        <button 
-          onClick={() => setIsPaymentOpen(true)}
-          title="Record Payment"
-          className="p-2.5 rounded-md hover:bg-emerald-500/10 text-emerald-500/40 hover:text-emerald-400 transition-all border border-transparent hover:border-emerald-500/20"
-        >
-          <CreditCard className="w-4 h-4" />
-        </button>
-      )}
-      
-      {(order.status === 'PENDING' || order.status === 'PAID') && (
-        <button 
-          onClick={() => handleStatusUpdate('COMPLETED')}
-          disabled={isUpdating}
-          title="Mark as Completed"
-          className="p-2.5 rounded-md hover:bg-emerald-500/10 text-emerald-500/40 hover:text-emerald-400 transition-all border border-transparent hover:border-emerald-500/20"
-        >
-          <CheckCircle2 className="w-4 h-4" />
-        </button>
-      )}
+      {canEdit && (
+        <>
+          {order.status === 'PENDING' && (
+            <button 
+              onClick={() => setIsPaymentOpen(true)}
+              title="Record Payment"
+              className="p-2.5 rounded-md hover:bg-emerald-500/10 text-emerald-500/40 hover:text-emerald-400 transition-all border border-transparent hover:border-emerald-500/20"
+            >
+              <CreditCard className="w-4 h-4" />
+            </button>
+          )}
+          
+          {(order.status === 'PENDING' || order.status === 'PAID') && (
+            <button 
+              onClick={() => handleStatusUpdate('COMPLETED')}
+              disabled={isUpdating}
+              title="Mark as Completed"
+              className="p-2.5 rounded-md hover:bg-emerald-500/10 text-emerald-500/40 hover:text-emerald-400 transition-all border border-transparent hover:border-emerald-500/20"
+            >
+              <CheckCircle2 className="w-4 h-4" />
+            </button>
+          )}
 
-      {order.status === 'PENDING' && (
-        <button 
-          onClick={() => handleStatusUpdate('CANCELLED')}
-          disabled={isUpdating}
-          title="Cancel Order"
-          className="p-2.5 rounded-md hover:bg-red-500/10 text-red-500/40 hover:text-red-400 transition-all border border-transparent hover:border-red-500/20"
-        >
-          <XCircle className="w-4 h-4" />
-        </button>
+          {order.status === 'PENDING' && (
+            <button 
+              onClick={() => handleStatusUpdate('CANCELLED')}
+              disabled={isUpdating}
+              title="Cancel Order"
+              className="p-2.5 rounded-md hover:bg-red-500/10 text-red-500/40 hover:text-red-400 transition-all border border-transparent hover:border-red-500/20"
+            >
+              <XCircle className="w-4 h-4" />
+            </button>
+          )}
+        </>
       )}
 
       <Dialog 

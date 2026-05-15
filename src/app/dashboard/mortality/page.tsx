@@ -4,10 +4,19 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { XCircle, Activity, History, AlertTriangle, Eye } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { formatLivestockType } from '@/lib/utils/growth-utils';
+import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
+import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { QuickMortalityLogger } from './QuickMortalityLogger';
 
 export default async function MortalityPage() {
+  const hasAccess = await checkWorkerPermissions('mortality', 'view');
+  const canEdit = await checkWorkerPermissions('mortality', 'edit');
+
+  if (!hasAccess) {
+    redirect('/dashboard/unauthorized');
+  }
+
   const [logs, batches] = await Promise.all([
     getAllMortalityLogs(),
     getAllBatches()
@@ -49,9 +58,11 @@ export default async function MortalityPage() {
       </div>
 
       {/* Quick Logging Section */}
-      <div className="bg-white p-5 rounded-md shadow-xl shadow-gray-200/50 border border-gray-100">
-        <QuickMortalityLogger activeBatches={activeBatches} />
-      </div>
+      {canEdit && (
+        <div className="bg-white p-5 rounded-md shadow-xl shadow-gray-200/50 border border-gray-100">
+          <QuickMortalityLogger activeBatches={activeBatches} />
+        </div>
+      )}
 
       <div className="bg-white rounded-md shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
         <div className="bg-gray-50/50 px-5 py-3 border-b border-gray-100 flex items-center justify-between">

@@ -112,8 +112,10 @@ function CustomerForm({ setIsOpen }: { setIsOpen: (val: boolean) => void }) {
 }
 
 
-export function CustomerActionsHeader() {
+export function CustomerActionsHeader({ canEdit = true }: { canEdit?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
+
+  if (!canEdit) return null;
 
   return (
     <>
