@@ -41,9 +41,14 @@ export default async function CustomersPage() {
         <p className="text-white/80 mb-7 max-w-lg text-center leading-relaxed">
           The Customer Relationship Management module is a <span className="text-white font-bold">Standard</span> tier feature. Upgrade to track debtor balances, monitor VIP purchasing trends, and manage your network.
         </p>
-        <Link href="/dashboard/license-upgrade" className="bg-white text-black px-9 py-4 rounded-md font-bold uppercase tracking-widest text-[11px] hover:scale-105 transition-all shadow-[0_0_40px_rgba(255,255,255,0.2)]">
-          Upgrade Subscription
-        </Link>
+        <div className="flex flex-col sm:flex-row gap-4 mt-2">
+          <Link href="/dashboard" className="bg-white/5 border border-white/10 text-white/80 px-9 py-4 rounded-md font-bold uppercase tracking-widest text-[11px] hover:scale-105 hover:bg-white/10 hover:text-white transition-all text-center">
+            Go Back
+          </Link>
+          <Link href="/dashboard/license-upgrade" className="bg-white text-black px-9 py-4 rounded-md font-bold uppercase tracking-widest text-[11px] hover:scale-105 transition-all shadow-[0_0_40px_rgba(255,255,255,0.2)] text-center">
+            Upgrade Subscription
+          </Link>
+        </div>
       </div>
     );
   }
