@@ -99,7 +99,7 @@ async function main() {
   })
 
   // 6. Add some logs
-  await prisma.mortality.create({
+  await prisma.healthMortality.create({
     data: {
       batchId: batch.id,
       count: 10,
