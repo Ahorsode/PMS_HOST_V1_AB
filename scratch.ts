@@ -1,5 +1,4 @@
 import prisma from './src/lib/db';
-import { TABLE_TO_MODEL } from './src/lib/actions/audit-actions'; // Wait, TABLE_TO_MODEL is not exported. I'll just copy the logic.
 
 async function testRestore() {
   const log = await prisma.deleteLog.findFirst({
