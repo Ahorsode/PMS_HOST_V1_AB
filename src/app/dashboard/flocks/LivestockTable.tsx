@@ -52,70 +52,72 @@ export function LivestockTable({ initialBatches, houses, isolationRooms }: Lives
       </div>
 
       <div className="bg-white rounded-md shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-100">
-          <thead>
-            <tr className="bg-gray-50/50">
-              <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Unit Name / Identity</th>
-              <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Type & Species</th>
-              <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Quantity</th>
-              <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Arrival Date</th>
-              <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Status</th>
-              <th className="px-5 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-widest">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-50">
-            {filteredBatches.map((batch: any) => (
-              <tr key={batch.id} className="hover:bg-gray-50/80 transition-all group">
-                <td className="px-5 py-3 whitespace-nowrap">
-                   <div className="text-sm font-bold text-emerald-700 uppercase tracking-normal">{batch.batchName || `Unit #${batch.localBatchId || batch.id}`}</div>
-                   <div className="text-xs text-gray-400 font-bold">ID: {batch.localBatchId || batch.id}</div>
-                </td>
-                <td className="px-5 py-3 whitespace-nowrap">
-                  <div className="text-sm font-bold text-gray-900">{formatLivestockType(batch.type)}</div>
-                  <div className="text-xs text-gray-500 font-medium">{batch.breedType}</div>
-                </td>
-                <td className="px-5 py-3 whitespace-nowrap">
-                  <div className="flex flex-col">
-                    <div className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
-                      {batch.currentCount?.toLocaleString() || '0'}
-                      <span className="text-gray-400 font-medium text-[10px] uppercase">Active</span>
-                    </div>
-                    {(batch.isolationCount > 0 || (batch.initialCount - (batch.currentCount + (batch.isolationCount || 0))) > 0) && (
-                      <div className="flex items-center gap-2 mt-1">
-                        {batch.isolationCount > 0 && (
-                          <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
-                            {batch.isolationCount} ISO
-                          </span>
-                        )}
-                        {(batch.initialCount - (batch.currentCount + (batch.isolationCount || 0))) > 0 && (
-                          <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
-                            {batch.initialCount - (batch.currentCount + (batch.isolationCount || 0))} DEAD
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </td>
-                <td className="px-5 py-3 whitespace-nowrap text-sm text-gray-500">
-                  {new Date(batch.arrivalDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                </td>
-                <td className="px-5 py-3 whitespace-nowrap">
-                  <span className={`px-2 py-1 inline-flex text-xs leading-5 font-bold rounded-full border shadow-sm ${
-                    batch.status === 'active' 
-                      ? 'bg-green-50 text-green-700 border-green-100' 
-                      : 'bg-gray-50 text-gray-600 border-gray-100'
-                  }`}>
-                    {batch.status.toUpperCase()}
-                  </span>
-                </td>
-                <td className="px-5 py-3 whitespace-nowrap text-right flex items-center justify-end gap-2">
-                  <WorkerStamp user={batch.user} />
-                  <FlockRowActions batch={batch} houses={houses} isolationRooms={isolationRooms} />
-                </td>
+        <div className="overflow-x-auto custom-scrollbar">
+          <table className="min-w-full divide-y divide-gray-100">
+            <thead>
+              <tr className="bg-gray-50/50">
+                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Unit Name / Identity</th>
+                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Type & Species</th>
+                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Quantity</th>
+                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Arrival Date</th>
+                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Status</th>
+                <th className="px-5 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-widest">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-50">
+              {filteredBatches.map((batch: any) => (
+                <tr key={batch.id} className="hover:bg-gray-50/80 transition-all group">
+                  <td className="px-5 py-3 whitespace-nowrap">
+                     <div className="text-sm font-bold text-emerald-700 uppercase tracking-normal">{batch.batchName || `Unit #${batch.localBatchId || batch.id}`}</div>
+                     <div className="text-xs text-gray-400 font-bold">ID: {batch.localBatchId || batch.id}</div>
+                  </td>
+                  <td className="px-5 py-3 whitespace-nowrap">
+                    <div className="text-sm font-bold text-gray-900">{formatLivestockType(batch.type)}</div>
+                    <div className="text-xs text-gray-500 font-medium">{batch.breedType}</div>
+                  </td>
+                  <td className="px-5 py-3 whitespace-nowrap">
+                    <div className="flex flex-col">
+                      <div className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                        {batch.currentCount?.toLocaleString() || '0'}
+                        <span className="text-gray-400 font-medium text-[10px] uppercase">Active</span>
+                      </div>
+                      {(batch.isolationCount > 0 || (batch.initialCount - (batch.currentCount + (batch.isolationCount || 0))) > 0) && (
+                        <div className="flex items-center gap-2 mt-1">
+                          {batch.isolationCount > 0 && (
+                            <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
+                              {batch.isolationCount} ISO
+                            </span>
+                          )}
+                          {(batch.initialCount - (batch.currentCount + (batch.isolationCount || 0))) > 0 && (
+                            <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
+                              {batch.initialCount - (batch.currentCount + (batch.isolationCount || 0))} DEAD
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-5 py-3 whitespace-nowrap text-sm text-gray-500">
+                    {new Date(batch.arrivalDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </td>
+                  <td className="px-5 py-3 whitespace-nowrap">
+                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-bold rounded-full border shadow-sm ${
+                      batch.status === 'active' 
+                        ? 'bg-green-50 text-green-700 border-green-100' 
+                        : 'bg-gray-50 text-gray-600 border-gray-100'
+                    }`}>
+                      {batch.status.toUpperCase()}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3 whitespace-nowrap text-right flex items-center justify-end gap-2">
+                    <WorkerStamp user={batch.user} />
+                    <FlockRowActions batch={batch} houses={houses} isolationRooms={isolationRooms} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {filteredBatches.length === 0 && (
           <div className="py-12 md:py-20 text-center">
             <Bird className="w-10 h-10 md:w-12 md:h-12 text-gray-200 mx-auto mb-3" />
