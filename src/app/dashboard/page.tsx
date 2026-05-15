@@ -20,7 +20,7 @@ export default async function DashboardPage() {
   }
 
   try {
-    const [stats, housesRaw, summary, membership, farm] = await Promise.all([
+    const [stats, housesRaw, summary, membership, farm, permissions] = await Promise.all([
       getDashboardStats(),
       (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
         return await tx.house.findMany({
@@ -31,7 +31,10 @@ export default async function DashboardPage() {
       prisma.farmMember.findUnique({
         where: { farmId_userId: { farmId: activeFarmId, userId } }
       }),
-      prisma.farm.findUnique({ where: { id: activeFarmId } })
+      prisma.farm.findUnique({ where: { id: activeFarmId } }),
+      prisma.userPermission.findUnique({
+        where: { userId_farmId: { userId, farmId: activeFarmId } }
+      })
     ]);
 
     const role = userId === farm?.userId ? 'OWNER' : membership?.role || 'WORKER';
@@ -51,6 +54,7 @@ export default async function DashboardPage() {
           summary={summary} 
           role={role as any} 
           subscriptionTier={farm?.subscriptionTier}
+          permissions={permissions}
         />
       </PullToRefresh>
     );

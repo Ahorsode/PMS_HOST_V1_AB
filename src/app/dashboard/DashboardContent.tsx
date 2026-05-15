@@ -85,6 +85,7 @@ interface DashboardContentProps {
     eggs: number;
   } | null;
   subscriptionTier?: SubscriptionTier;
+  permissions?: any;
 }
 
 const FloatingIcon = ({ icon: Icon, className = "" }: { icon: React.ElementType, className?: string }) => (
@@ -120,7 +121,7 @@ const MiniBarChart = ({ data, color }: { data: number[], color: string }) => {
   );
 };
 
-export function DashboardContent({ stats, houses, summary, role, subscriptionTier }: DashboardContentProps) {
+export function DashboardContent({ stats, houses, summary, role, subscriptionTier, permissions }: DashboardContentProps) {
   const { getAgeInDays, formatAge, getUnitBySpecies } = useLivestockStats();
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
@@ -202,142 +203,154 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
           <div className="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-5 items-start">
             
             {/* Total Population Hero Card */}
-            <Card className="md:col-span-2 lg:col-span-2 row-span-2 relative overflow-hidden bg-gradient-to-br from-emerald-500/10 to-transparent border-emerald-500/20">
-              <CardHeader className="pb-0">
-                <CardTitle>Total Population</CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-col h-full relative z-10 pt-3 pb-5">
-                <div className="mt-2 min-w-0">
-                   <p className="text-3xl md:text-5xl font-bold text-white tracking-normal truncate">{(stats?.totalBirds || 0).toLocaleString()}</p>
-                   <div className="text-emerald-400 font-bold text-sm md:text-xl mt-1 italic truncate">Active Livestock</div>
-                </div>
-                
-                <div className="flex items-center gap-2 text-emerald-400 px-3 py-2 bg-emerald-500/20 rounded-md w-fit mt-5 border border-emerald-500/20">
-                   <TrendingUp className="w-5 h-5" />
-                   <span className="text-xs font-bold uppercase tracking-widest">+12% growth rate</span>
-                </div>
-
-                {/* Mortality Sub-Panel included inside Total Population */}
-                <div className="mt-auto pt-5 w-full">
-                  <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 backdrop-blur-md">
-                    <div className="flex justify-between items-center mb-2">
-                       <div className="flex items-center gap-2">
-                         <Skull className="w-4 h-4 text-red-400" />
-                         <span className="text-red-400 font-bold text-sm">Mortality Rate</span>
-                       </div>
-                       <span className="text-white font-bold text-xl">{stats.mortalityRate}%</span>
-                    </div>
-                     <div className="grid grid-cols-2 gap-3 mt-2 bg-black/60 p-2 rounded-md">
-                        <div>
-                           <p className="text-xs text-white/70 uppercase font-bold tracking-widest italic mb-1">Today Dead</p>
-                           <p className="text-white font-bold text-2xl tracking-normal">{stats.todayDead}</p>
-                        </div>
-                        <div>
-                           <p className="text-xs text-white/70 uppercase font-bold tracking-widest italic mb-1">Overall Dead</p>
-                           <p className="text-white font-bold text-2xl tracking-normal">{stats.overallDead}</p>
-                        </div>
-                     </div>
-                     <div className="mt-3 pt-3 border-t border-white/5">
-                        <MiniBarChart data={stats.mortalityTrendData.map((d: { count: number }) => d.count)} color="bg-red-400" />
-                        <p className="text-[8px] text-center text-red-400/50 uppercase tracking-widest mt-2 font-bold">7 Day Mortality Trend</p>
-                     </div>
+            {(role === 'OWNER' || !permissions || permissions.canViewBatches) && (
+              <Card className="md:col-span-2 lg:col-span-2 row-span-2 relative overflow-hidden bg-gradient-to-br from-emerald-500/10 to-transparent border-emerald-500/20">
+                <CardHeader className="pb-0">
+                  <CardTitle>Total Population</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col h-full relative z-10 pt-3 pb-5">
+                  <div className="mt-2 min-w-0">
+                     <p className="text-3xl md:text-5xl font-bold text-white tracking-normal truncate">{(stats?.totalBirds || 0).toLocaleString()}</p>
+                     <div className="text-emerald-400 font-bold text-sm md:text-xl mt-1 italic truncate">Active Livestock</div>
                   </div>
-                </div>
-                
-                <div className="absolute -top-10 -right-10 opacity-10 -z-10 blend-modes mix-blend-screen">
-                   <img src="/logo.png" alt="" className="w-64 h-64 rounded-lg object-cover grayscale" />
-                </div>
-              </CardContent>
-            </Card>
+                  
+                  <div className="flex items-center gap-2 text-emerald-400 px-3 py-2 bg-emerald-500/20 rounded-md w-fit mt-5 border border-emerald-500/20">
+                     <TrendingUp className="w-5 h-5" />
+                     <span className="text-xs font-bold uppercase tracking-widest">+12% growth rate</span>
+                  </div>
+
+                  {/* Mortality Sub-Panel included inside Total Population */}
+                  {(role === 'OWNER' || !permissions || permissions.canViewMortality) && (
+                    <div className="mt-auto pt-5 w-full">
+                      <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-4 backdrop-blur-md">
+                        <div className="flex justify-between items-center mb-2">
+                           <div className="flex items-center gap-2">
+                             <Skull className="w-4 h-4 text-red-400" />
+                             <span className="text-red-400 font-bold text-sm">Mortality Rate</span>
+                           </div>
+                           <span className="text-white font-bold text-xl">{stats.mortalityRate}%</span>
+                        </div>
+                         <div className="grid grid-cols-2 gap-3 mt-2 bg-black/60 p-2 rounded-md">
+                            <div>
+                               <p className="text-xs text-white/70 uppercase font-bold tracking-widest italic mb-1">Today Dead</p>
+                               <p className="text-white font-bold text-2xl tracking-normal">{stats.todayDead}</p>
+                            </div>
+                            <div>
+                               <p className="text-xs text-white/70 uppercase font-bold tracking-widest italic mb-1">Overall Dead</p>
+                               <p className="text-white font-bold text-2xl tracking-normal">{stats.overallDead}</p>
+                            </div>
+                         </div>
+                         <div className="mt-3 pt-3 border-t border-white/5">
+                            <MiniBarChart data={stats.mortalityTrendData.map((d: { count: number }) => d.count)} color="bg-red-400" />
+                            <p className="text-[8px] text-center text-red-400/50 uppercase tracking-widest mt-2 font-bold">7 Day Mortality Trend</p>
+                         </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="absolute -top-10 -right-10 opacity-10 -z-10 blend-modes mix-blend-screen">
+                     <img src="/logo.png" alt="" className="w-64 h-64 rounded-lg object-cover grayscale" />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Top Row Right: Egg & Revenue */}
-            <Card className="md:col-span-2 lg:col-span-2 bg-blue-500/15 border-blue-500/20 relative overflow-hidden">
-              <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
-                <CardTitle className="text-blue-400">Production Inventory</CardTitle>
-                <Package className="w-5 h-5 text-blue-400/50" />
-              </CardHeader>
-              <CardContent className="relative z-10">
-                 <div className="flex justify-between items-end border-b border-white/5 pb-3 mb-2 gap-2">
-                    <div className="min-w-0">
-                      <p className="text-2xl md:text-4xl font-bold text-white tracking-normal truncate">{(stats?.todayEggs || 0).toLocaleString()}</p>
-                      <p className="text-[10px] text-white/70 font-bold uppercase tracking-widest mt-1 italic truncate">Collected (Crates)</p>
-                    </div>
-                    <div className="text-right min-w-0">
-                      <p className="text-xl md:text-2xl font-bold text-white tracking-normal truncate">{(stats?.totalEggs || 0).toLocaleString()}</p>
-                      <p className="text-[10px] text-white/70 font-bold uppercase tracking-widest mt-1 italic truncate">Total Stock</p>
-                    </div>
-                 </div>
-                <MiniBarChart data={stats.eggTrendData.map((d: { count: number }) => d.count)} color="bg-blue-400" />
-                <p className="text-[8px] text-center text-white/70 uppercase tracking-widest mt-2">7 Day Trend</p>
-              </CardContent>
-            </Card>
+            {(role === 'OWNER' || !permissions || permissions.canViewEggs) && (
+              <Card className="md:col-span-2 lg:col-span-2 bg-blue-500/15 border-blue-500/20 relative overflow-hidden">
+                <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
+                  <CardTitle className="text-blue-400">Production Inventory</CardTitle>
+                  <Package className="w-5 h-5 text-blue-400/50" />
+                </CardHeader>
+                <CardContent className="relative z-10">
+                   <div className="flex justify-between items-end border-b border-white/5 pb-3 mb-2 gap-2">
+                      <div className="min-w-0">
+                        <p className="text-2xl md:text-4xl font-bold text-white tracking-normal truncate">{(stats?.todayEggs || 0).toLocaleString()}</p>
+                        <p className="text-[10px] text-white/70 font-bold uppercase tracking-widest mt-1 italic truncate">Collected (Crates)</p>
+                      </div>
+                      <div className="text-right min-w-0">
+                        <p className="text-xl md:text-2xl font-bold text-white tracking-normal truncate">{(stats?.totalEggs || 0).toLocaleString()}</p>
+                        <p className="text-[10px] text-white/70 font-bold uppercase tracking-widest mt-1 italic truncate">Total Stock</p>
+                      </div>
+                   </div>
+                  <MiniBarChart data={stats.eggTrendData.map((d: { count: number }) => d.count)} color="bg-blue-400" />
+                  <p className="text-[8px] text-center text-white/70 uppercase tracking-widest mt-2">7 Day Trend</p>
+                </CardContent>
+              </Card>
+            )}
 
-            <Suspense fallback={<div className="md:col-span-2 lg:col-span-2 bg-white/10 h-32 rounded-lg animate-pulse" />}>
-              <FinancialOverview data={summary} />
-            </Suspense>
+            {(role === 'OWNER' || !permissions || permissions.canViewFinance) && (
+              <Suspense fallback={<div className="md:col-span-2 lg:col-span-2 bg-white/10 h-32 rounded-lg animate-pulse" />}>
+                <FinancialOverview data={summary} />
+              </Suspense>
+            )}
 
             {/* Productivity Index Benchmarking */}
-            <Card className="md:col-span-2 lg:col-span-2 bg-purple-500/15 border-purple-500/20 relative overflow-hidden group">
-               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                 <CardTitle className="text-purple-400">Productivity Index</CardTitle>
-                 <TrendingUp className="w-5 h-5 text-purple-400/50" />
-               </CardHeader>
-               <CardContent className="pt-2">
-                   <div className="flex items-baseline gap-2 min-w-0">
-                      <span className="text-3xl md:text-5xl font-bold text-white tracking-normal truncate">
-                        {stats.activeBatches.length > 0
-                          ? (stats.activeBatches.reduce((acc: number, batch: any) => acc + getGrowthProgress(batch.hatchDate, batch.breed).percent, 0) / stats.activeBatches.length).toFixed(1)
-                          : stats.productivityIndex || 94.2}%
-                      </span>
-                      <span className="text-[10px] font-bold uppercase text-purple-400 tracking-widest italic shrink-0">Efficiency</span>
-                   </div>
-                  <p className="text-xs text-white/70 font-bold uppercase tracking-widest mt-3">Growth vs Global Standards</p>
-                  <div className="h-2 w-full bg-white/10 rounded-full mt-2 overflow-hidden border border-white/5">
-                     <motion.div 
-                       initial={{ width: 0 }}
-                       animate={{ width: `${stats.activeBatches.length > 0 ? (stats.activeBatches.reduce((acc: number, batch: any) => acc + getGrowthProgress(batch.hatchDate, batch.breed).percent, 0) / stats.activeBatches.length) : (stats.productivityIndex || 94.2)}%` }}
-                       transition={{ duration: 1.5, delay: 0.5 }}
-                       className="h-full bg-gradient-to-r from-purple-600 to-purple-400"
-                     />
-                  </div>
-                  <div className="flex justify-between mt-2">
-                     <span className="text-[9px] font-bold text-purple-400/60 uppercase">Optimal: 95%+</span>
-                     <span className="text-[9px] font-bold text-white/70 uppercase">Benchmark: Multi-Species Average</span>
-                  </div>
-               </CardContent>
-            </Card>
+            {(role === 'OWNER' || !permissions || permissions.canViewBatches) && (
+              <Card className="md:col-span-2 lg:col-span-2 bg-purple-500/15 border-purple-500/20 relative overflow-hidden group">
+                 <CardHeader className="flex flex-row items-center justify-between pb-2">
+                   <CardTitle className="text-purple-400">Productivity Index</CardTitle>
+                   <TrendingUp className="w-5 h-5 text-purple-400/50" />
+                 </CardHeader>
+                 <CardContent className="pt-2">
+                     <div className="flex items-baseline gap-2 min-w-0">
+                        <span className="text-3xl md:text-5xl font-bold text-white tracking-normal truncate">
+                          {stats.activeBatches.length > 0
+                            ? (stats.activeBatches.reduce((acc: number, batch: any) => acc + getGrowthProgress(batch.hatchDate, batch.breed).percent, 0) / stats.activeBatches.length).toFixed(1)
+                            : stats.productivityIndex || 94.2}%
+                        </span>
+                        <span className="text-[10px] font-bold uppercase text-purple-400 tracking-widest italic shrink-0">Efficiency</span>
+                     </div>
+                    <p className="text-xs text-white/70 font-bold uppercase tracking-widest mt-3">Growth vs Global Standards</p>
+                    <div className="h-2 w-full bg-white/10 rounded-full mt-2 overflow-hidden border border-white/5">
+                       <motion.div 
+                         initial={{ width: 0 }}
+                         animate={{ width: `${stats.activeBatches.length > 0 ? (stats.activeBatches.reduce((acc: number, batch: any) => acc + getGrowthProgress(batch.hatchDate, batch.breed).percent, 0) / stats.activeBatches.length) : (stats.productivityIndex || 94.2)}%` }}
+                         transition={{ duration: 1.5, delay: 0.5 }}
+                         className="h-full bg-gradient-to-r from-purple-600 to-purple-400"
+                       />
+                    </div>
+                    <div className="flex justify-between mt-2">
+                       <span className="text-[9px] font-bold text-purple-400/60 uppercase">Optimal: 95%+</span>
+                       <span className="text-[9px] font-bold text-white/70 uppercase">Benchmark: Multi-Species Average</span>
+                    </div>
+                 </CardContent>
+              </Card>
+            )}
 
             {/* Egg Stock Inventory Card */}
-            <Card className="md:col-span-2 lg:col-span-2 bg-amber-500/15 border-amber-500/20 relative overflow-hidden group">
-               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                 <CardTitle className="text-amber-400 flex items-center gap-2">
-                   <Package className="w-4 h-4" /> Egg Stock
-                 </CardTitle>
-                 <Link href="/dashboard/inventory" className="text-[9px] font-bold uppercase tracking-widest text-amber-400/50 hover:text-amber-400 transition-colors">
-                   View Hub →
-                 </Link>
-               </CardHeader>
-               <CardContent className="pt-2">
-                 {(() => {
-                   const raw = stats.totalEggs || 0;
-                   const crates = Math.floor(raw / 30);
-                   const rem = raw % 30;
-                   return (
-                     <>
-                        <div className="flex items-baseline gap-2 min-w-0">
-                          <span className="text-3xl md:text-5xl font-bold text-white tracking-normal truncate">{crates}</span>
-                          <span className="text-lg md:text-xl font-bold text-amber-400/70 shrink-0">crates</span>
-                        </div>
-                       {rem > 0 && (
-                         <p className="text-amber-400 text-sm font-semibold mt-1">+ {rem} remainder</p>
-                       )}
-                       <p className="text-xs text-white/70 uppercase tracking-widest font-bold mt-2">{raw.toLocaleString()} eggs in stock</p>
-                     </>
-                   );
-                 })()}
-                 <div className="absolute -bottom-4 -right-4 w-20 h-20 rounded-full bg-amber-500/10 blur-xl" />
-               </CardContent>
-            </Card>
+            {(role === 'OWNER' || !permissions || permissions.canViewInventory || permissions.canViewEggs) && (
+              <Card className="md:col-span-2 lg:col-span-2 bg-amber-500/15 border-amber-500/20 relative overflow-hidden group">
+                 <CardHeader className="flex flex-row items-center justify-between pb-2">
+                   <CardTitle className="text-amber-400 flex items-center gap-2">
+                     <Package className="w-4 h-4" /> Egg Stock
+                   </CardTitle>
+                   <Link href="/dashboard/inventory" className="text-[9px] font-bold uppercase tracking-widest text-amber-400/50 hover:text-amber-400 transition-colors">
+                     View Hub →
+                   </Link>
+                 </CardHeader>
+                 <CardContent className="pt-2">
+                   {(() => {
+                     const raw = stats.totalEggs || 0;
+                     const crates = Math.floor(raw / 30);
+                     const rem = raw % 30;
+                     return (
+                       <>
+                          <div className="flex items-baseline gap-2 min-w-0">
+                            <span className="text-3xl md:text-5xl font-bold text-white tracking-normal truncate">{crates}</span>
+                            <span className="text-lg md:text-xl font-bold text-amber-400/70 shrink-0">crates</span>
+                          </div>
+                         {rem > 0 && (
+                           <p className="text-amber-400 text-sm font-semibold mt-1">+ {rem} remainder</p>
+                         )}
+                         <p className="text-xs text-white/70 uppercase tracking-widest font-bold mt-2">{raw.toLocaleString()} eggs in stock</p>
+                       </>
+                     );
+                   })()}
+                   <div className="absolute -bottom-4 -right-4 w-20 h-20 rounded-full bg-amber-500/10 blur-xl" />
+                 </CardContent>
+              </Card>
+            )}
 
 
             <Card className="md:col-span-2 lg:col-span-2 bg-amber-500/15 border-amber-500/20 h-[380px] flex flex-col">
