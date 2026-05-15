@@ -19,9 +19,6 @@ const RegisterBatchForm = dynamic(() => import('@/components/forms/RegisterBatch
 const FinancialOverview = dynamic(() => import('@/components/dashboard/FinancialOverview').then(mod => mod.FinancialOverview), {
   loading: () => <div className="h-32 w-full animate-pulse bg-white/10 rounded-lg" />
 });
-const MarketingSuite = dynamic(() => import('@/components/dashboard/MarketingSuite').then(mod => mod.MarketingSuite), {
-  loading: () => <div className="h-64 w-full animate-pulse bg-white/10 rounded-lg" />
-});
 const AccountantDashboard = dynamic(() => import('@/components/dashboard/AccountantDashboard').then(mod => mod.AccountantDashboard), {
   loading: () => <div className="h-screen w-full animate-pulse bg-white/10 rounded-lg" />
 });
@@ -411,9 +408,6 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
               </CardContent>
             </Card>
 
-            <Suspense fallback={<div className="md:col-span-1 lg:col-span-2 bg-white/10 h-64 rounded-lg animate-pulse" />}>
-              <MarketingSuite />
-            </Suspense>
           </div>
 
           {/* Active Units List */}
