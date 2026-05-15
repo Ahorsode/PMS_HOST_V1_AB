@@ -17,31 +17,31 @@ export function QuickMortalityLogger({ activeBatches }: QuickMortalityLoggerProp
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2 mb-2">
-        <Skull className="w-5 h-5 text-red-600" />
-        <h3 className="text-lg font-bold text-gray-900 uppercase tracking-normal italic">Quick Mortality Logging</h3>
+        <Skull className="w-5 h-5 text-red-500" />
+        <h3 className="text-lg font-bold text-white uppercase tracking-normal italic">Quick Mortality Logging</h3>
       </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {activeBatches.map((batch) => (
-          <Card key={batch.id} className="group hover:border-red-500 transition-all border-dashed bg-red-50/10">
+          <Card key={batch.id} className="group hover:border-red-500/50 transition-all border border-gray-800 bg-[#1F2937]">
             <CardContent className="p-3">
               <div className="flex justify-between items-start mb-2">
                 <div>
-                  <p className="text-xs font-bold text-red-600 uppercase tracking-widest leading-none mb-1">Active Unit</p>
-                  <h4 className="font-bold text-gray-900">{batch.batchName || `UNT-${batch.id.toString().padStart(3, '0')}`}</h4>
+                  <p className="text-xs font-bold text-red-400 uppercase tracking-widest leading-none mb-1">Active Unit</p>
+                  <h4 className="font-bold text-gray-100">{batch.batchName || `UNT-${batch.id.toString().padStart(3, '0')}`}</h4>
                 </div>
                 <button 
                   onClick={() => setSelectedBatch(batch)}
-                  className="p-2 bg-red-600 text-white rounded-md shadow-lg shadow-red-200 hover:scale-110 active:scale-95 transition-all"
+                  className="p-2 bg-red-500/20 text-red-400 rounded-md hover:bg-red-500 hover:text-white active:scale-95 transition-all border border-red-500/30"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
               </div>
               <div className="flex justify-between items-end">
-                <p className="text-xs text-gray-500 font-medium">{formatLivestockType(batch.type)}</p>
-                <p className="text-sm font-bold text-gray-900">
+                <p className="text-xs text-gray-400 font-medium">{formatLivestockType(batch.type)}</p>
+                <p className="text-sm font-bold text-white">
                   {batch.currentCount.toLocaleString()} 
-                  <span className="text-xs text-gray-400 font-normal ml-1 lowercase">
+                  <span className="text-xs text-gray-500 font-normal ml-1 lowercase">
                     {getLivestockUnit(batch.type)}
                   </span>
                 </p>
@@ -50,7 +50,7 @@ export function QuickMortalityLogger({ activeBatches }: QuickMortalityLoggerProp
           </Card>
         ))}
         {activeBatches.length === 0 && (
-          <div className="col-span-full py-7 text-center bg-gray-50 rounded-md border-2 border-dashed border-gray-100 italic text-gray-400 text-sm">
+          <div className="col-span-full py-7 text-center bg-[#1F2937]/50 rounded-md border border-dashed border-gray-700 italic text-gray-500 text-sm">
             No active units to log mortality for.
           </div>
         )}

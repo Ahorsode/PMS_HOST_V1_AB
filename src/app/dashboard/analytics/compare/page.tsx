@@ -1,9 +1,10 @@
 import React from 'react';
+import Link from 'next/link';
 import { getAllBatches } from '@/lib/actions/dashboard-actions';
 import { BatchComparison } from '@/components/analytics/BatchComparison';
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
 import { redirect } from 'next/navigation';
-import { BarChart3, TrendingUp } from 'lucide-react';
+import { BarChart3, TrendingUp, ArrowLeft } from 'lucide-react';
 
 export const metadata = {
   title: 'Comparative Analytics | Poultry PMS',
@@ -33,6 +34,9 @@ export default async function CompareAnalyticsPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-6 rounded-xl shadow-sm border border-gray-100 gap-4">
         <div>
+          <Link href="/dashboard/flocks" className="inline-flex items-center text-xs font-bold uppercase tracking-wider text-emerald-600 hover:text-emerald-700 transition-colors mb-4 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
+            <ArrowLeft className="w-4 h-4 mr-2" /> Back to Livestock
+          </Link>
           <h1 className="text-2xl md:text-4xl font-bold text-gray-900 tracking-normal">
             Comparative{' '}
             <span className="text-emerald-600 italic">Analytics</span>

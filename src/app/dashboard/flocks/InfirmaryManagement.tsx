@@ -58,42 +58,42 @@ export function InfirmaryManagement({ batches }: { batches: Batch[] }) {
     <div className="space-y-6 mt-8">
       <div className="flex items-center gap-2 mb-4">
         <Activity className="w-5 h-5 text-amber-500" />
-        <h3 className="text-lg font-bold text-gray-900 tracking-tight">Active Isolation Management</h3>
+        <h3 className="text-lg font-bold text-white tracking-tight">Active Isolation Management</h3>
       </div>
 
       <div className="grid grid-cols-1 gap-4">
         {isolatedBatches.length > 0 ? isolatedBatches.map((batch) => (
-          <div key={batch.id} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm flex flex-col lg:flex-row justify-between items-center gap-6 hover:shadow-md transition-all border-l-4 border-l-amber-400">
+          <div key={batch.id} className="bg-[#1F2937] border border-gray-800 rounded-2xl p-6 shadow-sm flex flex-col lg:flex-row justify-between items-center gap-6 hover:shadow-md transition-all border-l-4 border-l-amber-500">
             <div className="flex items-center gap-4 w-full lg:w-auto">
-              <div className="p-4 bg-amber-50 text-amber-600 rounded-2xl shrink-0">
+              <div className="p-4 bg-amber-500/10 text-amber-400 rounded-2xl shrink-0">
                 <Activity className="w-7 h-7" />
               </div>
               <div className="min-w-0">
-                <h4 className="font-bold text-gray-900 text-lg truncate">{batch.batchName}</h4>
+                <h4 className="font-bold text-gray-100 text-lg truncate">{batch.batchName}</h4>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="px-2.5 py-0.5 bg-amber-100 text-amber-700 text-[10px] font-black uppercase rounded-full">In Quarantine</span>
-                  <p className="text-sm text-gray-500 font-bold">
+                  <span className="px-2.5 py-0.5 bg-amber-500/20 text-amber-400 text-[10px] font-black uppercase rounded-full border border-amber-500/30">In Quarantine</span>
+                  <p className="text-sm text-gray-400 font-bold">
                     {batch.isolationCount} birds
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto bg-gray-50 p-3 rounded-2xl border border-gray-100">
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto bg-[#111827] p-3 rounded-2xl border border-gray-800">
               <div className="w-full sm:w-24">
                 <Input
                   type="number"
                   placeholder="Count"
                   value={counts[batch.id] || ''}
                   onChange={(e) => setCounts(prev => ({ ...prev, [batch.id]: e.target.value }))}
-                  className="h-10 bg-white border-gray-200 text-center font-bold"
+                  className="h-10 bg-[#1F2937] border-gray-700 text-white text-center font-bold"
                 />
               </div>
               <div className="flex gap-2 w-full sm:w-auto">
                 <Button 
                   onClick={() => handleAction(batch.id, 'RECOVER', batch.isolationCount)}
                   disabled={!!loadingId}
-                  className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs h-10 px-6 rounded-xl shadow-lg shadow-emerald-200"
+                  className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs h-10 px-6 rounded-xl shadow-lg shadow-emerald-900/20 border border-emerald-500/50"
                 >
                   {loadingId === `${batch.id}-RECOVER` ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
                   Recover
@@ -101,7 +101,7 @@ export function InfirmaryManagement({ batches }: { batches: Batch[] }) {
                 <Button 
                   onClick={() => handleAction(batch.id, 'DEAD', batch.isolationCount)}
                   disabled={!!loadingId}
-                  className="flex-1 sm:flex-none bg-white hover:bg-red-50 text-red-600 border border-red-100 font-bold text-xs h-10 px-6 rounded-xl transition-colors"
+                  className="flex-1 sm:flex-none bg-[#1F2937] hover:bg-red-500/10 text-red-400 border border-red-500/30 font-bold text-xs h-10 px-6 rounded-xl transition-colors"
                 >
                   {loadingId === `${batch.id}-DEAD` ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Skull className="w-4 h-4 mr-2" />}
                   Mortality
@@ -110,12 +110,12 @@ export function InfirmaryManagement({ batches }: { batches: Batch[] }) {
             </div>
           </div>
         )) : (
-          <div className="py-20 flex flex-col items-center justify-center text-gray-400 bg-white rounded-3xl border border-dashed border-gray-200 shadow-inner">
-            <div className="p-5 bg-emerald-50 rounded-full mb-4">
+          <div className="py-20 flex flex-col items-center justify-center text-gray-500 bg-[#1F2937]/50 rounded-3xl border border-dashed border-gray-700 shadow-inner">
+            <div className="p-5 bg-emerald-500/10 rounded-full mb-4">
               <CheckCircle2 className="w-10 h-10 text-emerald-500 opacity-40" />
             </div>
-            <p className="font-black text-gray-900 text-xl tracking-tight">Zero Quarantined Birds</p>
-            <p className="text-sm font-medium mt-1">Your entire livestock population is currently in active production houses.</p>
+            <p className="font-black text-white text-xl tracking-tight">Zero Quarantined Birds</p>
+            <p className="text-sm text-gray-400 font-medium mt-1">Your entire livestock population is currently in active production houses.</p>
           </div>
         )}
       </div>
