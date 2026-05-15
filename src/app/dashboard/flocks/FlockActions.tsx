@@ -34,7 +34,7 @@ export const FlockActionsHeader = ({ houses }: { houses: any[] }) => {
   );
 };
 
-export const FlockRowActions = ({ batch, houses }: { batch: any, houses: any[] }) => {
+export const FlockRowActions = ({ batch, houses, isolationRooms }: { batch: any, houses: any[], isolationRooms: any[] }) => {
   const router = useRouter();
   const [mode, setMode] = useState<'edit' | 'delete' | 'mortality' | null>(null);
 
@@ -86,6 +86,7 @@ export const FlockRowActions = ({ batch, houses }: { batch: any, houses: any[] }
             <LivestockForm 
               batch={batch} 
               houses={houses} 
+              isolationRooms={isolationRooms}
               mode={mode} 
               onClose={() => setMode(null)} 
             />

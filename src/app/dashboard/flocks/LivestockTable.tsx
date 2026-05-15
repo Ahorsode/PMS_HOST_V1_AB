@@ -9,9 +9,10 @@ import { WorkerStamp } from '@/components/ui/WorkerStamp';
 interface LivestockTableProps {
   initialBatches: any[];
   houses: any[];
+  isolationRooms: any[];
 }
 
-export function LivestockTable({ initialBatches, houses }: LivestockTableProps) {
+export function LivestockTable({ initialBatches, houses, isolationRooms }: LivestockTableProps) {
   const [filter, setFilter] = useState<'ALL' | 'POULTRY' | 'CATTLE' | 'PIG' | 'SHEEP' | 'OTHER'>('ALL');
 
   const filteredBatches = initialBatches.filter((batch: any) => {
@@ -73,11 +74,27 @@ export function LivestockTable({ initialBatches, houses }: LivestockTableProps) 
                   <div className="text-sm font-bold text-gray-900">{formatLivestockType(batch.type)}</div>
                   <div className="text-xs text-gray-500 font-medium">{batch.breedType}</div>
                 </td>
-                <td className="px-5 py-3 whitespace-nowrap text-sm text-gray-900 font-bold">
-                  {batch.currentCount?.toLocaleString() || '0'}
-                  <span className="text-gray-400 font-normal text-xs ml-1 lowercase">
-                    {getLivestockUnit(batch.type)}
-                  </span>
+                <td className="px-5 py-3 whitespace-nowrap">
+                  <div className="flex flex-col">
+                    <div className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
+                      {batch.currentCount?.toLocaleString() || '0'}
+                      <span className="text-gray-400 font-medium text-[10px] uppercase">Active</span>
+                    </div>
+                    {(batch.isolationCount > 0 || (batch.initialCount - (batch.currentCount + (batch.isolationCount || 0))) > 0) && (
+                      <div className="flex items-center gap-2 mt-1">
+                        {batch.isolationCount > 0 && (
+                          <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
+                            {batch.isolationCount} ISO
+                          </span>
+                        )}
+                        {(batch.initialCount - (batch.currentCount + (batch.isolationCount || 0))) > 0 && (
+                          <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">
+                            {batch.initialCount - (batch.currentCount + (batch.isolationCount || 0))} DEAD
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </td>
                 <td className="px-5 py-3 whitespace-nowrap text-sm text-gray-500">
                   {new Date(batch.arrivalDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -93,7 +110,7 @@ export function LivestockTable({ initialBatches, houses }: LivestockTableProps) 
                 </td>
                 <td className="px-5 py-3 whitespace-nowrap text-right flex items-center justify-end gap-2">
                   <WorkerStamp user={batch.user} />
-                  <FlockRowActions batch={batch} houses={houses} />
+                  <FlockRowActions batch={batch} houses={houses} isolationRooms={isolationRooms} />
                 </td>
               </tr>
             ))}

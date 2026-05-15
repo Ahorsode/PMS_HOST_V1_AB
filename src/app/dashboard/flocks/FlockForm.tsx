@@ -5,13 +5,14 @@ import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { Plus, Edit2, Trash2, Skull } from 'lucide-react';
-import { createBatch, updateBatch, deleteBatch, logMortality } from '@/lib/actions/batch-actions';
+import { createBatch, updateBatch, deleteBatch, logHealthEvent } from '@/lib/actions/batch-actions';
+import { Activity, Skull, Home, AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 interface LivestockFormProps {
   houses: { id: number; name: string }[];
+  isolationRooms?: { id: number; name: string; capacity: number }[];
   batch?: any;
   mode: 'create' | 'edit' | 'delete' | 'mortality';
   onClose: () => void;
@@ -33,7 +34,7 @@ const MORTALITY_REASONS: Record<string, string[]> = {
   "Other": ["Other"]
 };
 
-export const LivestockForm = ({ houses, batch, mode, onClose }: LivestockFormProps) => {
+export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, onClose }: LivestockFormProps) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -48,6 +49,8 @@ export const LivestockForm = ({ houses, batch, mode, onClose }: LivestockFormPro
     category: '',
     subCategory: '',
     reason: '',
+    healthType: 'DEAD' as 'SICK' | 'DEAD',
+    isolationRoomId: '',
   });
 
   const handleSubmit = async (e: any) => {
@@ -76,9 +79,11 @@ export const LivestockForm = ({ houses, batch, mode, onClose }: LivestockFormPro
       } else if (mode === 'delete') {
         res = await deleteBatch(batch.id);
       } else if (mode === 'mortality') {
-        res = await logMortality({
+        res = await logHealthEvent({
           batchId: batch.id,
+          type: formData.healthType,
           count: Number(formData.mortalityCount) || 0,
+          isolationRoomId: formData.healthType === 'SICK' ? Number(formData.isolationRoomId) : undefined,
           category: formData.category,
           subCategory: formData.subCategory,
           reason: formData.reason,
@@ -120,15 +125,38 @@ export const LivestockForm = ({ houses, batch, mode, onClose }: LivestockFormPro
     <form onSubmit={handleSubmit} className="space-y-3">
       {mode === 'mortality' ? (
         <>
+          <div className="flex gap-2 p-1 bg-gray-100 rounded-lg mb-4">
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, healthType: 'DEAD' })}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md font-bold text-xs uppercase tracking-wider transition-all ${
+                formData.healthType === 'DEAD' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <Skull className="w-4 h-4" />
+              Mortality (Dead)
+            </button>
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, healthType: 'SICK' })}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md font-bold text-xs uppercase tracking-wider transition-all ${
+                formData.healthType === 'SICK' ? 'bg-white text-amber-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <Activity className="w-4 h-4" />
+              Sickness (Sick)
+            </button>
+          </div>
+
           <div className="space-y-1">
             <Input
-              label="Mortality Count"
+              label={formData.healthType === 'DEAD' ? "Mortality Count" : "Sickness Count"}
               type="number"
               min="0"
               value={formData.mortalityCount}
               onChange={(e) => setFormData({ ...formData, mortalityCount: e.target.value })}
               required
-              placeholder="How many were lost?"
+              placeholder={formData.healthType === 'DEAD' ? "How many were lost?" : "How many are showing symptoms?"}
               className={isMortalityExceeded ? "border-red-500 focus:ring-red-500" : ""}
             />
             <p className={`text-[11px] font-medium ${isMortalityExceeded ? "text-red-600 animate-pulse" : "text-gray-500"}`}>
@@ -137,8 +165,22 @@ export const LivestockForm = ({ houses, batch, mode, onClose }: LivestockFormPro
                 : `Info: ${currentRemaining} birds remaining in this batch.`}
             </p>
           </div>
+
+          {formData.healthType === 'SICK' && (
+            <Select
+              label="Transfer to Isolation Room"
+              options={[
+                { label: 'Select Room...', value: '' },
+                ...isolationRooms.map(room => ({ label: `${room.name} (Cap: ${room.capacity})`, value: room.id }))
+              ]}
+              value={formData.isolationRoomId}
+              onChange={(e) => setFormData({ ...formData, isolationRoomId: e.target.value })}
+              required
+            />
+          )}
+
           <Select
-            label="Main Category"
+            label="Condition/Reason"
             options={[
               { label: 'Select Category...', value: '' },
               ...Object.keys(MORTALITY_REASONS).map(cat => ({ label: cat, value: cat }))
@@ -149,7 +191,7 @@ export const LivestockForm = ({ houses, batch, mode, onClose }: LivestockFormPro
           />
           {formData.category && (
             <Select
-              label="Sub-Category"
+              label="Specific Symptom/Cause"
               options={[
                 { label: 'Select Sub-Category...', value: '' },
                 ...MORTALITY_REASONS[formData.category].map(sub => ({ label: sub, value: sub }))
@@ -160,10 +202,10 @@ export const LivestockForm = ({ houses, batch, mode, onClose }: LivestockFormPro
             />
           )}
           <Input
-            label="Incident Details"
+            label="Additional Notes"
             value={formData.reason}
             onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-            placeholder="Briefly describe the mortality incident..."
+            placeholder="Briefly describe the health incident..."
           />
         </>
       ) : (
@@ -250,7 +292,7 @@ export const LivestockForm = ({ houses, batch, mode, onClose }: LivestockFormPro
           disabled={isMortalityExceeded}
           className={`h-10 px-7 rounded-md ${isMortalityExceeded ? "bg-gray-400 cursor-not-allowed" : "bg-emerald-600 hover:bg-emerald-700"}`}
         >
-          {mode === 'create' ? 'Register Unit' : mode === 'edit' ? 'Apply changes' : 'Log mortality'}
+          {mode === 'create' ? 'Register Unit' : mode === 'edit' ? 'Apply changes' : formData.healthType === 'SICK' ? 'Transfer to Isolation' : 'Log mortality'}
         </Button>
       </div>
     </form>

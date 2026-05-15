@@ -108,12 +108,13 @@ export async function deleteBatch(id: number) {
   })
 }
 
-export async function logMortality(data: {
+export async function logHealthEvent(data: {
   batchId: number
+  type: 'SICK' | 'DEAD'
   count: number
+  isolationRoomId?: number
   reason?: string
   logDate?: string
-  date?: string // Fallback
   category?: string
   subCategory?: string
 }) {
@@ -124,38 +125,50 @@ export async function logMortality(data: {
   if (!hasEditAccess) return { success: false, error: 'Unauthorized' }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    // 1. Create Mortality record
-    const mortality = await tx.mortality.create({
+    // 1. Create Mortality record (serves as health/mortality log)
+    const record = await tx.mortality.create({
       data: {
         batchId: data.batchId,
         farmId: activeFarmId,
-        deathCount: data.count,
+        count: data.count,
+        type: data.type,
+        isolation_room_id: data.type === 'SICK' ? data.isolationRoomId : null,
         reason: data.reason,
         category: data.category,
         subCategory: data.subCategory,
-        logDate: new Date(data.logDate || data.date || new Date()),
+        logDate: new Date(data.logDate || new Date()),
         userId: userId
       }
     })
 
-    // 2. Update Livestock count
+    // 2. Update Livestock counts
+    const updateData: any = {}
+    
+    if (data.type === 'DEAD') {
+      updateData.currentCount = { decrement: data.count }
+    } else if (data.type === 'SICK') {
+      updateData.currentCount = { decrement: data.count }
+      updateData.isolationCount = { increment: data.count }
+    }
+
     await tx.livestock.update({
       where: { id: data.batchId, farmId: activeFarmId },
-      data: {
-        currentCount: {
-          decrement: data.count
-        },
-        deathCount: {
-          increment: data.count
-        }
-      }
+      data: updateData
     })
 
     revalidatePath('/dashboard/flocks')
-    return { success: true, mortality }
+    return { success: true, record }
   }).catch((error: any) => {
-    console.error('Error logging mortality:', error)
-    return { success: false, error: error.message || 'Failed to log mortality' }
+    console.error('Error logging health event:', error)
+    return { success: false, error: error.message || 'Failed to log health event' }
+  })
+}
+
+// Backward compatibility wrapper
+export async function logMortality(data: any) {
+  return logHealthEvent({
+    ...data,
+    type: 'DEAD'
   })
 }
 
@@ -213,9 +226,8 @@ export async function returnFromIsolation(id: number, count: number) {
     await tx.livestock.update({
       where: { id, farmId: activeFarmId },
       data: {
-        isolationCount: {
-          decrement: count
-        }
+        isolationCount: { decrement: count },
+        currentCount: { increment: count }
       }
     })
 
@@ -224,5 +236,57 @@ export async function returnFromIsolation(id: number, count: number) {
   }).catch((error: any) => {
     console.error('Error returning from isolation:', error)
     return { success: false, error: error.message || 'Failed to return from isolation' }
+  })
+}
+
+export async function logMortalityInIsolation(data: {
+  batchId: number,
+  count: number,
+  reason?: string,
+  category?: string,
+  subCategory?: string
+}) {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return { success: false, error: 'No active farm selected' }
+
+  const hasEditAccess = await checkWorkerPermissions('batches', 'edit')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized' }
+
+  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    const batch = await tx.livestock.findUnique({
+      where: { id: data.batchId, farmId: activeFarmId }
+    })
+
+    if (!batch) throw new Error('Batch not found')
+    if ((batch.isolationCount || 0) < data.count) {
+      throw new Error('Not enough birds in isolation')
+    }
+
+    await tx.mortality.create({
+      data: {
+        batchId: data.batchId,
+        farmId: activeFarmId,
+        count: data.count,
+        type: 'DEAD',
+        reason: data.reason || 'Mortality while in isolation',
+        category: data.category || 'Health',
+        subCategory: data.subCategory || 'Isolation Mortality',
+        logDate: new Date(),
+        userId: userId
+      }
+    })
+
+    await tx.livestock.update({
+      where: { id: data.batchId, farmId: activeFarmId },
+      data: {
+        isolationCount: { decrement: data.count }
+      }
+    })
+
+    revalidatePath('/dashboard/flocks')
+    return { success: true }
+  }).catch((error: any) => {
+    console.error('Error logging mortality in isolation:', error)
+    return { success: false, error: error.message || 'Failed to log mortality' }
   })
 }

@@ -62,6 +62,16 @@ This document serves as the absolute reference for the Poultry PMS ecosystem. An
     - **Database**: Enforced by the `check_mortality_limit()` PostgreSQL trigger.
     - **UI**: Real-time validation in entry forms prevents input > current remaining count.
 
+### Health & Isolation (The Infirmary)
+- **Status Toggle**: Health events are logged as either `SICK` or `DEAD`.
+- **Isolation Logic**:
+    - `SICK`: Birds are transferred from `currentCount` to `isolationCount` and assigned to an **Isolation Room**.
+    - `DEAD`: Birds are permanently removed from `currentCount` and logged in the `Mortality` table.
+- **The Recovery Loop**:
+    - **Return to Flock**: Decrements `isolationCount` and increments `currentCount`.
+    - **Mortality in Isolation**: Decrements `isolationCount` and creates a `DEAD` log in `Mortality`. Does **NOT** affect `currentCount` (prevents double-counting).
+- **Infrastructure**: "Isolation Rooms" are specialized housing units created within the Health module to track quarantined livestock.
+
 
 ### Commercial Hub
 - **Sales**: Direct sale of livestock or eggs.
@@ -81,6 +91,14 @@ This document serves as the absolute reference for the Poultry PMS ecosystem. An
 ### Daily Records
 - **Feeding Logs**: Captures `amountConsumed` and links to an Inventory item (Feed Type).
 - **Weight Records**: Regular sampling of batch weights to track growth curves.
+
+### Comparative Analytics Suite
+- **Visual Style**: High-end **Glassmorphism** theme with gradients and interactive blurs.
+- **Features**:
+    - **Multivariate Selection**: Compare 2+ batches side-by-side.
+    - **Ghost Curves**: Toggle "Industry Benchmarks" to see ghost-comparison overlays of ideal performance.
+    - **Performance Scoring**: Automatic calculation of **EPEF (European Production Efficiency Factor)**.
+    - **Metric Focus**: Comparative analysis of FCR, Mortality Rate, and Production Index.
 
 ---
 

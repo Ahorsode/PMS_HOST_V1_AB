@@ -9,37 +9,37 @@ datasource db {
 }
 
 model User {
-  id                 String            @id @default(cuid())
+  id                 String           @id @default(cuid())
   firstname          String?
   surname            String?
-  email              String?           @unique
-  emailVerified      DateTime?         @map("email_verified")
+  email              String?          @unique
+  emailVerified      DateTime?        @map("email_verified")
   image              String?
-  role               Role              @default(OWNER)
-  createdAt          DateTime          @default(now()) @map("created_at")
-  updatedAt          DateTime          @updatedAt @map("updated_at")
+  role               Role             @default(OWNER)
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @updatedAt @map("updated_at")
   name               String?
-  phoneNumber        String?           @unique @map("phone_number")
-  middleName         String?           @map("middle_name")
+  phoneNumber        String?          @unique @map("phone_number")
+  middleName         String?          @map("middle_name")
   password           String?
-  mustChangePassword Boolean           @default(false) @map("must_change_password")
+  mustChangePassword Boolean          @default(false) @map("must_change_password")
   accounts           Account[]
-  auditLogs          AuditLog[]
   batches            Livestock[]
   feedingLogs        FeedingLog[]
-  deleteLogs         DeleteLog[]
-  eggProductions     EggProduction[]
   expenses           Expense[]
   memberships        FarmMember[]
   farms              Farm[]
-  insertLogs         InsertLog[]
-  inventory          Inventory[]
-  mortalities        HealthMortality[]
-  orders             Order[]
-  sales              Sale[]
   sessions           Session[]
   userPermissions    UserPermission[]
+  sales              Sale[]
+  inventory          Inventory[]
+  eggProductions     EggProduction[]
+  mortalities        HealthMortality[]
   weightRecords      WeightRecord[]
+  orders             Order[]
+  insertLogs         InsertLog[]
+  deleteLogs         DeleteLog[]
+  auditLogs          AuditLog[]
 
   @@map("users")
 }
@@ -67,10 +67,10 @@ model Session {
   id           String   @id @default(cuid())
   sessionToken String   @unique @map("session_token")
   userId       String   @map("user_id")
-  expires      DateTime
-  deviceType   String?  @map("device_type")
   farmId       Int?     @map("farm_id")
   loginTime    DateTime @default(now()) @map("login_time")
+  deviceType   String?  @map("device_type")
+  expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("sessions")
@@ -97,7 +97,6 @@ model Farm {
   batches          Livestock[]
   customers        Customer[]
   feedingLogs      FeedingLog[]
-  eggCategories    EggCategory[]
   eggProduction    EggProduction[]
   expenses         Expense[]
   members          FarmMember[]
@@ -108,18 +107,18 @@ model Farm {
   houses           House[]
   inventory        Inventory[]
   invitations      Invitation[]
-  isolationRooms   IsolationRoom[]
   medications      MedicationSchedule[]
   mortality        HealthMortality[]
+  isolationRooms   IsolationRoom[]
   orders           Order[]
   saleItems        SaleItem[]
   sales            Sale[]
   subscription     Subscription?
-  suppliers        Supplier[]
   userPermissions  UserPermission[]
-  vaccinations        VaccinationSchedule[]
-  weightRecords       WeightRecord[]
-  deviceRegistrations DeviceRegistration[]
+  vaccinations     VaccinationSchedule[]
+  weightRecords    WeightRecord[]
+  suppliers        Supplier[]
+  eggCategories    EggCategory[]
 
   @@index([userId])
   @@map("farms")
@@ -135,9 +134,9 @@ model House {
   userId             String      @default("user_placeholder")
   createdAt          DateTime    @default(now())
   updatedAt          DateTime    @updatedAt
-  isIsolation        Boolean     @default(false)
   batches            Livestock[]
   farm               Farm        @relation(fields: [farmId], references: [id])
+  isIsolation        Boolean     @default(false)
 
   @@index([userId])
   @@index([farmId])
@@ -157,17 +156,17 @@ model Livestock {
   userId               String                @default("user_placeholder")
   farmId               Int                   @default(1)
   batchName            String                @default("New Batch")
+  localBatchId         Int?                  @map("local_batch_id")
+  type                 LivestockType         @default(POULTRY_BROILER)
   carriage_inward      Decimal?              @db.Decimal(15, 2)
-  growthTargetOverride String?
   growth_target        String?
+  initial_actual_cost  Decimal?              @db.Decimal(15, 2)
+  initial_other_costs  Json?
   initialCostActual    Decimal?              @db.Decimal(15, 2)
   initialCostCarriage  Decimal?              @db.Decimal(15, 2)
   initialCostOther     Json?
-  initial_actual_cost  Decimal?              @db.Decimal(15, 2)
-  initial_other_costs  Json?
+  growthTargetOverride String?
   isolationCount       Int                   @default(0)
-  type                 LivestockType         @default(POULTRY_BROILER)
-  localBatchId         Int?                  @map("local_batch_id")
   farm                 Farm                  @relation(fields: [farmId], references: [id])
   house                House                 @relation(fields: [houseId], references: [id])
   user                 User                  @relation(fields: [userId], references: [id])
@@ -194,21 +193,21 @@ model Inventory {
   stockLevel                 Decimal                     @db.Decimal(15, 2)
   unit                       String
   category                   String?
+  costPerUnit                Decimal?                    @db.Decimal(15, 2)
   userId                     String                      @default("user_placeholder")
   createdAt                  DateTime                    @default(now())
   updatedAt                  DateTime                    @updatedAt
   farmId                     Int                         @default(1)
   reorderLevel               Decimal?                    @default(500.00) @db.Decimal(15, 2)
-  costPerUnit                Decimal?                    @db.Decimal(15, 2)
-  eggCategoryId              Int?
-  supplierId                 Int?
   feedingLogs                FeedingLog[]
   feedFormulationIngredients FeedFormulationIngredient[]
-  eggCategory                EggCategory?                @relation(fields: [eggCategoryId], references: [id])
   farm                       Farm                        @relation(fields: [farmId], references: [id])
+  supplierId                 Int?
   supplier                   Supplier?                   @relation(fields: [supplierId], references: [id])
-  user                       User                        @relation(fields: [userId], references: [id])
+  eggCategoryId              Int?
+  eggCategory                EggCategory?                @relation(fields: [eggCategoryId], references: [id])
   orderItems                 OrderItem[]
+  user                       User                        @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([farmId])
@@ -238,6 +237,7 @@ model DeleteLog {
 
   @@map("delete_logs")
 }
+
 
 model FeedingLog {
   id             Int              @id @default(autoincrement())
@@ -275,22 +275,22 @@ model HealthRecord {
 }
 
 model EggProduction {
-  id              Int          @id @default(autoincrement())
-  batchId         Int
-  eggsCollected   Int
-  logDate         DateTime
-  userId          String       @default("user_placeholder")
-  createdAt       DateTime     @default(now())
-  farmId          Int          @default(1)
-  categoryId      Int?
-  cratesCollected Decimal?     @db.Decimal(15, 2)
-  eggsRemaining   Int          @default(0)
-  qualityGrade    String?
-  unusableCount   Int          @default(0)
-  batch           Livestock    @relation(fields: [batchId], references: [id])
-  category        EggCategory? @relation(fields: [categoryId], references: [id])
-  farm            Farm         @relation(fields: [farmId], references: [id])
-  user            User         @relation(fields: [userId], references: [id])
+  id            Int       @id @default(autoincrement())
+  batchId       Int
+  eggsCollected Int
+  logDate       DateTime
+  userId        String    @default("user_placeholder")
+  createdAt     DateTime  @default(now())
+  farmId        Int       @default(1)
+  qualityGrade  String?
+  unusableCount Int       @default(0)
+  eggsRemaining Int       @default(0)
+  batch         Livestock @relation(fields: [batchId], references: [id])
+  farm          Farm      @relation(fields: [farmId], references: [id])
+  categoryId    Int?
+  category      EggCategory? @relation(fields: [categoryId], references: [id])
+  cratesCollected Decimal? @db.Decimal(15, 2)
+  user          User     @relation(fields: [userId], references: [id])
 
   @@index([batchId, logDate])
   @@index([userId])
@@ -299,14 +299,14 @@ model EggProduction {
 }
 
 model IsolationRoom {
-  id        Int               @id @default(autoincrement())
+  id        Int      @id @default(autoincrement())
   farmId    Int
   name      String
   capacity  Int
-  userId    String            @default("user_placeholder")
-  createdAt DateTime          @default(now())
-  updatedAt DateTime          @updatedAt
-  farm      Farm              @relation(fields: [farmId], references: [id])
+  userId    String   @default("user_placeholder")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  farm      Farm     @relation(fields: [farmId], references: [id])
   records   HealthMortality[]
 
   @@index([farmId])
@@ -318,6 +318,7 @@ model HealthMortality {
   id              Int             @id @default(autoincrement())
   batchId         Int
   count           Int
+  type            HealthEventType @default(DEAD)
   reason          String?
   logDate         DateTime
   userId          String          @default("user_placeholder")
@@ -326,16 +327,21 @@ model HealthMortality {
   farmId          Int             @default(1)
   subCategory     String?         @map("sub_category")
   isolationRoomId Int?            @map("isolation_room_id")
-  type            HealthEventType @default(DEAD)
+  
   batch           Livestock       @relation(fields: [batchId], references: [id])
   farm            Farm            @relation(fields: [farmId], references: [id])
-  isolationRoom   IsolationRoom?  @relation(fields: [isolationRoomId], references: [id])
   user            User            @relation(fields: [userId], references: [id])
+  isolationRoom   IsolationRoom?  @relation(fields: [isolationRoomId], references: [id])
 
   @@index([batchId, logDate])
   @@index([userId])
   @@index([farmId])
   @@map("mortality")
+}
+
+enum HealthEventType {
+  SICK
+  DEAD
 }
 
 model WeightRecord {
@@ -495,9 +501,9 @@ model Expense {
   createdAt   DateTime        @default(now()) @map("created_at")
   updatedAt   DateTime        @updatedAt @map("updated_at")
   batch_id    Int?
-  supplierId  Int?
   batches     Livestock?      @relation(fields: [batch_id], references: [id])
   farm        Farm            @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  supplierId  Int?
   supplier    Supplier?       @relation(fields: [supplierId], references: [id])
   user        User            @relation(fields: [userId], references: [id])
 
@@ -516,22 +522,22 @@ model UserPermission {
   canEditFinance   Boolean @default(false) @map("can_edit_finance")
   canViewInventory Boolean @default(false) @map("can_view_inventory")
   canEditInventory Boolean @default(false) @map("can_edit_inventory")
-  canViewBatches   Boolean @default(false) @map("can_view_batches")
-  canEditBatches   Boolean @default(false) @map("can_edit_batches")
-  canViewSales     Boolean @default(false) @map("can_view_sales")
-  canEditSales     Boolean @default(false) @map("can_edit_sales")
-  canViewEggs      Boolean @default(false) @map("can_view_eggs")
-  canEditEggs      Boolean @default(false) @map("can_edit_eggs")
-  canViewFeeding   Boolean @default(false) @map("can_view_feeding")
-  canEditFeeding   Boolean @default(false) @map("can_edit_feeding")
-  canViewHouses    Boolean @default(false) @map("can_view_houses")
-  canEditHouses    Boolean @default(false) @map("can_edit_houses")
-  canViewMortality Boolean @default(false) @map("can_view_mortality")
-  canEditMortality Boolean @default(false) @map("can_edit_mortality")
-  canViewCustomers Boolean @default(false) @map("can_view_customers")
-  canEditCustomers Boolean @default(false) @map("can_edit_customers")
-  canViewTeam      Boolean @default(false) @map("can_view_team")
-  canEditTeam      Boolean @default(false) @map("can_edit_team")
+  canViewBatches     Boolean @default(false) @map("can_view_batches")
+  canEditBatches     Boolean @default(false) @map("can_edit_batches")
+  canViewSales       Boolean @default(false) @map("can_view_sales")
+  canEditSales       Boolean @default(false) @map("can_edit_sales")
+  canViewEggs        Boolean @default(false) @map("can_view_eggs")
+  canEditEggs        Boolean @default(false) @map("can_edit_eggs")
+  canViewFeeding     Boolean @default(false) @map("can_view_feeding")
+  canEditFeeding     Boolean @default(false) @map("can_edit_feeding")
+  canViewHouses      Boolean @default(false) @map("can_view_houses")
+  canEditHouses      Boolean @default(false) @map("can_edit_houses")
+  canViewMortality   Boolean @default(false) @map("can_view_mortality")
+  canEditMortality   Boolean @default(false) @map("can_edit_mortality")
+  canViewCustomers   Boolean @default(false) @map("can_view_customers")
+  canEditCustomers   Boolean @default(false) @map("can_edit_customers")
+  canViewTeam        Boolean @default(false) @map("can_view_team")
+  canEditTeam        Boolean @default(false) @map("can_edit_team")
   farm             Farm    @relation(fields: [farmId], references: [id], onDelete: Cascade)
   user             User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -604,11 +610,11 @@ model Order {
   totalAmount    Decimal     @db.Decimal(15, 2)
   currency       String      @default("USD")
   status         String      @default("PENDING")
-  discountAmount Decimal     @default(0) @db.Decimal(15, 2)
-  createdAt      DateTime    @default(now()) @map("created_at")
-  orderDate      DateTime    @default(dbgenerated("'2024-01-01 00:00:00'::timestamp without time zone")) @map("order_date")
-  updatedAt      DateTime    @updatedAt @map("updated_at")
+  orderDate      DateTime    @default("2024-01-01T00:00:00.000Z") @map("order_date")
   userId         String      @default("user_placeholder") @map("user_id")
+  createdAt      DateTime    @default(now()) @map("created_at")
+  updatedAt      DateTime    @updatedAt @map("updated_at")
+  discountAmount Decimal     @default(0) @db.Decimal(15, 2)
   items          OrderItem[]
   customer       Customer?   @relation(fields: [customerId], references: [id])
   farm           Farm        @relation(fields: [farmId], references: [id])
@@ -617,6 +623,7 @@ model Order {
   @@index([orderDate, status])
   @@map("orders")
 }
+
 
 model OrderItem {
   id          Int        @id @default(autoincrement())
@@ -661,42 +668,6 @@ model FeedFormulationIngredient {
   inventory     Inventory       @relation(fields: [inventoryId], references: [id])
 
   @@map("feed_formulation_ingredients")
-}
-
-model Supplier {
-  id          Int         @id @default(autoincrement())
-  farmId      Int
-  name        String
-  phone       String?
-  email       String?
-  address     String?
-  balanceOwed Decimal     @default(0) @db.Decimal(10, 2)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  expenses    Expense[]
-  inventory   Inventory[]
-  farm        Farm        @relation(fields: [farmId], references: [id], onDelete: Cascade)
-
-  @@map("suppliers")
-}
-
-model EggCategory {
-  id             Int             @id @default(autoincrement())
-  farmId         Int
-  name           String
-  description    String?
-  createdAt      DateTime        @default(now())
-  farm           Farm            @relation(fields: [farmId], references: [id], onDelete: Cascade)
-  eggProductions EggProduction[]
-  inventoryItems Inventory[]
-
-  @@unique([farmId, name])
-  @@map("egg_categories")
-}
-
-enum HealthEventType {
-  SICK
-  DEAD
 }
 
 enum LivestockType {
@@ -744,18 +715,33 @@ enum FeedType {
   CUSTOM
 }
 
-model DeviceRegistration {
-  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  farmId       Int      @map("farmId")
-  userId       String   @map("userId")
-  deviceId     String   @map("deviceId")
-  deviceName   String?  @map("deviceName")
-  deviceType   String?  @map("deviceType")
-  lastSync     DateTime @default(now()) @map("lastSync")
-  isActive     Boolean  @default(true) @map("isActive")
-  registeredAt DateTime @default(now()) @map("registeredAt")
-  farm         Farm     @relation(fields: [farmId], references: [id], onDelete: Cascade)
+model Supplier {
+  id          Int         @id @default(autoincrement())
+  farmId      Int
+  name        String
+  phone       String?
+  email       String?
+  address     String?
+  balanceOwed Decimal     @default(0) @db.Decimal(10, 2)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  farm        Farm        @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  expenses    Expense[]
+  inventory   Inventory[]
 
-  @@unique([farmId, deviceId])
-  @@map("device_registrations")
+  @@map("suppliers")
+}
+
+model EggCategory {
+  id             Int             @id @default(autoincrement())
+  farmId         Int
+  name           String
+  description    String?
+  createdAt      DateTime        @default(now())
+  farm           Farm            @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  eggProductions EggProduction[]
+  inventoryItems Inventory[]
+
+  @@unique([farmId, name])
+  @@map("egg_categories")
 }

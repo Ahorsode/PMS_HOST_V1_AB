@@ -36,6 +36,7 @@ export const FlockDetailClient = ({ batch }: FlockDetailClientProps) => {
   const [isLoggingWeight, setIsLoggingWeight] = useState(false);
   const [weight, setWeight] = useState('');
   const [logDate, setLogDate] = useState(new Date().toISOString().split('T')[0]);
+  const [showGhost, setShowGhost] = useState(true);
 
   // Vaccination schedule state
   const [vaccinations, setVaccinations] = useState<any[]>(batch.vaccinations || []);
@@ -127,7 +128,7 @@ export const FlockDetailClient = ({ batch }: FlockDetailClientProps) => {
           value={batch.currentCount.toLocaleString()} 
           icon={TrendingUp} 
           color="blue" 
-          subtext={`from ${batch.initialCount} initial`}
+          subtext={batch.isolationCount > 0 ? `${batch.isolationCount} in isolation` : `from ${batch.initialCount} initial`}
         />
       </div>
 
@@ -139,9 +140,14 @@ export const FlockDetailClient = ({ batch }: FlockDetailClientProps) => {
                 <CardTitle className="text-white italic font-bold flex items-center gap-2">
                    <Weight className="w-5 h-5 text-emerald-400" /> Growth & Weight History
                 </CardTitle>
-                <Button variant="outline" size="sm" onClick={() => setIsLoggingWeight(!isLoggingWeight)}>
-                   {isLoggingWeight ? 'Cancel' : 'Log New Weight'}
-                </Button>
+                 <div className="flex items-center gap-2">
+                   <Button variant="ghost" size="sm" onClick={() => setShowGhost(!showGhost)} className={cn("text-[10px] font-black uppercase tracking-widest px-3 h-8 rounded-full border border-white/10", showGhost ? "bg-white/20 text-white" : "text-white/40 hover:bg-white/5")}>
+                      {showGhost ? 'Hide Ghost Curve' : 'Show Benchmark'}
+                   </Button>
+                   <Button variant="outline" size="sm" onClick={() => setIsLoggingWeight(!isLoggingWeight)} className="h-8">
+                      {isLoggingWeight ? 'Cancel' : 'Log New Weight'}
+                   </Button>
+                 </div>
              </CardHeader>
              <CardContent className="p-7">
                 <AnimatePresence>
@@ -177,21 +183,35 @@ export const FlockDetailClient = ({ batch }: FlockDetailClientProps) => {
 
                 {batch.weightRecords.length > 0 ? (
                   <div className="space-y-5">
-                     <div className="h-64 flex items-end gap-2 px-3 border-b border-white/5 pb-2">
+                     <div className="h-64 flex items-end gap-2 px-3 border-b border-white/5 pb-2 relative">
+                        {showGhost && (
+                          <div className="absolute inset-x-0 bottom-0 top-0 pointer-events-none opacity-20">
+                             <svg className="w-full h-full overflow-visible">
+                                <path 
+                                  d="M 0 256 Q 300 200 600 0" 
+                                  fill="none" 
+                                  stroke="white" 
+                                  strokeWidth="2" 
+                                  strokeDasharray="8 8"
+                                  className="drop-shadow-[0_0_5px_rgba(255,255,255,0.8)]"
+                                />
+                             </svg>
+                          </div>
+                        )}
                         {batch.weightRecords.slice(0, 7).reverse().map((rec: any, idx: number) => {
                            const maxWeight = Math.max(...batch.weightRecords.map((r: any) => r.averageWeight));
-                           const height = (rec.averageWeight / maxWeight) * 100;
+                           const height = (rec.averageWeight / (maxWeight * 1.1)) * 100;
                            return (
-                             <div key={idx} className="flex-1 flex flex-col items-center group relative">
+                             <div key={idx} className="flex-1 flex flex-col items-center group relative z-10">
                                 <motion.div 
                                   initial={{ height: 0 }}
                                   animate={{ height: `${height}%` }}
-                                  className="w-full bg-gradient-to-t from-emerald-600/50 to-emerald-400 rounded-t-xl transition-all shadow-[0_0_15px_rgba(16,185,129,0.2)]"
+                                  className="w-full bg-gradient-to-t from-emerald-600/50 to-emerald-400 rounded-t-xl transition-all shadow-[0_0_15px_rgba(16,185,129,0.2)] group-hover:scale-105 duration-300"
                                 />
-                                <span className="absolute -top-10 scale-0 group-hover:scale-100 transition-transform bg-white/20 backdrop-blur-md px-2 py-1 rounded-lg text-xs text-white whitespace-nowrap z-10">
+                                <span className="absolute -top-10 scale-0 group-hover:scale-100 transition-transform bg-white/20 backdrop-blur-md px-2 py-1 rounded-lg text-xs text-white whitespace-nowrap z-20 border border-white/10 font-bold">
                                    {rec.averageWeight} kg
                                 </span>
-                                <span className="text-[9px] text-white/70 font-bold mt-2 uppercase">
+                                <span className="text-[9px] text-white/70 font-bold mt-2 uppercase tracking-tighter">
                                    {new Date(rec.logDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
                                 </span>
                              </div>

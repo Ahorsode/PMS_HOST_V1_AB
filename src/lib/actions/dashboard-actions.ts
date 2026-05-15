@@ -480,6 +480,51 @@ export async function getHouses() {
   })
 }
 
+export async function getIsolationRooms() {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return []
+
+  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    return await tx.isolation_rooms.findMany({
+      where: { farmId: activeFarmId },
+      select: {
+        id: true,
+        name: true,
+        capacity: true
+      }
+    })
+  }).catch((error: any) => {
+    console.error('Error fetching isolation rooms:', error)
+    return []
+  })
+}
+
+export async function createIsolationRoom(data: { name: string, capacity: number }) {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) throw new Error('No active farm selected')
+
+  const hasAccess = await checkWorkerPermissions('batches', 'edit')
+  if (!hasAccess) throw new Error('Unauthorized')
+
+  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    const room = await tx.isolation_rooms.create({
+      data: {
+        name: data.name,
+        capacity: data.capacity,
+        farmId: activeFarmId,
+        userId: userId,
+        updatedAt: new Date()
+      }
+    })
+    revalidatePath('/dashboard/settings')
+    revalidatePath('/dashboard/flocks')
+    return { success: true, room }
+  }).catch((error: any) => {
+    console.error('Error creating isolation room:', error)
+    return { success: false, error: 'Failed to create isolation room' }
+  })
+}
+
 export async function getAllBatches() {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return []
