@@ -177,16 +177,16 @@ export default async function FinancePage() {
               ) : (
                 sales.map((sale: Sale) => (
                   <div key={sale.id} className="p-3 flex items-center justify-between hover:bg-white/5 transition-colors group">
-                    <div className="flex items-center gap-2">
-                      <div className="w-10 h-10 rounded-md bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 group-hover:scale-110 transition-transform">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <div className="w-10 h-10 rounded-md bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 group-hover:scale-110 transition-transform shrink-0">
                         <DollarSign className="w-5 h-5 text-emerald-400" />
                       </div>
-                      <div>
-                        <p className="text-white text-sm font-bold uppercase tracking-normal">{sale.customerName || 'Walk-in Customer'}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-white text-sm font-bold uppercase tracking-normal truncate">{sale.customerName || 'Walk-in Customer'}</p>
                         <p className="text-white/70 text-[9px] uppercase font-bold tracking-widest italic">{new Date(sale.saleDate).toLocaleDateString()}</p>
                       </div>
                     </div>
-                    <div className="text-right flex items-center gap-2">
+                    <div className="text-right flex items-center gap-2 shrink-0 ml-2">
                        <div className="text-right">
                          <p className="text-emerald-400 font-bold text-sm">+{formatCurrency(Number(sale.totalAmount))}</p>
                          <p className="text-white/70 text-[8px] uppercase font-bold tracking-widest">{sale.status}</p>
@@ -215,19 +215,19 @@ export default async function FinancePage() {
               ) : (
                 expenses.map((exp: Expense) => (
                   <div key={exp.id} className="p-3 flex items-center justify-between hover:bg-white/5 transition-colors group">
-                    <div className="flex items-center gap-2">
-                      <div className="w-10 h-10 rounded-md bg-red-500/10 flex items-center justify-center border border-red-500/20 group-hover:scale-110 transition-transform">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <div className="w-10 h-10 rounded-md bg-red-500/10 flex items-center justify-center border border-red-500/20 group-hover:scale-110 transition-transform shrink-0">
                         <Tag className="w-5 h-5 text-red-400" />
                       </div>
-                      <div>
-                        <p className="text-white text-sm font-bold uppercase tracking-normal">{exp.category}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-white text-sm font-bold uppercase tracking-normal truncate pr-2" title={exp.description || exp.category}>{exp.description || exp.category}</p>
                         <p className="text-white/70 text-[9px] uppercase font-bold tracking-widest italic">{new Date(exp.expenseDate).toLocaleDateString()}</p>
                       </div>
                     </div>
-                    <div className="text-right flex items-center gap-2">
-                       <div className="text-right">
+                    <div className="text-right flex items-center gap-2 shrink-0 ml-2">
+                       <div className="text-right min-w-0">
                          <p className="text-red-400 font-bold text-sm">-{formatCurrency(Number(exp.amount))}</p>
-                         <p className="text-white/70 text-[8px] uppercase font-bold tracking-widest truncate max-w-[100px]">{exp.description || 'No description'}</p>
+                         <p className="text-white/70 text-[8px] uppercase font-bold tracking-widest truncate max-w-[100px]" title={exp.category}>{exp.category}</p>
                        </div>
                        <WorkerStamp user={exp.user} />
                     </div>
