@@ -13,6 +13,7 @@ import {
   Search,
   ArrowRight,
   Eye
+} from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Dialog, DialogTitle, DialogDescription } from '@/components/ui/Dialog';
 import { restoreDeletedRecord } from '@/lib/actions/audit-actions';
