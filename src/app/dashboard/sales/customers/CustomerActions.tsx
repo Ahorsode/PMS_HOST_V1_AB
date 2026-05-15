@@ -4,10 +4,12 @@ import React, { useState } from 'react';
 import { UserPlus, Plus } from 'lucide-react';
 import { Dialog } from '@/components/ui/Dialog';
 import { createCustomer } from '@/lib/actions/customer-actions';
+import { createSupplier } from '@/lib/actions/supplier-actions';
 import { toast } from 'sonner';
 
 function CustomerForm({ setIsOpen }: { setIsOpen: (val: boolean) => void }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [partnerType, setPartnerType] = useState<'buyer' | 'supplier'>('buyer');
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -20,11 +22,16 @@ function CustomerForm({ setIsOpen }: { setIsOpen: (val: boolean) => void }) {
     };
 
     setIsSubmitting(true);
-    const res = await createCustomer(data);
+    let res;
+    if (partnerType === 'supplier') {
+      res = await createSupplier(data);
+    } else {
+      res = await createCustomer(data);
+    }
     setIsSubmitting(false);
 
     if (res.success) {
-      toast.success('Customer profile created');
+      toast.success(`${partnerType === 'supplier' ? 'Supplier' : 'Customer'} profile created`);
       setIsOpen(false);
     } else {
       toast.error('Failed to create profile');
@@ -33,14 +40,28 @@ function CustomerForm({ setIsOpen }: { setIsOpen: (val: boolean) => void }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5 pt-2">
-       <div className="space-y-3">
+       <div className="space-y-4">
+          <div className="space-y-1 pb-2 border-b border-white/10">
+             <label className="text-xs font-bold uppercase text-white/70 tracking-widest px-1">Partner Type</label>
+             <select 
+               value={partnerType}
+               onChange={(e) => setPartnerType(e.target.value as 'buyer' | 'supplier')}
+               className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-bold outline-none focus:border-emerald-500/50 transition-all appearance-none cursor-pointer"
+             >
+               <option value="buyer" className="bg-[#1a1a1a] text-white">Buyer (Customer)</option>
+               <option value="supplier" className="bg-[#1a1a1a] text-white">Supplier (Vendor)</option>
+             </select>
+          </div>
+
           <div className="space-y-1">
-             <label className="text-xs font-bold uppercase text-white/70 tracking-widest px-1">Full Name *</label>
+             <label className="text-xs font-bold uppercase text-white/70 tracking-widest px-1">
+               {partnerType === 'supplier' ? 'Supplier Name / Company *' : 'Full Name / Company *'}
+             </label>
              <input 
                name="name"
                required
                className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-bold outline-none focus:border-emerald-500/50 transition-all"
-               placeholder="e.g. John Doe / Kumasi Allied Feed"
+               placeholder={partnerType === 'supplier' ? "e.g. Acme Feeds Ltd." : "e.g. John Doe / Kumasi Allied Feed"}
              />
           </div>
 
@@ -59,7 +80,7 @@ function CustomerForm({ setIsOpen }: { setIsOpen: (val: boolean) => void }) {
                   name="email"
                   type="email"
                   className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-bold outline-none focus:border-emerald-500/50 transition-all"
-                  placeholder="client@growth.com"
+                  placeholder={partnerType === 'supplier' ? "vendor@supply.com" : "client@growth.com"}
                 />
              </div>
           </div>
@@ -69,7 +90,7 @@ function CustomerForm({ setIsOpen }: { setIsOpen: (val: boolean) => void }) {
              <textarea 
                name="address"
                className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-bold outline-none focus:border-emerald-500/50 transition-all h-24"
-               placeholder="Global shipping or warehouse location"
+               placeholder={partnerType === 'supplier' ? "Warehouse or business location" : "Global shipping or warehouse location"}
              />
           </div>
        </div>
@@ -79,11 +100,12 @@ function CustomerForm({ setIsOpen }: { setIsOpen: (val: boolean) => void }) {
          disabled={isSubmitting}
          className="w-full bg-emerald-500 text-[#064e3b] py-4 rounded-md font-bold uppercase tracking-widest text-xs transition-all hover:scale-[1.01] active:scale-[0.99] shadow-xl shadow-emerald-500/20"
        >
-         {isSubmitting ? 'Expanding Network...' : 'Create Partner Profile'}
+         {isSubmitting ? 'Expanding Network...' : `Create ${partnerType === 'supplier' ? 'Supplier' : 'Partner'} Profile`}
        </button>
     </form>
   );
 }
+
 
 export function CustomerActionsHeader() {
   const [isOpen, setIsOpen] = useState(false);
