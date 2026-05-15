@@ -16,8 +16,8 @@ export async function generateSocialPost() {
       where: { farmId: activeFarmId, logDate: { gte: sevenDaysAgo } },
       _sum: { eggsCollected: true, unusableCount: true }
     }),
-    prisma.mortality.aggregate({
-      where: { farmId: activeFarmId, logDate: { gte: sevenDaysAgo } },
+    prisma.healthMortality.aggregate({
+      where: { farmId: activeFarmId, logDate: { gte: sevenDaysAgo }, type: 'DEAD' },
       _sum: { count: true }
     }),
     prisma.livestock.findMany({
