@@ -170,8 +170,15 @@ export async function restoreDeletedRecord(logId: number) {
       if (!tx[modelName]) {
         throw new Error(`Model ${modelName} not found in transaction context`)
       }
+      
+      // Recreate the deleted record
       await tx[modelName].create({
         data: dataToRestore
+      })
+
+      // Remove the log from the Recovery Vault to prevent duplicate restorations
+      await tx.deleteLog.delete({
+        where: { id: logId }
       })
     })
 
