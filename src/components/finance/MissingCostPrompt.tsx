@@ -25,7 +25,7 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isOpen, setIsOpen] = useState(batches.length > 0);
 
-  const [actualCost, setActualCost] = useState('');
+  const [costPerUnit, setCostPerUnit] = useState('');
   const [carriageInward, setCarriageInward] = useState('');
   const [otherExpenses, setOtherExpenses] = useState<Array<{ label: string, amount: number }>>([]);
   const [newExpenseLabel, setNewExpenseLabel] = useState('');
@@ -59,7 +59,7 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
     setIsSubmitting(true);
     try {
       const result = await updateBatchFinancials(currentBatch.id, {
-        actualCost: isZero ? 0.001 : Number(actualCost), // Using tiny value to differentiate from "not set" if needed, or just 0
+        actualCost: isZero ? 0.001 : Number(costPerUnit) * currentBatch.initialCount, // Using tiny value to differentiate from "not set" if needed, or just 0
         carriageInward: isZero ? 0 : Number(carriageInward),
         otherExpenses: isZero ? [] : otherExpenses
       });
@@ -67,7 +67,7 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
       if (result.success) {
         if (currentIndex < batches.length - 1) {
           setCurrentIndex(currentIndex + 1);
-          setActualCost('');
+          setCostPerUnit('');
           setCarriageInward('');
           setOtherExpenses([]);
         } else {
@@ -107,14 +107,21 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
         </div>
 
         <div className="space-y-3">
-          <Input 
-            label={`Purchase Cost for ${currentBatch.initialCount} units`}
-            placeholder="0.00"
-            type="number"
-            min="0"
-            value={actualCost}
-            onChange={e => setActualCost(e.target.value)}
-          />
+          <div className="space-y-1">
+            <Input 
+              label="Cost Per Unit"
+              placeholder="0.00"
+              type="number"
+              min="0"
+              value={costPerUnit}
+              onChange={e => setCostPerUnit(e.target.value)}
+            />
+            {costPerUnit && Number(costPerUnit) > 0 && (
+              <p className="text-xs font-bold text-emerald-400 px-1 text-right">
+                Total Purchase Cost: GH₵ {(Number(costPerUnit) * currentBatch.initialCount).toFixed(2)}
+              </p>
+            )}
+          </div>
 
           <Input 
             label="Carriage Inward (Transport cost)"
@@ -181,7 +188,7 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
            <Button 
              onClick={() => handleSubmit(false)}
              isLoading={isSubmitting}
-             disabled={!actualCost || Number(actualCost) <= 0}
+             disabled={!costPerUnit || Number(costPerUnit) <= 0}
              className="flex-[2] rounded-md bg-emerald-500 text-black font-bold uppercase tracking-widest hover:bg-emerald-400"
            >
               Save & {currentIndex < batches.length - 1 ? 'Next Unit' : 'Finish'}
