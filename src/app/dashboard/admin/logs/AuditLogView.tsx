@@ -11,9 +11,11 @@ import {
   Table, 
   ShieldCheck,
   Search,
-  ArrowRight
+  ArrowRight,
+  Eye
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Dialog, DialogTitle, DialogDescription } from '@/components/ui/Dialog';
 import { restoreDeletedRecord } from '@/lib/actions/audit-actions';
 import { toast } from 'sonner';
 import { WorkerStamp } from '@/components/ui/WorkerStamp';
@@ -26,6 +28,13 @@ interface AuditLogViewProps {
 export default function AuditLogView({ initialEditLogs, initialDeleteLogs }: AuditLogViewProps) {
   const [activeTab, setActiveTab] = useState<'edits' | 'deletes'>('edits');
   const [isPending, startTransition] = useTransition();
+  const [selectedLog, setSelectedLog] = useState<any>(null);
+
+  const uniqueDeleteLogs = initialDeleteLogs.filter((log, index, self) =>
+    index === self.findIndex((t) => (
+      t.tableName === log.tableName && t.deletedDataCsv === log.deletedDataCsv
+    ))
+  );
 
   const handleRestore = (id: number) => {
     if (!confirm('Are you sure you want to restore this data? This will create a new record with the deleted values.')) return;
@@ -173,7 +182,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs }: Aud
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
-                    {initialDeleteLogs.map((log) => (
+                    {uniqueDeleteLogs.map((log: any) => (
                       <tr key={log.id} className="hover:bg-white/5 transition-colors group">
                         <td className="px-6 py-4 text-white/90 font-medium text-xs">
                           {new Date(log.deletedAt).toLocaleString()}
@@ -187,9 +196,18 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs }: Aud
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <p className="text-[10px] text-white/40 font-mono truncate max-w-[200px]">
-                            {log.deletedDataCsv.split('\n')[1]?.slice(0, 50)}...
-                          </p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-[10px] text-white/40 font-mono truncate max-w-[200px]" title={log.deletedDataCsv}>
+                              {log.deletedDataCsv.split('\n')[1]?.slice(0, 50)}...
+                            </p>
+                            <button 
+                              onClick={() => setSelectedLog(log)}
+                              className="text-white/40 hover:text-emerald-400 transition-colors" 
+                              title="View Details"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
                         </td>
                         <td className="px-6 py-4 text-right">
                           <button
@@ -203,7 +221,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs }: Aud
                         </td>
                       </tr>
                     ))}
-                    {initialDeleteLogs.length === 0 && (
+                    {uniqueDeleteLogs.length === 0 && (
                       <tr>
                         <td colSpan={5} className="px-6 py-20 text-center text-white/30 italic text-sm">
                           No deletion logs found.
@@ -217,6 +235,45 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs }: Aud
           </Card>
         )}
       </div>
+
+      <Dialog 
+        isOpen={!!selectedLog} 
+        onOpenChange={(open) => !open && setSelectedLog(null)}
+        title="Deleted Record Details"
+        description={selectedLog ? `Entity: ${selectedLog.tableName} | Deleted: ${new Date(selectedLog.deletedAt).toLocaleString()}` : ''}
+      >
+        {selectedLog && (
+          <div className="bg-black/20 border border-white/10 p-4 rounded-md overflow-x-auto mt-4 custom-scrollbar">
+            <table className="w-full text-left text-xs text-white/90">
+              <tbody>
+                {selectedLog.deletedDataCsv.split('\n')[0].split('|').map((header: string, i: number) => {
+                  const cleanHeader = header.trim().replace(/^"|"$/g, '').replace(/_/g, ' ').toUpperCase();
+                  const value = selectedLog.deletedDataCsv.split('\n')[1]?.split('|')[i]?.trim().replace(/^'|'$/g, '').replace(/''/g, "'") || 'N/A';
+                  return (
+                    <tr key={i} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
+                      <td className="py-2 px-3 font-bold text-white/50 tracking-widest">{cleanHeader}</td>
+                      <td className="py-2 px-3 font-mono">{value === 'NULL' || value === '' ? <span className="text-white/30 italic">none</span> : value}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            <div className="flex justify-end mt-6">
+              <button
+                onClick={() => {
+                  const id = selectedLog.id;
+                  setSelectedLog(null);
+                  handleRestore(id);
+                }}
+                disabled={isPending}
+                className="bg-emerald-500 hover:bg-emerald-600 text-black px-6 py-2 rounded-md font-bold uppercase text-[10px] tracking-widest transition-all hover:scale-105 disabled:opacity-50"
+              >
+                Restore Record
+              </button>
+            </div>
+          </div>
+        )}
+      </Dialog>
     </div>
   );
 }
