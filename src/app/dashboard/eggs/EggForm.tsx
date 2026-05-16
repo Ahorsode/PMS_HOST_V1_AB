@@ -105,7 +105,7 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
         />
       )}
       
-      <div className="grid grid-cols-2 gap-4">
+      <div className="space-y-4">
         <div className="space-y-1.5">
           <label className="text-xs font-bold text-white/70 uppercase tracking-wider">Logging Mode</label>
           <div className="grid grid-cols-2 gap-2">
@@ -116,7 +116,7 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
                 onClick={() => setLoggingMode(modeOpt as any)}
                 className={`py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${loggingMode === modeOpt ? 'bg-amber-500 text-black' : 'bg-white/10 text-white/70 hover:bg-white/10'}`}
               >
-                {modeOpt === 'individual' ? 'Individual' : 'Crates'}
+                {modeOpt === 'individual' ? 'Individual Eggs' : 'Crates (30/ea)'}
               </button>
             ))}
           </div>
@@ -143,7 +143,7 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="space-y-4">
         {loggingMode === 'individual' ? (
           <Input
             label="Total Eggs Collected"
@@ -154,7 +154,7 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
             required
           />
         ) : (
-          <div className="contents">
+          <div className="space-y-4">
              <Input
                 label="Number of Crates"
                 type="number"
@@ -174,7 +174,7 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
           </div>
         )}
         
-        {!formData.isSorted ? (
+        {!formData.isSorted && (
           <Select
             label="General Egg Size"
             options={[
@@ -184,14 +184,6 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
             ]}
             value={formData.qualityGrade}
             onChange={(e) => setFormData({ ...formData, qualityGrade: e.target.value })}
-          />
-        ) : (
-          <Input
-            label="Unusable Eggs"
-            type="number"
-            min="0"
-            value={formData.unusableCount}
-            onChange={(e) => setFormData({ ...formData, unusableCount: Number(e.target.value) })}
           />
         )}
       </div>
@@ -204,7 +196,7 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
               Allocated: {sortedTotal} / {formData.eggsCollected}
             </span>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="space-y-4">
             <Input
               label="Small"
               type="number"
@@ -238,23 +230,20 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
-        {!formData.isSorted && (
-          <Input
-            label="Unusable Eggs"
-            type="number"
-            min="0"
-            value={formData.unusableCount}
-            onChange={(e) => setFormData({ ...formData, unusableCount: Number(e.target.value) })}
-          />
-        )}
+      <div className="space-y-4">
+        <Input
+          label="Unusable Eggs (Damaged/Cracked)"
+          type="number"
+          min="0"
+          value={formData.unusableCount}
+          onChange={(e) => setFormData({ ...formData, unusableCount: Number(e.target.value) })}
+        />
         <Input
           label="Log Date"
           type="date"
           value={formData.logDate}
           onChange={(e) => setFormData({ ...formData, logDate: e.target.value })}
           required
-          className={formData.isSorted ? "col-span-2" : ""}
         />
       </div>
 
