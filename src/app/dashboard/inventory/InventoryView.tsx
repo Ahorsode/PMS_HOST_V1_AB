@@ -13,6 +13,7 @@ import {
   updateInventoryItem,
   deleteInventoryItem
 } from '@/lib/actions/inventory-actions';
+import { getSuppliers, createSupplier } from '@/lib/actions/supplier-actions';
 
 /* ───────────────────── helpers ───────────────────── */
 function eggDisplay(stockLevel: number) {
@@ -42,6 +43,7 @@ type InventoryItem = {
   unit: string;
   category: string;
   costPerUnit?: number | null;
+  supplierId?: number | null;
   user?: {
     firstname: string | null;
     surname: string | null;
@@ -56,6 +58,8 @@ type FormState = {
   category: string;
   bagQty?: string;
   costPerUnit: string;
+  supplierId: string;
+  paymentPlan: string;
 };
 
 
@@ -67,14 +71,17 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
   const [editing, setEditing] = useState<InventoryItem | null>(null);
   const [isPending, startTransition] = useTransition();
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
+  const [suppliers, setSuppliers] = useState<any[]>([]);
   const [form, setForm] = useState<FormState>({
-    itemName: '', stockLevel: '', unit: 'bags', category: 'FEED', costPerUnit: ''
+    itemName: '', stockLevel: '', unit: 'bags', category: 'FEED', costPerUnit: '', supplierId: '', paymentPlan: 'full'
   });
 
   const fetchItems = async () => {
     setLoading(true);
     const data = await getAllInventory();
     setItems((data as InventoryItem[]).map(i => ({ ...i, stockLevel: Number(i.stockLevel) })));
+    const sups = await getSuppliers();
+    setSuppliers(sups);
     setLoading(false);
   };
 
@@ -88,7 +95,7 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
   const openAdd = () => {
     if (!canEdit) return;
     setEditing(null);
-    setForm({ itemName: '', stockLevel: '', unit: 'bags', category: 'FEED', costPerUnit: '' });
+    setForm({ itemName: '', stockLevel: '', unit: 'bags', category: 'FEED', costPerUnit: '', supplierId: '', paymentPlan: 'full' });
     setShowForm(true);
   };
 
@@ -100,7 +107,9 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
       stockLevel: String(item.stockLevel),
       unit: item.unit,
       category: item.category,
-      costPerUnit: item.costPerUnit != null ? String(item.costPerUnit) : ''
+      costPerUnit: item.costPerUnit != null ? String(item.costPerUnit) : '',
+      supplierId: item.supplierId ? String(item.supplierId) : '',
+      paymentPlan: 'full'
     });
     setShowForm(true);
   };
@@ -120,6 +129,7 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
           unit: form.unit,
           category: form.category,
           ...(form.costPerUnit ? { costPerUnit: parseFloat(form.costPerUnit) } : {}),
+          ...(form.supplierId && form.supplierId !== 'onetime' ? { supplierId: parseInt(form.supplierId) } : { supplierId: undefined }),
         });
       } else {
         res = await createInventoryItem({
@@ -128,6 +138,7 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
           unit: form.unit,
           category: form.category,
           ...(form.costPerUnit ? { costPerUnit: parseFloat(form.costPerUnit) } : {}),
+          ...(form.supplierId && form.supplierId !== 'onetime' ? { supplierId: parseInt(form.supplierId) } : {}),
         });
       }
       if (res?.success) {
@@ -146,6 +157,21 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
       const res = await deleteInventoryItem(id);
       if (res?.success) { showToast('Item removed'); fetchItems(); }
       else showToast(res?.error || 'Delete failed', false);
+    });
+  };
+
+  const handleAddNewSupplier = async () => {
+    const name = window.prompt("Enter new supplier name:");
+    if (!name || !name.trim()) return;
+    startTransition(async () => {
+      const res = await createSupplier({ name: name.trim() });
+      if (res.success && res.supplier) {
+        showToast('Supplier added!');
+        setSuppliers(prev => [...prev, res.supplier]);
+        setForm(p => ({ ...p, supplierId: String(res.supplier.id) }));
+      } else {
+        showToast(res.error || 'Failed to add supplier', false);
+      }
     });
   };
 
@@ -407,6 +433,51 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
                   placeholder="0.00"
                   className="w-full bg-white/10 border border-white/10 rounded-md px-3 py-2.5 text-amber-400 text-sm font-bold placeholder-white/20 focus:outline-none focus:border-amber-500/50"
                 />
+              </div>
+
+              {/* Supplier & Payment */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-white/70 uppercase tracking-wider">Supplier</label>
+                <div className="flex gap-2">
+                  <select
+                    value={form.supplierId}
+                    onChange={e => setForm(p => ({ ...p, supplierId: e.target.value }))}
+                    className="flex-1 bg-white/10 border border-white/10 rounded-md px-3 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500/50 [&>option]:bg-gray-800"
+                  >
+                    <option value="">-- Select Supplier --</option>
+                    <option value="onetime">One-Time Supplier</option>
+                    {suppliers.map(sup => (
+                      <option key={sup.id} value={sup.id}>{sup.name}</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setForm(p => ({ ...p, supplierId: 'onetime' }))}
+                    className="px-3 py-2 rounded-md bg-white/10 hover:bg-white/20 text-white/70 hover:text-white text-xs font-bold transition-all whitespace-nowrap"
+                  >
+                    Set One-Time
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleAddNewSupplier}
+                    className="px-3 py-2 rounded-md bg-white/10 hover:bg-white/20 text-emerald-400 hover:text-emerald-300 text-xs font-bold transition-all whitespace-nowrap flex items-center"
+                  >
+                    <Plus className="w-4 h-4 mr-1" /> New
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-white/70 uppercase tracking-wider">Payment Plan</label>
+                <select
+                  value={form.paymentPlan}
+                  onChange={e => setForm(p => ({ ...p, paymentPlan: e.target.value }))}
+                  className="w-full bg-white/10 border border-white/10 rounded-md px-3 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500/50 [&>option]:bg-gray-800"
+                >
+                  <option value="full">Paid in Full</option>
+                  <option value="installments">Installments</option>
+                  <option value="net30">Net 30</option>
+                </select>
               </div>
 
               <motion.button
