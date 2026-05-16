@@ -643,6 +643,7 @@ model FeedFormulation {
   updatedAt       DateTime                    @updatedAt
   targetLivestock LivestockType?
   type            FeedType
+  stockLevel      Decimal                     @default(0) @db.Decimal(10, 2)
   feedingLogs     FeedingLog[]
   ingredients     FeedFormulationIngredient[]
   farm            Farm                        @relation(fields: [farmId], references: [id])

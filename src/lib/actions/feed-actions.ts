@@ -15,22 +15,38 @@ export async function createFeedFormulation(data: {
   if (!activeFarmId) throw new Error('No active farm selected')
 
   try {
-    const formulation = await prisma.feedFormulation.create({
-      data: {
-        farmId: activeFarmId,
-        name: data.name,
-        type: data.type,
-        targetLivestock: data.targetLivestock,
-        ingredients: {
-          create: data.ingredients.map(i => ({
-            inventoryId: i.inventoryId,
-            percentage: i.percentage,
-            quantity: 0,
-            unit: 'kg'
-          }))
+    const totalBags = data.ingredients.reduce((sum, i) => sum + Number(i.percentage), 0)
+
+    const formulation = await prisma.$transaction(async (tx) => {
+      const created = await tx.feedFormulation.create({
+        data: {
+          farmId: activeFarmId,
+          name: data.name,
+          type: data.type,
+          targetLivestock: data.targetLivestock,
+          stockLevel: totalBags,
+          ingredients: {
+            create: data.ingredients.map(i => ({
+              inventoryId: i.inventoryId,
+              percentage: i.percentage,
+              quantity: i.percentage,
+              unit: 'bag'
+            }))
+          }
         }
+      })
+
+      // Decrease inventory stock
+      for (const ing of data.ingredients) {
+        await tx.inventory.update({
+          where: { id: ing.inventoryId },
+          data: { stockLevel: { decrement: ing.percentage } }
+        })
       }
+
+      return created
     })
+
     revalidatePath('/dashboard/feed')
     return { success: true, formulation }
   } catch (error: any) {
@@ -125,16 +141,34 @@ export async function createFeedingLog(data: any) {
   if (!activeFarmId) throw new Error('No active farm selected')
 
   try {
-    const log = await prisma.feedingLog.create({
-      data: {
-        batchId: data.batchId,
-        feedTypeId: data.feedTypeId,
-        amountConsumed: data.amountConsumed,
-        logDate: new Date(data.logDate),
-        farmId: activeFarmId,
-        userId: userId || 'user_placeholder'
+    const log = await prisma.$transaction(async (tx) => {
+      const created = await tx.feedingLog.create({
+        data: {
+          batchId: data.batchId,
+          feedTypeId: data.feedTypeId,
+          formulationId: data.formulationId,
+          amountConsumed: data.amountConsumed,
+          logDate: new Date(data.logDate),
+          farmId: activeFarmId,
+          userId: userId || 'user_placeholder'
+        }
+      })
+
+      if (data.feedTypeId) {
+        await tx.inventory.update({
+          where: { id: data.feedTypeId },
+          data: { stockLevel: { decrement: data.amountConsumed } }
+        })
+      } else if (data.formulationId) {
+        await tx.feedFormulation.update({
+          where: { id: data.formulationId },
+          data: { stockLevel: { decrement: data.amountConsumed } }
+        })
       }
+
+      return created
     })
+
     revalidatePath('/dashboard/feed')
     return { success: true, log }
   } catch (error) {

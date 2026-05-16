@@ -57,11 +57,23 @@ export function FeedFormulationForm({ inventoryItems, onSuccess }: FeedFormulati
 
   const updateIngredient = (index: number, field: string, value: any) => {
     const newIngredients = [...ingredients]
+    if (field === 'percentage') {
+      const item = inventoryItems.find(i => i.id === newIngredients[index].inventoryId)
+      if (item && value !== '' && Number(value) > Number(item.stockLevel)) {
+        toast.error(`Cannot exceed stock level of ${item.stockLevel} bags`)
+        value = Number(item.stockLevel)
+      }
+    }
     newIngredients[index] = { ...newIngredients[index], [field]: value }
     setIngredients(newIngredients)
   }
 
   const totalBags = ingredients.reduce((sum, i) => sum + Number(i.percentage || 0), 0)
+
+  const getAvailableInventoryItems = (currentIndex: number) => {
+    const selectedIds = ingredients.map((ing, idx) => idx !== currentIndex ? ing.inventoryId : null).filter(Boolean)
+    return inventoryItems.filter(item => !selectedIds.includes(item.id))
+  }
 
   const handleSubmit = async () => {
     if (ingredients.length === 0) {
@@ -93,7 +105,8 @@ export function FeedFormulationForm({ inventoryItems, onSuccess }: FeedFormulati
   }
 
   return (
-    <Card className="border-white/20 bg-white/10 backdrop-blur-md shadow-2xl rounded-md overflow-hidden">
+    <div className="max-w-4xl mx-auto">
+      <Card className="border-white/20 bg-white/10 backdrop-blur-md shadow-2xl rounded-md overflow-hidden">
       <CardHeader className="bg-gradient-to-r from-emerald-600/20 to-teal-500/10 border-b border-white/10">
         <CardTitle className="flex items-center gap-2 text-emerald-950 font-bold italic">
           <Beaker className="w-5 h-5" />
@@ -146,16 +159,20 @@ export function FeedFormulationForm({ inventoryItems, onSuccess }: FeedFormulati
                     onChange={(e) => updateIngredient(idx, 'inventoryId', Number(e.target.value))}
                     className="w-full h-10 px-2 rounded-md bg-white/90 border border-white/40 text-emerald-950 font-bold text-sm"
                   >
-                    {inventoryItems.map(item => (
+                    {getAvailableInventoryItems(idx).map(item => (
                       <option key={item.id} value={item.id}>{item.itemName}</option>
                     ))}
                   </select>
                 </div>
-                <div className="w-32 space-y-1">
-                   <div className="text-[10px] uppercase font-bold text-emerald-400 tracking-widest">Number of Bags</div>
+                <div className="w-40 space-y-1">
+                   <div className="text-[10px] uppercase font-bold text-emerald-400 tracking-widest flex justify-between">
+                     <span>Number of Bags</span>
+                     <span className="text-gray-400">/ {inventoryItems.find(i => i.id === ing.inventoryId)?.stockLevel || 0}</span>
+                   </div>
                   <Input 
                     type="number"
                     min="0"
+                    max={inventoryItems.find(i => i.id === ing.inventoryId)?.stockLevel || 0}
                     value={ing.percentage}
                     onChange={(e) => updateIngredient(idx, 'percentage', e.target.value === '' ? '' : Number(e.target.value))}
                     placeholder="0"
@@ -198,5 +215,6 @@ export function FeedFormulationForm({ inventoryItems, onSuccess }: FeedFormulati
         </Button>
       </CardContent>
     </Card>
+    </div>
   )
 }

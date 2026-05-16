@@ -25,6 +25,7 @@ export default function FeedDashboard({ canEdit = true }: { canEdit?: boolean })
   const [batches, setBatches] = useState<any[]>([])
   const [showForm, setShowForm] = useState(false)
   const [showLogForm, setShowLogForm] = useState(false)
+  const [selectedFormulation, setSelectedFormulation] = useState<number | undefined>(undefined)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -56,7 +57,7 @@ export default function FeedDashboard({ canEdit = true }: { canEdit?: boolean })
         {canEdit && (
           <div className="flex items-center gap-3">
             <Button 
-              onClick={() => setShowLogForm(true)} 
+              onClick={() => { setSelectedFormulation(undefined); setShowLogForm(true); }} 
               className="bg-emerald-600/20 border border-emerald-500/50 hover:bg-emerald-600/40 text-emerald-100 gap-2 shadow-lg"
             >
               <Utensils className="w-4 h-4" />
@@ -80,8 +81,10 @@ export default function FeedDashboard({ canEdit = true }: { canEdit?: boolean })
             <FeedForm
               batches={batches}
               inventory={inventory.filter(i => i.category === 'FEED' || !i.category)}
+              formulations={formulations}
+              selectedFormulationId={selectedFormulation}
               mode="create"
-              onClose={() => { setShowLogForm(false); loadData(); }}
+              onClose={() => { setShowLogForm(false); setSelectedFormulation(undefined); loadData(); }}
             />
           </div>
         </div>
@@ -148,12 +151,24 @@ export default function FeedDashboard({ canEdit = true }: { canEdit?: boolean })
                     </div>
                     <div className="space-y-2">
                       {formulations.slice(0, 3).map(f => (
-                        <div key={f.id} className="flex justify-between items-center p-2 hover:bg-white/5 rounded-md transition-colors cursor-pointer group border border-transparent hover:border-white/10">
+                        <div key={f.id} className="flex justify-between items-center p-2 hover:bg-white/5 rounded-md transition-colors group border border-transparent hover:border-white/10">
                           <div>
                             <p className="font-bold text-emerald-100 text-base">{f.name}</p>
-                            <p className="text-xs font-bold text-gray-400 uppercase tracking-normal">{f.type}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="text-xs font-bold text-gray-400 uppercase tracking-normal">{f.type}</p>
+                              <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-1 rounded uppercase font-bold">
+                                {Number(f.stockLevel || 0).toLocaleString()} bags left
+                              </span>
+                            </div>
                           </div>
-                          <ArrowRight className="w-4 h-4 text-gray-500 group-hover:text-emerald-400 group-hover:translate-x-1 transition-all" />
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => { setSelectedFormulation(f.id); setShowLogForm(true); }}
+                            className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/20 px-2 py-1 h-auto text-xs"
+                          >
+                            LOG FEED
+                          </Button>
                         </div>
                       ))}
                     </div>
