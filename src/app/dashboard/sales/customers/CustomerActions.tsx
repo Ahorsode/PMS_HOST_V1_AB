@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { UserPlus, Plus, ChevronDown } from 'lucide-react';
+import { UserPlus, Plus, ChevronDown, Users } from 'lucide-react';
 import { Dialog } from '@/components/ui/Dialog';
 import { createCustomer } from '@/lib/actions/customer-actions';
 import { createSupplier } from '@/lib/actions/supplier-actions';
@@ -42,20 +42,13 @@ function CustomerForm({ setIsOpen }: { setIsOpen: (val: boolean) => void }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-5 pt-2">
        <div className="space-y-4">
+          {/* Partner Type is locked to buyer on this page */}
+          <input type="hidden" name="partnerType" value="buyer" />
           <div className="space-y-1">
-             <label className="text-xs font-bold uppercase text-white/70 tracking-widest px-1">Partner Type</label>
-             <div className="relative">
-               <select 
-                 value={partnerType}
-                 onChange={(e) => setPartnerType(e.target.value as 'buyer' | 'supplier')}
-                 className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-bold outline-none focus:border-emerald-500/50 transition-all appearance-none cursor-pointer"
-               >
-                 <option value="buyer" className="bg-[#1a1a1a] text-white">Buyer (Customer)</option>
-                 <option value="supplier" className="bg-[#1a1a1a] text-white">Supplier (Vendor)</option>
-               </select>
-               <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-white/50">
-                 <ChevronDown className="w-4 h-4" />
-               </div>
+             <label className="text-xs font-bold uppercase text-emerald-400 tracking-widest px-1">Partner Type</label>
+             <div className="bg-white/5 border border-white/10 rounded-md p-3 text-emerald-400 font-black flex items-center gap-2">
+               <Users className="w-4 h-4" />
+               Buyer (Customer)
              </div>
           </div>
 

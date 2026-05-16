@@ -33,7 +33,7 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
       items: [
         { name: 'Sales', icon: Banknote, href: '/dashboard/sales', roles: ['OWNER', 'MANAGER', 'CASHIER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
         { name: 'Customers', icon: Users, href: '/dashboard/sales/customers', roles: ['OWNER', 'MANAGER', 'CASHIER', 'ACCOUNTANT'] },
-        { name: 'Suppliers', icon: Truck, href: '/dashboard/inventory/suppliers', roles: ['OWNER', 'MANAGER', 'ACCOUNTANT'] },
+        { name: 'Suppliers', icon: Truck, href: '/dashboard/suppliers', roles: ['OWNER', 'MANAGER', 'ACCOUNTANT'] },
         { name: 'Finance Control', icon: Wallet, href: '/dashboard/finance', roles: ['OWNER', 'MANAGER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
         { name: 'Inventory', icon: LayoutDashboard, href: '/dashboard/inventory', roles: ['OWNER', 'MANAGER', 'ACCOUNTANT'] },
       ]
@@ -126,7 +126,15 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
                   {category.name}
                 </p>
                 {visibleItems.map((item) => {
-                  const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
+                  const isActive = pathname === item.href || (
+                    item.href !== '/dashboard' && 
+                    pathname.startsWith(item.href + '/') && 
+                    !visibleItems.some(other => 
+                      other.href !== item.href && 
+                      other.href.startsWith(item.href + '/') && 
+                      pathname.startsWith(other.href)
+                    )
+                  );
                   return (
                     <Link
                       key={item.name}
