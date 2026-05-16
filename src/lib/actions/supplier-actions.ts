@@ -65,6 +65,7 @@ export async function createSupplier(data: {
   email?: string
   address?: string
   balanceOwed?: number
+  legacyDebt?: number
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
@@ -73,9 +74,11 @@ export async function createSupplier(data: {
   if (!hasEditAccess) return { success: false, error: 'Unauthorized' }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    const { legacyDebt, ...rest } = data;
     const supplier = await tx.supplier.create({
       data: {
-        ...data,
+        ...rest,
+        balanceOwed: (data.balanceOwed || 0) + (legacyDebt || 0),
         farmId: activeFarmId
       }
     })

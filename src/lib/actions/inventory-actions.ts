@@ -35,8 +35,25 @@ export async function createInventoryItem(data: {
       }
     })
 
-    if (data.supplierId && data.paymentPlan === 'installments') {
-      const totalCost = data.stockLevel * (data.costPerUnit || 0)
+    const totalCost = data.stockLevel * (data.costPerUnit || 0)
+    const amountToLog = data.paymentPlan === 'full' ? totalCost : (data.amountPaid || 0)
+
+    if (amountToLog > 0) {
+      await tx.expense.create({
+        data: {
+          farmId: activeFarmId,
+          userId: userId,
+          amount: amountToLog,
+          category: data.category === 'FEED' ? 'FEED' : 
+                    data.category === 'MEDICINE' ? 'MEDICATION' : 'OTHER',
+          description: `Inventory Purchase: ${data.itemName} (${data.stockLevel} ${data.unit})`,
+          supplierId: data.supplierId,
+          expenseDate: new Date()
+        }
+      })
+    }
+
+    if (data.supplierId && (data.paymentPlan === 'installments' || data.paymentPlan === 'none')) {
       const debt = totalCost - (data.amountPaid || 0)
       if (debt > 0) {
         await tx.supplier.update({
