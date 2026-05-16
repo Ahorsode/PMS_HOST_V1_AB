@@ -18,6 +18,10 @@ interface EggFormProps {
 export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggFormProps) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [loggingMode, setLoggingMode] = useState<'individual' | 'crates'>('individual');
+  const [crates, setCrates] = useState(log?.eggsCollected ? Math.floor(log.eggsCollected / 30) : 0);
+  const [remainder, setRemainder] = useState(log?.eggsCollected ? log.eggsCollected % 30 : 0);
+
   const [formData, setFormData] = useState({
     batchId: log?.batchId || defaultBatchId || (batches[0]?.id || 0),
     eggsCollected: log?.eggsCollected || 0,
@@ -25,6 +29,13 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
     qualityGrade: log?.qualityGrade || 'GRADE_A',
     logDate: log?.logDate ? new Date(log.logDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
   });
+
+  const handleCrateChange = (c: number, r: number) => {
+    setCrates(c);
+    setRemainder(r);
+    setFormData(prev => ({ ...prev, eggsCollected: (c * 30) + r }));
+  };
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,17 +89,55 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
           required
         />
       )}
+      <div className="space-y-1.5">
+        <label className="text-xs font-bold text-white/70 uppercase tracking-wider">Logging Mode</label>
+        <div className="grid grid-cols-2 gap-2">
+          {['individual', 'crates'].map(modeOpt => (
+            <button
+              key={modeOpt}
+              type="button"
+              onClick={() => setLoggingMode(modeOpt as any)}
+              className={`py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${loggingMode === modeOpt ? 'bg-amber-500 text-black' : 'bg-white/10 text-white/70 hover:bg-white/10'}`}
+            >
+              {modeOpt === 'individual' ? 'Individual Eggs' : 'Crates (30/ea)'}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="grid grid-cols-2 gap-3">
-        <Input
-          label="Total Eggs Collected"
-          type="number"
-          min="0"
-          value={formData.eggsCollected}
-          onChange={(e) => setFormData({ ...formData, eggsCollected: Number(e.target.value) })}
-          required
-        />
+        {loggingMode === 'individual' ? (
+          <Input
+            label="Total Eggs Collected"
+            type="number"
+            min="0"
+            value={formData.eggsCollected}
+            onChange={(e) => setFormData({ ...formData, eggsCollected: Number(e.target.value) })}
+            required
+          />
+        ) : (
+          <div className="contents">
+             <Input
+                label="Number of Crates"
+                type="number"
+                min="0"
+                value={crates}
+                onChange={(e) => handleCrateChange(Number(e.target.value), remainder)}
+                required
+              />
+              <Input
+                label="Remainder Eggs"
+                type="number"
+                min="0"
+                max="29"
+                value={remainder}
+                onChange={(e) => handleCrateChange(crates, Number(e.target.value))}
+              />
+          </div>
+        )}
         <Select
           label="Quality Grade"
+
           options={[
             { label: 'Grade A (Premium)', value: 'GRADE_A' },
             { label: 'Grade B (Standard)', value: 'GRADE_B' },

@@ -70,8 +70,30 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
     e.preventDefault();
     if (items.some(i => !i.description.trim())) {
       toast.error('All items need a description');
+      setIsSubmitting(false);
       return;
     }
+
+    // Stock validation
+    for (const item of items) {
+      if (item.inventoryId && (item.inventoryId as unknown as string) !== 'PENDING') {
+        const inv = inventory.find(i => i.id === Number(item.inventoryId));
+        if (inv && Number(item.quantity) > Number(inv.stockLevel)) {
+          toast.error(`Not enough stock for ${inv.itemName}. Available: ${inv.stockLevel}`);
+          setIsSubmitting(false);
+          return;
+        }
+      }
+      if (item.livestockId && (item.livestockId as unknown as string) !== 'PENDING') {
+        const live = livestock.find(l => l.id === Number(item.livestockId));
+        if (live && Number(item.quantity) > Number(live.currentCount)) {
+          toast.error(`Not enough birds in ${live.batchName}. Available: ${live.currentCount}`);
+          setIsSubmitting(false);
+          return;
+        }
+      }
+    }
+
     setIsSubmitting(true);
     const res = await createOrder({
       customerId: customerId ? Number(customerId) : (undefined as any),
@@ -323,11 +345,41 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
                     {(item.livestockId as unknown as string) !== 'PENDING' && (item.inventoryId as unknown as string) !== 'PENDING' && (
                       <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
                         <div className="space-y-1">
-                          <p className="text-[9px] font-black uppercase text-white/50 mb-1 tracking-[0.2em]">Quantity</p>
+                          <div className="flex justify-between items-center">
+                            <p className="text-[9px] font-black uppercase text-white/50 mb-1 tracking-[0.2em]">Quantity</p>
+                            {/* Stock Warning UI */}
+                            {(() => {
+                              if (item.inventoryId && (item.inventoryId as unknown as string) !== 'PENDING') {
+                                const inv = inventory.find(i => i.id === Number(item.inventoryId));
+                                if (inv && Number(item.quantity) > Number(inv.stockLevel)) {
+                                  return <span className="text-[9px] font-black text-red-400 animate-pulse">Exceeds {inv.stockLevel} stock</span>;
+                                }
+                              }
+                              if (item.livestockId && (item.livestockId as unknown as string) !== 'PENDING') {
+                                const live = livestock.find(l => l.id === Number(item.livestockId));
+                                if (live && Number(item.quantity) > Number(live.currentCount)) {
+                                  return <span className="text-[9px] font-black text-red-400 animate-pulse">Exceeds {live.currentCount} birds</span>;
+                                }
+                              }
+                              return null;
+                            })()}
+                          </div>
                           <input
                             type="number"
                             min="0"
-                            className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white font-bold outline-none text-sm focus:border-emerald-500/30"
+                            className={`w-full bg-white/5 border rounded-lg p-3 text-white font-bold outline-none text-sm transition-all ${
+                              (() => {
+                                if (item.inventoryId && (item.inventoryId as unknown as string) !== 'PENDING') {
+                                  const inv = inventory.find(i => i.id === Number(item.inventoryId));
+                                  return inv && Number(item.quantity) > Number(inv.stockLevel) ? 'border-red-500/50' : 'border-white/10 focus:border-emerald-500/30';
+                                }
+                                if (item.livestockId && (item.livestockId as unknown as string) !== 'PENDING') {
+                                  const live = livestock.find(l => l.id === Number(item.livestockId));
+                                  return live && Number(item.quantity) > Number(live.currentCount) ? 'border-red-500/50' : 'border-white/10 focus:border-emerald-500/30';
+                                }
+                                return 'border-white/10 focus:border-emerald-500/30';
+                              })()
+                            }`}
                             value={item.quantity}
                             onChange={(e) => updateItem(idx, 'quantity', e.target.value === '' ? '' : Number(e.target.value))}
                             required
@@ -349,6 +401,7 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
                           </div>
                         </div>
                       </div>
+
                     )}
                   </>
                 )}
