@@ -9,17 +9,22 @@ import {
   Beaker, 
   Plus, 
   ArrowRight,
-  Database
+  Database,
+  Utensils
 } from 'lucide-react'
 import { FeedFormulationForm } from './FeedFormulationForm'
+import { FeedForm } from './FeedForm'
 import { getAllFeedFormulations, getConsumptionEfficiency } from '@/lib/actions/feed-actions'
 import { getAllInventory } from '@/lib/actions/inventory-actions'
+import { getAllBatches } from '@/lib/actions/dashboard-actions'
 
 export default function FeedDashboard({ canEdit = true }: { canEdit?: boolean }) {
   const [formulations, setFormulations] = useState<any[]>([])
   const [efficiency, setEfficiency] = useState<any[]>([])
   const [inventory, setInventory] = useState<any[]>([])
+  const [batches, setBatches] = useState<any[]>([])
   const [showForm, setShowForm] = useState(false)
+  const [showLogForm, setShowLogForm] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -28,14 +33,16 @@ export default function FeedDashboard({ canEdit = true }: { canEdit?: boolean })
 
   const loadData = async () => {
     setLoading(true)
-    const [fRes, eRes, iRes] = await Promise.all([
+    const [fRes, eRes, iRes, bRes] = await Promise.all([
       getAllFeedFormulations(),
       getConsumptionEfficiency(),
-      getAllInventory()
+      getAllInventory(),
+      getAllBatches()
     ])
     setFormulations(fRes)
     setEfficiency(eRes)
     setInventory(iRes)
+    setBatches(bRes)
     setLoading(false)
   }
 
@@ -43,19 +50,42 @@ export default function FeedDashboard({ canEdit = true }: { canEdit?: boolean })
     <div className="p-5 space-y-7 animate-in fade-in duration-700">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
         <div>
-          <h1 className="text-4xl font-bold text-gray-900 tracking-normal">Feed Management</h1>
-          <p className="text-gray-500 font-medium">Formulation builder & consumption efficiency analytics</p>
+          <h1 className="text-4xl font-bold text-white tracking-normal">Feed Management</h1>
+          <p className="text-emerald-100/60 font-medium">Formulation builder & consumption efficiency analytics</p>
         </div>
         {canEdit && (
-          <Button 
-            onClick={() => setShowForm(!showForm)} 
-            className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 shadow-lg shadow-emerald-200"
-          >
-            {showForm ? <Package className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-            {showForm ? 'View Formulations' : 'Create Formulation'}
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button 
+              onClick={() => setShowLogForm(true)} 
+              className="bg-emerald-600/20 border border-emerald-500/50 hover:bg-emerald-600/40 text-emerald-100 gap-2 shadow-lg"
+            >
+              <Utensils className="w-4 h-4" />
+              Log Feeding
+            </Button>
+            <Button 
+              onClick={() => setShowForm(!showForm)} 
+              className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 shadow-lg shadow-emerald-900/50"
+            >
+              {showForm ? <Package className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+              {showForm ? 'View Formulations' : 'Create Formulation'}
+            </Button>
+          </div>
         )}
       </header>
+
+      {showLogForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-3">
+          <div className="glass-pill rounded-lg p-5 w-full max-w-md border border-white/10 bg-[#0f172a]">
+            <h2 className="text-xl font-bold text-white mb-4">Log Feeding</h2>
+            <FeedForm
+              batches={batches}
+              inventory={inventory.filter(i => i.category === 'FEED' || !i.category)}
+              mode="create"
+              onClose={() => { setShowLogForm(false); loadData(); }}
+            />
+          </div>
+        </div>
+      )}
 
       {showForm ? (
         <FeedFormulationForm 
@@ -108,41 +138,41 @@ export default function FeedDashboard({ canEdit = true }: { canEdit?: boolean })
             </Card>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-               <Card className="bg-white/50 border-white shadow-sm rounded-lg h-full border-2">
+               <Card className="bg-[#1a2332] border-white/10 shadow-xl rounded-lg h-full">
                   <CardContent className="p-5">
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="p-2 bg-amber-100 rounded-md text-amber-600">
+                      <div className="p-2 bg-amber-500/20 rounded-md text-amber-400">
                         <Database className="w-6 h-6" />
                       </div>
-                      <h3 className="font-bold text-gray-900 border-none">Active Formulations</h3>
+                      <h3 className="font-bold text-white text-lg border-none">Active Formulations</h3>
                     </div>
                     <div className="space-y-2">
                       {formulations.slice(0, 3).map(f => (
-                        <div key={f.id} className="flex justify-between items-center p-2 hover:bg-white rounded-md transition-colors cursor-pointer group">
+                        <div key={f.id} className="flex justify-between items-center p-2 hover:bg-white/5 rounded-md transition-colors cursor-pointer group border border-transparent hover:border-white/10">
                           <div>
-                            <p className="font-bold text-gray-800">{f.name}</p>
+                            <p className="font-bold text-emerald-100 text-base">{f.name}</p>
                             <p className="text-xs font-bold text-gray-400 uppercase tracking-normal">{f.type}</p>
                           </div>
-                          <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-emerald-500 group-hover:translate-x-1 transition-all" />
+                          <ArrowRight className="w-4 h-4 text-gray-500 group-hover:text-emerald-400 group-hover:translate-x-1 transition-all" />
                         </div>
                       ))}
                     </div>
                   </CardContent>
                </Card>
 
-               <Card className="bg-white/50 border-white shadow-sm rounded-lg h-full border-2">
+               <Card className="bg-[#1a2332] border-white/10 shadow-xl rounded-lg h-full">
                   <CardContent className="p-5">
                     <div className="flex items-center gap-3 mb-3">
-                      <div className="p-2 bg-emerald-100 rounded-md text-emerald-600">
+                      <div className="p-2 bg-emerald-500/20 rounded-md text-emerald-400">
                         <Beaker className="w-6 h-6" />
                       </div>
-                      <h3 className="font-bold text-gray-900 border-none">Inventory Check</h3>
+                      <h3 className="font-bold text-white text-lg border-none">Inventory Check</h3>
                     </div>
                     <div className="space-y-2">
                        {inventory.slice(0, 4).map(item => (
-                         <div key={item.id} className="flex justify-between items-center bg-white p-2 rounded-md border border-gray-100">
-                           <span className="text-sm font-bold text-gray-700">{item.itemName}</span>
-                           <span className={`text-xs font-bold px-2 py-1 rounded ${item.stockLevel < 100 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500'}`}>
+                         <div key={item.id} className="flex justify-between items-center bg-white/5 p-2 rounded-md border border-white/10">
+                           <span className="text-base font-bold text-emerald-100">{item.itemName}</span>
+                           <span className={`text-xs font-bold px-2 py-1 rounded ${item.stockLevel < 100 ? 'bg-red-500/20 text-red-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
                               {Number(item.stockLevel).toLocaleString()} {item.unit}
                            </span>
                          </div>
@@ -155,15 +185,15 @@ export default function FeedDashboard({ canEdit = true }: { canEdit?: boolean })
 
           {/* Right Pillar: Recent History */}
           <div>
-             <Card className="bg-white/80 border-white shadow-xl rounded-lg h-full border-t border-l">
+             <Card className="bg-[#1a2332] border-white/10 shadow-xl rounded-lg h-full">
                 <CardHeader>
-                  <CardTitle className="text-gray-900 border-none">Ingredient Usage</CardTitle>
+                  <CardTitle className="text-white text-xl border-none">Ingredient Usage</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                    {formulations.map(f => (
-                     <div key={f.id} className="p-3 rounded-lg bg-gray-50/50 border border-gray-100">
+                     <div key={f.id} className="p-3 rounded-lg bg-white/5 border border-white/10">
                         <div className="flex justify-between items-center mb-3">
-                          <h4 className="font-bold text-sm uppercase tracking-widest text-emerald-800">{f.name}</h4>
+                          <h4 className="font-bold text-sm uppercase tracking-widest text-emerald-400">{f.name}</h4>
                         </div>
                         <div className="space-y-2">
                            {f.ingredients.map((ing: any) => (
@@ -172,7 +202,7 @@ export default function FeedDashboard({ canEdit = true }: { canEdit?: boolean })
                                  <span>{ing.inventory.itemName}</span>
                                  <span>{ing.percentage}%</span>
                                </div>
-                               <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                               <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
                                  <div 
                                   className="h-full bg-emerald-500 rounded-full" 
                                   style={{ width: `${ing.percentage}%` }}
