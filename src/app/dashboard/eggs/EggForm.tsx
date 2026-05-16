@@ -27,6 +27,10 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
     eggsCollected: log?.eggsCollected || 0,
     unusableCount: log?.unusableCount || 0,
     qualityGrade: log?.qualityGrade || 'MEDIUM',
+    isSorted: log?.isSorted || false,
+    smallCount: log?.smallCount || 0,
+    mediumCount: log?.mediumCount || 0,
+    largeCount: log?.largeCount || 0,
     logDate: log?.logDate ? new Date(log.logDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
   });
 
@@ -36,9 +40,12 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
     setFormData(prev => ({ ...prev, eggsCollected: (c * 30) + r }));
   };
 
+  const sortedTotal = formData.smallCount + formData.mediumCount + formData.largeCount;
+  const isOverTotal = formData.isSorted && sortedTotal > formData.eggsCollected;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isOverTotal) return;
     setIsLoading(true);
     try {
       if (mode === 'create') {
@@ -47,12 +54,19 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
           batchId: Number(formData.batchId),
           eggsCollected: Number(formData.eggsCollected),
           unusableCount: Number(formData.unusableCount),
+          smallCount: Number(formData.smallCount),
+          mediumCount: Number(formData.mediumCount),
+          largeCount: Number(formData.largeCount),
         });
       } else if (mode === 'edit') {
         await updateEggProduction(log.id, {
           eggsCollected: Number(formData.eggsCollected),
           unusableCount: Number(formData.unusableCount),
           qualityGrade: formData.qualityGrade,
+          isSorted: formData.isSorted,
+          smallCount: Number(formData.smallCount),
+          mediumCount: Number(formData.mediumCount),
+          largeCount: Number(formData.largeCount),
           logDate: formData.logDate,
         });
       } else if (mode === 'delete') {
@@ -80,7 +94,7 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
+    <form onSubmit={handleSubmit} className="space-y-4">
       {mode === 'create' && (
         <Select
           label="Livestock"
@@ -90,19 +104,42 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
           required
         />
       )}
-      <div className="space-y-1.5">
-        <label className="text-xs font-bold text-white/70 uppercase tracking-wider">Logging Mode</label>
-        <div className="grid grid-cols-2 gap-2">
-          {['individual', 'crates'].map(modeOpt => (
-            <button
-              key={modeOpt}
-              type="button"
-              onClick={() => setLoggingMode(modeOpt as any)}
-              className={`py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${loggingMode === modeOpt ? 'bg-amber-500 text-black' : 'bg-white/10 text-white/70 hover:bg-white/10'}`}
-            >
-              {modeOpt === 'individual' ? 'Individual Eggs' : 'Crates (30/ea)'}
-            </button>
-          ))}
+      
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-white/70 uppercase tracking-wider">Logging Mode</label>
+          <div className="grid grid-cols-2 gap-2">
+            {['individual', 'crates'].map(modeOpt => (
+              <button
+                key={modeOpt}
+                type="button"
+                onClick={() => setLoggingMode(modeOpt as any)}
+                className={`py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${loggingMode === modeOpt ? 'bg-amber-500 text-black' : 'bg-white/10 text-white/70 hover:bg-white/10'}`}
+              >
+                {modeOpt === 'individual' ? 'Individual' : 'Crates'}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="text-xs font-bold text-white/70 uppercase tracking-wider">Sorting Status</label>
+          <div className="grid grid-cols-2 gap-2">
+            {[false, true].map(isSorted => (
+              <button
+                key={isSorted ? 'sorted' : 'unsorted'}
+                type="button"
+                onClick={() => setFormData({ 
+                  ...formData, 
+                  isSorted,
+                  ...(isSorted ? {} : { smallCount: 0, mediumCount: 0, largeCount: 0 })
+                })}
+                className={`py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${formData.isSorted === isSorted ? 'bg-emerald-500 text-white' : 'bg-white/10 text-white/70 hover:bg-white/10'}`}
+              >
+                {isSorted ? 'Sorted' : 'Unsorted'}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -136,34 +173,94 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
               />
           </div>
         )}
-        <Select
-          label="Egg Size"
-          options={[
-            { label: 'Small', value: 'SMALL' },
-            { label: 'Medium', value: 'MEDIUM' },
-            { label: 'Large', value: 'LARGE' },
-          ]}
-          value={formData.qualityGrade}
-          onChange={(e) => setFormData({ ...formData, qualityGrade: e.target.value })}
+        
+        {!formData.isSorted ? (
+          <Select
+            label="General Egg Size"
+            options={[
+              { label: 'Small', value: 'SMALL' },
+              { label: 'Medium', value: 'MEDIUM' },
+              { label: 'Large', value: 'LARGE' },
+            ]}
+            value={formData.qualityGrade}
+            onChange={(e) => setFormData({ ...formData, qualityGrade: e.target.value })}
+          />
+        ) : (
+          <Input
+            label="Unusable Eggs"
+            type="number"
+            min="0"
+            value={formData.unusableCount}
+            onChange={(e) => setFormData({ ...formData, unusableCount: Number(e.target.value) })}
+          />
+        )}
+      </div>
+
+      {formData.isSorted && (
+        <div className="p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-xl space-y-3">
+          <div className="flex justify-between items-center mb-1">
+            <label className="text-xs font-bold text-emerald-400 uppercase tracking-widest">Size Distribution</label>
+            <span className={`text-xs font-bold ${isOverTotal ? 'text-red-400' : 'text-emerald-500/70'}`}>
+              Allocated: {sortedTotal} / {formData.eggsCollected}
+            </span>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <Input
+              label="Small"
+              type="number"
+              min="0"
+              value={formData.smallCount}
+              onChange={(e) => setFormData({ ...formData, smallCount: Number(e.target.value) })}
+              className="bg-emerald-950/20 border-emerald-900/30"
+            />
+            <Input
+              label="Medium"
+              type="number"
+              min="0"
+              value={formData.mediumCount}
+              onChange={(e) => setFormData({ ...formData, mediumCount: Number(e.target.value) })}
+              className="bg-emerald-950/20 border-emerald-900/30"
+            />
+            <Input
+              label="Large"
+              type="number"
+              min="0"
+              value={formData.largeCount}
+              onChange={(e) => setFormData({ ...formData, largeCount: Number(e.target.value) })}
+              className="bg-emerald-950/20 border-emerald-900/30"
+            />
+          </div>
+          {isOverTotal && (
+            <p className="text-[10px] text-red-400 font-bold uppercase italic">
+              Warning: Sum of sizes exceeds total eggs collected!
+            </p>
+          )}
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-3">
+        {!formData.isSorted && (
+          <Input
+            label="Unusable Eggs"
+            type="number"
+            min="0"
+            value={formData.unusableCount}
+            onChange={(e) => setFormData({ ...formData, unusableCount: Number(e.target.value) })}
+          />
+        )}
+        <Input
+          label="Log Date"
+          type="date"
+          value={formData.logDate}
+          onChange={(e) => setFormData({ ...formData, logDate: e.target.value })}
+          required
+          className={formData.isSorted ? "col-span-2" : ""}
         />
       </div>
-      <Input
-        label="Unusable Eggs (Damaged/Cracked)"
-        type="number"
-        min="0"
-        value={formData.unusableCount}
-        onChange={(e) => setFormData({ ...formData, unusableCount: Number(e.target.value) })}
-      />
-      <Input
-        label="Log Date"
-        type="date"
-        value={formData.logDate}
-        onChange={(e) => setFormData({ ...formData, logDate: e.target.value })}
-        required
-      />
-      <div className="flex justify-end gap-2 pt-3">
+
+      <div className="flex justify-end gap-2 pt-2">
         <Button variant="outline" type="button" onClick={onClose}>Cancel</Button>
-        <Button type="submit" isLoading={isLoading}>
+        <Button type="submit" isLoading={isLoading} disabled={isOverTotal}>
           {mode === 'create' ? 'Save Log' : mode === 'edit' ? 'Update Log' : 'Save'}
         </Button>
       </div>

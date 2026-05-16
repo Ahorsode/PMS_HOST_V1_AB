@@ -87,8 +87,11 @@ export default async function EggsPage() {
                 <tr>
                    <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Date</th>
                   <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Livestock</th>
-                  <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Size</th>
-                  <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Collected</th>
+                  <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Status</th>
+                  <th className="px-5 py-3 text-center text-xs font-bold text-gray-400 uppercase tracking-widest bg-gray-50/30">Small</th>
+                  <th className="px-5 py-3 text-center text-xs font-bold text-gray-400 uppercase tracking-widest bg-gray-50/30">Medium</th>
+                  <th className="px-5 py-3 text-center text-xs font-bold text-gray-400 uppercase tracking-widest bg-gray-50/30">Large</th>
+                  <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Total</th>
                   <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Unusable</th>
                   <th className="px-5 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-widest">Actions</th>
                 </tr>
@@ -103,9 +106,18 @@ export default async function EggsPage() {
                       {log.livestock?.batchName || `FLK-${log.batchId?.toString().padStart(3, '0')}`}
                     </td>
                     <td className="px-5 py-3 whitespace-nowrap">
-                      <span className="px-2 py-1 text-xs font-bold bg-amber-100 text-amber-700 rounded-lg">
-                        {log.qualityGrade?.replace('_', ' ') || 'MEDIUM'}
+                      <span className={`px-2 py-1 text-[10px] font-bold rounded-lg uppercase ${log.isSorted ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'}`}>
+                        {log.isSorted ? 'Sorted' : 'Unsorted'}
                       </span>
+                    </td>
+                    <td className="px-5 py-3 whitespace-nowrap text-center text-sm font-bold text-gray-500 bg-gray-50/10">
+                      {log.isSorted ? log.smallCount : (log.qualityGrade === 'SMALL' ? log.eggsCollected : '-')}
+                    </td>
+                    <td className="px-5 py-3 whitespace-nowrap text-center text-sm font-bold text-gray-500 bg-gray-50/10">
+                      {log.isSorted ? log.mediumCount : (log.qualityGrade === 'MEDIUM' ? log.eggsCollected : '-')}
+                    </td>
+                    <td className="px-5 py-3 whitespace-nowrap text-center text-sm font-bold text-gray-500 bg-gray-50/10">
+                      {log.isSorted ? log.largeCount : (log.qualityGrade === 'LARGE' ? log.eggsCollected : '-')}
                     </td>
                     <td className="px-5 py-3 whitespace-nowrap text-sm text-green-700 font-bold">
                       {log.eggsCollected} <span className="text-xs font-normal text-gray-400">eggs</span>

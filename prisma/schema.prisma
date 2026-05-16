@@ -287,6 +287,10 @@ model EggProduction {
   eggsRemaining   Int          @default(0)
   qualityGrade    String?
   unusableCount   Int          @default(0)
+  isSorted        Boolean      @default(false)
+  smallCount      Int          @default(0)
+  mediumCount     Int          @default(0)
+  largeCount      Int          @default(0)
   batch           Livestock    @relation(fields: [batchId], references: [id])
   category        EggCategory? @relation(fields: [categoryId], references: [id])
   farm            Farm         @relation(fields: [farmId], references: [id])

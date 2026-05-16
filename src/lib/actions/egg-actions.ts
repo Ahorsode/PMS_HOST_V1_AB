@@ -19,6 +19,10 @@ export async function createEggProduction(data: {
   categoryId?: number
   unusableCount?: number
   qualityGrade?: string
+  isSorted?: boolean
+  smallCount?: number
+  mediumCount?: number
+  largeCount?: number
   logDate: string
 }) {
   const { userId, activeFarmId } = await getAuthContext()
@@ -67,6 +71,10 @@ export async function createEggProduction(data: {
         unusableCount: data.unusableCount || 0,
         eggsRemaining: calculatedEggs - (data.unusableCount || 0),
         qualityGrade: data.qualityGrade,
+        isSorted: data.isSorted || false,
+        smallCount: data.smallCount || 0,
+        mediumCount: data.mediumCount || 0,
+        largeCount: data.largeCount || 0,
         logDate: new Date(data.logDate),
         userId: userId
       }
@@ -120,6 +128,10 @@ export async function updateEggProduction(id: number, data: {
   eggsCollected?: number
   unusableCount?: number
   qualityGrade?: string
+  isSorted?: boolean
+  smallCount?: number
+  mediumCount?: number
+  largeCount?: number
   logDate?: string
 }) {
   const { userId, activeFarmId } = await getAuthContext()
