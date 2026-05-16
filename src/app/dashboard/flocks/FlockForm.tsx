@@ -6,6 +6,7 @@ import { Dialog } from '@/components/ui/Dialog';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { createBatch, updateBatch, deleteBatch, logHealthEvent } from '@/lib/actions/batch-actions';
+import { createIsolationRoom } from '@/lib/actions/dashboard-actions';
 import { Activity, Skull, Home, AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -52,6 +53,8 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, onClos
     reason: '',
     healthType: 'DEAD' as 'SICK' | 'DEAD',
     isolationRoomId: '',
+    newRoomName: '',
+    newRoomCapacity: '',
   });
 
   const handleSubmit = async (e: any) => {
@@ -80,13 +83,35 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, onClos
       } else if (mode === 'delete') {
         res = await deleteBatch(batch.id);
       } else if (mode === 'mortality') {
+        let finalIsolationRoomId = formData.isolationRoomId;
+        
+        // Handle dynamic room creation
+        if (formData.healthType === 'SICK' && formData.isolationRoomId === 'add_new') {
+          if (!formData.newRoomName) {
+            toast.error("Please enter a room name");
+            setIsLoading(false);
+            return;
+          }
+          const roomRes = await createIsolationRoom({
+            name: formData.newRoomName,
+            capacity: Number(formData.newRoomCapacity) || 0
+          });
+          if (roomRes.success) {
+            finalIsolationRoomId = (roomRes.room as any).id.toString();
+          } else {
+            toast.error(roomRes.error || "Failed to create isolation room");
+            setIsLoading(false);
+            return;
+          }
+        }
+
         res = await logHealthEvent({
           batchId: batch.id,
           type: formData.healthType,
           count: Number(formData.mortalityCount) || 0,
-          isolationRoomId: formData.healthType === 'SICK' ? Number(formData.isolationRoomId) : undefined,
+          isolationRoomId: formData.healthType === 'SICK' ? Number(finalIsolationRoomId) : undefined,
           category: formData.category,
-          subCategory: formData.subCategory,
+          subCategory: formData.category === 'Unknown' ? 'Unknown cause yet' : formData.subCategory,
           reason: formData.reason,
           logDate: new Date().toISOString(),
         });
@@ -166,19 +191,39 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, onClos
                 : `Info: ${currentRemaining} birds remaining in this batch.`}
             </p>
           </div>
-
-          {formData.healthType === 'SICK' && (
+          {/* Health Details: Isolation Room (Show for all health events to allow logging from isolation) */}
+          <div className="space-y-3">
             <Select
-              label="Transfer to Isolation Room"
+              label={formData.healthType === 'SICK' ? "Transfer to Isolation Room" : "Logged in Isolation Room?"}
               options={[
-                { label: 'Select Room...', value: '' },
-                ...isolationRooms.map(room => ({ label: `${room.name} (Cap: ${room.capacity})`, value: room.id }))
+                { label: 'Select Room (Optional)...', value: '' },
+                ...isolationRooms.map(room => ({ label: `${room.name} (Cap: ${room.capacity})`, value: room.id.toString() })),
+                { label: '+ Add New Room', value: 'add_new' }
               ]}
               value={formData.isolationRoomId}
               onChange={(e) => setFormData({ ...formData, isolationRoomId: e.target.value })}
-              required
             />
-          )}
+
+            {formData.isolationRoomId === 'add_new' && (
+              <div className="grid grid-cols-2 gap-3 p-4 bg-emerald-50 rounded-lg border border-emerald-100 animate-in slide-in-from-top-2">
+                <Input
+                  label="New Room Name"
+                  placeholder="e.g., Room A"
+                  value={formData.newRoomName}
+                  onChange={(e) => setFormData({ ...formData, newRoomName: e.target.value })}
+                  required
+                />
+                <Input
+                  label="Capacity"
+                  type="number"
+                  placeholder="50"
+                  value={formData.newRoomCapacity}
+                  onChange={(e) => setFormData({ ...formData, newRoomCapacity: e.target.value })}
+                  required
+                />
+              </div>
+            )}
+          </div>
 
           <Select
             label="Condition/Reason"
@@ -190,7 +235,7 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, onClos
             onChange={(e) => setFormData({ ...formData, category: e.target.value, subCategory: '' })}
             required
           />
-          {formData.category && (
+          {formData.category && formData.category !== 'Unknown' && (
             <Select
               label="Specific Symptom/Cause"
               options={[

@@ -9,9 +9,10 @@ import { getLivestockUnit, formatLivestockType } from '@/lib/utils/growth-utils'
 
 interface QuickMortalityLoggerProps {
   activeBatches: any[];
+  isolationRooms?: any[];
 }
 
-export function QuickMortalityLogger({ activeBatches }: QuickMortalityLoggerProps) {
+export function QuickMortalityLogger({ activeBatches, isolationRooms = [] }: QuickMortalityLoggerProps) {
   const [selectedBatch, setSelectedBatch] = useState<any>(null);
 
   return (
@@ -66,6 +67,7 @@ export function QuickMortalityLogger({ activeBatches }: QuickMortalityLoggerProp
              <LivestockForm 
                batch={selectedBatch} 
                houses={[]} // Not needed for mortality mode in LivestockForm
+               isolationRooms={isolationRooms}
                mode="mortality" 
                onClose={() => setSelectedBatch(null)} 
              />

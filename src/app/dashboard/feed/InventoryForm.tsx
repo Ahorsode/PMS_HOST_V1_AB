@@ -19,7 +19,7 @@ export const InventoryForm = ({ item, mode, onClose }: InventoryFormProps) => {
   const [formData, setFormData] = useState({
     itemName: item?.itemName || '',
     stockLevel: item?.stockLevel || 0,
-    unit: item?.unit || 'kg',
+    unit: item?.unit || 'bags',
     category: item?.category || 'feed',
   });
 

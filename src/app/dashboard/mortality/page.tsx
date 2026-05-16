@@ -68,7 +68,7 @@ export default async function MortalityPage() {
       {/* Quick Logger */}
       {canEdit && (
         <div className="bg-[#111827] p-6 rounded-xl shadow-xl border border-gray-800">
-          <QuickMortalityLogger activeBatches={activeBatches} />
+          <QuickMortalityLogger activeBatches={activeBatches} isolationRooms={JSON.parse(JSON.stringify(isolationRooms))} />
         </div>
       )}
 
@@ -127,6 +127,7 @@ export default async function MortalityPage() {
                 <th className="px-5 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Batch</th>
                 <th className="px-5 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Count</th>
                 <th className="px-5 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Reason</th>
+                <th className="px-5 py-3 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Isolation</th>
                 <th className="px-5 py-3 text-right text-xs font-bold text-gray-400 uppercase tracking-widest">Actions</th>
               </tr>
             </thead>
@@ -143,6 +144,15 @@ export default async function MortalityPage() {
                       <span className="text-gray-200 font-bold italic">{log.category} › {log.subCategory}</span>
                       {log.reason && <span className="text-xs text-gray-500 mt-1">{log.reason}</span>}
                     </div>
+                  </td>
+                  <td className="px-5 py-3 whitespace-nowrap text-center">
+                    {log.isolationRoom ? (
+                      <span className="px-2 py-1 bg-amber-500/10 text-amber-500 text-[10px] font-bold uppercase rounded border border-amber-500/20">
+                        {log.isolationRoom.name}
+                      </span>
+                    ) : (
+                      <span className="text-gray-600 text-xs italic">None</span>
+                    )}
                   </td>
                   <td className="px-5 py-3 text-right">
                     <Link
@@ -174,6 +184,15 @@ export default async function MortalityPage() {
                     <span className="text-xs font-bold text-gray-300">{log.category}</span>
                     <span className="text-gray-600">›</span>
                     <span className="text-xs font-bold text-gray-400">{log.subCategory}</span>
+                  </div>
+                  <div className="mt-2">
+                    {log.isolationRoom ? (
+                      <span className="px-2 py-0.5 bg-amber-500/10 text-amber-500 text-[9px] font-bold uppercase rounded border border-amber-500/20">
+                        Room: {log.isolationRoom.name}
+                      </span>
+                    ) : (
+                      <span className="text-gray-600 text-[10px] italic">No room assigned</span>
+                    )}
                   </div>
                 </div>
                 <Link

@@ -79,7 +79,7 @@ export function WorkerDashboard({ stats, houses }: WorkerDashboardProps) {
                        <Wheat className="w-5 h-5 text-red-500" />
                        <div>
                          <p className="text-white text-sm font-bold truncate underline decoration-red-500/50">LOW STOCK: {item.name}</p>
-                         <p className="text-red-400 text-[9px] uppercase tracking-widest font-bold mt-1">{item.stockLevel} kg remaining</p>
+                         <p className="text-red-400 text-[9px] uppercase tracking-widest font-bold mt-1">{item.stockLevel} bags remaining</p>
                        </div>
                     </div>
                   ))}

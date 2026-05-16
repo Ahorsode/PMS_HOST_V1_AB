@@ -44,16 +44,16 @@ export function FeedFormulationForm({ inventoryItems, onSuccess }: FeedFormulati
   const [ingredients, setIngredients] = useState<{ inventoryId: number; percentage: number | '' }[]>([])
 
   const addIngredient = () => {
-    if (inventoryItems.length === 0) {
-      alert("Inventory is empty. Please add raw materials to your inventory before creating a formulation.");
+    // Only allow adding if we haven't exhausted inventory items
+    const usedIds = ingredients.map(i => i.inventoryId);
+    const availableItems = inventoryItems.filter(item => !usedIds.includes(item.id));
+    
+    if (availableItems.length === 0) {
+      toast.error("All inventory items have already been added to this formulation.");
       return;
     }
     
-    // Find first item ID not already in ingredients to prevent duplicates on add
-    const usedIds = ingredients.map(i => i.inventoryId);
-    const nextAvailable = inventoryItems.find(item => !usedIds.includes(item.id)) || inventoryItems[0];
-    
-    setIngredients([...ingredients, { inventoryId: nextAvailable?.id || 0, percentage: '' }])
+    setIngredients([...ingredients, { inventoryId: availableItems[0].id, percentage: '' }])
   }
 
   const removeIngredient = (index: number) => {
@@ -160,7 +160,13 @@ export function FeedFormulationForm({ inventoryItems, onSuccess }: FeedFormulati
               <Scale className="w-5 h-5 text-emerald-600" />
               Ingredients Breakdown
             </div>
-            <Button onClick={addIngredient} size="sm" variant="outline" className="gap-2 border-emerald-400/50 text-emerald-400 bg-emerald-400/10 font-bold uppercase tracking-widest text-xs h-10 px-4">
+            <Button 
+              onClick={addIngredient} 
+              size="sm" 
+              variant="outline" 
+              disabled={ingredients.length >= inventoryItems.length}
+              className="gap-2 border-emerald-400/50 text-emerald-400 bg-emerald-400/10 font-bold uppercase tracking-widest text-xs h-10 px-4 disabled:opacity-50"
+            >
               <Plus className="w-4 h-4" /> Add Item
             </Button>
           </div>
