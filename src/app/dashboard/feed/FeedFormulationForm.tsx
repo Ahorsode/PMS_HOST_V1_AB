@@ -108,28 +108,28 @@ export function FeedFormulationForm({ inventoryItems, onSuccess }: FeedFormulati
     <div className="max-w-4xl mx-auto">
       <Card className="border-white/20 bg-white/10 backdrop-blur-md shadow-2xl rounded-md overflow-hidden">
       <CardHeader className="bg-gradient-to-r from-emerald-600/20 to-teal-500/10 border-b border-white/10">
-        <CardTitle className="flex items-center gap-2 text-emerald-950 font-bold italic">
-          <Beaker className="w-5 h-5" />
+        <CardTitle className="flex items-center gap-2 text-white font-bold italic">
+          <Beaker className="w-5 h-5 text-emerald-400" />
           Create New Formulation
         </CardTitle>
       </CardHeader>
       <CardContent className="p-5 space-y-5">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="space-y-2">
-            <div className="text-xs font-bold uppercase tracking-widest text-emerald-400">Formulation Name</div>
+            <div className="text-sm font-bold uppercase tracking-widest text-emerald-400">Formulation Name</div>
             <Input 
               value={name} 
               onChange={(e) => setName(e.target.value)} 
               placeholder="e.g. Broiler Power Starter"
-              className="bg-white/80 border-white/30 backdrop-blur-sm text-emerald-950 font-bold"
+              className="bg-white/90 border-white/30 backdrop-blur-sm text-[#064e3b] font-bold h-12"
             />
           </div>
           <div className="space-y-2">
-            <div className="text-xs font-bold uppercase tracking-widest text-emerald-400">Feed Type</div>
+            <div className="text-sm font-bold uppercase tracking-widest text-emerald-400">Feed Type</div>
             <select 
               value={type} 
               onChange={(e) => setType(e.target.value as FeedType)}
-              className="w-full h-10 px-2 rounded-md bg-white/80 border border-white/30 backdrop-blur-sm text-emerald-950 font-bold"
+              className="w-full h-12 px-3 rounded-md bg-white/90 border border-white/30 backdrop-blur-sm text-[#064e3b] font-bold"
             >
               {FEED_TYPES.map(t => (
                 <option key={t} value={t}>{t.replace('_', ' ')}</option>
@@ -144,30 +144,30 @@ export function FeedFormulationForm({ inventoryItems, onSuccess }: FeedFormulati
               <Scale className="w-5 h-5 text-emerald-600" />
               Ingredients Breakdown
             </div>
-            <Button onClick={addIngredient} size="sm" variant="outline" className="gap-2 border-emerald-200 text-emerald-700 bg-emerald-50 font-bold uppercase tracking-widest text-[10px]">
+            <Button onClick={addIngredient} size="sm" variant="outline" className="gap-2 border-emerald-400/50 text-emerald-400 bg-emerald-400/10 font-bold uppercase tracking-widest text-xs h-10 px-4">
               <Plus className="w-4 h-4" /> Add Item
             </Button>
           </div>
 
           <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
             {ingredients.map((ing, idx) => (
-              <div key={idx} className="flex gap-2 items-end bg-white/40 p-3 rounded-md border border-white/20">
+              <div key={idx} className="flex items-end gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
                 <div className="flex-1 space-y-1">
-                  <div className="text-[10px] uppercase font-bold text-emerald-400 tracking-widest">Ingredient Source</div>
+                  <div className="text-sm uppercase font-black text-emerald-400 tracking-widest italic ml-1">Ingredient Source</div>
                   <select
                     value={ing.inventoryId}
                     onChange={(e) => updateIngredient(idx, 'inventoryId', Number(e.target.value))}
-                    className="w-full h-10 px-2 rounded-md bg-white/90 border border-white/40 text-emerald-950 font-bold text-sm"
+                    className="w-full h-14 px-4 rounded-md bg-white border-2 border-emerald-500/30 text-[#064e3b] font-black text-lg focus:border-emerald-500 transition-all shadow-inner"
                   >
                     {getAvailableInventoryItems(idx).map(item => (
                       <option key={item.id} value={item.id}>{item.itemName}</option>
                     ))}
                   </select>
                 </div>
-                <div className="w-40 space-y-1">
-                   <div className="text-[10px] uppercase font-bold text-emerald-400 tracking-widest flex justify-between">
-                     <span>Number of Bags</span>
-                     <span className="text-gray-400">/ {inventoryItems.find(i => i.id === ing.inventoryId)?.stockLevel || 0}</span>
+                <div className="w-52 space-y-1">
+                   <div className="text-sm uppercase font-black text-emerald-400 tracking-widest flex justify-between italic px-1">
+                     <span>Bags</span>
+                     <span className="text-white/50">Max: {inventoryItems.find(i => i.id === ing.inventoryId)?.stockLevel || 0}</span>
                    </div>
                   <Input 
                     type="number"
@@ -176,16 +176,16 @@ export function FeedFormulationForm({ inventoryItems, onSuccess }: FeedFormulati
                     value={ing.percentage}
                     onChange={(e) => updateIngredient(idx, 'percentage', e.target.value === '' ? '' : Number(e.target.value))}
                     placeholder="0"
-                    className="bg-white/90 text-emerald-950 font-bold"
+                    className="bg-white text-[#064e3b] font-black h-14 text-xl border-2 border-emerald-500/30 shadow-inner"
                   />
                 </div>
                 <Button 
                   variant="ghost" 
                   size="icon" 
                   onClick={() => removeIngredient(idx)}
-                  className="text-red-500 hover:bg-red-50 mb-1"
+                  className="text-red-500 hover:bg-red-500/20 h-14 w-14 border border-red-500/20"
                 >
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-6 h-6" />
                 </Button>
               </div>
             ))}
@@ -196,13 +196,13 @@ export function FeedFormulationForm({ inventoryItems, onSuccess }: FeedFormulati
             )}
           </div>
 
-          <div className="p-4 rounded-md flex justify-between items-center bg-emerald-500/10 border border-emerald-500/20 backdrop-blur-md">
-            <div className="flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-emerald-600" />
-              <span className="font-bold text-white uppercase tracking-widest text-xs italic">Total Number of Bags:</span>
+          <div className="p-5 rounded-md flex justify-between items-center bg-emerald-500/20 border-2 border-emerald-500/40 backdrop-blur-md shadow-lg shadow-emerald-500/10">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="w-7 h-7 text-emerald-400 animate-pulse" />
+              <span className="font-black text-white uppercase tracking-widest text-lg italic">Final Batch Size:</span>
             </div>
-            <span className="text-2xl font-bold text-emerald-400 italic">
-              {totalBags.toLocaleString()}
+            <span className="text-5xl font-black text-emerald-400 italic tabular-nums">
+              {totalBags.toLocaleString()} <span className="text-xl text-white/50 not-italic ml-1">BAGS</span>
             </span>
           </div>
         </div>

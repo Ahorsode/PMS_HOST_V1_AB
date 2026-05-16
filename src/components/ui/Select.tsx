@@ -12,7 +12,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <div className="w-full space-y-2">
         {label && (
-          <label className="text-xs font-bold uppercase tracking-widest text-emerald-400 italic ml-1">
+          <label className="text-sm font-bold uppercase tracking-widest text-emerald-400 italic ml-1">
             {label}
           </label>
         )}

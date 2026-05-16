@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, Bird, PawPrint, Egg, ThermometerSun, 
   Wheat, Settings, Users, XCircle, Banknote,
-  LogOut, Wallet, Crown, ShieldCheck, BarChart3
+  LogOut, Wallet, Crown, ShieldCheck, BarChart3, Truck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -33,6 +33,7 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
       items: [
         { name: 'Sales', icon: Banknote, href: '/dashboard/sales', roles: ['OWNER', 'MANAGER', 'CASHIER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
         { name: 'Customers', icon: Users, href: '/dashboard/sales/customers', roles: ['OWNER', 'MANAGER', 'CASHIER', 'ACCOUNTANT'] },
+        { name: 'Suppliers', icon: Truck, href: '/dashboard/inventory/suppliers', roles: ['OWNER', 'MANAGER', 'ACCOUNTANT'] },
         { name: 'Finance Control', icon: Wallet, href: '/dashboard/finance', roles: ['OWNER', 'MANAGER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
         { name: 'Inventory', icon: LayoutDashboard, href: '/dashboard/inventory', roles: ['OWNER', 'MANAGER', 'ACCOUNTANT'] },
       ]
@@ -85,6 +86,7 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
                   'Houses': ['canViewHouses', 'canEditHouses'],
                   'Mortality': ['canViewMortality', 'canEditMortality'],
                   'Customers': ['canViewCustomers', 'canEditCustomers'],
+                  'Suppliers': ['canViewCustomers', 'canEditCustomers'],
                   'Team Management': ['canViewTeam', 'canEditTeam'],
                   'Settings': ['canViewSettings', 'canEditSettings']
                 };

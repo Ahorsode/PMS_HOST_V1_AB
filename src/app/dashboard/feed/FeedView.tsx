@@ -52,7 +52,7 @@ export default function FeedDashboard({ canEdit = true }: { canEdit?: boolean })
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
         <div>
           <h1 className="text-4xl font-bold text-white tracking-normal">Feed Management</h1>
-          <p className="text-emerald-100/60 font-medium">Formulation builder & consumption efficiency analytics</p>
+          <p className="text-emerald-100 font-bold uppercase tracking-widest text-xs mt-2">Formulation builder & consumption efficiency analytics</p>
         </div>
         {canEdit && (
           <div className="flex items-center gap-3">
@@ -126,7 +126,7 @@ export default function FeedDashboard({ canEdit = true }: { canEdit?: boolean })
                         <span className="text-3xl font-bold">{eff.fcr}</span>
                         <span className="text-xs font-bold text-emerald-400">FCR</span>
                       </div>
-                      <div className="mt-3 flex justify-between text-xs font-medium text-emerald-200/60 uppercase">
+                      <div className="mt-3 flex justify-between text-sm font-bold text-emerald-100 uppercase tracking-wider">
                         <span>Feed: {eff.totalFeed}kg</span>
                         <span>Weight: {eff.currentWeight}kg</span>
                       </div>
@@ -155,8 +155,8 @@ export default function FeedDashboard({ canEdit = true }: { canEdit?: boolean })
                           <div>
                             <p className="font-bold text-emerald-100 text-base">{f.name}</p>
                             <div className="flex items-center gap-2">
-                              <p className="text-xs font-bold text-gray-400 uppercase tracking-normal">{f.type}</p>
-                              <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-1 rounded uppercase font-bold">
+                              <p className="text-sm font-bold text-white/60 uppercase tracking-wider">{f.type}</p>
+                              <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded uppercase font-bold border border-emerald-500/20">
                                 {Number(f.stockLevel || 0).toLocaleString()} bags left
                               </span>
                             </div>
@@ -186,8 +186,8 @@ export default function FeedDashboard({ canEdit = true }: { canEdit?: boolean })
                     <div className="space-y-2">
                        {inventory.slice(0, 4).map(item => (
                          <div key={item.id} className="flex justify-between items-center bg-white/5 p-2 rounded-md border border-white/10">
-                           <span className="text-base font-bold text-emerald-100">{item.itemName}</span>
-                           <span className={`text-xs font-bold px-2 py-1 rounded ${item.stockLevel < 100 ? 'bg-red-500/20 text-red-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                           <span className="text-lg font-bold text-emerald-100">{item.itemName}</span>
+                           <span className={`text-sm font-bold px-3 py-1.5 rounded-md border ${item.stockLevel < 100 ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'}`}>
                               {Number(item.stockLevel).toLocaleString()} {item.unit}
                            </span>
                          </div>
@@ -213,9 +213,9 @@ export default function FeedDashboard({ canEdit = true }: { canEdit?: boolean })
                         <div className="space-y-2">
                            {f.ingredients.map((ing: any) => (
                              <div key={ing.id} className="space-y-1">
-                               <div className="flex justify-between text-xs font-bold text-gray-400">
+                               <div className="flex justify-between text-sm font-bold text-white/70">
                                  <span>{ing.inventory.itemName}</span>
-                                 <span>{ing.percentage}%</span>
+                                 <span className="text-emerald-400">{ing.percentage}%</span>
                                </div>
                                <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
                                  <div 

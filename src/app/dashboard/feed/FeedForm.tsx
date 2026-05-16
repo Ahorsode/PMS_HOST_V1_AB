@@ -123,7 +123,7 @@ export const FeedForm = ({ batches, inventory, formulations = [], log, mode, onC
               size="sm"
               variant="outline"
               onClick={() => setFormData({ ...formData, amountConsumed: amt })}
-              className="flex-1 text-xs"
+              className="flex-1 text-sm font-bold border-emerald-500/30 text-emerald-100 hover:bg-emerald-500/20"
             >
               {amt === 0.25 ? '1/4' : amt === 0.5 ? '1/2' : amt === 0.75 ? '3/4' : '1'} Bag
             </Button>

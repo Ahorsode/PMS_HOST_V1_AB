@@ -167,8 +167,14 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
   const handleAddNewSupplier = async () => {
     const name = window.prompt("Enter new supplier name:");
     if (!name || !name.trim()) return;
+    const debt = window.prompt("Initial amount owing/debt (optional):", "0");
+    const legacyDebt = debt ? parseFloat(debt) : 0;
+
     startTransition(async () => {
-      const res = await createSupplier({ name: name.trim() });
+      const res = await createSupplier({ 
+        name: name.trim(),
+        legacyDebt: isNaN(legacyDebt) ? 0 : legacyDebt
+      });
       if (res.success && res.supplier) {
         showToast('Supplier added!');
         setSuppliers(prev => [...prev, res.supplier]);
@@ -195,10 +201,10 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-normal text-white">
+          <h1 className="text-4xl font-black tracking-tight text-white">
             Inventory <span className="text-emerald-400">Hub</span>
           </h1>
-          <p className="text-white/70 mt-1 text-sm">Feed, medicine &amp; egg stock — all in one place</p>
+          <p className="text-white/80 mt-1 text-base font-medium">Feed, medicine &amp; egg stock — all in one place</p>
         </div>
         {canEdit && (
           <motion.button
@@ -222,22 +228,22 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
               <Egg className="w-8 h-8 text-amber-400" />
             </div>
             <div>
-              <p className="text-white/70 text-xs uppercase tracking-widest font-bold mb-1">Egg Inventory</p>
-              <p className="text-4xl font-bold text-white">
+              <p className="text-white/80 text-sm uppercase tracking-widest font-black mb-1">Egg Inventory</p>
+              <p className="text-5xl font-black text-white leading-tight">
                 {eggDisplay(eggItem.stockLevel).crates}
-                <span className="text-xl font-semibold text-white/80 ml-1">crates</span>
+                <span className="text-2xl font-bold text-white/80 ml-1">crates</span>
               </p>
               {eggDisplay(eggItem.stockLevel).remainder > 0 && (
-                <p className="text-amber-400 text-sm font-semibold mt-0.5">
+                <p className="text-amber-400 text-base font-bold mt-1">
                   + {eggDisplay(eggItem.stockLevel).remainder} remainder
                 </p>
               )}
             </div>
           </div>
           <div className="text-right">
-            <p className="text-white/70 text-xs mb-1">Raw count</p>
-            <p className="text-2xl font-bold text-white">{eggItem.stockLevel.toLocaleString()}</p>
-            <p className="text-white/70 text-xs">eggs in stock</p>
+            <p className="text-white/80 text-sm font-bold mb-1">Raw count</p>
+            <p className="text-3xl font-black text-white">{eggItem.stockLevel.toLocaleString()}</p>
+            <p className="text-white/80 text-sm font-bold">eggs in stock</p>
           </div>
         </motion.div>
       )}
@@ -253,8 +259,8 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
           <div key={card.label} className="glass-pill rounded-md p-3 flex items-center gap-2">
             <card.icon className={`w-5 h-5 ${card.color}`} />
             <div>
-              <p className="text-2xl font-bold text-white">{card.value}</p>
-              <p className="text-white/70 text-xs">{card.label}</p>
+              <p className="text-3xl font-black text-white leading-none">{card.value}</p>
+              <p className="text-white/80 text-sm font-bold mt-1">{card.label}</p>
             </div>
           </div>
         ))}
@@ -273,15 +279,15 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
           const meta = CATEGORY_META[cat] || CATEGORY_META['OTHER'];
           return (
             <div key={cat} className="space-y-2">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-white/70 ml-1">{meta.label}</p>
+              <p className="text-sm font-black uppercase tracking-[0.2em] text-emerald-400 ml-1">{meta.label}</p>
               <div className={`rounded-lg border bg-gradient-to-br ${meta.color} overflow-hidden`}>
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-white/10">
-                        <th className="text-left px-4 py-2 text-white/70 font-semibold text-xs uppercase tracking-wider">Item</th>
-                        <th className="text-right px-4 py-2 text-white/70 font-semibold text-xs uppercase tracking-wider">Stock</th>
-                        <th className="text-right px-4 py-2 text-white/70 font-semibold text-xs uppercase tracking-wider">Cost/Unit</th>
-                        <th className="text-right px-4 py-2 text-white/70 font-semibold text-xs uppercase tracking-wider">Unit</th>
+                        <th className="text-left px-4 py-3 text-white/80 font-black text-sm uppercase tracking-wider">Item</th>
+                        <th className="text-right px-4 py-3 text-white/80 font-black text-sm uppercase tracking-wider">Stock</th>
+                        <th className="text-right px-4 py-3 text-white/80 font-black text-sm uppercase tracking-wider">Cost/Unit</th>
+                        <th className="text-right px-4 py-3 text-white/80 font-black text-sm uppercase tracking-wider">Unit</th>
                         <th className="px-4 py-2" />
                       </tr>
 
@@ -290,17 +296,17 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
                     {catItems.map((item, idx) => (
                       <tr key={item.id} className={`${idx < catItems.length - 1 ? 'border-b border-white/5' : ''} hover:bg-white/5 transition-colors`}>
                         <td className="px-4 py-2 font-semibold text-white">{item.itemName}</td>
-                        <td className={`px-4 py-2 text-right font-bold ${item.stockLevel <= 5 ? 'text-red-400' : 'text-emerald-400'}`}>
+                        <td className={`px-4 py-3 text-right font-black text-lg ${item.stockLevel <= 5 ? 'text-red-400 animate-pulse' : 'text-emerald-400'}`}>
                           {item.unit === 'bags' ? (
-                            <span>{item.stockLevel} <span className="text-white/70 font-normal text-xs">bags</span></span>
+                            <span>{item.stockLevel} <span className="text-white/60 font-bold text-sm uppercase">bags</span></span>
                           ) : (
                             item.stockLevel.toLocaleString()
                           )}
-                          {item.stockLevel <= 5 && <TrendingDown className="inline w-3 h-3 ml-1 text-red-400" />}
+                          {item.stockLevel <= 5 && <TrendingDown className="inline w-4 h-4 ml-2" />}
                         </td>
-                        <td className="px-4 py-2 text-right text-white/70 text-xs">
+                        <td className="px-4 py-3 text-right">
                           {item.costPerUnit != null ? (
-                            <span className="text-amber-400 font-bold">GHS {Number(item.costPerUnit).toFixed(2)}</span>
+                            <span className="text-amber-400 font-black text-base">GHS {Number(item.costPerUnit).toFixed(2)}</span>
                           ) : <span className="text-white/20">—</span>}
                         </td>
                         <td className="px-4 py-2 text-right text-white/70">{item.unit}</td>
@@ -441,7 +447,7 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
 
               {/* Supplier & Payment */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-white/70 uppercase tracking-wider">Supplier</label>
+                <label className="text-sm font-black text-white/80 uppercase tracking-widest">Supplier</label>
                 <div className="flex gap-2">
                   <select
                     value={form.supplierId}
@@ -457,7 +463,7 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
                         }));
                       }
                     }}
-                    className="flex-1 bg-white/10 border border-white/10 rounded-md px-3 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500/50 [&>option]:bg-gray-800"
+                    className="flex-1 bg-white/10 border border-white/10 rounded-md px-3 py-2.5 text-white text-sm font-bold focus:outline-none focus:border-emerald-500/50 [&>option]:bg-gray-800"
                   >
                     <option value="">-- Select Supplier --</option>
                     <option value="onetime">One-Time Supplier</option>
@@ -469,7 +475,7 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
                   <button
                     type="button"
                     onClick={() => setForm(p => ({ ...p, supplierId: 'onetime', paymentPlan: 'full' }))}
-                    className="px-3 py-2 rounded-md bg-white/10 hover:bg-white/20 text-white/70 hover:text-white text-xs font-bold transition-all whitespace-nowrap"
+                    className="px-3 py-2 rounded-md bg-white/10 hover:bg-emerald-500/30 text-white/80 hover:text-white text-xs font-black transition-all whitespace-nowrap uppercase tracking-tighter"
                   >
                     Set One-Time
                   </button>
@@ -477,7 +483,7 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-white/70 uppercase tracking-wider">Payment Plan</label>
+                <label className="text-sm font-black text-white/80 uppercase tracking-widest">Payment Plan</label>
                 <select
                   value={form.paymentPlan}
                   onChange={e => setForm(p => ({ ...p, paymentPlan: e.target.value }))}

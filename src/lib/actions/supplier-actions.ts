@@ -23,6 +23,42 @@ export async function getSuppliers() {
   })
 }
 
+export async function getSupplierStats() {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return []
+
+  const hasViewAccess = await checkWorkerPermissions('customers', 'view')
+  if (!hasViewAccess) return []
+
+  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    const suppliers = await tx.supplier.findMany({
+      where: { farmId: activeFarmId },
+      include: {
+        inventory: true
+      },
+      orderBy: { name: 'asc' }
+    })
+
+    return suppliers.map((supplier: any) => {
+      const orderCount = supplier.inventory.length;
+      const totalSpent = supplier.inventory.reduce((sum: number, item: any) => {
+        return sum + (Number(item.stockLevel) * Number(item.costPerUnit || 0))
+      }, 0);
+
+      return {
+        id: supplier.id,
+        name: supplier.name,
+        balanceOwed: Number(supplier.balanceOwed),
+        orderCount,
+        totalSpent
+      }
+    })
+  }).catch((error: any) => {
+    console.error('Error fetching supplier stats:', error)
+    return []
+  })
+}
+
 export async function createSupplier(data: {
   name: string
   phone?: string
