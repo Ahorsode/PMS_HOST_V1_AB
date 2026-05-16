@@ -379,7 +379,12 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
                       step="0.25"
                       min="0"
                       value={form.stockLevel}
-                      onChange={e => setForm(p => ({ ...p, stockLevel: e.target.value }))}
+                      onChange={e => {
+                        const val = e.target.value;
+                        if (val === '' || Number(val) >= 0) {
+                          setForm(p => ({ ...p, stockLevel: val }));
+                        }
+                      }}
                       placeholder="0"
                       className="w-full bg-white/10 border border-white/10 rounded-md px-3 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500/50"
                     />
@@ -400,7 +405,12 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
                     type="number"
                     min="0"
                     value={form.stockLevel}
-                    onChange={e => setForm(p => ({ ...p, stockLevel: e.target.value }))}
+                    onChange={e => {
+                      const val = e.target.value;
+                      if (val === '' || Number(val) >= 0) {
+                        setForm(p => ({ ...p, stockLevel: val }));
+                      }
+                    }}
                     placeholder="0"
                     className="w-full bg-white/10 border border-white/10 rounded-md px-3 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500/50"
                   />
@@ -428,7 +438,12 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
                   step="0.01"
                   min="0"
                   value={form.costPerUnit}
-                  onChange={e => setForm(p => ({ ...p, costPerUnit: e.target.value }))}
+                  onChange={e => {
+                    const val = e.target.value;
+                    if (val === '' || Number(val) >= 0) {
+                      setForm(p => ({ ...p, costPerUnit: val }));
+                    }
+                  }}
                   placeholder="0.00"
                   className="w-full bg-white/10 border border-white/10 rounded-md px-3 py-2.5 text-amber-400 text-sm font-bold placeholder-white/20 focus:outline-none focus:border-amber-500/50"
                 />
@@ -493,7 +508,12 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
                     step="0.01"
                     min="0"
                     value={form.amountPaid}
-                    onChange={e => setForm(p => ({ ...p, amountPaid: e.target.value }))}
+                    onChange={e => {
+                      const val = e.target.value;
+                      if (val === '' || Number(val) >= 0) {
+                        setForm(p => ({ ...p, amountPaid: val }));
+                      }
+                    }}
                     placeholder="0.00"
                     className="w-full bg-white/10 border border-white/10 rounded-md px-3 py-2.5 text-emerald-400 text-sm font-bold placeholder-white/20 focus:outline-none focus:border-emerald-500/50"
                   />

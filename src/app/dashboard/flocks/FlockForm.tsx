@@ -180,7 +180,13 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, onClos
               type="number"
               min="0"
               value={formData.mortalityCount}
-              onChange={(e) => setFormData({ ...formData, mortalityCount: e.target.value })}
+              onChange={(e) => {
+                const val = Number(e.target.value);
+                if (val > currentRemaining) {
+                  return;
+                }
+                setFormData({ ...formData, mortalityCount: e.target.value });
+              }}
               required
               placeholder={formData.healthType === 'DEAD' ? "How many were lost?" : "How many are showing symptoms?"}
               className={isMortalityExceeded ? "border-red-500 focus:ring-red-500" : ""}
@@ -218,7 +224,11 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, onClos
                   type="number"
                   placeholder="50"
                   value={formData.newRoomCapacity}
-                  onChange={(e) => setFormData({ ...formData, newRoomCapacity: e.target.value })}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    if (val < 0) return;
+                    setFormData({ ...formData, newRoomCapacity: e.target.value });
+                  }}
                   required
                 />
               </div>
@@ -304,7 +314,11 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, onClos
               type="number"
               min="0"
               value={formData.initialCount}
-              onChange={(e) => setFormData({ ...formData, initialCount: e.target.value === '' ? '' : Number(e.target.value) })}
+              onChange={(e) => {
+                const val = Number(e.target.value);
+                if (val < 0) return;
+                setFormData({ ...formData, initialCount: e.target.value === '' ? '' : val });
+              }}
               required
               placeholder="e.g. 1000"
             />

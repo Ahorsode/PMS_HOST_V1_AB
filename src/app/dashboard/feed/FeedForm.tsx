@@ -112,7 +112,11 @@ export const FeedForm = ({ batches, inventory, formulations = [], log, mode, onC
           min="0"
           step="0.01"
           value={formData.amountConsumed}
-          onChange={(e) => setFormData({ ...formData, amountConsumed: e.target.value === '' ? '' : Number(e.target.value) })}
+          onChange={(e) => {
+            const val = Number(e.target.value);
+            if (val < 0) return;
+            setFormData({ ...formData, amountConsumed: e.target.value === '' ? '' : val });
+          }}
           required
         />
         <div className="flex gap-2 mt-2">

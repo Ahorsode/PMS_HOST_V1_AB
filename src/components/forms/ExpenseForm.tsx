@@ -27,6 +27,8 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
 
   const categoryOptions = CATEGORIES.map(cat => ({ label: cat, value: cat }));
 
+  const [amount, setAmount] = useState('');
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
@@ -35,15 +37,15 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
 
     const formData = new FormData(e.currentTarget);
     const data = {
-      amount: Number(formData.get('amount')),
+      amount: Number(amount),
       category: formData.get('category') as string,
       description: formData.get('description') as string,
       expenseDate: formData.get('expenseDate') as string,
       reference: formData.get('reference') as string,
     };
 
-    if (!data.amount || !data.category || !data.expenseDate) {
-      setError('Please fill in all required fields.');
+    if (!data.amount || data.amount <= 0 || !data.category || !data.expenseDate) {
+      setError('Please fill in all required fields with valid positive amounts.');
       setLoading(false);
       return;
     }
@@ -51,6 +53,7 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
     const result = await createExpense(data);
     if (result.success) {
       setSuccess(true);
+      setAmount('');
       (e.target as HTMLFormElement).reset();
       if (onSuccess) onSuccess();
     } else {
@@ -93,6 +96,13 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
                 step="0.01" 
                 placeholder="0.00" 
                 required 
+                value={amount}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || Number(val) >= 0) {
+                    setAmount(val);
+                  }
+                }}
                 className="bg-black/50 border-white/10 rounded-md text-white placeholder:text-white/20"
               />
             </div>

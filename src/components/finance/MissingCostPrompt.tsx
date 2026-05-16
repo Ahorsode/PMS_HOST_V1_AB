@@ -114,7 +114,12 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
               type="number"
               min="0"
               value={costPerUnit}
-              onChange={e => setCostPerUnit(e.target.value)}
+              onChange={e => {
+                const val = e.target.value;
+                if (val === '' || Number(val) >= 0) {
+                  setCostPerUnit(val);
+                }
+              }}
             />
             {costPerUnit && Number(costPerUnit) > 0 && (
               <p className="text-xs font-bold text-emerald-400 px-1 text-right">
@@ -129,7 +134,12 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
             type="number"
             min="0"
             value={carriageInward}
-            onChange={e => setCarriageInward(e.target.value)}
+            onChange={e => {
+              const val = e.target.value;
+              if (val === '' || Number(val) >= 0) {
+                setCarriageInward(val);
+              }
+            }}
           />
 
           <div className="space-y-2">
@@ -147,7 +157,12 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
                   min="0"
                   className="col-span-1 bg-white/10 border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
                   value={newExpenseAmount}
-                  onChange={e => setNewExpenseAmount(e.target.value)}
+                  onChange={e => {
+                    const val = e.target.value;
+                    if (val === '' || Number(val) >= 0) {
+                      setNewExpenseAmount(val);
+                    }
+                  }}
                 />
                 <Button 
                   type="button" 

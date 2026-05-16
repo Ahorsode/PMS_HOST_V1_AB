@@ -16,6 +16,8 @@ export function PartnerForm({ setIsOpen, defaultType = 'supplier', onSuccess }: 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const partnerType = defaultType;
 
+  const [balanceOwed, setBalanceOwed] = useState('');
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -24,7 +26,7 @@ export function PartnerForm({ setIsOpen, defaultType = 'supplier', onSuccess }: 
       phone: formData.get('phone') as string,
       email: formData.get('email') as string,
       address: formData.get('address') as string,
-      balanceOwed: Number(formData.get('balanceOwed')) || 0,
+      balanceOwed: Number(balanceOwed) || 0,
     };
 
     setIsSubmitting(true);
@@ -109,6 +111,13 @@ export function PartnerForm({ setIsOpen, defaultType = 'supplier', onSuccess }: 
                type="number"
                step="0.01"
                min="0"
+               value={balanceOwed}
+               onChange={(e) => {
+                 const val = e.target.value;
+                 if (val === '' || Number(val) >= 0) {
+                   setBalanceOwed(val);
+                 }
+               }}
                className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-bold outline-none focus:border-emerald-500/50 transition-all"
                placeholder="0.00"
              />

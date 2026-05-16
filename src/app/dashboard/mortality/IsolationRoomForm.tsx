@@ -11,6 +11,7 @@ export const IsolationRoomForm = () => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [capacity, setCapacity] = useState('');
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -19,13 +20,20 @@ export const IsolationRoomForm = () => {
 
     const formData = new FormData(e.currentTarget);
     const name = formData.get('name') as string;
-    const capacity = parseInt(formData.get('capacity') as string);
+    const capacityVal = parseInt(capacity);
+
+    if (isNaN(capacityVal) || capacityVal < 0) {
+      setError('Capacity must be a non-negative number');
+      setIsLoading(false);
+      return;
+    }
 
     try {
-      const result = await createIsolationRoom({ name, capacity });
+      const result = await createIsolationRoom({ name, capacity: capacityVal });
       if (result.success) {
         // Reset form
         (e.target as HTMLFormElement).reset();
+        setCapacity('');
         router.refresh();
       } else {
         setError(result.error || 'Failed to create isolation room');
@@ -56,6 +64,13 @@ export const IsolationRoomForm = () => {
           label="Capacity (Birds)" 
           placeholder="e.g. 50" 
           required 
+          value={capacity}
+          onChange={(e) => {
+            const val = e.target.value;
+            if (val === '' || parseInt(val) >= 0) {
+              setCapacity(val);
+            }
+          }}
           className="bg-[#374151] border-gray-600 text-white placeholder-gray-400" 
         />
         {error && (

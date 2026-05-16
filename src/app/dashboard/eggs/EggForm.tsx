@@ -150,7 +150,10 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
             type="number"
             min="0"
             value={formData.eggsCollected}
-            onChange={(e) => setFormData({ ...formData, eggsCollected: Number(e.target.value) })}
+            onChange={(e) => {
+              const val = Number(e.target.value);
+              setFormData({ ...formData, eggsCollected: val });
+            }}
             required
           />
         ) : (
@@ -202,7 +205,14 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
               type="number"
               min="0"
               value={formData.smallCount}
-              onChange={(e) => setFormData({ ...formData, smallCount: Number(e.target.value) })}
+              onChange={(e) => {
+                const val = Number(e.target.value);
+                const currentTotal = val + formData.mediumCount + formData.largeCount;
+                if (currentTotal > formData.eggsCollected) {
+                  return;
+                }
+                setFormData({ ...formData, smallCount: val });
+              }}
               className="bg-emerald-950/20 border-emerald-900/30"
             />
             <Input
@@ -210,7 +220,14 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
               type="number"
               min="0"
               value={formData.mediumCount}
-              onChange={(e) => setFormData({ ...formData, mediumCount: Number(e.target.value) })}
+              onChange={(e) => {
+                const val = Number(e.target.value);
+                const currentTotal = formData.smallCount + val + formData.largeCount;
+                if (currentTotal > formData.eggsCollected) {
+                  return;
+                }
+                setFormData({ ...formData, mediumCount: val });
+              }}
               className="bg-emerald-950/20 border-emerald-900/30"
             />
             <Input
@@ -218,7 +235,14 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
               type="number"
               min="0"
               value={formData.largeCount}
-              onChange={(e) => setFormData({ ...formData, largeCount: Number(e.target.value) })}
+              onChange={(e) => {
+                const val = Number(e.target.value);
+                const currentTotal = formData.smallCount + formData.mediumCount + val;
+                if (currentTotal > formData.eggsCollected) {
+                  return;
+                }
+                setFormData({ ...formData, largeCount: val });
+              }}
               className="bg-emerald-950/20 border-emerald-900/30"
             />
           </div>
@@ -236,7 +260,13 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
           type="number"
           min="0"
           value={formData.unusableCount}
-          onChange={(e) => setFormData({ ...formData, unusableCount: Number(e.target.value) })}
+          onChange={(e) => {
+            const val = Number(e.target.value);
+            if (val > formData.eggsCollected) {
+              return;
+            }
+            setFormData({ ...formData, unusableCount: val });
+          }}
         />
         <Input
           label="Log Date"

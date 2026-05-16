@@ -84,9 +84,18 @@ export function InfirmaryManagement({ batches }: { batches: Batch[] }) {
                 <Input
                   type="number"
                   placeholder="Count"
+                  min="1"
+                  max={batch.isolationCount}
                   value={counts[batch.id] || ''}
-                  onChange={(e) => setCounts(prev => ({ ...prev, [batch.id]: e.target.value }))}
-                  className="h-10 bg-[#1F2937] border-gray-700 text-white text-center font-bold"
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
+                    if (val > batch.isolationCount) {
+                      toast.error(`Only ${batch.isolationCount} birds are currently in isolation`);
+                      return;
+                    }
+                    setCounts(prev => ({ ...prev, [batch.id]: e.target.value }));
+                  }}
+                  className={`h-10 bg-[#1F2937] border-gray-700 text-white text-center font-bold ${(parseInt(counts[batch.id]) > batch.isolationCount) ? 'border-red-500' : ''}`}
                 />
               </div>
               <div className="flex gap-2 w-full sm:w-auto">

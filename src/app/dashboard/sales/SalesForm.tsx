@@ -42,6 +42,8 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
   };
 
   const updateItem = (idx: number, field: string, value: any) => {
+    if ((field === 'quantity' || field === 'unitPrice') && value !== '' && Number(value) < 0) return;
+
     const newItems = [...items];
     (newItems[idx] as any)[field] = value === '' && (field === 'quantity' || field === 'unitPrice') ? '' : value;
 
@@ -158,7 +160,22 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
               type="number"
               min="0"
               value={discountValue}
-              onChange={(e) => setDiscountValue(e.target.value === '' ? '' : Number(e.target.value))}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val === '') {
+                  setDiscountValue('');
+                } else {
+                  const num = Number(val);
+                  if (num >= 0) {
+                    if (discountType === 'percent' && num > 100) {
+                      setDiscountValue(100);
+                      toast.error('Discount percent cannot exceed 100%');
+                    } else {
+                      setDiscountValue(num);
+                    }
+                  }
+                }
+              }}
               placeholder="0.00"
               className="w-full bg-white/10 border border-white/10 rounded-md p-3 pl-11 text-white font-bold outline-none focus:border-emerald-500/50 transition-all"
             />
