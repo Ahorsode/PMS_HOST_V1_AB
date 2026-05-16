@@ -57,6 +57,10 @@ export async function getCustomerStats() {
   return customers.map(c => ({
     id: c.id,
     name: c.name,
+    phone: c.phone,
+    email: c.email,
+    address: c.address,
+    createdAt: c.createdAt,
     balanceOwed: Number(c.balanceOwed),
     orderCount: c.orders.length,
     totalSpent: c.orders.reduce((sum, o) => sum + Number(o.totalAmount), 0)

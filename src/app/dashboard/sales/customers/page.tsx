@@ -8,10 +8,15 @@ import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
 import { CustomerActionsHeader, AddPartnerBox } from './CustomerActions';
 import { checkFeature } from '@/lib/subscription-utils';
 import Link from 'next/link';
+import { PartnerCard } from '@/components/partners/PartnerCard';
 
 interface CustomerStat {
   id: number;
   name: string;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  createdAt: Date | string;
   balanceOwed: number;
   orderCount: number;
   totalSpent: number;
@@ -137,52 +142,8 @@ export default async function CustomersPage() {
 
       {/* Grid of Profiles */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-         {customerStats.map((customer: CustomerStat) => (
-           <Card key={customer.id} className="bg-white/10 border-white/10 backdrop-blur-lg hover:bg-white/[0.08] transition-all cursor-pointer group relative overflow-hidden">
-              {customer.balanceOwed > 0 && (
-                <div className="absolute top-0 left-0 w-full h-1 bg-red-500/50" />
-              )}
-              <CardContent className="pt-7">
-                 <div className="flex flex-col items-center text-center">
-                    <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-white/10 to-transparent border border-white/10 flex items-center justify-center text-3xl font-bold text-emerald-400 mb-3 group-hover:scale-110 transition-all duration-500">
-                       {customer.name.charAt(0)}
-                    </div>
-                    <h3 className="text-xl font-bold text-white tracking-normal mb-1 line-clamp-1">{customer.name}</h3>
-                    <div className="flex items-center gap-2 mb-5">
-                       <span className="text-[9px] font-bold uppercase bg-emerald-500/20 text-emerald-400 px-2.5 py-1 rounded-full border border-emerald-500/20 tracking-widest">
-                         {customer.orderCount} Orders
-                       </span>
-                       {customer.balanceOwed > 0 && (
-                         <span className="text-[9px] font-bold uppercase bg-red-500/20 text-red-400 px-2.5 py-1 rounded-full border border-red-500/20 tracking-widest">
-                           DEBTOR
-                         </span>
-                       )}
-                    </div>
-
-                    <div className="w-full grid grid-cols-2 gap-2 mb-5">
-                       <div className="p-2 rounded-md bg-black/20 border border-white/5">
-                          <p className="text-[8px] font-bold uppercase text-white/70 mb-1 tracking-widest">Spent</p>
-                          <p className="text-xs font-bold text-white">{formatCurrency(customer.totalSpent)}</p>
-                       </div>
-                       <div className="p-2 rounded-md bg-black/20 border border-white/5 text-left">
-                          <p className="text-[8px] font-bold uppercase text-white/70 mb-1 tracking-widest">Owed</p>
-                          <p className={`text-xs font-bold ${customer.balanceOwed > 0 ? 'text-red-400' : 'text-white/20'}`}>
-                            {formatCurrency(customer.balanceOwed)}
-                          </p>
-                       </div>
-                    </div>
-
-                    <div className="flex gap-2 w-full">
-                       <button className="flex-1 py-2 rounded-md bg-white/10 hover:bg-white/15 border border-white/10">
-                          <Phone className="w-4 h-4 text-emerald-400 mx-auto" />
-                       </button>
-                       <button className="flex-2 w-full py-2 rounded-md bg-emerald-500 text-[#064e3b] font-bold text-xs uppercase tracking-widest">
-                          Profile
-                       </button>
-                    </div>
-                 </div>
-              </CardContent>
-           </Card>
+          {customerStats.map((customer: CustomerStat) => (
+            <PartnerCard key={customer.id} partner={customer} type="customer" />
           ))}
 
           {canEdit && <AddPartnerBox />}

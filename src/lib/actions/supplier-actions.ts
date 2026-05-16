@@ -48,6 +48,10 @@ export async function getSupplierStats() {
       return {
         id: supplier.id,
         name: supplier.name,
+        phone: supplier.phone,
+        email: supplier.email,
+        address: supplier.address,
+        createdAt: supplier.createdAt,
         balanceOwed: Number(supplier.balanceOwed),
         orderCount,
         totalSpent
