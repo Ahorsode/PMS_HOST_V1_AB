@@ -14,6 +14,9 @@ import {
   deleteInventoryItem
 } from '@/lib/actions/inventory-actions';
 import { getSuppliers, createSupplier } from '@/lib/actions/supplier-actions';
+import { Dialog } from '@/components/ui/Dialog';
+import { PartnerForm } from '@/components/partners/PartnerForm';
+
 
 /* ───────────────────── helpers ───────────────────── */
 function eggDisplay(stockLevel: number) {
@@ -73,9 +76,11 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
   const [isPending, startTransition] = useTransition();
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
   const [suppliers, setSuppliers] = useState<any[]>([]);
+  const [showSupplierModal, setShowSupplierModal] = useState(false);
   const [form, setForm] = useState<FormState>({
     itemName: '', stockLevel: '', unit: 'bags', category: 'FEED', costPerUnit: '', supplierId: '', paymentPlan: 'full', amountPaid: ''
   });
+
 
   const fetchItems = async () => {
     setLoading(true);
@@ -164,26 +169,10 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
     });
   };
 
-  const handleAddNewSupplier = async () => {
-    const name = window.prompt("Enter new supplier name:");
-    if (!name || !name.trim()) return;
-    const debt = window.prompt("Initial amount owing/debt (optional):", "0");
-    const legacyDebt = debt ? parseFloat(debt) : 0;
-
-    startTransition(async () => {
-      const res = await createSupplier({ 
-        name: name.trim(),
-        legacyDebt: isNaN(legacyDebt) ? 0 : legacyDebt
-      });
-      if (res.success && res.supplier) {
-        showToast('Supplier added!');
-        setSuppliers(prev => [...prev, res.supplier]);
-        setForm(p => ({ ...p, supplierId: String(res.supplier.id) }));
-      } else {
-        showToast(res.error || 'Failed to add supplier', false);
-      }
-    });
+  const handleAddNewSupplier = () => {
+    setShowSupplierModal(true);
   };
+
 
   // separate eggs from everything else
   const eggItem = items.find(i => i.category === 'EGGS' && i.itemName === 'Eggs');
@@ -525,7 +514,24 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
         )}
       </AnimatePresence>
 
+      {/* ── Add Supplier Modal ── */}
+      <Dialog
+        isOpen={showSupplierModal}
+        onOpenChange={setShowSupplierModal}
+        title="Add Distribution Partner"
+      >
+        <PartnerForm 
+          setIsOpen={setShowSupplierModal} 
+          defaultType="supplier"
+          onSuccess={(supplier) => {
+            setSuppliers(prev => [...prev, supplier]);
+            setForm(p => ({ ...p, supplierId: String(supplier.id) }));
+          }}
+        />
+      </Dialog>
+
       {/* ── Toast ── */}
+
       <AnimatePresence>
         {toast && (
           <motion.div
