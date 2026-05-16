@@ -127,7 +127,7 @@ export default function FeedDashboard({ canEdit = true }: { canEdit?: boolean })
                         <span className="text-xs font-bold text-emerald-400">FCR</span>
                       </div>
                       <div className="mt-3 flex justify-between text-sm font-bold text-emerald-100 uppercase tracking-wider">
-                        <span>Feed: {eff.totalFeed}kg</span>
+                        <span>Feed: {eff.totalFeed} bags</span>
                         <span>Weight: {eff.currentWeight}kg</span>
                       </div>
                     </div>

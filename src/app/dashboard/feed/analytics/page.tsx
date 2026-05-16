@@ -27,7 +27,7 @@ export default async function FeedAnalyticsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
         <MetricBox title="Inventory Items" value={inventory.length.toString()} icon={Package} color="text-emerald-400" bgColor="bg-emerald-500/10" />
         <MetricBox title="Low Stock Alerts" value={lowStock.length.toString()} icon={AlertTriangle} color="text-red-400" bgColor="bg-red-500/10" />
-        <MetricBox title="Active Consumption" value="7.2kg / day" icon={Activity} color="text-blue-400" bgColor="bg-blue-500/10" />
+        <MetricBox title="Active Consumption" value="7.2 bags / day" icon={Activity} color="text-blue-400" bgColor="bg-blue-500/10" />
         <MetricBox title="Avg. Stock Depth" value="84%" icon={Battery} color="text-emerald-400" bgColor="bg-emerald-500/10" />
       </div>
 
@@ -42,7 +42,7 @@ export default async function FeedAnalyticsPage() {
                     <div className="flex justify-between items-center">
                        <p className="text-white font-bold text-sm">{item.name}</p>
                        <span className={`text-xs font-bold ${item.stockLevel < 50 ? 'text-red-400' : 'text-emerald-400'}`}>
-                          {item.stockLevel}kg left
+                          {item.stockLevel} bags left
                        </span>
                     </div>
                     <div className="h-2 bg-white/10 rounded-full overflow-hidden border border-white/5">
@@ -68,7 +68,7 @@ export default async function FeedAnalyticsPage() {
                           <p className="text-white/20 text-[8px] font-bold uppercase tracking-widest italic">{log.feedType}</p>
                        </div>
                        <div className="text-right">
-                          <p className="text-emerald-400 font-bold text-sm tracking-normal">{log.amountConsumed}kg</p>
+                          <p className="text-emerald-400 font-bold text-sm tracking-normal">{log.amountConsumed} bags</p>
                           <p className="text-white/10 text-[8px] italic">Logged consumption</p>
                        </div>
                     </div>

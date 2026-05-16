@@ -114,7 +114,7 @@ export const FlockDetailClient = ({ batch }: FlockDetailClientProps) => {
           value={fcr > 0 ? fcr.toFixed(2) : '---'} 
           icon={Activity} 
           color="amber" 
-          subtext={`${totalFeed.toLocaleString()}kg Consumed`}
+          subtext={`${totalFeed.toLocaleString()} bags Consumed`}
         />
         <MetricCard 
           title="Mortality Rate" 
@@ -276,7 +276,7 @@ export const FlockDetailClient = ({ batch }: FlockDetailClientProps) => {
                                          {item.type}
                                       </span>
                                       <span className="text-white font-bold tracking-normal text-sm">
-                                         {item.type === 'FEED' && `Logged ${item.amountConsumed}kg consumption`}
+                                         {item.type === 'FEED' && `Logged ${item.amountConsumed} bags consumption`}
                                          {item.type === 'MORTALITY' && (
                                            <div className="flex flex-col inline-block align-middle">
                                               <span>Recorded {item.count} deaths</span>

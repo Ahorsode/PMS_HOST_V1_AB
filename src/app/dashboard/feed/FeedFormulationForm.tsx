@@ -48,7 +48,12 @@ export function FeedFormulationForm({ inventoryItems, onSuccess }: FeedFormulati
       alert("Inventory is empty. Please add raw materials to your inventory before creating a formulation.");
       return;
     }
-    setIngredients([...ingredients, { inventoryId: inventoryItems[0]?.id || 0, percentage: '' }])
+    
+    // Find first item ID not already in ingredients to prevent duplicates on add
+    const usedIds = ingredients.map(i => i.inventoryId);
+    const nextAvailable = inventoryItems.find(item => !usedIds.includes(item.id)) || inventoryItems[0];
+    
+    setIngredients([...ingredients, { inventoryId: nextAvailable?.id || 0, percentage: '' }])
   }
 
   const removeIngredient = (index: number) => {
@@ -71,8 +76,13 @@ export function FeedFormulationForm({ inventoryItems, onSuccess }: FeedFormulati
   const totalBags = ingredients.reduce((sum, i) => sum + Number(i.percentage || 0), 0)
 
   const getAvailableInventoryItems = (currentIndex: number) => {
-    const selectedIds = ingredients.map((ing, idx) => idx !== currentIndex ? ing.inventoryId : null).filter(Boolean)
-    return inventoryItems.filter(item => !selectedIds.includes(item.id))
+    // Collect all IDs selected in OTHER rows
+    const otherSelectedIds = ingredients
+      .filter((_, idx) => idx !== currentIndex)
+      .map(ing => ing.inventoryId);
+      
+    // Return all items except those selected in other rows
+    return inventoryItems.filter(item => !otherSelectedIds.includes(item.id));
   }
 
   const handleSubmit = async () => {
@@ -83,6 +93,12 @@ export function FeedFormulationForm({ inventoryItems, onSuccess }: FeedFormulati
     
     if (ingredients.some(i => i.percentage === '' || Number(i.percentage) <= 0)) {
       toast.error('All ingredients must have a valid number of bags');
+      return;
+    }
+
+    const uniqueIds = new Set(ingredients.map(i => i.inventoryId));
+    if (uniqueIds.size !== ingredients.length) {
+      toast.error('Each ingredient can only be selected once');
       return;
     }
 

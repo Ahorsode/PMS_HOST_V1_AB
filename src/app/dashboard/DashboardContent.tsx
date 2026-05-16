@@ -388,7 +388,7 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
                       <Wheat className="w-5 h-5 text-red-500 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
                          <p className="text-white text-xs font-bold truncate">Low Stock: {item.name}</p>
-                         <p className="text-red-500 text-xs uppercase tracking-widest font-bold mt-0.5">{item.stockLevel} kg remaining</p>
+                         <p className="text-red-500 text-xs uppercase tracking-widest font-bold mt-0.5">{item.stockLevel} bags remaining</p>
                       </div>
                    </div>
                 ))}
@@ -410,7 +410,7 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
               <CardContent className="flex-1 flex flex-col justify-between pt-2 relative z-10">
                   <div>
                     <p className="text-4xl font-bold text-white tracking-normal">
-                      {(stats.feedTrendData?.reduce((sum: number, d: { count: number }) => sum + (d.count || 0), 0) || 0).toLocaleString()} <span className="text-lg">kg</span>
+                      {(stats.feedTrendData?.reduce((sum: number, d: { count: number }) => sum + (d.count || 0), 0) || 0).toLocaleString()} <span className="text-lg">bags</span>
                     </p>
                     <p className="text-xs text-white/70 font-bold uppercase tracking-widest mt-1 italic">Weekly Consumption</p>
                  </div>
