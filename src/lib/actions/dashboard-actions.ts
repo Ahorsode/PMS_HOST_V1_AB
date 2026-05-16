@@ -503,7 +503,7 @@ export async function createIsolationRoom(data: { name: string, capacity: number
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
 
-  const hasAccess = await checkWorkerPermissions('batches', 'edit')
+  const hasAccess = (await checkWorkerPermissions('batches', 'edit')) || (await checkWorkerPermissions('mortality', 'edit'))
   if (!hasAccess) throw new Error('Unauthorized')
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
@@ -518,6 +518,7 @@ export async function createIsolationRoom(data: { name: string, capacity: number
     })
     revalidatePath('/dashboard/settings')
     revalidatePath('/dashboard/flocks')
+    revalidatePath('/dashboard/mortality')
     return { success: true, room }
   }).catch((error: any) => {
     console.error('Error creating isolation room:', error)

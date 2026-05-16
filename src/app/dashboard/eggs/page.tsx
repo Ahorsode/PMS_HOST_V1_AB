@@ -87,7 +87,7 @@ export default async function EggsPage() {
                 <tr>
                    <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Date</th>
                   <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Livestock</th>
-                  <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Grade</th>
+                  <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Size</th>
                   <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Collected</th>
                   <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Unusable</th>
                   <th className="px-5 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-widest">Actions</th>
@@ -104,7 +104,7 @@ export default async function EggsPage() {
                     </td>
                     <td className="px-5 py-3 whitespace-nowrap">
                       <span className="px-2 py-1 text-xs font-bold bg-amber-100 text-amber-700 rounded-lg">
-                        {log.qualityGrade?.replace('_', ' ') || 'GRADE A'}
+                        {log.qualityGrade?.replace('_', ' ') || 'MEDIUM'}
                       </span>
                     </td>
                     <td className="px-5 py-3 whitespace-nowrap text-sm text-green-700 font-bold">

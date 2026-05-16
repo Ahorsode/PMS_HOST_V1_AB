@@ -18,6 +18,7 @@ export async function createEggProduction(data: {
   cratesCollected?: number
   categoryId?: number
   unusableCount?: number
+  qualityGrade?: string
   logDate: string
 }) {
   const { userId, activeFarmId } = await getAuthContext()
@@ -65,6 +66,7 @@ export async function createEggProduction(data: {
         categoryId: finalCategoryId,
         unusableCount: data.unusableCount || 0,
         eggsRemaining: calculatedEggs - (data.unusableCount || 0),
+        qualityGrade: data.qualityGrade,
         logDate: new Date(data.logDate),
         userId: userId
       }
@@ -117,6 +119,7 @@ export async function createEggProduction(data: {
 export async function updateEggProduction(id: number, data: {
   eggsCollected?: number
   unusableCount?: number
+  qualityGrade?: string
   logDate?: string
 }) {
   const { userId, activeFarmId } = await getAuthContext()

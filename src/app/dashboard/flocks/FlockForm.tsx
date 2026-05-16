@@ -31,6 +31,7 @@ const MORTALITY_REASONS: Record<string, string[]> = {
   "Brooding": ["Wrong temperature", "Weak chicks", "Poor brooding care"],
   "Genetic": ["Weak breed", "Birth defect"],
   "Injury/Accident": ["Cannibalism", "Trampling", "Equipment injury"],
+  "Unknown": ["Unknown cause yet"],
   "Other": ["Other"]
 };
 

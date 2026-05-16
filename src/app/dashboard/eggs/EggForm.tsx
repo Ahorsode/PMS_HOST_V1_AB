@@ -26,7 +26,7 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
     batchId: log?.batchId || defaultBatchId || (batches[0]?.id || 0),
     eggsCollected: log?.eggsCollected || 0,
     unusableCount: log?.unusableCount || 0,
-    qualityGrade: log?.qualityGrade || 'GRADE_A',
+    qualityGrade: log?.qualityGrade || 'MEDIUM',
     logDate: log?.logDate ? new Date(log.logDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
   });
 
@@ -52,6 +52,7 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
         await updateEggProduction(log.id, {
           eggsCollected: Number(formData.eggsCollected),
           unusableCount: Number(formData.unusableCount),
+          qualityGrade: formData.qualityGrade,
           logDate: formData.logDate,
         });
       } else if (mode === 'delete') {
@@ -136,14 +137,11 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
           </div>
         )}
         <Select
-          label="Quality Grade"
-
+          label="Egg Size"
           options={[
-            { label: 'Grade A (Premium)', value: 'GRADE_A' },
-            { label: 'Grade B (Standard)', value: 'GRADE_B' },
-            { label: 'Grade C (Industrial)', value: 'GRADE_C' },
-            { label: 'Dirty/Stained', value: 'DIRTY' },
-            { label: 'Leaker', value: 'LEAKER' },
+            { label: 'Small', value: 'SMALL' },
+            { label: 'Medium', value: 'MEDIUM' },
+            { label: 'Large', value: 'LARGE' },
           ]}
           value={formData.qualityGrade}
           onChange={(e) => setFormData({ ...formData, qualityGrade: e.target.value })}
