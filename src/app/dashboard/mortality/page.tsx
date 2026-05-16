@@ -11,6 +11,7 @@ import { QuickMortalityLogger } from './QuickMortalityLogger';
 import { InfirmaryManagement } from '../flocks/InfirmaryManagement';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { IsolationRoomForm } from './IsolationRoomForm';
 
 export default async function MortalityPage() {
   const hasAccess = await checkWorkerPermissions('mortality', 'view');
@@ -83,21 +84,7 @@ export default async function MortalityPage() {
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-1 p-5 bg-[#1F2937] rounded-xl border border-gray-700 h-fit">
-            <h3 className="font-bold text-amber-400 mb-4 flex items-center gap-2">
-              <Plus className="w-4 h-4" /> Create New Room
-            </h3>
-            <form action={async (formData) => {
-              'use server'
-              const name = formData.get('name') as string
-              const capacity = parseInt(formData.get('capacity') as string)
-              await createIsolationRoom({ name, capacity })
-            }} className="space-y-4">
-              <Input name="name" label="Room Name" placeholder="e.g. Infirmary A" required className="bg-[#374151] border-gray-600 text-white placeholder-gray-400" />
-              <Input name="capacity" type="number" label="Capacity (Birds)" placeholder="e.g. 50" required className="bg-[#374151] border-gray-600 text-white placeholder-gray-400" />
-              <Button type="submit" className="w-full bg-amber-600 hover:bg-amber-700 text-white">Add Room</Button>
-            </form>
-          </div>
+          <IsolationRoomForm />
           <div className="md:col-span-2">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {isolationRooms.length > 0 ? isolationRooms.map((room: any) => (

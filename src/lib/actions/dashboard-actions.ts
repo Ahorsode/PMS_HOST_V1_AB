@@ -485,7 +485,7 @@ export async function getIsolationRooms() {
   if (!activeFarmId) return []
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    return await tx.isolation_rooms.findMany({
+    return await tx.isolationRoom.findMany({
       where: { farmId: activeFarmId },
       select: {
         id: true,
@@ -507,7 +507,7 @@ export async function createIsolationRoom(data: { name: string, capacity: number
   if (!hasAccess) throw new Error('Unauthorized')
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    const room = await tx.isolation_rooms.create({
+    const room = await tx.isolationRoom.create({
       data: {
         name: data.name,
         capacity: data.capacity,
