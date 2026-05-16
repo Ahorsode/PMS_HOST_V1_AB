@@ -9,6 +9,7 @@ export async function createCustomer(data: {
   phone?: string
   email?: string
   address?: string
+  balanceOwed?: number
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')

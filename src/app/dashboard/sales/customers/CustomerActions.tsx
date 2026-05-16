@@ -19,6 +19,7 @@ function CustomerForm({ setIsOpen }: { setIsOpen: (val: boolean) => void }) {
       phone: formData.get('phone') as string,
       email: formData.get('email') as string,
       address: formData.get('address') as string,
+      balanceOwed: Number(formData.get('balanceOwed')) || 0,
     };
 
     setIsSubmitting(true);
@@ -96,6 +97,18 @@ function CustomerForm({ setIsOpen }: { setIsOpen: (val: boolean) => void }) {
                name="address"
                className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-bold outline-none focus:border-emerald-500/50 transition-all h-24"
                placeholder={partnerType === 'supplier' ? "Warehouse or business location" : "Global shipping or warehouse location"}
+             />
+          </div>
+
+          <div className="space-y-1">
+             <label className="text-xs font-bold uppercase text-white/70 tracking-widest px-1">Old Debt / Amount Owing (GHS)</label>
+             <input 
+               name="balanceOwed"
+               type="number"
+               step="0.01"
+               min="0"
+               className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-bold outline-none focus:border-emerald-500/50 transition-all"
+               placeholder="0.00"
              />
           </div>
        </div>

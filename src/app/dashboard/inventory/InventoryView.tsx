@@ -60,6 +60,7 @@ type FormState = {
   costPerUnit: string;
   supplierId: string;
   paymentPlan: string;
+  amountPaid: string;
 };
 
 
@@ -73,7 +74,7 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [form, setForm] = useState<FormState>({
-    itemName: '', stockLevel: '', unit: 'bags', category: 'FEED', costPerUnit: '', supplierId: '', paymentPlan: 'full'
+    itemName: '', stockLevel: '', unit: 'bags', category: 'FEED', costPerUnit: '', supplierId: '', paymentPlan: 'full', amountPaid: ''
   });
 
   const fetchItems = async () => {
@@ -95,7 +96,7 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
   const openAdd = () => {
     if (!canEdit) return;
     setEditing(null);
-    setForm({ itemName: '', stockLevel: '', unit: 'bags', category: 'FEED', costPerUnit: '', supplierId: '', paymentPlan: 'full' });
+    setForm({ itemName: '', stockLevel: '', unit: 'bags', category: 'FEED', costPerUnit: '', supplierId: '', paymentPlan: 'full', amountPaid: '' });
     setShowForm(true);
   };
 
@@ -109,7 +110,8 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
       category: item.category,
       costPerUnit: item.costPerUnit != null ? String(item.costPerUnit) : '',
       supplierId: item.supplierId ? String(item.supplierId) : '',
-      paymentPlan: 'full'
+      paymentPlan: 'full',
+      amountPaid: ''
     });
     setShowForm(true);
   };
@@ -139,6 +141,8 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
           category: form.category,
           ...(form.costPerUnit ? { costPerUnit: parseFloat(form.costPerUnit) } : {}),
           ...(form.supplierId && form.supplierId !== 'onetime' ? { supplierId: parseInt(form.supplierId) } : {}),
+          paymentPlan: form.paymentPlan,
+          ...(form.paymentPlan === 'installments' && form.amountPaid ? { amountPaid: parseFloat(form.amountPaid) } : {}),
         });
       }
       if (res?.success) {
@@ -441,7 +445,18 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
                 <div className="flex gap-2">
                   <select
                     value={form.supplierId}
-                    onChange={e => setForm(p => ({ ...p, supplierId: e.target.value }))}
+                    onChange={e => {
+                      const val = e.target.value;
+                      if (val === 'add_new') {
+                        handleAddNewSupplier();
+                      } else {
+                        setForm(p => ({ 
+                          ...p, 
+                          supplierId: val,
+                          ...(val === 'onetime' ? { paymentPlan: 'full' } : {}) 
+                        }));
+                      }
+                    }}
                     className="flex-1 bg-white/10 border border-white/10 rounded-md px-3 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500/50 [&>option]:bg-gray-800"
                   >
                     <option value="">-- Select Supplier --</option>
@@ -449,20 +464,14 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
                     {suppliers.map(sup => (
                       <option key={sup.id} value={sup.id}>{sup.name}</option>
                     ))}
+                    <option value="add_new">+ Add New Supply</option>
                   </select>
                   <button
                     type="button"
-                    onClick={() => setForm(p => ({ ...p, supplierId: 'onetime' }))}
+                    onClick={() => setForm(p => ({ ...p, supplierId: 'onetime', paymentPlan: 'full' }))}
                     className="px-3 py-2 rounded-md bg-white/10 hover:bg-white/20 text-white/70 hover:text-white text-xs font-bold transition-all whitespace-nowrap"
                   >
                     Set One-Time
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleAddNewSupplier}
-                    className="px-3 py-2 rounded-md bg-white/10 hover:bg-white/20 text-emerald-400 hover:text-emerald-300 text-xs font-bold transition-all whitespace-nowrap flex items-center"
-                  >
-                    <Plus className="w-4 h-4 mr-1" /> New
                   </button>
                 </div>
               </div>
@@ -472,13 +481,29 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
                 <select
                   value={form.paymentPlan}
                   onChange={e => setForm(p => ({ ...p, paymentPlan: e.target.value }))}
-                  className="w-full bg-white/10 border border-white/10 rounded-md px-3 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500/50 [&>option]:bg-gray-800"
+                  disabled={form.supplierId === 'onetime'}
+                  className="w-full bg-white/10 border border-white/10 rounded-md px-3 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500/50 [&>option]:bg-gray-800 disabled:opacity-50"
                 >
                   <option value="full">Paid in Full</option>
                   <option value="installments">Installments</option>
-                  <option value="net30">Net 30</option>
+                  <option value="none">None</option>
                 </select>
               </div>
+
+              {form.paymentPlan === 'installments' && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-white/70 uppercase tracking-wider">Amount Paid (Initial Payment)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={form.amountPaid}
+                    onChange={e => setForm(p => ({ ...p, amountPaid: e.target.value }))}
+                    placeholder="0.00"
+                    className="w-full bg-white/10 border border-white/10 rounded-md px-3 py-2.5 text-emerald-400 text-sm font-bold placeholder-white/20 focus:outline-none focus:border-emerald-500/50"
+                  />
+                </div>
+              )}
 
               <motion.button
                 whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}

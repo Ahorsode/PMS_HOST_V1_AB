@@ -12,6 +12,8 @@ export async function createInventoryItem(data: {
   category?: string
   costPerUnit?: number
   supplierId?: number
+  paymentPlan?: string
+  amountPaid?: number
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
@@ -22,11 +24,28 @@ export async function createInventoryItem(data: {
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const item = await tx.inventory.create({
       data: {
-        ...data,
+        itemName: data.itemName,
+        stockLevel: data.stockLevel,
+        unit: data.unit,
+        category: data.category,
+        costPerUnit: data.costPerUnit,
+        supplierId: data.supplierId,
         userId: userId,
         farmId: activeFarmId
       }
     })
+
+    if (data.supplierId && data.paymentPlan === 'installments') {
+      const totalCost = data.stockLevel * (data.costPerUnit || 0)
+      const debt = totalCost - (data.amountPaid || 0)
+      if (debt > 0) {
+        await tx.supplier.update({
+          where: { id: data.supplierId },
+          data: { balanceOwed: { increment: debt } }
+        })
+      }
+    }
+    
     revalidatePath('/dashboard/inventory')
     revalidatePath('/dashboard')
     return { success: true, item: { ...item, stockLevel: Number(item.stockLevel) } }

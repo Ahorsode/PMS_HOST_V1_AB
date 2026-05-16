@@ -28,6 +28,7 @@ export async function createSupplier(data: {
   phone?: string
   email?: string
   address?: string
+  balanceOwed?: number
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
