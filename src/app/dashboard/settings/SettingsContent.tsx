@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Home, Settings as SettingsIcon, Bell, Shield, Plus, Loader2, Save, CheckCircle2 } from 'lucide-react';
+import { Home, Settings as SettingsIcon, Bell, Shield, Plus, Loader2, Save, CheckCircle2, Laptop, Key, Copy, Check, CreditCard, ChevronRight } from 'lucide-react';
 import { updateFarmInfo, createHouse } from '@/lib/actions/dashboard-actions';
 import { updateFarmSettings, getFarmSettings } from '@/lib/actions/preference-actions';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { getFarmLicenseStatus, purchaseDesktopLicense, generateDeviceLicenses } from '@/lib/actions/licenses';
 
 interface InventoryItem {
   id: string;
@@ -47,6 +48,81 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
   const [reorderLevels, setReorderLevels] = useState<Record<string, number>>({});
   const [isLoadingPrefs, setIsLoadingPrefs] = useState(false);
   const [growthStandards, setGrowthStandards] = useState<any[]>([]);
+
+  // Desktop Licensing states
+  const [licenseStatus, setLicenseStatus] = useState<string>('UNPAID');
+  const [devices, setDevices] = useState<any[]>([]);
+  const [isLoadingLicense, setIsLoadingLicense] = useState(false);
+  const [showCheckoutModal, setShowCheckoutModal] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [seatCount, setSeatCount] = useState<number>(3);
+  const [isGeneratingKeys, setIsGeneratingKeys] = useState(false);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+
+  const fetchLicenseData = async () => {
+    setIsLoadingLicense(true);
+    try {
+      const res = await getFarmLicenseStatus();
+      if (res.success) {
+        setLicenseStatus(res.licenseStatus || 'UNPAID');
+        setDevices(res.devices || []);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoadingLicense(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'licenses') {
+      fetchLicenseData();
+    }
+  }, [activeTab]);
+
+  const handleConfirmPayment = async () => {
+    setIsProcessingPayment(true);
+    try {
+      const res = await purchaseDesktopLicense();
+      if (res.success) {
+        setLicenseStatus('PAID_AND_ACTIVE');
+        setShowCheckoutModal(false);
+        setMessage({ type: 'success', text: 'Desktop Bundle License unlocked successfully!' });
+        await fetchLicenseData();
+      } else {
+        setMessage({ type: 'error', text: res.error || 'Payment processing failed.' });
+      }
+    } catch (err) {
+      console.error(err);
+      setMessage({ type: 'error', text: 'Payment failed' });
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
+  const handleGenerateKeys = async () => {
+    setIsGeneratingKeys(true);
+    try {
+      const res = await generateDeviceLicenses(seatCount);
+      if (res.success) {
+        setMessage({ type: 'success', text: `Successfully generated ${seatCount} device license keys!` });
+        await fetchLicenseData();
+      } else {
+        setMessage({ type: 'error', text: res.error || 'Failed to generate keys' });
+      }
+    } catch (err) {
+      console.error(err);
+      setMessage({ type: 'error', text: 'Failed to generate keys' });
+    } finally {
+      setIsGeneratingKeys(false);
+    }
+  };
+
+  const copyToClipboard = (keyText: string) => {
+    navigator.clipboard.writeText(keyText);
+    setCopiedKey(keyText);
+    setTimeout(() => setCopiedKey(null), 2000);
+  };
 
   useEffect(() => {
     if (activeTab === 'preferences' || activeTab === 'notifications') {
@@ -140,6 +216,7 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
     { id: 'farm', label: 'Farm Info', icon: Home },
     { id: 'notifications', label: 'Reminders', icon: Bell },
     { id: 'preferences', label: 'Stock Levels', icon: SettingsIcon },
+    { id: 'licenses', label: 'Desktop App Licenses', icon: Laptop },
     { id: 'security', label: 'Security', icon: Shield },
   ];
 
@@ -339,6 +416,290 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
               )}
             </CardContent>
           </Card>
+        )}
+
+        {/* ---- DESKTOP LICENSES TAB ---- */}
+        {activeTab === 'licenses' && (
+          <div className="space-y-6">
+            {isLoadingLicense ? (
+              <Card className="border border-white/5 bg-zinc-950/40">
+                <CardContent className="flex flex-col items-center justify-center py-20 space-y-4">
+                  <Loader2 className="w-10 h-10 text-emerald-400 animate-spin" />
+                  <p className="text-sm text-zinc-400">Loading licensing configurations...</p>
+                </CardContent>
+              </Card>
+            ) : licenseStatus !== 'PAID_AND_ACTIVE' ? (
+              /* State 1: Pitch Card */
+              <Card className="border border-emerald-500/20 bg-gradient-to-br from-zinc-950 via-zinc-900 to-emerald-950/20 shadow-xl overflow-hidden relative group">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none group-hover:bg-emerald-500/10 transition-all duration-500" />
+                <CardHeader className="pb-4">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium mb-2 w-fit">
+                    <Laptop className="w-3.5 h-3.5" />
+                    Premium Offline Capability
+                  </div>
+                  <CardTitle className="text-2xl font-bold text-white tracking-tight">
+                    Run Poultry PMS Offline on Your Farm
+                  </CardTitle>
+                  <p className="text-sm text-zinc-400 mt-2 max-w-2xl leading-relaxed">
+                    Deploy native Windows desktop apps across your farm infrastructure. Collect feeding stats, egg production, and mortality logs 100% offline. Automatically sync back to the cloud when a connection is detected.
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {[
+                      { title: 'Zero Latency', desc: 'Instant local database read/write speeds, even during complete cloud outages.' },
+                      { title: 'Auto Reconciliation', desc: 'Secure, transactional outbox queues background synchronization heartbeats.' },
+                      { title: 'Optimized Display', desc: 'High-contrast theme optimized specifically for rugged outdoor farm conditions.' }
+                    ].map((feat, idx) => (
+                      <div key={idx} className="p-4 rounded-lg bg-white/5 border border-white/5 hover:border-emerald-500/20 transition-all duration-300">
+                        <h4 className="font-semibold text-white text-sm mb-1">{feat.title}</h4>
+                        <p className="text-xs text-zinc-400 leading-relaxed">{feat.desc}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="pt-4 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="text-left">
+                      <p className="text-xs text-zinc-500 uppercase tracking-widest font-semibold">One-time Bundle License</p>
+                      <p className="text-2xl font-extrabold text-white mt-0.5">$199 <span className="text-sm font-normal text-zinc-400">USD</span></p>
+                    </div>
+                    <Button 
+                      onClick={() => setShowCheckoutModal(true)} 
+                      className="px-6 py-5 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-black font-semibold rounded-md shadow-lg shadow-emerald-500/10 flex items-center gap-2 group/btn transition-all duration-300 hover:scale-[1.02]"
+                    >
+                      <CreditCard className="w-4 h-4" />
+                      Unlock Desktop License Bundle
+                      <ChevronRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : devices.length === 0 ? (
+              /* State 3: Seat count setup wizard */
+              <Card className="border border-emerald-500/20 bg-zinc-950/40">
+                <CardHeader>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium mb-2 w-fit">
+                    Step 2: Seat Configuration
+                  </div>
+                  <CardTitle className="text-xl font-bold text-white">Configure Your Physical Terminals</CardTitle>
+                  <p className="text-sm text-zinc-400 mt-1">
+                    Determine how many physical computers or terminal screens you will deploy across your farm. We will generate a unique cryptographic license key for each seat.
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-2 max-w-md">
+                    <label className="text-xs text-zinc-400 font-semibold uppercase tracking-wider">Number of Terminal Seats</label>
+                    <div className="flex gap-3">
+                      <Input
+                        type="number"
+                        min={1}
+                        max={100}
+                        value={seatCount}
+                        onChange={(e) => setSeatCount(Math.max(1, parseInt(e.target.value) || 1))}
+                        className="bg-white/5 border-white/10 text-white rounded-md focus:border-emerald-500/50"
+                      />
+                      <Button
+                        disabled={isGeneratingKeys}
+                        onClick={handleGenerateKeys}
+                        className="bg-emerald-500 hover:bg-emerald-400 text-black font-semibold px-6 rounded-md flex items-center gap-2 whitespace-nowrap"
+                      >
+                        {isGeneratingKeys ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Generating...
+                          </>
+                        ) : (
+                          <>
+                            <Key className="w-4 h-4" />
+                            Complete Setup & Generate Keys
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                    <p className="text-xs text-zinc-500 mt-1">You can pre-allocate between 1 and 100 license slots now. Additional slots can be added later.</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              /* State 4: Licenses Access Portal Table */
+              <Card className="border border-white/5 bg-zinc-950/40">
+                <CardHeader className="flex flex-row items-center justify-between border-b border-white/5 pb-4">
+                  <div>
+                    <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
+                      <Laptop className="w-5 h-5 text-emerald-400" />
+                      Active Terminal Licenses
+                    </CardTitle>
+                    <p className="text-xs text-zinc-400 mt-1">Use these keys to register and activate your native Windows PMS desktop clients.</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        setDevices([]); // clear to force setup page again
+                      }}
+                      className="border-white/10 hover:bg-white/5 text-xs h-8 rounded-md flex items-center gap-1.5 text-zinc-300 hover:text-white"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Add Seat
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b border-white/5 bg-white/[0.02] text-[10px] text-zinc-500 uppercase tracking-widest font-bold">
+                          <th className="py-3.5 px-6">Device Label</th>
+                          <th className="py-3.5 px-6">License Key</th>
+                          <th className="py-3.5 px-6">Status</th>
+                          <th className="py-3.5 px-6">Hardware Binding</th>
+                          <th className="py-3.5 px-6 text-right">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-white/5">
+                        {devices.map((device) => (
+                          <tr key={device.id} className="hover:bg-white/[0.01] transition-colors text-sm text-zinc-300">
+                            <td className="py-4 px-6 font-medium text-white">{device.deviceName}</td>
+                            <td className="py-4 px-6">
+                              <code className="px-2.5 py-1 rounded bg-white/5 border border-white/5 font-mono text-xs text-emerald-300 tracking-wider">
+                                {device.licenseKey}
+                              </code>
+                            </td>
+                            <td className="py-4 px-6">
+                              <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${
+                                device.status === 'ACTIVE' 
+                                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                                  : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                              }`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${device.status === 'ACTIVE' ? 'bg-emerald-400' : 'bg-amber-400 animate-pulse'}`} />
+                                {device.status}
+                              </span>
+                            </td>
+                            <td className="py-4 px-6">
+                              {device.hardwareId ? (
+                                <code className="font-mono text-xs text-zinc-500">{device.hardwareId}</code>
+                              ) : (
+                                <span className="text-xs text-zinc-600 italic">Awaiting client activation</span>
+                              )}
+                            </td>
+                            <td className="py-4 px-6 text-right">
+                              <Button
+                                variant="ghost"
+                                onClick={() => copyToClipboard(device.licenseKey)}
+                                className="h-8 w-8 p-0 rounded-md hover:bg-white/5 text-zinc-400 hover:text-white"
+                                title="Copy License Key"
+                              >
+                                {copiedKey === device.licenseKey ? (
+                                  <Check className="w-4 h-4 text-emerald-400" />
+                                ) : (
+                                  <Copy className="w-4 h-4" />
+                                )}
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* State 2: Dummy Stripe Checkout Modal */}
+            {showCheckoutModal && (
+              <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                <div className="w-full max-w-xl bg-zinc-950 border border-white/10 rounded-lg shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                  <div className="grid grid-cols-1 md:grid-cols-5">
+                    {/* Left details panel */}
+                    <div className="md:col-span-2 bg-zinc-900 p-6 flex flex-col justify-between border-b md:border-b-0 md:border-r border-white/5">
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
+                          <Laptop className="w-4 h-4" />
+                          Poultry PMS
+                        </div>
+                        <div>
+                          <h3 className="text-white font-bold text-lg">Desktop Bundle</h3>
+                          <p className="text-xs text-zinc-400 mt-1">One-time purchase for full offline access</p>
+                        </div>
+                      </div>
+                      <div className="mt-8 md:mt-0">
+                        <span className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Total Amount</span>
+                        <div className="text-2xl font-black text-white mt-1">$199.00</div>
+                      </div>
+                    </div>
+
+                    {/* Right checkout details panel */}
+                    <div className="md:col-span-3 p-6 space-y-5">
+                      <div className="flex items-center justify-between pb-3 border-b border-white/5">
+                        <span className="text-sm font-semibold text-white">Stripe Testmode</span>
+                        <span className="text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-bold uppercase tracking-wider font-semibold">Test Data</span>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="space-y-1">
+                          <label className="text-[10px] text-zinc-400 uppercase tracking-wider font-bold">Card Number</label>
+                          <Input
+                            disabled
+                            value="4242 •••• •••• 4242"
+                            className="bg-white/5 border-white/5 text-zinc-400 rounded-md"
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <label className="text-[10px] text-zinc-400 uppercase tracking-wider font-bold">Expires</label>
+                            <Input
+                              disabled
+                              value="12 / 29"
+                              className="bg-white/5 border-white/5 text-zinc-400 rounded-md"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <label className="text-[10px] text-zinc-400 uppercase tracking-wider font-bold">CVC</label>
+                            <Input
+                              disabled
+                              value="123"
+                              className="bg-white/5 border-white/5 text-zinc-400 rounded-md"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-3 bg-zinc-900 border border-white/5 rounded-md text-xs text-zinc-400 leading-relaxed">
+                        ⚠️ This payment sandbox will bypass actual transaction networks and instantly activate your licenses.
+                      </div>
+
+                      <div className="flex gap-3 pt-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowCheckoutModal(false)}
+                          className="flex-1 border-white/10 hover:bg-white/5 rounded-md h-11 text-zinc-300"
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          disabled={isProcessingPayment}
+                          onClick={handleConfirmPayment}
+                          className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-black font-bold rounded-md h-11 flex items-center justify-center gap-2"
+                        >
+                          {isProcessingPayment ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Validating...
+                            </>
+                          ) : (
+                            <>
+                              <Check className="w-4 h-4" />
+                              Pay $199
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
         {/* ---- SECURITY TAB ---- */}

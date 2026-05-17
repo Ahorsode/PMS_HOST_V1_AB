@@ -1,6 +1,6 @@
 const { app, BrowserWindow, shell, ipcMain, safeStorage } = require('electron');
 const path = require('path');
-const serve = require('electron-serve').default || require('electron-serve');
+const serve = require('electron-serve');
 const db = require('./database');
 const crypto = require('crypto');
 const fs = require('fs');
@@ -11,26 +11,83 @@ const loadURL = serve({ directory: path.join(__dirname, '../out') });
 
 let mainWindow;
 
+function getSecureLicenseToken() {
+  try {
+    const userDataPath = app.getPath('userData');
+    const tokenPath = path.join(userDataPath, 'license_token.dat');
+    if (!fs.existsSync(tokenPath)) return null;
+    const encrypted = fs.readFileSync(tokenPath);
+    if (!safeStorage.isEncryptionAvailable()) {
+      return encrypted.toString('utf8');
+    }
+    return safeStorage.decryptString(encrypted);
+  } catch (err) {
+    console.error('[License Check] Failed to read secure license token:', err);
+    return null;
+  }
+}
+
+function getHardwareId() {
+  const interfaces = os.networkInterfaces();
+  let mac = '';
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      if (!iface.internal && iface.mac !== '00:00:00:00:00:00') {
+        mac = iface.mac;
+        break;
+      }
+    }
+    if (mac) break;
+  }
+  
+  const platform = process.platform;
+  const arch = process.arch;
+  const cpus = os.cpus().length;
+  const totalMemory = os.totalmem();
+  
+  const hash = crypto.createHash('sha256');
+  hash.update(`${mac}-${platform}-${arch}-${cpus}-${totalMemory}`);
+  return `HW-${hash.digest('hex').substring(0, 16).toUpperCase()}`;
+}
+
 function createWindow() {
+  const token = getSecureLicenseToken();
+  const isActivated = !!token;
+
   mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 800,
-    minWidth: 900,
-    minHeight: 650,
+    width: isActivated ? 1280 : 450,
+    height: isActivated ? 800 : 600,
+    minWidth: isActivated ? 900 : 450,
+    minHeight: isActivated ? 650 : 600,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
       preload: path.join(__dirname, 'preload.js'),
     },
     backgroundColor: '#000000',
-    title: 'Poultry Management System',
+    title: isActivated ? 'Poultry Management System' : 'Activate Poultry PMS Terminal',
     show: false,
+    resizable: isActivated,
+    maximizable: isActivated,
+    minimizable: isActivated,
   });
 
-  if (isDev) {
-    mainWindow.loadURL('http://localhost:3000');
+  if (!isActivated) {
+    mainWindow.setMenu(null);
+  }
+
+  if (isActivated) {
+    if (isDev) {
+      mainWindow.loadURL('http://localhost:3000');
+    } else {
+      loadURL(mainWindow);
+    }
   } else {
-    loadURL(mainWindow);
+    if (isDev) {
+      mainWindow.loadURL('http://localhost:3000/activate');
+    } else {
+      mainWindow.loadURL('app://./activate');
+    }
   }
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -103,6 +160,85 @@ ipcMain.on('db-execute', (event, { sql, params, table, action, payload }) => {
 
 // --- Auth & Secure Storage Handlers ---
 
+ipcMain.handle('activate-terminal', async (event, { farmId, licenseKey }) => {
+  try {
+    const hardwareId = getHardwareId();
+    console.log(`[Activation] Invoking cloud registration for Farm ${farmId}, Key ${licenseKey}, HW ${hardwareId}`);
+    
+    const response = await fetch(`${CLOUD_URL}/api/devices/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        farmId,
+        licenseKey,
+        hardwareId,
+        deviceName: `${os.hostname()} Terminal`,
+        deviceType: process.platform
+      })
+    });
+
+    if (!response.ok) {
+      const errData = await response.json();
+      return { success: false, error: errData.error || 'Server rejected activation request' };
+    }
+
+    const result = await response.json();
+    if (!result.success || !result.device) {
+      return { success: false, error: 'Invalid activation response payload' };
+    }
+
+    // 1. Save DeviceToken securely via safeStorage
+    const tokenData = JSON.stringify({
+      deviceToken: result.device.id,
+      farmId,
+      licenseKey,
+      hardwareId
+    });
+    
+    const userDataPath = app.getPath('userData');
+    const encrypted = safeStorage.isEncryptionAvailable()
+      ? safeStorage.encryptString(tokenData)
+      : Buffer.from(tokenData, 'utf8');
+      
+    fs.writeFileSync(path.join(userDataPath, 'license_token.dat'), encrypted);
+
+    // 2. Save sync credentials to sync_auth.dat
+    const syncAuthData = JSON.stringify({
+      licenseKey: licenseKey,
+      deviceToken: result.device.id
+    });
+    const encryptedSyncAuth = safeStorage.isEncryptionAvailable()
+      ? safeStorage.encryptString(syncAuthData)
+      : Buffer.from(syncAuthData, 'utf8');
+    fs.writeFileSync(path.join(userDataPath, 'sync_auth.dat'), encryptedSyncAuth);
+
+    // 3. Initialize SQLite
+    db.initDatabase();
+
+    // 4. Force a quick pull-sync API call to populate database with active batches
+    console.log('[Activation] Executing initial cloud data synchronization pull...');
+    await attemptSync();
+
+    // 5. Unlock UI & Resize back to standard window settings
+    if (mainWindow) {
+      mainWindow.setResizable(true);
+      mainWindow.setMaximizable(true);
+      mainWindow.setMinimizable(true);
+      mainWindow.setMinimumSize(900, 650);
+      mainWindow.setSize(1280, 800);
+      mainWindow.setTitle('Poultry Management System');
+      mainWindow.center();
+    }
+    
+    return { success: true };
+  } catch (err) {
+    console.error('[Activation Exception]:', err);
+    return { success: false, error: err.message };
+  }
+});
+
 ipcMain.on('save-auth-data', (event, { sessionToken, licenseKey, deviceToken }) => {
   try {
     const data = JSON.stringify({ sessionToken, licenseKey, deviceToken });
@@ -171,6 +307,14 @@ const CLOUD_URL = isDev ? 'http://localhost:3000' : 'https://poultry-pms.vercel.
  * 2. Pull: Fetch fresh cloud updates since last successful sync.
  */
 async function attemptSync() {
+  const token = getSecureLicenseToken();
+  if (!token) {
+    console.log('[Sync Worker] Sync blocked: Device is not activated.');
+    syncStatus = 'OFFLINE';
+    broadcastSyncStatus();
+    return;
+  }
+
   if (isSyncing) return;
   
   isSyncing = true;
@@ -274,6 +418,15 @@ async function attemptSync() {
 
 function broadcastSyncStatus() {
   if (!mainWindow) return;
+  const token = getSecureLicenseToken();
+  if (!token) {
+    mainWindow.webContents.send('sync-status-update', {
+      pending: 0,
+      lastSync: null,
+      status: 'OFFLINE'
+    });
+    return;
+  }
   const remaining = db.query('SELECT count(*) as count FROM sync_queue')[0].count;
   mainWindow.webContents.send('sync-status-update', {
     pending: remaining,
@@ -286,7 +439,10 @@ function broadcastSyncStatus() {
 setInterval(attemptSync, 60000); // Check every minute
 
 app.whenReady().then(() => {
-  db.initDatabase();
+  const token = getSecureLicenseToken();
+  if (token) {
+    db.initDatabase();
+  }
   createWindow();
 });
 

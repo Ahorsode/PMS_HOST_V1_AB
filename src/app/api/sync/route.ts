@@ -18,7 +18,7 @@ export async function POST(req: Request) {
       });
       if (device) {
         farmId = device.farmId;
-        userId = device.userId;
+        userId = device.userId || undefined;
       }
     }
 

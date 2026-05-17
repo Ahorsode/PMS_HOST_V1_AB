@@ -94,6 +94,7 @@ model Farm {
   updatedAt        DateTime              @updatedAt
   userId           String                @default("user_placeholder")
   subscriptionTier SubscriptionTier      @default(BASIC)
+  master_license_status String?          @default("UNPAID") @map("master_license_status")
   batches          Livestock[]
   customers        Customer[]
   feedingLogs      FeedingLog[]
@@ -689,7 +690,7 @@ model EggCategory {
   name            String
   description     String?
   createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  updatedAt       DateTime        @updatedAt @default(now())
   eggProductions  EggProduction[]
   farm            Farm            @relation(fields: [farmId], references: [id])
   inventoryItems  Inventory[]
@@ -753,13 +754,18 @@ enum FeedType {
 model DeviceRegistration {
   id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   farmId       String   @map("farmId")
-  userId       String   @map("userId")
-  deviceId     String   @map("deviceId")
+  userId       String?  @map("userId")
+  deviceId     String?  @map("deviceId")
   deviceName   String?  @map("deviceName")
   deviceType   String?  @map("deviceType")
   lastSync     DateTime @default(now()) @map("lastSync")
   isActive     Boolean  @default(true) @map("isActive")
   registeredAt DateTime @default(now()) @map("registeredAt")
+  
+  licenseKey   String?  @unique @map("licenseKey")
+  status       String   @default("PENDING") @map("status")
+  hardwareId   String?  @map("hardwareId")
+  
   farm         Farm     @relation(fields: [farmId], references: [id], onDelete: Cascade)
 
   @@unique([farmId, deviceId])

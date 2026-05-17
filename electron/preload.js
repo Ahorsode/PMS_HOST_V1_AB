@@ -34,5 +34,20 @@ contextBridge.exposeInMainWorld('electronAPI', {
         ipcRenderer.removeListener(channel, subscription);
       };
     }
+  },
+
+  /**
+   * Securely invoke a method in the main process and await a promise-based response.
+   * @param {string} channel - The IPC channel name.
+   * @param {any} data - The payload to send.
+   */
+  invoke: async (channel, data) => {
+    const validChannels = ['activate-terminal'];
+    if (validChannels.includes(channel)) {
+      return await ipcRenderer.invoke(channel, data);
+    } else {
+      console.warn(`Attempted to invoke unauthorized IPC channel: ${channel}`);
+      throw new Error(`Unauthorized IPC channel: ${channel}`);
+    }
   }
 });
