@@ -27,9 +27,6 @@ export async function getAuthContext() {
   
   const userId = session.user.id
   let activeFarmId = (session.user as any).activeFarmId
-  if (activeFarmId && typeof activeFarmId === 'string') {
-    activeFarmId = parseInt(activeFarmId, 10);
-  }
 
   if (!activeFarmId) {
     const farm = await prisma.farm.findFirst({
