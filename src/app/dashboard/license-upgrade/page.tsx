@@ -42,6 +42,23 @@ const tiers = [
     color: 'from-amber-400 to-orange-500',
     shadow: 'shadow-amber-500/20',
     popular: true
+  },
+  {
+    name: 'Desktop Offline Bundle',
+    tier: 'DESKTOP_OFFLINE',
+    price: '$199',
+    period: 'one-time',
+    description: 'Deploy native Windows terminal apps across your farm infrastructure.',
+    features: [
+      '100% Offline Access',
+      'Background Auto-Sync',
+      'Multi-Terminal Support',
+      'Local Data Export',
+      'Offline Device Management',
+      'Requires Active Plan'
+    ],
+    color: 'from-blue-500 to-indigo-400',
+    shadow: 'shadow-blue-500/20'
   }
 ];
 
@@ -52,13 +69,25 @@ export default function LicenseUpgradePage() {
   const handleUpgrade = async (tier: any) => {
     setIsUpgrading(tier);
     try {
-      const result = await upgradeFarmSubscription(tier);
-      if (result.success) {
-        alert(`Successfully upgraded to ${tier} Tier! (Dev Mode Bypass Active)`);
-        router.push('/dashboard/profile');
-        router.refresh();
+      if (tier === 'DESKTOP_OFFLINE') {
+        const { purchaseDesktopLicense } = await import('@/lib/actions/licenses');
+        const result = await purchaseDesktopLicense();
+        if (result.success) {
+          alert('Successfully unlocked Desktop Offline Bundle!');
+          router.push('/dashboard/settings?tab=licenses');
+          router.refresh();
+        } else {
+          alert("Error: " + result.error);
+        }
       } else {
-        alert("Error: " + result.error);
+        const result = await upgradeFarmSubscription(tier);
+        if (result.success) {
+          alert(`Successfully upgraded to ${tier} Tier! (Dev Mode Bypass Active)`);
+          router.push('/dashboard/profile');
+          router.refresh();
+        } else {
+          alert("Error: " + result.error);
+        }
       }
     } catch (error) {
       alert("An unexpected error occurred.");
@@ -84,7 +113,7 @@ export default function LicenseUpgradePage() {
       </div>
 
       {/* Tiers Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-7 items-stretch pt-7">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-7 items-stretch pt-7">
         {tiers.map((tier) => (
           <div key={tier.name} className="relative group h-full">
             {tier.popular && (
@@ -101,7 +130,7 @@ export default function LicenseUpgradePage() {
                 <div className="space-y-3">
                   <div className={`w-16 h-16 rounded-md bg-gradient-to-br ${tier.color} p-0.5 shadow-xl ${tier.shadow}`}>
                     <div className="w-full h-full rounded-[14px] bg-[#0f1115] flex items-center justify-center">
-                      {tier.tier === 'PRO' ? <Shield className="w-8 h-8 text-emerald-400" /> : <Crown className="w-8 h-8 text-amber-400" />}
+                      {tier.tier === 'STANDARD' ? <Shield className="w-8 h-8 text-emerald-400" /> : tier.tier === 'DESKTOP_OFFLINE' ? <LayoutDashboard className="w-8 h-8 text-blue-400" /> : <Crown className="w-8 h-8 text-amber-400" />}
                     </div>
                   </div>
                   <div>
@@ -137,8 +166,10 @@ export default function LicenseUpgradePage() {
                   isLoading={isUpgrading === tier.tier}
                   disabled={isUpgrading !== null}
                   className={`w-full h-16 rounded-lg font-bold uppercase tracking-widest text-sm transition-all shadow-2xl ${
-                    tier.tier === 'PRO' 
+                    tier.tier === 'STANDARD' 
                     ? 'bg-emerald-500 hover:bg-emerald-400 text-[#064e3b] shadow-emerald-500/20' 
+                    : tier.tier === 'DESKTOP_OFFLINE'
+                    ? 'bg-blue-500 hover:bg-blue-400 text-[#0f172a] shadow-blue-500/20'
                     : 'bg-amber-500 hover:bg-amber-400 text-[#451a03] shadow-amber-500/20'
                   }`}
                 >
