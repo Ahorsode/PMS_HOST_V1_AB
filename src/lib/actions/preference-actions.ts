@@ -26,7 +26,7 @@ export async function updateFarmSettings(data: {
   return settings;
 }
 
-export async function updateReorderLevel(inventoryId: number, reorderLevel: number) {
+export async function updateReorderLevel(inventoryId: string, reorderLevel: number) {
   const { activeFarmId } = await getAuthContext();
   if (!activeFarmId) throw new Error("No active farm found");
 
@@ -40,7 +40,7 @@ export async function updateReorderLevel(inventoryId: number, reorderLevel: numb
 }
 
 export async function createVaccinationSchedule(data: {
-  livestockId: number;
+  livestockId: string;
   vaccineName: string;
   scheduledDate: Date;
   notes?: string;
@@ -62,7 +62,7 @@ export async function createVaccinationSchedule(data: {
 }
 
 export async function createMedicationSchedule(data: {
-  livestockId: number;
+  livestockId: string;
   medicationName: string;
   scheduledDate: Date;
   notes?: string;

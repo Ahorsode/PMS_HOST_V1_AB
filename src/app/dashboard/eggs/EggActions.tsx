@@ -82,7 +82,7 @@ export const EggLogActions = ({ log, batches, canEdit = true }: { log: any, batc
   );
 };
 
-export const LogProductionButton = ({ batchId, batches, canEdit = true }: { batchId: number, batches: any[], canEdit?: boolean }) => {
+export const LogProductionButton = ({ batchId, batches, canEdit = true }: { batchId: string, batches: any[], canEdit?: boolean }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (

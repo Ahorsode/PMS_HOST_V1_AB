@@ -54,7 +54,7 @@ export async function createSale(data: {
   })
 }
 
-export async function deleteSale(id: number) {
+export async function deleteSale(id: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 

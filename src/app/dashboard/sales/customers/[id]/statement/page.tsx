@@ -8,9 +8,9 @@ import { redirect } from 'next/navigation';
 
 export default async function CustomerStatementPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const customerId = parseInt(id);
+  const customerId = id;
   
-  if (isNaN(customerId)) {
+  if (!customerId) {
     redirect('/dashboard/sales/customers');
   }
 
@@ -20,7 +20,7 @@ export default async function CustomerStatementPage({ params }: { params: Promis
     redirect('/dashboard/sales/customers');
   }
 
-  const transactions = statement.orders.sort((a, b) => new Date(b.orderDate || b.createdAt).getTime() - new Date(a.orderDate || a.createdAt).getTime());
+  const transactions = statement.orders.sort((a: any, b: any) => new Date(b.orderDate || b.createdAt).getTime() - new Date(a.orderDate || a.createdAt).getTime());
 
   return (
     <div className="max-w-[1200px] mx-auto space-y-7 px-5 py-9 relative">

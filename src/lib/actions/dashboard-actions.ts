@@ -295,7 +295,7 @@ export async function getDashboardStats() {
 
 
 export async function createBatch(data: {
-  houseId: number
+  houseId: string
   breedType: string
   initialCount: number
   arrivalDate: string
@@ -336,7 +336,7 @@ export async function createBatch(data: {
  * Updates the initial investment financials for a livestock unit.
  * This is triggered after batch creation as per the new financial control flow.
  */
-export async function updateBatchFinancials(id: number, data: {
+export async function updateBatchFinancials(id: string, data: {
   actualCost: number
   carriageInward: number
   otherExpenses: Array<{ label: string, amount: number }>
@@ -395,7 +395,7 @@ export async function updateBatchFinancials(id: number, data: {
 /**
  * Overrides the growth target standard for a specific batch.
  */
-export async function updateGrowthTarget(id: number, target: string) {
+export async function updateGrowthTarget(id: string, target: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
 
@@ -417,10 +417,10 @@ export async function updateGrowthTarget(id: number, target: string) {
 
 
 export async function logFeeding(data: {
-  batchId: number
-  feedTypeId: number
+  batchId: string
+  feedTypeId: string
   amountConsumed: number
-  formulationId?: number
+  formulationId?: string
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
@@ -566,7 +566,7 @@ export async function getAllBatches() {
 }
 
 
-export async function updateBatchStatus(id: number, status: string) {
+export async function updateBatchStatus(id: string, status: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
 
@@ -588,7 +588,7 @@ export async function updateBatchStatus(id: number, status: string) {
 }
 
 export async function logProduction(data: {
-  batchId: number
+  batchId: string
   eggsCollected: number
   damagedEggs: number
   birdWeight?: number
@@ -1097,7 +1097,7 @@ export async function getAllMortalityLogs() {
   })
 }
 
-export async function getBatchDetails(id: number) {
+export async function getBatchDetails(id: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return null
 
@@ -1166,7 +1166,7 @@ export async function getBatchDetails(id: number) {
 }
 
 export async function logWeight(data: {
-  batchId: number
+  batchId: string
   averageWeight: number
   logDate: string
 }) {
@@ -1191,7 +1191,7 @@ export async function logWeight(data: {
   })
 }
 
-export async function getInventoryDetails(id: number) {
+export async function getInventoryDetails(id: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return null
 
@@ -1223,7 +1223,7 @@ export async function getInventoryDetails(id: number) {
   })
 }
 
-export async function getSaleDetails(id: number) {
+export async function getSaleDetails(id: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return null
 

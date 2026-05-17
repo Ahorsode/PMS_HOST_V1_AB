@@ -6,7 +6,7 @@ import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
 
 export async function createBatch(data: {
-  houseId: number
+  houseId: string
   breedType: string
   initialCount: number
   arrivalDate: string
@@ -40,8 +40,8 @@ export async function createBatch(data: {
   })
 }
 
-export async function updateBatch(id: number, data: {
-  houseId?: number
+export async function updateBatch(id: string, data: {
+  houseId?: string
   breedType?: string
   initialCount?: number
   currentCount?: number
@@ -89,7 +89,7 @@ export async function updateBatch(id: number, data: {
   })
 }
 
-export async function deleteBatch(id: number) {
+export async function deleteBatch(id: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
@@ -109,10 +109,10 @@ export async function deleteBatch(id: number) {
 }
 
 export async function logHealthEvent(data: {
-  batchId: number
+  batchId: string
   type: 'SICK' | 'DEAD'
   count: number
-  isolationRoomId?: number
+  isolationRoomId?: string
   reason?: string
   logDate?: string
   category?: string
@@ -172,7 +172,7 @@ export async function logMortality(data: any) {
   })
 }
 
-export async function transferToIsolation(id: number, count: number) {
+export async function transferToIsolation(id: string, count: number) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
@@ -206,7 +206,7 @@ export async function transferToIsolation(id: number, count: number) {
   })
 }
 
-export async function returnFromIsolation(id: number, count: number) {
+export async function returnFromIsolation(id: string, count: number) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
@@ -240,7 +240,7 @@ export async function returnFromIsolation(id: number, count: number) {
 }
 
 export async function logMortalityInIsolation(data: {
-  batchId: number,
+  batchId: string,
   count: number,
   reason?: string,
   category?: string,

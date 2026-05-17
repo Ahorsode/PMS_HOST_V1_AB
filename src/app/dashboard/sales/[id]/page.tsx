@@ -6,7 +6,7 @@ import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 
 export default async function SaleDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const sale = await getSaleDetails(Number(id));
+  const sale = await getSaleDetails(id);
 
   if (!sale) {
     notFound();

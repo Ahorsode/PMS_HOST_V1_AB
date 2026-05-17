@@ -8,9 +8,9 @@ import { redirect } from 'next/navigation';
 
 export default async function SupplierStatementPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const supplierId = parseInt(id);
+  const supplierId = id;
   
-  if (isNaN(supplierId)) {
+  if (!supplierId) {
     redirect('/dashboard/suppliers');
   }
 
@@ -21,7 +21,7 @@ export default async function SupplierStatementPage({ params }: { params: Promis
   }
 
   const transactions = [
-    ...statement.inventory.map(item => ({
+    ...statement.inventories.map((item: any) => ({
       id: `inv-${item.id}`,
       type: 'Inventory',
       name: item.itemName,
@@ -29,7 +29,7 @@ export default async function SupplierStatementPage({ params }: { params: Promis
       amount: Number(item.stockLevel) * Number(item.costPerUnit || 0),
       details: `${item.stockLevel} ${item.unit} @ ${formatCurrency(item.costPerUnit)}/unit`
     })),
-    ...statement.expenses.map(e => ({
+    ...statement.expenses.map((e: any) => ({
       id: `exp-${e.id}`,
       type: 'Expense',
       name: e.description,
@@ -37,7 +37,7 @@ export default async function SupplierStatementPage({ params }: { params: Promis
       amount: e.amount,
       details: e.category
     }))
-  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  ].sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
     <div className="max-w-[1200px] mx-auto space-y-7 px-5 py-9 relative">

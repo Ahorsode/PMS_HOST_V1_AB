@@ -10,7 +10,7 @@ interface SalesFormProps {
   inventory: any[];
   livestock: any[];
   onSuccess: () => void;
-  initialLivestockId?: number;
+  initialLivestockId?: string;
 }
 
 export function SalesForm({ customers, inventory, livestock, onSuccess, initialLivestockId }: SalesFormProps) {
@@ -18,8 +18,8 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
     description: initialLivestockId ? (livestock.find(l => l.id === initialLivestockId)?.batchName || 'Livestock') : '',
     quantity: 1 as number | '',
     unitPrice: 0 as number | '',
-    inventoryId: undefined as number | 'PENDING' | undefined,
-    livestockId: (initialLivestockId || undefined) as number | 'PENDING' | undefined
+    inventoryId: undefined as string | 'PENDING' | undefined,
+    livestockId: (initialLivestockId || undefined) as string | 'PENDING' | undefined
   }]);
   const [discountValue, setDiscountValue] = useState<number | ''>(0);
   const [discountType, setDiscountType] = useState<'flat' | 'percent'>('percent');
@@ -31,8 +31,8 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
       description: '',
       quantity: 1 as number | '',
       unitPrice: 0 as number | '',
-      inventoryId: undefined as number | 'PENDING' | undefined,
-      livestockId: undefined as number | 'PENDING' | undefined
+      inventoryId: undefined as string | 'PENDING' | undefined,
+      livestockId: undefined as string | 'PENDING' | undefined
     }]);
   };
 
@@ -104,8 +104,8 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
         description: i.description,
         quantity: Number(i.quantity) || 0,
         unitPrice: Number(i.unitPrice) || 0,
-        inventoryId: i.inventoryId && (i.inventoryId as unknown as string) !== 'PENDING' ? Number(i.inventoryId) : undefined,
-        livestockId: i.livestockId && (i.livestockId as unknown as string) !== 'PENDING' ? Number(i.livestockId) : undefined
+        inventoryId: i.inventoryId && (i.inventoryId as unknown as string) !== 'PENDING' ? i.inventoryId as string : undefined,
+        livestockId: i.livestockId && (i.livestockId as unknown as string) !== 'PENDING' ? i.livestockId as string : undefined
       }))
     });
     setIsSubmitting(false);

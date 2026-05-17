@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
+import { SyncStatusIndicator } from './SyncStatusIndicator';
+
 export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permissions?: any }) => {
   const pathname = usePathname();
 
@@ -167,6 +169,11 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
         <div className="mt-auto px-3 w-full pb-3 space-y-2 flex-shrink-0">
             <div className="h-px bg-white/10 mb-3 group-hover:block hidden" />
             
+            {/* Desktop Sync Status */}
+            <div className="px-2 group-hover:block hidden mb-2 transition-all duration-300">
+              <SyncStatusIndicator />
+            </div>
+
             {/* Profile Action */}
             <Link 
               href="/dashboard/profile"

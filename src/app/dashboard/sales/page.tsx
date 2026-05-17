@@ -12,7 +12,7 @@ import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
 import { WorkerStamp } from '@/components/ui/WorkerStamp';
 
 interface OrderItem {
-  id: number;
+  id: string;
   description: string;
   quantity: number;
   unitPrice: number;
@@ -20,7 +20,7 @@ interface OrderItem {
 }
 
 interface Order {
-  id: number;
+  id: string;
   totalAmount: any;
   discountAmount: any;
   status: string;
@@ -37,7 +37,7 @@ interface Order {
 }
 
 interface Customer {
-  id: number;
+  id: string;
   name: string;
   phone: string | null;
 }
@@ -51,7 +51,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
   }
 
   const resolvedParams = await searchParams;
-  const sellBatchId = resolvedParams.sellBatchId ? Number(resolvedParams.sellBatchId) : undefined;
+  const sellBatchId = resolvedParams.sellBatchId || undefined;
 
   const [ordersRaw, customersRaw, inventory, livestock] = await Promise.all([
     getAllOrders(),
@@ -136,7 +136,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                 {orders.map((order: Order) => (
                   <tr key={order.id} className="hover:bg-white/5 transition-colors group">
                     <td className="px-7 py-5">
-                      <span className="text-white font-bold text-sm tracking-normal uppercase tabular-nums">ORD-{order.id.toString().padStart(4, '0')}</span>
+                      <span className="text-white font-bold text-sm tracking-normal uppercase tabular-nums">ORD-{order.id.slice(-6).toUpperCase()}</span>
                     </td>
                     <td className="px-7 py-5">
                       <div className="flex flex-col">
@@ -179,7 +179,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
             {orders.map((order: Order) => (
               <div key={order.id} className="bg-black/20 rounded-md p-3 border border-white/5 flex flex-col space-y-2">
                  <div className="flex justify-between items-center">
-                   <span className="text-white font-bold text-sm tracking-normal uppercase tabular-nums">ORD-{order.id.toString().padStart(4, '0')}</span>
+                   <span className="text-white font-bold text-sm tracking-normal uppercase tabular-nums">ORD-{order.id.slice(-6).toUpperCase()}</span>
                    <span className={`px-2 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest border ${
                         order.status === 'COMPLETED' || order.status === 'PAID'
                           ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'

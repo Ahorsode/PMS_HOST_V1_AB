@@ -232,7 +232,7 @@ export async function getFarmMembers() {
  * Deletes a pending invitation.
  * Only the Absolute Owner (creator) or a Manager can cancel invitations.
  */
-export async function deleteInvitation(invitationId: number) {
+export async function deleteInvitation(invitationId: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
 
@@ -264,7 +264,7 @@ export async function deleteInvitation(invitationId: number) {
  * Deletes a member from the farm.
  * Only the Absolute Owner can remove others. 
  */
-export async function deleteMember(memberId: number) {
+export async function deleteMember(memberId: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
 
@@ -435,7 +435,7 @@ export async function checkWorkerPermissions(
   try {
     // 1. Fetch Farm for Absolute Ownership Check
     const farm = await prisma.farm.findUnique({
-      where: { id: Number(activeFarmId) },
+      where: { id: activeFarmId },
       select: { userId: true }
     })
     if (!farm) return false
@@ -447,7 +447,7 @@ export async function checkWorkerPermissions(
     const membership = await prisma.farmMember.findUnique({
       where: {
         farmId_userId: {
-          farmId: Number(activeFarmId),
+          farmId: activeFarmId,
           userId: userId
         }
       }
@@ -456,7 +456,7 @@ export async function checkWorkerPermissions(
     
     // 3. Load Overrides
     const perm = await prisma.userPermission.findFirst({
-      where: { userId: userId, farmId: Number(activeFarmId) }
+      where: { userId: userId, farmId: activeFarmId }
     })
     
     if (perm) {

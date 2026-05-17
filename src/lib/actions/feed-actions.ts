@@ -9,7 +9,7 @@ export async function createFeedFormulation(data: {
   name: string
   type: FeedType
   targetLivestock?: LivestockType
-  ingredients: { inventoryId: number; percentage: number }[]
+  ingredients: { inventoryId: string; percentage: number }[]
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
@@ -84,7 +84,7 @@ export async function getAllFeedFormulations() {
   }))
 }
 
-export async function deleteFeedFormulation(id: number) {
+export async function deleteFeedFormulation(id: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
 
@@ -177,7 +177,7 @@ export async function createFeedingLog(data: any) {
   }
 }
 
-export async function updateFeedingLog(id: number, data: any) {
+export async function updateFeedingLog(id: string, data: any) {
   const { activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
 
@@ -197,7 +197,7 @@ export async function updateFeedingLog(id: number, data: any) {
   }
 }
 
-export async function deleteFeedingLog(id: number, data?: any) {
+export async function deleteFeedingLog(id: string, data?: any) {
   const { activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
 

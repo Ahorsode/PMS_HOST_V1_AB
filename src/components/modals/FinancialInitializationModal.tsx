@@ -41,7 +41,7 @@ export function FinancialInitializationModal({ isOpen, onClose, batchId, batchNa
   const handleSave = async () => {
     setIsSubmitting(true);
     try {
-      const result = await updateBatchFinancials(Number(batchId), {
+      const result = await updateBatchFinancials(batchId, {
         actualCost: totalActualCost,
         carriageInward: Number(carriageCost) || 0,
         otherExpenses: otherExpenses.map(exp => ({

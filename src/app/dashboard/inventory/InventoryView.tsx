@@ -40,13 +40,13 @@ const CATEGORY_META: Record<string, { icon: React.ElementType; color: string; la
 };
 
 type InventoryItem = {
-  id: number;
+  id: string;
   itemName: string;
   stockLevel: number;
   unit: string;
   category: string;
   costPerUnit?: number | null;
-  supplierId?: number | null;
+  supplierId?: string | null;
   user?: {
     firstname: string | null;
     surname: string | null;
@@ -136,7 +136,7 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
           unit: form.unit,
           category: form.category,
           ...(form.costPerUnit ? { costPerUnit: parseFloat(form.costPerUnit) } : {}),
-          ...(form.supplierId && form.supplierId !== 'onetime' ? { supplierId: parseInt(form.supplierId) } : { supplierId: undefined }),
+          ...(form.supplierId && form.supplierId !== 'onetime' ? { supplierId: form.supplierId } : { supplierId: undefined }),
         });
       } else {
         res = await createInventoryItem({
@@ -145,7 +145,7 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
           unit: form.unit,
           category: form.category,
           ...(form.costPerUnit ? { costPerUnit: parseFloat(form.costPerUnit) } : {}),
-          ...(form.supplierId && form.supplierId !== 'onetime' ? { supplierId: parseInt(form.supplierId) } : {}),
+          ...(form.supplierId && form.supplierId !== 'onetime' ? { supplierId: form.supplierId } : {}),
           paymentPlan: form.paymentPlan,
           ...(form.paymentPlan === 'installments' && form.amountPaid ? { amountPaid: parseFloat(form.amountPaid) } : {}),
         });
@@ -160,7 +160,7 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
     });
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: string) => {
     if (!canEdit) return;
     startTransition(async () => {
       const res = await deleteInventoryItem(id);

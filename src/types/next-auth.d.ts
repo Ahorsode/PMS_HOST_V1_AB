@@ -1,16 +1,18 @@
-import NextAuth, { type DefaultSession, type DefaultUser } from 'next-auth';
+import { type DefaultSession, type DefaultUser } from 'next-auth';
 
 declare module 'next-auth' {
   interface Session {
     user: {
       id: string;
       role: string;
-      activeFarmId?: number;
+      activeFarmId?: string;
+      mustChangePassword?: boolean;
     } & DefaultSession['user'];
   }
 
   interface User extends DefaultUser {
     role: string;
-    activeFarmId?: number;
+    activeFarmId?: string;
+    mustChangePassword?: boolean;
   }
 }

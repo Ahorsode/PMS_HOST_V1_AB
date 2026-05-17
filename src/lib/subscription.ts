@@ -6,7 +6,7 @@ export type AppFeature =
   | 'feed-formulation' 
   | 'advanced-finance'
 
-export async function checkSubscriptionFeature(farmId: number, feature: AppFeature): Promise<boolean> {
+export async function checkSubscriptionFeature(farmId: string, feature: AppFeature): Promise<boolean> {
   const subscription = await prisma.subscription.findUnique({
     where: { farmId },
     include: { plan: true }

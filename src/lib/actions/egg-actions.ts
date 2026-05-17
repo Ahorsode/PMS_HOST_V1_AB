@@ -13,10 +13,10 @@ async function getUserId() {
 }
 
 export async function createEggProduction(data: {
-  batchId: number
+  batchId: string
   eggsCollected?: number
   cratesCollected?: number
-  categoryId?: number
+  categoryId?: string
   unusableCount?: number
   qualityGrade?: string
   isSorted?: boolean
@@ -43,7 +43,7 @@ export async function createEggProduction(data: {
     const calculatedEggs = data.eggsCollected ?? (data.cratesCollected ? Math.round(data.cratesCollected * eggsPerCrate) : 0)
     
     // Ensure "Unsorted" default if no categoryId provided
-    let finalCategoryId = data.categoryId
+    let finalCategoryId = data.categoryId as any
     if (!finalCategoryId) {
       let unsortedCategory = await tx.eggCategory.findFirst({
         where: { farmId: activeFarmId, name: 'Unsorted' }
@@ -124,7 +124,7 @@ export async function createEggProduction(data: {
   })
 }
 
-export async function updateEggProduction(id: number, data: {
+export async function updateEggProduction(id: string, data: {
   eggsCollected?: number
   unusableCount?: number
   qualityGrade?: string
@@ -156,7 +156,7 @@ export async function updateEggProduction(id: number, data: {
   })
 }
 
-export async function deleteEggProduction(id: number) {
+export async function deleteEggProduction(id: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 

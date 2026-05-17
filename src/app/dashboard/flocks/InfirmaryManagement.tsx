@@ -3,24 +3,28 @@
 import React, { useState } from 'react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { returnFromIsolation, logMortalityInIsolation } from '@/lib/actions/batch-actions'
+import { dataService } from '@/services/dataService';
 import { toast } from 'sonner'
+import { useSession } from 'next-auth/react'
 import { Activity, Skull, CheckCircle2, Loader2, ArrowRight } from 'lucide-react'
 
 interface Batch {
-  id: number
+  id: string
   batchName: string
   isolationCount: number
 }
 
 export function InfirmaryManagement({ batches }: { batches: Batch[] }) {
+  const { data: session } = useSession();
   const [loadingId, setLoadingId] = useState<string | null>(null)
-  const [counts, setCounts] = useState<Record<number, string>>({})
+  const [counts, setCounts] = useState<Record<string, string>>({})
 
   const isolatedBatches = batches.filter(b => (b.isolationCount || 0) > 0)
 
-  const handleAction = async (batchId: number, type: 'RECOVER' | 'DEAD', maxCount: number) => {
+  const handleAction = async (batchId: string, type: 'RECOVER' | 'DEAD', maxCount: number) => {
     const inputCount = parseInt(counts[batchId]) || maxCount
+    const userId = session?.user?.id || 'offline_user';
+    const farmId = session?.user?.activeFarmId || 'farm_placeholder';
     
     if (inputCount <= 0 || inputCount > maxCount) {
       toast.error('Invalid count')
@@ -29,25 +33,40 @@ export function InfirmaryManagement({ batches }: { batches: Batch[] }) {
 
     setLoadingId(`${batchId}-${type}`)
     try {
-      let res;
       if (type === 'RECOVER') {
-        res = await returnFromIsolation(batchId, inputCount)
+        await dataService.execute({
+          sql: 'UPDATE batches SET isolationCount = isolationCount - ?, currentCount = currentCount + ? WHERE id = ?',
+          params: [inputCount, inputCount, batchId],
+          table: 'batches',
+          action: 'UPDATE',
+          payload: { id: batchId, action: 'RECOVER', count: inputCount }
+        });
       } else {
-        res = await logMortalityInIsolation({ 
-          batchId, 
+        await dataService.execute({
+          sql: 'UPDATE batches SET isolationCount = isolationCount - ? WHERE id = ?',
+          params: [inputCount, batchId],
+          table: 'batches',
+          action: 'UPDATE',
+          payload: { id: batchId, action: 'DEAD_IN_ISOLATION', count: inputCount }
+        });
+        
+        // Also log to mortality table using the unified logHealthEvent
+        await dataService.logHealthEvent({
+          farmId,
+          batchId,
+          type: 'DEAD',
           count: inputCount,
-          category: 'Isolation',
-          subCategory: 'Resolved in Quarantine'
-        })
+          userId,
+          logDate: new Date().toISOString(),
+          category: 'Quarantine',
+          reason: 'Died during isolation/recovery period'
+        });
       }
 
-      if (res.success) {
-        toast.success(type === 'RECOVER' ? `${inputCount} birds recovered!` : `${inputCount} mortality logs recorded.`)
-        setCounts(prev => ({ ...prev, [batchId]: '' }))
-      } else {
-        toast.error(res.error)
-      }
+      toast.success(type === 'RECOVER' ? `${inputCount} birds recovered!` : `${inputCount} mortality logs recorded.`)
+      setCounts(prev => ({ ...prev, [batchId]: '' }))
     } catch (err) {
+      console.error(err);
       toast.error('An unexpected error occurred')
     } finally {
       setLoadingId(null)

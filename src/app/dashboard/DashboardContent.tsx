@@ -74,7 +74,7 @@ interface DashboardContentProps {
     };
   };
   houses: Array<{
-    id: number;
+    id: string;
     name: string;
     currentTemperature: number | null;
     currentHumidity: number | null;

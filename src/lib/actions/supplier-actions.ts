@@ -94,7 +94,7 @@ export async function createSupplier(data: {
   })
 }
 
-export async function updateSupplierBalance(id: number, amount: number) {
+export async function updateSupplierBalance(id: string, amount: number) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 

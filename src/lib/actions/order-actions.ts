@@ -5,14 +5,14 @@ import { revalidatePath } from 'next/cache'
 import { getAuthContext, hasPermission } from '@/lib/auth-utils'
 
 export async function createOrder(data: {
-  customerId?: number
+  customerId?: string
   discountAmount?: number
   items: { 
     description: string; 
     quantity: number; 
     unitPrice: number;
-    inventoryId?: number;
-    livestockId?: number;
+    inventoryId?: string;
+    livestockId?: string;
   }[]
 }) {
   const { userId, role, activeFarmId, permissions } = await getAuthContext()
@@ -106,7 +106,7 @@ export async function getAllOrders() {
   }))
 }
 
-export async function updateOrderStatus(id: number, status: string) {
+export async function updateOrderStatus(id: string, status: string) {
   const { userId, role, activeFarmId, permissions } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
 
@@ -219,7 +219,7 @@ export async function updateOrderStatus(id: number, status: string) {
   }
 }
 
-export async function deleteOrder(id: number) {
+export async function deleteOrder(id: string) {
   const { userId, role, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
   

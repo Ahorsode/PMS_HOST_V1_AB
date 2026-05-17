@@ -8,13 +8,13 @@ import { createFeedingLog, updateFeedingLog, deleteFeedingLog } from '@/lib/acti
 import { useRouter } from 'next/navigation';
 
 interface FeedFormProps {
-  batches: { id: number; breedType: string }[];
-  inventory: { id: number; itemName: string }[];
-  formulations?: { id: number; name: string }[];
+  batches: { id: string; breedType: string }[];
+  inventory: { id: string; itemName: string }[];
+  formulations?: { id: string; name: string }[];
   log?: any;
   mode: 'create' | 'edit' | 'delete';
   onClose: () => void;
-  selectedFormulationId?: number;
+  selectedFormulationId?: string;
 }
 
 export const FeedForm = ({ batches, inventory, formulations = [], log, mode, onClose, selectedFormulationId }: FeedFormProps) => {
@@ -32,7 +32,7 @@ export const FeedForm = ({ batches, inventory, formulations = [], log, mode, onC
     : (log?.feedTypeId ? `inv_${log.feedTypeId}` : (log?.formulationId ? `form_${log.formulationId}` : feedOptions[0]?.value || ''));
 
   const [formData, setFormData] = useState({
-    batchId: log?.batchId || (batches[0]?.id || 0),
+    batchId: log?.batchId || (batches[0]?.id || ''),
     feedSource: defaultFeedSource,
     amountConsumed: log?.amountConsumed || '',
     logDate: log?.logDate ? new Date(log.logDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
@@ -43,12 +43,12 @@ export const FeedForm = ({ batches, inventory, formulations = [], log, mode, onC
     setIsLoading(true);
     try {
       const isInv = String(formData.feedSource).startsWith('inv_');
-      const parsedId = Number(String(formData.feedSource).split('_')[1]);
+      const parsedId = String(formData.feedSource).split('_')[1];
 
       if (mode === 'create') {
         await createFeedingLog({
           ...formData,
-          batchId: Number(formData.batchId),
+          batchId: formData.batchId,
           feedTypeId: isInv ? parsedId : null,
           formulationId: !isInv ? parsedId : null,
           amountConsumed: Number(formData.amountConsumed),
@@ -63,7 +63,7 @@ export const FeedForm = ({ batches, inventory, formulations = [], log, mode, onC
       } else if (mode === 'delete') {
         await deleteFeedingLog(log.id, {
           amountConsumed: Number(log.amountConsumed),
-          feedTypeId: Number(log.feedTypeId),
+          feedTypeId: log.feedTypeId,
         });
       }
       onClose();
@@ -91,9 +91,9 @@ export const FeedForm = ({ batches, inventory, formulations = [], log, mode, onC
     <form onSubmit={handleSubmit} className="space-y-3">
       <Select
         label="Batch"
-        options={batches.map(b => ({ label: `FLK-${b.id.toString().padStart(3, '0')} (${b.breedType})`, value: b.id }))}
+        options={batches.map(b => ({ label: `FLK-${b.id} (${b.breedType})`, value: b.id }))}
         value={formData.batchId}
-        onChange={(e) => setFormData({ ...formData, batchId: Number(e.target.value) })}
+        onChange={(e) => setFormData({ ...formData, batchId: e.target.value })}
         disabled={mode === 'edit'}
         required
       />

@@ -9,7 +9,7 @@ import Link from 'next/link';
 
 interface PartnerCardProps {
   partner: {
-    id: number;
+    id: string;
     name: string;
     phone?: string | null;
     email?: string | null;

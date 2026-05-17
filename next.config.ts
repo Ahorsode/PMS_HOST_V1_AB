@@ -2,7 +2,11 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  output: process.env.NEXT_PUBLIC_PLATFORM === 'desktop' ? 'export' : undefined,
+  trailingSlash: true,
+  images: {
+    unoptimized: process.env.NEXT_PUBLIC_PLATFORM === 'desktop',
+  },
 };
 
 export default withSentryConfig(nextConfig, {

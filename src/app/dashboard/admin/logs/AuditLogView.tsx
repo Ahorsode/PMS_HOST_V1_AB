@@ -36,7 +36,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs }: Aud
     ))
   );
 
-  const handleRestore = (id: number) => {
+  const handleRestore = (id: string) => {
     if (!confirm('Are you sure you want to restore this data? This will create a new record with the deleted values.')) return;
     
     startTransition(async () => {

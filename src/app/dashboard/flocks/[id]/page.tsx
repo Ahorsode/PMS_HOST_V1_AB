@@ -6,7 +6,7 @@ import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 
 export default async function FlockDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const batch = await getBatchDetails(Number(id));
+  const batch = await getBatchDetails(id);
 
   if (!batch) {
     notFound();

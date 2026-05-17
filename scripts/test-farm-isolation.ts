@@ -7,10 +7,10 @@ async function testIsolation() {
   try {
     // 0. Cleanup any previous failed runs
     console.log('Pre-test cleanup...')
-    await prisma.livestock.deleteMany({ where: { farmId: { in: [1001, 1002] } } })
-    await prisma.house.deleteMany({ where: { farmId: { in: [1001, 1002] } } })
-    await prisma.farmMember.deleteMany({ where: { farmId: { in: [1001, 1002] } } })
-    await prisma.farm.deleteMany({ where: { id: { in: [1001, 1002] } } })
+    await prisma.livestock.deleteMany({ where: { farmId: { in: ['1001', '1002'] } } })
+    await prisma.house.deleteMany({ where: { farmId: { in: ['1001', '1002'] } } })
+    await prisma.farmMember.deleteMany({ where: { farmId: { in: ['1001', '1002'] } } })
+    await prisma.farm.deleteMany({ where: { id: { in: ['1001', '1002'] } } })
 
     // 1. Create Test Users
     console.log('Creating users...')
@@ -28,14 +28,14 @@ async function testIsolation() {
     // 2. Create Test Farms
     console.log('Creating farms and memberships...')
     const farmA = await prisma.farm.create({
-      data: { id: 1001, name: 'Farm A', userId: userA.id, capacity: 1000 }
+      data: { id: '1001', name: 'Farm A', userId: userA.id, capacity: 1000 }
     })
     await prisma.farmMember.create({
       data: { farmId: farmA.id, userId: userA.id, role: 'OWNER' }
     })
 
     const farmB = await prisma.farm.create({
-      data: { id: 1002, name: 'Farm B', userId: userB.id, capacity: 2000 }
+      data: { id: '1002', name: 'Farm B', userId: userB.id, capacity: 2000 }
     })
     await prisma.farmMember.create({
       data: { farmId: farmB.id, userId: userB.id, role: 'OWNER' }
@@ -45,7 +45,7 @@ async function testIsolation() {
     console.log('Creating houses...')
     const houseA = await prisma.house.create({
       data: { 
-        id: 1001, 
+        id: '1001', 
         name: 'House A', 
         farmId: farmA.id, 
         userId: userA.id, 
@@ -54,7 +54,7 @@ async function testIsolation() {
     })
     const houseB = await prisma.house.create({
       data: { 
-        id: 1002, 
+        id: '1002', 
         name: 'House B', 
         farmId: farmB.id, 
         userId: userB.id, 
@@ -109,10 +109,10 @@ async function testIsolation() {
     console.log('\nCleaning up test data...')
     await prisma.$executeRawUnsafe(`RESET app.current_farm_id;`)
     await prisma.$executeRawUnsafe(`RESET app.current_user_id;`)
-    await prisma.livestock.deleteMany({ where: { farmId: { in: [1001, 1002] } } })
-    await prisma.house.deleteMany({ where: { farmId: { in: [1001, 1002] } } })
-    await prisma.farmMember.deleteMany({ where: { farmId: { in: [1001, 1002] } } })
-    await prisma.farm.deleteMany({ where: { id: { in: [1001, 1002] } } })
+    await prisma.livestock.deleteMany({ where: { farmId: { in: ['1001', '1002'] } } })
+    await prisma.house.deleteMany({ where: { farmId: { in: ['1001', '1002'] } } })
+    await prisma.farmMember.deleteMany({ where: { farmId: { in: ['1001', '1002'] } } })
+    await prisma.farm.deleteMany({ where: { id: { in: ['1001', '1002'] } } })
     console.log('Cleanup completed.')
 
   } catch (error: any) {

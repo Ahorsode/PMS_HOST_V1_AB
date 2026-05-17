@@ -41,7 +41,7 @@ export function FeedFormulationForm({ inventoryItems, onSuccess }: FeedFormulati
   const [name, setName] = useState('')
   const [type, setType] = useState<FeedType>('STARTER')
   const [targetLivestock, setTargetLivestock] = useState<LivestockType>('POULTRY_BROILER')
-  const [ingredients, setIngredients] = useState<{ inventoryId: number; percentage: number | '' }[]>([])
+  const [ingredients, setIngredients] = useState<{ inventoryId: string; percentage: number | '' }[]>([])
 
   const addIngredient = () => {
     // Only allow adding if we haven't exhausted inventory items
@@ -108,6 +108,7 @@ export function FeedFormulationForm({ inventoryItems, onSuccess }: FeedFormulati
       targetLivestock,
       ingredients: ingredients.map(i => ({
         ...i,
+        inventoryId: i.inventoryId.toString(),
         percentage: Number(i.percentage)
       }))
     })
@@ -178,7 +179,7 @@ export function FeedFormulationForm({ inventoryItems, onSuccess }: FeedFormulati
                   <div className="text-sm uppercase font-black text-emerald-400 tracking-widest italic ml-1">Ingredient Source</div>
                   <select
                     value={ing.inventoryId}
-                    onChange={(e) => updateIngredient(idx, 'inventoryId', Number(e.target.value))}
+                    onChange={(e) => updateIngredient(idx, 'inventoryId', e.target.value)}
                     className="w-full h-14 px-4 rounded-md bg-white border-2 border-emerald-500/30 text-[#064e3b] font-black text-lg focus:border-emerald-500 transition-all shadow-inner"
                   >
                     {getAvailableInventoryItems(idx).map(item => (

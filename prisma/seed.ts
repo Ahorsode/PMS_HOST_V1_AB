@@ -19,9 +19,10 @@ async function main() {
 
   // 2. Create a Farm
   const farm = await prisma.farm.upsert({
-    where: { id: 1 },
+    where: { id: 'seed_farm_1' },
     update: {},
     create: {
+      id: 'seed_farm_1',
       name: 'Green Valley Poultry',
       location: '123 Farm Road, Rural County',
       capacity: 50000,
@@ -31,9 +32,10 @@ async function main() {
 
   // 3. Create two Houses
   const house1 = await prisma.house.upsert({
-    where: { id: 1 },
+    where: { id: 'seed_house_1' },
     update: {},
     create: {
+      id: 'seed_house_1',
       farmId: farm.id,
       name: 'H-01',
       capacity: 10000,
@@ -44,9 +46,10 @@ async function main() {
   })
 
   const house2 = await prisma.house.upsert({
-    where: { id: 2 },
+    where: { id: 'seed_house_2' },
     update: {},
     create: {
+      id: 'seed_house_2',
       farmId: farm.id,
       name: 'H-02',
       capacity: 15000,
@@ -58,9 +61,10 @@ async function main() {
 
   // 4. Create a Broiler Batch
   const batch = await prisma.livestock.upsert({
-    where: { id: 1 },
+    where: { id: 'seed_batch_1' },
     update: {},
     create: {
+      id: 'seed_batch_1',
       houseId: house1.id,
       batchName: 'Broiler Batch 1',
       type: 'POULTRY_BROILER',
@@ -69,42 +73,49 @@ async function main() {
       currentCount: 4950,
       arrivalDate: new Date('2026-03-01'),
       status: 'active',
-      userId
+      userId,
+      farmId: farm.id
     },
   })
 
   // 5. Create Feed Inventory
   await prisma.inventory.upsert({
-    where: { id: 1 },
+    where: { id: 'seed_inventory_1' },
     update: {},
     create: {
+      id: 'seed_inventory_1',
       itemName: 'Starter Feed',
       category: 'feed',
       stockLevel: 1200.50,
       unit: 'kg',
-      userId
+      userId,
+      farmId: farm.id
     },
   })
 
   await prisma.inventory.upsert({
-    where: { id: 2 },
+    where: { id: 'seed_inventory_2' },
     update: {},
     create: {
+      id: 'seed_inventory_2',
       itemName: 'Grower Feed',
       category: 'feed',
       stockLevel: 450.00,
       unit: 'kg',
-      userId
+      userId,
+      farmId: farm.id
     },
   })
 
   // 6. Add some logs
   await prisma.healthMortality.create({
     data: {
+      id: 'seed_log_1',
       batchId: batch.id,
       count: 10,
       logDate: new Date(),
-      userId
+      userId,
+      farmId: farm.id
     }
   })
 

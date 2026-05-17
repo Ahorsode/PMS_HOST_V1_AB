@@ -5,15 +5,15 @@ import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { createBatch, updateBatch, deleteBatch, logHealthEvent } from '@/lib/actions/batch-actions';
-import { createIsolationRoom } from '@/lib/actions/dashboard-actions';
+import { dataService } from '@/services/dataService';
 import { Activity, Skull, Home, AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { useSession } from 'next-auth/react';
 
 interface LivestockFormProps {
-  houses: { id: number; name: string }[];
-  isolationRooms?: { id: number; name: string; capacity: number }[];
+  houses: { id: string; name: string }[];
+  isolationRooms?: { id: string; name: string; capacity: number }[];
   batch?: any;
   mode: 'create' | 'edit' | 'delete' | 'mortality';
   onClose: () => void;
@@ -37,10 +37,11 @@ const MORTALITY_REASONS: Record<string, string[]> = {
 };
 
 export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, onClose }: LivestockFormProps) => {
+  const { data: session } = useSession();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    houseId: batch?.houseId || (houses[0]?.id || 0),
+    houseId: batch?.houseId || (houses[0]?.id || ''),
     batchName: batch?.batchName || '',
     breedType: batch?.breedType || '',
     initialCount: batch?.initialCount || '' as number | '',
@@ -60,61 +61,66 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, onClos
   const handleSubmit = async (e: any) => {
     if (e && e.preventDefault) e.preventDefault();
     setIsLoading(true);
+    const userId = session?.user?.id || 'offline_user';
+    const farmId = session?.user?.activeFarmId || 'farm_placeholder';
+
     try {
-      let res;
+      let res: any;
       if (mode === 'create') {
-        res = await createBatch({
-          houseId: Number(formData.houseId),
-          batchName: formData.batchName,
-          breedType: formData.breedType,
-          initialCount: Number(formData.initialCount) || 0,
-          arrivalDate: formData.arrivalDate,
+        res = await dataService.execute({
+          sql: 'INSERT INTO batches (id, houseId, batchName, breedType, initialCount, currentCount, arrivalDate, farmId, userId) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          params: [crypto.randomUUID(), formData.houseId, formData.batchName, formData.breedType, Number(formData.initialCount) || 0, Number(formData.initialCount) || 0, formData.arrivalDate, farmId, userId],
+          table: 'batches',
+          action: 'INSERT',
+          payload: { houseId: formData.houseId, batchName: formData.batchName, breedType: formData.breedType, initialCount: Number(formData.initialCount) || 0, arrivalDate: formData.arrivalDate, farmId, userId }
         });
+        res = { success: true };
       } else if (mode === 'edit') {
-        res = await updateBatch(batch.id, {
-          houseId: Number(formData.houseId),
-          batchName: formData.batchName,
-          breedType: formData.breedType,
-          growthTargetOverride: formData.growthTargetOverride,
-          initialCount: Number(formData.initialCount) || 0,
-          arrivalDate: formData.arrivalDate,
-          status: formData.status,
+        res = await dataService.execute({
+          sql: 'UPDATE batches SET houseId = ?, batchName = ?, breedType = ?, growthTargetOverride = ?, initialCount = ?, arrivalDate = ?, status = ? WHERE id = ?',
+          params: [formData.houseId, formData.batchName, formData.breedType, formData.growthTargetOverride, Number(formData.initialCount) || 0, formData.arrivalDate, formData.status, batch.id],
+          table: 'batches',
+          action: 'UPDATE',
+          payload: { id: batch.id, houseId: formData.houseId, batchName: formData.batchName, breedType: formData.breedType, growthTargetOverride: formData.growthTargetOverride, initialCount: Number(formData.initialCount) || 0, arrivalDate: formData.arrivalDate, status: formData.status }
         });
+        res = { success: true };
       } else if (mode === 'delete') {
-        res = await deleteBatch(batch.id);
+        res = await dataService.execute({
+          sql: 'DELETE FROM batches WHERE id = ?',
+          params: [batch.id],
+          table: 'batches',
+          action: 'DELETE',
+          payload: { id: batch.id }
+        });
+        res = { success: true };
       } else if (mode === 'mortality') {
         let finalIsolationRoomId = formData.isolationRoomId;
         
-        // Handle dynamic room creation
         if (formData.healthType === 'SICK' && formData.isolationRoomId === 'add_new') {
-          if (!formData.newRoomName) {
-            toast.error("Please enter a room name");
-            setIsLoading(false);
-            return;
-          }
-          const roomRes = await createIsolationRoom({
-            name: formData.newRoomName,
-            capacity: Number(formData.newRoomCapacity) || 0
+          const roomId = crypto.randomUUID();
+          await dataService.execute({
+            sql: 'INSERT INTO isolation_rooms (id, farmId, name, capacity, userId) VALUES (?, ?, ?, ?, ?)',
+            params: [roomId, farmId, formData.newRoomName, Number(formData.newRoomCapacity) || 0, userId],
+            table: 'isolation_rooms',
+            action: 'INSERT',
+            payload: { id: roomId, farmId, name: formData.newRoomName, capacity: Number(formData.newRoomCapacity) || 0, userId }
           });
-          if (roomRes.success) {
-            finalIsolationRoomId = (roomRes.room as any).id.toString();
-          } else {
-            toast.error(roomRes.error || "Failed to create isolation room");
-            setIsLoading(false);
-            return;
-          }
+          finalIsolationRoomId = roomId;
         }
 
-        res = await logHealthEvent({
+        res = await dataService.logHealthEvent({
+          farmId,
           batchId: batch.id,
           type: formData.healthType,
           count: Number(formData.mortalityCount) || 0,
-          isolationRoomId: formData.healthType === 'SICK' ? Number(finalIsolationRoomId) : undefined,
-          category: formData.category,
-          subCategory: formData.category === 'Unknown' ? 'Unknown cause yet' : formData.subCategory,
-          reason: formData.reason,
+          isolationRoomId: finalIsolationRoomId || undefined,
+          userId,
           logDate: new Date().toISOString(),
+          category: formData.category,
+          subCategory: formData.subCategory,
+          reason: formData.reason
         });
+        res = { success: true };
       }
 
       if (res?.success) {
@@ -278,7 +284,7 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, onClos
               label="House Assignment"
               options={houses.map(h => ({ label: h.name, value: h.id }))}
               value={formData.houseId}
-              onChange={(e) => setFormData({ ...formData, houseId: Number(e.target.value) })}
+              onChange={(e) => setFormData({ ...formData, houseId: e.target.value })}
               required
             />
           </div>

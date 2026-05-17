@@ -32,7 +32,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 interface RegisterBatchFormProps {
   houses: Array<{
-    id: number;
+    id: string;
     name: string;
   }>;
   onSuccess?: () => void;
@@ -112,7 +112,7 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
     );
   }
 
-  const houseOptions = houses.map(h => ({ label: h.name, value: h.id.toString() }));
+  const houseOptions = houses.map(h => ({ label: h.name, value: h.id }));
   
   const speciesOptions = [
     { label: "Poultry (Meat)", value: LivestockType.POULTRY_BROILER },
@@ -146,7 +146,7 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
     setIsSubmitting(true);
     try {
       const result = await createBatch({
-        houseId: parseInt(data.houseId),
+        houseId: data.houseId,
         breedType: data.breed,
         initialCount: data.initialQuantity,
         arrivalDate: data.hatchDate,

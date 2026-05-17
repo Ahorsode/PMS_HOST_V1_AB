@@ -13,7 +13,7 @@ export function SalesActionsHeader({ customers, inventory, livestock, initialLiv
   customers: any[], 
   inventory: any[],
   livestock: any[],
-  initialLivestockId?: number,
+  initialLivestockId?: string,
   canEdit?: boolean
 }) {
   const [isOpen, setIsOpen] = useState(!!initialLivestockId);

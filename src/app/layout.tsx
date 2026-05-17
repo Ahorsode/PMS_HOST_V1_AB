@@ -27,6 +27,7 @@ export const viewport: Viewport = {
 };
 
 import AuthProvider from "@/components/providers/SessionProvider";
+import { DesktopSyncManager } from "@/components/layout/DesktopSyncManager";
 
 export default function RootLayout({
   children,
@@ -37,6 +38,7 @@ export default function RootLayout({
       <html lang="en">
         <body className={`${geistSans.variable} antialiased bg-[#0a0a0a] min-h-screen text-white font-sans`}>
           <AuthProvider>
+            <DesktopSyncManager />
             <div className="fixed inset-0 pointer-events-none">
             <div className="absolute inset-0 bg-gradient-to-tr from-emerald-950/20 via-[#0a0a0a] to-[#0a0a0a]" />
             <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-[128px]" />

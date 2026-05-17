@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 interface InventoryItem {
-  id: number;
+  id: string;
   itemName: string;
   stockLevel: number;
   reorderLevel?: number;
@@ -44,7 +44,7 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
   const [feedReminderTime, setFeedReminderTime] = useState('18:00');
   const [currency, setCurrency] = useState('GHS');
   const [growthTarget, setGrowthTarget] = useState<number | undefined>();
-  const [reorderLevels, setReorderLevels] = useState<Record<number, number>>({});
+  const [reorderLevels, setReorderLevels] = useState<Record<string, number>>({});
   const [isLoadingPrefs, setIsLoadingPrefs] = useState(false);
   const [growthStandards, setGrowthStandards] = useState<any[]>([]);
 
@@ -55,7 +55,7 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
   }, [activeTab]);
 
   useEffect(() => {
-    const initial: Record<number, number> = {};
+    const initial: Record<string, number> = {};
     inventory.forEach(item => {
       initial[item.id] = item.reorderLevel ?? 500;
     });
@@ -125,7 +125,7 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
     }
   };
 
-  const handleSaveReorderLevel = async (itemId: number) => {
+  const handleSaveReorderLevel = async (itemId: string) => {
     try {
       const { updateReorderLevel } = await import('@/lib/actions/preference-actions');
       await updateReorderLevel(itemId, reorderLevels[itemId] ?? 500);

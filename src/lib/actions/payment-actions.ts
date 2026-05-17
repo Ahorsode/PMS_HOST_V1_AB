@@ -5,9 +5,9 @@ import { revalidatePath } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 
 export async function recordPayment(data: {
-  customerId: number
+  customerId: string
   amount: number
-  orderId?: number
+  orderId?: string
   paymentMethod?: string
 }) {
   const { userId, role, activeFarmId } = await getAuthContext()

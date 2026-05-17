@@ -3,14 +3,14 @@
 import prisma from '@/lib/db'
 import { getAuthContext } from '@/lib/auth-utils'
 
-export async function getSupplierStatement(supplierId: number) {
+export async function getSupplierStatement(supplierId: string) {
   const { activeFarmId } = await getAuthContext()
   if (!activeFarmId) return null
 
   const supplier = await prisma.supplier.findUnique({
     where: { id: supplierId, farmId: activeFarmId },
     include: {
-      inventory: {
+      inventories: {
         orderBy: { createdAt: 'desc' }
       },
       expenses: {
@@ -23,8 +23,8 @@ export async function getSupplierStatement(supplierId: number) {
 
   return {
     ...supplier,
-    balanceOwed: Number(supplier.balanceOwed),
-    inventory: supplier.inventory.map(item => ({
+    balanceOwed: 0, // Not supported by schema yet
+    inventories: supplier.inventories.map(item => ({
       ...item,
       stockLevel: Number(item.stockLevel),
       costPerUnit: Number(item.costPerUnit || 0)
@@ -36,7 +36,7 @@ export async function getSupplierStatement(supplierId: number) {
   }
 }
 
-export async function getCustomerStatement(customerId: number) {
+export async function getCustomerStatement(customerId: string) {
   const { activeFarmId } = await getAuthContext()
   if (!activeFarmId) return null
 

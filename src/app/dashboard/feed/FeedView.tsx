@@ -25,7 +25,7 @@ export default function FeedDashboard({ canEdit = true }: { canEdit?: boolean })
   const [batches, setBatches] = useState<any[]>([])
   const [showForm, setShowForm] = useState(false)
   const [showLogForm, setShowLogForm] = useState(false)
-  const [selectedFormulation, setSelectedFormulation] = useState<number | undefined>(undefined)
+  const [selectedFormulation, setSelectedFormulation] = useState<string | undefined>(undefined)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
