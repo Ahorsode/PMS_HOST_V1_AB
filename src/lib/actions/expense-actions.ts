@@ -46,10 +46,10 @@ export async function createExpense(data: {
   supplierId?: number
 }) {
   const { userId, activeFarmId } = await getAuthContext()
-  if (!activeFarmId) throw new Error('No active farm selected')
+  if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
   const hasEditAccess = await checkWorkerPermissions('finance', 'edit')
-  if (!hasEditAccess) throw new Error('Unauthorized: Missing Edit Finance Permission')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized: You do not have permission to log expenses' }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     // Map LABOR to SALARY to match database enum
@@ -85,7 +85,7 @@ export async function deleteExpense(id: number) {
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
   const hasEditAccess = await checkWorkerPermissions('finance', 'edit')
-  if (!hasEditAccess) throw new Error('Unauthorized: Missing Edit Finance Permission')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized: You do not have permission to delete expenses' }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     await tx.expense.update({
@@ -105,7 +105,7 @@ export async function restoreExpense(id: number) {
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
   const hasEditAccess = await checkWorkerPermissions('finance', 'edit')
-  if (!hasEditAccess) throw new Error('Unauthorized: Missing Edit Finance Permission')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized: You do not have permission to restore expenses' }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     await tx.expense.update({

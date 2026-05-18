@@ -20,15 +20,29 @@ import { restoreDeletedRecord } from '@/lib/actions/audit-actions';
 import { toast } from 'sonner';
 import { WorkerStamp } from '@/components/ui/WorkerStamp';
 
+import { restoreBatch } from '@/lib/actions/batch-actions';
+import { restoreEggProduction } from '@/lib/actions/egg-actions';
+import { restoreFeedingLog } from '@/lib/actions/feed-actions';
+import { restoreExpense } from '@/lib/actions/expense-actions';
+import { restoreSale } from '@/lib/actions/sale-actions';
+import { restoreOrder } from '@/lib/actions/order-actions';
+import { restoreInventory } from '@/lib/actions/inventory-actions';
+import { useRouter } from 'next/navigation';
+
 interface AuditLogViewProps {
   initialEditLogs: any[];
   initialDeleteLogs: any[];
+  trashItems: any;
 }
 
-export default function AuditLogView({ initialEditLogs, initialDeleteLogs }: AuditLogViewProps) {
-  const [activeTab, setActiveTab] = useState<'edits' | 'deletes'>('edits');
+export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trashItems }: AuditLogViewProps) {
+  const [activeTab, setActiveTab] = useState<'edits' | 'deletes' | 'recovery'>('edits');
   const [isPending, startTransition] = useTransition();
   const [selectedLog, setSelectedLog] = useState<any>(null);
+  const router = useRouter();
+
+  // Count total soft-deleted records for the badge
+  const trashCount = trashItems ? Object.values(trashItems as Record<string, any[]>).reduce((s: number, a: any[]) => s + a.length, 0) : 0;
 
   const uniqueDeleteLogs = initialDeleteLogs.filter((log, index, self) =>
     index === self.findIndex((t) => (
@@ -45,6 +59,19 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs }: Aud
         toast.success(res.message);
       } else {
         toast.error(res.error);
+      }
+    });
+  };
+
+  const handleSoftRestore = (restoreFn: (id: number) => Promise<any>, id: number, label: string) => {
+    if (!confirm(`Restore this ${label}? It will reappear in its original module.`)) return;
+    startTransition(async () => {
+      const res = await restoreFn(id);
+      if (res.success) {
+        toast.success(`${label} restored successfully`);
+        router.refresh();
+      } else {
+        toast.error(res.error || `Failed to restore ${label}`);
       }
     });
   };
@@ -83,6 +110,21 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs }: Aud
             }`}
           >
             Deletions
+          </button>
+          <button
+            onClick={() => setActiveTab('recovery')}
+            className={`relative px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
+              activeTab === 'recovery' 
+                ? 'bg-amber-500 text-black shadow-[0_0_15px_rgba(245,158,11,0.3)]' 
+                : 'text-white/60 hover:text-white'
+            }`}
+          >
+            Recovery
+            {trashCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center">
+                {trashCount > 9 ? '9+' : trashCount}
+              </span>
+            )}
           </button>
         </div>
       </div>
@@ -158,7 +200,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs }: Aud
               </div>
             </CardContent>
           </Card>
-        ) : (
+        ) : activeTab === 'deletes' ? (
           <Card className="bg-white/5 border-white/10 backdrop-blur-xl overflow-hidden">
             <CardHeader className="border-b border-white/5 flex flex-row items-center justify-between">
               <CardTitle className="text-white flex items-center gap-2">
@@ -233,8 +275,163 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs }: Aud
               </div>
             </CardContent>
           </Card>
+        ) : (
+          /* Recovery Tab — soft-deleted records (isDeleted: true) */
+          <Card className="bg-white/5 border-white/10 backdrop-blur-xl overflow-hidden">
+            <CardHeader className="border-b border-white/5 flex flex-row items-center justify-between">
+              <CardTitle className="text-white flex items-center gap-2">
+                <RotateCcw className="w-5 h-5 text-amber-400" />
+                Soft-Deleted Records
+              </CardTitle>
+              <div className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">
+                {trashCount} record{trashCount !== 1 ? 's' : ''} recoverable
+              </div>
+            </CardHeader>
+            <CardContent className="p-4 space-y-4">
+              {!trashItems || trashCount === 0 ? (
+                <p className="text-center text-white/30 italic text-sm py-16">All records are active — nothing in the recovery queue.</p>
+              ) : (
+                <>
+                  {/* Batches */}
+                  {trashItems.batches?.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 mb-2">Batches ({trashItems.batches.length})</p>
+                      <div className="space-y-1.5">
+                        {trashItems.batches.map((b: any) => (
+                          <div key={b.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-white/5 border border-white/10">
+                            <div>
+                              <p className="text-xs font-bold text-white">{b.batchName}</p>
+                              <p className="text-[10px] text-white/40">{b.breedType} · {b.currentCount} birds</p>
+                            </div>
+                            <button onClick={() => handleSoftRestore(restoreBatch, b.id, 'Batch')} disabled={isPending} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/20 transition-all flex items-center gap-1 disabled:opacity-50">
+                              <RotateCcw className="w-3 h-3" /> Restore
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {/* Expenses */}
+                  {trashItems.expenses?.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-purple-400 mb-2">Expenses ({trashItems.expenses.length})</p>
+                      <div className="space-y-1.5">
+                        {trashItems.expenses.map((e: any) => (
+                          <div key={e.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-white/5 border border-white/10">
+                            <div>
+                              <p className="text-xs font-bold text-white">{e.description || e.category}</p>
+                              <p className="text-[10px] text-white/40">{e.category} · GHS {e.amount.toFixed(2)}</p>
+                            </div>
+                            <button onClick={() => handleSoftRestore(restoreExpense, e.id, 'Expense')} disabled={isPending} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-purple-500/15 hover:bg-purple-500/30 text-purple-400 border border-purple-500/20 transition-all flex items-center gap-1 disabled:opacity-50">
+                              <RotateCcw className="w-3 h-3" /> Restore
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {/* Sales */}
+                  {trashItems.sales?.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-blue-400 mb-2">Sales ({trashItems.sales.length})</p>
+                      <div className="space-y-1.5">
+                        {trashItems.sales.map((s: any) => (
+                          <div key={s.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-white/5 border border-white/10">
+                            <div>
+                              <p className="text-xs font-bold text-white">{s.customerName || 'Walk-in'}</p>
+                              <p className="text-[10px] text-white/40">GHS {s.totalAmount.toFixed(2)} · {s.status}</p>
+                            </div>
+                            <button onClick={() => handleSoftRestore(restoreSale, s.id, 'Sale')} disabled={isPending} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-blue-500/15 hover:bg-blue-500/30 text-blue-400 border border-blue-500/20 transition-all flex items-center gap-1 disabled:opacity-50">
+                              <RotateCcw className="w-3 h-3" /> Restore
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {/* Orders */}
+                  {trashItems.orders?.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-400 mb-2">Orders ({trashItems.orders.length})</p>
+                      <div className="space-y-1.5">
+                        {trashItems.orders.map((o: any) => (
+                          <div key={o.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-white/5 border border-white/10">
+                            <div>
+                              <p className="text-xs font-bold text-white">{o.customer?.name || 'No customer'}</p>
+                              <p className="text-[10px] text-white/40">GHS {o.totalAmount.toFixed(2)} · {o.status}</p>
+                            </div>
+                            <button onClick={() => handleSoftRestore(restoreOrder, o.id, 'Order')} disabled={isPending} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/30 text-indigo-400 border border-indigo-500/20 transition-all flex items-center gap-1 disabled:opacity-50">
+                              <RotateCcw className="w-3 h-3" /> Restore
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {/* Inventory */}
+                  {trashItems.inventory?.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-teal-400 mb-2">Inventory ({trashItems.inventory.length})</p>
+                      <div className="space-y-1.5">
+                        {trashItems.inventory.map((i: any) => (
+                          <div key={i.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-white/5 border border-white/10">
+                            <div>
+                              <p className="text-xs font-bold text-white">{i.itemName}</p>
+                              <p className="text-[10px] text-white/40">{i.stockLevel} {i.unit} · {i.category}</p>
+                            </div>
+                            <button onClick={() => handleSoftRestore(restoreInventory, i.id, 'Inventory')} disabled={isPending} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-teal-500/15 hover:bg-teal-500/30 text-teal-400 border border-teal-500/20 transition-all flex items-center gap-1 disabled:opacity-50">
+                              <RotateCcw className="w-3 h-3" /> Restore
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {/* Egg Production */}
+                  {trashItems.eggProduction?.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-yellow-400 mb-2">Egg Logs ({trashItems.eggProduction.length})</p>
+                      <div className="space-y-1.5">
+                        {trashItems.eggProduction.map((e: any) => (
+                          <div key={e.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-white/5 border border-white/10">
+                            <div>
+                              <p className="text-xs font-bold text-white">{e.batch?.batchName || `Batch #${e.batchId}`}</p>
+                              <p className="text-[10px] text-white/40">{e.eggsCollected} collected · {new Date(e.logDate).toLocaleDateString()}</p>
+                            </div>
+                            <button onClick={() => handleSoftRestore(restoreEggProduction, e.id, 'Egg Log')} disabled={isPending} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-yellow-500/15 hover:bg-yellow-500/30 text-yellow-400 border border-yellow-500/20 transition-all flex items-center gap-1 disabled:opacity-50">
+                              <RotateCcw className="w-3 h-3" /> Restore
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {/* Feed Logs */}
+                  {trashItems.feedingLogs?.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-orange-400 mb-2">Feed Logs ({trashItems.feedingLogs.length})</p>
+                      <div className="space-y-1.5">
+                        {trashItems.feedingLogs.map((l: any) => (
+                          <div key={l.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-white/5 border border-white/10">
+                            <div>
+                              <p className="text-xs font-bold text-white">{l.batch?.batchName || `Batch #${l.batchId}`}</p>
+                              <p className="text-[10px] text-white/40">{l.amountConsumed} kg · {new Date(l.logDate).toLocaleDateString()}</p>
+                            </div>
+                            <button onClick={() => handleSoftRestore(restoreFeedingLog, l.id, 'Feed Log')} disabled={isPending} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-orange-500/15 hover:bg-orange-500/30 text-orange-400 border border-orange-500/20 transition-all flex items-center gap-1 disabled:opacity-50">
+                              <RotateCcw className="w-3 h-3" /> Restore
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
         )}
       </div>
+
 
       <Dialog 
         isOpen={!!selectedLog} 

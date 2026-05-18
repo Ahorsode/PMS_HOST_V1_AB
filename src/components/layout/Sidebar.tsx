@@ -45,7 +45,6 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
         { name: 'Audit Logs', icon: ShieldCheck, href: '/dashboard/admin/logs', roles: ['OWNER', 'MANAGER'] },
         { name: 'Team Management', icon: Users, href: '/dashboard/team', roles: ['OWNER', 'MANAGER'] },
         { name: 'License Upgrade', icon: Crown, href: '/dashboard/license-upgrade', roles: ['OWNER', 'MANAGER'] },
-        { name: 'Data Recovery', icon: Trash2, href: '/dashboard/settings/trash', roles: ['OWNER', 'MANAGER'] },
         { name: 'Settings', icon: Settings, href: '/dashboard/settings', roles: ['OWNER', 'MANAGER'] },
       ]
     }
