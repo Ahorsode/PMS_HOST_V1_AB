@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Home, Settings as SettingsIcon, Bell, Shield, Plus, Loader2, Save, CheckCircle2 } from 'lucide-react';
+import { Home, Settings as SettingsIcon, Bell, Shield, Plus, Loader2, Save, CheckCircle2, Monitor } from 'lucide-react';
 import { updateFarmInfo, createHouse } from '@/lib/actions/dashboard-actions';
 import { updateFarmSettings, getFarmSettings } from '@/lib/actions/preference-actions';
 import { Input } from '@/components/ui/Input';
@@ -30,9 +30,13 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
 
   useEffect(() => {
     if (activeTabFromUrl && activeTabFromUrl !== activeTab) {
-      setActiveTab(activeTabFromUrl);
+      if (activeTabFromUrl === 'desktop-licenses') {
+        router.push('/dashboard/settings/desktop-licenses');
+      } else {
+        setActiveTab(activeTabFromUrl);
+      }
     }
-  }, [activeTabFromUrl]);
+  }, [activeTabFromUrl, router]);
 
   const [isUpdatingFarm, setIsUpdatingFarm] = useState(false);
   const [isAddingHouse, setIsAddingHouse] = useState(false);
@@ -141,6 +145,7 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
     { id: 'notifications', label: 'Reminders', icon: Bell },
     { id: 'preferences', label: 'Stock Levels', icon: SettingsIcon },
     { id: 'security', label: 'Security', icon: Shield },
+    { id: 'desktop-licenses', label: 'Desktop Licenses', icon: Monitor },
   ];
 
   return (
@@ -149,7 +154,13 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
+            onClick={() => {
+              if (tab.id === 'desktop-licenses') {
+                router.push('/dashboard/settings/desktop-licenses');
+              } else {
+                setActiveTab(tab.id);
+              }
+            }}
             className={`w-full text-left px-3 py-2 rounded-md flex items-center transition-all duration-300 ${
               activeTab === tab.id
                 ? 'bg-emerald-500/20 text-emerald-400 shadow-[inset_0_0_20px_rgba(16,185,129,0.1)] border border-emerald-500/30'

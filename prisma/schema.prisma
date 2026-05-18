@@ -120,6 +120,7 @@ model Farm {
   vaccinations        VaccinationSchedule[]
   weightRecords       WeightRecord[]
   deviceRegistrations DeviceRegistration[]
+  masterLicenseStatus String                @default("UNPAID") @map("master_license_status")
 
   @@index([userId])
   @@map("farms")
@@ -752,8 +753,11 @@ enum FeedType {
 model DeviceRegistration {
   id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   farmId       Int      @map("farmId")
-  userId       String   @map("userId")
-  deviceId     String   @map("deviceId")
+  userId       String?  @map("userId")
+  deviceId     String?  @map("deviceId")
+  hardwareId   String?  @map("hardwareId")
+  licenseKey   String?  @unique @map("licenseKey")
+  status       String   @default("PENDING") @map("status")
   deviceName   String?  @map("deviceName")
   deviceType   String?  @map("deviceType")
   lastSync     DateTime @default(now()) @map("lastSync")
