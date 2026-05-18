@@ -7,7 +7,7 @@ import { signOut } from 'next-auth/react';
 import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, Bird, PawPrint, Egg, ThermometerSun, 
-  Wheat, Settings, Users, XCircle, Banknote,
+  Wheat, Settings, Users, XCircle, Banknote, Activity,
   LogOut, Wallet, Crown, ShieldCheck, BarChart3, Truck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -26,6 +26,7 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
         { name: 'Eggs', icon: Egg, href: '/dashboard/eggs', roles: ['OWNER', 'MANAGER', 'WORKER'] },
         { name: 'Feeding', icon: Wheat, href: '/dashboard/feed', roles: ['OWNER', 'MANAGER', 'WORKER'] },
         { name: 'Mortality', icon: XCircle, href: '/dashboard/mortality', roles: ['OWNER', 'MANAGER', 'WORKER'] },
+        { name: 'Quarantine', icon: Activity, href: '/dashboard/quarantine', roles: ['OWNER', 'MANAGER', 'WORKER'] },
       ]
     },
     {
@@ -85,6 +86,7 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
                   'Feeding': ['canViewFeeding', 'canEditFeeding'],
                   'Houses': ['canViewHouses', 'canEditHouses'],
                   'Mortality': ['canViewMortality', 'canEditMortality'],
+                  'Quarantine': ['canViewMortality', 'canEditMortality'],
                   'Customers': ['canViewCustomers', 'canEditCustomers'],
                   'Suppliers': ['canViewCustomers', 'canEditCustomers'],
                   'Team Management': ['canViewTeam', 'canEditTeam'],

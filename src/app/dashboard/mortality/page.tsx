@@ -8,10 +8,8 @@ import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { QuickMortalityLogger } from './QuickMortalityLogger';
-import { InfirmaryManagement } from '../flocks/InfirmaryManagement';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { IsolationRoomForm } from './IsolationRoomForm';
 
 export default async function MortalityPage() {
   const hasAccess = await checkWorkerPermissions('mortality', 'view');
@@ -21,10 +19,9 @@ export default async function MortalityPage() {
     redirect('/dashboard/unauthorized');
   }
 
-  const [logs, batches, isolationRooms] = await Promise.all([
+  const [logs, batches] = await Promise.all([
     getAllMortalityLogs(),
-    getAllBatches(),
-    getIsolationRooms()
+    getAllBatches()
   ]);
 
   const activeBatches = JSON.parse(JSON.stringify(
@@ -38,7 +35,7 @@ export default async function MortalityPage() {
         <div>
           <h2 className="text-3xl font-extrabold text-white tracking-normal uppercase italic flex items-center gap-3">
             <Skull className="w-8 h-8 text-red-500" />
-            Mortality &amp; <span className="text-red-500 ml-2">Quarantine</span>
+            Mortality
           </h2>
           <p className="text-gray-400 mt-1">Centralized history of livestock mortality records and active isolation management.</p>
         </div>
@@ -68,49 +65,11 @@ export default async function MortalityPage() {
       {/* Quick Logger */}
       {canEdit && (
         <div className="bg-[#111827] p-6 rounded-xl shadow-xl border border-gray-800">
-          <QuickMortalityLogger activeBatches={activeBatches} isolationRooms={JSON.parse(JSON.stringify(isolationRooms))} />
+          <QuickMortalityLogger activeBatches={activeBatches} isolationRooms={[]} />
         </div>
       )}
 
-      {/* Isolation Room Management */}
-      <div className="bg-[#111827] p-6 rounded-xl shadow-xl border border-gray-800">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-amber-500/10 text-amber-500 rounded-lg">
-            <Home className="w-6 h-6" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold text-white">Isolation Rooms</h2>
-            <p className="text-sm text-gray-400">Configure dedicated housing for sick or quarantined birds.</p>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <IsolationRoomForm />
-          <div className="md:col-span-2">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {isolationRooms.length > 0 ? isolationRooms.map((room: any) => (
-                <div key={room.id} className="p-5 bg-[#1F2937] border border-gray-700 rounded-xl hover:border-amber-500/50 transition-all shadow-sm">
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="font-bold text-gray-100">{room.name}</h4>
-                    <span className="px-2 py-1 bg-amber-500/20 text-amber-400 text-[10px] font-bold uppercase rounded">Active</span>
-                  </div>
-                  <div className="text-sm text-gray-400">
-                    Capacity: <span className="text-gray-200 font-medium">{room.capacity} birds</span>
-                  </div>
-                </div>
-              )) : (
-                <div className="col-span-full py-12 flex flex-col items-center justify-center text-gray-500 bg-[#1F2937]/50 rounded-xl border border-dashed border-gray-700">
-                  <Home className="w-12 h-12 mb-3 opacity-30 text-amber-500" />
-                  <p className="font-medium">No isolation rooms configured yet.</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-        {/* Active Isolation Management */}
-        <div className="mt-8 border-t border-gray-800 pt-6">
-          <InfirmaryManagement batches={batches} />
-        </div>
-      </div>
+
 
       {/* Historical Log */}
       <div className="bg-[#111827] rounded-xl shadow-xl border border-gray-800 overflow-hidden">

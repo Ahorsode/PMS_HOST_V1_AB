@@ -5,6 +5,7 @@ import { Crown, Check, Shield, Zap, Sparkles, Building2, LayoutDashboard, Finger
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { upgradeFarmSubscription } from '@/lib/actions/subscription-actions';
+import { purchaseDesktopLicenseBundle } from '@/lib/actions/licenses';
 import { useRouter } from 'next/navigation';
 
 const tiers = [
@@ -42,6 +43,23 @@ const tiers = [
     color: 'from-amber-400 to-orange-500',
     shadow: 'shadow-amber-500/20',
     popular: true
+  },
+  {
+    name: 'Desktop Node License',
+    tier: 'DESKTOP',
+    price: '$399',
+    period: '/one-time',
+    description: 'Install Poultry PMS on local offline terminals across your farm.',
+    features: [
+      'Offline Resilience',
+      'Hardware Token Binding',
+      'Local Receipt Printing',
+      'Automated Background Sync',
+      'No Monthly Subscription Fees',
+      'Perpetual License'
+    ],
+    color: 'from-blue-500 to-indigo-400',
+    shadow: 'shadow-blue-500/20'
   }
 ];
 
@@ -52,13 +70,24 @@ export default function LicenseUpgradePage() {
   const handleUpgrade = async (tier: any) => {
     setIsUpgrading(tier);
     try {
-      const result = await upgradeFarmSubscription(tier);
-      if (result.success) {
-        alert(`Successfully upgraded to ${tier} Tier! (Dev Mode Bypass Active)`);
-        router.push('/dashboard/profile');
-        router.refresh();
+      if (tier === 'DESKTOP') {
+        const result = await purchaseDesktopLicenseBundle(3);
+        if (result.success) {
+          alert('Successfully purchased Desktop Node License!');
+          router.push('/dashboard/settings?tab=desktop-licenses');
+          router.refresh();
+        } else {
+          alert("Error: " + result.error);
+        }
       } else {
-        alert("Error: " + result.error);
+        const result = await upgradeFarmSubscription(tier);
+        if (result.success) {
+          alert(`Successfully upgraded to ${tier} Tier! (Dev Mode Bypass Active)`);
+          router.push('/dashboard/profile');
+          router.refresh();
+        } else {
+          alert("Error: " + result.error);
+        }
       }
     } catch (error) {
       alert("An unexpected error occurred.");
@@ -84,7 +113,7 @@ export default function LicenseUpgradePage() {
       </div>
 
       {/* Tiers Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-7 items-stretch pt-7">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7 items-stretch pt-7">
         {tiers.map((tier) => (
           <div key={tier.name} className="relative group h-full">
             {tier.popular && (
@@ -101,7 +130,7 @@ export default function LicenseUpgradePage() {
                 <div className="space-y-3">
                   <div className={`w-16 h-16 rounded-md bg-gradient-to-br ${tier.color} p-0.5 shadow-xl ${tier.shadow}`}>
                     <div className="w-full h-full rounded-[14px] bg-[#0f1115] flex items-center justify-center">
-                      {tier.tier === 'PRO' ? <Shield className="w-8 h-8 text-emerald-400" /> : <Crown className="w-8 h-8 text-amber-400" />}
+                      {tier.tier === 'PRO' ? <Shield className="w-8 h-8 text-emerald-400" /> : tier.tier === 'PREMIUM' ? <Crown className="w-8 h-8 text-amber-400" /> : <LayoutDashboard className="w-8 h-8 text-blue-400" />}
                     </div>
                   </div>
                   <div>
@@ -139,7 +168,9 @@ export default function LicenseUpgradePage() {
                   className={`w-full h-16 rounded-lg font-bold uppercase tracking-widest text-sm transition-all shadow-2xl ${
                     tier.tier === 'PRO' 
                     ? 'bg-emerald-500 hover:bg-emerald-400 text-[#064e3b] shadow-emerald-500/20' 
-                    : 'bg-amber-500 hover:bg-amber-400 text-[#451a03] shadow-amber-500/20'
+                    : tier.tier === 'PREMIUM'
+                    ? 'bg-amber-500 hover:bg-amber-400 text-[#451a03] shadow-amber-500/20'
+                    : 'bg-blue-500 hover:bg-blue-400 text-white shadow-blue-500/20'
                   }`}
                 >
                   {isUpgrading === tier.tier ? 'Processing...' : `Upgrade to ${tier.tier}`}

@@ -4,56 +4,60 @@ import prisma from "@/lib/db";
 import { getAuthContext } from "@/lib/auth-utils";
 
 export async function purchaseDesktopLicenseBundle(terminals: number) {
-  const { userId, activeFarmId } = await getAuthContext();
+  try {
+    const { userId, activeFarmId } = await getAuthContext();
 
-  if (!activeFarmId) {
-    throw new Error("No active farm selected");
-  }
-
-  // 1. Verify Farm Status
-  const farm = await prisma.farm.findUnique({
-    where: { id: activeFarmId },
-    select: { masterLicenseStatus: true }
-  });
-
-  if (!farm) {
-    throw new Error("Farm not found");
-  }
-
-  if (farm.masterLicenseStatus === "PAID_AND_ACTIVE") {
-    throw new Error("Farm already has an active license bundle.");
-  }
-
-  // 2. Perform Transaction
-  await prisma.$transaction(async (tx) => {
-    // Update Farm
-    await tx.farm.update({
-      where: { id: activeFarmId },
-      data: { masterLicenseStatus: "PAID_AND_ACTIVE" }
-    });
-
-    // Generate keys
-    const segment = () => Math.random().toString(36).substring(2, 6).toUpperCase();
-
-    const deviceRegistrations = [];
-    for (let i = 0; i < terminals; i++) {
-      const uniqueLicenseKey = `PMS-${segment()}-${segment()}-${segment()}`;
-      deviceRegistrations.push({
-        farmId: activeFarmId,
-        userId: userId,
-        licenseKey: uniqueLicenseKey,
-        deviceName: `Terminal ${i + 1}`,
-        status: "PENDING",
-        hardwareId: null, // Left empty until claimed
-      });
+    if (!activeFarmId) {
+      throw new Error("No active farm selected");
     }
 
-    await tx.deviceRegistration.createMany({
-      data: deviceRegistrations
+    // 1. Verify Farm Status
+    const farm = await prisma.farm.findUnique({
+      where: { id: activeFarmId },
+      select: { masterLicenseStatus: true }
     });
-  });
 
-  return { success: true };
+    if (!farm) {
+      throw new Error("Farm not found");
+    }
+
+    if (farm.masterLicenseStatus === "PAID_AND_ACTIVE") {
+      throw new Error("Farm already has an active license bundle.");
+    }
+
+    // 2. Perform Transaction
+    await prisma.$transaction(async (tx) => {
+      // Update Farm
+      await tx.farm.update({
+        where: { id: activeFarmId },
+        data: { masterLicenseStatus: "PAID_AND_ACTIVE" }
+      });
+
+      // Generate keys
+      const segment = () => Math.random().toString(36).substring(2, 6).toUpperCase();
+
+      const deviceRegistrations = [];
+      for (let i = 0; i < terminals; i++) {
+        const uniqueLicenseKey = `PMS-${segment()}-${segment()}-${segment()}`;
+        deviceRegistrations.push({
+          farmId: activeFarmId,
+          userId: userId,
+          licenseKey: uniqueLicenseKey,
+          deviceName: `Terminal ${i + 1}`,
+          status: "PENDING",
+          hardwareId: null, // Left empty until claimed
+        });
+      }
+
+      await tx.deviceRegistration.createMany({
+        data: deviceRegistrations
+      });
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message || "An unexpected error occurred." };
+  }
 }
 
 export async function getDesktopLicenses() {
