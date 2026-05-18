@@ -126,7 +126,6 @@ export default function DesktopLicensesClient({ initialPaid, initialLicenses }: 
                   value={cardNumber}
                   onChange={(e) => setCardNumber(e.target.value)}
                   required
-                  icon={<CreditCard className="w-4 h-4 text-white/40" />}
                 />
                 <div className="grid grid-cols-2 gap-4">
                   <Input 
