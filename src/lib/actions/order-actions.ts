@@ -74,7 +74,7 @@ export async function getAllOrders() {
   if (!activeFarmId) return []
 
   const orders = await prisma.order.findMany({
-    where: { farmId: activeFarmId },
+    where: { farmId: activeFarmId, isDeleted: false },
     include: {
       customer: true,
       items: true,
@@ -230,73 +230,39 @@ export async function deleteOrder(id: number) {
   }
 
   try {
-    const order = await prisma.order.findUnique({
+    await prisma.order.update({
       where: { id, farmId: activeFarmId },
-      include: { items: { include: { inventory: true } } }
+      data: { isDeleted: true }
     })
-
-    if (!order) throw new Error('Order not found')
-
-    await prisma.$transaction(async (tx) => {
-      // 1. Restore Stock if it was completed
-      if (order.status === 'COMPLETED') {
-        for (const item of order.items) {
-          if (item.inventoryId) {
-            await tx.inventory.update({
-              where: { id: item.inventoryId },
-              data: { stockLevel: { increment: item.quantity } }
-            })
-
-            // LIFO Restoration for Eggs
-            if (item.inventory?.category === 'EGGS') {
-              let qtyToRestore = item.quantity
-              const productions = await tx.eggProduction.findMany({
-                where: { farmId: activeFarmId },
-                orderBy: { logDate: 'desc' }
-              })
-              for (const prod of productions) {
-                if (qtyToRestore <= 0) break
-                const maxHold = prod.eggsCollected - prod.unusableCount
-                const canAdd = maxHold - prod.eggsRemaining
-                if (canAdd <= 0) continue
-                const add = Math.min(canAdd, qtyToRestore)
-                await tx.eggProduction.update({
-                  where: { id: prod.id },
-                  data: { eggsRemaining: { increment: add } }
-                })
-                qtyToRestore -= add
-              }
-            }
-          }
-          if (item.livestockId) {
-            await tx.livestock.update({
-              where: { id: item.livestockId },
-              data: { currentCount: { increment: item.quantity } }
-            })
-          }
-        }
-      }
-
-      // 2. Reduce Customer Balance if exists
-      if (order.customerId) {
-        await tx.customer.update({
-          where: { id: order.customerId },
-          data: {
-            balanceOwed: { decrement: Number(order.totalAmount) }
-          }
-        })
-      }
-
-      // 3. Delete Order Items then Order
-      await tx.orderItem.deleteMany({ where: { orderId: id } })
-      await tx.order.delete({ where: { id } })
-    })
-
     revalidatePath('/dashboard/sales')
     revalidatePath('/dashboard/orders')
-    return { success: true, message: 'Order deleted and stock restored' }
+    return { success: true, message: 'Order moved to trash' }
   } catch (error) {
     console.error('Error deleting order:', error)
     return { success: false, error: 'Failed to delete order' }
+  }
+}
+
+export async function restoreOrder(id: number) {
+  const { userId, role, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) throw new Error('No active farm selected')
+
+  const authorizedRoles = ['OWNER', 'MANAGER', 'ACCOUNTANT']
+  if (!authorizedRoles.includes(role)) {
+    return { success: false, error: 'Unauthorized: Only Managers can restore orders' }
+  }
+
+  try {
+    await prisma.order.update({
+      where: { id, farmId: activeFarmId },
+      data: { isDeleted: false }
+    })
+    revalidatePath('/dashboard/sales')
+    revalidatePath('/dashboard/orders')
+    revalidatePath('/dashboard/settings/trash')
+    return { success: true, message: 'Order restored successfully' }
+  } catch (error) {
+    console.error('Error restoring order:', error)
+    return { success: false, error: 'Failed to restore order' }
   }
 }

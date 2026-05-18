@@ -97,14 +97,36 @@ export async function deleteBatch(id: number) {
   if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Batches Permission' }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    await tx.livestock.delete({
-      where: { id, farmId: activeFarmId }
+    await tx.livestock.update({
+      where: { id, farmId: activeFarmId },
+      data: { isDeleted: true }
     })
     revalidatePath('/dashboard/flocks')
     return { success: true }
   }).catch((error: any) => {
     console.error('Error deleting batch:', error)
     return { success: false, error: 'Failed to delete batch' }
+  })
+}
+
+export async function restoreBatch(id: number) {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return { success: false, error: 'No active farm selected' }
+
+  const hasEditAccess = await checkWorkerPermissions('batches', 'edit')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Batches Permission' }
+
+  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    await tx.livestock.update({
+      where: { id, farmId: activeFarmId },
+      data: { isDeleted: false }
+    })
+    revalidatePath('/dashboard/flocks')
+    revalidatePath('/dashboard/settings/trash')
+    return { success: true }
+  }).catch((error: any) => {
+    console.error('Error restoring batch:', error)
+    return { success: false, error: 'Failed to restore batch' }
   })
 }
 

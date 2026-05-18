@@ -459,23 +459,9 @@ export async function checkWorkerPermissions(
       where: { userId: userId, farmId: Number(activeFarmId) }
     })
     
-    if (perm) {
-      if (module === 'finance') return action === 'view' ? perm.canViewFinance : perm.canEditFinance
-      if (module === 'inventory') return action === 'view' ? perm.canViewInventory : perm.canEditInventory
-      if (module === 'batches') return action === 'view' ? perm.canViewBatches : perm.canEditBatches
-      if (module === 'sales') return action === 'view' ? perm.canViewSales : perm.canEditSales
-      if (module === 'eggs') return action === 'view' ? perm.canViewEggs : perm.canEditEggs
-      if (module === 'feeding') return action === 'view' ? perm.canViewFeeding : perm.canEditFeeding
-      if (module === 'houses') return action === 'view' ? perm.canViewHouses : perm.canEditHouses
-      if (module === 'mortality') return action === 'view' ? perm.canViewMortality : perm.canEditMortality
-      if (module === 'customers') return action === 'view' ? perm.canViewCustomers : perm.canEditCustomers
-      if (module === 'team') return action === 'view' ? perm.canViewTeam : perm.canEditTeam
-    }
-    
-    // 4. Fallback to Role Defaults
+    // 3. Role-based defaults for privileged roles (not overrideable by UserPermission)
     if (membership.role === 'MANAGER') return true
     
-    // Role-specific defaults
     if (membership.role === 'ACCOUNTANT' || membership.role === 'FINANCE_OFFICER') {
       return module === 'finance' || module === 'sales' || module === 'customers'
     }
@@ -484,7 +470,23 @@ export async function checkWorkerPermissions(
       return module === 'finance' || module === 'sales'
     }
     
-    if (membership.role === 'WORKER') return action === 'view'
+    // 4. WORKER: apply granular UserPermission overrides if they exist
+    if (membership.role === 'WORKER') {
+      if (perm) {
+        if (module === 'finance')    return action === 'view' ? perm.canViewFinance    : perm.canEditFinance
+        if (module === 'inventory')  return action === 'view' ? perm.canViewInventory  : perm.canEditInventory
+        if (module === 'batches')    return action === 'view' ? perm.canViewBatches    : perm.canEditBatches
+        if (module === 'sales')      return action === 'view' ? perm.canViewSales      : perm.canEditSales
+        if (module === 'eggs')       return action === 'view' ? perm.canViewEggs       : perm.canEditEggs
+        if (module === 'feeding')    return action === 'view' ? perm.canViewFeeding    : perm.canEditFeeding
+        if (module === 'houses')     return action === 'view' ? perm.canViewHouses     : perm.canEditHouses
+        if (module === 'mortality')  return action === 'view' ? perm.canViewMortality  : perm.canEditMortality
+        if (module === 'customers')  return action === 'view' ? perm.canViewCustomers  : perm.canEditCustomers
+        if (module === 'team')       return action === 'view' ? perm.canViewTeam       : perm.canEditTeam
+      }
+      // Worker with no explicit permissions: view-only by default
+      return action === 'view'
+    }
     
     return false
   } catch (error) {

@@ -182,10 +182,13 @@ model Livestock {
   vaccinations         VaccinationSchedule[]
   weightRecords        WeightRecord[]
 
+  isDeleted            Boolean               @default(false) @map("is_deleted")
+
   @@index([status])
   @@index([type])
   @@index([userId])
   @@index([farmId])
+  @@index([farmId, isDeleted])
   @@map("batches")
 }
 
@@ -211,8 +214,11 @@ model Inventory {
   user                       User                        @relation(fields: [userId], references: [id])
   orderItems                 OrderItem[]
 
+  isDeleted                  Boolean                     @default(false) @map("is_deleted")
+
   @@index([userId])
   @@index([farmId])
+  @@index([farmId, isDeleted])
   @@map("inventory")
 }
 
@@ -255,9 +261,12 @@ model FeedingLog {
   formulation    FeedFormulation? @relation(fields: [formulationId], references: [id])
   user           User?            @relation(fields: [userId], references: [id])
 
+  isDeleted      Boolean          @default(false) @map("is_deleted")
+
   @@index([batchId, logDate])
   @@index([userId])
   @@index([farmId])
+  @@index([farmId, isDeleted])
   @@map("daily_feeding_logs")
 }
 
@@ -297,9 +306,12 @@ model EggProduction {
   farm            Farm         @relation(fields: [farmId], references: [id])
   user            User         @relation(fields: [userId], references: [id])
 
+  isDeleted       Boolean      @default(false) @map("is_deleted")
+
   @@index([batchId, logDate])
   @@index([userId])
   @@index([farmId])
+  @@index([farmId, isDeleted])
   @@map("egg_production")
 }
 
@@ -337,9 +349,12 @@ model HealthMortality {
   isolationRoom   IsolationRoom?  @relation(fields: [isolationRoomId], references: [id])
   user            User            @relation(fields: [userId], references: [id])
 
+  isDeleted       Boolean         @default(false) @map("is_deleted")
+
   @@index([batchId, logDate])
   @@index([userId])
   @@index([farmId])
+  @@index([farmId, isDeleted])
   @@map("mortality")
 }
 
@@ -373,9 +388,12 @@ model Sale {
   farm         Farm       @relation(fields: [farmId], references: [id])
   user         User       @relation(fields: [userId], references: [id])
 
+  isDeleted    Boolean    @default(false) @map("is_deleted")
+
   @@index([saleDate, status])
   @@index([userId])
   @@index([farmId])
+  @@index([farmId, isDeleted])
   @@map("sales")
 }
 
@@ -506,10 +524,13 @@ model Expense {
   supplier    Supplier?       @relation(fields: [supplierId], references: [id])
   user        User            @relation(fields: [userId], references: [id])
 
+  isDeleted   Boolean         @default(false) @map("is_deleted")
+
   @@index([expenseDate, category])
   @@index([farmId])
   @@index([userId])
   @@index([batch_id])
+  @@index([farmId, isDeleted])
   @@map("expenses")
 }
 
@@ -619,7 +640,10 @@ model Order {
   farm           Farm        @relation(fields: [farmId], references: [id])
   user           User        @relation(fields: [userId], references: [id])
 
+  isDeleted      Boolean     @default(false) @map("is_deleted")
+
   @@index([orderDate, status])
+  @@index([farmId, isDeleted])
   @@map("orders")
 }
 

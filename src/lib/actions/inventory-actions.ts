@@ -108,8 +108,9 @@ export async function deleteInventoryItem(id: number) {
   if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Inventory Permission' }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    await tx.inventory.delete({
-      where: { id, farmId: activeFarmId }
+    await tx.inventory.update({
+      where: { id, farmId: activeFarmId },
+      data: { isDeleted: true }
     })
     revalidatePath('/dashboard/inventory')
     return { success: true }
@@ -119,13 +120,34 @@ export async function deleteInventoryItem(id: number) {
   })
 }
 
+export async function restoreInventory(id: number) {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return { success: false, error: 'No active farm selected' }
+
+  const hasEditAccess = await checkWorkerPermissions('inventory', 'edit')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Inventory Permission' }
+
+  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    await tx.inventory.update({
+      where: { id, farmId: activeFarmId },
+      data: { isDeleted: false }
+    })
+    revalidatePath('/dashboard/inventory')
+    revalidatePath('/dashboard/settings/trash')
+    return { success: true }
+  }).catch((error: any) => {
+    console.error('Error restoring inventory item:', error)
+    return { success: false, error: 'Failed to restore item' }
+  })
+}
+
 export async function getAllInventory() {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return []
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const items = await tx.inventory.findMany({
-      where: { farmId: activeFarmId },
+      where: { farmId: activeFarmId, isDeleted: false },
       include: {
         user: {
           select: {
@@ -152,7 +174,7 @@ export async function getEggInventoryStock(): Promise<number> {
   if (!activeFarmId) return 0
 
   const eggItem = await prisma.inventory.findFirst({
-    where: { farmId: activeFarmId, category: 'EGGS' }
+    where: { farmId: activeFarmId, category: 'EGGS', isDeleted: false }
   })
   return eggItem ? Number(eggItem.stockLevel) : 0
 }

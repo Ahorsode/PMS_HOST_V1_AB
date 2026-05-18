@@ -198,17 +198,36 @@ export async function updateFeedingLog(id: number, data: any) {
 }
 
 export async function deleteFeedingLog(id: number, data?: any) {
-  const { activeFarmId } = await getAuthContext()
+  const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
 
   try {
-    await prisma.feedingLog.delete({
-      where: { id }
+    await prisma.feedingLog.update({
+      where: { id },
+      data: { isDeleted: true }
     })
     revalidatePath('/dashboard/feed')
     return { success: true }
   } catch (error) {
     console.error('Error deleting feeding log:', error)
     return { success: false, error: 'Failed to delete feeding log' }
+  }
+}
+
+export async function restoreFeedingLog(id: number) {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) throw new Error('No active farm selected')
+
+  try {
+    await prisma.feedingLog.update({
+      where: { id },
+      data: { isDeleted: false }
+    })
+    revalidatePath('/dashboard/feed')
+    revalidatePath('/dashboard/settings/trash')
+    return { success: true }
+  } catch (error) {
+    console.error('Error restoring feeding log:', error)
+    return { success: false, error: 'Failed to restore feeding log' }
   }
 }

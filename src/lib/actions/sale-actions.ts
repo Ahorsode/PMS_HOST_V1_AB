@@ -62,17 +62,35 @@ export async function deleteSale(id: number) {
   if (!hasEditAccess) throw new Error('Unauthorized: Missing Edit Finance Permission')
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    // Delete sale items first if not handled by cascade
-    await tx.saleItem.deleteMany({
-      where: { saleId: id, farmId: activeFarmId }
-    })
-    await tx.sale.delete({
-      where: { id, farmId: activeFarmId }
+    await tx.sale.update({
+      where: { id, farmId: activeFarmId },
+      data: { isDeleted: true }
     })
     revalidatePath('/dashboard/sales')
     return { success: true }
   }).catch((error: any) => {
     console.error('Error deleting sale:', error)
     return { success: false, error: 'Failed to delete sale' }
+  })
+}
+
+export async function restoreSale(id: number) {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return { success: false, error: 'No active farm selected' }
+
+  const hasEditAccess = await checkWorkerPermissions('finance', 'edit')
+  if (!hasEditAccess) throw new Error('Unauthorized: Missing Edit Finance Permission')
+
+  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    await tx.sale.update({
+      where: { id, farmId: activeFarmId },
+      data: { isDeleted: false }
+    })
+    revalidatePath('/dashboard/sales')
+    revalidatePath('/dashboard/settings/trash')
+    return { success: true }
+  }).catch((error: any) => {
+    console.error('Error restoring sale:', error)
+    return { success: false, error: 'Failed to restore sale' }
   })
 }

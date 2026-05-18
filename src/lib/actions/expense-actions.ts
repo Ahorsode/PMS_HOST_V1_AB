@@ -14,7 +14,7 @@ export async function getExpenses() {
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const expenses = await tx.expense.findMany({
-      where: { farmId: activeFarmId },
+      where: { farmId: activeFarmId, isDeleted: false },
       include: {
         user: {
           select: {
@@ -77,5 +77,46 @@ export async function createExpense(data: {
   }).catch((error: any) => {
     console.error('Error creating expense:', error)
     return { success: false, error: 'Failed to create expense' }
+  })
+}
+
+export async function deleteExpense(id: number) {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return { success: false, error: 'No active farm selected' }
+
+  const hasEditAccess = await checkWorkerPermissions('finance', 'edit')
+  if (!hasEditAccess) throw new Error('Unauthorized: Missing Edit Finance Permission')
+
+  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    await tx.expense.update({
+      where: { id, farmId: activeFarmId },
+      data: { isDeleted: true }
+    })
+    revalidatePath('/dashboard/finance')
+    return { success: true }
+  }).catch((error: any) => {
+    console.error('Error deleting expense:', error)
+    return { success: false, error: 'Failed to delete expense' }
+  })
+}
+
+export async function restoreExpense(id: number) {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return { success: false, error: 'No active farm selected' }
+
+  const hasEditAccess = await checkWorkerPermissions('finance', 'edit')
+  if (!hasEditAccess) throw new Error('Unauthorized: Missing Edit Finance Permission')
+
+  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    await tx.expense.update({
+      where: { id, farmId: activeFarmId },
+      data: { isDeleted: false }
+    })
+    revalidatePath('/dashboard/finance')
+    revalidatePath('/dashboard/settings/trash')
+    return { success: true }
+  }).catch((error: any) => {
+    console.error('Error restoring expense:', error)
+    return { success: false, error: 'Failed to restore expense' }
   })
 }
