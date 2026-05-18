@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && prisma db push --accept-data-loss && next build",
+    "build": "prisma generate && prisma db execute --file=prisma/migrations/20260518000000_add_soft_delete_is_deleted/migration.sql --schema=prisma/schema.prisma && next build",
     "start": "next start",
     "lint": "eslint",
     "prisma:seed": "tsx prisma/seed.ts"
