@@ -52,15 +52,22 @@ export async function createExpense(data: {
   if (!hasEditAccess) throw new Error('Unauthorized: Missing Edit Finance Permission')
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    // Map LABOR to SALARY to match database enum
+    const dbCategory = data.category === 'LABOR' ? 'SALARY' : data.category;
+
+    // Store reference inside description since database model doesn't have referenceNumber field
+    const dbDescription = data.reference
+      ? `[Ref: ${data.reference}] ${data.description || ''}`.trim()
+      : data.description;
+
     const expense = await tx.expense.create({
       data: {
         farmId: activeFarmId,
         userId: userId,
         amount: data.amount,
-        category: data.category as any,
-        description: data.description,
+        category: dbCategory as any,
+        description: dbDescription,
         expenseDate: new Date(data.expenseDate),
-        referenceNumber: data.reference,
         supplierId: data.supplierId
       }
     })
