@@ -10,6 +10,7 @@ import { redirect } from 'next/navigation';
 import { SalesRowActions, SalesActionsHeader } from './SalesActions';
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
 import { WorkerStamp } from '@/components/ui/WorkerStamp';
+import Link from 'next/link';
 
 interface OrderItem {
   id: number;
@@ -250,9 +251,9 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                       <span className="text-xs font-bold text-emerald-400 tracking-normal shrink-0">VIP Client</span>
                    </div>
                  ))}
-                 <button className="w-full py-2 rounded-md bg-white/10 border border-white/10 text-xs font-bold uppercase tracking-widest text-white/70 hover:text-white transition-colors mt-2">
+                 <Link href="/dashboard/sales/customers" className="block text-center w-full py-2 rounded-md bg-white/10 border border-white/10 text-xs font-bold uppercase tracking-widest text-white/70 hover:bg-white/20 hover:text-white transition-all mt-2">
                    View All CRM Profiles
-                 </button>
+                 </Link>
               </CardContent>
            </Card>
         </div>
