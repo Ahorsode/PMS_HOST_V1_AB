@@ -153,12 +153,14 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
       {mode === 'mortality' ? (
         <>
           {!defaultHealthType && (
-            <div className="flex gap-2 p-1 bg-gray-100 rounded-lg mb-4">
+            <div className="flex gap-2 p-1 bg-white/5 border border-white/5 rounded-lg mb-4">
               <button
                 type="button"
                 onClick={() => setFormData({ ...formData, healthType: 'DEAD' })}
                 className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md font-bold text-xs uppercase tracking-wider transition-all ${
-                  formData.healthType === 'DEAD' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                  formData.healthType === 'DEAD' 
+                    ? 'bg-red-500/20 text-red-400 border border-red-500/30 shadow-sm' 
+                    : 'text-white/40 hover:text-white/70 hover:bg-white/5 border border-transparent'
                 }`}
               >
                 <Skull className="w-4 h-4" />
@@ -168,7 +170,9 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
                 type="button"
                 onClick={() => setFormData({ ...formData, healthType: 'SICK' })}
                 className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md font-bold text-xs uppercase tracking-wider transition-all ${
-                  formData.healthType === 'SICK' ? 'bg-white text-amber-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                  formData.healthType === 'SICK' 
+                    ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 shadow-sm' 
+                    : 'text-white/40 hover:text-white/70 hover:bg-white/5 border border-transparent'
                 }`}
               >
                 <Activity className="w-4 h-4" />
@@ -215,7 +219,7 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
               />
 
               {formData.isolationRoomId === 'add_new' && (
-                <div className="grid grid-cols-2 gap-3 p-4 bg-emerald-50 rounded-lg border border-emerald-100 animate-in slide-in-from-top-2">
+                <div className="grid grid-cols-2 gap-3 p-4 bg-emerald-950/40 rounded-lg border border-emerald-500/20 animate-in slide-in-from-top-2">
                   <Input
                     label="New Room Name"
                     placeholder="e.g., Room A"
