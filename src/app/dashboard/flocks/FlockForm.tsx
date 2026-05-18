@@ -16,6 +16,7 @@ interface LivestockFormProps {
   isolationRooms?: { id: number; name: string; capacity: number }[];
   batch?: any;
   mode: 'create' | 'edit' | 'delete' | 'mortality';
+  defaultHealthType?: 'DEAD' | 'SICK';
   onClose: () => void;
 }
 
@@ -36,7 +37,7 @@ const MORTALITY_REASONS: Record<string, string[]> = {
   "Other": ["Other"]
 };
 
-export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, onClose }: LivestockFormProps) => {
+export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaultHealthType, onClose }: LivestockFormProps) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -51,7 +52,7 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, onClos
     category: '',
     subCategory: '',
     reason: '',
-    healthType: 'DEAD' as 'SICK' | 'DEAD',
+    healthType: defaultHealthType || ('DEAD' as 'SICK' | 'DEAD'),
     isolationRoomId: '',
     newRoomName: '',
     newRoomCapacity: '',
@@ -151,28 +152,30 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, onClos
     <form onSubmit={handleSubmit} className="space-y-3">
       {mode === 'mortality' ? (
         <>
-          <div className="flex gap-2 p-1 bg-gray-100 rounded-lg mb-4">
-            <button
-              type="button"
-              onClick={() => setFormData({ ...formData, healthType: 'DEAD' })}
-              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md font-bold text-xs uppercase tracking-wider transition-all ${
-                formData.healthType === 'DEAD' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <Skull className="w-4 h-4" />
-              Mortality (Dead)
-            </button>
-            <button
-              type="button"
-              onClick={() => setFormData({ ...formData, healthType: 'SICK' })}
-              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md font-bold text-xs uppercase tracking-wider transition-all ${
-                formData.healthType === 'SICK' ? 'bg-white text-amber-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <Activity className="w-4 h-4" />
-              Sickness (Sick)
-            </button>
-          </div>
+          {!defaultHealthType && (
+            <div className="flex gap-2 p-1 bg-gray-100 rounded-lg mb-4">
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, healthType: 'DEAD' })}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md font-bold text-xs uppercase tracking-wider transition-all ${
+                  formData.healthType === 'DEAD' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <Skull className="w-4 h-4" />
+                Mortality (Dead)
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, healthType: 'SICK' })}
+                className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-md font-bold text-xs uppercase tracking-wider transition-all ${
+                  formData.healthType === 'SICK' ? 'bg-white text-amber-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                <Activity className="w-4 h-4" />
+                Sickness (Sick)
+              </button>
+            </div>
+          )}
 
           <div className="space-y-1">
             <Input
@@ -197,43 +200,45 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, onClos
                 : `Info: ${currentRemaining} birds remaining in this batch.`}
             </p>
           </div>
-          {/* Health Details: Isolation Room (Show for all health events to allow logging from isolation) */}
-          <div className="space-y-3">
-            <Select
-              label={formData.healthType === 'SICK' ? "Transfer to Isolation Room" : "Logged in Isolation Room?"}
-              options={[
-                { label: 'Select Room (Optional)...', value: '' },
-                ...isolationRooms.map(room => ({ label: `${room.name} (Cap: ${room.capacity})`, value: room.id.toString() })),
-                { label: '+ Add New Room', value: 'add_new' }
-              ]}
-              value={formData.isolationRoomId}
-              onChange={(e) => setFormData({ ...formData, isolationRoomId: e.target.value })}
-            />
+          {/* Health Details: Isolation Room (Show only if not DEAD) */}
+          {formData.healthType === 'SICK' && (
+            <div className="space-y-3">
+              <Select
+                label="Transfer to Isolation Room"
+                options={[
+                  { label: 'Select Room (Optional)...', value: '' },
+                  ...isolationRooms.map(room => ({ label: `${room.name} (Cap: ${room.capacity})`, value: room.id.toString() })),
+                  { label: '+ Add New Room', value: 'add_new' }
+                ]}
+                value={formData.isolationRoomId}
+                onChange={(e) => setFormData({ ...formData, isolationRoomId: e.target.value })}
+              />
 
-            {formData.isolationRoomId === 'add_new' && (
-              <div className="grid grid-cols-2 gap-3 p-4 bg-emerald-50 rounded-lg border border-emerald-100 animate-in slide-in-from-top-2">
-                <Input
-                  label="New Room Name"
-                  placeholder="e.g., Room A"
-                  value={formData.newRoomName}
-                  onChange={(e) => setFormData({ ...formData, newRoomName: e.target.value })}
-                  required
-                />
-                <Input
-                  label="Capacity"
-                  type="number"
-                  placeholder="50"
-                  value={formData.newRoomCapacity}
-                  onChange={(e) => {
-                    const val = Number(e.target.value);
-                    if (val < 0) return;
-                    setFormData({ ...formData, newRoomCapacity: e.target.value });
-                  }}
-                  required
-                />
-              </div>
-            )}
-          </div>
+              {formData.isolationRoomId === 'add_new' && (
+                <div className="grid grid-cols-2 gap-3 p-4 bg-emerald-50 rounded-lg border border-emerald-100 animate-in slide-in-from-top-2">
+                  <Input
+                    label="New Room Name"
+                    placeholder="e.g., Room A"
+                    value={formData.newRoomName}
+                    onChange={(e) => setFormData({ ...formData, newRoomName: e.target.value })}
+                    required
+                  />
+                  <Input
+                    label="Capacity"
+                    type="number"
+                    placeholder="50"
+                    value={formData.newRoomCapacity}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      if (val < 0) return;
+                      setFormData({ ...formData, newRoomCapacity: e.target.value });
+                    }}
+                    required
+                  />
+                </div>
+              )}
+            </div>
+          )}
 
           <Select
             label="Condition/Reason"

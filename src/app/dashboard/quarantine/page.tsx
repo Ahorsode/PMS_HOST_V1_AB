@@ -4,10 +4,12 @@ import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
 import { redirect } from 'next/navigation';
 import { InfirmaryManagement } from '../flocks/InfirmaryManagement';
 import { IsolationRoomForm } from '../mortality/IsolationRoomForm';
+import { QuickMortalityLogger } from '../mortality/QuickMortalityLogger';
 import { Home, Activity } from 'lucide-react';
 
 export default async function QuarantinePage() {
   const hasAccess = await checkWorkerPermissions('mortality', 'view');
+  const canEdit = await checkWorkerPermissions('mortality', 'edit');
 
   if (!hasAccess) {
     redirect('/dashboard/unauthorized');
@@ -20,6 +22,7 @@ export default async function QuarantinePage() {
 
   // Serializing batches to prevent React Server Component errors with Date objects
   const serializedBatches = JSON.parse(JSON.stringify(batches));
+  const activeBatches = serializedBatches.filter((b: any) => b.status === 'active');
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 px-3 py-7">
@@ -32,6 +35,13 @@ export default async function QuarantinePage() {
           <p className="text-gray-400 mt-1">Manage isolated livestock and dedicated recovery facilities.</p>
         </div>
       </div>
+
+      {/* Quick Logger */}
+      {canEdit && (
+        <div className="bg-[#111827] p-6 rounded-xl shadow-xl border border-gray-800">
+          <QuickMortalityLogger activeBatches={activeBatches} isolationRooms={isolationRooms} defaultType="SICK" />
+        </div>
+      )}
 
       <div className="bg-[#111827] p-6 rounded-xl shadow-xl border border-gray-800">
         <div className="flex items-center gap-3 mb-6">
