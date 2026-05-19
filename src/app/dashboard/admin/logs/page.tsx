@@ -17,11 +17,17 @@ export default async function AuditLogsPage() {
     redirect('/dashboard/unauthorized');
   }
 
-  const [editLogs, deleteLogs, trashItems] = await Promise.all([
-    getEditLogs(),
-    getDeleteLogs(),
-    getTrashItems()
-  ]);
+  let editLogs, deleteLogs, trashItems;
+  try {
+    [editLogs, deleteLogs, trashItems] = await Promise.all([
+      getEditLogs(),
+      getDeleteLogs(),
+      getTrashItems()
+    ]);
+  } catch (serverError: any) {
+    console.error("CRITICAL PRODUCTION LOGS ERROR:", serverError.message, serverError.stack);
+    throw serverError;
+  }
 
   return (
     <div className="max-w-[1400px] mx-auto p-4 md:p-8">

@@ -64,11 +64,11 @@ export async function createExpense(data: {
       data: {
         farmId: activeFarmId,
         userId: userId,
-        amount: data.amount,
+        amount: parseFloat(String(data.amount)),
         category: dbCategory as any,
         description: dbDescription,
         expenseDate: new Date(data.expenseDate),
-        supplierId: data.supplierId
+        supplierId: data.supplierId ? parseInt(String(data.supplierId)) : null
       }
     })
     revalidatePath('/dashboard/finance')
