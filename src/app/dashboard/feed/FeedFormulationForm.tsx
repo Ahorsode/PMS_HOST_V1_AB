@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -40,10 +41,44 @@ interface FeedFormulationFormProps {
 }
 
 export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: FeedFormulationFormProps) {
+  const router = useRouter()
   const [name, setName] = useState('')
   const [type, setType] = useState<FeedType>('STARTER')
   const [targetLivestock, setTargetLivestock] = useState<LivestockType>('POULTRY_BROILER')
   const [ingredients, setIngredients] = useState<{ inventoryId: string; percentage: number | '' }[]>([])
+
+  if (inventoryItems.length === 0) {
+    return (
+      <div className="space-y-4 p-6 text-center max-w-md mx-auto bg-white/10 backdrop-blur-md border border-white/20 rounded-lg">
+        <p className="text-amber-400 font-bold text-lg">
+          No Inventory Items Available!
+        </p>
+        <p className="text-white/70 text-sm">
+          To create a feed formulation, you must first add ingredient items to your inventory.
+        </p>
+        <div className="flex gap-2 pt-2">
+          {onClose && (
+            <Button 
+              variant="outline" 
+              onClick={onClose}
+              className="flex-1 border-white/20 text-white hover:bg-white/10 font-bold bg-transparent"
+            >
+              Cancel
+            </Button>
+          )}
+          <Button 
+            onClick={() => {
+              if (onClose) onClose();
+              router.push('/dashboard/inventory');
+            }}
+            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+          >
+            Go to Inventory
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const addIngredient = () => {
     // Only allow adding if we haven't exhausted inventory items

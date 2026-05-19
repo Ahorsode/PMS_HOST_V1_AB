@@ -87,6 +87,39 @@ export const FeedForm = ({ batches, inventory, formulations = [], log, mode, onC
     );
   }
 
+  if (feedOptions.length === 0) {
+    return (
+      <div className="space-y-4 p-4 text-center">
+        <p className="text-amber-400 font-bold text-base">
+          No Feed Inventory or Formulations!
+        </p>
+        <p className="text-white/70 text-sm">
+          To log a feeding, you need at least one Feed Item in your inventory or an active Feed Formulation.
+        </p>
+        <div className="flex flex-col gap-2 pt-2">
+          <Button 
+            onClick={() => {
+              onClose();
+              router.push('/dashboard/inventory');
+            }}
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+          >
+            Go to Inventory
+          </Button>
+          <Button 
+            onClick={() => {
+              onClose();
+              router.push('/dashboard/feed');
+            }}
+            className="w-full border border-white/20 text-white hover:bg-white/10 font-bold bg-transparent"
+          >
+            Create Formulation
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <Select

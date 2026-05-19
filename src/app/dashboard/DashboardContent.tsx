@@ -437,30 +437,26 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
 
                  return (
                    <div key={batch.id} className="p-5 rounded-lg bg-white/15 border border-white/10 group/batch relative overflow-hidden transition-all duration-300 shadow-2xl">
-                     <div className="flex justify-between items-start mb-5">
-                        <div className="space-y-1">
-                           <div className="flex items-center gap-2 mb-2">
-                              <span className="text-emerald-400 font-bold text-xs uppercase tracking-normal bg-emerald-500/20 px-2 py-0.5 rounded-lg border border-emerald-500/20">{batch.batchName || `UNIT-${batch.numericId}`}</span>
-                              <span className="text-white/70 font-bold text-xs uppercase tracking-widest">House #{batch.houseNumber}</span>
+                     <div className="flex justify-between items-start mb-5 gap-3">
+                        <div className="flex-1 min-w-0 space-y-1">
+                           <div className="flex items-center gap-2 mb-2 flex-wrap">
+                              <span className="text-emerald-400 font-bold text-xs uppercase tracking-normal bg-emerald-500/20 px-2 py-0.5 rounded-lg border border-emerald-500/20 truncate">{batch.batchName || `UNIT-${batch.numericId}`}</span>
+                              <span className="text-white/70 font-bold text-xs uppercase tracking-widest truncate">House #{batch.houseNumber}</span>
                            </div>
                            <h4 className="text-white font-bold text-lg md:text-2xl tracking-normal capitalize truncate">{formatLivestockType(batch.type)} - {batch.breed}</h4>
                            <div className="text-white/70 text-xs font-bold uppercase tracking-widest mt-1">
                               Started {new Date(batch.hatchDate).toLocaleDateString()}
                            </div>
                         </div>
-                         <div className="flex flex-col items-end gap-2">
+                         <div className="flex flex-col items-end gap-2 shrink-0">
                            <HealthBadge status="Healthy" />
                          </div>
                      </div>
                      
-                     <div className="grid grid-cols-2 gap-3 mb-5 bg-black/60 p-3 rounded-md">
+                     <div className="bg-black/60 p-3 rounded-md mb-5">
                         <div className="flex flex-col">
                            <span className="text-white/70 text-[9px] font-bold uppercase tracking-widest mb-1">Quantity/Weight ({unit})</span>
                            <span className="text-white font-bold text-xl tracking-normal leading-none">{(batch.quantity || 0).toLocaleString()}</span>
-                        </div>
-                        <div className="flex flex-col items-end">
-                           <span className="text-white/70 text-[9px] font-bold uppercase tracking-widest mb-1">Growth Target</span>
-                           <span className="text-white font-bold text-xl tracking-normal leading-none">{progress.target} Days</span>
                         </div>
                      </div>
 

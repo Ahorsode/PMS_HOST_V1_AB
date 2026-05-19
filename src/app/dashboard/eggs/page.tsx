@@ -82,95 +82,97 @@ export default async function EggsPage() {
             <div className="bg-gray-50/50 px-5 py-3 border-b border-gray-100">
               <h3 className="font-bold text-gray-800">Production History</h3>
             </div>
-            <table className="min-w-full divide-y divide-gray-100">
-              <thead>
-                <tr>
-                   <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Date</th>
-                  <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Livestock</th>
-                  <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Status</th>
-                  <th className="px-5 py-3 text-center text-xs font-bold text-gray-400 uppercase tracking-widest bg-gray-50/30">Small</th>
-                  <th className="px-5 py-3 text-center text-xs font-bold text-gray-400 uppercase tracking-widest bg-gray-50/30">Medium</th>
-                  <th className="px-5 py-3 text-center text-xs font-bold text-gray-400 uppercase tracking-widest bg-gray-50/30">Large</th>
-                  <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Total</th>
-                  <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Unusable</th>
-                  <th className="px-5 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-widest">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {productionHistory.flatMap((log: any) => {
-                  if (!log.isSorted) {
-                    return [(
-                      <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
+            <div className="overflow-x-auto w-full">
+              <table className="min-w-full divide-y divide-gray-100">
+                <thead>
+                  <tr>
+                     <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Date</th>
+                    <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Livestock</th>
+                    <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Status</th>
+                    <th className="px-5 py-3 text-center text-xs font-bold text-gray-400 uppercase tracking-widest bg-gray-50/30">Small</th>
+                    <th className="px-5 py-3 text-center text-xs font-bold text-gray-400 uppercase tracking-widest bg-gray-50/30">Medium</th>
+                    <th className="px-5 py-3 text-center text-xs font-bold text-gray-400 uppercase tracking-widest bg-gray-50/30">Large</th>
+                    <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Total</th>
+                    <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Unusable</th>
+                    <th className="px-5 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-widest">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {productionHistory.flatMap((log: any) => {
+                    if (!log.isSorted) {
+                      return [(
+                        <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="px-5 py-3 whitespace-nowrap text-sm text-gray-600 font-medium">
+                            {formatDate(log.logDate)}
+                          </td>
+                          <td className="px-5 py-3 whitespace-nowrap text-sm text-gray-900 font-bold">
+                            {log.batch?.batchName || `FLK-${log.batchId?.toString().padStart(3, '0')}`}
+                          </td>
+                          <td className="px-5 py-3 whitespace-nowrap">
+                            <span className="px-2 py-1 text-[10px] font-bold rounded-lg uppercase bg-gray-100 text-gray-600">
+                              Unsorted
+                            </span>
+                          </td>
+                          <td colSpan={3} className="px-5 py-3 whitespace-nowrap text-center text-sm font-bold text-gray-400 bg-gray-50/10 italic">
+                            Bulk Collection
+                          </td>
+                          <td className="px-5 py-3 whitespace-nowrap text-sm text-green-700 font-bold">
+                            {Math.floor(log.eggsCollected / 30)} {Math.floor(log.eggsCollected / 30) === 1 ? 'crate' : 'crates'} / {log.eggsCollected % 30}
+                          </td>
+                          <td className="px-5 py-3 whitespace-nowrap text-sm text-red-600">
+                            {log.unusableCount || 0}
+                          </td>
+                          <td className="px-5 py-3 whitespace-nowrap text-right">
+                            <EggLogActions log={log} batches={layerBatches} canEdit={canEdit} />
+                          </td>
+                        </tr>
+                      )];
+                    }
+
+                    // For sorted logs, create 3 rows
+                    const sizes = [
+                      { label: 'Small', count: log.smallCount, color: 'text-amber-600 bg-amber-50' },
+                      { label: 'Medium', count: log.mediumCount, color: 'text-emerald-600 bg-emerald-50' },
+                      { label: 'Large', count: log.largeCount, color: 'text-blue-600 bg-blue-50' }
+                    ].filter(s => s.count > 0);
+
+                    return sizes.map((size, idx) => (
+                      <tr key={`${log.id}-${size.label}`} className={`hover:bg-gray-50/50 transition-colors ${idx === 0 ? 'border-t-2 border-emerald-500/10' : ''}`}>
                         <td className="px-5 py-3 whitespace-nowrap text-sm text-gray-600 font-medium">
-                          {formatDate(log.logDate)}
+                          {idx === 0 ? formatDate(log.logDate) : ''}
                         </td>
                         <td className="px-5 py-3 whitespace-nowrap text-sm text-gray-900 font-bold">
-                          {log.batch?.batchName || `FLK-${log.batchId?.toString().padStart(3, '0')}`}
+                          {idx === 0 ? (log.batch?.batchName || `FLK-${log.batchId?.toString().padStart(3, '0')}`) : ''}
                         </td>
                         <td className="px-5 py-3 whitespace-nowrap">
-                          <span className="px-2 py-1 text-[10px] font-bold rounded-lg uppercase bg-gray-100 text-gray-600">
-                            Unsorted
+                          <span className={`px-2 py-1 text-[10px] font-bold rounded-lg uppercase bg-emerald-100 text-emerald-700`}>
+                            {size.label} Size
                           </span>
                         </td>
-                        <td colSpan={3} className="px-5 py-3 whitespace-nowrap text-center text-sm font-bold text-gray-400 bg-gray-50/10 italic">
-                          Bulk Collection
+                        <td className="px-5 py-3 whitespace-nowrap text-center text-sm font-bold text-gray-500 bg-gray-50/10">
+                          {size.label === 'Small' ? size.count : '-'}
                         </td>
-                        <td className="px-5 py-3 whitespace-nowrap text-sm text-green-700 font-bold">
-                          {Math.floor(log.eggsCollected / 30)} {Math.floor(log.eggsCollected / 30) === 1 ? 'crate' : 'crates'} / {log.eggsCollected % 30}
+                        <td className="px-5 py-3 whitespace-nowrap text-center text-sm font-bold text-gray-500 bg-gray-50/10">
+                          {size.label === 'Medium' ? size.count : '-'}
+                        </td>
+                        <td className="px-5 py-3 whitespace-nowrap text-center text-sm font-bold text-gray-500 bg-gray-50/10">
+                          {size.label === 'Large' ? size.count : '-'}
+                        </td>
+                        <td className="px-5 py-3 whitespace-nowrap text-sm text-emerald-700 font-bold">
+                          {idx === 0 ? `${Math.floor(log.eggsCollected / 30)} ${Math.floor(log.eggsCollected / 30) === 1 ? 'crate' : 'crates'} / ${log.eggsCollected % 30}` : ''}
                         </td>
                         <td className="px-5 py-3 whitespace-nowrap text-sm text-red-600">
-                          {log.unusableCount || 0}
+                          {idx === 0 ? (log.unusableCount || 0) : ''}
                         </td>
                         <td className="px-5 py-3 whitespace-nowrap text-right">
-                          <EggLogActions log={log} batches={layerBatches} canEdit={canEdit} />
+                          {idx === 0 && <EggLogActions log={log} batches={layerBatches} canEdit={canEdit} />}
                         </td>
                       </tr>
-                    )];
-                  }
-
-                  // For sorted logs, create 3 rows
-                  const sizes = [
-                    { label: 'Small', count: log.smallCount, color: 'text-amber-600 bg-amber-50' },
-                    { label: 'Medium', count: log.mediumCount, color: 'text-emerald-600 bg-emerald-50' },
-                    { label: 'Large', count: log.largeCount, color: 'text-blue-600 bg-blue-50' }
-                  ].filter(s => s.count > 0);
-
-                  return sizes.map((size, idx) => (
-                    <tr key={`${log.id}-${size.label}`} className={`hover:bg-gray-50/50 transition-colors ${idx === 0 ? 'border-t-2 border-emerald-500/10' : ''}`}>
-                      <td className="px-5 py-3 whitespace-nowrap text-sm text-gray-600 font-medium">
-                        {idx === 0 ? formatDate(log.logDate) : ''}
-                      </td>
-                      <td className="px-5 py-3 whitespace-nowrap text-sm text-gray-900 font-bold">
-                        {idx === 0 ? (log.batch?.batchName || `FLK-${log.batchId?.toString().padStart(3, '0')}`) : ''}
-                      </td>
-                      <td className="px-5 py-3 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-[10px] font-bold rounded-lg uppercase bg-emerald-100 text-emerald-700`}>
-                          {size.label} Size
-                        </span>
-                      </td>
-                      <td className="px-5 py-3 whitespace-nowrap text-center text-sm font-bold text-gray-500 bg-gray-50/10">
-                        {size.label === 'Small' ? size.count : '-'}
-                      </td>
-                      <td className="px-5 py-3 whitespace-nowrap text-center text-sm font-bold text-gray-500 bg-gray-50/10">
-                        {size.label === 'Medium' ? size.count : '-'}
-                      </td>
-                      <td className="px-5 py-3 whitespace-nowrap text-center text-sm font-bold text-gray-500 bg-gray-50/10">
-                        {size.label === 'Large' ? size.count : '-'}
-                      </td>
-                      <td className="px-5 py-3 whitespace-nowrap text-sm text-emerald-700 font-bold">
-                        {idx === 0 ? `${Math.floor(log.eggsCollected / 30)} ${Math.floor(log.eggsCollected / 30) === 1 ? 'crate' : 'crates'} / ${log.eggsCollected % 30}` : ''}
-                      </td>
-                      <td className="px-5 py-3 whitespace-nowrap text-sm text-red-600">
-                        {idx === 0 ? (log.unusableCount || 0) : ''}
-                      </td>
-                      <td className="px-5 py-3 whitespace-nowrap text-right">
-                        {idx === 0 && <EggLogActions log={log} batches={layerBatches} canEdit={canEdit} />}
-                      </td>
-                    </tr>
-                  ));
-                })}
-              </tbody>
-            </table>
+                    ));
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
