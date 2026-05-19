@@ -105,7 +105,7 @@ export default async function EggsPage() {
                           {formatDate(log.logDate)}
                         </td>
                         <td className="px-5 py-3 whitespace-nowrap text-sm text-gray-900 font-bold">
-                          {log.livestock?.batchName || `FLK-${log.batchId?.toString().padStart(3, '0')}`}
+                          {log.batch?.batchName || `FLK-${log.batchId?.toString().padStart(3, '0')}`}
                         </td>
                         <td className="px-5 py-3 whitespace-nowrap">
                           <span className="px-2 py-1 text-[10px] font-bold rounded-lg uppercase bg-gray-100 text-gray-600">
@@ -116,7 +116,7 @@ export default async function EggsPage() {
                           Bulk Collection
                         </td>
                         <td className="px-5 py-3 whitespace-nowrap text-sm text-green-700 font-bold">
-                          {log.eggsCollected} <span className="text-xs font-normal text-gray-400">eggs</span>
+                          {Math.floor(log.eggsCollected / 30)} {Math.floor(log.eggsCollected / 30) === 1 ? 'crate' : 'crates'} / {log.eggsCollected % 30}
                         </td>
                         <td className="px-5 py-3 whitespace-nowrap text-sm text-red-600">
                           {log.unusableCount || 0}
@@ -141,7 +141,7 @@ export default async function EggsPage() {
                         {idx === 0 ? formatDate(log.logDate) : ''}
                       </td>
                       <td className="px-5 py-3 whitespace-nowrap text-sm text-gray-900 font-bold">
-                        {idx === 0 ? (log.livestock?.batchName || `FLK-${log.batchId?.toString().padStart(3, '0')}`) : ''}
+                        {idx === 0 ? (log.batch?.batchName || `FLK-${log.batchId?.toString().padStart(3, '0')}`) : ''}
                       </td>
                       <td className="px-5 py-3 whitespace-nowrap">
                         <span className={`px-2 py-1 text-[10px] font-bold rounded-lg uppercase bg-emerald-100 text-emerald-700`}>
@@ -158,7 +158,7 @@ export default async function EggsPage() {
                         {size.label === 'Large' ? size.count : '-'}
                       </td>
                       <td className="px-5 py-3 whitespace-nowrap text-sm text-emerald-700 font-bold">
-                        {idx === 0 ? `${log.eggsCollected} total` : ''}
+                        {idx === 0 ? `${Math.floor(log.eggsCollected / 30)} ${Math.floor(log.eggsCollected / 30) === 1 ? 'crate' : 'crates'} / ${log.eggsCollected % 30}` : ''}
                       </td>
                       <td className="px-5 py-3 whitespace-nowrap text-sm text-red-600">
                         {idx === 0 ? (log.unusableCount || 0) : ''}
