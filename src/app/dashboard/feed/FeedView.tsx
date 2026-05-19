@@ -97,6 +97,7 @@ export default function FeedDashboard({ canEdit = true }: { canEdit?: boolean })
             setShowForm(false)
             loadData()
           }} 
+          onClose={() => setShowForm(false)}
         />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">

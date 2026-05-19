@@ -9,7 +9,8 @@ import {
   Trash2, 
   Scale, 
   Beaker, 
-  AlertCircle 
+  AlertCircle,
+  X
 } from 'lucide-react'
 import { createFeedFormulation } from '@/lib/actions/feed-actions'
 import { FeedType, LivestockType } from '@prisma/client'
@@ -35,9 +36,10 @@ const LIVESTOCK_TYPES = [
 interface FeedFormulationFormProps {
   inventoryItems: any[]
   onSuccess: () => void
+  onClose?: () => void
 }
 
-export function FeedFormulationForm({ inventoryItems, onSuccess }: FeedFormulationFormProps) {
+export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: FeedFormulationFormProps) {
   const [name, setName] = useState('')
   const [type, setType] = useState<FeedType>('STARTER')
   const [targetLivestock, setTargetLivestock] = useState<LivestockType>('POULTRY_BROILER')
@@ -123,11 +125,22 @@ export function FeedFormulationForm({ inventoryItems, onSuccess }: FeedFormulati
   return (
     <div className="max-w-4xl mx-auto">
       <Card className="border-white/20 bg-white/10 backdrop-blur-md shadow-2xl rounded-md overflow-hidden">
-      <CardHeader className="bg-gradient-to-r from-emerald-600/20 to-teal-500/10 border-b border-white/10">
+      <CardHeader className="bg-gradient-to-r from-emerald-600/20 to-teal-500/10 border-b border-white/10 flex flex-row justify-between items-center">
         <CardTitle className="flex items-center gap-2 text-white font-bold italic">
           <Beaker className="w-5 h-5 text-emerald-400" />
           Create New Formulation
         </CardTitle>
+        {onClose && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="h-8 w-8 p-0 text-white/70 hover:text-white hover:bg-white/10 rounded-full"
+          >
+            <X className="w-5 h-5" />
+          </Button>
+        )}
       </CardHeader>
       <CardContent className="p-5 space-y-5">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -137,7 +150,7 @@ export function FeedFormulationForm({ inventoryItems, onSuccess }: FeedFormulati
               value={name} 
               onChange={(e) => setName(e.target.value)} 
               placeholder="e.g. Broiler Power Starter"
-              className="bg-white/90 border-white/30 backdrop-blur-sm text-[#064e3b] font-bold h-12"
+              className="bg-white/10 border-white/10 text-white placeholder:text-white/30 focus:ring-emerald-500/50 focus:border-emerald-500/50 font-bold h-12"
             />
           </div>
           <div className="space-y-2">
@@ -145,7 +158,7 @@ export function FeedFormulationForm({ inventoryItems, onSuccess }: FeedFormulati
             <select 
               value={type} 
               onChange={(e) => setType(e.target.value as FeedType)}
-              className="w-full h-12 px-3 rounded-md bg-white/90 border border-white/30 backdrop-blur-sm text-[#064e3b] font-bold"
+              className="w-full h-12 px-3 rounded-md bg-white/10 border border-white/10 text-white focus:ring-emerald-500/50 focus:border-emerald-500/50 font-bold [&>option]:bg-[#0f172a] [&>option]:text-white"
             >
               {FEED_TYPES.map(t => (
                 <option key={t} value={t}>{t.replace('_', ' ')}</option>
