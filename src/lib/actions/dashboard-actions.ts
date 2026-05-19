@@ -295,7 +295,7 @@ export async function getDashboardStats() {
 
 
 export async function createBatch(data: {
-  houseId: number
+  houseId: string
   breedType: string
   initialCount: number
   arrivalDate: string

@@ -32,7 +32,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 interface RegisterBatchFormProps {
   houses: Array<{
-    id: number;
+    id: string | number;
     name: string;
   }>;
   onSuccess?: () => void;
@@ -146,7 +146,7 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
     setIsSubmitting(true);
     try {
       const result = await createBatch({
-        houseId: parseInt(data.houseId),
+        houseId: data.houseId,
         breedType: data.breed,
         initialCount: data.initialQuantity,
         arrivalDate: data.hatchDate,
