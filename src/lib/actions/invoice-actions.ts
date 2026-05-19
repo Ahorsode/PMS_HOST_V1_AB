@@ -5,7 +5,7 @@ import PDFDocument from 'pdfkit'
 import { getAuthContext } from '@/lib/auth-utils'
 import { checkFeature } from '@/lib/subscription-utils'
 
-export async function generateInvoicePDF(orderId: number) {
+export async function generateInvoicePDF(orderId: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
 

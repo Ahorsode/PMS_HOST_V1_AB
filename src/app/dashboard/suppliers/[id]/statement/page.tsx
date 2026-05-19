@@ -8,9 +8,9 @@ import { redirect } from 'next/navigation';
 
 export default async function SupplierStatementPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const supplierId = parseInt(id);
+  const supplierId = id;
   
-  if (isNaN(supplierId)) {
+  if (!supplierId) {
     redirect('/dashboard/suppliers');
   }
 
@@ -21,7 +21,7 @@ export default async function SupplierStatementPage({ params }: { params: Promis
   }
 
   const transactions = [
-    ...statement.inventory.map(item => ({
+    ...statement.inventory.map((item: any) => ({
       id: `inv-${item.id}`,
       type: 'Inventory',
       name: item.itemName,
@@ -29,7 +29,7 @@ export default async function SupplierStatementPage({ params }: { params: Promis
       amount: Number(item.stockLevel) * Number(item.costPerUnit || 0),
       details: `${item.stockLevel} ${item.unit} @ ${formatCurrency(item.costPerUnit)}/unit`
     })),
-    ...statement.expenses.map(e => ({
+    ...statement.expenses.map((e: any) => ({
       id: `exp-${e.id}`,
       type: 'Expense',
       name: e.description,

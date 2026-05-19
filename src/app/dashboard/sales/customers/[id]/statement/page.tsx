@@ -8,9 +8,9 @@ import { redirect } from 'next/navigation';
 
 export default async function CustomerStatementPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const customerId = parseInt(id);
+  const customerId = id;
   
-  if (isNaN(customerId)) {
+  if (!customerId) {
     redirect('/dashboard/sales/customers');
   }
 

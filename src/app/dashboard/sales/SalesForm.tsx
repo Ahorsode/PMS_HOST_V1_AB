@@ -10,7 +10,7 @@ interface SalesFormProps {
   inventory: any[];
   livestock: any[];
   onSuccess: () => void;
-  initialLivestockId?: number;
+  initialLivestockId?: string;
 }
 
 export function SalesForm({ customers, inventory, livestock, onSuccess, initialLivestockId }: SalesFormProps) {
@@ -18,8 +18,8 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
     description: initialLivestockId ? (livestock.find(l => l.id === initialLivestockId)?.batchName || 'Livestock') : '',
     quantity: 1 as number | '',
     unitPrice: 0 as number | '',
-    inventoryId: undefined as number | 'PENDING' | undefined,
-    livestockId: (initialLivestockId || undefined) as number | 'PENDING' | undefined
+    inventoryId: undefined as string | 'PENDING' | undefined,
+    livestockId: (initialLivestockId || undefined) as string | 'PENDING' | undefined
   }]);
   const [discountValue, setDiscountValue] = useState<number | ''>(0);
   const [discountType, setDiscountType] = useState<'flat' | 'percent'>('percent');
@@ -31,8 +31,8 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
       description: '',
       quantity: 1 as number | '',
       unitPrice: 0 as number | '',
-      inventoryId: undefined as number | 'PENDING' | undefined,
-      livestockId: undefined as number | 'PENDING' | undefined
+      inventoryId: undefined as string | 'PENDING' | undefined,
+      livestockId: undefined as string | 'PENDING' | undefined
     }]);
   };
 
@@ -48,13 +48,13 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
     (newItems[idx] as any)[field] = value === '' && (field === 'quantity' || field === 'unitPrice') ? '' : value;
 
     if (field === 'livestockId' && value && (value as unknown as string) !== 'PENDING') {
-      const live = livestock.find((l: any) => l.id === Number(value));
+      const live = livestock.find((l: any) => l.id === value);
       if (live) newItems[idx].description = live.batchName;
       newItems[idx].inventoryId = undefined;
     }
 
     if (field === 'inventoryId' && value && (value as unknown as string) !== 'PENDING') {
-      const inv = inventory.find((i: any) => i.id === Number(value));
+      const inv = inventory.find((i: any) => i.id === value);
       if (inv) newItems[idx].description = inv.itemName;
       newItems[idx].livestockId = undefined;
     }
@@ -79,7 +79,7 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
     // Stock validation
     for (const item of items) {
       if (item.inventoryId && (item.inventoryId as unknown as string) !== 'PENDING') {
-        const inv = inventory.find(i => i.id === Number(item.inventoryId));
+        const inv = inventory.find(i => i.id === item.inventoryId);
         if (inv && Number(item.quantity) > Number(inv.stockLevel)) {
           toast.error(`Not enough stock for ${inv.itemName}. Available: ${inv.stockLevel}`);
           setIsSubmitting(false);
@@ -87,7 +87,7 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
         }
       }
       if (item.livestockId && (item.livestockId as unknown as string) !== 'PENDING') {
-        const live = livestock.find(l => l.id === Number(item.livestockId));
+        const live = livestock.find(l => l.id === item.livestockId);
         if (live && Number(item.quantity) > Number(live.currentCount)) {
           toast.error(`Not enough birds in ${live.batchName}. Available: ${live.currentCount}`);
           setIsSubmitting(false);
@@ -98,14 +98,14 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
 
     setIsSubmitting(true);
     const res = await createOrder({
-      customerId: customerId ? Number(customerId) : (undefined as any),
+      customerId: customerId || undefined,
       discountAmount: calculatedDiscount,
       items: items.map(i => ({
         description: i.description,
         quantity: Number(i.quantity) || 0,
         unitPrice: Number(i.unitPrice) || 0,
-        inventoryId: i.inventoryId && (i.inventoryId as unknown as string) !== 'PENDING' ? Number(i.inventoryId) : undefined,
-        livestockId: i.livestockId && (i.livestockId as unknown as string) !== 'PENDING' ? Number(i.livestockId) : undefined
+        inventoryId: i.inventoryId && (i.inventoryId as unknown as string) !== 'PENDING' ? i.inventoryId : undefined,
+        livestockId: i.livestockId && (i.livestockId as unknown as string) !== 'PENDING' ? i.livestockId : undefined
       }))
     });
     setIsSubmitting(false);
@@ -288,10 +288,10 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
                             onChange={(e) => {
                               const val = e.target.value;
                               const newItems = [...items];
-                              (newItems[idx] as any).inventoryId = val ? Number(val) : 'PENDING';
+                              (newItems[idx] as any).inventoryId = val ? val : 'PENDING';
                               (newItems[idx] as any).livestockId = undefined;
                               if (val && (val as unknown as string) !== 'PENDING') {
-                                const inv = inventory.find((i: any) => i.id === Number(val));
+                                const inv = inventory.find((i: any) => i.id === val);
                                 if (inv) newItems[idx].description = inv.itemName;
                               }
                               setItems(newItems);
@@ -341,7 +341,7 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
                                 setItems(newItems);
                               }}
                               className="p-3 rounded-lg hover:bg-white/5 text-white/30 hover:text-white transition-all group/reset"
-                              title="Reset selection"
+                               title="Reset selection"
                             >
                               <Plus className="w-4 h-4 rotate-45 group-hover/reset:text-emerald-400 transition-colors" />
                             </button>
@@ -367,13 +367,13 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
                             {/* Stock Warning UI */}
                             {(() => {
                               if (item.inventoryId && (item.inventoryId as unknown as string) !== 'PENDING') {
-                                const inv = inventory.find(i => i.id === Number(item.inventoryId));
+                                const inv = inventory.find(i => i.id === item.inventoryId);
                                 if (inv && Number(item.quantity) > Number(inv.stockLevel)) {
                                   return <span className="text-[9px] font-black text-red-400 animate-pulse">Exceeds {inv.stockLevel} stock</span>;
                                 }
                               }
                               if (item.livestockId && (item.livestockId as unknown as string) !== 'PENDING') {
-                                const live = livestock.find(l => l.id === Number(item.livestockId));
+                                const live = livestock.find(l => l.id === item.livestockId);
                                 if (live && Number(item.quantity) > Number(live.currentCount)) {
                                   return <span className="text-[9px] font-black text-red-400 animate-pulse">Exceeds {live.currentCount} birds</span>;
                                 }
@@ -387,11 +387,11 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
                             className={`w-full bg-white/5 border rounded-lg p-3 text-white font-bold outline-none text-sm transition-all ${
                               (() => {
                                 if (item.inventoryId && (item.inventoryId as unknown as string) !== 'PENDING') {
-                                  const inv = inventory.find(i => i.id === Number(item.inventoryId));
+                                  const inv = inventory.find(i => i.id === item.inventoryId);
                                   return inv && Number(item.quantity) > Number(inv.stockLevel) ? 'border-red-500/50' : 'border-white/10 focus:border-emerald-500/30';
                                 }
                                 if (item.livestockId && (item.livestockId as unknown as string) !== 'PENDING') {
-                                  const live = livestock.find(l => l.id === Number(item.livestockId));
+                                  const live = livestock.find(l => l.id === item.livestockId);
                                   return live && Number(item.quantity) > Number(live.currentCount) ? 'border-red-500/50' : 'border-white/10 focus:border-emerald-500/30';
                                 }
                                 return 'border-white/10 focus:border-emerald-500/30';

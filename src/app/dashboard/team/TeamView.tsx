@@ -19,7 +19,7 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
   const [isInviting, setIsInviting] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState<string>('WORKER');
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<{ id: number, type: 'member' | 'invite' } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string, type: 'member' | 'invite' } | null>(null);
   const [permissionTarget, setPermissionTarget] = useState<any>(null);
   const [limitCheck, setLimitCheck] = useState<{ canAdd: boolean, limit: number, current: number } | null>(null);
 

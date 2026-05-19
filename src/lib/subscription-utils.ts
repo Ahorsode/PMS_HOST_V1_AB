@@ -28,7 +28,7 @@ const WORKER_LIMITS: Record<SubscriptionTier, number> = {
   PREMIUM: 1000, // Effectively unlimited
 };
 
-export async function getFarmTier(farmId: number): Promise<SubscriptionTier> {
+export async function getFarmTier(farmId: string): Promise<SubscriptionTier> {
   const farm = await prisma.farm.findUnique({
     where: { id: farmId },
     select: { subscriptionTier: true }
@@ -36,17 +36,17 @@ export async function getFarmTier(farmId: number): Promise<SubscriptionTier> {
   return farm?.subscriptionTier || SubscriptionTier.BASIC;
 }
 
-export async function checkFeature(farmId: number, feature: Feature): Promise<boolean> {
+export async function checkFeature(farmId: string, feature: Feature): Promise<boolean> {
   const tier = await getFarmTier(farmId);
   return TIER_MAPPING[tier].includes(feature);
 }
 
-export async function getWorkerLimit(farmId: number): Promise<number> {
+export async function getWorkerLimit(farmId: string): Promise<number> {
   const tier = await getFarmTier(farmId);
   return WORKER_LIMITS[tier];
 }
 
-export async function canAddWorker(farmId: number): Promise<{ canAdd: boolean; limit: number; current: number }> {
+export async function canAddWorker(farmId: string): Promise<{ canAdd: boolean; limit: number; current: number }> {
     const tier = await getFarmTier(farmId);
     const limit = WORKER_LIMITS[tier];
     

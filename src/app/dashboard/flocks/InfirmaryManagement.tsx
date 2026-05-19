@@ -5,21 +5,21 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { returnFromIsolation, logMortalityInIsolation } from '@/lib/actions/batch-actions'
 import { toast } from 'sonner'
-import { Activity, Skull, CheckCircle2, Loader2, ArrowRight } from 'lucide-react'
+import { Activity, Skull, CheckCircle2, Loader2 } from 'lucide-react'
 
 interface Batch {
-  id: number
+  id: string
   batchName: string
   isolationCount: number
 }
 
 export function InfirmaryManagement({ batches }: { batches: Batch[] }) {
   const [loadingId, setLoadingId] = useState<string | null>(null)
-  const [counts, setCounts] = useState<Record<number, string>>({})
+  const [counts, setCounts] = useState<Record<string, string>>({})
 
   const isolatedBatches = batches.filter(b => (b.isolationCount || 0) > 0)
 
-  const handleAction = async (batchId: number, type: 'RECOVER' | 'DEAD', maxCount: number) => {
+  const handleAction = async (batchId: string, type: 'RECOVER' | 'DEAD', maxCount: number) => {
     const inputCount = parseInt(counts[batchId]) || maxCount
     
     if (inputCount <= 0 || inputCount > maxCount) {

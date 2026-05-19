@@ -56,9 +56,9 @@ function currency(n: number) {
   return new Intl.NumberFormat('en-GH', { style: 'currency', currency: 'GHS', maximumFractionDigits: 2 }).format(n)
 }
 
-type RestoreFn = (id: number) => Promise<{ success: boolean; error?: string }>
+type RestoreFn = (id: string) => Promise<{ success: boolean; error?: string }>
 
-function RestoreButton({ id, onRestore, color }: { id: number; onRestore: RestoreFn; color: string }) {
+function RestoreButton({ id, onRestore, color }: { id: string; onRestore: RestoreFn; color: string }) {
   const [isPending, startTransition] = useTransition()
   const [done, setDone] = useState(false)
   const router = useRouter()

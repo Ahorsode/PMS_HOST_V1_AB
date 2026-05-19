@@ -7,8 +7,12 @@ async function main() {
 
   // 1. Create a User (Optional, but good for multi-tenancy)
   const user = await prisma.user.upsert({
-    where: { email: 'seed@example.com' },
-    update: {},
+    where: { id: userId },
+    update: {
+      email: 'seed@example.com',
+      name: 'Seed User',
+      role: 'OWNER'
+    },
     create: {
       id: userId,
       email: 'seed@example.com',
@@ -19,9 +23,10 @@ async function main() {
 
   // 2. Create a Farm
   const farm = await prisma.farm.upsert({
-    where: { id: 1 },
+    where: { id: 'seed_farm_1' },
     update: {},
     create: {
+      id: 'seed_farm_1',
       name: 'Green Valley Poultry',
       location: '123 Farm Road, Rural County',
       capacity: 50000,
@@ -31,9 +36,10 @@ async function main() {
 
   // 3. Create two Houses
   const house1 = await prisma.house.upsert({
-    where: { id: 1 },
+    where: { id: 'seed_house_1' },
     update: {},
     create: {
+      id: 'seed_house_1',
       farmId: farm.id,
       name: 'H-01',
       capacity: 10000,
@@ -44,9 +50,10 @@ async function main() {
   })
 
   const house2 = await prisma.house.upsert({
-    where: { id: 2 },
+    where: { id: 'seed_house_2' },
     update: {},
     create: {
+      id: 'seed_house_2',
       farmId: farm.id,
       name: 'H-02',
       capacity: 15000,
@@ -58,10 +65,12 @@ async function main() {
 
   // 4. Create a Broiler Batch
   const batch = await prisma.livestock.upsert({
-    where: { id: 1 },
+    where: { id: 'seed_batch_1' },
     update: {},
     create: {
+      id: 'seed_batch_1',
       houseId: house1.id,
+      farmId: farm.id,
       batchName: 'Broiler Batch 1',
       type: 'POULTRY_BROILER',
       breedType: 'Broiler',
@@ -75,9 +84,11 @@ async function main() {
 
   // 5. Create Feed Inventory
   await prisma.inventory.upsert({
-    where: { id: 1 },
+    where: { id: 'seed_inventory_1' },
     update: {},
     create: {
+      id: 'seed_inventory_1',
+      farmId: farm.id,
       itemName: 'Starter Feed',
       category: 'feed',
       stockLevel: 1200.50,
@@ -87,9 +98,11 @@ async function main() {
   })
 
   await prisma.inventory.upsert({
-    where: { id: 2 },
+    where: { id: 'seed_inventory_2' },
     update: {},
     create: {
+      id: 'seed_inventory_2',
+      farmId: farm.id,
       itemName: 'Grower Feed',
       category: 'feed',
       stockLevel: 450.00,
@@ -102,6 +115,7 @@ async function main() {
   await prisma.healthMortality.create({
     data: {
       batchId: batch.id,
+      farmId: farm.id,
       count: 10,
       logDate: new Date(),
       userId

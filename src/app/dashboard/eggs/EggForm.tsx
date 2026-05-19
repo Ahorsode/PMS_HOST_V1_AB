@@ -8,11 +8,11 @@ import { createEggProduction, updateEggProduction, deleteEggProduction } from '@
 import { useRouter } from 'next/navigation';
 
 interface EggFormProps {
-  batches: { id: number; batchName: string; livestockType: string }[];
+  batches: { id: string; batchName: string; livestockType: string }[];
   log?: any;
   mode: 'create' | 'edit' | 'delete';
   onClose: () => void;
-  defaultBatchId?: number;
+  defaultBatchId?: string;
 }
 
 export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggFormProps) => {
@@ -23,7 +23,7 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
   const [remainder, setRemainder] = useState(log?.eggsCollected ? log.eggsCollected % 30 : 0);
 
   const [formData, setFormData] = useState({
-    batchId: log?.batchId || defaultBatchId || (batches[0]?.id || 0),
+    batchId: log?.batchId || defaultBatchId || (batches[0]?.id || ''),
     eggsCollected: log?.eggsCollected || 0,
     unusableCount: log?.unusableCount || 0,
     qualityGrade: log?.qualityGrade || 'MEDIUM',
@@ -51,7 +51,7 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
       if (mode === 'create') {
         await createEggProduction({
           ...formData,
-          batchId: Number(formData.batchId),
+          batchId: formData.batchId,
           eggsCollected: Number(formData.eggsCollected),
           unusableCount: Number(formData.unusableCount),
           smallCount: Number(formData.smallCount),
@@ -100,7 +100,7 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
           label="Livestock"
           options={batches.map(b => ({ label: `${b.batchName} (${b.livestockType})`, value: b.id }))}
           value={formData.batchId}
-          onChange={(e) => setFormData({ ...formData, batchId: Number(e.target.value) })}
+          onChange={(e) => setFormData({ ...formData, batchId: e.target.value })}
           required
         />
       )}

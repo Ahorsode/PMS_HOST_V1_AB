@@ -43,7 +43,7 @@ export async function createExpense(data: {
   description?: string
   expenseDate: string
   reference?: string
-  supplierId?: number
+  supplierId?: string
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
@@ -68,7 +68,7 @@ export async function createExpense(data: {
         category: dbCategory as any,
         description: dbDescription,
         expenseDate: new Date(data.expenseDate),
-        supplierId: data.supplierId ? parseInt(String(data.supplierId)) : null
+        supplierId: data.supplierId || null
       }
     })
     revalidatePath('/dashboard/finance')
@@ -80,7 +80,7 @@ export async function createExpense(data: {
   })
 }
 
-export async function deleteExpense(id: number) {
+export async function deleteExpense(id: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
@@ -100,7 +100,7 @@ export async function deleteExpense(id: number) {
   })
 }
 
-export async function restoreExpense(id: number) {
+export async function restoreExpense(id: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 

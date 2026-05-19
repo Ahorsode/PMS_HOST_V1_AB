@@ -3,7 +3,7 @@
 import prisma from '@/lib/db'
 import { getAuthContext } from '@/lib/auth-utils'
 
-export async function getSupplierStatement(supplierId: number) {
+export async function getSupplierStatement(supplierId: string) {
   const { activeFarmId } = await getAuthContext()
   if (!activeFarmId) return null
 
@@ -36,7 +36,7 @@ export async function getSupplierStatement(supplierId: number) {
   }
 }
 
-export async function getCustomerStatement(customerId: number) {
+export async function getCustomerStatement(customerId: string) {
   const { activeFarmId } = await getAuthContext()
   if (!activeFarmId) return null
 

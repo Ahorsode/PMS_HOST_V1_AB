@@ -50,7 +50,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
     ))
   );
 
-  const handleRestore = (id: number) => {
+  const handleRestore = (id: string) => {
     if (!confirm('Are you sure you want to restore this data? This will create a new record with the deleted values.')) return;
     
     startTransition(async () => {
@@ -63,7 +63,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
     });
   };
 
-  const handleSoftRestore = (restoreFn: (id: number) => Promise<any>, id: number, label: string) => {
+  const handleSoftRestore = (restoreFn: (id: string) => Promise<any>, id: string, label: string) => {
     if (!confirm(`Restore this ${label}? It will reappear in its original module.`)) return;
     startTransition(async () => {
       const res = await restoreFn(id);

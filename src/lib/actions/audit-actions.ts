@@ -79,7 +79,7 @@ const TABLE_TO_MODEL: Record<string, string> = {
   'invitations': 'invitation',
 }
 
-export async function restoreDeletedRecord(logId: number) {
+export async function restoreDeletedRecord(logId: string) {
   const { userId, role, activeFarmId } = await getAuthContext()
   if (!activeFarmId || role !== 'OWNER') {
     return { success: false, error: 'Unauthorized: Only Owners can restore data' }

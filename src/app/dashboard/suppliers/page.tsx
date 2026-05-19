@@ -11,7 +11,7 @@ import Link from 'next/link';
 import { PartnerCard } from '@/components/partners/PartnerCard';
 
 interface SupplierStat {
-  id: number;
+  id: string;
   name: string;
   phone?: string | null;
   email?: string | null;

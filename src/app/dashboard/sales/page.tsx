@@ -38,7 +38,7 @@ interface Order {
 }
 
 interface Customer {
-  id: number;
+  id: string;
   name: string;
   phone: string | null;
 }
@@ -52,7 +52,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
   }
 
   const resolvedParams = await searchParams;
-  const sellBatchId = resolvedParams.sellBatchId ? Number(resolvedParams.sellBatchId) : undefined;
+  const sellBatchId = resolvedParams.sellBatchId;
 
   const [ordersRaw, customersRaw, inventory, livestock] = await Promise.all([
     getAllOrders(),

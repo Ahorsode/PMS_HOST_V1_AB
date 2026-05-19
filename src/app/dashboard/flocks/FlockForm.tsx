@@ -12,8 +12,8 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 
 interface LivestockFormProps {
-  houses: { id: number; name: string }[];
-  isolationRooms?: { id: number; name: string; capacity: number }[];
+  houses: { id: string; name: string }[];
+  isolationRooms?: { id: string; name: string; capacity: number }[];
   batch?: any;
   mode: 'create' | 'edit' | 'delete' | 'mortality';
   defaultHealthType?: 'DEAD' | 'SICK';
@@ -41,7 +41,7 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    houseId: batch?.houseId || (houses[0]?.id || 0),
+    houseId: batch?.houseId || (houses[0]?.id || ''),
     batchName: batch?.batchName || '',
     breedType: batch?.breedType || '',
     initialCount: batch?.initialCount || '' as number | '',
@@ -65,7 +65,7 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
       let res;
       if (mode === 'create') {
         res = await createBatch({
-          houseId: Number(formData.houseId),
+          houseId: String(formData.houseId),
           batchName: formData.batchName,
           breedType: formData.breedType,
           initialCount: Number(formData.initialCount) || 0,
@@ -73,7 +73,7 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
         });
       } else if (mode === 'edit') {
         res = await updateBatch(batch.id, {
-          houseId: Number(formData.houseId),
+          houseId: String(formData.houseId),
           batchName: formData.batchName,
           breedType: formData.breedType,
           growthTargetOverride: formData.growthTargetOverride,
@@ -110,7 +110,7 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
           batchId: batch.id,
           type: formData.healthType,
           count: Number(formData.mortalityCount) || 0,
-          isolationRoomId: formData.healthType === 'SICK' ? Number(finalIsolationRoomId) : undefined,
+          isolationRoomId: formData.healthType === 'SICK' ? String(finalIsolationRoomId) : undefined,
           category: formData.category,
           subCategory: formData.category === 'Unknown' ? 'Unknown cause yet' : formData.subCategory,
           reason: formData.reason,
@@ -287,7 +287,7 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
               label="House Assignment"
               options={houses.map(h => ({ label: h.name, value: h.id }))}
               value={formData.houseId}
-              onChange={(e) => setFormData({ ...formData, houseId: Number(e.target.value) })}
+              onChange={(e) => setFormData({ ...formData, houseId: e.target.value })}
               required
             />
           </div>

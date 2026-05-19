@@ -44,7 +44,7 @@ export const authConfig = {
         (session.user as any).id = token.id as string;
         (session.user as any).role = token.role as string;
         // Always carry activeFarmId from token — may be refreshed server-side via getAuthContext()
-        (session.user as any).activeFarmId = token.activeFarmId as number | undefined;
+        (session.user as any).activeFarmId = token.activeFarmId as string | undefined;
         (session.user as any).mustChangePassword = token.mustChangePassword as boolean;
       }
       return session;
