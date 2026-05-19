@@ -56,52 +56,71 @@ export async function POST(req: Request) {
     // Set mustChangePassword if it's an invitation or if the password is the default '123456'
     const mustChangePassword = !!invitation || rawPassword === '123456';
 
-    // Create or Update the user
-    let user;
-    if (existingUser) {
-      user = await prisma.user.update({
-        where: { id: existingUser.id },
-        data: {
-          firstname,
-          surname,
-          email: cleanEmail || existingUser.email,
-          password: hashedPassword,
-          mustChangePassword,
-          role: invitation?.role || existingUser.role || 'OWNER',
-        }
-      });
-    } else {
-      user = await prisma.user.create({
-        data: {
-          firstname,
-          surname,
-          email: cleanEmail,
-          phoneNumber: normalizedPhone || phoneNumber,
-          password: hashedPassword,
-          mustChangePassword,
-          role: invitation?.role || 'OWNER',
-        }
-      });
-    }
+    // Create or Update the user and associated resources in a transaction
+    const user = await prisma.$transaction(async (tx) => {
+      let txUser;
+      if (existingUser) {
+        txUser = await tx.user.update({
+          where: { id: existingUser.id },
+          data: {
+            firstname: firstname || '',
+            surname: surname || '',
+            email: cleanEmail || existingUser.email,
+            password: hashedPassword,
+            mustChangePassword,
+            role: invitation?.role || existingUser.role || 'OWNER',
+          }
+        });
+      } else {
+        txUser = await tx.user.create({
+          data: {
+            firstname: firstname || '',
+            surname: surname || '',
+            email: cleanEmail,
+            phoneNumber: normalizedPhone || phoneNumber,
+            password: hashedPassword,
+            mustChangePassword,
+            role: invitation?.role || 'OWNER',
+          }
+        });
+      }
 
-    // If there's an invitation, link to farm and update invitation
-    if (invitation) {
-      await prisma.farmMember.create({
-        data: {
-          farmId: invitation.farmId,
-          userId: user.id,
-          role: invitation.role
-        }
-      });
+      // If there's an invitation, link to farm and update invitation
+      if (invitation) {
+        await tx.farmMember.create({
+          data: {
+            farmId: invitation.farmId,
+            userId: txUser.id,
+            role: invitation.role
+          }
+        });
 
-      await prisma.invitation.update({
-        where: { id: invitation.id },
-        data: { status: 'ACCEPTED' }
-      });
-    }
+        await tx.invitation.update({
+          where: { id: invitation.id },
+          data: { status: 'ACCEPTED' }
+        });
+      } else if (!existingUser || !existingUser.password) {
+        // Create default farm for new standalone owners
+        const newFarm = await tx.farm.create({
+          data: {
+            name: `${firstname || 'My'}'s Farm`,
+            userId: txUser.id,
+            capacity: 0,
+            location: '',
+          }
+        });
 
-    // If it's an OWNER, we should ideally create a default farm here, 
-    // but we'll follow existing logic for now unless requested.
+        await tx.farmMember.create({
+          data: {
+            farmId: newFarm.id,
+            userId: txUser.id,
+            role: 'OWNER'
+          }
+        });
+      }
+
+      return txUser;
+    });
 
     return NextResponse.json({ 
       message: 'User created successfully', 
