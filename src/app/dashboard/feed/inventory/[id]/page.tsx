@@ -5,7 +5,7 @@ import { InventoryDetailClient } from './InventoryDetailClient';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 
 export default async function InventoryDetailPage({ params }: { params: { id: string } }) {
-  const item = await getInventoryDetails(Number(params.id));
+  const item = await getInventoryDetails(params.id);
 
   if (!item) {
     notFound();

@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
 
-export async function updateHouse(id: number, data: {
+export async function updateHouse(id: string, data: {
   name?: string
   capacity?: number
 }) {
@@ -44,7 +44,7 @@ export async function updateHouse(id: number, data: {
   })
 }
 
-export async function deleteHouse(id: number) {
+export async function deleteHouse(id: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 

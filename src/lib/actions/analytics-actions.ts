@@ -4,7 +4,7 @@ import prisma from '@/lib/db'
 import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
 
-export async function getBatchAnalytics(batchId: number) {
+export async function getBatchAnalytics(batchId: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
 
@@ -45,7 +45,7 @@ export async function getBatchAnalytics(batchId: number) {
   })
 }
 
-export async function getMortalityTrends(farmId: number) {
+export async function getMortalityTrends(farmId: string) {
   const { userId, activeFarmId } = await getAuthContext()
   const targetFarmId = farmId || activeFarmId
   if (!targetFarmId) throw new Error('No farm ID provided')

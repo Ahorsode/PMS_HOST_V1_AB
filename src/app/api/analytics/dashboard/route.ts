@@ -11,7 +11,7 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url)
   const farmIdStr = searchParams.get('farmId')
-  const farmId = farmIdStr ? parseInt(farmIdStr) : activeFarmId
+  const farmId = farmIdStr || activeFarmId
 
   if (!farmId) {
     return NextResponse.json({ error: 'farmId is required or no active farm' }, { status: 400 })

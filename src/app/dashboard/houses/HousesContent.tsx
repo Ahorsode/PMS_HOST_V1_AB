@@ -58,7 +58,7 @@ export default function HousesPage({ houses, canEdit = true }: { houses: any[], 
     }
   }
 
-  async function handleDelete(id: number) {
+  async function handleDelete(id: string) {
     if (!confirm("Are you sure you want to delete this house? This cannot be undone.")) return;
     
     setIsLoading(true);

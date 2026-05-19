@@ -9,7 +9,7 @@ import { updateBatchFinancials } from '@/lib/actions/dashboard-actions';
 import { useRouter } from 'next/navigation';
 
 interface Batch {
-  id: number;
+  id: string;
   batchName: string;
   initialCount: number;
   type: string;
