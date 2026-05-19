@@ -92,7 +92,11 @@ export default function FeedDashboard({ canEdit = true }: { canEdit?: boolean })
 
       {showForm ? (
         <FeedFormulationForm 
-          inventoryItems={inventory} 
+          inventoryItems={inventory.filter(i => {
+            const name = (i.itemName || '').toLowerCase();
+            const cat = (i.category || '').toLowerCase();
+            return !name.includes('egg') && !cat.includes('egg') && !i.eggCategoryId;
+          })} 
           onSuccess={() => {
             setShowForm(false)
             loadData()
