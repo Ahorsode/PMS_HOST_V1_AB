@@ -151,9 +151,15 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
             min="0"
             value={formData.eggsCollected}
             onChange={(e) => {
-              const val = Number(e.target.value);
+              let valStr = e.target.value;
+              if (valStr.startsWith('0') && valStr.length > 1) {
+                valStr = valStr.replace(/^0+/, '');
+                e.target.value = valStr;
+              }
+              const val = valStr === '' ? 0 : Number(valStr);
               setFormData({ ...formData, eggsCollected: val });
             }}
+            onFocus={(e) => e.target.select()}
             required
           />
         ) : (
@@ -163,7 +169,16 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
                 type="number"
                 min="0"
                 value={crates}
-                onChange={(e) => handleCrateChange(Number(e.target.value), remainder)}
+                onChange={(e) => {
+                  let valStr = e.target.value;
+                  if (valStr.startsWith('0') && valStr.length > 1) {
+                    valStr = valStr.replace(/^0+/, '');
+                    e.target.value = valStr;
+                  }
+                  const val = valStr === '' ? 0 : Number(valStr);
+                  handleCrateChange(val, remainder);
+                }}
+                onFocus={(e) => e.target.select()}
                 required
               />
               <Input
@@ -172,7 +187,20 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
                 min="0"
                 max="29"
                 value={remainder}
-                onChange={(e) => handleCrateChange(crates, Number(e.target.value))}
+                onChange={(e) => {
+                  let valStr = e.target.value;
+                  if (valStr.startsWith('0') && valStr.length > 1) {
+                    valStr = valStr.replace(/^0+/, '');
+                    e.target.value = valStr;
+                  }
+                  let val = valStr === '' ? 0 : Number(valStr);
+                  if (val > 29) {
+                    val = 29;
+                    e.target.value = '29';
+                  }
+                  handleCrateChange(crates, val);
+                }}
+                onFocus={(e) => e.target.select()}
               />
           </div>
         )}
@@ -206,13 +234,19 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
               min="0"
               value={formData.smallCount}
               onChange={(e) => {
-                const val = Number(e.target.value);
+                let valStr = e.target.value;
+                if (valStr.startsWith('0') && valStr.length > 1) {
+                  valStr = valStr.replace(/^0+/, '');
+                  e.target.value = valStr;
+                }
+                const val = valStr === '' ? 0 : Number(valStr);
                 const currentTotal = val + formData.mediumCount + formData.largeCount;
                 if (currentTotal > formData.eggsCollected) {
                   return;
                 }
                 setFormData({ ...formData, smallCount: val });
               }}
+              onFocus={(e) => e.target.select()}
               className="bg-emerald-950/20 border-emerald-900/30"
             />
             <Input
@@ -221,13 +255,19 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
               min="0"
               value={formData.mediumCount}
               onChange={(e) => {
-                const val = Number(e.target.value);
+                let valStr = e.target.value;
+                if (valStr.startsWith('0') && valStr.length > 1) {
+                  valStr = valStr.replace(/^0+/, '');
+                  e.target.value = valStr;
+                }
+                const val = valStr === '' ? 0 : Number(valStr);
                 const currentTotal = formData.smallCount + val + formData.largeCount;
                 if (currentTotal > formData.eggsCollected) {
                   return;
                 }
                 setFormData({ ...formData, mediumCount: val });
               }}
+              onFocus={(e) => e.target.select()}
               className="bg-emerald-950/20 border-emerald-900/30"
             />
             <Input
@@ -236,13 +276,19 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
               min="0"
               value={formData.largeCount}
               onChange={(e) => {
-                const val = Number(e.target.value);
+                let valStr = e.target.value;
+                if (valStr.startsWith('0') && valStr.length > 1) {
+                  valStr = valStr.replace(/^0+/, '');
+                  e.target.value = valStr;
+                }
+                const val = valStr === '' ? 0 : Number(valStr);
                 const currentTotal = formData.smallCount + formData.mediumCount + val;
                 if (currentTotal > formData.eggsCollected) {
                   return;
                 }
                 setFormData({ ...formData, largeCount: val });
               }}
+              onFocus={(e) => e.target.select()}
               className="bg-emerald-950/20 border-emerald-900/30"
             />
           </div>
@@ -261,12 +307,18 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
           min="0"
           value={formData.unusableCount}
           onChange={(e) => {
-            const val = Number(e.target.value);
+            let valStr = e.target.value;
+            if (valStr.startsWith('0') && valStr.length > 1) {
+              valStr = valStr.replace(/^0+/, '');
+              e.target.value = valStr;
+            }
+            const val = valStr === '' ? 0 : Number(valStr);
             if (val > formData.eggsCollected) {
               return;
             }
             setFormData({ ...formData, unusableCount: val });
           }}
+          onFocus={(e) => e.target.select()}
         />
         <Input
           label="Log Date"
