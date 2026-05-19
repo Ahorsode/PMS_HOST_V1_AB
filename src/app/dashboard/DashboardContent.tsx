@@ -210,8 +210,8 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
                 </CardHeader>
                 <CardContent className="flex flex-col h-full relative z-10 pt-3 pb-5">
                   <div className="mt-2 min-w-0">
-                     <p className="text-3xl md:text-5xl font-bold text-white tracking-normal truncate">{(stats?.totalBirds || 0).toLocaleString()}</p>
-                     <div className="text-emerald-400 font-bold text-sm md:text-xl mt-1 italic truncate">Active Livestock</div>
+                     <p className="text-3xl sm:text-4xl md:text-5xl font-bold text-white tracking-normal break-all">{(stats?.totalBirds || 0).toLocaleString()}</p>
+                     <div className="text-emerald-400 font-bold text-sm md:text-xl mt-1 italic break-words">Active Livestock</div>
                   </div>
                   
                   <div className="flex items-center gap-2 text-emerald-400 px-3 py-2 bg-emerald-500/20 rounded-md w-fit mt-5 border border-emerald-500/20">
@@ -265,12 +265,12 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
                 <CardContent className="relative z-10">
                    <div className="flex justify-between items-end border-b border-white/5 pb-3 mb-2 gap-2">
                       <div className="min-w-0">
-                        <p className="text-2xl md:text-4xl font-bold text-white tracking-normal truncate">{(stats?.todayEggs || 0).toLocaleString()}</p>
-                        <p className="text-[10px] text-white/70 font-bold uppercase tracking-widest mt-1 italic truncate">Collected (Crates)</p>
+                        <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-normal break-all">{(stats?.todayEggs || 0).toLocaleString()}</p>
+                        <p className="text-[10px] text-white/70 font-bold uppercase tracking-widest mt-1 italic break-words">Collected (Crates)</p>
                       </div>
                       <div className="text-right min-w-0">
-                        <p className="text-xl md:text-2xl font-bold text-white tracking-normal truncate">{(stats?.totalEggs || 0).toLocaleString()}</p>
-                        <p className="text-[10px] text-white/70 font-bold uppercase tracking-widest mt-1 italic truncate">Total Stock</p>
+                        <p className="text-xl sm:text-2xl md:text-2xl font-bold text-white tracking-normal break-all">{(stats?.totalEggs || 0).toLocaleString()}</p>
+                        <p className="text-[10px] text-white/70 font-bold uppercase tracking-widest mt-1 italic break-words">Total Stock</p>
                       </div>
                    </div>
                   <MiniBarChart data={stats.eggTrendData.map((d: { count: number }) => d.count)} color="bg-blue-400" />

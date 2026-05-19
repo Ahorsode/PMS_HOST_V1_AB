@@ -40,7 +40,7 @@ export function AccountantDashboard({ summary, stats }: AccountantDashboardProps
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-7">
               <div>
                 <p className="text-xs text-white/70 uppercase font-bold tracking-widest mb-1">Net Position</p>
-                <h2 className="text-5xl font-bold text-white tracking-normal">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white tracking-normal break-all">
                   {formatCurrency((summary?.revenue || 0) - (summary?.expenses || 0))}
                 </h2>
                 <div className="flex items-center gap-2 mt-3 text-emerald-400">
@@ -56,7 +56,7 @@ export function AccountantDashboard({ summary, stats }: AccountantDashboardProps
                     <ArrowUpRight className="w-3 h-3 text-emerald-400" />
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xl font-bold text-white tracking-normal">{formatCurrency(summary?.revenue || 0)}</span>
+                    <span className="text-sm sm:text-base md:text-xl font-bold text-white tracking-normal break-all">{formatCurrency(summary?.revenue || 0)}</span>
                     <div className="h-1.5 w-24 bg-white/10 rounded-full overflow-hidden">
                        <div className="h-full bg-emerald-500 w-[75%]" />
                     </div>
@@ -69,7 +69,7 @@ export function AccountantDashboard({ summary, stats }: AccountantDashboardProps
                     <ArrowDownRight className="w-3 h-3 text-red-400" />
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xl font-bold text-white tracking-normal">{formatCurrency(summary?.expenses || 0)}</span>
+                    <span className="text-sm sm:text-base md:text-xl font-bold text-white tracking-normal break-all">{formatCurrency(summary?.expenses || 0)}</span>
                     <div className="h-1.5 w-24 bg-white/10 rounded-full overflow-hidden">
                        <div className="h-full bg-red-500 w-[45%]" />
                     </div>
@@ -89,7 +89,7 @@ export function AccountantDashboard({ summary, stats }: AccountantDashboardProps
                </CardTitle>
             </CardHeader>
             <CardContent>
-               <div className="text-3xl font-bold text-white tracking-normal">{totalDebt}</div>
+               <div className="text-xl sm:text-2xl md:text-3xl font-bold text-white tracking-normal break-all">{totalDebt}</div>
                <p className="text-[9px] text-white/70 uppercase font-bold mt-1">Pending from 3 active distributors</p>
             </CardContent>
           </Card>
@@ -101,7 +101,7 @@ export function AccountantDashboard({ summary, stats }: AccountantDashboardProps
                </CardTitle>
             </CardHeader>
             <CardContent>
-               <div className="text-3xl font-bold text-white tracking-normal">{burnRate}</div>
+               <div className="text-xl sm:text-2xl md:text-3xl font-bold text-white tracking-normal break-all">{burnRate}</div>
                <p className="text-[9px] text-white/70 uppercase font-bold mt-1">Avg. operational cost / week</p>
             </CardContent>
           </Card>

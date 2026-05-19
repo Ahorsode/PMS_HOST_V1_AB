@@ -67,15 +67,30 @@ export function SalesRowActions({ order, canEdit = true }: { order: any, canEdit
 
   const handleDownloadInvoice = async () => {
     toast.info('Generating PDF...');
-    const res = await generateInvoicePDF(order.id) as any;
-    if (res.success && res.pdfBase64) {
-      const link = document.createElement('a');
-      link.href = `data:application/pdf;base64,${res.pdfBase64}`;
-      link.download = res.filename || 'Invoice.pdf';
-      link.click();
-      toast.success('Invoice downloaded');
-    } else {
-      toast.error('Failed to generate invoice');
+    try {
+      const res = await generateInvoicePDF(order.id) as any;
+      if (res.success && res.pdfBase64) {
+        const binStr = atob(res.pdfBase64);
+        const len = binStr.length;
+        const arr = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+          arr[i] = binStr.charCodeAt(i);
+        }
+        const blob = new Blob([arr], { type: 'application/pdf' });
+        const url = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = res.filename || 'Invoice.pdf';
+        link.click();
+        
+        setTimeout(() => URL.revokeObjectURL(url), 100);
+        toast.success('Invoice downloaded');
+      } else {
+        toast.error(res.error || 'Failed to generate invoice');
+      }
+    } catch (e: any) {
+      toast.error(e?.message || 'Unexpected error generating PDF');
     }
   };
 
