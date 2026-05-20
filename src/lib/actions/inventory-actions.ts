@@ -100,14 +100,29 @@ export async function updateInventoryItem(id: string, data: {
   })
 }
 
-export async function deleteInventoryItem(id: string) {
+export async function deleteInventoryItem(id: string, reason: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
   const hasEditAccess = await checkWorkerPermissions('inventory', 'edit')
   if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Inventory Permission' }
 
+  if (!reason || reason.trim().length < 5) return { success: false, error: 'A valid reason is required for deletion' }
+
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    const existing = await tx.inventory.findUnique({ where: { id, farmId: activeFarmId } })
+    if (existing) {
+      await tx.deleteLog.create({
+        data: {
+          userId,
+          farmId: activeFarmId,
+          tableName: 'inventory',
+          deletedDataCsv: JSON.stringify(existing),
+          reason: reason.trim()
+        }
+      })
+    }
+
     await tx.inventory.update({
       where: { id, farmId: activeFarmId },
       data: { isDeleted: true }

@@ -60,11 +60,6 @@ export const FeedForm = ({ batches, inventory, formulations = [], log, mode, onC
           feedTypeId: isInv ? parsedId : null,
           formulationId: !isInv ? parsedId : null,
         });
-      } else if (mode === 'delete') {
-        await deleteFeedingLog(log.id, {
-          amountConsumed: Number(log.amountConsumed),
-          feedTypeId: Number(log.feedTypeId),
-        });
       }
       onClose();
       router.refresh();
@@ -74,18 +69,6 @@ export const FeedForm = ({ batches, inventory, formulations = [], log, mode, onC
       setIsLoading(false);
     }
   };
-
-  if (mode === 'delete') {
-    return (
-      <div className="space-y-3">
-        <p className="text-white/70 font-medium">Are you sure you want to delete this log? This action cannot be undone.</p>
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button variant="danger" onClick={handleSubmit} isLoading={isLoading}>Delete Log</Button>
-        </div>
-      </div>
-    );
-  }
 
   if (feedOptions.length === 0) {
     return (

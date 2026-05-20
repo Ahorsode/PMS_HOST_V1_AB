@@ -69,8 +69,6 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
           largeCount: Number(formData.largeCount),
           logDate: formData.logDate,
         });
-      } else if (mode === 'delete') {
-        await deleteEggProduction(log.id);
       }
       onClose();
       router.refresh();
@@ -81,17 +79,7 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
     }
   };
 
-  if (mode === 'delete') {
-    return (
-      <div className="space-y-3">
-        <p className="text-white/70 font-medium">Are you sure you want to delete this log? This action cannot be undone.</p>
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button variant="danger" onClick={handleSubmit} isLoading={isLoading}>Delete Log</Button>
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">

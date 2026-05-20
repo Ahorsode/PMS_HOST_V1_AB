@@ -156,14 +156,29 @@ export async function updateEggProduction(id: string, data: {
   })
 }
 
-export async function deleteEggProduction(id: string) {
+export async function deleteEggProduction(id: string, reason: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
   const hasEditAccess = await checkWorkerPermissions('batches', 'edit')
   if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Batches Permission' }
 
+  if (!reason || reason.trim().length < 5) return { success: false, error: 'A valid reason is required for deletion' }
+
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    const existing = await tx.eggProduction.findUnique({ where: { id, farmId: activeFarmId } })
+    if (existing) {
+      await tx.deleteLog.create({
+        data: {
+          userId,
+          farmId: activeFarmId,
+          tableName: 'egg_production',
+          deletedDataCsv: JSON.stringify(existing),
+          reason: reason.trim()
+        }
+      })
+    }
+
     await tx.eggProduction.update({
       where: { id, farmId: activeFarmId },
       data: { isDeleted: true }

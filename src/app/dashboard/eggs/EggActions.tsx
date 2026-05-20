@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { EggForm } from './EggForm';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { DeleteConfirmationModal } from '@/components/modals/DeleteConfirmationModal';
 
 export const EggActionsHeader = ({ batches, canEdit = true }: { batches: any[], canEdit?: boolean }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -35,7 +37,29 @@ export const EggActionsHeader = ({ batches, canEdit = true }: { batches: any[], 
 };
 
 export const EggLogActions = ({ log, batches, canEdit = true }: { log: any, batches: any[], canEdit?: boolean }) => {
-  const [mode, setMode] = useState<'edit' | 'delete' | null>(null);
+  const [mode, setMode] = useState<'edit' | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const router = useRouter();
+
+  const handleDelete = async (reason: string) => {
+    setIsDeleting(true);
+    try {
+      const { deleteEggProduction } = await import('@/lib/actions/egg-actions');
+      const res = await deleteEggProduction(log.id, reason);
+      if (res.success) {
+        setShowDeleteModal(false);
+        router.refresh();
+      } else {
+        alert(res.error || 'Failed to delete log');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('An unexpected error occurred');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <div className="flex items-center gap-2">
@@ -56,7 +80,7 @@ export const EggLogActions = ({ log, batches, canEdit = true }: { log: any, batc
             <Edit2 className="h-4 w-4" />
           </button>
           <button 
-            onClick={() => setMode('delete')}
+            onClick={() => setShowDeleteModal(true)}
             className="p-1 text-gray-400 hover:bg-gray-100 rounded transition-colors"
           >
             <Trash2 className="h-4 w-4" />
@@ -67,7 +91,7 @@ export const EggLogActions = ({ log, batches, canEdit = true }: { log: any, batc
       <Dialog 
         isOpen={mode !== null} 
         onOpenChange={(open) => !open && setMode(null)} 
-        title={mode === 'edit' ? 'Edit Production Log' : 'Delete Log'}
+        title="Edit Production Log"
       >
         {mode && (
           <EggForm 
@@ -78,6 +102,14 @@ export const EggLogActions = ({ log, batches, canEdit = true }: { log: any, batc
           />
         )}
       </Dialog>
+      
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDelete}
+        itemName={`Egg Collection Log (${new Date(log.logDate).toLocaleDateString()})`}
+        isLoading={isDeleting}
+      />
     </div>
   );
 };

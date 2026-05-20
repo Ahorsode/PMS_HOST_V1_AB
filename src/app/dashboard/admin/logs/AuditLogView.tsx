@@ -218,7 +218,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                     <tr className="bg-white/5">
                       <th className="px-6 py-3 text-[10px] font-bold text-white/50 uppercase tracking-widest">Deleted At</th>
                       <th className="px-6 py-3 text-[10px] font-bold text-white/50 uppercase tracking-widest">By Whom</th>
-                      <th className="px-6 py-3 text-[10px] font-bold text-white/50 uppercase tracking-widest">Entity</th>
+                      <th className="px-6 py-3 text-[10px] font-bold text-white/50 uppercase tracking-widest">Entity & Reason</th>
                       <th className="px-6 py-3 text-[10px] font-bold text-white/50 uppercase tracking-widest">Data Summary</th>
                       <th className="px-6 py-3 text-right text-[10px] font-bold text-white/50 uppercase tracking-widest">Action</th>
                     </tr>
@@ -233,9 +233,14 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                           <WorkerStamp user={log.user} />
                         </td>
                         <td className="px-6 py-4">
-                          <span className="bg-red-500/10 text-red-400 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest border border-red-500/20">
+                          <span className="bg-red-500/10 text-red-400 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest border border-red-500/20 mb-1 inline-block">
                             {log.tableName}
                           </span>
+                          {log.reason && (
+                            <p className="text-[10px] text-white/60 font-medium truncate max-w-[150px]" title={log.reason}>
+                              "{log.reason}"
+                            </p>
+                          )}
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">

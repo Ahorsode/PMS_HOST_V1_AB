@@ -81,8 +81,6 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
           arrivalDate: formData.arrivalDate,
           status: formData.status,
         });
-      } else if (mode === 'delete') {
-        res = await deleteBatch(batch.id);
       } else if (mode === 'mortality') {
         let finalIsolationRoomId = formData.isolationRoomId;
         
@@ -133,17 +131,7 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
     }
   };
 
-  if (mode === 'delete') {
-    return (
-      <div className="space-y-3">
-        <p className="text-gray-600 font-bold">Are you sure you want to decommission this livestock unit? This action cannot be undone.</p>
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button variant="danger" onClick={handleSubmit} isLoading={isLoading}>Delete Unit</Button>
-        </div>
-      </div>
-    );
-  }
+
 
   const currentRemaining = batch?.currentCount || 0;
   const isMortalityExceeded = mode === 'mortality' && Number(formData.mortalityCount) > currentRemaining;

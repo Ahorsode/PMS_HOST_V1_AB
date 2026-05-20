@@ -8,6 +8,7 @@ import { LivestockForm } from './FlockForm';
 import { RegisterBatchForm } from '@/components/forms/RegisterBatchForm';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { DeleteConfirmationModal } from '@/components/modals/DeleteConfirmationModal';
 
 export const FlockActionsHeader = ({ houses, canEdit = true }: { houses: any[], canEdit?: boolean }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -38,7 +39,28 @@ export const FlockActionsHeader = ({ houses, canEdit = true }: { houses: any[], 
 
 export const FlockRowActions = ({ batch, houses, isolationRooms, canEdit = true }: { batch: any, houses: any[], isolationRooms: any[], canEdit?: boolean }) => {
   const router = useRouter();
-  const [mode, setMode] = useState<'edit' | 'delete' | 'mortality' | null>(null);
+  const [mode, setMode] = useState<'edit' | 'mortality' | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDelete = async (reason: string) => {
+    setIsDeleting(true);
+    try {
+      const { deleteBatch } = await import('@/lib/actions/batch-actions');
+      const res = await deleteBatch(batch.id, reason);
+      if (res.success) {
+        setShowDeleteModal(false);
+        router.refresh();
+      } else {
+        alert(res.error || 'Failed to delete batch');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('An unexpected error occurred');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <div className="flex items-center gap-2">
@@ -74,7 +96,7 @@ export const FlockRowActions = ({ batch, houses, isolationRooms, canEdit = true 
             <Edit2 className="h-4 w-4" />
           </button>
           <button 
-            onClick={() => setMode('delete')}
+            onClick={() => setShowDeleteModal(true)}
             className="p-1 text-gray-400 hover:bg-gray-100 rounded transition-colors"
             title="Delete Unit"
           >
@@ -86,18 +108,26 @@ export const FlockRowActions = ({ batch, houses, isolationRooms, canEdit = true 
       <Dialog 
         isOpen={mode !== null} 
         onOpenChange={(open) => !open && setMode(null)} 
-        title={mode === 'edit' ? 'Edit Unit' : mode === 'delete' ? 'Delete Unit' : 'Log Mortality'}
+        title={mode === 'edit' ? 'Edit Unit' : 'Log Mortality'}
       >
         {mode && (
             <LivestockForm 
               batch={batch} 
               houses={houses} 
               isolationRooms={isolationRooms}
-              mode={mode} 
+              mode={mode as any} 
               onClose={() => setMode(null)} 
             />
         )}
       </Dialog>
+      
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDelete}
+        itemName={batch.batchName || `Batch ${batch.id}`}
+        isLoading={isDeleting}
+      />
     </div>
   );
 };

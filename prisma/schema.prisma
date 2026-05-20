@@ -239,6 +239,7 @@ model DeleteLog {
   tableName      String   @map("table_name")
   deletedDataCsv String   @map("deleted_data_csv")
   deletedAt      DateTime @default(now()) @map("deleted_at")
+  reason         String?
   user           User     @relation(fields: [userId], references: [id])
 
   @@map("delete_logs")

@@ -54,14 +54,29 @@ export async function createSale(data: {
   })
 }
 
-export async function deleteSale(id: string) {
+export async function deleteSale(id: string, reason: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
   const hasEditAccess = await checkWorkerPermissions('finance', 'edit')
   if (!hasEditAccess) throw new Error('Unauthorized: Missing Edit Finance Permission')
 
+  if (!reason || reason.trim().length < 5) return { success: false, error: 'A valid reason is required for deletion' }
+
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    const existing = await tx.sale.findUnique({ where: { id, farmId: activeFarmId } })
+    if (existing) {
+      await tx.deleteLog.create({
+        data: {
+          userId,
+          farmId: activeFarmId,
+          tableName: 'sales',
+          deletedDataCsv: JSON.stringify(existing),
+          reason: reason.trim()
+        }
+      })
+    }
+
     await tx.sale.update({
       where: { id, farmId: activeFarmId },
       data: { isDeleted: true }

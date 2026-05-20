@@ -219,7 +219,7 @@ export async function updateOrderStatus(id: string, status: string) {
   }
 }
 
-export async function deleteOrder(id: string) {
+export async function deleteOrder(id: string, reason: string) {
   const { userId, role, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
   
@@ -229,7 +229,22 @@ export async function deleteOrder(id: string) {
     return { success: false, error: 'Unauthorized: Only Managers can delete orders' }
   }
 
+  if (!reason || reason.trim().length < 5) return { success: false, error: 'A valid reason is required for deletion' }
+
   try {
+    const existing = await prisma.order.findUnique({ where: { id, farmId: activeFarmId } })
+    if (existing) {
+      await prisma.deleteLog.create({
+        data: {
+          userId,
+          farmId: activeFarmId,
+          tableName: 'orders',
+          deletedDataCsv: JSON.stringify(existing),
+          reason: reason.trim()
+        }
+      })
+    }
+
     await prisma.order.update({
       where: { id, farmId: activeFarmId },
       data: { isDeleted: true }

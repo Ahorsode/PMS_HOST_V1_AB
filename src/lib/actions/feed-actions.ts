@@ -197,11 +197,26 @@ export async function updateFeedingLog(id: string, data: any) {
   }
 }
 
-export async function deleteFeedingLog(id: string, data?: any) {
+export async function deleteFeedingLog(id: string, reason: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
 
+  if (!reason || reason.trim().length < 5) return { success: false, error: 'A valid reason is required for deletion' }
+
   try {
+    const existing = await prisma.feedingLog.findUnique({ where: { id, farmId: activeFarmId } })
+    if (existing) {
+      await prisma.deleteLog.create({
+        data: {
+          userId,
+          farmId: activeFarmId,
+          tableName: 'feeding_logs',
+          deletedDataCsv: JSON.stringify(existing),
+          reason: reason.trim()
+        }
+      })
+    }
+
     await prisma.feedingLog.update({
       where: { id },
       data: { isDeleted: true }

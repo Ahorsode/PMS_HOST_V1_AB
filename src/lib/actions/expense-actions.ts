@@ -80,14 +80,29 @@ export async function createExpense(data: {
   })
 }
 
-export async function deleteExpense(id: string) {
+export async function deleteExpense(id: string, reason: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
   const hasEditAccess = await checkWorkerPermissions('finance', 'edit')
   if (!hasEditAccess) return { success: false, error: 'Unauthorized: You do not have permission to delete expenses' }
 
+  if (!reason || reason.trim().length < 5) return { success: false, error: 'A valid reason is required for deletion' }
+
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    const existing = await tx.expense.findUnique({ where: { id, farmId: activeFarmId } })
+    if (existing) {
+      await tx.deleteLog.create({
+        data: {
+          userId,
+          farmId: activeFarmId,
+          tableName: 'expenses',
+          deletedDataCsv: JSON.stringify(existing),
+          reason: reason.trim()
+        }
+      })
+    }
+
     await tx.expense.update({
       where: { id, farmId: activeFarmId },
       data: { isDeleted: true }

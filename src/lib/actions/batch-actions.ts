@@ -89,14 +89,29 @@ export async function updateBatch(id: string, data: {
   })
 }
 
-export async function deleteBatch(id: string) {
+export async function deleteBatch(id: string, reason: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
   const hasEditAccess = await checkWorkerPermissions('batches', 'edit')
   if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Batches Permission' }
 
+  if (!reason || reason.trim().length < 5) return { success: false, error: 'A valid reason is required for deletion' }
+
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    const existing = await tx.livestock.findUnique({ where: { id, farmId: activeFarmId } })
+    if (existing) {
+      await tx.deleteLog.create({
+        data: {
+          userId,
+          farmId: activeFarmId,
+          tableName: 'livestock',
+          deletedDataCsv: JSON.stringify(existing),
+          reason: reason.trim()
+        }
+      })
+    }
+
     await tx.livestock.update({
       where: { id, farmId: activeFarmId },
       data: { isDeleted: true }

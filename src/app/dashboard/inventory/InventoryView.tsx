@@ -16,6 +16,7 @@ import {
 import { getSuppliers, createSupplier } from '@/lib/actions/supplier-actions';
 import { Dialog } from '@/components/ui/Dialog';
 import { PartnerForm } from '@/components/partners/PartnerForm';
+import { DeleteConfirmationModal } from '@/components/modals/DeleteConfirmationModal';
 
 
 /* ───────────────────── helpers ───────────────────── */
@@ -77,6 +78,8 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [showSupplierModal, setShowSupplierModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<InventoryItem | null>(null);
   const [form, setForm] = useState<FormState>({
     itemName: '', stockLevel: '', unit: 'bags', category: 'FEED', costPerUnit: '', supplierId: '', paymentPlan: 'full', amountPaid: ''
   });
@@ -160,11 +163,17 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
     });
   };
 
-  const handleDelete = (id: string) => {
+  const confirmDelete = (item: InventoryItem) => {
     if (!canEdit) return;
+    setItemToDelete(item);
+    setShowDeleteModal(true);
+  };
+
+  const handleDelete = (reason: string) => {
+    if (!canEdit || !itemToDelete) return;
     startTransition(async () => {
-      const res = await deleteInventoryItem(id);
-      if (res?.success) { showToast('Item removed'); fetchItems(); }
+      const res = await deleteInventoryItem(itemToDelete.id, reason);
+      if (res?.success) { showToast('Item removed'); fetchItems(); setShowDeleteModal(false); }
       else showToast(res?.error || 'Delete failed', false);
     });
   };
@@ -306,7 +315,7 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
                                <button onClick={() => openEdit(item)} className="p-1.5 rounded-md hover:bg-white/10 text-white/70 hover:text-white transition-colors">
                                  <Pencil className="w-4 h-4" />
                                </button>
-                               <button onClick={() => handleDelete(item.id)} className="p-1.5 rounded-md hover:bg-red-500/20 text-white/70 hover:text-red-400 transition-colors">
+                               <button onClick={() => confirmDelete(item)} className="p-1.5 rounded-md hover:bg-red-500/20 text-white/70 hover:text-red-400 transition-colors">
                                  <Trash2 className="w-4 h-4" />
                                </button>
                              </>
@@ -564,6 +573,14 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
           </motion.div>
         )}
       </AnimatePresence>
+
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDelete}
+        itemName={itemToDelete?.itemName}
+        isLoading={isPending}
+      />
     </div>
   );
 }

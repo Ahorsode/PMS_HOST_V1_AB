@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 
 interface InventoryFormProps {
   item?: any;
-  mode: 'create' | 'edit' | 'delete';
+  mode: 'create' | 'edit';
   onClose: () => void;
 }
 
@@ -37,8 +37,6 @@ export const InventoryForm = ({ item, mode, onClose }: InventoryFormProps) => {
           ...formData,
           stockLevel: Number(formData.stockLevel),
         });
-      } else if (mode === 'delete') {
-        await deleteInventoryItem(item.id);
       }
       onClose();
       router.refresh();
@@ -49,17 +47,7 @@ export const InventoryForm = ({ item, mode, onClose }: InventoryFormProps) => {
     }
   };
 
-  if (mode === 'delete') {
-    return (
-      <div className="space-y-3">
-        <p className="text-white/70 font-medium">Are you sure you want to delete this item? This action cannot be undone.</p>
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button variant="danger" onClick={handleSubmit} isLoading={isLoading}>Delete Item</Button>
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
