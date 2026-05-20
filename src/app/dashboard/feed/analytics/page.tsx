@@ -65,11 +65,11 @@ export default async function FeedAnalyticsPage() {
                     <div key={idx} className="hover:bg-white/[0.02] px-7 py-3 flex items-center justify-between">
                        <div>
                           <p className="text-white font-bold text-xs">{log.batch?.breedType}</p>
-                          <p className="text-white/20 text-[8px] font-bold uppercase tracking-widest italic">{log.feedType}</p>
+                          <p className="text-white/60 text-[8px] font-bold uppercase tracking-widest italic">{log.feedType}</p>
                        </div>
                        <div className="text-right">
                           <p className="text-emerald-400 font-bold text-sm tracking-normal">{log.amountConsumed} bags</p>
-                          <p className="text-white/10 text-[8px] italic">Logged consumption</p>
+                          <p className="text-white/60 text-[8px] italic">Logged consumption</p>
                        </div>
                     </div>
                   ))}
@@ -87,7 +87,7 @@ const MetricBox = ({ title, value, icon: Icon, color, bgColor }: any) => (
      </div>
      <div>
         <h3 className="text-white font-bold text-3xl tracking-normal">{value}</h3>
-        <p className="text-white/20 font-bold uppercase tracking-widest text-[9px] mt-1 italic">{title}</p>
+        <p className="text-white/60 font-bold uppercase tracking-widest text-[9px] mt-1 italic">{title}</p>
      </div>
   </div>
 );

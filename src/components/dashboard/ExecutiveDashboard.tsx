@@ -13,6 +13,8 @@ import {
   ClipboardList
 } from 'lucide-react'
 
+import { formatCurrency } from '@/lib/utils'
+
 interface ExecutiveDashboardProps {
   stats: {
     totalProfit: number
@@ -24,9 +26,10 @@ interface ExecutiveDashboardProps {
     supplierDebt: number
     customerDebt: number
   }
+  currency?: string
 }
 
-export function ExecutiveDashboard({ stats }: ExecutiveDashboardProps) {
+export function ExecutiveDashboard({ stats, currency = 'GHS' }: ExecutiveDashboardProps) {
   return (
     <div className="space-y-8 p-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -46,7 +49,7 @@ export function ExecutiveDashboard({ stats }: ExecutiveDashboardProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricCard 
           title="Net Projected Profit" 
-          value={`GHS ${stats.totalProfit.toLocaleString()}`}
+          value={formatCurrency(stats.totalProfit, currency)}
           trend={stats.profitTrend}
           icon={<DollarSign className="w-5 h-5 text-emerald-400" />}
           description="EBITDA matching current cycle performance"
@@ -61,9 +64,9 @@ export function ExecutiveDashboard({ stats }: ExecutiveDashboardProps) {
         />
         <MetricCard 
           title="Total Outstanding Debt" 
-          value={`GHS ${stats.totalDebt.toLocaleString()}`}
+          value={formatCurrency(stats.totalDebt, currency)}
           icon={<AlertTriangle className="w-5 h-5 text-rose-400" />}
-          description={`Suppliers: ${stats.supplierDebt.toLocaleString()} | Customers: ${stats.customerDebt.toLocaleString()}`}
+          description={`Suppliers: ${formatCurrency(stats.supplierDebt, currency)} | Customers: ${formatCurrency(stats.customerDebt, currency)}`}
         />
         <MetricCard 
           title="Live Asset Value" 
@@ -85,7 +88,7 @@ export function ExecutiveDashboard({ stats }: ExecutiveDashboardProps) {
           <CardContent className="space-y-4">
             <PriorityItem 
               title="Supplier Payment Due" 
-              detail="Debt to TopFeeds GHS 12,500 due in 3 days" 
+              detail={`Debt to TopFeeds ${formatCurrency(12500, currency)} due in 3 days`} 
               type="finance"
             />
             <PriorityItem 

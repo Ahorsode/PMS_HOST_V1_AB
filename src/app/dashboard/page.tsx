@@ -20,7 +20,7 @@ export default async function DashboardPage() {
   }
 
   try {
-    const [stats, housesRaw, summary, membership, farm, permissions] = await Promise.all([
+    const [stats, housesRaw, summary, membership, farm, permissions, farmSettings] = await Promise.all([
       getDashboardStats(),
       (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
         return await tx.house.findMany({
@@ -34,10 +34,14 @@ export default async function DashboardPage() {
       prisma.farm.findUnique({ where: { id: activeFarmId } }),
       prisma.userPermission.findUnique({
         where: { userId_farmId: { userId, farmId: activeFarmId } }
+      }),
+      prisma.farmSettings.findUnique({
+        where: { farmId: activeFarmId }
       })
     ]);
 
     const role = userId === farm?.userId ? 'OWNER' : membership?.role || 'WORKER';
+    const currency = farmSettings?.currency || 'GHS';
     
     // Serialize Decimal objects to numbers for Client Components
     const houses = (housesRaw as any[]).map((house: { id: number; name: string; currentTemperature: any; currentHumidity: any }) => ({
@@ -55,6 +59,7 @@ export default async function DashboardPage() {
           role={role as any} 
           subscriptionTier={farm?.subscriptionTier}
           permissions={permissions}
+          currency={currency}
         />
       </PullToRefresh>
     );

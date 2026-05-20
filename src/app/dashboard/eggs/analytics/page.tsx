@@ -53,14 +53,14 @@ export default async function EggsAnalyticsPage() {
                       </td>
                       <td className="px-7 py-5">
                          <p className="text-white font-bold text-sm tracking-normal">{log.batch?.breedType}</p>
-                         <p className="text-white/20 text-[8px] font-bold uppercase tracking-widest">FLK-{log.batchId?.toString().padStart(3, '0')}</p>
+                         <p className="text-white/60 text-[8px] font-bold uppercase tracking-widest mt-1">FLK-{log.batchId?.toString().padStart(3, '0')}</p>
                       </td>
                       <td className="px-7 py-5 text-center">
-                         <span className="text-red-400/40 font-bold text-sm tracking-normal">{log.cracked || 0}</span>
+                         <span className="text-red-400/80 font-bold text-sm tracking-normal">{log.cracked || 0}</span>
                       </td>
                       <td className="px-7 py-5 text-right">
                          <span className="text-emerald-400 font-bold text-2xl tracking-normal">{log.quantity}</span>
-                         <span className="text-xs text-white/20 ml-2 italic">units</span>
+                         <span className="text-xs text-white/60 ml-2 italic">units</span>
                       </td>
                     </tr>
                   ))}
@@ -79,7 +79,7 @@ const MetricBox = ({ title, value, icon: Icon, color, bgColor }: any) => (
      </div>
      <div>
         <h3 className="text-white font-bold text-3xl tracking-normal">{value}</h3>
-        <p className="text-white/20 font-bold uppercase tracking-widest text-[9px] mt-1 italic">{title}</p>
+        <p className="text-white/60 font-bold uppercase tracking-widest text-[9px] mt-1 italic">{title}</p>
      </div>
   </div>
 );

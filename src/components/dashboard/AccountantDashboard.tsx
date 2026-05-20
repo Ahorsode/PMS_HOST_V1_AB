@@ -10,13 +10,14 @@ import { FinancialOverview } from '@/components/dashboard/FinancialOverview';
 interface AccountantDashboardProps {
   summary: any;
   stats: any;
+  currency?: string;
 }
 
-export function AccountantDashboard({ summary, stats }: AccountantDashboardProps) {
+export function AccountantDashboard({ summary, stats, currency = 'GHS' }: AccountantDashboardProps) {
   // Mocking some financial-specific metrics for the "Terminal" feel
   const revenueVelocity = "+14.2%";
-  const burnRate = formatCurrency(4250);
-  const totalDebt = formatCurrency(1200);
+  const burnRate = formatCurrency(4250, currency);
+  const totalDebt = formatCurrency(1200, currency);
 
   return (
     <div className="space-y-7 pb-11">
@@ -41,7 +42,7 @@ export function AccountantDashboard({ summary, stats }: AccountantDashboardProps
               <div>
                 <p className="text-xs text-white/70 uppercase font-bold tracking-widest mb-1">Net Position</p>
                 <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white tracking-normal break-all">
-                  {formatCurrency((summary?.revenue || 0) - (summary?.expenses || 0))}
+                  {formatCurrency((summary?.revenue || 0) - (summary?.expenses || 0), currency)}
                 </h2>
                 <div className="flex items-center gap-2 mt-3 text-emerald-400">
                   <TrendingUp className="w-4 h-4" />
@@ -56,7 +57,7 @@ export function AccountantDashboard({ summary, stats }: AccountantDashboardProps
                     <ArrowUpRight className="w-3 h-3 text-emerald-400" />
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm sm:text-base md:text-xl font-bold text-white tracking-normal break-all">{formatCurrency(summary?.revenue || 0)}</span>
+                    <span className="text-sm sm:text-base md:text-xl font-bold text-white tracking-normal break-all">{formatCurrency(summary?.revenue || 0, currency)}</span>
                     <div className="h-1.5 w-24 bg-white/10 rounded-full overflow-hidden">
                        <div className="h-full bg-emerald-500 w-[75%]" />
                     </div>
@@ -69,7 +70,7 @@ export function AccountantDashboard({ summary, stats }: AccountantDashboardProps
                     <ArrowDownRight className="w-3 h-3 text-red-400" />
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm sm:text-base md:text-xl font-bold text-white tracking-normal break-all">{formatCurrency(summary?.expenses || 0)}</span>
+                    <span className="text-sm sm:text-base md:text-xl font-bold text-white tracking-normal break-all">{formatCurrency(summary?.expenses || 0, currency)}</span>
                     <div className="h-1.5 w-24 bg-white/10 rounded-full overflow-hidden">
                        <div className="h-full bg-red-500 w-[45%]" />
                     </div>
@@ -109,7 +110,7 @@ export function AccountantDashboard({ summary, stats }: AccountantDashboardProps
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-7 items-start">
-        <FinancialOverview data={summary} />
+        <FinancialOverview data={summary} currency={currency} />
         
         {/* Recent Financial Events */}
         <Card className="bg-white/10 border-white/10">
@@ -143,7 +144,7 @@ export function AccountantDashboard({ summary, stats }: AccountantDashboardProps
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-emerald-400 font-bold text-lg">+ {formatCurrency(item.totalAmount)}</p>
+                      <p className="text-emerald-400 font-bold text-lg">+ {formatCurrency(item.totalAmount, currency)}</p>
                     </div>
                  </div>
                ));

@@ -121,7 +121,7 @@ const MiniBarChart = ({ data, color }: { data: number[], color: string }) => {
   );
 };
 
-export function DashboardContent({ stats, houses, summary, role, subscriptionTier, permissions }: DashboardContentProps) {
+export function DashboardContent({ stats, houses, summary, role, subscriptionTier, permissions, currency = 'GHS' }: DashboardContentProps & { currency?: string }) {
   const { getAgeInDays, formatAge, getUnitBySpecies } = useLivestockStats();
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
 
@@ -133,7 +133,7 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
   };
 
   if (role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER') {
-    return <AccountantDashboard summary={summary} stats={stats} />;
+    return <AccountantDashboard summary={summary} stats={stats} currency={currency} />;
   }
 
   if (role === 'WORKER' || role === 'CASHIER') {
@@ -141,7 +141,7 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
   }
 
   if (role === 'OWNER' && subscriptionTier === 'PREMIUM') {
-    return <ExecutiveDashboard stats={stats.executiveStats!} />;
+    return <ExecutiveDashboard stats={stats.executiveStats!} currency={currency} />;
   }
 
   const renderZeroState = () => (
@@ -279,9 +279,9 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
               </Card>
             )}
 
-            {(role === 'OWNER' || !permissions || permissions.canViewFinance) && (
+             {(role === 'OWNER' || !permissions || permissions.canViewFinance) && (
               <Suspense fallback={<div className="md:col-span-2 lg:col-span-2 bg-white/10 h-32 rounded-lg animate-pulse" />}>
-                <FinancialOverview data={summary} />
+                <FinancialOverview data={summary} currency={currency} />
               </Suspense>
             )}
 

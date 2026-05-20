@@ -10,9 +10,10 @@ interface FinancialOverviewProps {
     expenses: number
     eggs: number
   } | null
+  currency?: string
 }
 
-export function FinancialOverview({ data }: FinancialOverviewProps) {
+export function FinancialOverview({ data, currency = 'GHS' }: FinancialOverviewProps) {
   if (!data) return null
   
   const profit = data.revenue - data.expenses
@@ -28,7 +29,7 @@ export function FinancialOverview({ data }: FinancialOverviewProps) {
         <div className="flex justify-between items-end">
           <div className="space-y-1 min-w-0">
             <p className="text-xl sm:text-2xl md:text-4xl font-bold text-white tracking-normal break-all">
-              {formatCurrency(profit)}
+              {formatCurrency(profit, currency)}
             </p>
             <p className={`text-[10px] md:text-xs font-bold uppercase tracking-widest flex items-center gap-1 ${isProfitable ? 'text-emerald-400' : 'text-red-400'} break-words`}>
               {isProfitable ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
@@ -37,14 +38,14 @@ export function FinancialOverview({ data }: FinancialOverviewProps) {
           </div>
           <div className="text-right min-w-0">
              <div className="text-[10px] md:text-xs font-bold text-white/70 uppercase tracking-widest break-words">Revenue</div>
-             <div className="text-xs sm:text-sm font-bold text-white break-all">{formatCurrency(data.revenue)}</div>
+             <div className="text-xs sm:text-sm font-bold text-white break-all">{formatCurrency(data.revenue, currency)}</div>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-2">
            <div className="bg-black/60 p-2 rounded-md border border-white/5">
               <div className="text-xs font-bold text-white/70 uppercase tracking-widest mb-1">Expenses</div>
-              <div className="text-xs sm:text-sm font-bold text-red-400 break-all">{formatCurrency(data.expenses)}</div>
+              <div className="text-xs sm:text-sm font-bold text-red-400 break-all">{formatCurrency(data.expenses, currency)}</div>
            </div>
            <div className="bg-black/60 p-2 rounded-md border border-white/5">
               <div className="text-xs font-bold text-white/70 uppercase tracking-widest mb-1">Production</div>

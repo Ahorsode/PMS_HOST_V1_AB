@@ -1,17 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Agri-ERP | Enterprise Farm Management System",
@@ -35,7 +24,7 @@ export default function RootLayout({
 }>) {
   return (
       <html lang="en">
-        <body className={`${geistSans.variable} antialiased bg-[#0a0a0a] min-h-screen text-white font-sans`}>
+        <body className="antialiased bg-[#0a0a0a] min-h-screen text-white font-sans">
           <AuthProvider>
             <div className="fixed inset-0 pointer-events-none">
             <div className="absolute inset-0 bg-gradient-to-tr from-emerald-950/20 via-[#0a0a0a] to-[#0a0a0a]" />

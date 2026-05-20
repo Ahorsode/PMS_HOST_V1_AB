@@ -55,7 +55,7 @@ export default async function FlocksAnalyticsPage() {
                       <tr key={batch.id} className="hover:bg-white/[0.02] transition-colors group">
                         <td className="px-7 py-5">
                            <p className="text-white font-bold text-sm tracking-normal">{batch.batchName || batch.breedType}</p>
-                           <p className="text-white/20 text-[8px] font-bold uppercase tracking-widest mt-1 italic">{batch.house?.name || 'Unassigned House'}</p>
+                           <p className="text-white/60 text-[8px] font-bold uppercase tracking-widest mt-1 italic">{batch.house?.name || 'Unassigned House'}</p>
                         </td>
                         <td className="px-7 py-5 text-center">
                            <span className="text-emerald-400 font-bold text-lg tracking-normal">{batch.currentQuantity}</span>
@@ -90,7 +90,7 @@ const MetricBox = ({ title, value, icon: Icon, color, bgColor }: any) => (
      </div>
      <div>
         <h3 className="text-white font-bold text-3xl tracking-normal">{value}</h3>
-        <p className="text-white/20 font-bold uppercase tracking-widest text-[9px] mt-1 italic">{title}</p>
+        <p className="text-white/60 font-bold uppercase tracking-widest text-[9px] mt-1 italic">{title}</p>
      </div>
   </div>
 );
