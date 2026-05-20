@@ -79,7 +79,7 @@ export async function deleteSale(id: string, reason: string) {
 
     await tx.sale.update({
       where: { id, farmId: activeFarmId },
-      data: { isDeleted: true }
+      data: { isDeleted: true, deletedAt: new Date() }
     })
     revalidatePath('/dashboard/sales')
     return { success: true }
@@ -99,7 +99,7 @@ export async function restoreSale(id: string) {
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     await tx.sale.update({
       where: { id, farmId: activeFarmId },
-      data: { isDeleted: false }
+      data: { isDeleted: false, deletedAt: null }
     })
     revalidatePath('/dashboard/sales')
     revalidatePath('/dashboard/settings/trash')

@@ -32,9 +32,9 @@ export default async function AuditLogsPage() {
   return (
     <div className="max-w-[1400px] mx-auto p-4 md:p-8">
       <AuditLogView 
-        initialEditLogs={JSON.parse(JSON.stringify(editLogs))} 
-        initialDeleteLogs={JSON.parse(JSON.stringify(deleteLogs))}
-        trashItems={JSON.parse(JSON.stringify(trashItems))}
+        initialEditLogs={JSON.parse(JSON.stringify(editLogs, (key, value) => typeof value === 'bigint' ? value.toString() : value))} 
+        initialDeleteLogs={JSON.parse(JSON.stringify(deleteLogs, (key, value) => typeof value === 'bigint' ? value.toString() : value))}
+        trashItems={JSON.parse(JSON.stringify(trashItems, (key, value) => typeof value === 'bigint' ? value.toString() : value))}
       />
     </div>
   );

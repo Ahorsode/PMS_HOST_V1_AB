@@ -114,7 +114,7 @@ export async function deleteBatch(id: string, reason: string) {
 
     await tx.livestock.update({
       where: { id, farmId: activeFarmId },
-      data: { isDeleted: true }
+      data: { isDeleted: true, deletedAt: new Date() }
     })
     revalidatePath('/dashboard/flocks')
     return { success: true }
@@ -134,7 +134,7 @@ export async function restoreBatch(id: string) {
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     await tx.livestock.update({
       where: { id, farmId: activeFarmId },
-      data: { isDeleted: false }
+      data: { isDeleted: false, deletedAt: null }
     })
     revalidatePath('/dashboard/flocks')
     revalidatePath('/dashboard/settings/trash')

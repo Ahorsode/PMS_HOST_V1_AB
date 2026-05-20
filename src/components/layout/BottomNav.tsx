@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, PawPrint, XCircle, User, Egg, ThermometerSun, Banknote, Wheat, Wallet, Users, Settings, Crown, LogOut, ShieldCheck, BarChart3, Activity } from 'lucide-react';
+import { LayoutDashboard, PawPrint, XCircle, User, Egg, ThermometerSun, Banknote, Wheat, Wallet, Users, Settings, Crown, LogOut, ShieldCheck, BarChart3, Activity, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { signOut } from 'next-auth/react';
 
@@ -24,6 +24,7 @@ export const BottomNav = ({ role = 'OWNER', permissions }: { role?: string, perm
     { name: 'Sales', icon: Banknote, href: '/dashboard/sales', roles: ['OWNER', 'MANAGER', 'CASHIER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
     { name: 'Customers', icon: Users, href: '/dashboard/sales/customers', roles: ['OWNER', 'MANAGER', 'CASHIER', 'ACCOUNTANT'] },
     { name: 'Finance Hub', icon: Wallet, href: '/dashboard/finance', roles: ['OWNER', 'MANAGER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
+    { name: 'Reports', icon: FileText, href: '/dashboard/reports', roles: ['OWNER', 'MANAGER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
     { name: 'My Profile', icon: User, href: '/dashboard/profile', roles: ['OWNER', 'MANAGER', 'WORKER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
     { name: 'Audit Logs', icon: ShieldCheck, href: '/dashboard/admin/logs', roles: ['OWNER', 'MANAGER'] },
     { name: 'License Upgrade', icon: Crown, href: '/dashboard/license-upgrade', roles: ['OWNER', 'MANAGER'] },
@@ -39,6 +40,7 @@ export const BottomNav = ({ role = 'OWNER', permissions }: { role?: string, perm
     if (permissions) {
       const permissionMap: Record<string, string[]> = {
         'Finance Hub': ['canViewFinance', 'canEditFinance'],
+        'Reports': ['canViewFinance', 'canEditFinance'],
         'Sales': ['canViewSales', 'canEditSales'],
         'Livestock': ['canViewBatches', 'canEditBatches'],
         'Analytics': ['canViewBatches', 'canEditBatches'],
@@ -67,7 +69,7 @@ export const BottomNav = ({ role = 'OWNER', permissions }: { role?: string, perm
 
     // 5. Role-specific Fallbacks (Accountant/Finance/Cashier)
     if (role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER') {
-        const allowedForAccountant = ['Dashboard', 'Sales', 'Customers', 'Finance Hub', 'My Profile'];
+        const allowedForAccountant = ['Dashboard', 'Sales', 'Customers', 'Finance Hub', 'Reports', 'My Profile'];
         return allowedForAccountant.includes(item.name);
     }
     

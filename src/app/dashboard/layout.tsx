@@ -35,20 +35,24 @@ export default async function DashboardLayout({
     }
   });
 
-  if (!farm) {
-    // Check if they were invited and accept it automatically!
-    const inviteCheck = await acceptInvitation(false);
-    if (inviteCheck?.success) {
-      // Force a hard redirect to clear caches and allow DB replication to catch up
-      redirect('/dashboard');
+  const isPlaceholder = farm && farm.capacity === 0 && farm.location === '';
+
+  if (!farm || isPlaceholder) {
+    if (!farm) {
+      // Check if they were invited and accept it automatically!
+      const inviteCheck = await acceptInvitation(false);
+      if (inviteCheck?.success) {
+        // Force a hard redirect to clear caches and allow DB replication to catch up
+        redirect('/dashboard');
+      }
+    }
+
+    if (dbUser?.role === 'OWNER') {
+      redirect('/onboarding');
     }
   }
 
-  if (!farm && dbUser?.role === 'OWNER') {
-    redirect('/onboarding');
-  }
-
-  if (!farm && dbUser?.role !== 'OWNER') {
+  if ((!farm || isPlaceholder) && dbUser?.role !== 'OWNER') {
     const identifier = dbUser?.email || (dbUser as any)?.phoneNumber || 'your account';
     return (
       <div className="min-h-screen flex items-center justify-center bg-black/20 backdrop-blur-xl text-white p-7">

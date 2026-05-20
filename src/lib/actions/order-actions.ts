@@ -247,7 +247,7 @@ export async function deleteOrder(id: string, reason: string) {
 
     await prisma.order.update({
       where: { id, farmId: activeFarmId },
-      data: { isDeleted: true }
+      data: { isDeleted: true, deletedAt: new Date() }
     })
     revalidatePath('/dashboard/sales')
     revalidatePath('/dashboard/orders')
@@ -270,7 +270,7 @@ export async function restoreOrder(id: string) {
   try {
     await prisma.order.update({
       where: { id, farmId: activeFarmId },
-      data: { isDeleted: false }
+      data: { isDeleted: false, deletedAt: null }
     })
     revalidatePath('/dashboard/sales')
     revalidatePath('/dashboard/orders')

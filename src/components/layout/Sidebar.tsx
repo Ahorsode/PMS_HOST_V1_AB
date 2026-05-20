@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, Bird, PawPrint, Egg, ThermometerSun, 
   Wheat, Settings, Users, XCircle, Banknote, Activity,
-  LogOut, Wallet, Crown, ShieldCheck, BarChart3, Truck, Trash2
+  LogOut, Wallet, Crown, ShieldCheck, BarChart3, Truck, Trash2, FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -36,6 +36,7 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
         { name: 'Customers', icon: Users, href: '/dashboard/sales/customers', roles: ['OWNER', 'MANAGER', 'CASHIER', 'ACCOUNTANT'] },
         { name: 'Suppliers', icon: Truck, href: '/dashboard/suppliers', roles: ['OWNER', 'MANAGER', 'ACCOUNTANT'] },
         { name: 'Finance Control', icon: Wallet, href: '/dashboard/finance', roles: ['OWNER', 'MANAGER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
+        { name: 'Reports', icon: FileText, href: '/dashboard/reports', roles: ['OWNER', 'MANAGER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
         { name: 'Inventory', icon: LayoutDashboard, href: '/dashboard/inventory', roles: ['OWNER', 'MANAGER', 'ACCOUNTANT'] },
       ]
     },
@@ -65,7 +66,7 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
             Agri<span className="text-emerald-400 text-shadow-glow">Tech</span>
           </span>
         </div>
-
+        
         {/* Navigation */}
         <nav className="flex-1 px-3 space-y-7 overflow-y-auto custom-scrollbar overflow-x-hidden">
           {categories.map((category) => {
@@ -78,6 +79,7 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
                 // Map item names to their respective permission keys
                 const permissionMap: Record<string, string[]> = {
                   'Finance Control': ['canViewFinance', 'canEditFinance'],
+                  'Reports': ['canViewFinance', 'canEditFinance'],
                   'Livestock': ['canViewBatches', 'canEditBatches'],
                   'Analytics': ['canViewBatches', 'canEditBatches'],
                   'Inventory': ['canViewInventory', 'canEditInventory'],
@@ -108,7 +110,7 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
 
               // 5. Role-specific Fallbacks (Accountant/Finance/Cashier)
               if (role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER') {
-                return item.name === 'Finance Control' || item.name === 'Dashboard';
+                return item.name === 'Finance Control' || item.name === 'Reports' || item.name === 'Dashboard';
               }
               if (role === 'CASHIER') {
                 return item.name === 'Finance Control' || item.name === 'Sales' || item.name === 'Dashboard';

@@ -181,7 +181,7 @@ export async function deleteEggProduction(id: string, reason: string) {
 
     await tx.eggProduction.update({
       where: { id, farmId: activeFarmId },
-      data: { isDeleted: true }
+      data: { isDeleted: true, deletedAt: new Date() }
     })
     revalidatePath('/dashboard/eggs')
     return { success: true }
@@ -201,7 +201,7 @@ export async function restoreEggProduction(id: string) {
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     await tx.eggProduction.update({
       where: { id, farmId: activeFarmId },
-      data: { isDeleted: false }
+      data: { isDeleted: false, deletedAt: null }
     })
     revalidatePath('/dashboard/eggs')
     revalidatePath('/dashboard/settings/trash')

@@ -219,7 +219,7 @@ export async function deleteFeedingLog(id: string, reason: string) {
 
     await prisma.feedingLog.update({
       where: { id },
-      data: { isDeleted: true }
+      data: { isDeleted: true, deletedAt: new Date() }
     })
     revalidatePath('/dashboard/feed')
     return { success: true }

@@ -105,7 +105,7 @@ export async function deleteExpense(id: string, reason: string) {
 
     await tx.expense.update({
       where: { id, farmId: activeFarmId },
-      data: { isDeleted: true }
+      data: { isDeleted: true, deletedAt: new Date() }
     })
     revalidatePath('/dashboard/finance')
     return { success: true }
@@ -125,7 +125,7 @@ export async function restoreExpense(id: string) {
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     await tx.expense.update({
       where: { id, farmId: activeFarmId },
-      data: { isDeleted: false }
+      data: { isDeleted: false, deletedAt: null }
     })
     revalidatePath('/dashboard/finance')
     revalidatePath('/dashboard/settings/trash')

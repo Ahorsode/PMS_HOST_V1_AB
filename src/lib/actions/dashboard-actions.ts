@@ -720,23 +720,78 @@ export async function onboardFarmer(data: { name: string, location: string, capa
   const { userId } = await getAuthContext()
   try {
     const result = await prisma.$transaction(async (tx: any) => {
-      const farm = await tx.farm.create({
-        data: {
-          name: data.name,
-          location: data.location,
-          capacity: data.capacity,
-          userId: userId
+      // Find if there is an existing placeholder/default farm created during signup
+      const placeholderFarm = await tx.farm.findFirst({
+        where: {
+          userId: userId,
+          capacity: 0,
+          location: ''
         }
       })
 
-      // Assign the user as OWNER of this farm
-      await tx.farmMember.create({
-        data: {
-          farmId: farm.id,
-          userId: userId,
-          role: 'OWNER'
-        }
+      let farm;
+      if (placeholderFarm) {
+        // Update the placeholder farm instead of creating a duplicate
+        farm = await tx.farm.update({
+          where: { id: placeholderFarm.id },
+          data: {
+            name: data.name,
+            location: data.location,
+            capacity: data.capacity
+          }
+        })
+      } else {
+        // Create a new farm
+        farm = await tx.farm.create({
+          data: {
+            name: data.name,
+            location: data.location,
+            capacity: data.capacity,
+            userId: userId
+          }
+        })
+      }
+
+      // Assign/ensure the user is OWNER of this farm in farmMember
+      const existingMember = await tx.farmMember.findFirst({
+        where: { farmId: farm.id, userId: userId }
       })
+
+      if (!existingMember) {
+        await tx.farmMember.create({
+          data: {
+            farmId: farm.id,
+            userId: userId,
+            role: 'OWNER'
+          }
+        })
+      } else if (existingMember.role !== 'OWNER') {
+        await tx.farmMember.update({
+          where: { id: existingMember.id },
+          data: { role: 'OWNER' }
+        })
+      }
+
+      // Ensure the User's role is updated to OWNER
+      await tx.user.update({
+        where: { id: userId },
+        data: { role: 'OWNER' }
+      })
+
+      // Ensure default FarmSettings exist for this farm
+      const existingSettings = await tx.farmSettings.findUnique({
+        where: { farmId: farm.id }
+      })
+
+      if (!existingSettings) {
+        await tx.farmSettings.create({
+          data: {
+            farmId: farm.id,
+            currency: 'GHS',
+            eggsPerCrate: 30
+          }
+        })
+      }
 
       return farm
     })

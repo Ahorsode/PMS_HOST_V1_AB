@@ -9,37 +9,38 @@ datasource db {
 }
 
 model User {
-  id                 String            @id @default(cuid())
-  firstname          String?
-  surname            String?
-  email              String?           @unique
-  emailVerified      DateTime?         @map("email_verified")
-  image              String?
-  role               Role              @default(OWNER)
-  createdAt          DateTime          @default(now()) @map("created_at")
-  updatedAt          DateTime          @updatedAt @map("updated_at")
-  name               String?
-  phoneNumber        String?           @unique @map("phone_number")
-  middleName         String?           @map("middle_name")
-  password           String?
-  mustChangePassword Boolean           @default(false) @map("must_change_password")
-  accounts           Account[]
-  auditLogs          AuditLog[]
-  batches            Livestock[]
-  feedingLogs        FeedingLog[]
-  deleteLogs         DeleteLog[]
-  eggProductions     EggProduction[]
-  expenses           Expense[]
-  memberships        FarmMember[]
-  farms              Farm[]
-  insertLogs         InsertLog[]
-  inventory          Inventory[]
-  mortalities        HealthMortality[]
-  orders             Order[]
-  sales              Sale[]
-  sessions           Session[]
-  userPermissions    UserPermission[]
-  weightRecords      WeightRecord[]
+  id                    String                 @id @default(cuid())
+  firstname             String?
+  surname               String?
+  email                 String?                @unique
+  emailVerified         DateTime?              @map("email_verified")
+  image                 String?
+  role                  Role                   @default(OWNER)
+  createdAt             DateTime               @default(now()) @map("created_at")
+  updatedAt             DateTime               @updatedAt @map("updated_at")
+  name                  String?
+  phoneNumber           String?                @unique @map("phone_number")
+  middleName            String?                @map("middle_name")
+  password              String?
+  mustChangePassword    Boolean                @default(false) @map("must_change_password")
+  accounts              Account[]
+  auditLogs             AuditLog[]
+  batches               Livestock[]
+  feedingLogs           FeedingLog[]
+  deleteLogs            DeleteLog[]
+  eggProductions        EggProduction[]
+  expenses              Expense[]
+  memberships           FarmMember[]
+  farms                 Farm[]
+  financialTransactions FinancialTransaction[]
+  insertLogs            InsertLog[]
+  inventory             Inventory[]
+  mortalities           HealthMortality[]
+  orders                Order[]
+  sales                 Sale[]
+  sessions              Session[]
+  userPermissions       UserPermission[]
+  weightRecords         WeightRecord[]
 
   @@map("users")
 }
@@ -86,48 +87,49 @@ model VerificationToken {
 }
 
 model Farm {
-  id                 String            @id @default(cuid())
-  name                String
-  location            String?
-  capacity            Int
-  createdAt           DateTime              @default(now())
-  updatedAt           DateTime              @updatedAt
-  userId              String                @default("user_placeholder")
-  subscriptionTier    SubscriptionTier      @default(BASIC)
-  masterLicenseStatus String?               @default("UNPAID") @map("master_license_status")
-  batches             Livestock[]
-  customers           Customer[]
-  feedingLogs         FeedingLog[]
-  deviceRegistrations DeviceRegistration[]
-  eggCategories       EggCategory[]
-  eggProduction       EggProduction[]
-  expenses            Expense[]
-  members             FarmMember[]
-  settings            FarmSettings?
-  user                User                  @relation(fields: [userId], references: [id])
-  feedFormulations    FeedFormulation[]
-  healthRecords       HealthRecord[]
-  houses              House[]
-  inventory           Inventory[]
-  invitations         Invitation[]
-  isolationRooms      IsolationRoom[]
-  medications         MedicationSchedule[]
-  mortality           HealthMortality[]
-  orders              Order[]
-  saleItems           SaleItem[]
-  sales               Sale[]
-  subscription        Subscription?
-  suppliers           Supplier[]
-  userPermissions     UserPermission[]
-  vaccinations        VaccinationSchedule[]
-  weightRecords       WeightRecord[]
+  id                    String                 @id @default(cuid())
+  name                  String
+  location              String?
+  capacity              Int
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  userId                String                 @default("user_placeholder")
+  subscriptionTier      SubscriptionTier       @default(BASIC)
+  masterLicenseStatus   String?                @default("UNPAID") @map("master_license_status")
+  batches               Livestock[]
+  customers             Customer[]
+  feedingLogs           FeedingLog[]
+  deviceRegistrations   DeviceRegistration[]
+  eggCategories         EggCategory[]
+  eggProduction         EggProduction[]
+  expenses              Expense[]
+  members               FarmMember[]
+  settings              FarmSettings?
+  user                  User                   @relation(fields: [userId], references: [id])
+  feedFormulations      FeedFormulation[]
+  financialTransactions FinancialTransaction[]
+  healthRecords         HealthRecord[]
+  houses                House[]
+  inventory             Inventory[]
+  invitations           Invitation[]
+  isolationRooms        IsolationRoom[]
+  medications           MedicationSchedule[]
+  mortality             HealthMortality[]
+  orders                Order[]
+  saleItems             SaleItem[]
+  sales                 Sale[]
+  subscription          Subscription?
+  suppliers             Supplier[]
+  userPermissions       UserPermission[]
+  vaccinations          VaccinationSchedule[]
+  weightRecords         WeightRecord[]
 
   @@index([userId])
   @@map("farms")
 }
 
 model House {
-  id                 String            @id @default(cuid())
+  id                 String      @id @default(cuid())
   farmId             String
   name               String
   capacity           Int
@@ -146,7 +148,7 @@ model House {
 }
 
 model Livestock {
-  id                 String            @id @default(cuid())
+  id                   String                @id @default(cuid())
   status               String                @default("active")
   arrivalDate          DateTime
   breedType            String
@@ -170,6 +172,7 @@ model Livestock {
   type                 LivestockType         @default(POULTRY_BROILER)
   localBatchId         Int?                  @map("local_batch_id")
   isDeleted            Boolean               @default(false) @map("is_deleted")
+  deletedAt            DateTime?             @map("deleted_at")
   farm                 Farm                  @relation(fields: [farmId], references: [id])
   house                House                 @relation(fields: [houseId], references: [id])
   user                 User                  @relation(fields: [userId], references: [id])
@@ -188,11 +191,12 @@ model Livestock {
   @@index([userId])
   @@index([farmId])
   @@index([farmId, isDeleted])
+  @@index([farmId, deletedAt])
   @@map("batches")
 }
 
 model Inventory {
-  id                 String            @id @default(cuid())
+  id                         String                      @id @default(cuid())
   itemName                   String
   stockLevel                 Decimal                     @db.Decimal(15, 2)
   unit                       String
@@ -206,6 +210,7 @@ model Inventory {
   eggCategoryId              String?
   supplierId                 String?
   isDeleted                  Boolean                     @default(false) @map("is_deleted")
+  deletedAt                  DateTime?                   @map("deleted_at")
   feedingLogs                FeedingLog[]
   feedFormulationIngredients FeedFormulationIngredient[]
   eggCategory                EggCategory?                @relation(fields: [eggCategoryId], references: [id])
@@ -217,6 +222,7 @@ model Inventory {
   @@index([userId])
   @@index([farmId])
   @@index([farmId, isDeleted])
+  @@index([farmId, deletedAt])
   @@map("inventory")
 }
 
@@ -246,7 +252,7 @@ model DeleteLog {
 }
 
 model FeedingLog {
-  id                 String            @id @default(cuid())
+  id             String           @id @default(cuid())
   batchId        String?          @map("batch_id")
   feedTypeId     String?          @map("feed_type_id")
   amountConsumed Decimal          @map("amount_consumed") @db.Decimal(15, 2)
@@ -255,6 +261,7 @@ model FeedingLog {
   farmId         String           @default("farm_placeholder")
   formulationId  String?          @map("formulation_id")
   isDeleted      Boolean          @default(false) @map("is_deleted")
+  deletedAt      DateTime?        @map("deleted_at")
   batch          Livestock?       @relation(fields: [batchId], references: [id])
   farm           Farm             @relation(fields: [farmId], references: [id])
   inventory      Inventory?       @relation(fields: [feedTypeId], references: [id])
@@ -265,11 +272,12 @@ model FeedingLog {
   @@index([userId])
   @@index([farmId])
   @@index([farmId, isDeleted])
+  @@index([farmId, deletedAt])
   @@map("daily_feeding_logs")
 }
 
 model HealthRecord {
-  id                 String            @id @default(cuid())
+  id          String     @id @default(cuid())
   batchId     String?    @map("batch_id")
   recordType  String?    @map("record_type") @db.VarChar(50)
   description String?
@@ -283,7 +291,7 @@ model HealthRecord {
 }
 
 model EggProduction {
-  id                 String            @id @default(cuid())
+  id              String       @id @default(cuid())
   batchId         String
   eggsCollected   Int
   logDate         DateTime
@@ -300,6 +308,7 @@ model EggProduction {
   mediumCount     Int          @default(0)
   smallCount      Int          @default(0)
   isDeleted       Boolean      @default(false) @map("is_deleted")
+  deletedAt       DateTime?    @map("deleted_at")
   batch           Livestock    @relation(fields: [batchId], references: [id])
   category        EggCategory? @relation(fields: [categoryId], references: [id])
   farm            Farm         @relation(fields: [farmId], references: [id])
@@ -309,11 +318,12 @@ model EggProduction {
   @@index([userId])
   @@index([farmId])
   @@index([farmId, isDeleted])
+  @@index([farmId, deletedAt])
   @@map("egg_production")
 }
 
 model IsolationRoom {
-  id                 String            @id @default(cuid())
+  id        String            @id @default(cuid())
   farmId    String
   name      String
   capacity  Int
@@ -329,7 +339,7 @@ model IsolationRoom {
 }
 
 model HealthMortality {
-  id                 String            @id @default(cuid())
+  id              String          @id @default(cuid())
   batchId         String
   count           Int
   reason          String?
@@ -342,6 +352,7 @@ model HealthMortality {
   isolationRoomId String?         @map("isolation_room_id")
   type            HealthEventType @default(DEAD)
   isDeleted       Boolean         @default(false) @map("is_deleted")
+  deletedAt       DateTime?       @map("deleted_at")
   batch           Livestock       @relation(fields: [batchId], references: [id])
   farm            Farm            @relation(fields: [farmId], references: [id])
   isolationRoom   IsolationRoom?  @relation(fields: [isolationRoomId], references: [id])
@@ -351,11 +362,12 @@ model HealthMortality {
   @@index([userId])
   @@index([farmId])
   @@index([farmId, isDeleted])
+  @@index([farmId, deletedAt])
   @@map("mortality")
 }
 
 model WeightRecord {
-  id                 String            @id @default(cuid())
+  id            String    @id @default(cuid())
   batchId       String
   averageWeight Decimal   @db.Decimal(10, 3)
   logDate       DateTime
@@ -372,7 +384,7 @@ model WeightRecord {
 }
 
 model Sale {
-  id                 String            @id @default(cuid())
+  id           String     @id @default(cuid())
   customerName String?
   totalAmount  Decimal    @db.Decimal(15, 2)
   saleDate     DateTime   @default(now())
@@ -381,6 +393,7 @@ model Sale {
   createdAt    DateTime   @default(now())
   farmId       String     @default("farm_placeholder")
   isDeleted    Boolean    @default(false) @map("is_deleted")
+  deletedAt    DateTime?  @map("deleted_at")
   items        SaleItem[]
   farm         Farm       @relation(fields: [farmId], references: [id])
   user         User       @relation(fields: [userId], references: [id])
@@ -389,11 +402,12 @@ model Sale {
   @@index([userId])
   @@index([farmId])
   @@index([farmId, isDeleted])
+  @@index([farmId, deletedAt])
   @@map("sales")
 }
 
 model SaleItem {
-  id                 String            @id @default(cuid())
+  id          String  @id @default(cuid())
   saleId      String
   description String
   quantity    Int
@@ -408,7 +422,7 @@ model SaleItem {
 }
 
 model FarmMember {
-  id                 String            @id @default(cuid())
+  id        String   @id @default(cuid())
   farmId    String
   userId    String
   role      Role     @default(WORKER)
@@ -422,7 +436,7 @@ model FarmMember {
 }
 
 model Invitation {
-  id                 String            @id @default(cuid())
+  id          String   @id @default(cuid())
   email       String?
   role        Role     @default(WORKER)
   status      String   @default("PENDING")
@@ -438,7 +452,7 @@ model Invitation {
 }
 
 model VaccinationSchedule {
-  id                 String            @id @default(cuid())
+  id            String    @id @default(cuid())
   batchId       String
   vaccineName   String
   scheduledDate DateTime
@@ -454,7 +468,7 @@ model VaccinationSchedule {
 }
 
 model MedicationSchedule {
-  id                 String            @id @default(cuid())
+  id             String    @id @default(cuid())
   batchId        String
   medicationName String
   scheduledDate  DateTime
@@ -470,7 +484,7 @@ model MedicationSchedule {
 }
 
 model FarmSettings {
-  id                 String            @id @default(cuid())
+  id                     String   @id @default(cuid())
   farmId                 String   @unique
   eggRecordReminderTime  String?  @default("18:00")
   feedRecordReminderTime String?  @default("18:00")
@@ -495,15 +509,19 @@ model AuditLog {
   userId        String   @map("user_id")
   farmId        String   @map("farm_id")
   createdAt     DateTime @default(now()) @map("created_at")
+  actionType    String?  @map("action_type")
+  description   String?
+  metadata      Json?    @map("metadata")
   user          User     @relation(fields: [userId], references: [id])
 
   @@index([farmId])
+  @@index([farmId, createdAt])
   @@index([userId])
   @@map("audit_logs")
 }
 
 model Expense {
-  id                 String            @id @default(cuid())
+  id          String          @id @default(cuid())
   farmId      String
   userId      String          @map("user_id")
   amount      Decimal         @db.Decimal(15, 2)
@@ -515,6 +533,7 @@ model Expense {
   batch_id    String?
   supplierId  String?
   isDeleted   Boolean         @default(false) @map("is_deleted")
+  deletedAt   DateTime?       @map("deleted_at")
   batches     Livestock?      @relation(fields: [batch_id], references: [id])
   farm        Farm            @relation(fields: [farmId], references: [id], onDelete: Cascade)
   supplier    Supplier?       @relation(fields: [supplierId], references: [id])
@@ -525,11 +544,12 @@ model Expense {
   @@index([userId])
   @@index([batch_id])
   @@index([farmId, isDeleted])
+  @@index([farmId, deletedAt])
   @@map("expenses")
 }
 
 model UserPermission {
-  id                 String            @id @default(cuid())
+  id               String  @id @default(cuid())
   userId           String  @map("user_id")
   farmId           String  @map("farm_id")
   canViewFinance   Boolean @default(false) @map("can_view_finance")
@@ -562,7 +582,7 @@ model UserPermission {
 }
 
 model GrowthStandards {
-  id                 String            @id @default(cuid())
+  id            String        @id @default(cuid())
   livestockType LivestockType
   ageInDays     Int
   targetWeight  Decimal       @db.Decimal(10, 3)
@@ -574,7 +594,7 @@ model GrowthStandards {
 }
 
 model SubscriptionPlan {
-  id                 String            @id @default(cuid())
+  id            String           @id @default(cuid())
   name          String
   tier          SubscriptionTier
   price         Decimal          @db.Decimal(15, 2)
@@ -589,7 +609,7 @@ model SubscriptionPlan {
 }
 
 model Subscription {
-  id                 String            @id @default(cuid())
+  id        String           @id @default(cuid())
   farmId    String           @unique
   planId    String
   status    String           @default("ACTIVE")
@@ -602,7 +622,7 @@ model Subscription {
 }
 
 model Customer {
-  id                 String            @id @default(cuid())
+  id          String   @id @default(cuid())
   farmId      String
   name        String
   phone       String?
@@ -618,7 +638,7 @@ model Customer {
 }
 
 model Order {
-  id                 String            @id @default(cuid())
+  id             String      @id @default(cuid())
   farmId         String
   customerId     String?
   totalAmount    Decimal     @db.Decimal(15, 2)
@@ -630,6 +650,7 @@ model Order {
   updatedAt      DateTime    @updatedAt @map("updated_at")
   userId         String      @default("user_placeholder") @map("user_id")
   isDeleted      Boolean     @default(false) @map("is_deleted")
+  deletedAt      DateTime?   @map("deleted_at")
   items          OrderItem[]
   customer       Customer?   @relation(fields: [customerId], references: [id])
   farm           Farm        @relation(fields: [farmId], references: [id])
@@ -637,11 +658,12 @@ model Order {
 
   @@index([orderDate, status])
   @@index([farmId, isDeleted])
+  @@index([farmId, deletedAt])
   @@map("orders")
 }
 
 model OrderItem {
-  id                 String            @id @default(cuid())
+  id          String     @id @default(cuid())
   orderId     String
   description String
   quantity    Int
@@ -657,7 +679,7 @@ model OrderItem {
 }
 
 model FeedFormulation {
-  id                 String            @id @default(cuid())
+  id              String                      @id @default(cuid())
   farmId          String
   name            String
   notes           String?
@@ -674,7 +696,7 @@ model FeedFormulation {
 }
 
 model FeedFormulationIngredient {
-  id                 String            @id @default(cuid())
+  id            String          @id @default(cuid())
   formulationId String
   inventoryId   String
   quantity      Decimal         @db.Decimal(10, 2)
@@ -686,7 +708,7 @@ model FeedFormulationIngredient {
 }
 
 model Supplier {
-  id                 String            @id @default(cuid())
+  id          String      @id @default(cuid())
   farmId      String
   name        String
   phone       String?
@@ -703,7 +725,7 @@ model Supplier {
 }
 
 model EggCategory {
-  id                 String            @id @default(cuid())
+  id              String          @id @default(cuid())
   farmId          String
   name            String
   description     String?
@@ -736,6 +758,32 @@ model DeviceRegistration {
 
   @@unique([farmId, deviceId])
   @@map("device_registrations")
+}
+
+model FinancialTransaction {
+  id              String    @id @default(cuid())
+  farmId          String    @map("farm_id")
+  userId          String    @map("user_id")
+  type            String
+  category        String
+  amount          Decimal   @db.Decimal(15, 2)
+  paymentStatus   String    @map("payment_status")
+  paymentMethod   String    @map("payment_method")
+  referenceNum    String?   @map("reference_num")
+  transactionDate DateTime  @map("transaction_date")
+  description     String?
+  isDeleted       Boolean   @default(false) @map("is_deleted")
+  deletedAt       DateTime? @map("deleted_at")
+  settledAt       DateTime? @map("settled_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  farm            Farm      @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([farmId, type, transactionDate])
+  @@index([farmId, deletedAt])
+  @@index([farmId, isDeleted])
+  @@map("financial_transactions")
 }
 
 enum HealthEventType {

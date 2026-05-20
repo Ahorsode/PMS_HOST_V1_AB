@@ -125,7 +125,7 @@ export async function deleteInventoryItem(id: string, reason: string) {
 
     await tx.inventory.update({
       where: { id, farmId: activeFarmId },
-      data: { isDeleted: true }
+      data: { isDeleted: true, deletedAt: new Date() }
     })
     revalidatePath('/dashboard/inventory')
     return { success: true }
@@ -145,7 +145,7 @@ export async function restoreInventory(id: string) {
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     await tx.inventory.update({
       where: { id, farmId: activeFarmId },
-      data: { isDeleted: false }
+      data: { isDeleted: false, deletedAt: null }
     })
     revalidatePath('/dashboard/inventory')
     revalidatePath('/dashboard/settings/trash')
