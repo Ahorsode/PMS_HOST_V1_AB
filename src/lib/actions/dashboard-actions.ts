@@ -1,13 +1,15 @@
 'use server'
 
 import prisma from '@/lib/db'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, unstable_cache } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 import bcrypt from 'bcryptjs'
 import { redirect } from 'next/navigation'
 import { checkWorkerPermissions } from './staff-actions'
 import { LivestockType } from '@prisma/client'
 import { signOut } from '@/auth'
+import { farmCacheTags, revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
+import { checkRateLimit } from '@/lib/performance/rate-limit'
 
 export async function getDashboardStats() {
   const { userId, activeFarmId } = await getAuthContext()
@@ -17,7 +19,8 @@ export async function getDashboardStats() {
   const canViewInventory = await checkWorkerPermissions('inventory', 'view')
   const canViewBatches = await checkWorkerPermissions('batches', 'view')
 
-  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+  const cachedLoader = unstable_cache(async () => {
+    return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
@@ -287,7 +290,13 @@ export async function getDashboardStats() {
         mortalityRate: Number(mortalityRate.toFixed(2))
       }
     }
-  }).catch((error: any) => {
+    })
+  }, [`dashboard-stats:${activeFarmId}:${canViewFinance ? 1 : 0}:${canViewInventory ? 1 : 0}:${canViewBatches ? 1 : 0}`], {
+    revalidate: 60,
+    tags: [farmCacheTags.dashboard(activeFarmId), farmCacheTags.analytics(activeFarmId)],
+  })
+
+  return await cachedLoader().catch((error: any) => {
     console.error('Error fetching dashboard stats:', error)
     throw new Error('Failed to fetch dashboard stats')
   })
@@ -308,6 +317,17 @@ export async function createBatch(data: {
   const hasAccess = await checkWorkerPermissions('batches', 'edit')
   if (!hasAccess) throw new Error('Unauthorized')
 
+  const limitResult = await checkRateLimit({
+    scope: 'createBatch',
+    farmId: activeFarmId,
+    userId,
+    limit: 12,
+    windowSec: 60,
+  })
+  if (!limitResult.ok) {
+    return { success: false, error: 'Too many requests. Please wait and try again.', code: 429, retryAfterSec: limitResult.retryAfterSec }
+  }
+
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const batch = await tx.livestock.create({
       data: {
@@ -325,6 +345,7 @@ export async function createBatch(data: {
     })
     revalidatePath('/dashboard')
     revalidatePath('/dashboard/flocks')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, id: batch.id }
   }).catch((error: any) => {
     console.error('Error creating livestock:', error)
@@ -346,6 +367,17 @@ export async function updateBatchFinancials(id: string, data: {
 
   const hasAccess = await checkWorkerPermissions('finance', 'edit')
   if (!hasAccess) throw new Error('Unauthorized: Finance edit required')
+
+  const limitResult = await checkRateLimit({
+    scope: 'updateBatchFinancials',
+    farmId: activeFarmId,
+    userId,
+    limit: 10,
+    windowSec: 60,
+  })
+  if (!limitResult.ok) {
+    return { success: false, error: 'Too many requests. Please wait and try again.', code: 429, retryAfterSec: limitResult.retryAfterSec }
+  }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const batch = await tx.livestock.update({
@@ -385,6 +417,7 @@ export async function updateBatchFinancials(id: string, data: {
     revalidatePath('/dashboard')
     revalidatePath('/dashboard/accounting')
     revalidatePath('/dashboard/finance')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true }
   }).catch((error: any) => {
     console.error('Error updating financials:', error)
@@ -428,6 +461,17 @@ export async function logFeeding(data: {
   const hasAccess = await checkWorkerPermissions('inventory', 'edit')
   if (!hasAccess) throw new Error('Unauthorized')
 
+  const limitResult = await checkRateLimit({
+    scope: 'logFeeding',
+    farmId: activeFarmId,
+    userId,
+    limit: 20,
+    windowSec: 60,
+  })
+  if (!limitResult.ok) {
+    return { success: false, error: 'Too many requests. Please wait and try again.', code: 429, retryAfterSec: limitResult.retryAfterSec }
+  }
+
   try {
     const result = await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
       const log = await tx.feedingLog.create({
@@ -452,6 +496,7 @@ export async function logFeeding(data: {
       return log
     })
     revalidatePath('/dashboard')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, log: { ...result, amountConsumed: Number(result.amountConsumed) } }
   } catch (error) {
     console.error('Error logging feeding:', error)

@@ -70,7 +70,7 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
       setShowHouseModal(true);
       setValue("houseId", ""); // Reset dropdown to placeholder
     }
-  }, [selectedHouseId]);
+  }, [selectedHouseId, setValue]);
 
   const handleCreateHouse = async () => {
     if (!newHouseData.name || !newHouseData.capacity) {

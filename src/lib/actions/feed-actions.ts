@@ -1,9 +1,11 @@
 'use server'
 
 import prisma from '@/lib/db'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, unstable_cache } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 import { FeedType, LivestockType } from '@prisma/client'
+import { checkRateLimit } from '@/lib/performance/rate-limit'
+import { farmCacheTags, revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 
 export async function createFeedFormulation(data: {
   name: string
@@ -13,6 +15,17 @@ export async function createFeedFormulation(data: {
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
+
+  const limitResult = await checkRateLimit({
+    scope: 'createFeedFormulation',
+    farmId: activeFarmId,
+    userId,
+    limit: 10,
+    windowSec: 60,
+  })
+  if (!limitResult.ok) {
+    return { success: false, error: 'Too many requests. Please wait and try again.', code: 429, retryAfterSec: limitResult.retryAfterSec }
+  }
 
   try {
     const totalBags = data.ingredients.reduce((sum, i) => sum + Number(i.percentage), 0)
@@ -48,6 +61,7 @@ export async function createFeedFormulation(data: {
     })
 
     revalidatePath('/dashboard/feed')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, formulation }
   } catch (error: any) {
     console.error('Error creating feed formulation:', error)
@@ -59,29 +73,36 @@ export async function getAllFeedFormulations() {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return []
 
+  const loader = unstable_cache(async () => {
     const formulations = await prisma.feedFormulation.findMany({
-    where: { farmId: activeFarmId },
-    include: {
-      ingredients: {
-        include: { inventory: true }
+      where: { farmId: activeFarmId },
+      include: {
+        ingredients: {
+          include: { inventory: true }
+        }
       }
-    }
+    })
+
+    return formulations.map((f: any) => ({
+      ...f,
+      ingredients: f.ingredients.map((ing: any) => ({
+        ...ing,
+        quantity: Number(ing.quantity),
+        percentage: Number(ing.percentage),
+        inventory: ing.inventory ? {
+          ...ing.inventory,
+          stockLevel: Number(ing.inventory.stockLevel),
+          reorderLevel: ing.inventory.reorderLevel ? Number(ing.inventory.reorderLevel) : null,
+          costPerUnit: ing.inventory.costPerUnit ? Number(ing.inventory.costPerUnit) : null
+        } : null
+      }))
+    }))
+  }, [`feed-formulations:${activeFarmId}`], {
+    revalidate: 15,
+    tags: [farmCacheTags.dashboard(activeFarmId), farmCacheTags.analytics(activeFarmId)],
   })
 
-  return formulations.map((f: any) => ({
-    ...f,
-    ingredients: f.ingredients.map((ing: any) => ({
-      ...ing,
-      quantity: Number(ing.quantity),
-      percentage: Number(ing.percentage),
-      inventory: ing.inventory ? {
-        ...ing.inventory,
-        stockLevel: Number(ing.inventory.stockLevel),
-        reorderLevel: ing.inventory.reorderLevel ? Number(ing.inventory.reorderLevel) : null,
-        costPerUnit: ing.inventory.costPerUnit ? Number(ing.inventory.costPerUnit) : null
-      } : null
-    }))
-  }))
+  return loader()
 }
 
 export async function deleteFeedFormulation(id: string) {
@@ -140,6 +161,17 @@ export async function createFeedingLog(data: any) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
 
+  const limitResult = await checkRateLimit({
+    scope: 'createFeedingLog',
+    farmId: activeFarmId,
+    userId,
+    limit: 20,
+    windowSec: 60,
+  })
+  if (!limitResult.ok) {
+    return { success: false, error: 'Too many requests. Please wait and try again.', code: 429, retryAfterSec: limitResult.retryAfterSec }
+  }
+
   try {
     const log = await prisma.$transaction(async (tx) => {
       const created = await tx.feedingLog.create({
@@ -170,6 +202,7 @@ export async function createFeedingLog(data: any) {
     })
 
     revalidatePath('/dashboard/feed')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, log }
   } catch (error) {
     console.error('Error creating feeding log:', error)

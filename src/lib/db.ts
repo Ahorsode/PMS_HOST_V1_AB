@@ -1,4 +1,7 @@
 import { PrismaClient } from '@prisma/client'
+import { validateDatabaseRuntimeConfig } from '@/lib/performance/env-validation'
+
+validateDatabaseRuntimeConfig()
 
 const prismaClientSingleton = () => {
   return new PrismaClient().$extends({

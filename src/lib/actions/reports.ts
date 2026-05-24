@@ -1,8 +1,10 @@
 'use server'
 
 import prisma from '@/lib/db'
+import { unstable_cache } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
+import { farmCacheTags } from '@/lib/performance/cache-tags'
 
 export interface ComprehensiveReport {
   startDate: string
@@ -93,7 +95,9 @@ export async function generateComprehensiveFarmReport(
   // Set end of day for the end date to include the entire last day
   end.setHours(23, 59, 59, 999)
 
-  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+  const cacheKey = `comprehensive-report:${activeFarmId}:${start.toISOString()}:${end.toISOString()}`
+  const loader = unstable_cache(async () => {
+    return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     // Run parallel queries inside the tenant context
     const [
       transactions,
@@ -357,7 +361,13 @@ export async function generateComprehensiveFarmReport(
     }
 
     return JSON.parse(JSON.stringify(rawReportPayload))
-  }).catch((error: any) => {
+    })
+  }, [cacheKey], {
+    revalidate: 60,
+    tags: [farmCacheTags.reports(activeFarmId), farmCacheTags.analytics(activeFarmId)],
+  })
+
+  return await loader().catch((error: any) => {
     console.error('Error generating comprehensive report:', error)
     return null
   })

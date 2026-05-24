@@ -2,9 +2,30 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import { normalizePhoneNumber } from '@/lib/auth-utils';
+import { checkRateLimit } from '@/lib/performance/rate-limit';
 
 export async function POST(req: Request) {
   try {
+    const forwarded = req.headers.get('x-forwarded-for');
+    const ip = forwarded?.split(',')[0]?.trim() || 'unknown';
+    const limit = await checkRateLimit({
+      scope: 'api-signup',
+      ip,
+      limit: 8,
+      windowSec: 60,
+    });
+
+    if (!limit.ok) {
+      return NextResponse.json(
+        {
+          message: 'Too many signup attempts. Please wait and try again.',
+          code: 429,
+          retryAfterSec: limit.retryAfterSec,
+        },
+        { status: 429, headers: { 'Retry-After': String(limit.retryAfterSec) } },
+      );
+    }
+
     const { firstname, surname, email, phoneNumber, password } = await req.json();
 
     if (!phoneNumber) {

@@ -1,8 +1,10 @@
 'use server'
 
 import prisma from '@/lib/db'
+import { unstable_cache } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
+import { farmCacheTags } from '@/lib/performance/cache-tags'
 
 export async function getBatchAnalytics(batchId: string) {
   const { userId, activeFarmId } = await getAuthContext()
@@ -11,7 +13,8 @@ export async function getBatchAnalytics(batchId: string) {
   const hasAccess = await checkWorkerPermissions('batches', 'view')
   if (!hasAccess) throw new Error('Unauthorized')
   
-  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+  const loader = unstable_cache(async () => {
+    return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const batch = await tx.livestock.findUnique({
       where: { id: batchId, farmId: activeFarmId },
       include: {
@@ -42,7 +45,13 @@ export async function getBatchAnalytics(batchId: string) {
       currentWeight: Number(currentWeight).toFixed(3),
       mortalityRate: ((batch.initialCount - batch.currentCount) / batch.initialCount * 100).toFixed(2)
     }
+    })
+  }, [`batch-analytics:${activeFarmId}:${batchId}`], {
+    revalidate: 15,
+    tags: [farmCacheTags.analytics(activeFarmId), farmCacheTags.dashboard(activeFarmId)],
   })
+
+  return loader()
 }
 
 export async function getMortalityTrends(farmId: string) {
@@ -53,7 +62,8 @@ export async function getMortalityTrends(farmId: string) {
   const hasAccess = await checkWorkerPermissions('batches', 'view')
   if (!hasAccess) throw new Error('Unauthorized')
   
-  return await (prisma as any).$withFarmContext(userId, targetFarmId, async (tx: any) => {
+  const loader = unstable_cache(async () => {
+    return await (prisma as any).$withFarmContext(userId, targetFarmId, async (tx: any) => {
     const mortalityData = await tx.healthMortality.findMany({
       where: {
         farmId: targetFarmId,
@@ -70,5 +80,11 @@ export async function getMortalityTrends(farmId: string) {
     }, {})
 
     return Object.entries(trends).map(([date, count]) => ({ date, count }))
+    })
+  }, [`mortality-trends:${targetFarmId}`], {
+    revalidate: 60,
+    tags: [farmCacheTags.analytics(targetFarmId)],
   })
+
+  return loader()
 }

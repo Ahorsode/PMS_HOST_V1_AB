@@ -159,7 +159,6 @@ export async function restoreDeletedRecord(logId: string) {
     })
 
     // Remove ID and metadata to let DB generate fresh ones
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { id, createdAt, updatedAt, deletedAt, ...dataToRestore } = record
 
     // Ensure context matches current session

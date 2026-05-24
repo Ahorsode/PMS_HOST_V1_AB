@@ -36,7 +36,7 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
         setActiveTab(activeTabFromUrl);
       }
     }
-  }, [activeTabFromUrl, router]);
+  }, [activeTabFromUrl, activeTab, router]);
 
   const [isUpdatingFarm, setIsUpdatingFarm] = useState(false);
   const [isAddingHouse, setIsAddingHouse] = useState(false);

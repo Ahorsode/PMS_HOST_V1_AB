@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server'
+import { unstable_cache } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 import prisma from '@/lib/db'
 import { getBatchAnalytics, getMortalityTrends } from '@/lib/actions/analytics-actions'
+import { farmCacheTags } from '@/lib/performance/cache-tags'
 
 export async function GET(req: Request) {
   const { userId, activeFarmId } = await getAuthContext()
@@ -18,9 +20,10 @@ export async function GET(req: Request) {
   }
 
   try {
-    return await (prisma as any).$withFarmContext(userId, farmId, async (tx: any) => {
+    const loader = unstable_cache(async () => {
+      return await (prisma as any).$withFarmContext(userId, farmId, async (tx: any) => {
       // Get all active batches for the farm
-      const activeBatches = await tx.batch.findMany({
+      const activeBatches = await tx.livestock.findMany({
         where: { farmId: farmId, status: 'active' },
         select: { id: true, breedType: true }
       })
@@ -51,6 +54,12 @@ export async function GET(req: Request) {
         timestamp: new Date().toISOString()
       })
     })
+    }, [`analytics-dashboard:${farmId}`], {
+      revalidate: 15,
+      tags: [farmCacheTags.analytics(farmId), farmCacheTags.dashboard(farmId)],
+    })
+
+    return await loader()
   } catch (error) {
     console.error('API Error:', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })

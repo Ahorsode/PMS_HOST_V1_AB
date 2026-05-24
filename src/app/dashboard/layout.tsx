@@ -18,7 +18,7 @@ export default async function DashboardLayout({
     redirect('/login');
   }
 
-  let dbUser = await prisma.user.findUnique({
+  const dbUser = await prisma.user.findUnique({
     where: { id: session.user.id }
   });
 
@@ -26,7 +26,7 @@ export default async function DashboardLayout({
     redirect('/login');
   }
 
-  let farm = await prisma.farm.findFirst({
+  const farm = await prisma.farm.findFirst({
     where: { 
       OR: [
         { userId: session.user.id },
@@ -79,8 +79,6 @@ export default async function DashboardLayout({
 
   // If user has a farm but no name yet (invited member on first login), redirect to profile setup
   if (farm && !dbUser?.firstname && dbUser?.role !== 'OWNER') {
-    const currentPath = '/dashboard';
-    // Only redirect if not already on the profile page to avoid loops
     redirect('/onboarding/profile');
   }
 

@@ -8,6 +8,12 @@ const client = new OAuth2Client(process.env.AUTH_GOOGLE_ID);
 
 export async function POST(req: Request) {
   try {
+    const authSecret = process.env.AUTH_SECRET;
+    const googleClientId = process.env.AUTH_GOOGLE_ID;
+    if (!authSecret || !googleClientId) {
+      return NextResponse.json({ error: "Server auth configuration is missing" }, { status: 500 });
+    }
+
     const json = await req.json();
     const { idToken, deviceType } = json;
 
@@ -18,7 +24,7 @@ export async function POST(req: Request) {
     // Verify the ID token from Flutter
     const ticket = await client.verifyIdToken({
       idToken,
-      audience: process.env.AUTH_GOOGLE_ID,
+      audience: googleClientId,
     });
 
     const payload = ticket.getPayload();
@@ -47,8 +53,6 @@ export async function POST(req: Request) {
     });
 
     // Create a NextAuth session JWT
-    const secret = process.env.AUTH_SECRET || "development_secret";
-    
     const token = await encode({
       token: {
         sub: user.id,
@@ -56,7 +60,7 @@ export async function POST(req: Request) {
         name: user.name,
         picture: user.image,
       },
-      secret,
+      secret: authSecret,
       salt: "authjs.session-token",
     });
     
