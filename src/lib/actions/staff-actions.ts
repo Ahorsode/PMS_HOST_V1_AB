@@ -6,6 +6,7 @@ import { getAuthContext, normalizePhoneNumber } from '@/lib/auth-utils'
 import { canAddWorker } from '@/lib/subscription-utils'
 import { Role } from '@prisma/client'
 import bcrypt from 'bcryptjs'
+import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 
 /**
  * Invites a worker to a farm.
@@ -18,6 +19,9 @@ export async function inviteWorker(data: {
   try {
     const { userId, activeFarmId } = await getAuthContext()
     if (!activeFarmId) throw new Error('No active farm selected')
+
+    const rateLimit = await checkRateLimit({ policy: 'team.invite', scope: 'inviteWorker', farmId: activeFarmId, userId })
+    if (!rateLimit.ok) return rateLimitActionError(rateLimit)
     
     const limitCheck = await canAddWorker(activeFarmId)
     if (!limitCheck.canAdd) {
@@ -236,6 +240,9 @@ export async function deleteInvitation(invitationId: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
 
+  const rateLimit = await checkRateLimit({ policy: 'team.invite', scope: 'deleteInvitation', farmId: activeFarmId, userId })
+  if (!rateLimit.ok) return rateLimitActionError(rateLimit)
+
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const farm = await tx.farm.findUnique({ where: { id: activeFarmId } })
     const membership = await tx.farmMember.findUnique({
@@ -267,6 +274,9 @@ export async function deleteInvitation(invitationId: string) {
 export async function deleteMember(memberId: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
+
+  const rateLimit = await checkRateLimit({ policy: 'team.permissions', scope: 'deleteMember', farmId: activeFarmId, userId })
+  if (!rateLimit.ok) return rateLimitActionError(rateLimit)
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const farm = await tx.farm.findUnique({ where: { id: activeFarmId } })
@@ -315,6 +325,9 @@ export async function updateWorkerPermissions(
 ) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
+
+  const rateLimit = await checkRateLimit({ policy: 'team.permissions', scope: 'updateWorkerPermissions', farmId: activeFarmId, userId })
+  if (!rateLimit.ok) return rateLimitActionError(rateLimit)
 
   try {
     return await prisma.$transaction(async (tx: any) => {

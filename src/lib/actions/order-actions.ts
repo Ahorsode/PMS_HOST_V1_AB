@@ -3,6 +3,8 @@
 import prisma from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { getAuthContext, hasPermission } from '@/lib/auth-utils'
+import { revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
+import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 
 export async function createOrder(data: {
   customerId?: string
@@ -21,6 +23,9 @@ export async function createOrder(data: {
   const discount = Number(data.discountAmount || 0)
   const subtotal = data.items.reduce((sum, i) => sum + (i.quantity * i.unitPrice), 0)
   const totalAmount = subtotal - discount
+
+  const limitResult = await checkRateLimit({ policy: 'orders.write', scope: 'createOrder', farmId: activeFarmId, userId })
+  if (!limitResult.ok) return rateLimitActionError(limitResult)
 
   try {
     const result = await prisma.$transaction(async (tx) => {
@@ -61,6 +66,7 @@ export async function createOrder(data: {
     revalidatePath('/dashboard/orders')
     revalidatePath('/dashboard/sales')
     revalidatePath('/dashboard')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, order: result }
   } catch (error) {
     console.error('Error creating order:', error)
@@ -109,6 +115,9 @@ export async function getAllOrders() {
 export async function updateOrderStatus(id: string, status: string) {
   const { userId, role, activeFarmId, permissions } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
+
+  const limitResult = await checkRateLimit({ policy: 'orders.write', scope: 'updateOrderStatus', farmId: activeFarmId, userId })
+  if (!limitResult.ok) return rateLimitActionError(limitResult)
 
   try {
     const order = await prisma.order.findUnique({
@@ -212,6 +221,7 @@ export async function updateOrderStatus(id: string, status: string) {
     revalidatePath('/dashboard/orders')
     revalidatePath('/dashboard/sales')
     revalidatePath('/dashboard/inventory')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, order: result }
   } catch (error) {
     console.error('Error updating order status:', error)
@@ -230,6 +240,9 @@ export async function deleteOrder(id: string, reason: string) {
   }
 
   if (!reason || reason.trim().length < 5) return { success: false, error: 'A valid reason is required for deletion' }
+
+  const limitResult = await checkRateLimit({ policy: 'orders.write', scope: 'deleteOrder', farmId: activeFarmId, userId })
+  if (!limitResult.ok) return rateLimitActionError(limitResult)
 
   try {
     const existing = await prisma.order.findUnique({ where: { id, farmId: activeFarmId } })
@@ -251,6 +264,7 @@ export async function deleteOrder(id: string, reason: string) {
     })
     revalidatePath('/dashboard/sales')
     revalidatePath('/dashboard/orders')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, message: 'Order moved to trash' }
   } catch (error) {
     console.error('Error deleting order:', error)
@@ -267,6 +281,9 @@ export async function restoreOrder(id: string) {
     return { success: false, error: 'Unauthorized: Only Managers can restore orders' }
   }
 
+  const limitResult = await checkRateLimit({ policy: 'orders.write', scope: 'restoreOrder', farmId: activeFarmId, userId })
+  if (!limitResult.ok) return rateLimitActionError(limitResult)
+
   try {
     await prisma.order.update({
       where: { id, farmId: activeFarmId },
@@ -275,6 +292,7 @@ export async function restoreOrder(id: string) {
     revalidatePath('/dashboard/sales')
     revalidatePath('/dashboard/orders')
     revalidatePath('/dashboard/settings/trash')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, message: 'Order restored successfully' }
   } catch (error) {
     console.error('Error restoring order:', error)

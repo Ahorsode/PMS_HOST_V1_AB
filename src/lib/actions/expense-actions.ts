@@ -4,6 +4,8 @@ import prisma from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
+import { revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
+import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 
 export async function getExpenses() {
   const { userId, activeFarmId } = await getAuthContext()
@@ -51,6 +53,9 @@ export async function createExpense(data: {
   const hasEditAccess = await checkWorkerPermissions('finance', 'edit')
   if (!hasEditAccess) return { success: false, error: 'Unauthorized: You do not have permission to log expenses' }
 
+  const limitResult = await checkRateLimit({ policy: 'finance.write', scope: 'createExpense', farmId: activeFarmId, userId })
+  if (!limitResult.ok) return rateLimitActionError(limitResult)
+
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     // Map LABOR to SALARY to match database enum
     const dbCategory = data.category === 'LABOR' ? 'SALARY' : data.category;
@@ -73,6 +78,7 @@ export async function createExpense(data: {
     })
     revalidatePath('/dashboard/finance')
     revalidatePath('/dashboard')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, expense }
   }).catch((error: any) => {
     console.error('Error creating expense:', error)
@@ -88,6 +94,9 @@ export async function deleteExpense(id: string, reason: string) {
   if (!hasEditAccess) return { success: false, error: 'Unauthorized: You do not have permission to delete expenses' }
 
   if (!reason || reason.trim().length < 5) return { success: false, error: 'A valid reason is required for deletion' }
+
+  const limitResult = await checkRateLimit({ policy: 'finance.write', scope: 'deleteExpense', farmId: activeFarmId, userId })
+  if (!limitResult.ok) return rateLimitActionError(limitResult)
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const existing = await tx.expense.findUnique({ where: { id, farmId: activeFarmId } })
@@ -108,6 +117,7 @@ export async function deleteExpense(id: string, reason: string) {
       data: { isDeleted: true, deletedAt: new Date() }
     })
     revalidatePath('/dashboard/finance')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true }
   }).catch((error: any) => {
     console.error('Error deleting expense:', error)
@@ -122,6 +132,9 @@ export async function restoreExpense(id: string) {
   const hasEditAccess = await checkWorkerPermissions('finance', 'edit')
   if (!hasEditAccess) return { success: false, error: 'Unauthorized: You do not have permission to restore expenses' }
 
+  const limitResult = await checkRateLimit({ policy: 'finance.write', scope: 'restoreExpense', farmId: activeFarmId, userId })
+  if (!limitResult.ok) return rateLimitActionError(limitResult)
+
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     await tx.expense.update({
       where: { id, farmId: activeFarmId },
@@ -129,6 +142,7 @@ export async function restoreExpense(id: string) {
     })
     revalidatePath('/dashboard/finance')
     revalidatePath('/dashboard/settings/trash')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true }
   }).catch((error: any) => {
     console.error('Error restoring expense:', error)

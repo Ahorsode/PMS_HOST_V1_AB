@@ -2,17 +2,16 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import { normalizePhoneNumber } from '@/lib/auth-utils';
-import { checkRateLimit } from '@/lib/performance/rate-limit';
+import { checkRateLimit, rateLimitHeaders } from '@/lib/performance/rate-limit';
 
 export async function POST(req: Request) {
   try {
     const forwarded = req.headers.get('x-forwarded-for');
     const ip = forwarded?.split(',')[0]?.trim() || 'unknown';
     const limit = await checkRateLimit({
+      policy: 'auth.signup',
       scope: 'api-signup',
       ip,
-      limit: 8,
-      windowSec: 60,
     });
 
     if (!limit.ok) {
@@ -22,7 +21,7 @@ export async function POST(req: Request) {
           code: 429,
           retryAfterSec: limit.retryAfterSec,
         },
-        { status: 429, headers: { 'Retry-After': String(limit.retryAfterSec) } },
+        { status: 429, headers: rateLimitHeaders(limit) },
       );
     }
 

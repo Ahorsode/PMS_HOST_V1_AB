@@ -3,6 +3,7 @@
 import prisma from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
+import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 
 export async function createCustomer(data: {
   name: string
@@ -13,6 +14,9 @@ export async function createCustomer(data: {
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
+
+  const limitResult = await checkRateLimit({ policy: 'sales.write', scope: 'createCustomer', farmId: activeFarmId, userId })
+  if (!limitResult.ok) return rateLimitActionError(limitResult)
 
   try {
     const customer = await prisma.customer.create({

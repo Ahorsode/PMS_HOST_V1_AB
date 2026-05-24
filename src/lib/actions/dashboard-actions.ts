@@ -9,7 +9,7 @@ import { checkWorkerPermissions } from './staff-actions'
 import { LivestockType } from '@prisma/client'
 import { signOut } from '@/auth'
 import { farmCacheTags, revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
-import { checkRateLimit } from '@/lib/performance/rate-limit'
+import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 
 export async function getDashboardStats() {
   const { userId, activeFarmId } = await getAuthContext()
@@ -318,14 +318,13 @@ export async function createBatch(data: {
   if (!hasAccess) throw new Error('Unauthorized')
 
   const limitResult = await checkRateLimit({
+    policy: 'production.write',
     scope: 'createBatch',
     farmId: activeFarmId,
     userId,
-    limit: 12,
-    windowSec: 60,
   })
   if (!limitResult.ok) {
-    return { success: false, error: 'Too many requests. Please wait and try again.', code: 429, retryAfterSec: limitResult.retryAfterSec }
+    return rateLimitActionError(limitResult)
   }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
@@ -369,14 +368,13 @@ export async function updateBatchFinancials(id: string, data: {
   if (!hasAccess) throw new Error('Unauthorized: Finance edit required')
 
   const limitResult = await checkRateLimit({
+    policy: 'finance.write',
     scope: 'updateBatchFinancials',
     farmId: activeFarmId,
     userId,
-    limit: 10,
-    windowSec: 60,
   })
   if (!limitResult.ok) {
-    return { success: false, error: 'Too many requests. Please wait and try again.', code: 429, retryAfterSec: limitResult.retryAfterSec }
+    return rateLimitActionError(limitResult)
   }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
@@ -462,14 +460,13 @@ export async function logFeeding(data: {
   if (!hasAccess) throw new Error('Unauthorized')
 
   const limitResult = await checkRateLimit({
+    policy: 'feed.write',
     scope: 'logFeeding',
     farmId: activeFarmId,
     userId,
-    limit: 20,
-    windowSec: 60,
   })
   if (!limitResult.ok) {
-    return { success: false, error: 'Too many requests. Please wait and try again.', code: 429, retryAfterSec: limitResult.retryAfterSec }
+    return rateLimitActionError(limitResult)
   }
 
   try {

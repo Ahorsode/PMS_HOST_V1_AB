@@ -4,7 +4,7 @@ import prisma from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
-import { checkRateLimit } from '@/lib/performance/rate-limit'
+import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 import { revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 
 export async function getFinancialTransactions() {
@@ -64,14 +64,13 @@ export async function createFinancialTransaction(data: {
   }
 
   const limitResult = await checkRateLimit({
+    policy: 'finance.write',
     scope: 'createFinancialTransaction',
     farmId: activeFarmId,
     userId,
-    limit: 12,
-    windowSec: 60,
   })
   if (!limitResult.ok) {
-    return { success: false, error: 'Too many requests. Please wait and try again.', code: 429, retryAfterSec: limitResult.retryAfterSec }
+    return rateLimitActionError(limitResult)
   }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
@@ -126,14 +125,13 @@ export async function settleTransaction(id: string, referenceNum?: string) {
   if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Finance Permission' }
 
   const limitResult = await checkRateLimit({
+    policy: 'finance.write',
     scope: 'settleFinancialTransaction',
     farmId: activeFarmId,
     userId,
-    limit: 20,
-    windowSec: 60,
   })
   if (!limitResult.ok) {
-    return { success: false, error: 'Too many requests. Please wait and try again.', code: 429, retryAfterSec: limitResult.retryAfterSec }
+    return rateLimitActionError(limitResult)
   }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
@@ -200,14 +198,13 @@ export async function deleteFinancialTransaction(id: string, reason: string) {
   }
 
   const limitResult = await checkRateLimit({
+    policy: 'finance.write',
     scope: 'deleteFinancialTransaction',
     farmId: activeFarmId,
     userId,
-    limit: 10,
-    windowSec: 60,
   })
   if (!limitResult.ok) {
-    return { success: false, error: 'Too many requests. Please wait and try again.', code: 429, retryAfterSec: limitResult.retryAfterSec }
+    return rateLimitActionError(limitResult)
   }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {

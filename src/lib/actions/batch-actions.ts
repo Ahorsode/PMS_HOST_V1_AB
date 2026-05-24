@@ -4,6 +4,8 @@ import prisma from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
+import { revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
+import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 
 export async function createBatch(data: {
   houseId: string
@@ -17,6 +19,9 @@ export async function createBatch(data: {
 
   const hasEditAccess = await checkWorkerPermissions('batches', 'edit')
   if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Batches Permission' }
+
+  const limitResult = await checkRateLimit({ policy: 'production.write', scope: 'createBatchLegacy', farmId: activeFarmId, userId })
+  if (!limitResult.ok) return rateLimitActionError(limitResult)
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const batch = await tx.livestock.create({
@@ -33,6 +38,7 @@ export async function createBatch(data: {
       }
     })
     revalidatePath('/dashboard/flocks')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, batch }
   }).catch((error: any) => {
     console.error('Error creating batch:', error)
@@ -55,6 +61,9 @@ export async function updateBatch(id: string, data: {
 
   const hasEditAccess = await checkWorkerPermissions('batches', 'edit')
   if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Batches Permission' }
+
+  const limitResult = await checkRateLimit({ policy: 'production.write', scope: 'updateBatch', farmId: activeFarmId, userId })
+  if (!limitResult.ok) return rateLimitActionError(limitResult)
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     // 1. Fetch existing to handle count synchronization
@@ -82,6 +91,7 @@ export async function updateBatch(id: string, data: {
     })
     
     revalidatePath('/dashboard/flocks')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, batch }
   }).catch((error: any) => {
     console.error('Error updating batch:', error)
@@ -97,6 +107,9 @@ export async function deleteBatch(id: string, reason: string) {
   if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Batches Permission' }
 
   if (!reason || reason.trim().length < 5) return { success: false, error: 'A valid reason is required for deletion' }
+
+  const limitResult = await checkRateLimit({ policy: 'production.write', scope: 'deleteBatch', farmId: activeFarmId, userId })
+  if (!limitResult.ok) return rateLimitActionError(limitResult)
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const existing = await tx.livestock.findUnique({ where: { id, farmId: activeFarmId } })
@@ -117,6 +130,7 @@ export async function deleteBatch(id: string, reason: string) {
       data: { isDeleted: true, deletedAt: new Date() }
     })
     revalidatePath('/dashboard/flocks')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true }
   }).catch((error: any) => {
     console.error('Error deleting batch:', error)
@@ -131,6 +145,9 @@ export async function restoreBatch(id: string) {
   const hasEditAccess = await checkWorkerPermissions('batches', 'edit')
   if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Batches Permission' }
 
+  const limitResult = await checkRateLimit({ policy: 'production.write', scope: 'restoreBatch', farmId: activeFarmId, userId })
+  if (!limitResult.ok) return rateLimitActionError(limitResult)
+
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     await tx.livestock.update({
       where: { id, farmId: activeFarmId },
@@ -138,6 +155,7 @@ export async function restoreBatch(id: string) {
     })
     revalidatePath('/dashboard/flocks')
     revalidatePath('/dashboard/settings/trash')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true }
   }).catch((error: any) => {
     console.error('Error restoring batch:', error)
@@ -160,6 +178,9 @@ export async function logHealthEvent(data: {
 
   const hasEditAccess = await checkWorkerPermissions('batches', 'edit')
   if (!hasEditAccess) return { success: false, error: 'Unauthorized' }
+
+  const limitResult = await checkRateLimit({ policy: 'production.write', scope: 'logHealthEvent', farmId: activeFarmId, userId })
+  if (!limitResult.ok) return rateLimitActionError(limitResult)
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     // 1. Create Mortality record (serves as health/mortality log)
@@ -194,6 +215,7 @@ export async function logHealthEvent(data: {
     })
 
     revalidatePath('/dashboard/flocks')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, record }
   }).catch((error: any) => {
     console.error('Error logging health event:', error)
@@ -216,6 +238,9 @@ export async function transferToIsolation(id: string, count: number) {
   const hasEditAccess = await checkWorkerPermissions('batches', 'edit')
   if (!hasEditAccess) return { success: false, error: 'Unauthorized' }
 
+  const limitResult = await checkRateLimit({ policy: 'production.write', scope: 'transferToIsolation', farmId: activeFarmId, userId })
+  if (!limitResult.ok) return rateLimitActionError(limitResult)
+
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const batch = await tx.livestock.findUnique({
       where: { id, farmId: activeFarmId }
@@ -236,6 +261,7 @@ export async function transferToIsolation(id: string, count: number) {
     })
 
     revalidatePath('/dashboard/flocks')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true }
   }).catch((error: any) => {
     console.error('Error transferring to isolation:', error)
@@ -249,6 +275,9 @@ export async function returnFromIsolation(id: string, count: number) {
 
   const hasEditAccess = await checkWorkerPermissions('batches', 'edit')
   if (!hasEditAccess) return { success: false, error: 'Unauthorized' }
+
+  const limitResult = await checkRateLimit({ policy: 'production.write', scope: 'returnFromIsolation', farmId: activeFarmId, userId })
+  if (!limitResult.ok) return rateLimitActionError(limitResult)
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const batch = await tx.livestock.findUnique({
@@ -269,6 +298,7 @@ export async function returnFromIsolation(id: string, count: number) {
     })
 
     revalidatePath('/dashboard/flocks')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true }
   }).catch((error: any) => {
     console.error('Error returning from isolation:', error)
@@ -288,6 +318,9 @@ export async function logMortalityInIsolation(data: {
 
   const hasEditAccess = await checkWorkerPermissions('batches', 'edit')
   if (!hasEditAccess) return { success: false, error: 'Unauthorized' }
+
+  const limitResult = await checkRateLimit({ policy: 'production.write', scope: 'logMortalityInIsolation', farmId: activeFarmId, userId })
+  if (!limitResult.ok) return rateLimitActionError(limitResult)
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const batch = await tx.livestock.findUnique({
@@ -321,6 +354,7 @@ export async function logMortalityInIsolation(data: {
     })
 
     revalidatePath('/dashboard/flocks')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true }
   }).catch((error: any) => {
     console.error('Error logging mortality in isolation:', error)

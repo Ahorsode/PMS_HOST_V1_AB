@@ -4,7 +4,7 @@ import prisma from '@/lib/db'
 import { revalidatePath, unstable_cache } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 import { FeedType, LivestockType } from '@prisma/client'
-import { checkRateLimit } from '@/lib/performance/rate-limit'
+import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 import { farmCacheTags, revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 
 export async function createFeedFormulation(data: {
@@ -17,14 +17,13 @@ export async function createFeedFormulation(data: {
   if (!activeFarmId) throw new Error('No active farm selected')
 
   const limitResult = await checkRateLimit({
+    policy: 'feed.write',
     scope: 'createFeedFormulation',
     farmId: activeFarmId,
     userId,
-    limit: 10,
-    windowSec: 60,
   })
   if (!limitResult.ok) {
-    return { success: false, error: 'Too many requests. Please wait and try again.', code: 429, retryAfterSec: limitResult.retryAfterSec }
+    return rateLimitActionError(limitResult)
   }
 
   try {
@@ -162,14 +161,13 @@ export async function createFeedingLog(data: any) {
   if (!activeFarmId) throw new Error('No active farm selected')
 
   const limitResult = await checkRateLimit({
+    policy: 'feed.write',
     scope: 'createFeedingLog',
     farmId: activeFarmId,
     userId,
-    limit: 20,
-    windowSec: 60,
   })
   if (!limitResult.ok) {
-    return { success: false, error: 'Too many requests. Please wait and try again.', code: 429, retryAfterSec: limitResult.retryAfterSec }
+    return rateLimitActionError(limitResult)
   }
 
   try {

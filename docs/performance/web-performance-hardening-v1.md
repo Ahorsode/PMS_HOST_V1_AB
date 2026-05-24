@@ -40,17 +40,30 @@ Mutation paths revalidate these tags to preserve read-after-write behavior.
 
 ## Rate Limiting
 
-Rate limiting is enforced for critical write pathways with key pattern:
+Rate limiting is enforced for critical write pathways with named policies and key pattern:
 
-`{scope}:{farmId}:{userId}` (or `{scope}:{ip}` for public API routes)
+`{policy}:{scope}:{farmId}:{userId}` (or `{policy}:{scope}:global:{ip}` for public API routes)
 
 Backend:
 
 - Primary: Upstash Redis via `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN`
-- Fallback: in-memory fixed window (dev-safe, not distributed)
+- Algorithm: sliding window via `@upstash/ratelimit`
+- Development fallback: in-memory sliding window
+- Production fallback: fail closed for financial/admin policies unless `RATE_LIMIT_FAIL_OPEN=true`
 
 API routes return:
 
 - HTTP `429`
 - payload with `code: 429` and `retryAfterSec`
-- `Retry-After` response header
+- `Retry-After`, `X-RateLimit-Limit`, `X-RateLimit-Remaining`, and `X-RateLimit-Reset` response headers
+
+Current policies:
+
+- `auth.signup`: public signup attempts
+- `team.invite`, `team.permissions`: staff and permission administration
+- `finance.write`: expenses and financial transactions
+- `inventory.write`: inventory create/update/delete/restore
+- `production.write`: flock, mortality, egg, and production logging writes
+- `feed.write`: feed formulation and feeding log writes
+- `sales.write`, `orders.write`: commercial write paths
+- `audit.restore`: reserved for recovery/audit restore flows

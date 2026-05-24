@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { auth } from '@/auth'
 import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
-import { checkRateLimit } from '@/lib/performance/rate-limit'
+import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 import { revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 
 async function getUserId() {
@@ -34,14 +34,13 @@ export async function createEggProduction(data: {
   if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Batches Permission' }
 
   const limitResult = await checkRateLimit({
+    policy: 'production.write',
     scope: 'createEggProduction',
     farmId: activeFarmId,
     userId,
-    limit: 20,
-    windowSec: 60,
   })
   if (!limitResult.ok) {
-    return { success: false, error: 'Too many requests. Please wait and try again.', code: 429, retryAfterSec: limitResult.retryAfterSec }
+    return rateLimitActionError(limitResult)
   }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
@@ -155,14 +154,13 @@ export async function updateEggProduction(id: string, data: {
   if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Batches Permission' }
 
   const limitResult = await checkRateLimit({
+    policy: 'production.write',
     scope: 'updateEggProduction',
     farmId: activeFarmId,
     userId,
-    limit: 30,
-    windowSec: 60,
   })
   if (!limitResult.ok) {
-    return { success: false, error: 'Too many requests. Please wait and try again.', code: 429, retryAfterSec: limitResult.retryAfterSec }
+    return rateLimitActionError(limitResult)
   }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
@@ -192,14 +190,13 @@ export async function deleteEggProduction(id: string, reason: string) {
   if (!reason || reason.trim().length < 5) return { success: false, error: 'A valid reason is required for deletion' }
 
   const limitResult = await checkRateLimit({
+    policy: 'production.write',
     scope: 'deleteEggProduction',
     farmId: activeFarmId,
     userId,
-    limit: 10,
-    windowSec: 60,
   })
   if (!limitResult.ok) {
-    return { success: false, error: 'Too many requests. Please wait and try again.', code: 429, retryAfterSec: limitResult.retryAfterSec }
+    return rateLimitActionError(limitResult)
   }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {

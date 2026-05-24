@@ -4,6 +4,8 @@ import prisma from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
+import { revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
+import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 
 export async function createInventoryItem(data: {
   itemName: string
@@ -20,6 +22,9 @@ export async function createInventoryItem(data: {
 
   const hasEditAccess = await checkWorkerPermissions('inventory', 'edit')
   if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Inventory Permission' }
+
+  const limitResult = await checkRateLimit({ policy: 'inventory.write', scope: 'createInventoryItem', farmId: activeFarmId, userId })
+  if (!limitResult.ok) return rateLimitActionError(limitResult)
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const item = await tx.inventory.create({
@@ -65,6 +70,7 @@ export async function createInventoryItem(data: {
     
     revalidatePath('/dashboard/inventory')
     revalidatePath('/dashboard')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, item: { ...item, stockLevel: Number(item.stockLevel) } }
   }).catch((error: any) => {
     console.error('Error creating inventory item:', error)
@@ -86,6 +92,9 @@ export async function updateInventoryItem(id: string, data: {
   const hasEditAccess = await checkWorkerPermissions('inventory', 'edit')
   if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Inventory Permission' }
 
+  const limitResult = await checkRateLimit({ policy: 'inventory.write', scope: 'updateInventoryItem', farmId: activeFarmId, userId })
+  if (!limitResult.ok) return rateLimitActionError(limitResult)
+
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const item = await tx.inventory.update({
       where: { id, farmId: activeFarmId },
@@ -93,6 +102,7 @@ export async function updateInventoryItem(id: string, data: {
     })
     revalidatePath('/dashboard/inventory')
     revalidatePath('/dashboard')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, item: { ...item, stockLevel: Number(item.stockLevel) } }
   }).catch((error: any) => {
     console.error('Error updating inventory item:', error)
@@ -108,6 +118,9 @@ export async function deleteInventoryItem(id: string, reason: string) {
   if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Inventory Permission' }
 
   if (!reason || reason.trim().length < 5) return { success: false, error: 'A valid reason is required for deletion' }
+
+  const limitResult = await checkRateLimit({ policy: 'inventory.write', scope: 'deleteInventoryItem', farmId: activeFarmId, userId })
+  if (!limitResult.ok) return rateLimitActionError(limitResult)
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const existing = await tx.inventory.findUnique({ where: { id, farmId: activeFarmId } })
@@ -128,6 +141,7 @@ export async function deleteInventoryItem(id: string, reason: string) {
       data: { isDeleted: true, deletedAt: new Date() }
     })
     revalidatePath('/dashboard/inventory')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true }
   }).catch((error: any) => {
     console.error('Error deleting inventory item:', error)
@@ -142,6 +156,9 @@ export async function restoreInventory(id: string) {
   const hasEditAccess = await checkWorkerPermissions('inventory', 'edit')
   if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Inventory Permission' }
 
+  const limitResult = await checkRateLimit({ policy: 'inventory.write', scope: 'restoreInventory', farmId: activeFarmId, userId })
+  if (!limitResult.ok) return rateLimitActionError(limitResult)
+
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     await tx.inventory.update({
       where: { id, farmId: activeFarmId },
@@ -149,6 +166,7 @@ export async function restoreInventory(id: string) {
     })
     revalidatePath('/dashboard/inventory')
     revalidatePath('/dashboard/settings/trash')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true }
   }).catch((error: any) => {
     console.error('Error restoring inventory item:', error)
