@@ -73,6 +73,7 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
   }, [selectedHouseId, setValue]);
 
   const handleCreateHouse = async () => {
+    if (isCreatingHouse) return;
     if (!newHouseData.name || !newHouseData.capacity) {
       toast.error("Please fill in house name and capacity");
       return;
@@ -143,6 +144,7 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
       ];
 
   const onSubmit = async (data: FormValues) => {
+    if (isSubmitting) return;
     setIsSubmitting(true);
     try {
       const result = await createBatch({
@@ -177,83 +179,86 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
   return (
     <div className="w-full max-w-lg">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <Input
-            label="Unit Name / Identity"
-            placeholder="e.g., Q1-Broiler-Alpha"
-            {...register("batchName")}
-            error={errors.batchName?.message}
-          />
-
-          <Select
-            label="Livestock Category"
-            options={speciesOptions}
-            {...register("type")}
-            error={errors.type?.message}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <Select
-            label="Primary Breed / Specie"
-            options={breedOptions}
-            {...register("breed")}
-            error={errors.breed?.message}
-          />
-
-          <Input
-            label="Initial Quantity"
-            type="number"
-            min="1"
-            placeholder="1000"
-            {...register("initialQuantity", { valueAsNumber: true })}
-            error={errors.initialQuantity?.message}
-          />
-        </div>
-
-          <Select
-            label="Farm House"
-            options={[
-              { label: "Select House Location", value: "" }, 
-              ...houseOptions,
-              { label: "➕ Add New House", value: "NEW_HOUSE" }
-            ]}
-            {...register("houseId")}
-            error={errors.houseId?.message}
-          />
-
-        <Input
-          label="Arrival / Hatch Date"
-          type="date"
-          {...register("hatchDate")}
-          error={errors.hatchDate?.message}
-        />
-
-        <div className="border-t border-white/10 pt-3 mt-2">
-          <h3 className="text-sm font-medium text-amber-500 mb-3 italic uppercase tracking-widest text-xs">Optional Initial Schedule</h3>
+        <fieldset disabled={isSubmitting} className="space-y-5 disabled:opacity-70">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Input
-              label="1st Vaccination Date"
-              type="date"
-              {...register("vaccinationDate")}
+              label="Unit Name / Identity"
+              placeholder="e.g., Q1-Broiler-Alpha"
+              {...register("batchName")}
+              error={errors.batchName?.message}
             />
-            <Input
-              label="Vaccine Name"
-              placeholder="e.g., Gumboro"
-              {...register("vaccineName")}
+
+            <Select
+              label="Livestock Category"
+              options={speciesOptions}
+              {...register("type")}
+              error={errors.type?.message}
             />
           </div>
-        </div>
 
-        <div className="pt-3">
-          <Button
-            type="submit"
-            isLoading={isSubmitting}
-            className="w-full bg-emerald-500 hover:bg-emerald-400 text-[#064e3b] font-bold h-14 rounded-lg uppercase tracking-widest transition-all shadow-[0_0_30px_rgba(16,185,129,0.2)]"
-          >
-            Register Unit & Continue
-          </Button>
-        </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <Select
+              label="Primary Breed / Specie"
+              options={breedOptions}
+              {...register("breed")}
+              error={errors.breed?.message}
+            />
+
+            <Input
+              label="Initial Quantity"
+              type="number"
+              min="1"
+              placeholder="1000"
+              {...register("initialQuantity", { valueAsNumber: true })}
+              error={errors.initialQuantity?.message}
+            />
+          </div>
+
+            <Select
+              label="Farm House"
+              options={[
+                { label: "Select House Location", value: "" }, 
+                ...houseOptions,
+                { label: "➕ Add New House", value: "NEW_HOUSE" }
+              ]}
+              {...register("houseId")}
+              error={errors.houseId?.message}
+            />
+
+          <Input
+            label="Arrival / Hatch Date"
+            type="date"
+            {...register("hatchDate")}
+            error={errors.hatchDate?.message}
+          />
+
+          <div className="border-t border-white/10 pt-3 mt-2">
+            <h3 className="text-sm font-medium text-amber-500 mb-3 italic uppercase tracking-widest text-xs">Optional Initial Schedule</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <Input
+                label="1st Vaccination Date"
+                type="date"
+                {...register("vaccinationDate")}
+              />
+              <Input
+                label="Vaccine Name"
+                placeholder="e.g., Gumboro"
+                {...register("vaccineName")}
+              />
+            </div>
+          </div>
+
+          <div className="pt-3">
+            <Button
+              type="submit"
+              isLoading={isSubmitting}
+              loadingText="Registering unit..."
+              className="w-full bg-emerald-500 hover:bg-emerald-400 text-[#064e3b] font-bold h-14 rounded-lg uppercase tracking-widest transition-all shadow-[0_0_30px_rgba(16,185,129,0.2)]"
+            >
+              Register Unit & Continue
+            </Button>
+          </div>
+        </fieldset>
       </form>
 
       {createdBatchId && (
@@ -268,7 +273,7 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
 
       <Dialog
         isOpen={showHouseModal}
-        onOpenChange={setShowHouseModal}
+        onOpenChange={(open) => !isCreatingHouse && setShowHouseModal(open)}
         title="➕ Create New Farm House"
         description="Add a new housing unit to your farm to accommodate this livestock unit."
       >
@@ -278,6 +283,7 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
             placeholder="e.g. House Alpha, Pen 1"
             value={newHouseData.name}
             onChange={e => setNewHouseData(p => ({ ...p, name: e.target.value }))}
+            disabled={isCreatingHouse}
           />
           <Input 
             label="Total Capacity (Birds/Heads)"
@@ -286,12 +292,14 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
             placeholder="e.g. 500"
             value={newHouseData.capacity}
             onChange={e => setNewHouseData(p => ({ ...p, capacity: e.target.value }))}
+            disabled={isCreatingHouse}
           />
           <div className="flex gap-2 pt-2">
-             <Button variant="secondary" onClick={() => setShowHouseModal(false)} className="flex-1">Cancel</Button>
+             <Button variant="secondary" onClick={() => setShowHouseModal(false)} disabled={isCreatingHouse} className="flex-1">Cancel</Button>
              <Button 
                onClick={handleCreateHouse} 
                isLoading={isCreatingHouse}
+               loadingText="Creating..."
                className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-black font-bold"
              >
                Create House

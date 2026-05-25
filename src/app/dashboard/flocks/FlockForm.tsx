@@ -60,6 +60,7 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
 
   const handleSubmit = async (e: any) => {
     if (e && e.preventDefault) e.preventDefault();
+    if (isLoading) return;
     setIsLoading(true);
     try {
       let res;
@@ -138,8 +139,9 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      {mode === 'mortality' ? (
-        <>
+      <fieldset disabled={isLoading} className="space-y-3 disabled:opacity-70">
+        {mode === 'mortality' ? (
+          <>
           {!defaultHealthType && (
             <div className="flex gap-2 p-1 bg-white/5 border border-white/5 rounded-lg mb-4">
               <button
@@ -260,9 +262,9 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
             onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
             placeholder="Briefly describe the health incident..."
           />
-        </>
-      ) : (
-        <>
+          </>
+        ) : (
+          <>
           <div className="grid grid-cols-2 gap-3">
             <Input
               label="Unit Identity / Name"
@@ -339,13 +341,15 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
               onChange={(e) => setFormData({ ...formData, status: e.target.value })}
             />
           )}
-        </>
-      )}
+          </>
+        )}
+      </fieldset>
       <div className="flex justify-end gap-2 pt-5 border-t border-gray-100 italic font-medium text-xs uppercase text-gray-400">
-        <Button variant="outline" type="button" onClick={onClose} className="h-10 px-7 rounded-md border-gray-200">Cancel</Button>
+        <Button variant="outline" type="button" onClick={onClose} disabled={isLoading} className="h-10 px-7 rounded-md border-gray-200">Cancel</Button>
         <Button 
           type="submit" 
           isLoading={isLoading} 
+          loadingText={mode === 'create' ? 'Registering...' : mode === 'edit' ? 'Saving...' : formData.healthType === 'SICK' ? 'Transferring...' : 'Logging...'}
           disabled={isMortalityExceeded}
           className={`h-10 px-7 rounded-md ${isMortalityExceeded ? "bg-gray-400 cursor-not-allowed" : "bg-emerald-600 hover:bg-emerald-700"}`}
         >

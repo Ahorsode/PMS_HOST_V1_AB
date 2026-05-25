@@ -51,6 +51,7 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
   const [reorderLevels, setReorderLevels] = useState<Record<string, number>>({});
   const [isLoadingPrefs, setIsLoadingPrefs] = useState(false);
   const [growthStandards, setGrowthStandards] = useState<any[]>([]);
+  const [savingReorderId, setSavingReorderId] = useState<string | null>(null);
 
   useEffect(() => {
     if (activeTab === 'preferences' || activeTab === 'notifications') {
@@ -130,6 +131,8 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
   };
 
   const handleSaveReorderLevel = async (itemId: string) => {
+    if (savingReorderId === itemId) return;
+    setSavingReorderId(itemId);
     try {
       const { updateReorderLevel } = await import('@/lib/actions/preference-actions');
       await updateReorderLevel(itemId, reorderLevels[itemId] ?? 500);
@@ -137,6 +140,8 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
       setTimeout(() => setMessage(null), 3000);
     } catch (err) {
       setMessage({ type: 'error', text: 'Failed to save reorder level.' });
+    } finally {
+      setSavingReorderId(null);
     }
   };
 
@@ -340,6 +345,8 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
                           onClick={() => handleSaveReorderLevel(item.id)}
                           size="sm"
                           variant="outline"
+                          isLoading={savingReorderId === item.id}
+                          loadingText="Saving"
                         >
                           <Save className="w-3.5 h-3.5" />
                         </Button>

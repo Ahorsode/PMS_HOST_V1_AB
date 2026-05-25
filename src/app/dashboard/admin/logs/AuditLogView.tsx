@@ -12,7 +12,8 @@ import {
   ShieldCheck,
   Search,
   ArrowRight,
-  Eye
+  Eye,
+  Loader2
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Dialog, DialogTitle, DialogDescription } from '@/components/ui/Dialog';
@@ -37,7 +38,8 @@ interface AuditLogViewProps {
 
 export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trashItems }: AuditLogViewProps) {
   const [activeTab, setActiveTab] = useState<'edits' | 'deletes' | 'recovery'>('edits');
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
+  const [restoringKeys, setRestoringKeys] = useState<Set<string>>(() => new Set());
   const [selectedLog, setSelectedLog] = useState<any>(null);
   const router = useRouter();
 
@@ -50,28 +52,56 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
     ))
   );
 
+  const setRestoreActive = (key: string, active: boolean) => {
+    setRestoringKeys((prev) => {
+      const next = new Set(prev);
+      if (active) {
+        next.add(key);
+      } else {
+        next.delete(key);
+      }
+      return next;
+    });
+  };
+
+  const isRestoring = (key: string) => restoringKeys.has(key);
+
   const handleRestore = (id: string) => {
+    const restoreKey = `audit:${id}`;
+    if (isRestoring(restoreKey)) return;
     if (!confirm('Are you sure you want to restore this data? This will create a new record with the deleted values.')) return;
     
+    setRestoreActive(restoreKey, true);
     startTransition(async () => {
-      const res = await restoreDeletedRecord(id);
-      if (res.success) {
-        toast.success(res.message);
-      } else {
-        toast.error(res.error);
+      try {
+        const res = await restoreDeletedRecord(id);
+        if (res.success) {
+          toast.success(res.message);
+        } else {
+          toast.error(res.error);
+        }
+      } finally {
+        setRestoreActive(restoreKey, false);
       }
     });
   };
 
   const handleSoftRestore = (restoreFn: (id: string) => Promise<any>, id: string, label: string) => {
+    const restoreKey = `${label}:${id}`;
+    if (isRestoring(restoreKey)) return;
     if (!confirm(`Restore this ${label}? It will reappear in its original module.`)) return;
+    setRestoreActive(restoreKey, true);
     startTransition(async () => {
-      const res = await restoreFn(id);
-      if (res.success) {
-        toast.success(`${label} restored successfully`);
-        router.refresh();
-      } else {
-        toast.error(res.error || `Failed to restore ${label}`);
+      try {
+        const res = await restoreFn(id);
+        if (res.success) {
+          toast.success(`${label} restored successfully`);
+          router.refresh();
+        } else {
+          toast.error(res.error || `Failed to restore ${label}`);
+        }
+      } finally {
+        setRestoreActive(restoreKey, false);
       }
     });
   };
@@ -259,11 +289,11 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                         <td className="px-6 py-4 text-right">
                           <button
                             onClick={() => handleRestore(log.id)}
-                            disabled={isPending}
+                            disabled={isRestoring(`audit:${log.id}`)}
                             className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/10 transition-all text-[10px] font-bold uppercase tracking-widest disabled:opacity-50"
                           >
-                            <RotateCcw className={`w-3 h-3 ${isPending ? 'animate-spin' : ''}`} />
-                            Restore
+                            {isRestoring(`audit:${log.id}`) ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
+                            {isRestoring(`audit:${log.id}`) ? 'Restoring...' : 'Restore'}
                           </button>
                         </td>
                       </tr>
@@ -308,8 +338,8 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                               <p className="text-xs font-bold text-white">{b.batchName}</p>
                               <p className="text-[10px] text-white/40">{b.breedType} · {b.currentCount} birds</p>
                             </div>
-                            <button onClick={() => handleSoftRestore(restoreBatch, b.id, 'Batch')} disabled={isPending} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/20 transition-all flex items-center gap-1 disabled:opacity-50">
-                              <RotateCcw className="w-3 h-3" /> Restore
+                            <button onClick={() => handleSoftRestore(restoreBatch, b.id, 'Batch')} disabled={isRestoring(`Batch:${b.id}`)} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/20 transition-all flex items-center gap-1 disabled:opacity-50">
+                              {isRestoring(`Batch:${b.id}`) ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />} {isRestoring(`Batch:${b.id}`) ? 'Restoring...' : 'Restore'}
                             </button>
                           </div>
                         ))}
@@ -327,8 +357,8 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                               <p className="text-xs font-bold text-white">{e.description || e.category}</p>
                               <p className="text-[10px] text-white/40">{e.category} · GHS {e.amount.toFixed(2)}</p>
                             </div>
-                            <button onClick={() => handleSoftRestore(restoreExpense, e.id, 'Expense')} disabled={isPending} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-purple-500/15 hover:bg-purple-500/30 text-purple-400 border border-purple-500/20 transition-all flex items-center gap-1 disabled:opacity-50">
-                              <RotateCcw className="w-3 h-3" /> Restore
+                            <button onClick={() => handleSoftRestore(restoreExpense, e.id, 'Expense')} disabled={isRestoring(`Expense:${e.id}`)} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-purple-500/15 hover:bg-purple-500/30 text-purple-400 border border-purple-500/20 transition-all flex items-center gap-1 disabled:opacity-50">
+                              {isRestoring(`Expense:${e.id}`) ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />} {isRestoring(`Expense:${e.id}`) ? 'Restoring...' : 'Restore'}
                             </button>
                           </div>
                         ))}
@@ -346,8 +376,8 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                               <p className="text-xs font-bold text-white">{s.customerName || 'Walk-in'}</p>
                               <p className="text-[10px] text-white/40">GHS {s.totalAmount.toFixed(2)} · {s.status}</p>
                             </div>
-                            <button onClick={() => handleSoftRestore(restoreSale, s.id, 'Sale')} disabled={isPending} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-blue-500/15 hover:bg-blue-500/30 text-blue-400 border border-blue-500/20 transition-all flex items-center gap-1 disabled:opacity-50">
-                              <RotateCcw className="w-3 h-3" /> Restore
+                            <button onClick={() => handleSoftRestore(restoreSale, s.id, 'Sale')} disabled={isRestoring(`Sale:${s.id}`)} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-blue-500/15 hover:bg-blue-500/30 text-blue-400 border border-blue-500/20 transition-all flex items-center gap-1 disabled:opacity-50">
+                              {isRestoring(`Sale:${s.id}`) ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />} {isRestoring(`Sale:${s.id}`) ? 'Restoring...' : 'Restore'}
                             </button>
                           </div>
                         ))}
@@ -365,8 +395,8 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                               <p className="text-xs font-bold text-white">{o.customer?.name || 'No customer'}</p>
                               <p className="text-[10px] text-white/40">GHS {o.totalAmount.toFixed(2)} · {o.status}</p>
                             </div>
-                            <button onClick={() => handleSoftRestore(restoreOrder, o.id, 'Order')} disabled={isPending} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/30 text-indigo-400 border border-indigo-500/20 transition-all flex items-center gap-1 disabled:opacity-50">
-                              <RotateCcw className="w-3 h-3" /> Restore
+                            <button onClick={() => handleSoftRestore(restoreOrder, o.id, 'Order')} disabled={isRestoring(`Order:${o.id}`)} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/30 text-indigo-400 border border-indigo-500/20 transition-all flex items-center gap-1 disabled:opacity-50">
+                              {isRestoring(`Order:${o.id}`) ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />} {isRestoring(`Order:${o.id}`) ? 'Restoring...' : 'Restore'}
                             </button>
                           </div>
                         ))}
@@ -384,8 +414,8 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                               <p className="text-xs font-bold text-white">{i.itemName}</p>
                               <p className="text-[10px] text-white/40">{i.stockLevel} {i.unit} · {i.category}</p>
                             </div>
-                            <button onClick={() => handleSoftRestore(restoreInventory, i.id, 'Inventory')} disabled={isPending} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-teal-500/15 hover:bg-teal-500/30 text-teal-400 border border-teal-500/20 transition-all flex items-center gap-1 disabled:opacity-50">
-                              <RotateCcw className="w-3 h-3" /> Restore
+                            <button onClick={() => handleSoftRestore(restoreInventory, i.id, 'Inventory')} disabled={isRestoring(`Inventory:${i.id}`)} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-teal-500/15 hover:bg-teal-500/30 text-teal-400 border border-teal-500/20 transition-all flex items-center gap-1 disabled:opacity-50">
+                              {isRestoring(`Inventory:${i.id}`) ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />} {isRestoring(`Inventory:${i.id}`) ? 'Restoring...' : 'Restore'}
                             </button>
                           </div>
                         ))}
@@ -403,8 +433,8 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                               <p className="text-xs font-bold text-white">{e.batch?.batchName || `Batch #${e.batchId}`}</p>
                               <p className="text-[10px] text-white/40">{e.eggsCollected} collected · {new Date(e.logDate).toLocaleDateString()}</p>
                             </div>
-                            <button onClick={() => handleSoftRestore(restoreEggProduction, e.id, 'Egg Log')} disabled={isPending} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-yellow-500/15 hover:bg-yellow-500/30 text-yellow-400 border border-yellow-500/20 transition-all flex items-center gap-1 disabled:opacity-50">
-                              <RotateCcw className="w-3 h-3" /> Restore
+                            <button onClick={() => handleSoftRestore(restoreEggProduction, e.id, 'Egg Log')} disabled={isRestoring(`Egg Log:${e.id}`)} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-yellow-500/15 hover:bg-yellow-500/30 text-yellow-400 border border-yellow-500/20 transition-all flex items-center gap-1 disabled:opacity-50">
+                              {isRestoring(`Egg Log:${e.id}`) ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />} {isRestoring(`Egg Log:${e.id}`) ? 'Restoring...' : 'Restore'}
                             </button>
                           </div>
                         ))}
@@ -422,8 +452,8 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                               <p className="text-xs font-bold text-white">{l.batch?.batchName || `Batch #${l.batchId}`}</p>
                               <p className="text-[10px] text-white/40">{l.amountConsumed} kg · {new Date(l.logDate).toLocaleDateString()}</p>
                             </div>
-                            <button onClick={() => handleSoftRestore(restoreFeedingLog, l.id, 'Feed Log')} disabled={isPending} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-orange-500/15 hover:bg-orange-500/30 text-orange-400 border border-orange-500/20 transition-all flex items-center gap-1 disabled:opacity-50">
-                              <RotateCcw className="w-3 h-3" /> Restore
+                            <button onClick={() => handleSoftRestore(restoreFeedingLog, l.id, 'Feed Log')} disabled={isRestoring(`Feed Log:${l.id}`)} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-orange-500/15 hover:bg-orange-500/30 text-orange-400 border border-orange-500/20 transition-all flex items-center gap-1 disabled:opacity-50">
+                              {isRestoring(`Feed Log:${l.id}`) ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />} {isRestoring(`Feed Log:${l.id}`) ? 'Restoring...' : 'Restore'}
                             </button>
                           </div>
                         ))}
@@ -467,10 +497,10 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                   setSelectedLog(null);
                   handleRestore(id);
                 }}
-                disabled={isPending}
+                disabled={isRestoring(`audit:${selectedLog.id}`)}
                 className="bg-emerald-500 hover:bg-emerald-600 text-black px-6 py-2 rounded-md font-bold uppercase text-[10px] tracking-widest transition-all hover:scale-105 disabled:opacity-50"
               >
-                Restore Record
+                {isRestoring(`audit:${selectedLog.id}`) ? 'Restoring...' : 'Restore Record'}
               </button>
             </div>
           </div>

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
-import { Share2, Copy, Check, Sparkles, Loader2 } from 'lucide-react'
+import { Share2, Copy, Check, Sparkles } from 'lucide-react'
 import { generateSocialPost } from '@/lib/actions/marketing-actions'
 
 export function MarketingSuite() {
@@ -12,6 +12,7 @@ export function MarketingSuite() {
   const [copied, setCopied] = useState(false)
 
   const handleGenerate = async () => {
+    if (loading) return
     setLoading(true)
     try {
       const res = await generateSocialPost()
@@ -49,10 +50,10 @@ export function MarketingSuite() {
               {post}
             </div>
             <div className="flex gap-2">
-              <Button onClick={handleGenerate} variant="outline" className="flex-1 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10">
+              <Button onClick={handleGenerate} variant="outline" isLoading={loading} loadingText="Regenerating..." className="flex-1 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10">
                 Regenerate
               </Button>
-              <Button onClick={handleCopy} className={`flex-1 transition-all duration-300 ${copied ? 'bg-emerald-500' : 'bg-emerald-600'}`}>
+              <Button onClick={handleCopy} disabled={loading} className={`flex-1 transition-all duration-300 ${copied ? 'bg-emerald-500' : 'bg-emerald-600'}`}>
                 {copied ? <Check size={16} className="mr-2" /> : <Copy size={16} className="mr-2" />}
                 {copied ? 'Copied!' : 'Copy Post'}
               </Button>
@@ -71,11 +72,11 @@ export function MarketingSuite() {
             </div>
             <Button 
              onClick={handleGenerate} 
-             disabled={loading}
+             isLoading={loading}
+             loadingText="Analyzing data..."
              className="bg-emerald-500 text-[#064e3b] font-bold uppercase tracking-widest text-[11px] px-7 rounded-md shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:scale-105 transition-transform"
             >
-              {loading ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
-              {loading ? 'Analyzing Data...' : 'Generate Post'}
+              Generate Post
             </Button>
           </div>
         )}

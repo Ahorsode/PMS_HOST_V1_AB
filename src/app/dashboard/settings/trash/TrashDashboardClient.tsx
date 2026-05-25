@@ -65,6 +65,7 @@ function RestoreButton({ id, onRestore, color }: { id: string; onRestore: Restor
   const c = COLOR_MAP[color]
 
   const handle = () => {
+    if (isPending) return
     startTransition(async () => {
       const res = await onRestore(id)
       if (res.success) {
@@ -89,7 +90,7 @@ function RestoreButton({ id, onRestore, color }: { id: string; onRestore: Restor
       className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-md transition-all ${c.btn} shadow-md ${c.glow}`}
     >
       {isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCcw className="w-3.5 h-3.5" />}
-      Restore
+      {isPending ? 'Restoring...' : 'Restore'}
     </motion.button>
   )
 }

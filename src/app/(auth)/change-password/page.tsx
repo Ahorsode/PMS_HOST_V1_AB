@@ -20,6 +20,7 @@ export default function ChangePasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
     
     if (newPassword.length < 6) {
       setError('Password must be at least 6 characters long.');
@@ -172,7 +173,10 @@ export default function ChangePasswordPage() {
                       className="w-full h-14 bg-white hover:bg-gray-100 text-black rounded-md font-bold text-lg transition-all shadow-xl hover:scale-[1.02] active:scale-95 disabled:opacity-50 flex items-center justify-center group/btn"
                     >
                       {isLoading ? (
-                        <Loader2 className="w-6 h-6 animate-spin" />
+                        <span className="inline-flex items-center gap-2">
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          Updating password...
+                        </span>
                       ) : (
                         <>
                           <span>Update Password</span>

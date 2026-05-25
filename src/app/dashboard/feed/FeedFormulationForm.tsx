@@ -46,6 +46,7 @@ export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: Feed
   const [type, setType] = useState<FeedType>('STARTER')
   const [targetLivestock, setTargetLivestock] = useState<LivestockType>('POULTRY_BROILER')
   const [ingredients, setIngredients] = useState<{ inventoryId: string; percentage: number | '' }[]>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   if (inventoryItems.length === 0) {
     return (
@@ -123,6 +124,8 @@ export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: Feed
   }
 
   const handleSubmit = async () => {
+    if (isSubmitting) return;
+
     if (ingredients.length === 0) {
       toast.error('Please add at least one ingredient');
       return;
@@ -139,21 +142,26 @@ export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: Feed
       return;
     }
 
-    const res = await createFeedFormulation({
-      name,
-      type,
-      targetLivestock,
-      ingredients: ingredients.map(i => ({
-        ...i,
-        percentage: Number(i.percentage)
-      }))
-    })
+    setIsSubmitting(true);
+    try {
+      const res = await createFeedFormulation({
+        name,
+        type,
+        targetLivestock,
+        ingredients: ingredients.map(i => ({
+          ...i,
+          percentage: Number(i.percentage)
+        }))
+      })
 
-    if (res.success) {
-      toast.success('Formulation saved successfully');
-      onSuccess()
-    } else {
-      toast.error((res as any).error || 'Failed to save formulation');
+      if (res.success) {
+        toast.success('Formulation saved successfully');
+        onSuccess()
+      } else {
+        toast.error((res as any).error || 'Failed to save formulation');
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -212,7 +220,7 @@ export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: Feed
               onClick={addIngredient} 
               size="sm" 
               variant="outline" 
-              disabled={ingredients.length >= inventoryItems.length}
+              disabled={isSubmitting || ingredients.length >= inventoryItems.length}
               className="gap-2 border-emerald-400/50 text-emerald-400 bg-emerald-400/10 font-bold uppercase tracking-widest text-xs h-10 px-4 disabled:opacity-50"
             >
               <Plus className="w-4 h-4" /> Add Item
@@ -253,6 +261,7 @@ export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: Feed
                   variant="ghost" 
                   size="icon" 
                   onClick={() => removeIngredient(idx)}
+                  disabled={isSubmitting}
                   className="text-red-500 hover:bg-red-500/20 h-14 w-14 border border-red-500/20"
                 >
                   <Trash2 className="w-6 h-6" />
@@ -279,6 +288,8 @@ export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: Feed
 
         <Button 
           onClick={handleSubmit} 
+          isLoading={isSubmitting}
+          loadingText="Saving formulation..."
           className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-md shadow-lg transition-all uppercase tracking-widest"
         >
           Save Formulation

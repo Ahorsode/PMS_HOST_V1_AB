@@ -13,12 +13,14 @@ import { toast } from 'sonner';
 export default function HousesPage({ houses, canEdit = true }: { houses: any[], canEdit?: boolean }) {
   const [isAdding, setIsAdding] = useState(false);
   const [editingHouse, setEditingHouse] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [deletingHouseId, setDeletingHouseId] = useState<string | null>(null);
   const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setIsLoading(true);
+    if (isSaving) return;
+    setIsSaving(true);
     const formData = new FormData(e.currentTarget);
     try {
       await createHouse(formData);
@@ -29,15 +31,16 @@ export default function HousesPage({ houses, canEdit = true }: { houses: any[], 
       toast.error("Failed to add house");
       console.error(error);
     } finally {
-      setIsLoading(false);
+      setIsSaving(false);
     }
   }
 
   async function handleUpdate(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!editingHouse) return;
+    if (isSaving) return;
     
-    setIsLoading(true);
+    setIsSaving(true);
     const formData = new FormData(e.currentTarget);
     const name = formData.get('name') as string;
     const capacity = parseInt(formData.get('capacity') as string);
@@ -54,14 +57,15 @@ export default function HousesPage({ houses, canEdit = true }: { houses: any[], 
     } catch (error) {
       toast.error("An error occurred during update");
     } finally {
-      setIsLoading(false);
+      setIsSaving(false);
     }
   }
 
   async function handleDelete(id: string) {
+    if (deletingHouseId === id) return;
     if (!confirm("Are you sure you want to delete this house? This cannot be undone.")) return;
     
-    setIsLoading(true);
+    setDeletingHouseId(id);
     try {
       const res = await deleteHouse(id);
       if (res.success) {
@@ -73,7 +77,7 @@ export default function HousesPage({ houses, canEdit = true }: { houses: any[], 
     } catch (error) {
       toast.error("An error occurred during deletion");
     } finally {
-      setIsLoading(false);
+      setDeletingHouseId(null);
     }
   }
 
@@ -104,8 +108,8 @@ export default function HousesPage({ houses, canEdit = true }: { houses: any[], 
                 <Input label="Capacity" name="capacity" type="number" min="0" placeholder="Max birds" required />
               </div>
               <div className="flex justify-end gap-2 pt-3">
-                <Button type="button" variant="outline" onClick={() => setIsAdding(false)}>Cancel</Button>
-                <Button type="submit" isLoading={isLoading} className="bg-emerald-600 hover:bg-emerald-700">Save House</Button>
+                <Button type="button" variant="outline" onClick={() => setIsAdding(false)} disabled={isSaving}>Cancel</Button>
+                <Button type="submit" isLoading={isSaving} loadingText="Saving..." className="bg-emerald-600 hover:bg-emerald-700">Save House</Button>
               </div>
             </form>
           </CardContent>
@@ -124,8 +128,8 @@ export default function HousesPage({ houses, canEdit = true }: { houses: any[], 
                 <Input label="Capacity" name="capacity" type="number" min="0" defaultValue={editingHouse.capacity} required />
               </div>
               <div className="flex justify-end gap-2 pt-3">
-                <Button type="button" variant="outline" onClick={() => setEditingHouse(null)}>Cancel</Button>
-                <Button type="submit" isLoading={isLoading} className="bg-blue-600 hover:bg-blue-700">Update House</Button>
+                <Button type="button" variant="outline" onClick={() => setEditingHouse(null)} disabled={isSaving}>Cancel</Button>
+                <Button type="submit" isLoading={isSaving} loadingText="Updating..." className="bg-blue-600 hover:bg-blue-700">Update House</Button>
               </div>
             </form>
           </CardContent>
@@ -144,6 +148,7 @@ export default function HousesPage({ houses, canEdit = true }: { houses: any[], 
                 <div className="flex items-center gap-1 transition-opacity">
                   <button 
                     onClick={() => setEditingHouse(house)}
+                    disabled={deletingHouseId === house.id}
                     className="p-1.5 hover:bg-blue-50 rounded-md text-blue-600 transition-colors"
                     title="Edit House"
                   >
@@ -151,10 +156,11 @@ export default function HousesPage({ houses, canEdit = true }: { houses: any[], 
                   </button>
                   <button 
                     onClick={() => handleDelete(house.id)}
-                    className="p-1.5 hover:bg-red-50 rounded-md text-red-600 transition-colors"
+                    disabled={deletingHouseId === house.id}
+                    className="p-1.5 hover:bg-red-50 rounded-md text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Delete House"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    {deletingHouseId === house.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
                   </button>
                 </div>
               )}

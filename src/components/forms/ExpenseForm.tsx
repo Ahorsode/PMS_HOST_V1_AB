@@ -31,6 +31,7 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (loading) return;
     setLoading(true);
     setError(null);
     setSuccess(false);
@@ -50,16 +51,19 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
       return;
     }
 
-    const result = await createExpense(data);
-    if (result.success) {
-      setSuccess(true);
-      setAmount('');
-      (e.target as HTMLFormElement).reset();
-      if (onSuccess) onSuccess();
-    } else {
-      setError(result.error || 'Failed to log expense');
+    try {
+      const result = await createExpense(data);
+      if (result.success) {
+        setSuccess(true);
+        setAmount('');
+        (e.target as HTMLFormElement).reset();
+        if (onSuccess) onSuccess();
+      } else {
+        setError(result.error || 'Failed to log expense');
+      }
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   return (
@@ -172,11 +176,12 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
           </AnimatePresence>
 
           <Button 
-            disabled={loading} 
+            isLoading={loading}
+            loadingText="Logging..."
             type="submit" 
             className="w-full bg-emerald-500 hover:bg-emerald-600 text-black font-bold uppercase tracking-widest h-12 rounded-md"
           >
-            {loading ? 'Logging...' : 'Log Expense'}
+            Log Expense
           </Button>
         </form>
       </CardContent>

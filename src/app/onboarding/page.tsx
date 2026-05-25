@@ -15,6 +15,7 @@ export default function OnboardingPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isLoading) return;
     setIsLoading(true);
     setError(null);
 
@@ -65,12 +66,14 @@ export default function OnboardingPage() {
                   name="name"
                   required
                   placeholder="e.g. Green Valley Farm"
+                  disabled={isLoading}
                 />
                 <Input 
                   label="Location"
                   name="location"
                   required
                   placeholder="e.g. Kumasi, Ghana"
+                  disabled={isLoading}
                 />
                 <Input 
                   label="Total Capacity (Birds)"
@@ -79,6 +82,7 @@ export default function OnboardingPage() {
                   required
                   min="1"
                   placeholder="e.g. 5000"
+                  disabled={isLoading}
                 />
               </div>
 
@@ -86,6 +90,7 @@ export default function OnboardingPage() {
                 <Button
                   type="submit"
                   isLoading={isLoading}
+                  loadingText="Setting up farm..."
                   size="lg"
                   className="w-full"
                 >

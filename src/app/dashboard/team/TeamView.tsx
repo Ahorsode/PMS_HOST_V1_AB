@@ -17,6 +17,8 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
   const [invitations, setInvitations] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isInviting, setIsInviting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSavingPermissions, setIsSavingPermissions] = useState(false);
   const [currentUserRole, setCurrentUserRole] = useState<string>('WORKER');
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string, type: 'member' | 'invite' } | null>(null);
@@ -72,8 +74,8 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
   };
 
   const handleDelete = async () => {
-    if (!deleteTarget) return;
-    setIsLoading(true);
+    if (!deleteTarget || isDeleting) return;
+    setIsDeleting(true);
     try {
       if (deleteTarget.type === 'member') {
         await deleteMember(deleteTarget.id);
@@ -85,13 +87,13 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
     } catch (err) {
       console.error(err);
     } finally {
-      setIsLoading(false);
+      setIsDeleting(false);
     }
   };
 
   const handleSavePermissions = async (permissions: any) => {
-    if (!permissionTarget) return;
-    setIsLoading(true);
+    if (!permissionTarget || isSavingPermissions) return;
+    setIsSavingPermissions(true);
     try {
       const response = await updateWorkerPermissions(permissionTarget.userId, permissions) as any;
       if (response?.success) {
@@ -104,7 +106,7 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
     } catch (err: any) {
       alert(err.message || 'Unknown error');
     } finally {
-      setIsLoading(false);
+      setIsSavingPermissions(false);
     }
   };
 
@@ -322,9 +324,11 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
                   <Button 
                     type="submit" 
                     disabled={!!(isInviting || (limitCheck && !limitCheck.canAdd))}
+                    isLoading={isInviting}
+                    loadingText="Sending..."
                     className="w-full py-5 mt-3"
                   >
-                    {isInviting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Send Invitation'}
+                    Send Invitation
                   </Button>
                 </form>
               </CardContent>
@@ -358,7 +362,7 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
 
       <Dialog 
         isOpen={!!deleteTarget} 
-        onOpenChange={(open) => !open && setDeleteTarget(null)} 
+        onOpenChange={(open) => !open && !isDeleting && setDeleteTarget(null)} 
         title={`Revoke ${deleteTarget?.type === 'member' ? 'Access' : 'Invitation'}`}
       >
         <div className="space-y-5">
@@ -367,8 +371,8 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
             This action cannot be undone.
           </p>
           <div className="flex justify-end gap-2 pt-5 border-t border-white/10">
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
-            <Button variant="danger" onClick={handleDelete} isLoading={isLoading}>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={isDeleting}>Cancel</Button>
+            <Button variant="danger" onClick={handleDelete} isLoading={isDeleting} loadingText="Revoking...">
               Confirm Revoke
             </Button>
           </div>
@@ -381,7 +385,7 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
           onClose={() => setPermissionTarget(null)}
           staffName={`${permissionTarget.user?.firstname || ''} ${permissionTarget.user?.surname || ''}`}
           initialPermissions={permissionTarget.user?.userPermissions?.[0]}
-          isLoading={isLoading}
+          isLoading={isSavingPermissions}
           onSave={handleSavePermissions}
         />
       )}

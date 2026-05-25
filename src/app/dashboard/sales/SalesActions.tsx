@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Plus, MoreVertical, Eye, CheckCircle2, XCircle, Trash2, ShoppingCart, FileDown, CreditCard } from 'lucide-react';
+import { Plus, MoreVertical, Eye, CheckCircle2, XCircle, Trash2, ShoppingCart, FileDown, CreditCard, Loader2 } from 'lucide-react';
 import { Dialog } from '@/components/ui/Dialog';
 import { SalesForm } from './SalesForm';
 import { updateOrderStatus } from '@/lib/actions/order-actions';
@@ -50,22 +50,30 @@ export function SalesActionsHeader({ customers, inventory, livestock, initialLiv
 }
 
 export function SalesRowActions({ order, canEdit = true }: { order: any, canEdit?: boolean }) {
-  const [isUpdating, setIsUpdating] = useState(false);
+  const [updatingAction, setUpdatingAction] = useState<'completed' | 'cancelled' | 'payment' | null>(null);
+  const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState(Number(order.totalAmount));
 
   const handleStatusUpdate = async (status: string) => {
-    setIsUpdating(true);
-    const res = await updateOrderStatus(order.id, status);
-    setIsUpdating(false);
-    if (res.success) {
-      toast.success(`Order ${status.toLowerCase()} successfully`);
-    } else {
-      toast.error(res.error || 'Failed to update order status');
+    if (updatingAction) return;
+    const action = status.toLowerCase() === 'completed' ? 'completed' : 'cancelled';
+    setUpdatingAction(action);
+    try {
+      const res = await updateOrderStatus(order.id, status);
+      if (res.success) {
+        toast.success(`Order ${status.toLowerCase()} successfully`);
+      } else {
+        toast.error(res.error || 'Failed to update order status');
+      }
+    } finally {
+      setUpdatingAction(null);
     }
   };
 
   const handleDownloadInvoice = async () => {
+    if (isDownloadingInvoice) return;
+    setIsDownloadingInvoice(true);
     toast.info('Generating PDF...');
     try {
       const res = await generateInvoicePDF(order.id) as any;
@@ -91,23 +99,29 @@ export function SalesRowActions({ order, canEdit = true }: { order: any, canEdit
       }
     } catch (e: any) {
       toast.error(e?.message || 'Unexpected error generating PDF');
+    } finally {
+      setIsDownloadingInvoice(false);
     }
   };
 
   const handleRecordPayment = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsUpdating(true);
-    const res = await recordPayment({
-      customerId: order.customerId,
-      amount: paymentAmount,
-      orderId: order.id
-    });
-    setIsUpdating(false);
-    if (res.success) {
-      toast.success('Payment recorded and order marked PAID');
-      setIsPaymentOpen(false);
-    } else {
-      toast.error(res.error || 'Failed to record payment');
+    if (updatingAction) return;
+    setUpdatingAction('payment');
+    try {
+      const res = await recordPayment({
+        customerId: order.customerId,
+        amount: paymentAmount,
+        orderId: order.id
+      });
+      if (res.success) {
+        toast.success('Payment recorded and order marked PAID');
+        setIsPaymentOpen(false);
+      } else {
+        toast.error(res.error || 'Failed to record payment');
+      }
+    } finally {
+      setUpdatingAction(null);
     }
   };
 
@@ -115,10 +129,11 @@ export function SalesRowActions({ order, canEdit = true }: { order: any, canEdit
     <div className="flex items-center justify-end gap-2 px-2">
       <button 
         onClick={handleDownloadInvoice}
+        disabled={isDownloadingInvoice}
         title="Download Invoice"
-        className="p-2.5 rounded-md hover:bg-blue-500/10 text-blue-500/40 hover:text-blue-400 transition-all border border-transparent hover:border-blue-500/20"
+        className="p-2.5 rounded-md hover:bg-blue-500/10 text-blue-500/40 hover:text-blue-400 transition-all border border-transparent hover:border-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        <FileDown className="w-4 h-4" />
+        {isDownloadingInvoice ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
       </button>
 
       {canEdit && (
@@ -136,22 +151,22 @@ export function SalesRowActions({ order, canEdit = true }: { order: any, canEdit
           {(order.status === 'PENDING' || order.status === 'PAID') && (
             <button 
               onClick={() => handleStatusUpdate('COMPLETED')}
-              disabled={isUpdating}
+              disabled={!!updatingAction}
               title="Mark as Completed"
-              className="p-2.5 rounded-md hover:bg-emerald-500/10 text-emerald-500/40 hover:text-emerald-400 transition-all border border-transparent hover:border-emerald-500/20"
+              className="p-2.5 rounded-md hover:bg-emerald-500/10 text-emerald-500/40 hover:text-emerald-400 transition-all border border-transparent hover:border-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <CheckCircle2 className="w-4 h-4" />
+              {updatingAction === 'completed' ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
             </button>
           )}
 
           {order.status === 'PENDING' && (
             <button 
               onClick={() => handleStatusUpdate('CANCELLED')}
-              disabled={isUpdating}
+              disabled={!!updatingAction}
               title="Cancel Order"
-              className="p-2.5 rounded-md hover:bg-red-500/10 text-red-500/40 hover:text-red-400 transition-all border border-transparent hover:border-red-500/20"
+              className="p-2.5 rounded-md hover:bg-red-500/10 text-red-500/40 hover:text-red-400 transition-all border border-transparent hover:border-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <XCircle className="w-4 h-4" />
+              {updatingAction === 'cancelled' ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
             </button>
           )}
         </>
@@ -183,10 +198,11 @@ export function SalesRowActions({ order, canEdit = true }: { order: any, canEdit
 
            <button 
              type="submit"
-             disabled={isUpdating}
-             className="w-full flex items-center justify-center gap-2 bg-emerald-500 text-[#064e3b] px-5 py-3 rounded-md font-bold uppercase tracking-widest text-[11px] transition-all hover:scale-105"
+             disabled={updatingAction === 'payment'}
+             className="w-full flex items-center justify-center gap-2 bg-emerald-500 text-[#064e3b] px-5 py-3 rounded-md font-bold uppercase tracking-widest text-[11px] transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
            >
-             {isUpdating ? 'Recording...' : 'Record Payment & Settle Order'}
+             {updatingAction === 'payment' && <Loader2 className="w-4 h-4 animate-spin" />}
+             {updatingAction === 'payment' ? 'Recording...' : 'Record Payment & Settle Order'}
            </button>
         </form>
       </Dialog>

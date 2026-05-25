@@ -34,6 +34,7 @@ interface FlockDetailClientProps {
 
 export const FlockDetailClient = ({ batch }: FlockDetailClientProps) => {
   const [isLoggingWeight, setIsLoggingWeight] = useState(false);
+  const [isSavingWeight, setIsSavingWeight] = useState(false);
   const [weight, setWeight] = useState('');
   const [logDate, setLogDate] = useState(new Date().toISOString().split('T')[0]);
   const [showGhost, setShowGhost] = useState(true);
@@ -61,7 +62,9 @@ export const FlockDetailClient = ({ batch }: FlockDetailClientProps) => {
 
   const handleLogWeight = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSavingWeight) return;
     if (!weight) return;
+    setIsSavingWeight(true);
     try {
       await logWeight({
         batchId: batch.id,
@@ -72,11 +75,14 @@ export const FlockDetailClient = ({ batch }: FlockDetailClientProps) => {
       setWeight('');
     } catch (err) {
       console.error(err);
+    } finally {
+      setIsSavingWeight(false);
     }
   };
 
   const handleAddVaccination = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSavingVacc) return;
     if (!vaccName || !vaccDate) return;
     setIsSavingVacc(true);
     try {
@@ -166,6 +172,7 @@ export const FlockDetailClient = ({ batch }: FlockDetailClientProps) => {
                              step="0.001" 
                              value={weight} 
                              onChange={(e) => setWeight(e.target.value)} 
+                             disabled={isSavingWeight}
                              required
                            />
                            <Input 
@@ -173,10 +180,11 @@ export const FlockDetailClient = ({ batch }: FlockDetailClientProps) => {
                              type="date" 
                              value={logDate} 
                              onChange={(e) => setLogDate(e.target.value)} 
+                             disabled={isSavingWeight}
                              required
                            />
                         </div>
-                        <Button type="submit" className="w-full py-3">Save Weight Record</Button>
+                        <Button type="submit" isLoading={isSavingWeight} loadingText="Saving weight..." className="w-full py-3">Save Weight Record</Button>
                      </motion.form>
                    )}
                 </AnimatePresence>
@@ -308,7 +316,8 @@ export const FlockDetailClient = ({ batch }: FlockDetailClientProps) => {
                 </CardTitle>
                 <button
                   onClick={() => setShowVaccForm(!showVaccForm)}
-                  className="p-1.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:bg-amber-500/20 transition-all"
+                  disabled={isSavingVacc}
+                  className="p-1.5 rounded-md bg-amber-500/10 border border-amber-500/20 text-amber-400 hover:bg-amber-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Plus className="w-3.5 h-3.5" />
                 </button>
@@ -328,6 +337,7 @@ export const FlockDetailClient = ({ batch }: FlockDetailClientProps) => {
                         placeholder="e.g. Newcastle IBD"
                         value={vaccName}
                         onChange={e => setVaccName(e.target.value)}
+                        disabled={isSavingVacc}
                         required
                       />
                       <Input
@@ -335,6 +345,7 @@ export const FlockDetailClient = ({ batch }: FlockDetailClientProps) => {
                         type="date"
                         value={vaccDate}
                         onChange={e => setVaccDate(e.target.value)}
+                        disabled={isSavingVacc}
                         required
                       />
                       <Input
@@ -342,8 +353,9 @@ export const FlockDetailClient = ({ batch }: FlockDetailClientProps) => {
                         placeholder="Dosage, route..."
                         value={vaccNotes}
                         onChange={e => setVaccNotes(e.target.value)}
+                        disabled={isSavingVacc}
                       />
-                      <Button type="submit" isLoading={isSavingVacc} className="w-full" size="sm">
+                      <Button type="submit" isLoading={isSavingVacc} loadingText="Adding schedule..." className="w-full" size="sm">
                         Add Schedule
                       </Button>
                     </motion.form>

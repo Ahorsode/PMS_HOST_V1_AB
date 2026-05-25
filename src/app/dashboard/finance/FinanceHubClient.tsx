@@ -89,7 +89,7 @@ export function FinanceHubClient({
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   
   const [selectedTx, setSelectedTx] = useState<Transaction | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [mutationMode, setMutationMode] = useState<'add' | 'settle' | 'delete' | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
   
   // Add Transaction Form state
@@ -114,6 +114,9 @@ export function FinanceHubClient({
   const [searchTerm, setSearchTerm] = useState('')
   const [filterType, setFilterType] = useState<'ALL' | 'REVENUE' | 'EXPENSE'>('ALL')
   const [filterStatus, setFilterStatus] = useState<string>('ALL')
+  const isAddingTransaction = mutationMode === 'add'
+  const isSettlingTransaction = mutationMode === 'settle'
+  const isDeletingTransaction = mutationMode === 'delete'
 
   // Calculate totals based on current list (excluding soft deleted)
   const totalRevenue = transactions
@@ -138,93 +141,105 @@ export function FinanceHubClient({
   // Handle Add Submit
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
+    if (mutationMode) return
+    setMutationMode('add')
     setErrorMsg('')
 
     const amt = parseFloat(formData.amount)
     if (isNaN(amt) || amt <= 0) {
       setErrorMsg('Please enter a valid amount greater than 0')
-      setLoading(false)
+      setMutationMode(null)
       return
     }
 
-    const res = await createFinancialTransaction({
-      ...formData,
-      amount: amt
-    })
-
-    if (res.success && res.transaction) {
-      // Safely prepend the new transaction
-      setTransactions(prev => [res.transaction as any, ...prev])
-      setIsAddOpen(false)
-      // reset form
-      setFormData({
-        type: 'EXPENSE',
-        category: EXPENSE_CATEGORIES[0],
-        amount: '',
-        paymentStatus: 'PAID',
-        paymentMethod: 'Cash',
-        referenceNum: '',
-        transactionDate: new Date().toISOString().split('T')[0],
-        description: ''
+    try {
+      const res = await createFinancialTransaction({
+        ...formData,
+        amount: amt
       })
-    } else {
-      setErrorMsg(res.error || 'Failed to create transaction')
+
+      if (res.success && res.transaction) {
+        // Safely prepend the new transaction
+        setTransactions(prev => [res.transaction as any, ...prev])
+        setIsAddOpen(false)
+        // reset form
+        setFormData({
+          type: 'EXPENSE',
+          category: EXPENSE_CATEGORIES[0],
+          amount: '',
+          paymentStatus: 'PAID',
+          paymentMethod: 'Cash',
+          referenceNum: '',
+          transactionDate: new Date().toISOString().split('T')[0],
+          description: ''
+        })
+      } else {
+        setErrorMsg(res.error || 'Failed to create transaction')
+      }
+    } finally {
+      setMutationMode(null)
     }
-    setLoading(false)
   }
 
   // Handle Settle Submit
   const handleSettleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedTx) return
-    setLoading(true)
+    if (mutationMode) return
+    setMutationMode('settle')
     setErrorMsg('')
 
-    const res = await settleTransaction(selectedTx.id, settleRef)
-    if (res.success) {
-      const baseDesc = selectedTx.description || ''
-      const settledSuffix = `Fully settled on ${new Date().toLocaleDateString()}${settleRef ? ` (ref: ${settleRef})` : ''}`
-      const updatedDesc = baseDesc 
-        ? `${baseDesc} | ${settledSuffix}`
-        : settledSuffix;
+    try {
+      const res = await settleTransaction(selectedTx.id, settleRef)
+      if (res.success) {
+        const baseDesc = selectedTx.description || ''
+        const settledSuffix = `Fully settled on ${new Date().toLocaleDateString()}${settleRef ? ` (ref: ${settleRef})` : ''}`
+        const updatedDesc = baseDesc 
+          ? `${baseDesc} | ${settledSuffix}`
+          : settledSuffix;
 
-      setTransactions(prev => prev.map(t => 
-        t.id === selectedTx.id 
-          ? { 
-              ...t, 
-              paymentStatus: 'PAID', 
-              referenceNum: settleRef || t.referenceNum,
-              description: updatedDesc
-            } 
-          : t
-      ))
-      setIsSettleOpen(false)
-      setSettleRef('')
-      setSelectedTx(null)
-    } else {
-      setErrorMsg(res.error || 'Failed to settle transaction')
+        setTransactions(prev => prev.map(t => 
+          t.id === selectedTx.id 
+            ? { 
+                ...t, 
+                paymentStatus: 'PAID', 
+                referenceNum: settleRef || t.referenceNum,
+                description: updatedDesc
+              } 
+            : t
+        ))
+        setIsSettleOpen(false)
+        setSettleRef('')
+        setSelectedTx(null)
+      } else {
+        setErrorMsg(res.error || 'Failed to settle transaction')
+      }
+    } finally {
+      setMutationMode(null)
     }
-    setLoading(false)
   }
 
   // Handle Delete Submit
   const handleDeleteSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selectedTx) return
-    setLoading(true)
+    if (mutationMode) return
+    setMutationMode('delete')
     setErrorMsg('')
 
-    const res = await deleteFinancialTransaction(selectedTx.id, deleteReason)
-    if (res.success) {
-      setTransactions(prev => prev.filter(t => t.id !== selectedTx.id))
-      setIsDeleteOpen(false)
-      setDeleteReason('')
-      setSelectedTx(null)
-    } else {
-      setErrorMsg(res.error || 'Failed to delete transaction')
+    try {
+      const res = await deleteFinancialTransaction(selectedTx.id, deleteReason)
+      if (res.success) {
+        setTransactions(prev => prev.filter(t => t.id !== selectedTx.id))
+        setIsDeleteOpen(false)
+        setDeleteReason('')
+        setSelectedTx(null)
+      } else {
+        setErrorMsg(res.error || 'Failed to delete transaction')
+      }
+    } finally {
+      setMutationMode(null)
     }
-    setLoading(false)
   }
 
   // Filter list
@@ -600,7 +615,8 @@ export function FinanceHubClient({
           <Card className="bg-[#18181b] border-white/10 w-full max-w-lg shadow-2xl relative">
             <button 
               onClick={() => setIsAddOpen(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white"
+              disabled={isAddingTransaction}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <X className="w-5 h-5" />
             </button>
@@ -740,16 +756,18 @@ export function FinanceHubClient({
                   <Button
                     type="button"
                     onClick={() => setIsAddOpen(false)}
+                    disabled={isAddingTransaction}
                     className="bg-slate-700 hover:bg-slate-600 text-white font-bold"
                   >
                     Cancel
                   </Button>
                   <Button
                     type="submit"
-                    disabled={loading}
+                    isLoading={isAddingTransaction}
+                    loadingText="Submitting..."
                     className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold"
                   >
-                    {loading ? 'Submitting...' : 'Record Transaction'}
+                    Record Transaction
                   </Button>
                 </div>
               </form>
@@ -764,7 +782,8 @@ export function FinanceHubClient({
           <Card className="bg-[#18181b] border-white/10 w-full max-w-md shadow-2xl relative">
             <button 
               onClick={() => setIsSettleOpen(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white"
+              disabled={isSettlingTransaction}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <X className="w-5 h-5" />
             </button>
@@ -810,16 +829,18 @@ export function FinanceHubClient({
                   <Button
                     type="button"
                     onClick={() => setIsSettleOpen(false)}
+                    disabled={isSettlingTransaction}
                     className="bg-slate-700 hover:bg-slate-600 text-white font-bold"
                   >
                     Cancel
                   </Button>
                   <Button
                     type="submit"
-                    disabled={loading}
+                    isLoading={isSettlingTransaction}
+                    loadingText="Saving..."
                     className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold"
                   >
-                    {loading ? 'Saving...' : 'Confirm Settlement'}
+                    Confirm Settlement
                   </Button>
                 </div>
               </form>
@@ -834,7 +855,8 @@ export function FinanceHubClient({
           <Card className="bg-[#18181b] border-white/10 w-full max-w-md shadow-2xl relative">
             <button 
               onClick={() => setIsDeleteOpen(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white"
+              disabled={isDeletingTransaction}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <X className="w-5 h-5" />
             </button>
@@ -874,16 +896,19 @@ export function FinanceHubClient({
                   <Button
                     type="button"
                     onClick={() => setIsDeleteOpen(false)}
+                    disabled={isDeletingTransaction}
                     className="bg-slate-700 hover:bg-slate-600 text-white font-bold"
                   >
                     Cancel
                   </Button>
                   <Button
                     type="submit"
-                    disabled={loading || deleteReason.trim().length < 5}
+                    disabled={deleteReason.trim().length < 5}
+                    isLoading={isDeletingTransaction}
+                    loadingText="Deleting..."
                     className="bg-rose-500 hover:bg-rose-600 text-white font-bold"
                   >
-                    {loading ? 'Deleting...' : 'Log Deletion'}
+                    Log Deletion
                   </Button>
                 </div>
               </form>

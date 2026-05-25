@@ -15,6 +15,7 @@ export default function ProfileOnboardingPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isLoading) return;
     setIsLoading(true);
     setError(null);
 
@@ -72,12 +73,14 @@ export default function ProfileOnboardingPage() {
                   name="firstname"
                   required
                   placeholder="e.g. John"
+                  disabled={isLoading}
                 />
                 <Input 
                   label="Surname"
                   name="surname"
                   required
                   placeholder="e.g. Doe"
+                  disabled={isLoading}
                 />
                 
                 <div className="pt-2 border-t border-white/5 space-y-5">
@@ -87,12 +90,14 @@ export default function ProfileOnboardingPage() {
                     name="newPassword"
                     type="password"
                     placeholder="Enter short or long password"
+                    disabled={isLoading}
                   />
                   <Input 
                     label="Confirm Password"
                     name="confirmPassword"
                     type="password"
                     placeholder="Confirm your password"
+                    disabled={isLoading}
                   />
                 </div>
               </div>
@@ -101,6 +106,7 @@ export default function ProfileOnboardingPage() {
                 <Button
                   type="submit"
                   isLoading={isLoading}
+                  loadingText="Saving profile..."
                   size="lg"
                   className="w-full"
                 >

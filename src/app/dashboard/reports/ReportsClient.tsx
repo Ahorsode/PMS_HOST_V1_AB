@@ -67,12 +67,16 @@ export function ReportsClient({
   }
 
   const handleFetch = async (sDate = startDate, eDate = endDate) => {
+    if (loading) return
     setLoading(true)
-    const newReport = await onDateChange(sDate, eDate)
-    if (newReport) {
-      setReport(newReport)
+    try {
+      const newReport = await onDateChange(sDate, eDate)
+      if (newReport) {
+        setReport(newReport)
+      }
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const triggerPdfDownload = () => {
@@ -247,19 +251,22 @@ export function ReportsClient({
           <div className="flex flex-wrap gap-2 w-full lg:w-auto">
             <button
               onClick={() => applyPreset(7)}
-              className="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-3 py-2 rounded-lg border border-slate-700 transition-all"
+              disabled={loading}
+              className="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-3 py-2 rounded-lg border border-slate-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Last 7 Days
             </button>
             <button
               onClick={() => applyPreset(30)}
-              className="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-3 py-2 rounded-lg border border-slate-700 transition-all"
+              disabled={loading}
+              className="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-3 py-2 rounded-lg border border-slate-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Last 30 Days
             </button>
             <button
               onClick={applyThisMonth}
-              className="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-3 py-2 rounded-lg border border-slate-700 transition-all"
+              disabled={loading}
+              className="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-3 py-2 rounded-lg border border-slate-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               This Month
             </button>
@@ -290,10 +297,11 @@ export function ReportsClient({
             </div>
             <Button
               onClick={() => handleFetch()}
-              disabled={loading}
+              isLoading={loading}
+              loadingText="Aggregating..."
               className="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold py-2 px-4 rounded-lg w-full sm:w-auto"
             >
-              {loading ? 'Aggregating...' : 'Generate'}
+              Generate
             </Button>
           </div>
         </CardContent>

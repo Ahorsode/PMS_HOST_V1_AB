@@ -26,6 +26,7 @@ export default function SignUpPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
     if (!formData.phoneNumber || !formData.password) return;
     
     setIsLoading(true);
@@ -116,6 +117,7 @@ export default function SignUpPage() {
                           value={formData.firstname}
                           onChange={handleChange}
                           placeholder="First"
+                          disabled={isLoading}
                           className="w-full h-12 pl-9 pr-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
                         />
                       </div>
@@ -126,6 +128,7 @@ export default function SignUpPage() {
                           value={formData.surname}
                           onChange={handleChange}
                           placeholder="Surname"
+                          disabled={isLoading}
                           className="w-full h-12 px-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
                         />
                       </div>
@@ -141,6 +144,7 @@ export default function SignUpPage() {
                         value={formData.email}
                         onChange={handleChange}
                         placeholder="Email Address (Optional)"
+                        disabled={isLoading}
                         className="w-full h-12 pl-9 pr-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
                       />
                     </div>
@@ -156,6 +160,7 @@ export default function SignUpPage() {
                         onChange={handleChange}
                         placeholder="+233 54 000 0000"
                         required
+                        disabled={isLoading}
                         className="w-full h-12 pl-9 pr-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
                       />
                     </div>
@@ -171,6 +176,7 @@ export default function SignUpPage() {
                         onChange={handleChange}
                         placeholder="Create Password"
                         required
+                        disabled={isLoading}
                         className="w-full h-12 pl-9 pr-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
                       />
                     </div>
@@ -194,7 +200,10 @@ export default function SignUpPage() {
                       className="w-full h-14 bg-white hover:bg-gray-100 text-black rounded-md font-bold text-lg transition-all shadow-xl hover:scale-[1.02] active:scale-95 disabled:opacity-50 flex items-center justify-center group/btn"
                     >
                       {isLoading ? (
-                        <Loader2 className="w-6 h-6 animate-spin" />
+                        <span className="inline-flex items-center gap-2">
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          Creating account...
+                        </span>
                       ) : (
                         <>
                           <span>Create Account</span>
@@ -205,7 +214,7 @@ export default function SignUpPage() {
                   </form>
                   
                   <p className="text-white/70 text-xs font-bold pt-3">
-                    Already have an account? <button onClick={() => router.push('/login')} className="text-emerald-400 hover:underline">Log In</button>
+                    Already have an account? <button onClick={() => router.push('/login')} disabled={isLoading} className="text-emerald-400 hover:underline disabled:opacity-50 disabled:cursor-not-allowed">Log In</button>
                   </p>
                 </div>
               </div>

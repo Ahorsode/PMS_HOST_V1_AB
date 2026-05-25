@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { Dialog } from '@/components/ui/Dialog';
 import { Card, CardContent } from '@/components/ui/Card';
-import { Banknote, Truck, Plus, Trash2, Save, X } from 'lucide-react';
+import { Banknote, Truck, Plus, Trash2, Save, X, Loader2 } from 'lucide-react';
 import { updateBatchFinancials } from '@/lib/actions/dashboard-actions';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
@@ -39,6 +39,7 @@ export function FinancialInitializationModal({ isOpen, onClose, batchId, batchNa
   };
 
   const handleSave = async () => {
+    if (isSubmitting) return;
     setIsSubmitting(true);
     try {
       const result = await updateBatchFinancials(batchId, {
@@ -66,7 +67,7 @@ export function FinancialInitializationModal({ isOpen, onClose, batchId, batchNa
   return (
     <Dialog 
       isOpen={isOpen} 
-      onOpenChange={(open) => !open && onClose()} 
+      onOpenChange={(open) => !open && !isSubmitting && onClose()} 
       title={`Financial Initialization: ${batchName}`}
       description="Initialize the investment costs for this livestock unit. These will be recorded as farm expenses for accurate P&L reporting."
     >
@@ -119,6 +120,7 @@ export function FinancialInitializationModal({ isOpen, onClose, batchId, batchNa
             </label>
             <button 
               onClick={addOtherExpense}
+              disabled={isSubmitting}
               className="p-1.5 bg-purple-500/10 border border-purple-500/20 rounded-lg text-purple-400 hover:bg-purple-500/20 transition-all"
             >
               <Plus className="w-4 h-4" />
@@ -144,7 +146,8 @@ export function FinancialInitializationModal({ isOpen, onClose, batchId, batchNa
                   />
                   <button 
                     onClick={() => removeOtherExpense(idx)}
-                    className="p-2 text-red-400 hover:bg-red-500/10 rounded-md transition-all"
+                    disabled={isSubmitting}
+                    className="p-2 text-red-400 hover:bg-red-500/10 rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -161,7 +164,8 @@ export function FinancialInitializationModal({ isOpen, onClose, batchId, batchNa
         <div className="flex gap-2 pt-3">
           <button 
             onClick={onClose}
-            className="flex-1 py-3 rounded-md bg-white/10 border border-white/10 text-white font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all"
+            disabled={isSubmitting}
+            className="flex-1 py-3 rounded-md bg-white/10 border border-white/10 text-white font-bold text-xs uppercase tracking-widest hover:bg-white/10 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Skip for Now
           </button>
@@ -170,7 +174,10 @@ export function FinancialInitializationModal({ isOpen, onClose, batchId, batchNa
             disabled={isSubmitting}
             className="flex-1 py-3 rounded-md bg-emerald-500 text-[#064e3b] font-bold text-xs uppercase tracking-widest hover:bg-emerald-400 transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] disabled:opacity-50"
           >
-            {isSubmitting ? 'Saving...' : 'Save Initial Costs'}
+            <span className="inline-flex items-center justify-center gap-2">
+              {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+              {isSubmitting ? 'Saving...' : 'Save Initial Costs'}
+            </span>
           </button>
         </div>
       </div>

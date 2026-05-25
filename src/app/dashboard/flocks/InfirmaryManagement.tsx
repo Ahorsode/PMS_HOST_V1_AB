@@ -20,6 +20,9 @@ export function InfirmaryManagement({ batches }: { batches: Batch[] }) {
   const isolatedBatches = batches.filter(b => (b.isolationCount || 0) > 0)
 
   const handleAction = async (batchId: string, type: 'RECOVER' | 'DEAD', maxCount: number) => {
+    const actionKey = `${batchId}-${type}`
+    if (loadingId === actionKey) return
+
     const inputCount = parseInt(counts[batchId]) || maxCount
     
     if (inputCount <= 0 || inputCount > maxCount) {
@@ -27,7 +30,7 @@ export function InfirmaryManagement({ batches }: { batches: Batch[] }) {
       return
     }
 
-    setLoadingId(`${batchId}-${type}`)
+    setLoadingId(actionKey)
     try {
       let res;
       if (type === 'RECOVER') {
@@ -64,6 +67,15 @@ export function InfirmaryManagement({ batches }: { batches: Batch[] }) {
       <div className="grid grid-cols-1 gap-4">
         {isolatedBatches.length > 0 ? isolatedBatches.map((batch) => (
           <div key={batch.id} className="bg-[#1F2937] border border-gray-800 rounded-2xl p-6 shadow-sm flex flex-col lg:flex-row justify-between items-center gap-6 hover:shadow-md transition-all border-l-4 border-l-amber-500">
+            {(() => {
+              const recoverKey = `${batch.id}-RECOVER`
+              const mortalityKey = `${batch.id}-DEAD`
+              const isRecovering = loadingId === recoverKey
+              const isLoggingMortality = loadingId === mortalityKey
+              const isRowLoading = isRecovering || isLoggingMortality
+
+              return (
+                <>
             <div className="flex items-center gap-4 w-full lg:w-auto">
               <div className="p-4 bg-amber-500/10 text-amber-400 rounded-2xl shrink-0">
                 <Activity className="w-7 h-7" />
@@ -87,6 +99,7 @@ export function InfirmaryManagement({ batches }: { batches: Batch[] }) {
                   min="1"
                   max={batch.isolationCount}
                   value={counts[batch.id] || ''}
+                  disabled={isRowLoading}
                   onChange={(e) => {
                     const val = parseInt(e.target.value);
                     if (val > batch.isolationCount) {
@@ -101,22 +114,29 @@ export function InfirmaryManagement({ batches }: { batches: Batch[] }) {
               <div className="flex gap-2 w-full sm:w-auto">
                 <Button 
                   onClick={() => handleAction(batch.id, 'RECOVER', batch.isolationCount)}
-                  disabled={!!loadingId}
+                  isLoading={isRecovering}
+                  loadingText="Recovering..."
+                  disabled={isLoggingMortality}
                   className="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs h-10 px-6 rounded-xl shadow-lg shadow-emerald-900/20 border border-emerald-500/50"
                 >
-                  {loadingId === `${batch.id}-RECOVER` ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
                   Recover
                 </Button>
                 <Button 
                   onClick={() => handleAction(batch.id, 'DEAD', batch.isolationCount)}
-                  disabled={!!loadingId}
+                  isLoading={isLoggingMortality}
+                  loadingText="Logging..."
+                  disabled={isRecovering}
                   className="flex-1 sm:flex-none bg-[#1F2937] hover:bg-red-500/10 text-red-400 border border-red-500/30 font-bold text-xs h-10 px-6 rounded-xl transition-colors"
                 >
-                  {loadingId === `${batch.id}-DEAD` ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Skull className="w-4 h-4 mr-2" />}
+                  <Skull className="w-4 h-4 mr-2" />
                   Mortality
                 </Button>
               </div>
             </div>
+                </>
+              )
+            })()}
           </div>
         )) : (
           <div className="py-20 flex flex-col items-center justify-center text-gray-500 bg-[#1F2937]/50 rounded-3xl border border-dashed border-gray-700 shadow-inner">

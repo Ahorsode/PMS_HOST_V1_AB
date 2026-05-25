@@ -38,6 +38,7 @@ export default function DesktopLicensesClient({ initialPaid, initialLicenses }: 
 
   const handleCheckoutSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
     setIsLoading(true);
     // Simulate gateway delay
     setTimeout(() => {
@@ -47,6 +48,7 @@ export default function DesktopLicensesClient({ initialPaid, initialLicenses }: 
   };
 
   const handleGenerateKeys = async () => {
+    if (isLoading) return;
     setIsLoading(true);
     try {
       const res = await purchaseDesktopLicenseBundle(seatCount);
@@ -108,7 +110,7 @@ export default function DesktopLicensesClient({ initialPaid, initialLicenses }: 
                 <ShieldCheck className="w-6 h-6 text-emerald-400" />
                 Secure Checkout
               </CardTitle>
-              <button onClick={() => setViewState('PITCH')} className="text-white/40 hover:text-white transition-colors">&times;</button>
+              <button onClick={() => setViewState('PITCH')} disabled={isLoading} className="text-white/40 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed">&times;</button>
             </div>
             <p className="text-sm text-white/50 mt-1">One-time payment for perpetual local terminal access.</p>
           </CardHeader>
@@ -147,8 +149,8 @@ export default function DesktopLicensesClient({ initialPaid, initialLicenses }: 
               </div>
 
               <div className="pt-4">
-                <Button type="submit" className="w-full h-12 text-lg font-bold bg-emerald-500 hover:bg-emerald-600" disabled={isLoading}>
-                  {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Authorize Payment ($199)'}
+                <Button type="submit" className="w-full h-12 text-lg font-bold bg-emerald-500 hover:bg-emerald-600" isLoading={isLoading} loadingText="Authorizing...">
+                  Authorize Payment ($199)
                 </Button>
               </div>
             </form>
@@ -179,6 +181,7 @@ export default function DesktopLicensesClient({ initialPaid, initialLicenses }: 
                 <button 
                   type="button"
                   onClick={() => setSeatCount(Math.max(1, seatCount - 1))}
+                  disabled={isLoading}
                   className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-xl flex items-center justify-center transition-colors"
                 >
                   -
@@ -189,6 +192,7 @@ export default function DesktopLicensesClient({ initialPaid, initialLicenses }: 
                 <button 
                   type="button"
                   onClick={() => setSeatCount(seatCount + 1)}
+                  disabled={isLoading}
                   className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-xl flex items-center justify-center transition-colors"
                 >
                   +
@@ -198,10 +202,11 @@ export default function DesktopLicensesClient({ initialPaid, initialLicenses }: 
 
             <Button 
               onClick={handleGenerateKeys} 
-              disabled={isLoading}
+              isLoading={isLoading}
+              loadingText="Generating keys..."
               className="w-full h-14 text-lg font-bold bg-emerald-500 hover:bg-emerald-600 shadow-[0_0_20px_rgba(16,185,129,0.3)]"
             >
-              {isLoading ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Key className="w-5 h-5 mr-2" />}
+              <Key className="w-5 h-5 mr-2" />
               Confirm Seat Count & Generate Keys
             </Button>
           </div>

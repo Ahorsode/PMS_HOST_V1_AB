@@ -26,6 +26,7 @@ export function DeleteConfirmationModal({
   if (!isOpen) return null;
 
   const handleConfirm = () => {
+    if (isLoading) return;
     if (!reason.trim()) {
       setError("A reason is required to delete this item.");
       return;

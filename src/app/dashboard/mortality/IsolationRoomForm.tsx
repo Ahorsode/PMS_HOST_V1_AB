@@ -15,6 +15,7 @@ export const IsolationRoomForm = () => {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (isLoading) return;
     setIsLoading(true);
     setError(null);
 
@@ -56,6 +57,7 @@ export const IsolationRoomForm = () => {
           label="Room Name" 
           placeholder="e.g. Infirmary A" 
           required 
+          disabled={isLoading}
           className="bg-[#374151] border-gray-600 text-white placeholder-gray-400" 
         />
         <Input 
@@ -65,6 +67,7 @@ export const IsolationRoomForm = () => {
           placeholder="e.g. 50" 
           required 
           value={capacity}
+          disabled={isLoading}
           onChange={(e) => {
             const val = e.target.value;
             if (val === '' || parseInt(val) >= 0) {
@@ -82,6 +85,7 @@ export const IsolationRoomForm = () => {
           type="submit" 
           className="w-full bg-amber-600 hover:bg-amber-700 text-white"
           isLoading={isLoading}
+          loadingText="Creating room..."
         >
           Add Room
         </Button>

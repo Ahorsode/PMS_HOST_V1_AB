@@ -126,6 +126,7 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
 
   const handleSave = () => {
     if (!canEdit) return;
+    if (isPending) return;
     if (!form.itemName.trim()) return showToast('Item name is required', false);
     const stockNum = parseFloat(form.stockLevel);
     if (isNaN(stockNum) || stockNum < 0) return showToast('Invalid stock level', false);
@@ -171,6 +172,7 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
 
   const handleDelete = (reason: string) => {
     if (!canEdit || !itemToDelete) return;
+    if (isPending) return;
     startTransition(async () => {
       const res = await deleteInventoryItem(itemToDelete.id, reason);
       if (res?.success) { showToast('Item removed'); fetchItems(); setShowDeleteModal(false); }
