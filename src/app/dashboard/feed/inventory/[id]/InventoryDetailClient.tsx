@@ -101,7 +101,7 @@ export const InventoryDetailClient = ({ item }: InventoryDetailClientProps) => {
                                      Consumed <span className="text-emerald-400">{log.amountConsumed} {item.unit}</span>
                                   </span>
                                   <span className="text-white/70 text-[9px] font-bold uppercase tracking-widest bg-white/10 px-2 py-0.5 rounded-lg border border-white/10">
-                                     Batch FLK-{log.batchId?.toString().padStart(3, '0')}
+                                     {log.batch?.batchName || `Usage ${idx + 1}`}
                                   </span>
                                </div>
                             </div>
@@ -149,7 +149,7 @@ export const InventoryDetailClient = ({ item }: InventoryDetailClientProps) => {
                  <MetaItem label="Item Name" value={item.itemName} />
                  <MetaItem label="Category" value={item.category || 'N/A'} />
                  <MetaItem label="Unit of Measure" value={item.unit} />
-                 <MetaItem label="Unique ID" value={`INV-${item.id.toString().padStart(3, '0')}`} />
+                 <MetaItem label="Inventory Label" value={item.itemName} />
               </div>
            </Card>
         </div>

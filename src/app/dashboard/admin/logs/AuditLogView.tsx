@@ -183,7 +183,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
-                    {initialEditLogs.map((log) => (
+                    {initialEditLogs.map((log, index) => (
                       <tr key={log.id} className="hover:bg-white/5 transition-colors">
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2 text-white/90 font-medium text-xs">
@@ -200,7 +200,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                               {log.tableName}
                             </span>
                             <span className="text-[10px] font-mono text-emerald-400 font-bold">
-                              ID: #{log.recordId}
+                              Change {index + 1}
                             </span>
                           </div>
                         </td>
@@ -430,7 +430,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                         {trashItems.eggProduction.map((e: any) => (
                           <div key={e.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-white/5 border border-white/10">
                             <div>
-                              <p className="text-xs font-bold text-white">{e.batch?.batchName || `Batch #${e.batchId}`}</p>
+                              <p className="text-xs font-bold text-white">{e.batch?.batchName || 'Recovered egg log'}</p>
                               <p className="text-[10px] text-white/40">{e.eggsCollected} collected · {new Date(e.logDate).toLocaleDateString()}</p>
                             </div>
                             <button onClick={() => handleSoftRestore(restoreEggProduction, e.id, 'Egg Log')} disabled={isRestoring(`Egg Log:${e.id}`)} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-yellow-500/15 hover:bg-yellow-500/30 text-yellow-400 border border-yellow-500/20 transition-all flex items-center gap-1 disabled:opacity-50">
@@ -449,7 +449,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                         {trashItems.feedingLogs.map((l: any) => (
                           <div key={l.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-white/5 border border-white/10">
                             <div>
-                              <p className="text-xs font-bold text-white">{l.batch?.batchName || `Batch #${l.batchId}`}</p>
+                              <p className="text-xs font-bold text-white">{l.batch?.batchName || 'Recovered feed log'}</p>
                               <p className="text-[10px] text-white/40">{l.amountConsumed} kg · {new Date(l.logDate).toLocaleDateString()}</p>
                             </div>
                             <button onClick={() => handleSoftRestore(restoreFeedingLog, l.id, 'Feed Log')} disabled={isRestoring(`Feed Log:${l.id}`)} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-orange-500/15 hover:bg-orange-500/30 text-orange-400 border border-orange-500/20 transition-all flex items-center gap-1 disabled:opacity-50">

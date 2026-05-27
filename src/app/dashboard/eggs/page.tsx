@@ -57,22 +57,25 @@ export default async function EggsPage() {
                 </div>
               ) : (
                 <div className="grid gap-3">
-                  {layerBatches.map((batch: any) => (
+                  {layerBatches.map((batch: any, index: number) => {
+                    const livestockLabel = batch.batchName || `Layer flock ${index + 1}`;
+                    return (
                     <div key={batch.id} className="p-4 border border-gray-100 rounded-md bg-white hover:border-green-200 hover:shadow-lg hover:shadow-green-900/5 transition-all flex justify-between items-center group">
                       <div className="flex items-center gap-3">
                         <div className="h-12 w-12 rounded-md bg-green-50 flex items-center justify-center text-green-700 font-bold">
-                          {batch.id}
+                          {index + 1}
                         </div>
                         <div>
-                          <span className="font-bold text-gray-900">{batch.batchName || `FLK-${batch.id.toString().padStart(3, '0')}`}</span>
+                          <span className="font-bold text-gray-900">{livestockLabel}</span>
                           <p className="text-xs text-gray-500 font-medium">
-                            {batch.house?.name || `House ${batch.houseId}`} • {batch.currentCount.toLocaleString()} {batch.type?.toLowerCase().includes('poultry') ? 'birds' : 'animals'}
+                            {batch.house?.name || 'House not named'} • {batch.currentCount.toLocaleString()} {batch.type?.toLowerCase().includes('poultry') ? 'birds' : 'animals'}
                           </p>
                         </div>
                       </div>
                       <LogProductionButton batchId={batch.id} batches={layerBatches} canEdit={canEdit} />
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
@@ -98,7 +101,8 @@ export default async function EggsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {productionHistory.flatMap((log: any) => {
+                  {productionHistory.flatMap((log: any, logIndex: number) => {
+                    const livestockLabel = log.batch?.batchName || `Livestock ${logIndex + 1}`;
                     if (!log.isSorted) {
                       return [(
                         <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
@@ -106,7 +110,7 @@ export default async function EggsPage() {
                             {formatDate(log.logDate)}
                           </td>
                           <td className="px-5 py-3 whitespace-nowrap text-sm text-gray-900 font-bold">
-                            {log.batch?.batchName || `FLK-${log.batchId?.toString().padStart(3, '0')}`}
+                            {livestockLabel}
                           </td>
                           <td className="px-5 py-3 whitespace-nowrap">
                             <span className="px-2 py-1 text-[10px] font-bold rounded-lg uppercase bg-gray-100 text-gray-600">
@@ -142,7 +146,7 @@ export default async function EggsPage() {
                           {idx === 0 ? formatDate(log.logDate) : ''}
                         </td>
                         <td className="px-5 py-3 whitespace-nowrap text-sm text-gray-900 font-bold">
-                          {idx === 0 ? (log.batch?.batchName || `FLK-${log.batchId?.toString().padStart(3, '0')}`) : ''}
+                          {idx === 0 ? livestockLabel : ''}
                         </td>
                         <td className="px-5 py-3 whitespace-nowrap">
                           <span className={`px-2 py-1 text-[10px] font-bold rounded-lg uppercase bg-emerald-100 text-emerald-700`}>

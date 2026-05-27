@@ -66,11 +66,13 @@ export function LivestockTable({ initialBatches, houses, isolationRooms, canEdit
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-50">
-              {filteredBatches.map((batch: any) => (
+              {filteredBatches.map((batch: any, index: number) => {
+                const unitLabel = batch.batchName || `Unit ${index + 1}`;
+                return (
                 <tr key={batch.id} className="hover:bg-gray-50/80 transition-all group">
                   <td className="px-5 py-3 whitespace-nowrap">
-                     <div className="text-sm font-bold text-emerald-700 uppercase tracking-normal">{batch.batchName || `Unit #${batch.localBatchId || batch.id}`}</div>
-                     <div className="text-xs text-gray-400 font-bold">ID: {batch.localBatchId || batch.id}</div>
+                     <div className="text-sm font-bold text-emerald-700 uppercase tracking-normal">{unitLabel}</div>
+                     <div className="text-xs text-gray-400 font-bold">Display No. {index + 1}</div>
                   </td>
                   <td className="px-5 py-3 whitespace-nowrap">
                     <div className="text-sm font-bold text-gray-900">{formatLivestockType(batch.type)}</div>
@@ -115,7 +117,8 @@ export function LivestockTable({ initialBatches, houses, isolationRooms, canEdit
                     <FlockRowActions batch={batch} houses={houses} isolationRooms={isolationRooms} canEdit={canEdit} />
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>

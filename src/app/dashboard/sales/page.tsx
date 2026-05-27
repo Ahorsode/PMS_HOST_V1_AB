@@ -126,7 +126,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-white/10">
-                  <th className="px-7 py-4 text-xs font-bold uppercase tracking-widest text-white/70">Order ID</th>
+                  <th className="px-7 py-4 text-xs font-bold uppercase tracking-widest text-white/70">Order</th>
                   <th className="px-7 py-4 text-xs font-bold uppercase tracking-widest text-white/70">Customer</th>
                   <th className="px-7 py-4 text-xs font-bold uppercase tracking-widest text-white/70">Amount</th>
                   <th className="px-7 py-4 text-xs font-bold uppercase tracking-widest text-white/70">Status</th>
@@ -134,10 +134,10 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {orders.map((order: Order) => (
+                {orders.map((order: Order, index: number) => (
                   <tr key={order.id} className="hover:bg-white/5 transition-colors group">
                     <td className="px-7 py-5">
-                      <span className="text-white font-bold text-sm tracking-normal uppercase tabular-nums">ORD-{order.id.toString().padStart(4, '0')}</span>
+                      <span className="text-white font-bold text-sm tracking-normal uppercase tabular-nums">Order {index + 1}</span>
                     </td>
                     <td className="px-7 py-5">
                       <div className="flex flex-col">
@@ -177,10 +177,10 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
           </div>
 
           <div className="block md:hidden p-3 space-y-3">
-            {orders.map((order: Order) => (
+            {orders.map((order: Order, index: number) => (
               <div key={order.id} className="bg-black/20 rounded-md p-3 border border-white/5 flex flex-col space-y-2">
                  <div className="flex justify-between items-center">
-                   <span className="text-white font-bold text-sm tracking-normal uppercase tabular-nums">ORD-{order.id.toString().padStart(4, '0')}</span>
+                   <span className="text-white font-bold text-sm tracking-normal uppercase tabular-nums">Order {index + 1}</span>
                    <span className={`px-2 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest border ${
                         order.status === 'COMPLETED' || order.status === 'PAID'
                           ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'

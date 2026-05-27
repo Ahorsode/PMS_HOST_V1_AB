@@ -8,7 +8,7 @@ import { createFeedingLog, updateFeedingLog, deleteFeedingLog } from '@/lib/acti
 import { useRouter } from 'next/navigation';
 
 interface FeedFormProps {
-  batches: { id: number; breedType: string }[];
+  batches: { id: number; breedType: string; batchName?: string | null }[];
   inventory: { id: number; itemName: string }[];
   formulations?: { id: number; name: string }[];
   log?: any;
@@ -107,7 +107,7 @@ export const FeedForm = ({ batches, inventory, formulations = [], log, mode, onC
     <form onSubmit={handleSubmit} className="space-y-3">
       <Select
         label="Batch"
-        options={batches.map(b => ({ label: `FLK-${b.id.toString().padStart(3, '0')} (${b.breedType})`, value: b.id }))}
+        options={batches.map((b, index) => ({ label: `${b.batchName || `Unit ${index + 1}`} (${b.breedType})`, value: b.id }))}
         value={formData.batchId}
         onChange={(e) => setFormData({ ...formData, batchId: Number(e.target.value) })}
         disabled={mode === 'edit'}

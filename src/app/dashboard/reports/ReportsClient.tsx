@@ -99,9 +99,9 @@ export function ReportsClient({
       ['Average Feed Conversion Ratio (FCR)', `${report.kpis.averageFcr.toFixed(2)}`, ''],
       [],
       ['Consolidated Ledger Statements', '', '', '', '', '', '', ''],
-      ['Transaction ID', 'Date', 'Type', 'Category', 'Amount (GHS)', 'Payment Status', 'Payment Method', 'Reference', 'Description'],
-      ...report.financials.map(f => [
-        f.id,
+      ['Transaction', 'Date', 'Type', 'Category', 'Amount (GHS)', 'Payment Status', 'Payment Method', 'Reference', 'Description'],
+      ...report.financials.map((f, index) => [
+        `Transaction ${index + 1}`,
         new Date(f.transactionDate).toLocaleDateString(),
         f.type,
         f.category,
@@ -113,9 +113,9 @@ export function ReportsClient({
       ]),
       [],
       ['Operational & Deletion Audit Logs', '', '', '', ''],
-      ['Log ID', 'Timestamp', 'Action Type', 'Description', 'Logged By'],
-      ...report.auditTimeline.map(l => [
-        l.id,
+      ['Log', 'Timestamp', 'Action Type', 'Description', 'Logged By'],
+      ...report.auditTimeline.map((l, index) => [
+        `Log ${index + 1}`,
         new Date(l.createdAt).toLocaleString(),
         l.actionType || '',
         l.description || '',

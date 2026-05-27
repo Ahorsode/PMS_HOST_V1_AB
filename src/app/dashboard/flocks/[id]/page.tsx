@@ -17,7 +17,7 @@ export default async function FlockDetailPage({ params }: { params: Promise<{ id
       <Breadcrumbs 
         items={[
           { label: 'Livestock', href: '/dashboard/flocks' },
-          { label: `UNIT-${batch.id.toString().padStart(3, '0')}` }
+          { label: batch.batchName || 'Unit details' }
         ]} 
       />
       
@@ -27,7 +27,7 @@ export default async function FlockDetailPage({ params }: { params: Promise<{ id
             Livestock <span className="text-emerald-400 italic">Management</span>
           </h2>
           <p className="text-white/70 font-bold uppercase tracking-widest text-xs mt-2 flex items-center gap-2 italic">
-             {batch.breedType} • House {batch.house?.name || batch.houseId}
+             {batch.breedType} • {batch.house?.name || 'House not named'}
           </p>
         </div>
         <div className="flex gap-3">

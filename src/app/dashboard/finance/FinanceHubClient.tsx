@@ -799,7 +799,7 @@ export function FinanceHubClient({
             <CardHeader className="pb-2">
               <CardTitle className="text-white text-xl font-black">Record Settle Payment</CardTitle>
               <p className="text-xs text-slate-400 font-medium mt-1">
-                Settling {selectedTx.type === 'REVENUE' ? 'Receivable' : 'Payable'} Invoice #{selectedTx.referenceNum || selectedTx.id.substring(0, 8)} generated on {new Date(selectedTx.transactionDate).toLocaleDateString()} for GH₵ {selectedTx.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                Settling {selectedTx.type === 'REVENUE' ? 'Receivable' : 'Payable'} invoice {selectedTx.referenceNum ? `#${selectedTx.referenceNum}` : 'for this transaction'} generated on {new Date(selectedTx.transactionDate).toLocaleDateString()} for GH₵ {selectedTx.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </p>
             </CardHeader>
             <CardContent>

@@ -128,7 +128,7 @@ export const FlockRowActions = ({ batch, houses, isolationRooms, canEdit = true 
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
         onConfirm={handleDelete}
-        itemName={batch.batchName || `Batch ${batch.id}`}
+        itemName={batch.batchName || 'Selected livestock unit'}
         isLoading={isDeleting}
       />
     </div>

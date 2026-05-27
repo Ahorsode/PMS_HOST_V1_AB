@@ -88,7 +88,7 @@ export default async function CustomerStatementPage({ params }: { params: Promis
                   No orders recorded yet.
                </div>
             ) : (
-               transactions.map((order) => (
+               transactions.map((order, index) => (
                   <div key={order.id} className="group relative bg-white/5 border border-white/10 p-5 rounded-lg hover:bg-white/[0.08] transition-all">
                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4 pb-4 border-b border-white/5">
                         <div className="flex items-center gap-5">
@@ -96,7 +96,7 @@ export default async function CustomerStatementPage({ params }: { params: Promis
                               <ShoppingCart className="w-5 h-5 text-blue-400" />
                            </div>
                            <div>
-                              <p className="text-white font-bold text-lg leading-tight">Order #{order.id}</p>
+                              <p className="text-white font-bold text-lg leading-tight">Order {index + 1}</p>
                               <div className="flex items-center gap-3 mt-1">
                                  <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${order.status === 'PAID' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
                                     {order.status}

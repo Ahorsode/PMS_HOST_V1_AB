@@ -166,7 +166,7 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
       return items.map(e => (
         <Row key={e.id}>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm text-white">{e.batch?.batchName || `Batch #${e.batchId}`}</p>
+            <p className="font-bold text-sm text-white">{e.batch?.batchName || 'Recovered egg log'}</p>
             <p className="text-xs text-white/50">{e.eggsCollected} collected &bull; {e.unusableCount} unusable &bull; {fmt(e.logDate)}</p>
           </div>
           <RestoreButton id={e.id} onRestore={restoreEggProduction} color={activeTabConfig.color} />
@@ -182,7 +182,7 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
       return items.map(l => (
         <Row key={l.id}>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm text-white">{l.batch?.batchName || `Batch #${l.batchId}`}</p>
+            <p className="font-bold text-sm text-white">{l.batch?.batchName || 'Recovered feed log'}</p>
             <p className="text-xs text-white/50">{l.amountConsumed} kg consumed &bull; {fmt(l.logDate)}</p>
           </div>
           <RestoreButton id={l.id} onRestore={restoreFeedingLog} color={activeTabConfig.color} />
@@ -198,7 +198,7 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
       return items.map(m => (
         <Row key={m.id}>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm text-white">{m.batch?.batchName || `Batch #${m.batchId}`}</p>
+            <p className="font-bold text-sm text-white">{m.batch?.batchName || 'Recovered mortality record'}</p>
             <p className="text-xs text-white/50">{m.count} {m.type.toLowerCase()} &bull; {m.reason || 'No reason'} &bull; {fmt(m.logDate)}</p>
           </div>
           <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${m.type === 'DEAD' ? 'bg-red-500/20 text-red-300' : 'bg-orange-500/20 text-orange-300'}`}>{m.type}</span>

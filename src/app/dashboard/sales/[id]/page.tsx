@@ -17,7 +17,7 @@ export default async function SaleDetailPage({ params }: { params: Promise<{ id:
       <Breadcrumbs 
         items={[
           { label: 'Sales & Finance', href: '/dashboard/sales' },
-          { label: `Order ORD-${sale.id.toString().padStart(4, '0')}` }
+          { label: sale.customerName ? `${sale.customerName} order` : 'Order details' }
         ]} 
       />
       

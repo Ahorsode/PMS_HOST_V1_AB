@@ -46,14 +46,14 @@ export default async function EggsAnalyticsPage() {
                   </tr>
                </thead>
                <tbody className="divide-y divide-white/10">
-                  {logs.slice(0, 15).map((log: any) => (
+                  {logs.slice(0, 15).map((log: any, index: number) => (
                     <tr key={log.id} className="hover:bg-white/[0.02] transition-colors">
                       <td className="px-7 py-5 text-white font-bold text-sm tracking-normal italic">
                         {formatDate(log.logDate)}
                       </td>
                       <td className="px-7 py-5">
                          <p className="text-white font-bold text-sm tracking-normal">{log.batch?.breedType}</p>
-                         <p className="text-white/60 text-[8px] font-bold uppercase tracking-widest mt-1">FLK-{log.batchId?.toString().padStart(3, '0')}</p>
+                         <p className="text-white/60 text-[8px] font-bold uppercase tracking-widest mt-1">{log.batch?.batchName || `Collection ${index + 1}`}</p>
                       </td>
                       <td className="px-7 py-5 text-center">
                          <span className="text-red-400/80 font-bold text-sm tracking-normal">{log.cracked || 0}</span>

@@ -18,9 +18,9 @@ export default async function CompareAnalyticsPage() {
   const rawBatches = await getAllBatches();
   const batches = JSON.parse(JSON.stringify(rawBatches));
 
-  const analyticsData = batches.map((b: any) => ({
+  const analyticsData = batches.map((b: any, index: number) => ({
     id: b.id,
-    batchName: b.batchName || `Batch #${b.id}`,
+    batchName: b.batchName || `Unit ${index + 1}`,
     arrivalDate: new Date(b.arrivalDate).toISOString(),
     fcr: 1.72,
     mortalityRate: b.initialCount

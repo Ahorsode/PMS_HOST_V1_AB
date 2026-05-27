@@ -91,11 +91,13 @@ export default async function MortalityPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-800">
-              {logs.map((log: any) => (
+              {logs.map((log: any, index: number) => {
+                const livestockLabel = log.batch?.batchName || `Livestock ${index + 1}`;
+                return (
                 <tr key={`desk-${log.id}`} className="hover:bg-[#1F2937] transition-colors">
                   <td className="px-5 py-3 whitespace-nowrap text-sm text-gray-300 font-medium">{formatDate(log.logDate)}</td>
                   <td className="px-5 py-3 whitespace-nowrap text-sm font-bold text-gray-100">
-                    FLK-{log.batchId?.toString().padStart(3, '0')} ({formatLivestockType(log.batch?.type)})
+                    {livestockLabel} ({formatLivestockType(log.batch?.type)})
                   </td>
                   <td className="px-5 py-3 whitespace-nowrap text-lg text-red-500 font-bold italic">{log.count}</td>
                   <td className="px-5 py-3 text-sm text-gray-400 font-medium">
@@ -122,18 +124,21 @@ export default async function MortalityPage() {
                     </Link>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
         {/* Mobile */}
         <div className="md:hidden flex flex-col gap-3 p-3">
-          {logs.map((log: any) => (
+          {logs.map((log: any, index: number) => {
+            const livestockLabel = log.batch?.batchName || `Livestock ${index + 1}`;
+            return (
             <div key={`mob-${log.id}`} className="bg-[#1F2937] border border-gray-700 p-3 rounded-lg shadow-sm flex flex-col gap-2">
               <div className="flex justify-between items-center border-b border-gray-700 pb-2">
                 <span className="text-xs font-bold tracking-widest text-gray-400 uppercase">{formatDate(log.logDate)}</span>
                 <span className="text-sm font-bold text-gray-200 bg-gray-800 px-2 py-1 rounded-full uppercase tracking-widest">
-                  FLK-{log.batchId?.toString().padStart(3, '0')}
+                  {livestockLabel}
                 </span>
               </div>
               <div className="flex items-center justify-between">
@@ -162,7 +167,8 @@ export default async function MortalityPage() {
                 </Link>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
         {logs.length === 0 && (
           <div className="py-24 text-center">

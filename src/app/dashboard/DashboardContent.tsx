@@ -430,7 +430,7 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
                 <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent mx-5" />
              </div>
              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-               {stats.activeBatches.map((batch: any) => {
+               {stats.activeBatches.map((batch: any, index: number) => {
                  const progress = getGrowthProgress(batch.hatchDate, batch.breed);
                  const unit = getUnitBySpecies(batch.type);
                  const formattedAge = formatAge(batch.hatchDate, batch.type);
@@ -440,8 +440,8 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
                      <div className="flex justify-between items-start mb-5 gap-3">
                         <div className="flex-1 min-w-0 space-y-1">
                            <div className="flex items-center gap-2 mb-2 flex-wrap">
-                              <span className="text-emerald-400 font-bold text-xs uppercase tracking-normal bg-emerald-500/20 px-2 py-0.5 rounded-lg border border-emerald-500/20 truncate">{batch.batchName || `UNIT-${batch.numericId}`}</span>
-                              <span className="text-white/70 font-bold text-xs uppercase tracking-widest truncate">House #{batch.houseNumber}</span>
+                              <span className="text-emerald-400 font-bold text-xs uppercase tracking-normal bg-emerald-500/20 px-2 py-0.5 rounded-lg border border-emerald-500/20 truncate">{batch.batchName || `Unit ${index + 1}`}</span>
+                              <span className="text-white/70 font-bold text-xs uppercase tracking-widest truncate">{batch.houseNumber ? 'Assigned house' : 'House not assigned'}</span>
                            </div>
                            <h4 className="text-white font-bold text-lg md:text-2xl tracking-normal capitalize truncate">{formatLivestockType(batch.type)} - {batch.breed}</h4>
                            <div className="text-white/70 text-xs font-bold uppercase tracking-widest mt-1">

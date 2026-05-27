@@ -136,7 +136,7 @@ export function AccountantDashboard({ summary, stats, currency = 'GHS' }: Accoun
                       </div>
                       <div>
                         <p className="text-white font-bold text-sm tracking-normal">
-                          {item.type === 'ORDER' ? `Order #${item.id}` : `Sale #${item.id}`} - {item.customerName || 'Walk-in'}
+                          {item.type === 'ORDER' ? `Order ${i + 1}` : `Sale ${i + 1}`} - {item.customerName || 'Walk-in'}
                         </p>
                         <p className="text-[9px] text-white/70 uppercase font-bold">
                           {item.date.toLocaleDateString()} • {item.status || 'Verified'}

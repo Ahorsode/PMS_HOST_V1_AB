@@ -17,6 +17,10 @@ export function QuickMortalityLogger({ activeBatches, isolationRooms = [], defau
   const [selectedBatch, setSelectedBatch] = useState<any>(null);
 
   const isDead = defaultType === 'DEAD';
+  const selectedBatchIndex = selectedBatch
+    ? activeBatches.findIndex((batch) => batch.id === selectedBatch.id)
+    : -1;
+  const selectedBatchLabel = selectedBatch?.batchName || (selectedBatchIndex >= 0 ? `Unit ${selectedBatchIndex + 1}` : 'Selected unit');
 
   return (
     <div className="space-y-3">
@@ -32,7 +36,7 @@ export function QuickMortalityLogger({ activeBatches, isolationRooms = [], defau
       </div>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        {activeBatches.map((batch) => (
+        {activeBatches.map((batch, index) => (
           <Card 
             key={batch.id} 
             className={`group hover:border-${isDead ? 'red-500/50' : 'amber-500/50'} transition-all border border-gray-800 bg-[#1F2937]`}
@@ -43,7 +47,7 @@ export function QuickMortalityLogger({ activeBatches, isolationRooms = [], defau
                   <p className={`text-xs font-bold ${isDead ? 'text-red-400' : 'text-amber-400'} uppercase tracking-widest leading-none mb-1`}>
                     Active Unit
                   </p>
-                  <h4 className="font-bold text-gray-100">{batch.batchName || `UNT-${batch.id.toString().padStart(3, '0')}`}</h4>
+                  <h4 className="font-bold text-gray-100">{batch.batchName || `Unit ${index + 1}`}</h4>
                 </div>
                 <button 
                   onClick={() => setSelectedBatch(batch)}
@@ -74,7 +78,7 @@ export function QuickMortalityLogger({ activeBatches, isolationRooms = [], defau
       <Dialog 
         isOpen={!!selectedBatch} 
         onOpenChange={(open) => !open && setSelectedBatch(null)} 
-        title={isDead ? `Log Mortality: ${selectedBatch?.batchName || `UNT-${selectedBatch?.id.toString().padStart(3, '0')}`}` : `Isolate/Quarantine: ${selectedBatch?.batchName || `UNT-${selectedBatch?.id.toString().padStart(3, '0')}`}`}
+        title={isDead ? `Log Mortality: ${selectedBatchLabel}` : `Isolate/Quarantine: ${selectedBatchLabel}`}
       >
         {selectedBatch && (
           <div className="p-2">

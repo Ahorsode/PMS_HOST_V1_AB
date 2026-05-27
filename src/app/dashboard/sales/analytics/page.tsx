@@ -48,14 +48,14 @@ export default async function SalesAnalyticsPage() {
                   </tr>
                </thead>
                <tbody className="divide-y divide-white/10">
-                  {sales.map((sale: any) => (
+                  {sales.map((sale: any, index: number) => (
                     <tr key={sale.id} className="transition-colors">
                       <td className="px-7 py-5 text-white font-bold text-sm tracking-normal italic">
                         {formatDate(sale.saleDate)}
                       </td>
                       <td className="px-7 py-5">
                          <p className="text-white font-bold text-sm tracking-normal">{sale.customerName || 'Walk-in Customer'}</p>
-                         <p className="text-white/20 text-[8px] font-bold uppercase tracking-widest">ORD-{sale.id.toString().padStart(4, '0')}</p>
+                         <p className="text-white/20 text-[8px] font-bold uppercase tracking-widest">Order {index + 1}</p>
                       </td>
                       <td className="px-7 py-5 text-center">
                          <span className="text-white/70 font-bold text-sm tracking-normal">{sale.items?.length || 0}</span>

@@ -98,7 +98,7 @@ export function ExecutiveDashboard({ stats, currency = 'GHS' }: ExecutiveDashboa
             />
             <PriorityItem 
               title="Batch Optimization" 
-              detail="Batch #2401 FCR 1.85 (Target 1.70)" 
+              detail="Layer flock FCR 1.85 (Target 1.70)" 
               type="performance"
             />
           </CardContent>

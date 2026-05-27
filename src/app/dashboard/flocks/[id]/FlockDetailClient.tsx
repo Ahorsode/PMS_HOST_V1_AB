@@ -407,9 +407,9 @@ export const FlockDetailClient = ({ batch }: FlockDetailClientProps) => {
            <Card className="rounded-lg bg-white/10 border-white/10 backdrop-blur-xl p-7 shadow-2xl border-dashed">
               <h4 className="text-white/80 font-bold italic uppercase text-xs tracking-widest mb-5 border-b border-white/5 pb-2">Batch Metadata</h4>
               <div className="space-y-5">
-                 <MetaItem label="Batch ID" value={`FLK-${(batch.localBatchId || batch.id).toString().padStart(3, '0')}`} />
+                 <MetaItem label="Unit Name" value={batch.batchName || 'Selected unit'} />
                  <MetaItem label="Source" value="Local Hatchery" />
-                 <MetaItem label="Housing" value={batch.house?.name || `House ${batch.houseId}`} />
+                 <MetaItem label="Housing" value={batch.house?.name || 'House not named'} />
                  <MetaItem label="Status" value={batch.status.toUpperCase()} />
               </div>
            </Card>

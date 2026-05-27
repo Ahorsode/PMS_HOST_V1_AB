@@ -101,7 +101,7 @@ export const SaleDetailClient = ({ sale }: SaleDetailClientProps) => {
               <h4 className="text-white font-bold italic text-xl mb-5">Customer Details</h4>
               <div className="space-y-4">
                  <MetaItem label="Client Name" value={sale.customerName || 'Walk-in Customer'} />
-                 <MetaItem label="Transaction ID" value={`ORD-${sale.id.toString().padStart(4, '0')}`} />
+                 <MetaItem label="Transaction" value="Current order" />
                  <MetaItem label="Payment Status" value="PAID / SETTLED" />
               </div>
            </Card>
