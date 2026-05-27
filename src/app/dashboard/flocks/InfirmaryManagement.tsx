@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { returnFromIsolation, logMortalityInIsolation } from '@/lib/actions/batch-actions'
 import { toast } from 'sonner'
-import { Activity, Skull, CheckCircle2, Loader2 } from 'lucide-react'
+import { Activity, Skull, CheckCircle2 } from 'lucide-react'
+import { MutationBoundary } from '@/components/ui/MutationFeedback'
 
 interface Batch {
   id: string
@@ -65,17 +66,16 @@ export function InfirmaryManagement({ batches }: { batches: Batch[] }) {
       </div>
 
       <div className="grid grid-cols-1 gap-4">
-        {isolatedBatches.length > 0 ? isolatedBatches.map((batch) => (
-          <div key={batch.id} className="bg-[#1F2937] border border-gray-800 rounded-2xl p-6 shadow-sm flex flex-col lg:flex-row justify-between items-center gap-6 hover:shadow-md transition-all border-l-4 border-l-amber-500">
-            {(() => {
-              const recoverKey = `${batch.id}-RECOVER`
-              const mortalityKey = `${batch.id}-DEAD`
-              const isRecovering = loadingId === recoverKey
-              const isLoggingMortality = loadingId === mortalityKey
-              const isRowLoading = isRecovering || isLoggingMortality
+        {isolatedBatches.length > 0 ? isolatedBatches.map((batch) => {
+          const recoverKey = `${batch.id}-RECOVER`
+          const mortalityKey = `${batch.id}-DEAD`
+          const isRecovering = loadingId === recoverKey
+          const isLoggingMortality = loadingId === mortalityKey
+          const isRowLoading = isRecovering || isLoggingMortality
 
-              return (
-                <>
+          return (
+          <MutationBoundary key={batch.id} active={isRowLoading} label={isRecovering ? 'Recovering livestock...' : 'Logging mortality...'} className="rounded-2xl">
+          <div className="bg-[#1F2937] border border-gray-800 rounded-2xl p-6 shadow-sm flex flex-col lg:flex-row justify-between items-center gap-6 hover:shadow-md transition-all border-l-4 border-l-amber-500">
             <div className="flex items-center gap-4 w-full lg:w-auto">
               <div className="p-4 bg-amber-500/10 text-amber-400 rounded-2xl shrink-0">
                 <Activity className="w-7 h-7" />
@@ -134,11 +134,10 @@ export function InfirmaryManagement({ batches }: { batches: Batch[] }) {
                 </Button>
               </div>
             </div>
-                </>
-              )
-            })()}
           </div>
-        )) : (
+          </MutationBoundary>
+          )
+        }) : (
           <div className="py-20 flex flex-col items-center justify-center text-gray-500 bg-[#1F2937]/50 rounded-3xl border border-dashed border-gray-700 shadow-inner">
             <div className="p-5 bg-emerald-500/10 rounded-full mb-4">
               <CheckCircle2 className="w-10 h-10 text-emerald-500 opacity-40" />

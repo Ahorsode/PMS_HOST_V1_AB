@@ -9,6 +9,7 @@ import { createHouse } from '@/lib/actions/dashboard-actions';
 import { updateHouse, deleteHouse } from '@/lib/actions/house-actions';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { MutationBoundary } from '@/components/ui/MutationFeedback';
 
 export default function HousesPage({ houses, canEdit = true }: { houses: any[], canEdit?: boolean }) {
   const [isAdding, setIsAdding] = useState(false);
@@ -138,7 +139,8 @@ export default function HousesPage({ houses, canEdit = true }: { houses: any[], 
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {houses.map((house) => (
-          <Card key={house.id} className="group hover:border-emerald-500 transition-all border-dashed bg-white shadow-sm hover:shadow-md">
+          <MutationBoundary key={house.id} active={deletingHouseId === house.id} label="Deleting house...">
+          <Card className="group hover:border-emerald-500 transition-all border-dashed bg-white shadow-sm hover:shadow-md">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-lg font-bold flex items-center gap-2 text-white">
                 <Home className="w-4 h-4 text-emerald-500" />
@@ -178,6 +180,7 @@ export default function HousesPage({ houses, canEdit = true }: { houses: any[], 
               </div>
             </CardContent>
           </Card>
+          </MutationBoundary>
         ))}
         
         {houses.length === 0 && (

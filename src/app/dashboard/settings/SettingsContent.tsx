@@ -8,6 +8,7 @@ import { updateFarmSettings, getFarmSettings } from '@/lib/actions/preference-ac
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { MutationBoundary } from '@/components/ui/MutationFeedback';
 
 interface InventoryItem {
   id: string;
@@ -324,7 +325,8 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
               ) : (
                 <div className="space-y-2">
                   {inventory.map(item => (
-                    <div key={item.id} className="flex items-center gap-3 p-3 rounded-md bg-white/10 border border-white/10">
+                    <MutationBoundary key={item.id} active={savingReorderId === item.id} label="Saving threshold...">
+                    <div className="flex items-center gap-3 p-3 rounded-md bg-white/10 border border-white/10">
                       <div className="flex-1">
                         <p className="font-bold text-white text-sm">{item.itemName}</p>
                         <p className="text-xs text-white/70 uppercase tracking-widest">Current stock: {item.stockLevel} {item.unit}</p>
@@ -352,6 +354,7 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
                         </Button>
                       </div>
                     </div>
+                    </MutationBoundary>
                   ))}
                 </div>
               )}

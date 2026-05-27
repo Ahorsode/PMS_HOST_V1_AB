@@ -8,6 +8,7 @@ import { updateOrderStatus } from '@/lib/actions/order-actions';
 import { recordPayment } from '@/lib/actions/payment-actions';
 import { generateInvoicePDF } from '@/lib/actions/invoice-actions';
 import { toast } from 'sonner';
+import { MutationBoundary } from '@/components/ui/MutationFeedback';
 
 export function SalesActionsHeader({ customers, inventory, livestock, initialLivestockId, canEdit = true }: { 
   customers: any[], 
@@ -126,6 +127,7 @@ export function SalesRowActions({ order, canEdit = true }: { order: any, canEdit
   };
 
   return (
+    <MutationBoundary active={!!updatingAction || isDownloadingInvoice} label={updatingAction === 'payment' ? 'Recording payment...' : isDownloadingInvoice ? 'Generating invoice...' : 'Updating order...'} className="rounded-md">
     <div className="flex items-center justify-end gap-2 px-2">
       <button 
         onClick={handleDownloadInvoice}
@@ -207,5 +209,6 @@ export function SalesRowActions({ order, canEdit = true }: { order: any, canEdit
         </form>
       </Dialog>
     </div>
+    </MutationBoundary>
   );
 }

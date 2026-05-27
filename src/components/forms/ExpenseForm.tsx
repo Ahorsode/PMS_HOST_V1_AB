@@ -8,6 +8,7 @@ import { Select } from '@/components/ui/Select';
 import { AlertCircle, CheckCircle2, DollarSign, Calendar, FileText, Tag } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createExpense } from '@/lib/actions/expense-actions';
+import { MutationBoundary } from '@/components/ui/MutationFeedback';
 
 const CATEGORIES = [
   'FEED',
@@ -76,6 +77,8 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
       </CardHeader>
       <CardContent className="pt-5">
         <form onSubmit={handleSubmit} className="space-y-3">
+          <MutationBoundary active={loading} label="Logging expense...">
+          <fieldset disabled={loading} className="space-y-3 disabled:opacity-70">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-2">
               <label className="text-xs uppercase font-bold text-white/70 tracking-widest italic flex items-center gap-1 ml-1 opacity-70">
@@ -183,6 +186,8 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
           >
             Log Expense
           </Button>
+          </fieldset>
+          </MutationBoundary>
         </form>
       </CardContent>
     </Card>

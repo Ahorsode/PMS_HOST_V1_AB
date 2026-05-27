@@ -17,6 +17,7 @@ import { getSuppliers, createSupplier } from '@/lib/actions/supplier-actions';
 import { Dialog } from '@/components/ui/Dialog';
 import { PartnerForm } from '@/components/partners/PartnerForm';
 import { DeleteConfirmationModal } from '@/components/modals/DeleteConfirmationModal';
+import { SkeletonLine } from '@/components/ui/MutationFeedback';
 
 
 /* ───────────────────── helpers ───────────────────── */
@@ -188,6 +189,7 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
   // separate eggs from everything else
   const eggItem = items.find(i => i.category === 'EGGS' && i.itemName === 'Eggs');
   const otherItems = items.filter(i => !(i.category === 'EGGS' && i.itemName === 'Eggs'));
+  const mutatingItemId = isPending ? itemToDelete?.id ?? editing?.id ?? null : null;
 
   const grouped: Record<string, InventoryItem[]> = {};
   otherItems.forEach(item => {
@@ -293,11 +295,18 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
 
                   </thead>
                   <tbody>
-                    {catItems.map((item, idx) => (
-                      <tr key={item.id} className={`${idx < catItems.length - 1 ? 'border-b border-white/5' : ''} hover:bg-white/5 transition-colors`}>
-                        <td className="px-4 py-2 font-semibold text-white">{item.itemName}</td>
+                    {catItems.map((item, idx) => {
+                      const isMutatingItem = mutatingItemId === item.id;
+
+                      return (
+                      <tr key={item.id} className={`${idx < catItems.length - 1 ? 'border-b border-white/5' : ''} hover:bg-white/5 transition-colors ${isMutatingItem ? 'bg-emerald-500/10 animate-pulse' : ''}`}>
+                        <td className="px-4 py-2 font-semibold text-white">
+                          {isMutatingItem ? <SkeletonLine className="h-4 w-32" /> : item.itemName}
+                        </td>
                         <td className={`px-4 py-3 text-right font-black text-lg ${item.stockLevel <= 5 ? 'text-red-400 animate-pulse' : 'text-emerald-400'}`}>
-                          {item.unit === 'bags' ? (
+                          {isMutatingItem ? (
+                            <SkeletonLine className="ml-auto h-4 w-16" />
+                          ) : item.unit === 'bags' ? (
                             <span>{item.stockLevel} <span className="text-white/60 font-bold text-sm uppercase">bags</span></span>
                           ) : (
                             item.stockLevel.toLocaleString()
@@ -305,11 +314,15 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
                           {item.stockLevel <= 5 && <TrendingDown className="inline w-4 h-4 ml-2" />}
                         </td>
                         <td className="px-4 py-3 text-right">
-                          {item.costPerUnit != null ? (
+                          {isMutatingItem ? (
+                            <SkeletonLine className="ml-auto h-4 w-20" />
+                          ) : item.costPerUnit != null ? (
                             <span className="text-amber-400 font-black text-base">GHS {Number(item.costPerUnit).toFixed(2)}</span>
                           ) : <span className="text-white/20">—</span>}
                         </td>
-                        <td className="px-4 py-2 text-right text-white/70">{item.unit}</td>
+                        <td className="px-4 py-2 text-right text-white/70">
+                          {isMutatingItem ? <SkeletonLine className="ml-auto h-3 w-12" /> : item.unit}
+                        </td>
                         <td className="px-4 py-2 text-right flex items-center justify-end gap-2">
                            <WorkerStamp user={item.user} />
                            {canEdit && (
@@ -324,7 +337,8 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
                            )}
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

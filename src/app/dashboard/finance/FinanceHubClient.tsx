@@ -24,6 +24,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { createFinancialTransaction, settleTransaction, deleteFinancialTransaction } from '@/lib/actions/financial-transaction-actions'
+import { SkeletonLine } from '@/components/ui/MutationFeedback'
 
 interface Transaction {
   id: string
@@ -432,7 +433,10 @@ export function FinanceHubClient({
                 <tbody className="divide-y divide-white/5">
                   {transactions
                     .filter(t => t.paymentStatus !== 'PAID')
-                    .map((tx) => (
+                    .map((tx) => {
+                      const isMutatingTx = !!mutationMode && selectedTx?.id === tx.id
+
+                      return (
                       <tr 
                         key={tx.id} 
                         onClick={() => {
@@ -441,14 +445,14 @@ export function FinanceHubClient({
                             setIsSettleOpen(true)
                           }
                         }}
-                        className="hover:bg-amber-500/5 transition-colors group cursor-pointer"
+                        className={`hover:bg-amber-500/5 transition-colors group cursor-pointer ${isMutatingTx ? 'bg-emerald-500/10 animate-pulse' : ''}`}
                         title="Click to quickly settle transaction"
                       >
                         <td className="py-4 px-6 text-white text-xs font-bold">
-                          {new Date(tx.transactionDate).toLocaleDateString(undefined, { dateStyle: 'medium' })}
+                          {isMutatingTx ? <SkeletonLine className="h-3 w-24" /> : new Date(tx.transactionDate).toLocaleDateString(undefined, { dateStyle: 'medium' })}
                         </td>
                         <td className="py-4 px-4 text-xs font-black">
-                          <span className={`inline-flex items-center gap-1 ${tx.type === 'REVENUE' ? 'text-blue-400' : 'text-amber-400'}`}>
+                          {isMutatingTx ? <SkeletonLine className="h-3 w-28" /> : <span className={`inline-flex items-center gap-1 ${tx.type === 'REVENUE' ? 'text-blue-400' : 'text-amber-400'}`}>
                             {tx.type === 'REVENUE' ? (
                               <>
                                 <ArrowUpRight className="w-4 h-4" />
@@ -460,26 +464,26 @@ export function FinanceHubClient({
                                 Payable (Outflow)
                               </>
                             )}
-                          </span>
+                          </span>}
                         </td>
                         <td className="py-4 px-4 text-xs font-bold text-white max-w-[150px] truncate">
-                          {tx.category}
+                          {isMutatingTx ? <SkeletonLine className="h-3 w-24" /> : tx.category}
                         </td>
                         <td className="py-4 px-4 text-xs text-slate-400 font-medium font-mono">
-                          {tx.referenceNum || '—'}
+                          {isMutatingTx ? <SkeletonLine className="h-3 w-16" /> : tx.referenceNum || '—'}
                         </td>
                         <td className="py-4 px-4 text-xs">
-                          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-bold text-[9px] border uppercase ${
+                          {isMutatingTx ? <SkeletonLine className="h-5 w-20" /> : <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-bold text-[9px] border uppercase ${
                             tx.paymentStatus === 'UNPAID'
                               ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
                               : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                           }`}>
                             <AlertTriangle className="w-3 h-3" />
                             {tx.paymentStatus.replace('_', ' ')}
-                          </span>
+                          </span>}
                         </td>
                         <td className={`py-4 px-6 text-right text-sm font-black ${tx.type === 'REVENUE' ? 'text-blue-400' : 'text-amber-400'}`}>
-                          GH₵ {tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          {isMutatingTx ? <SkeletonLine className="ml-auto h-3 w-20" /> : `GH₵ ${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                         </td>
                         {canEdit && (
                           <td className="py-4 px-6 text-center">
@@ -490,7 +494,8 @@ export function FinanceHubClient({
                           </td>
                         )}
                       </tr>
-                    ))}
+                      )
+                    })}
                 </tbody>
               </table>
             )}
@@ -530,32 +535,35 @@ export function FinanceHubClient({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/5">
-                  {filteredTransactions.map((tx) => (
-                    <tr key={tx.id} className="hover:bg-white/5 transition-colors group">
+                  {filteredTransactions.map((tx) => {
+                    const isMutatingTx = !!mutationMode && selectedTx?.id === tx.id
+
+                    return (
+                    <tr key={tx.id} className={`hover:bg-white/5 transition-colors group ${isMutatingTx ? 'bg-emerald-500/10 animate-pulse' : ''}`}>
                       <td className="py-4 px-6 text-white text-xs font-bold">
-                        {new Date(tx.transactionDate).toLocaleDateString(undefined, { dateStyle: 'medium' })}
+                        {isMutatingTx ? <SkeletonLine className="h-3 w-24" /> : new Date(tx.transactionDate).toLocaleDateString(undefined, { dateStyle: 'medium' })}
                       </td>
                       <td className="py-4 px-4 text-xs font-black">
-                        <span className={`inline-flex items-center gap-1 ${tx.type === 'REVENUE' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {isMutatingTx ? <SkeletonLine className="h-3 w-20" /> : <span className={`inline-flex items-center gap-1 ${tx.type === 'REVENUE' ? 'text-emerald-400' : 'text-rose-400'}`}>
                           {tx.type === 'REVENUE' ? (
                             <ArrowUpRight className="w-4 h-4" />
                           ) : (
                             <ArrowDownRight className="w-4 h-4" />
                           )}
                           {tx.type}
-                        </span>
+                        </span>}
                       </td>
                       <td className="py-4 px-4 text-xs font-bold text-white max-w-[150px] truncate" title={tx.category}>
-                        {tx.category}
+                        {isMutatingTx ? <SkeletonLine className="h-3 w-28" /> : tx.category}
                       </td>
                       <td className="py-4 px-4 text-xs text-slate-300 font-bold">
-                        {tx.paymentMethod}
+                        {isMutatingTx ? <SkeletonLine className="h-3 w-16" /> : tx.paymentMethod}
                       </td>
                       <td className="py-4 px-4 text-xs text-slate-400 font-medium font-mono" title={tx.referenceNum || ''}>
-                        {tx.referenceNum || '—'}
+                        {isMutatingTx ? <SkeletonLine className="h-3 w-16" /> : tx.referenceNum || '—'}
                       </td>
                       <td className="py-4 px-4 text-xs">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-bold text-[9px] border uppercase ${
+                        {isMutatingTx ? <SkeletonLine className="h-5 w-20" /> : <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-bold text-[9px] border uppercase ${
                           tx.paymentStatus === 'PAID' 
                             ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' 
                             : tx.paymentStatus === 'UNPAID'
@@ -566,10 +574,10 @@ export function FinanceHubClient({
                           {tx.paymentStatus === 'UNPAID' && <AlertTriangle className="w-3 h-3" />}
                           {tx.paymentStatus === 'PARTIALLY_PAID' && <Clock className="w-3 h-3" />}
                           {tx.paymentStatus.replace('_', ' ')}
-                        </span>
+                        </span>}
                       </td>
                       <td className={`py-4 px-6 text-right text-sm font-black ${tx.type === 'REVENUE' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                        {tx.type === 'REVENUE' ? '+' : '-'}GH₵ {tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        {isMutatingTx ? <SkeletonLine className="ml-auto h-3 w-20" /> : `${tx.type === 'REVENUE' ? '+' : '-'}GH₵ ${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                       </td>
                       {canEdit && (
                         <td className="py-4 px-6 text-center">
@@ -601,7 +609,8 @@ export function FinanceHubClient({
                         </td>
                       )}
                     </tr>
-                  ))}
+                    )
+                  })}
                 </tbody>
               </table>
             )}

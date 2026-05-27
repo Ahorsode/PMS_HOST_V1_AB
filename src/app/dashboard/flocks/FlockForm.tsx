@@ -10,6 +10,7 @@ import { createIsolationRoom } from '@/lib/actions/dashboard-actions';
 import { Activity, Skull, Home, AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { MutationBoundary } from '@/components/ui/MutationFeedback';
 
 interface LivestockFormProps {
   houses: { id: string; name: string }[];
@@ -139,6 +140,10 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
+      <MutationBoundary
+        active={isLoading}
+        label={mode === 'create' ? 'Registering unit...' : mode === 'edit' ? 'Saving changes...' : formData.healthType === 'SICK' ? 'Transferring to isolation...' : 'Logging mortality...'}
+      >
       <fieldset disabled={isLoading} className="space-y-3 disabled:opacity-70">
         {mode === 'mortality' ? (
           <>
@@ -344,6 +349,7 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
           </>
         )}
       </fieldset>
+      </MutationBoundary>
       <div className="flex justify-end gap-2 pt-5 border-t border-gray-100 italic font-medium text-xs uppercase text-gray-400">
         <Button variant="outline" type="button" onClick={onClose} disabled={isLoading} className="h-10 px-7 rounded-md border-gray-200">Cancel</Button>
         <Button 

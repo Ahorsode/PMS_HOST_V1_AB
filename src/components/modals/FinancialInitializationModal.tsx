@@ -7,6 +7,7 @@ import { Banknote, Truck, Plus, Trash2, Save, X, Loader2 } from 'lucide-react';
 import { updateBatchFinancials } from '@/lib/actions/dashboard-actions';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
+import { MutationBoundary } from '@/components/ui/MutationFeedback';
 
 interface FinancialInitializationModalProps {
   isOpen: boolean;
@@ -71,6 +72,7 @@ export function FinancialInitializationModal({ isOpen, onClose, batchId, batchNa
       title={`Financial Initialization: ${batchName}`}
       description="Initialize the investment costs for this livestock unit. These will be recorded as farm expenses for accurate P&L reporting."
     >
+      <MutationBoundary active={isSubmitting} label="Saving initial costs...">
       <div className="space-y-5 pt-3">
         
         <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-3 flex justify-between items-center">
@@ -181,6 +183,7 @@ export function FinancialInitializationModal({ isOpen, onClose, batchId, batchNa
           </button>
         </div>
       </div>
+      </MutationBoundary>
     </Dialog>
   );
 }

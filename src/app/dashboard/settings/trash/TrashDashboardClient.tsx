@@ -15,6 +15,7 @@ import { restoreSale } from '@/lib/actions/sale-actions'
 import { restoreOrder } from '@/lib/actions/order-actions'
 import { restoreInventory } from '@/lib/actions/inventory-actions'
 import { useRouter } from 'next/navigation'
+import { MutationBoundary } from '@/components/ui/MutationFeedback'
 
 type TrashItems = {
   batches: any[]
@@ -107,8 +108,9 @@ function EmptyState({ label }: { label: string }) {
   )
 }
 
-function Row({ children }: { children: React.ReactNode }) {
+function Row({ children, isMutating = false }: { children: React.ReactNode; isMutating?: boolean }) {
   return (
+    <MutationBoundary active={isMutating} label="Restoring record..." className="rounded-lg">
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
@@ -117,6 +119,7 @@ function Row({ children }: { children: React.ReactNode }) {
     >
       {children}
     </motion.div>
+    </MutationBoundary>
   )
 }
 

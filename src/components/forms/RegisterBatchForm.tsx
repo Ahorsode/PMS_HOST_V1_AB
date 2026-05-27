@@ -16,6 +16,7 @@ import { LivestockType } from '@prisma/client';
 import { createHouse } from '@/lib/actions/dashboard-actions';
 import { Dialog } from '@/components/ui/Dialog';
 import { toast } from 'sonner';
+import { MutationBoundary } from '@/components/ui/MutationFeedback';
 
 const formSchema = z.object({
   batchName: z.string().min(2, "Unit Name is required"),
@@ -179,6 +180,7 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
   return (
     <div className="w-full max-w-lg">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+        <MutationBoundary active={isSubmitting} label="Registering livestock unit...">
         <fieldset disabled={isSubmitting} className="space-y-5 disabled:opacity-70">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Input
@@ -259,6 +261,7 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
             </Button>
           </div>
         </fieldset>
+        </MutationBoundary>
       </form>
 
       {createdBatchId && (
@@ -277,6 +280,7 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
         title="➕ Create New Farm House"
         description="Add a new housing unit to your farm to accommodate this livestock unit."
       >
+        <MutationBoundary active={isCreatingHouse} label="Creating house...">
         <div className="space-y-4 pt-3">
           <Input 
             label="House Name / Number"
@@ -306,6 +310,7 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
              </Button>
           </div>
         </div>
+        </MutationBoundary>
       </Dialog>
     </div>
   );

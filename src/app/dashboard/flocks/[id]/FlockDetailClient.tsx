@@ -27,6 +27,7 @@ import { logWeight } from '@/lib/actions/dashboard-actions';
 import { createVaccinationSchedule } from '@/lib/actions/preference-actions';
 import { cn } from '@/lib/utils';
 import { WorkerStamp } from '@/components/ui/WorkerStamp';
+import { MutationBoundary } from '@/components/ui/MutationFeedback';
 
 interface FlockDetailClientProps {
   batch: any;
@@ -165,6 +166,7 @@ export const FlockDetailClient = ({ batch }: FlockDetailClientProps) => {
                        onSubmit={handleLogWeight}
                        className="mb-7 p-5 bg-emerald-500/10 rounded-lg border border-emerald-500/10 space-y-3"
                      >
+                        <MutationBoundary active={isSavingWeight} label="Saving weight...">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                            <Input 
                              label="Average Weight (kg)" 
@@ -185,6 +187,7 @@ export const FlockDetailClient = ({ batch }: FlockDetailClientProps) => {
                            />
                         </div>
                         <Button type="submit" isLoading={isSavingWeight} loadingText="Saving weight..." className="w-full py-3">Save Weight Record</Button>
+                        </MutationBoundary>
                      </motion.form>
                    )}
                 </AnimatePresence>
@@ -332,6 +335,7 @@ export const FlockDetailClient = ({ batch }: FlockDetailClientProps) => {
                       onSubmit={handleAddVaccination}
                       className="space-y-2 p-3 bg-amber-500/5 rounded-md border border-amber-500/15 mb-2"
                     >
+                      <MutationBoundary active={isSavingVacc} label="Adding schedule...">
                       <Input
                         label="Vaccine Name"
                         placeholder="e.g. Newcastle IBD"
@@ -358,6 +362,7 @@ export const FlockDetailClient = ({ batch }: FlockDetailClientProps) => {
                       <Button type="submit" isLoading={isSavingVacc} loadingText="Adding schedule..." className="w-full" size="sm">
                         Add Schedule
                       </Button>
+                      </MutationBoundary>
                     </motion.form>
                   )}
                 </AnimatePresence>

@@ -9,6 +9,7 @@ import { RegisterBatchForm } from '@/components/forms/RegisterBatchForm';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { DeleteConfirmationModal } from '@/components/modals/DeleteConfirmationModal';
+import { MutationBoundary } from '@/components/ui/MutationFeedback';
 
 export const FlockActionsHeader = ({ houses, canEdit = true }: { houses: any[], canEdit?: boolean }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -44,6 +45,7 @@ export const FlockRowActions = ({ batch, houses, isolationRooms, canEdit = true 
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDelete = async (reason: string) => {
+    if (isDeleting) return;
     setIsDeleting(true);
     try {
       const { deleteBatch } = await import('@/lib/actions/batch-actions');
@@ -63,6 +65,7 @@ export const FlockRowActions = ({ batch, houses, isolationRooms, canEdit = true 
   };
 
   return (
+    <MutationBoundary active={isDeleting} label="Deleting unit..." className="rounded-lg">
     <div className="flex items-center gap-2">
       <Link 
         href={`/dashboard/flocks/${batch.id}`}
@@ -129,5 +132,6 @@ export const FlockRowActions = ({ batch, houses, isolationRooms, canEdit = true 
         isLoading={isDeleting}
       />
     </div>
+    </MutationBoundary>
   );
 };

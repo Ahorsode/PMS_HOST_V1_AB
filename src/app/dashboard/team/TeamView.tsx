@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { PermissionsModal } from '@/components/ui/PermissionsModal';
 import { useRouter } from 'next/navigation';
+import { MutationBoundary } from '@/components/ui/MutationFeedback';
 
 export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
   const router = useRouter();
@@ -48,6 +49,7 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
 
   const handleInvite = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isInviting) return;
     setIsInviting(true);
     setMessage(null);
 
@@ -160,8 +162,12 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {members.map((member) => (
-                    <div key={member.id} className="p-4 rounded-lg border border-white/5 bg-white/10 hover:border-emerald-500/30 hover:bg-white/[0.08] transition-all flex items-center justify-between group relative overflow-hidden">
+                  {members.map((member) => {
+                    const isMutatingMember = isDeleting && deleteTarget?.type === 'member' && deleteTarget.id === member.id;
+
+                    return (
+                    <MutationBoundary key={member.id} active={isMutatingMember} label="Revoking access...">
+                    <div className="p-4 rounded-lg border border-white/5 bg-white/10 hover:border-emerald-500/30 hover:bg-white/[0.08] transition-all flex items-center justify-between group relative overflow-hidden">
                       <div className="flex items-center space-x-4">
                         <div className="w-14 h-14 rounded-md bg-emerald-500/10 flex items-center justify-center text-emerald-400 font-bold text-xl shadow-lg border border-emerald-500/20">
                           {(member.user.firstname?.charAt(0) || member.user.surname?.charAt(0) || 'U').toUpperCase()}
@@ -193,7 +199,9 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
                         )}
                       </div>
                     </div>
-                  ))}
+                    </MutationBoundary>
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
@@ -216,8 +224,12 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {invitations.map((invite) => (
-                    <div key={invite.id} className="p-4 rounded-md border border-white/5 bg-white/10 flex items-center justify-between group hover:bg-white/[0.08] transition-all">
+                  {invitations.map((invite) => {
+                    const isMutatingInvite = isDeleting && deleteTarget?.type === 'invite' && deleteTarget.id === invite.id;
+
+                    return (
+                    <MutationBoundary key={invite.id} active={isMutatingInvite} label="Cancelling invite...">
+                    <div className="p-4 rounded-md border border-white/5 bg-white/10 flex items-center justify-between group hover:bg-white/[0.08] transition-all">
                       <div className="flex items-center space-x-3">
                         <div className="w-12 h-12 rounded-md bg-amber-500/10 flex items-center justify-center text-amber-500 border border-amber-500/20">
                           <Mail className="w-6 h-6" />
@@ -240,7 +252,9 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
                         )}
                       </div>
                     </div>
-                  ))}
+                    </MutationBoundary>
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
@@ -296,6 +310,8 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
               </CardHeader>
               <CardContent className="relative z-10 px-7 pb-7">
                 <form onSubmit={handleInvite} className="space-y-5">
+                  <MutationBoundary active={isInviting} label="Sending invitation...">
+                  <fieldset disabled={isInviting} className="space-y-5 disabled:opacity-70">
                   {message && (
                     <div className={`p-3 rounded-md text-xs font-bold uppercase tracking-widest flex items-center gap-2 animate-in fade-in slide-in-from-top-2 backdrop-blur-md ${
                       message.type === 'success' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'
@@ -330,6 +346,8 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
                   >
                     Send Invitation
                   </Button>
+                  </fieldset>
+                  </MutationBoundary>
                 </form>
               </CardContent>
             </Card>

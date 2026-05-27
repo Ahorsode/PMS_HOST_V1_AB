@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { createIsolationRoom } from '@/lib/actions/dashboard-actions';
 import { Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { MutationBoundary } from '@/components/ui/MutationFeedback';
 
 export const IsolationRoomForm = () => {
   const router = useRouter();
@@ -52,6 +53,8 @@ export const IsolationRoomForm = () => {
         <Plus className="w-4 h-4" /> Create New Room
       </h3>
       <form onSubmit={handleSubmit} className="space-y-4">
+        <MutationBoundary active={isLoading} label="Creating isolation room...">
+        <fieldset disabled={isLoading} className="space-y-4 disabled:opacity-70">
         <Input 
           name="name" 
           label="Room Name" 
@@ -89,6 +92,8 @@ export const IsolationRoomForm = () => {
         >
           Add Room
         </Button>
+        </fieldset>
+        </MutationBoundary>
       </form>
     </div>
   );
