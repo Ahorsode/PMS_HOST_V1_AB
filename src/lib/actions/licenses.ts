@@ -2,129 +2,26 @@
 
 import prisma from "@/lib/db";
 import { getAuthContext } from "@/lib/auth-utils";
-import { normalizeHardwareFingerprint } from "@/lib/license-token";
-import { revalidatePath } from "next/cache";
-
-function addDays(base: Date, days: number) {
-  const next = new Date(base);
-  next.setUTCDate(next.getUTCDate() + days);
-  return next;
-}
 
 function serializeLicense(registration: {
   id: string;
   farmId: string;
-  deviceName: string | null;
-  licenseKey: string | null;
   status: string;
   hardwareId: string | null;
   licenseExpiresAt: Date | null;
-  registeredAt: Date;
+  lastSync: Date | null;
 }) {
   return {
     id: registration.id,
     farmId: registration.farmId,
-    deviceName: registration.deviceName,
-    licenseKey: registration.licenseKey,
     status: registration.status,
     hardwareId: registration.hardwareId,
     licenseExpiresAt: registration.licenseExpiresAt?.toISOString() ?? null,
-    registeredAt: registration.registeredAt.toISOString(),
+    lastSync: registration.lastSync?.toISOString() ?? null,
   };
 }
 
 export type DesktopLicenseRow = ReturnType<typeof serializeLicense>;
-
-export type ActivateDesktopTrialResult =
-  | {
-      success: true;
-      license: DesktopLicenseRow;
-      expiresAt: string;
-    }
-  | {
-      success: false;
-      error: string;
-      errorCode?: string;
-    };
-
-export async function activateFreeDesktopTrial(input: {
-  hardwareId: string;
-}): Promise<ActivateDesktopTrialResult> {
-  try {
-    const { userId, activeFarmId } = await getAuthContext();
-
-    if (!activeFarmId) {
-      return { success: false, error: "No active farm selected", errorCode: "NO_ACTIVE_FARM" };
-    }
-
-    if (!input.hardwareId || input.hardwareId.trim().length < 6) {
-      return { success: false, error: "Enter a valid Desktop Hardware ID", errorCode: "INVALID_HARDWARE_ID" };
-    }
-
-    const hardwareId = normalizeHardwareFingerprint(input.hardwareId);
-
-    const existing = await prisma.deviceRegistration.findFirst({
-      where: { hardwareId },
-      select: { id: true },
-    });
-
-    if (existing) {
-      return {
-        success: false,
-        error: "This device has already consumed an evaluation license.",
-        errorCode: "TRIAL_ALREADY_CONSUMED",
-      };
-    }
-
-    const expiresAt = addDays(new Date(), 30);
-    const registration = await prisma.deviceRegistration.create({
-      data: {
-        farmId: activeFarmId,
-        userId,
-        hardwareId,
-        deviceId: hardwareId,
-        deviceName: "HatchLog Desktop Trial",
-        deviceType: "Desktop",
-        status: "CLOUD_TRIAL",
-        licenseExpiresAt: expiresAt,
-        isActive: true,
-      },
-      select: {
-        id: true,
-        farmId: true,
-        deviceName: true,
-        licenseKey: true,
-        status: true,
-        hardwareId: true,
-        licenseExpiresAt: true,
-        registeredAt: true,
-      },
-    });
-
-    revalidatePath("/dashboard/settings/desktop-licenses");
-    revalidatePath("/admin/payments");
-
-    return {
-      success: true,
-      license: serializeLicense(registration),
-      expiresAt: expiresAt.toISOString(),
-    };
-  } catch (error: any) {
-    if (error?.code === "P2002") {
-      return {
-        success: false,
-        error: "This device has already consumed an evaluation license.",
-        errorCode: "TRIAL_ALREADY_CONSUMED",
-      };
-    }
-
-    console.error("[activateFreeDesktopTrial]", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Could not activate desktop trial",
-    };
-  }
-}
 
 export async function purchaseDesktopLicenseBundle(terminals: number) {
   try {
@@ -195,15 +92,13 @@ export async function getDesktopLicenses() {
     select: {
       id: true,
       farmId: true,
-      deviceName: true,
-      licenseKey: true,
       status: true,
       hardwareId: true,
       licenseExpiresAt: true,
-      registeredAt: true,
+      lastSync: true,
     },
     orderBy: {
-      registeredAt: "asc"
+      lastSync: "desc"
     }
   });
 

@@ -19,7 +19,7 @@ export default async function DesktopLicensesPage() {
         <p className="text-white/70 mt-2">Manage your offline terminal licenses for the Poultry PMS companion app.</p>
       </div>
       
-      <DesktopLicensesClient initialPaid={data.isPaid} initialLicenses={data.licenses} />
+      <DesktopLicensesClient initialLicenses={data.licenses} />
     </div>
   );
 }
