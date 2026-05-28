@@ -1,167 +1,177 @@
 "use client";
 
-import Link from "next/link";
-import React from "react";
-import { Clock3, Download, Monitor, ShieldCheck } from "lucide-react";
+import React, { useMemo, useState, useTransition, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { AlertTriangle, Clipboard, Clock3, KeyRound, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import type { DesktopLicenseRow } from "@/lib/actions/licenses";
+import {
+  generateDesktopActivationKey,
+  type DesktopActivationHubData,
+} from "@/lib/actions/licenses";
 
 interface DesktopLicensesClientProps {
-  initialLicenses: DesktopLicenseRow[];
+  initialData: DesktopActivationHubData;
 }
 
-const WINDOWS_DOWNLOAD_URL =
-  process.env.NEXT_PUBLIC_HATCHLOG_WINDOWS_DOWNLOAD_URL || "/downloads/hatchlog-windows.exe";
+type CountdownParts = { days: number; hours: number; minutes: number };
 
-function truncateHardwareId(value: string | null) {
-  if (!value) return "Awaiting sync";
-  if (value.length <= 18) return value;
-  return `${value.slice(0, 8)}...${value.slice(-6)}`;
+function calculateCountdown(expiresAtIso: string | null): CountdownParts {
+  if (!expiresAtIso) return { days: 0, hours: 0, minutes: 0 };
+  const expiresAt = new Date(expiresAtIso).getTime();
+  const now = Date.now();
+  const diffMs = Math.max(0, expiresAt - now);
+
+  const totalMinutes = Math.floor(diffMs / (1000 * 60));
+  const days = Math.floor(totalMinutes / (60 * 24));
+  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+  const minutes = totalMinutes % 60;
+
+  return { days, hours, minutes };
 }
 
-function statusBadge(status: string) {
-  if (status === "CLOUD_TRIAL" || status === "ACTIVE") {
-    return {
-      label: "ACTIVE",
-      icon: <span className="h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_12px_rgba(110,231,183,0.95)]" />,
-      className: "border-emerald-300/30 bg-emerald-400/10 text-emerald-200 shadow-[0_0_24px_rgba(16,185,129,0.12)]",
-    };
+export default function DesktopLicensesClient({ initialData }: DesktopLicensesClientProps) {
+  const [generatedKey, setGeneratedKey] = useState(initialData.generatedKey);
+  const [isCopied, setIsCopied] = useState(false);
+  const [isGenerating, startGenerateTransition] = useTransition();
+  const hasActiveTerminal = initialData.hasActiveTerminal;
+  const expiresAt = initialData.activeLicense?.licenseExpiresAt ?? null;
+  const [countdown, setCountdown] = useState<CountdownParts>(() => calculateCountdown(expiresAt));
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!hasActiveTerminal) return;
+
+    setCountdown(calculateCountdown(expiresAt));
+    const timer = window.setInterval(() => {
+      setCountdown(calculateCountdown(expiresAt));
+    }, 60_000);
+
+    return () => window.clearInterval(timer);
+  }, [expiresAt, hasActiveTerminal]);
+
+  useEffect(() => {
+    if (hasActiveTerminal || !generatedKey) return;
+    const timer = window.setInterval(() => {
+      router.refresh();
+    }, 60_000);
+    return () => window.clearInterval(timer);
+  }, [generatedKey, hasActiveTerminal, router]);
+
+  const formattedExpiry = useMemo(() => {
+    if (!expiresAt) return "Not set";
+    const date = new Date(expiresAt);
+    if (Number.isNaN(date.getTime())) return "Not set";
+    return new Intl.DateTimeFormat("en-GH", { dateStyle: "full", timeStyle: "short" }).format(date);
+  }, [expiresAt]);
+
+  async function handleGenerateKey() {
+    startGenerateTransition(async () => {
+      const result = await generateDesktopActivationKey();
+      if (result.success) {
+        setGeneratedKey(result.licenseKey);
+      }
+    });
   }
 
-  if (status === "GRACE_PERIOD") {
-    return {
-      label: "GRACE PERIOD",
-      icon: <Clock3 className="h-3.5 w-3.5" />,
-      className: "border-amber-300/30 bg-amber-400/10 text-amber-200",
-    };
+  async function handleCopy() {
+    if (!generatedKey) return;
+    await navigator.clipboard.writeText(generatedKey);
+    setIsCopied(true);
+    window.setTimeout(() => setIsCopied(false), 1500);
   }
 
-  return {
-    label: "EXPIRED",
-    icon: <span className="h-2 w-2 rounded-full bg-red-300" />,
-    className: "border-red-300/30 bg-red-400/10 text-red-200",
-  };
-}
-
-function formatDate(value: string | null) {
-  if (!value) return "Not set";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Not set";
-
-  return new Intl.DateTimeFormat("en-GH", {
-    dateStyle: "medium",
-  }).format(date);
-}
-
-function formatDateTime(value: string | null) {
-  if (!value) return "Not synced yet";
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Not synced yet";
-
-  return new Intl.DateTimeFormat("en-GH", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date);
-}
-
-export default function DesktopLicensesClient({ initialLicenses }: DesktopLicensesClientProps) {
-  if (initialLicenses.length === 0) {
+  if (hasActiveTerminal) {
     return (
-      <Card className="border border-emerald-500/20 bg-black/40 backdrop-blur-xl">
-        <CardContent className="grid gap-8 p-6 md:grid-cols-[1fr_auto] md:items-center md:p-8">
-          <div>
-            <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-md border border-emerald-400/20 bg-emerald-500/10 text-emerald-300">
-              <Monitor className="h-6 w-6" />
-            </div>
-            <h2 className="text-3xl font-black tracking-tight text-white">Connect Your Farm Computer</h2>
-            <div className="mt-6 grid gap-4">
-              <div className="flex gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-emerald-500 text-sm font-black text-black">
-                  1
-                </span>
-                <p className="pt-1 text-sm font-semibold leading-6 text-white/75">
-                  Download and run the installer on your farm computer.
-                </p>
-              </div>
-              <div className="flex gap-3">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-emerald-500 text-sm font-black text-black">
-                  2
-                </span>
-                <p className="pt-1 text-sm font-semibold leading-6 text-white/75">
-                  Log in with your web credentials. The app will automatically connect this terminal to your account securely.
-                </p>
-              </div>
-            </div>
+      <Card className="border border-emerald-400/25 bg-black/40 backdrop-blur-xl shadow-[0_0_40px_rgba(16,185,129,0.12)]">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-xl text-white">
+            <ShieldCheck className="h-5 w-5 text-emerald-300" />
+            Desktop Terminal Status
+          </CardTitle>
+          <p className="mt-2 text-sm text-white/70">
+            <span className="inline-flex items-center rounded-full border border-emerald-300/35 bg-emerald-500/15 px-3 py-1 text-xs font-black tracking-widest text-emerald-200 shadow-[0_0_18px_rgba(16,185,129,0.35)]">
+              🟢 TERMINAL ACTIVE
+            </span>
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-5">
+            <p className="text-xs uppercase tracking-[0.2em] text-white/60">Days Remaining</p>
+            <p className="mt-2 text-3xl font-black text-emerald-200">
+              {countdown.days} Days, {countdown.hours} Hours, {countdown.minutes} Minutes
+            </p>
+            <p className="mt-3 text-sm text-white/65">
+              Expiration Date: <span className="font-semibold text-white/90">{formattedExpiry}</span>
+            </p>
           </div>
-
-          <Button asChild size="lg" className="w-full md:w-auto">
-            <Link href={WINDOWS_DOWNLOAD_URL}>
-              <Download className="h-5 w-5" />
-              📥 DOWNLOAD HATCHLOG FOR WINDOWS
-            </Link>
-          </Button>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="border border-white/10 bg-black/40 backdrop-blur-xl">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-xl text-white">
-          <ShieldCheck className="h-5 w-5 text-emerald-400" />
-          Connected Terminal Status
-        </CardTitle>
-        <p className="mt-2 text-sm text-white/60">
-          HatchLog Desktop reports its hardware fingerprint automatically after login.
-        </p>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] border-collapse text-left">
-            <thead>
-              <tr className="border-b border-white/10 text-xs font-black uppercase tracking-widest text-white/45">
-                <th className="p-4 pl-0">Terminal ID</th>
-                <th className="p-4">Status</th>
-                <th className="p-4">Expiration Date</th>
-                <th className="p-4 pr-0">Last Sync</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {initialLicenses.map((license) => {
-                const badge = statusBadge(license.status);
+    <div className="space-y-6">
+      <Card className="border border-white/15 bg-black/40 backdrop-blur-xl">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-xl text-white">
+            <Clock3 className="h-5 w-5 text-emerald-300" />
+            Evaluation License Terms
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ul className="space-y-3 text-sm text-white/80">
+            <li className="rounded-xl border border-emerald-300/20 bg-emerald-500/10 p-4">
+              <span className="font-black text-emerald-200">30-Day Free Evaluation:</span> For all new desktop terminal setups.
+            </li>
+            <li className="rounded-xl border border-amber-300/20 bg-amber-500/10 p-4">
+              <span className="font-black text-amber-100">10-Day Emergency Extension:</span> Safety grace window for older offline deployments reconnecting to sync.
+            </li>
+          </ul>
+        </CardContent>
+      </Card>
 
-                return (
-                  <tr key={license.id} className="transition hover:bg-white/5">
-                    <td className="p-4 pl-0 align-top">
-                      <p className="font-mono text-sm font-black text-white" title={license.hardwareId || undefined}>
-                        {truncateHardwareId(license.hardwareId)}
-                      </p>
-                    </td>
-                    <td className="p-4 align-top">
-                      <span
-                        className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-black uppercase tracking-widest ${badge.className}`}
-                      >
-                        {badge.icon}
-                        {badge.label}
-                      </span>
-                    </td>
-                    <td className="p-4 align-top">
-                      <span className="text-sm font-bold text-white/80">{formatDate(license.licenseExpiresAt)}</span>
-                    </td>
-                    <td className="p-4 pr-0 align-top">
-                      <span className="text-sm font-semibold text-white/65">{formatDateTime(license.lastSync)}</span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </CardContent>
-    </Card>
+      <Card className="border border-emerald-500/20 bg-black/40 backdrop-blur-xl">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-xl text-white">
+            <KeyRound className="h-5 w-5 text-emerald-300" />
+            Generate Activation Key
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-white/55">Farm ID</p>
+            <div className="mt-2 rounded-xl border border-white/15 bg-white/5 px-4 py-3 font-mono text-sm font-bold text-white">
+              {initialData.farmId}
+            </div>
+          </div>
+
+          {!generatedKey ? (
+            <Button
+              onClick={handleGenerateKey}
+              disabled={isGenerating}
+              className="w-full rounded-xl border border-emerald-300/30 bg-emerald-500/70 px-5 py-6 text-xs font-black tracking-[0.2em] text-black shadow-[0_12px_32px_rgba(16,185,129,0.35)] hover:bg-emerald-400"
+            >
+              {isGenerating ? "GENERATING..." : "[ GENERATE DESKTOP ACTIVATION KEY ]"}
+            </Button>
+          ) : (
+            <div className="space-y-3 rounded-2xl border border-emerald-300/25 bg-emerald-500/10 p-4">
+              <p className="text-xs uppercase tracking-[0.2em] text-emerald-100/80">Activation Key</p>
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <span className="font-mono text-lg font-black text-white">{generatedKey}</span>
+                <Button onClick={handleCopy} variant="ghost" className="border border-white/20 bg-white/5 text-white hover:bg-white/10">
+                  <Clipboard className="h-4 w-4" />
+                  {isCopied ? "Copied" : "Copy to Clipboard"}
+                </Button>
+              </div>
+              <p className="flex items-start gap-2 text-xs font-semibold text-amber-100/90">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-300" />
+                This key can only be used once to activate a single desktop computer.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }

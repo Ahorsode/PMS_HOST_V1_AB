@@ -2,6 +2,7 @@
 
 import prisma from "@/lib/db";
 import { getAuthContext } from "@/lib/auth-utils";
+import { revalidatePath } from "next/cache";
 
 function serializeLicense(registration: {
   id: string;
@@ -22,6 +23,21 @@ function serializeLicense(registration: {
 }
 
 export type DesktopLicenseRow = ReturnType<typeof serializeLicense>;
+
+type DesktopActivationRecord = {
+  id: string;
+  licenseKey: string | null;
+  hardwareId: string | null;
+  status: string;
+  licenseExpiresAt: string | null;
+};
+
+export interface DesktopActivationHubData {
+  farmId: string;
+  generatedKey: string | null;
+  hasActiveTerminal: boolean;
+  activeLicense: DesktopActivationRecord | null;
+}
 
 export async function purchaseDesktopLicenseBundle(terminals: number) {
   try {
@@ -105,4 +121,98 @@ export async function getDesktopLicenses() {
   const isPaid = licenses.some((license) => license.status === "ACTIVE");
 
   return { isPaid, licenses: licenses.map(serializeLicense) };
+}
+
+function serializeActivationRecord(registration: {
+  id: string;
+  licenseKey: string | null;
+  hardwareId: string | null;
+  status: string;
+  licenseExpiresAt: Date | null;
+}): DesktopActivationRecord {
+  return {
+    id: registration.id,
+    licenseKey: registration.licenseKey,
+    hardwareId: registration.hardwareId,
+    status: registration.status,
+    licenseExpiresAt: registration.licenseExpiresAt?.toISOString() ?? null,
+  };
+}
+
+export async function getDesktopActivationHubData(): Promise<DesktopActivationHubData> {
+  const { activeFarmId } = await getAuthContext();
+  if (!activeFarmId) {
+    throw new Error("No active farm selected");
+  }
+
+  const now = new Date();
+
+  const activeRegistration = await prisma.deviceRegistration.findFirst({
+    where: {
+      farmId: activeFarmId,
+      hardwareId: { not: null },
+      licenseExpiresAt: { gt: now },
+      status: { in: ["CLOUD_TRIAL", "GRACE_PERIOD", "ACTIVE"] },
+    },
+    select: {
+      id: true,
+      licenseKey: true,
+      hardwareId: true,
+      status: true,
+      licenseExpiresAt: true,
+    },
+    orderBy: { licenseExpiresAt: "asc" },
+  });
+
+  const pendingRegistration = await prisma.deviceRegistration.findFirst({
+    where: {
+      farmId: activeFarmId,
+      hardwareId: null,
+      licenseKey: { not: null },
+      status: { in: ["CLOUD_TRIAL", "GRACE_PERIOD", "ACTIVE"] },
+    },
+    select: {
+      id: true,
+      licenseKey: true,
+      hardwareId: true,
+      status: true,
+      licenseExpiresAt: true,
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return {
+    farmId: activeFarmId,
+    generatedKey: activeRegistration ? null : pendingRegistration?.licenseKey ?? null,
+    hasActiveTerminal: Boolean(activeRegistration),
+    activeLicense: activeRegistration ? serializeActivationRecord(activeRegistration) : null,
+  };
+}
+
+export async function generateDesktopActivationKey() {
+  const { activeFarmId, userId } = await getAuthContext();
+  if (!activeFarmId) {
+    return { success: false as const, error: "No active farm selected." };
+  }
+
+  try {
+    const result = await prisma.$queryRaw<Array<{ license_key: string }>>`
+      SELECT license_key
+      FROM public.generate_desktop_activation_key(${activeFarmId}, ${userId})
+    `;
+
+    const licenseKey = result[0]?.license_key ?? null;
+
+    if (!licenseKey) {
+      return { success: false as const, error: "Could not generate activation key." };
+    }
+
+    revalidatePath("/dashboard/settings/desktop-licenses");
+    return { success: true as const, licenseKey };
+  } catch (error) {
+    return {
+      success: false as const,
+      error: error instanceof Error ? error.message : "Could not generate activation key.",
+    };
+  }
 }
