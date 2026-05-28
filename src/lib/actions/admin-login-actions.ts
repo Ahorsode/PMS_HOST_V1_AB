@@ -26,53 +26,62 @@ type AdminLoginResult =
     }
 
 export async function loginAdmin(input: unknown): Promise<AdminLoginResult> {
-  const parsed = adminLoginSchema.safeParse(input)
+  try {
+    const parsed = adminLoginSchema.safeParse(input)
 
-  if (!parsed.success) {
+    if (!parsed.success) {
+      return {
+        success: false,
+        error: parsed.error.issues[0]?.message ?? 'Invalid login details',
+      }
+    }
+
+    const { username, password, callbackUrl } = parsed.data
+
+    const adminUser = await prisma.adminUser.findFirst({
+      where: {
+        username,
+        isActive: true,
+      },
+      select: {
+        id: true,
+        username: true,
+        passwordHash: true,
+      },
+    })
+
+    const passwordMatches = adminUser
+      ? await bcrypt.compare(password, adminUser.passwordHash)
+      : false
+
+    if (!adminUser || !passwordMatches) {
+      return {
+        success: false,
+        error: 'Invalid admin username or password',
+      }
+    }
+
+    await prisma.adminUser.update({
+      where: { id: adminUser.id },
+      data: { lastLoginAt: new Date() },
+    })
+
+    await createAdminSession({
+      id: adminUser.id,
+      username: adminUser.username,
+    })
+
+    return {
+      success: true,
+      redirectTo: sanitizeAdminCallbackUrl(callbackUrl),
+    }
+  } catch (error) {
+    console.error('[loginAdmin] failed', error)
+
     return {
       success: false,
-      error: parsed.error.issues[0]?.message ?? 'Invalid login details',
+      error: 'Admin login is not ready yet. Please run the database migration and try again.',
     }
-  }
-
-  const { username, password, callbackUrl } = parsed.data
-
-  const adminUser = await prisma.adminUser.findFirst({
-    where: {
-      username,
-      isActive: true,
-    },
-    select: {
-      id: true,
-      username: true,
-      passwordHash: true,
-    },
-  })
-
-  const passwordMatches = adminUser
-    ? await bcrypt.compare(password, adminUser.passwordHash)
-    : false
-
-  if (!adminUser || !passwordMatches) {
-    return {
-      success: false,
-      error: 'Invalid admin username or password',
-    }
-  }
-
-  await prisma.adminUser.update({
-    where: { id: adminUser.id },
-    data: { lastLoginAt: new Date() },
-  })
-
-  await createAdminSession({
-    id: adminUser.id,
-    username: adminUser.username,
-  })
-
-  return {
-    success: true,
-    redirectTo: sanitizeAdminCallbackUrl(callbackUrl),
   }
 }
 

@@ -20,19 +20,24 @@ export default function AdminLoginForm({ callbackUrl }: { callbackUrl: string })
     setError(null)
 
     startTransition(async () => {
-      const result = await loginAdmin({
-        username,
-        password,
-        callbackUrl,
-      })
+      try {
+        const result = await loginAdmin({
+          username,
+          password,
+          callbackUrl,
+        })
 
-      if (!result.success) {
-        setError(result.error)
-        return
+        if (!result.success) {
+          setError(result.error)
+          return
+        }
+
+        router.replace(result.redirectTo)
+        router.refresh()
+      } catch (error) {
+        console.error('[AdminLoginForm] login failed', error)
+        setError('Admin login failed. Please refresh and try again.')
       }
-
-      router.replace(result.redirectTo)
-      router.refresh()
     })
   }
 
@@ -105,4 +110,3 @@ export default function AdminLoginForm({ callbackUrl }: { callbackUrl: string })
     </form>
   )
 }
-
