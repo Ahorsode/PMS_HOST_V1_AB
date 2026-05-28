@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MutationBoundary } from '@/components/ui/MutationFeedback';
 
-const SHOW_USER_DESKTOP_LICENSES = process.env.NEXT_PUBLIC_SHOW_USER_DESKTOP_LICENSES === 'true';
+const SHOW_USER_DESKTOP_LICENSES = process.env.NEXT_PUBLIC_SHOW_USER_DESKTOP_LICENSES !== 'false';
 
 interface InventoryItem {
   id: string;

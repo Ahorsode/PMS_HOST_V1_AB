@@ -3,7 +3,7 @@ import { getDesktopLicenses } from '@/lib/actions/licenses';
 import DesktopLicensesClient from './DesktopLicensesClient';
 import { redirect } from 'next/navigation';
 
-const SHOW_USER_DESKTOP_LICENSES = process.env.NEXT_PUBLIC_SHOW_USER_DESKTOP_LICENSES === 'true';
+const SHOW_USER_DESKTOP_LICENSES = process.env.NEXT_PUBLIC_SHOW_USER_DESKTOP_LICENSES !== 'false';
 
 export default async function DesktopLicensesPage() {
   if (!SHOW_USER_DESKTOP_LICENSES) {

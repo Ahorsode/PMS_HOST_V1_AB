@@ -13,6 +13,7 @@ interface License {
   licenseKey: string | null;
   status: string;
   hardwareId: string | null;
+  licenseExpiresAt?: Date | string | null;
 }
 
 interface DesktopLicensesClientProps {
@@ -22,9 +23,10 @@ interface DesktopLicensesClientProps {
 
 export default function DesktopLicensesClient({ initialPaid, initialLicenses }: DesktopLicensesClientProps) {
   const [licenses] = useState<License[]>(initialLicenses);
+  const hasRegistrations = licenses.length > 0;
   
   const [viewState, setViewState] = useState<'PITCH' | 'CHECKOUT' | 'ALLOCATION' | 'MANAGEMENT'>(
-    initialPaid ? 'MANAGEMENT' : 'PITCH'
+    initialPaid || hasRegistrations ? 'MANAGEMENT' : 'PITCH'
   );
 
   const [isLoading, setIsLoading] = useState(false);

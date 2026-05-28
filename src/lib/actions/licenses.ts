@@ -67,15 +67,6 @@ export async function getDesktopLicenses() {
     throw new Error("No active farm selected");
   }
 
-  const farm = await prisma.farm.findUnique({
-    where: { id: activeFarmId },
-    select: { masterLicenseStatus: true }
-  });
-
-  if (!farm || farm.masterLicenseStatus !== "PAID_AND_ACTIVE") {
-    return { isPaid: false, licenses: [] };
-  }
-
   const licenses = await prisma.deviceRegistration.findMany({
     where: { farmId: activeFarmId },
     select: {
@@ -83,12 +74,15 @@ export async function getDesktopLicenses() {
       deviceName: true,
       licenseKey: true,
       status: true,
-      hardwareId: true
+      hardwareId: true,
+      licenseExpiresAt: true,
     },
     orderBy: {
       registeredAt: "asc"
     }
   });
 
-  return { isPaid: true, licenses };
+  const isPaid = licenses.some((license) => license.status === "ACTIVE");
+
+  return { isPaid, licenses };
 }
