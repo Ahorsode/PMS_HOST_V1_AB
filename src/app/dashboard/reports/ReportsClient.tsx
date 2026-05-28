@@ -84,55 +84,93 @@ export function ReportsClient({
     window.open(url, '_blank')
   }
 
-  const triggerCsvDownload = () => {
-    // Generate CSV for KPIs, Financials, and Audit Logs
-    const rows = [
-      ['GAAP Financial KPI Summary', '', ''],
-      ['KPI Name', 'Value', ''],
-      ['Total Revenue', `GH₵ ${report.kpis.totalRevenue.toFixed(2)}`, ''],
-      ['Total Expense', `GH₵ ${report.kpis.totalExpense.toFixed(2)}`, ''],
-      ['Net Income', `GH₵ ${report.kpis.netIncome.toFixed(2)}`, ''],
-      ['Total Feed Consumed', `${report.kpis.totalFeedConsumed} kg`, ''],
-      ['Total Eggs Collected', `${report.kpis.totalEggsCollected} eggs`, ''],
-      ['Total Mortality', `${report.kpis.totalMortality} birds`, ''],
-      ['Mortality Rate', `${report.kpis.mortalityRate.toFixed(2)}%`, ''],
-      ['Average Feed Conversion Ratio (FCR)', `${report.kpis.averageFcr.toFixed(2)}`, ''],
-      [],
-      ['Consolidated Ledger Statements', '', '', '', '', '', '', ''],
-      ['Transaction', 'Date', 'Type', 'Category', 'Amount (GHS)', 'Payment Status', 'Payment Method', 'Reference', 'Description'],
-      ...report.financials.map((f, index) => [
-        `Transaction ${index + 1}`,
-        new Date(f.transactionDate).toLocaleDateString(),
-        f.type,
-        f.category,
-        f.amount.toString(),
-        f.paymentStatus,
-        f.paymentMethod,
-        f.referenceNum || '',
-        f.description || ''
-      ]),
-      [],
-      ['Operational & Deletion Audit Logs', '', '', '', ''],
-      ['Log', 'Timestamp', 'Action Type', 'Description', 'Logged By'],
-      ...report.auditTimeline.map((l, index) => [
-        `Log ${index + 1}`,
-        new Date(l.createdAt).toLocaleString(),
-        l.actionType || '',
-        l.description || '',
-        l.userName
-      ])
-    ]
+  const triggerExcelDownload = () => {
+    const tableRows = report.financials
+      .map(
+        (f, index) => `
+          <tr>
+            <td>${index + 1}</td>
+            <td>${new Date(f.transactionDate).toLocaleDateString()}</td>
+            <td>${f.type}</td>
+            <td>${f.category}</td>
+            <td>${f.amount.toFixed(2)}</td>
+            <td>${f.paymentStatus}</td>
+            <td>${f.paymentMethod}</td>
+            <td>${f.referenceNum || ''}</td>
+            <td>${f.description || ''}</td>
+          </tr>
+        `,
+      )
+      .join('')
 
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + rows.map(e => e.map(val => `"${val.replace(/"/g, '""')}"`).join(",")).join("\n")
+    const html = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
+        <head><meta charset="utf-8" /></head>
+        <body>
+          <h2>Farm Intelligence Report (${startDate} to ${endDate})</h2>
+          <table border="1">
+            <tr><th>Total Revenue (GHS)</th><td>${report.kpis.totalRevenue.toFixed(2)}</td></tr>
+            <tr><th>Total Expense (GHS)</th><td>${report.kpis.totalExpense.toFixed(2)}</td></tr>
+            <tr><th>Net Income (GHS)</th><td>${report.kpis.netIncome.toFixed(2)}</td></tr>
+            <tr><th>Total Eggs</th><td>${report.kpis.totalEggsCollected}</td></tr>
+            <tr><th>Total Mortality</th><td>${report.kpis.totalMortality}</td></tr>
+          </table>
+          <br />
+          <table border="1">
+            <tr>
+              <th>#</th><th>Date</th><th>Type</th><th>Category</th><th>Amount (GHS)</th><th>Status</th><th>Method</th><th>Reference</th><th>Description</th>
+            </tr>
+            ${tableRows}
+          </table>
+        </body>
+      </html>
+    `
 
-    const encodedUri = encodeURI(csvContent)
-    const link = document.createElement("a")
-    link.setAttribute("href", encodedUri)
-    link.setAttribute("download", `farm_intelligence_report_${startDate}_to_${endDate}.csv`)
-    document.body.appendChild(link)
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `farm_intelligence_report_${startDate}_to_${endDate}.xls`
     link.click()
-    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
+  const triggerWordDownload = () => {
+    const auditItems = report.auditTimeline
+      .map(
+        (item) =>
+          `<li><strong>${new Date(item.createdAt).toLocaleString()}:</strong> ${item.actionType || 'SYSTEM'} - ${item.description} (${item.userName})</li>`,
+      )
+      .join('')
+
+    const html = `
+      <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">
+        <head><meta charset="utf-8" /></head>
+        <body>
+          <h1>Farm Intelligence Report</h1>
+          <p><strong>Period:</strong> ${startDate} to ${endDate}</p>
+          <h2>KPI Summary</h2>
+          <ul>
+            <li>Total Revenue: GH₵ ${report.kpis.totalRevenue.toFixed(2)}</li>
+            <li>Total Expense: GH₵ ${report.kpis.totalExpense.toFixed(2)}</li>
+            <li>Net Income: GH₵ ${report.kpis.netIncome.toFixed(2)}</li>
+            <li>Feed Consumed: ${report.kpis.totalFeedConsumed} kg</li>
+            <li>Eggs Collected: ${report.kpis.totalEggsCollected}</li>
+            <li>Mortality Rate: ${report.kpis.mortalityRate.toFixed(2)}%</li>
+          </ul>
+          <h2>Audit Logs</h2>
+          <ul>${auditItems}</ul>
+        </body>
+      </html>
+    `
+
+    const blob = new Blob([html], { type: 'application/msword;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `farm_intelligence_report_${startDate}_to_${endDate}.doc`
+    link.click()
+    URL.revokeObjectURL(url)
   }
 
   // Helper to draw clean SVG charts for trends
@@ -228,11 +266,18 @@ export function ReportsClient({
         </div>
         <div className="flex flex-wrap gap-3">
           <Button 
-            onClick={triggerCsvDownload}
+            onClick={triggerExcelDownload}
             className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-5 rounded-lg shadow-lg shadow-blue-600/20 flex items-center gap-2 transform hover:-translate-y-0.5 transition-all"
           >
             <Download className="w-5 h-5" />
-            Export CSV
+            Export Excel
+          </Button>
+          <Button 
+            onClick={triggerWordDownload}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-5 rounded-lg shadow-lg shadow-indigo-600/20 flex items-center gap-2 transform hover:-translate-y-0.5 transition-all"
+          >
+            <Download className="w-5 h-5" />
+            Export Word
           </Button>
           <Button 
             onClick={triggerPdfDownload}

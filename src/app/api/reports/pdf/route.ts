@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext } from '@/lib/auth-utils'
 import { generateComprehensiveFarmReport } from '@/lib/actions/reports'
-import PDFDocument from 'pdfkit'
+import PDFDocument from 'pdfkit/js/pdfkit.standalone.js'
 
 export async function GET(request: NextRequest) {
   try {
@@ -26,12 +26,7 @@ export async function GET(request: NextRequest) {
     const startFormatted = new Date(startDateStr).toLocaleDateString()
     const endFormatted = new Date(endDateStr).toLocaleDateString()
 
-    // Create PDF Document using PDFKit
-    // Create PDF Document using PDFKit
     const doc = new PDFDocument({ margin: 40, size: 'A4' })
-    const chunks: Buffer[] = []
-
-    doc.on('data', (chunk) => chunks.push(chunk))
     
     // Header Section
     doc.fillColor('#1e293b').fontSize(20).font('Helvetica-Bold').text('POULTRY MANAGEMENT SYSTEM', 40, 40)
@@ -188,12 +183,11 @@ export async function GET(request: NextRequest) {
 
     doc.end()
 
-    // Wait for the pdf generation to complete and retrieve the buffer
     const pdfBuffer = await new Promise<Buffer>((resolve, reject) => {
       const buffers: Buffer[] = []
-      doc.on('data', (chunk) => buffers.push(chunk))
+      doc.on('data', (chunk: Buffer) => buffers.push(chunk))
       doc.on('end', () => resolve(Buffer.concat(buffers)))
-      doc.on('error', (err) => reject(err))
+      doc.on('error', (err: unknown) => reject(err))
     })
 
     return new NextResponse(new Uint8Array(pdfBuffer), {
