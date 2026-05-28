@@ -1,159 +1,178 @@
 "use client";
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Monitor, CreditCard, Key, Copy, CheckCircle2, Loader2, ShieldCheck, DownloadCloud } from 'lucide-react';
-import { purchaseDesktopLicenseBundle } from '@/lib/actions/licenses';
-
-interface License {
-  id: string;
-  deviceName: string | null;
-  licenseKey: string | null;
-  status: string;
-  hardwareId: string | null;
-}
+import Link from "next/link";
+import React, { useMemo, useState, useTransition } from "react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Clock3,
+  Fingerprint,
+  KeyRound,
+  Monitor,
+  ShieldCheck,
+} from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import {
+  activateFreeDesktopTrial,
+  type DesktopLicenseRow,
+} from "@/lib/actions/licenses";
 
 interface DesktopLicensesClientProps {
   initialPaid: boolean;
-  initialLicenses: License[];
+  initialLicenses: DesktopLicenseRow[];
 }
 
-export default function DesktopLicensesClient({ initialPaid, initialLicenses }: DesktopLicensesClientProps) {
-  const [licenses] = useState<License[]>(initialLicenses);
-  const hasRegistrations = licenses.length > 0;
-  
-  const [viewState, setViewState] = useState<'PITCH' | 'CHECKOUT' | 'ALLOCATION' | 'MANAGEMENT'>(
-    initialPaid || hasRegistrations ? 'MANAGEMENT' : 'PITCH'
-  );
+function statusLabel(status: string) {
+  switch (status) {
+    case "CLOUD_TRIAL":
+      return "Active";
+    case "GRACE_PERIOD":
+      return "Grace Period";
+    case "ACTIVE":
+      return "Active";
+    case "EXPIRED":
+      return "Expired";
+    default:
+      return status || "Pending";
+  }
+}
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [seatCount, setSeatCount] = useState<number>(1);
-  const [copiedKey, setCopiedKey] = useState<string | null>(null);
-
-  // Dummy checkout fields
-  const [cardNumber, setCardNumber] = useState('');
-  const [expiry, setExpiry] = useState('');
-  const [cvv, setCvv] = useState('');
-
-  const handleCheckoutSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (isLoading) return;
-    setIsLoading(true);
-    // Simulate gateway delay
-    setTimeout(() => {
-      setIsLoading(false);
-      setViewState('ALLOCATION');
-    }, 1500);
-  };
-
-  const handleGenerateKeys = async () => {
-    if (isLoading) return;
-    setIsLoading(true);
-    try {
-      const res = await purchaseDesktopLicenseBundle(seatCount);
-      if (res.success) {
-        // We'll need to refresh the page or reload data
-        window.location.reload();
-      }
-    } catch (error) {
-      console.error(error);
-      alert('Failed to generate keys.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedKey(text);
-    setTimeout(() => setCopiedKey(null), 2000);
-  };
-
-  if (viewState === 'PITCH') {
-    return (
-      <Card className="border border-emerald-500/20 bg-gradient-to-br from-black/60 to-emerald-950/20 shadow-2xl relative overflow-hidden group">
-        <div className="absolute top-0 right-0 p-12 opacity-5 pointer-events-none transition-transform duration-700 group-hover:scale-110">
-          <DownloadCloud className="w-64 h-64 text-emerald-400" />
-        </div>
-        <CardContent className="p-10 relative z-10 flex flex-col md:flex-row items-center gap-10">
-          <div className="flex-1 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-widest">
-              <Monitor className="w-4 h-4" />
-              Pro Feature
-            </div>
-            <h2 className="text-4xl font-extrabold text-white tracking-tight">Desktop Companion App</h2>
-            <p className="text-lg text-white/80 leading-relaxed font-medium max-w-2xl">
-              Bring Poultry PMS directly to your farm&apos;s physical terminals. Enable local data resilience, faster offline operations, and multi-office synchronization seamlessly.
-            </p>
-            <div className="pt-4">
-              <Button 
-                onClick={() => setViewState('CHECKOUT')} 
-                className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-4 px-8 text-lg rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all duration-300 hover:shadow-[0_0_30px_rgba(16,185,129,0.5)]"
-              >
-                Purchase Desktop License Bundle
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
+function statusClass(status: string) {
+  if (status === "ACTIVE" || status === "CLOUD_TRIAL") {
+    return "border-emerald-400/30 bg-emerald-500/10 text-emerald-300";
   }
 
-  if (viewState === 'CHECKOUT') {
-    return (
-      <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-        <Card className="w-full max-w-md bg-[#111] border border-white/10 shadow-2xl animate-in fade-in zoom-in duration-200">
-          <CardHeader className="border-b border-white/5 pb-6">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-2xl font-bold flex items-center gap-2">
-                <ShieldCheck className="w-6 h-6 text-emerald-400" />
-                Secure Checkout
-              </CardTitle>
-              <button onClick={() => setViewState('PITCH')} disabled={isLoading} className="text-white/40 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed">&times;</button>
-            </div>
-            <p className="text-sm text-white/50 mt-1">One-time payment for perpetual local terminal access.</p>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <form onSubmit={handleCheckoutSubmit} className="space-y-5">
-              <div className="p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex justify-between items-center mb-6">
-                <span className="font-medium text-white/80">Desktop License Bundle</span>
-                <span className="text-xl font-bold text-white">$199.00</span>
-              </div>
-              
-              <div className="space-y-4">
-                <Input 
-                  label="Card Number" 
-                  placeholder="0000 0000 0000 0000" 
-                  value={cardNumber}
-                  onChange={(e) => setCardNumber(e.target.value)}
-                  required
-                />
-                <div className="grid grid-cols-2 gap-4">
-                  <Input 
-                    label="Expiry Date" 
-                    placeholder="MM/YY" 
-                    value={expiry}
-                    onChange={(e) => setExpiry(e.target.value)}
-                    required
-                  />
-                  <Input 
-                    label="CVV" 
-                    placeholder="123" 
-                    type="password"
-                    value={cvv}
-                    onChange={(e) => setCvv(e.target.value)}
-                    required
-                  />
-                </div>
-              </div>
+  if (status === "GRACE_PERIOD") {
+    return "border-amber-400/30 bg-amber-500/10 text-amber-300";
+  }
 
-              <div className="pt-4">
-                <Button type="submit" className="w-full h-12 text-lg font-bold bg-emerald-500 hover:bg-emerald-600" isLoading={isLoading} loadingText="Authorizing...">
-                  Authorize Payment ($199)
-                </Button>
-              </div>
+  return "border-red-400/30 bg-red-500/10 text-red-300";
+}
+
+function daysRemaining(expiresAt: string | null) {
+  if (!expiresAt) return "Not set";
+
+  const expiry = new Date(expiresAt).getTime();
+  if (Number.isNaN(expiry)) return "Not set";
+
+  const diffDays = Math.ceil((expiry - Date.now()) / (1000 * 60 * 60 * 24));
+  if (diffDays <= 0) return "Expired";
+  if (diffDays === 1) return "1 day";
+  return `${diffDays} days`;
+}
+
+function formatExpiry(expiresAt: string | null) {
+  if (!expiresAt) return "No expiry saved";
+
+  const date = new Date(expiresAt);
+  if (Number.isNaN(date.getTime())) return "No expiry saved";
+
+  return new Intl.DateTimeFormat("en-GH", {
+    dateStyle: "medium",
+  }).format(date);
+}
+
+export default function DesktopLicensesClient({
+  initialPaid,
+  initialLicenses,
+}: DesktopLicensesClientProps) {
+  const [licenses, setLicenses] = useState<DesktopLicenseRow[]>(initialLicenses);
+  const [hardwareId, setHardwareId] = useState("");
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [isPending, startTransition] = useTransition();
+
+  const hasLinkedDevices = licenses.length > 0;
+  const activeCount = useMemo(
+    () =>
+      licenses.filter((license) =>
+        ["ACTIVE", "CLOUD_TRIAL", "GRACE_PERIOD"].includes(license.status),
+      ).length,
+    [licenses],
+  );
+
+  function handleActivateTrial(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setMessage(null);
+
+    startTransition(async () => {
+      const result = await activateFreeDesktopTrial({ hardwareId });
+
+      if (!result.success) {
+        setMessage({ type: "error", text: result.error });
+        return;
+      }
+
+      setLicenses((current) => [result.license, ...current]);
+      setHardwareId("");
+      setMessage({
+        type: "success",
+        text: `30-day desktop trial activated. Valid until ${formatExpiry(result.expiresAt)}.`,
+      });
+    });
+  }
+
+  if (!hasLinkedDevices) {
+    return (
+      <div className="grid gap-5">
+        <Card className="border border-emerald-500/20 bg-black/40 backdrop-blur-xl">
+          <CardHeader>
+            <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-md border border-emerald-400/20 bg-emerald-500/10 text-emerald-300">
+              <Fingerprint className="h-6 w-6" />
+            </div>
+            <CardTitle className="text-2xl font-black text-white">
+              Activate Your Free 30-Day Desktop Trial
+            </CardTitle>
+            <p className="max-w-2xl text-sm leading-6 text-white/70">
+              Link one Windows desktop installation to this web farm and start a 30-day evaluation license.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleActivateTrial} className="grid gap-5">
+              <label className="grid gap-2">
+                <span className="text-xs font-black uppercase tracking-widest text-emerald-300">
+                  Enter Desktop Hardware ID
+                </span>
+                <input
+                  value={hardwareId}
+                  onChange={(event) => setHardwareId(event.target.value)}
+                  disabled={isPending}
+                  required
+                  minLength={6}
+                  className="h-12 rounded-md border border-white/10 bg-black/50 px-4 font-mono text-sm font-bold text-white outline-none transition focus:border-emerald-400/60 focus:ring-4 focus:ring-emerald-400/10 disabled:opacity-60"
+                  placeholder="Example: WINDOWS-GUID-OR-HARDWARE-CODE"
+                />
+                <span className="rounded-md border border-white/10 bg-white/5 p-3 text-xs leading-5 text-white/65">
+                  Open your HatchLog Desktop App, select &quot;Link to Cloud&quot;, and view your Hardware ID code.
+                </span>
+              </label>
+
+              {message ? (
+                <div
+                  className={`flex items-start gap-3 rounded-md border p-3 text-sm font-semibold ${
+                    message.type === "success"
+                      ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-200"
+                      : "border-red-400/30 bg-red-500/10 text-red-200"
+                  }`}
+                >
+                  {message.type === "success" ? (
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+                  ) : (
+                    <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                  )}
+                  {message.text}
+                </div>
+              ) : null}
+
+              <Button
+                type="submit"
+                isLoading={isPending}
+                loadingText="Activating..."
+                className="w-full sm:w-fit"
+              >
+                <KeyRound className="h-4 w-4" />
+                Link & Activate 30-Day Pass
+              </Button>
             </form>
           </CardContent>
         </Card>
@@ -161,134 +180,129 @@ export default function DesktopLicensesClient({ initialPaid, initialLicenses }: 
     );
   }
 
-  if (viewState === 'ALLOCATION') {
-    return (
-      <Card className="max-w-2xl mx-auto border-emerald-500/20 bg-gradient-to-b from-emerald-950/20 to-transparent">
-        <CardHeader className="text-center pb-2">
-          <div className="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-emerald-500/40 shadow-[0_0_30px_rgba(16,185,129,0.2)]">
-            <CheckCircle2 className="w-8 h-8 text-emerald-400" />
-          </div>
-          <CardTitle className="text-3xl font-bold text-white">Payment Successful</CardTitle>
-          <p className="text-white/70 mt-2">Configure your physical computer terminals.</p>
-        </CardHeader>
-        <CardContent className="p-8">
-          <div className="space-y-8">
-            <div className="text-center space-y-4">
-              <label className="block text-lg font-medium text-white">
-                How many physical computer terminals (Offices, Gate Houses, Barns) do you want to assign to this farm?
-              </label>
-              
-              <div className="flex items-center justify-center gap-4">
-                <button 
-                  type="button"
-                  onClick={() => setSeatCount(Math.max(1, seatCount - 1))}
-                  disabled={isLoading}
-                  className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-xl flex items-center justify-center transition-colors"
-                >
-                  -
-                </button>
-                <div className="w-24 h-16 bg-black/50 border border-white/20 rounded-xl flex items-center justify-center text-3xl font-black text-white">
-                  {seatCount}
-                </div>
-                <button 
-                  type="button"
-                  onClick={() => setSeatCount(seatCount + 1)}
-                  disabled={isLoading}
-                  className="w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold text-xl flex items-center justify-center transition-colors"
-                >
-                  +
-                </button>
-              </div>
-            </div>
+  return (
+    <div className="grid gap-5">
+      {message ? (
+        <div
+          className={`flex items-start gap-3 rounded-md border p-3 text-sm font-semibold ${
+            message.type === "success"
+              ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-200"
+              : "border-red-400/30 bg-red-500/10 text-red-200"
+          }`}
+        >
+          {message.type === "success" ? (
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+          ) : (
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+          )}
+          {message.text}
+        </div>
+      ) : null}
 
-            <Button 
-              onClick={handleGenerateKeys} 
-              isLoading={isLoading}
-              loadingText="Generating keys..."
-              className="w-full h-14 text-lg font-bold bg-emerald-500 hover:bg-emerald-600 shadow-[0_0_20px_rgba(16,185,129,0.3)]"
-            >
-              <Key className="w-5 h-5 mr-2" />
-              Confirm Seat Count & Generate Keys
-            </Button>
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card className="border border-white/10 bg-black/35">
+          <CardContent className="flex items-center gap-4 p-5">
+            <div className="rounded-md border border-emerald-400/20 bg-emerald-500/10 p-3 text-emerald-300">
+              <Monitor className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs font-black uppercase tracking-widest text-white/50">Linked Terminals</p>
+              <p className="text-2xl font-black text-white">{licenses.length}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border border-white/10 bg-black/35">
+          <CardContent className="flex items-center gap-4 p-5">
+            <div className="rounded-md border border-emerald-400/20 bg-emerald-500/10 p-3 text-emerald-300">
+              <ShieldCheck className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs font-black uppercase tracking-widest text-white/50">Running Access</p>
+              <p className="text-2xl font-black text-white">{activeCount}</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border border-white/10 bg-black/35">
+          <CardContent className="flex items-center gap-4 p-5">
+            <div className="rounded-md border border-amber-400/20 bg-amber-500/10 p-3 text-amber-300">
+              <Clock3 className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs font-black uppercase tracking-widest text-white/50">Account Tier</p>
+              <p className="text-2xl font-black text-white">{initialPaid ? "Paid" : "Trial"}</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="border border-white/10 bg-black/40 backdrop-blur-xl">
+        <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2 text-xl text-white">
+              <KeyRound className="h-5 w-5 text-emerald-400" />
+              Active Terminal Status
+            </CardTitle>
+            <p className="mt-2 text-sm text-white/60">
+              Review hardware bindings, trial state, grace state, and renewal timing.
+            </p>
+          </div>
+          <Button asChild className="w-full md:w-fit">
+            <Link href="/dashboard/license-upgrade">
+              <ShieldCheck className="h-4 w-4" />
+              Upgrade / Renew License Bundle
+            </Link>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[780px] border-collapse text-left">
+              <thead>
+                <tr className="border-b border-white/10 text-xs font-black uppercase tracking-widest text-white/45">
+                  <th className="p-4 pl-0">Hardware ID</th>
+                  <th className="p-4">Farm ID</th>
+                  <th className="p-4">Status</th>
+                  <th className="p-4">Days Remaining</th>
+                  <th className="p-4 pr-0">Expires</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-white/5">
+                {licenses.map((license) => (
+                  <tr key={license.id} className="transition hover:bg-white/5">
+                    <td className="p-4 pl-0 align-top">
+                      <p className="max-w-[320px] break-all font-mono text-sm font-bold text-white">
+                        {license.hardwareId || "Awaiting hardware link"}
+                      </p>
+                      <p className="mt-1 text-xs text-white/45">{license.deviceName || "HatchLog Desktop"}</p>
+                    </td>
+                    <td className="p-4 align-top">
+                      <p className="max-w-[220px] break-all font-mono text-xs font-bold text-white/70">
+                        {license.farmId}
+                      </p>
+                    </td>
+                    <td className="p-4 align-top">
+                      <span
+                        className={`inline-flex rounded-full border px-3 py-1 text-xs font-black uppercase tracking-widest ${statusClass(
+                          license.status,
+                        )}`}
+                      >
+                        {statusLabel(license.status)}
+                      </span>
+                    </td>
+                    <td className="p-4 align-top">
+                      <span className="font-bold text-white">{daysRemaining(license.licenseExpiresAt)}</span>
+                    </td>
+                    <td className="p-4 pr-0 align-top">
+                      <span className="text-sm text-white/65">{formatExpiry(license.licenseExpiresAt)}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </CardContent>
       </Card>
-    );
-  }
-
-  // MANAGEMENT STATE
-  return (
-    <Card className="border border-white/10 bg-black/40 backdrop-blur-xl">
-      <CardHeader>
-        <CardTitle className="text-xl flex items-center gap-2">
-          <Key className="w-5 h-5 text-emerald-400" />
-          Active Terminal Keys
-        </CardTitle>
-        <p className="text-sm text-white/60">Input these cryptographic keys into your desktop application to bind the hardware to your farm.</p>
-      </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-white/10 text-xs uppercase tracking-widest text-white/50 font-bold">
-                <th className="p-4 pl-0">Terminal Name</th>
-                <th className="p-4">Secret License Key</th>
-                <th className="p-4">Binding Status</th>
-                <th className="p-4 pr-0">Hardware ID</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {licenses.map((license) => (
-                <tr key={license.id} className="hover:bg-white/5 transition-colors">
-                  <td className="p-4 pl-0 font-medium text-white flex items-center gap-3">
-                    <Monitor className="w-4 h-4 text-emerald-400/70" />
-                    {license.deviceName}
-                  </td>
-                  <td className="p-4">
-                    <div className="inline-flex items-center gap-2 bg-black/60 border border-white/10 rounded-md px-3 py-1.5 group">
-                      <code className="font-mono text-sm text-emerald-300 tracking-wider">
-                        {license.licenseKey}
-                      </code>
-                      <button 
-                        onClick={() => copyToClipboard(license.licenseKey || '')}
-                        className="text-white/40 hover:text-white transition-colors"
-                        title="Copy to clipboard"
-                      >
-                        {copiedKey === license.licenseKey ? (
-                          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                        ) : (
-                          <Copy className="w-4 h-4" />
-                        )}
-                      </button>
-                    </div>
-                  </td>
-                  <td className="p-4">
-                    {license.hardwareId ? (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-bold uppercase">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Bound
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-bold uppercase">
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" /> Pending
-                      </span>
-                    )}
-                  </td>
-                  <td className="p-4 pr-0 text-white/50 font-mono text-sm truncate max-w-[150px]" title={license.hardwareId || ''}>
-                    {license.hardwareId || 'Awaiting Connection...'}
-                  </td>
-                </tr>
-              ))}
-              {licenses.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="p-8 text-center text-white/50 font-medium">
-                    No active terminal licenses found.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </CardContent>
-    </Card>
+    </div>
   );
 }
