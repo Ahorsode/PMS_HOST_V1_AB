@@ -4,12 +4,34 @@ import prisma from '@/lib/db'
 import { normalizeHardwareFingerprint } from '@/lib/license-token'
 import { getRequestUserId } from '@/lib/request-auth'
 
-const requestSchema = z.object({
-  hardware_id: z.string().trim().min(6, 'hardware_id is required'),
-  web_farm_id: z.string().trim().min(1, 'web_farm_id is required'),
-  device_name: z.string().trim().min(1).max(120).optional(),
-  device_type: z.string().trim().min(1).max(60).optional(),
-})
+const requestSchema = z
+  .object({
+    hardware_id: z.string().trim().optional(),
+    hardwareId: z.string().trim().optional(),
+    web_farm_id: z.string().trim().optional(),
+    webFarmId: z.string().trim().optional(),
+    farm_id: z.string().trim().optional(),
+    farmId: z.string().trim().optional(),
+    device_name: z.string().trim().min(1).max(120).optional(),
+    deviceName: z.string().trim().min(1).max(120).optional(),
+    device_type: z.string().trim().min(1).max(60).optional(),
+    deviceType: z.string().trim().min(1).max(60).optional(),
+  })
+  .transform((value) => ({
+    hardwareId: value.hardware_id || value.hardwareId || '',
+    requestedFarmId: value.web_farm_id || value.webFarmId || value.farm_id || value.farmId || '',
+    deviceName: value.device_name || value.deviceName,
+    deviceType: value.device_type || value.deviceType,
+  }))
+  .superRefine((value, ctx) => {
+    if (!value.hardwareId || value.hardwareId.length < 6) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['hardware_id'],
+        message: 'hardware_id is required',
+      })
+    }
+  })
 
 function addDays(base: Date, days: number) {
   const next = new Date(base)
@@ -30,8 +52,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Invalid payload' }, { status: 400 })
     }
 
-    const hardwareId = normalizeHardwareFingerprint(parsed.data.hardware_id)
-    const farmId = parsed.data.web_farm_id
+    const hardwareId = normalizeHardwareFingerprint(parsed.data.hardwareId)
+    const requestedFarmId = parsed.data.requestedFarmId || null
     const now = new Date()
     const expiresAt = addDays(now, 30)
 
@@ -54,16 +76,30 @@ export async function POST(request: Request) {
       )
     }
 
-    const farm = await prisma.farm.findFirst({
-      where: {
-        id: farmId,
-        OR: [{ userId }, { members: { some: { userId } } }],
-      },
-      select: { id: true },
-    })
+    const farm = requestedFarmId
+      ? await prisma.farm.findFirst({
+          where: {
+            id: requestedFarmId,
+            OR: [{ userId }, { members: { some: { userId } } }],
+          },
+          select: { id: true },
+        })
+      : await prisma.farm.findFirst({
+          where: {
+            OR: [{ userId }, { members: { some: { userId } } }],
+          },
+          orderBy: { createdAt: 'asc' },
+          select: { id: true },
+        })
 
     if (!farm) {
-      return NextResponse.json({ error: 'Farm not found or not accessible' }, { status: 404 })
+      return NextResponse.json(
+        {
+          error: 'Farm not found or not accessible',
+          error_code: 'FARM_NOT_ACCESSIBLE',
+        },
+        { status: 404 },
+      )
     }
 
     const registration = await prisma.deviceRegistration.create({
@@ -72,8 +108,8 @@ export async function POST(request: Request) {
         userId,
         hardwareId,
         deviceId: hardwareId,
-        deviceName: parsed.data.device_name ?? 'Flutter Desktop',
-        deviceType: parsed.data.device_type ?? 'Desktop',
+        deviceName: parsed.data.deviceName ?? 'Flutter Desktop',
+        deviceType: parsed.data.deviceType ?? 'Desktop',
         status: 'CLOUD_TRIAL',
         licenseExpiresAt: expiresAt,
         isActive: true,
@@ -89,6 +125,7 @@ export async function POST(request: Request) {
       {
         success: true,
         registration_id: registration.id,
+        farm_id: farm.id,
         license_status: registration.status,
         license_expires_at: registration.licenseExpiresAt?.toISOString() ?? null,
       },

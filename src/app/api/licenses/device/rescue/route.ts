@@ -4,9 +4,23 @@ import prisma from '@/lib/db'
 import { normalizeHardwareFingerprint } from '@/lib/license-token'
 import { getRequestUserId } from '@/lib/request-auth'
 
-const requestSchema = z.object({
-  hardware_id: z.string().trim().min(6, 'hardware_id is required'),
-})
+const requestSchema = z
+  .object({
+    hardware_id: z.string().trim().optional(),
+    hardwareId: z.string().trim().optional(),
+  })
+  .transform((value) => ({
+    hardwareId: value.hardware_id || value.hardwareId || '',
+  }))
+  .superRefine((value, ctx) => {
+    if (!value.hardwareId || value.hardwareId.length < 6) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['hardware_id'],
+        message: 'hardware_id is required',
+      })
+    }
+  })
 
 function addDays(base: Date, days: number) {
   const next = new Date(base)
@@ -27,7 +41,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Invalid payload' }, { status: 400 })
     }
 
-    const hardwareId = normalizeHardwareFingerprint(parsed.data.hardware_id)
+    const hardwareId = normalizeHardwareFingerprint(parsed.data.hardwareId)
     const now = new Date()
 
     const registration = await prisma.deviceRegistration.findFirst({
