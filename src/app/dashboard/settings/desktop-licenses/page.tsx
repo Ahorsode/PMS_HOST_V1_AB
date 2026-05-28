@@ -1,8 +1,15 @@
 import React from 'react';
 import { getDesktopLicenses } from '@/lib/actions/licenses';
 import DesktopLicensesClient from './DesktopLicensesClient';
+import { redirect } from 'next/navigation';
+
+const SHOW_USER_DESKTOP_LICENSES = process.env.NEXT_PUBLIC_SHOW_USER_DESKTOP_LICENSES === 'true';
 
 export default async function DesktopLicensesPage() {
+  if (!SHOW_USER_DESKTOP_LICENSES) {
+    redirect('/dashboard/settings');
+  }
+
   const data = await getDesktopLicenses();
 
   return (

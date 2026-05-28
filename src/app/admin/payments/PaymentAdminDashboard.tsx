@@ -181,6 +181,7 @@ export default function PaymentAdminDashboard({
   const [generatedToken, setGeneratedToken] = useState<string | null>(null)
   const [generatedExpiry, setGeneratedExpiry] = useState<string | null>(null)
   const [copiedToken, setCopiedToken] = useState(false)
+  const [copiedActivationField, setCopiedActivationField] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
@@ -222,6 +223,7 @@ export default function PaymentAdminDashboard({
     setGeneratedToken(null)
     setGeneratedExpiry(null)
     setCopiedToken(false)
+    setCopiedActivationField(null)
     setFormError(null)
   }
 
@@ -231,6 +233,7 @@ export default function PaymentAdminDashboard({
     setGeneratedToken(null)
     setGeneratedExpiry(null)
     setCopiedToken(false)
+    setCopiedActivationField(null)
     setFormError(null)
   }
 
@@ -245,6 +248,14 @@ export default function PaymentAdminDashboard({
     await navigator.clipboard.writeText(token)
     setCopiedToken(true)
     window.setTimeout(() => setCopiedToken(false), 1800)
+  }
+
+  async function copyActivationField(field: string, value: string | null | undefined) {
+    if (!value) return
+
+    await navigator.clipboard.writeText(value)
+    setCopiedActivationField(field)
+    window.setTimeout(() => setCopiedActivationField(null), 1800)
   }
 
   function handleConfirmPayment(event: React.FormEvent<HTMLFormElement>) {
@@ -530,13 +541,61 @@ export default function PaymentAdminDashboard({
             </div>
 
             <form onSubmit={handleConfirmPayment} className="grid gap-5 p-5 sm:p-6">
-              <div className="rounded-[1.35rem] border border-[#f7f1df]/10 bg-black/25 p-4">
-                <p className="text-[0.65rem] font-black uppercase tracking-[0.22em] text-[#d8c78f]/70">
-                  Hardware Fingerprint Payload
-                </p>
-                <p className="mt-2 break-all font-[var(--font-payment-admin-mono)] text-sm font-bold leading-6 text-[#fff9e8]">
-                  {selectedRow.hardwareId}
-                </p>
+              <div className="grid gap-4 md:grid-cols-[0.85fr_1.15fr]">
+                <div className="rounded-[1.35rem] border border-[#d8c78f]/20 bg-[#d8c78f]/10 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[0.65rem] font-black uppercase tracking-[0.22em] text-[#d8c78f]/90">
+                        Farm ID for activation
+                      </p>
+                      <p className="mt-2 break-all font-[var(--font-payment-admin-mono)] text-sm font-black leading-6 text-[#fff9e8]">
+                        {selectedRow.farmId}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => copyActivationField('farmId', selectedRow.farmId)}
+                      className="rounded-xl border border-[#f7f1df]/10 bg-[#f7f1df]/10 p-2 text-[#fff9e8] transition hover:bg-[#f7f1df]/20"
+                      aria-label="Copy farm ID"
+                      title="Copy farm ID"
+                    >
+                      {copiedActivationField === 'farmId' ? (
+                        <CheckCircle2 className="h-4 w-4 text-emerald-200" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                  <p className="mt-3 text-xs font-semibold text-[#c5ba9a]/80">
+                    Send this with the license token to bind the farmer&apos;s desktop app to the right farm.
+                  </p>
+                </div>
+
+                <div className="rounded-[1.35rem] border border-[#f7f1df]/10 bg-black/25 p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-[0.65rem] font-black uppercase tracking-[0.22em] text-[#d8c78f]/70">
+                        Hardware Fingerprint Payload
+                      </p>
+                      <p className="mt-2 break-all font-[var(--font-payment-admin-mono)] text-sm font-bold leading-6 text-[#fff9e8]">
+                        {selectedRow.hardwareId}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => copyActivationField('hardwareId', selectedRow.hardwareId)}
+                      className="rounded-xl border border-[#f7f1df]/10 bg-[#f7f1df]/10 p-2 text-[#fff9e8] transition hover:bg-[#f7f1df]/20"
+                      aria-label="Copy hardware fingerprint"
+                      title="Copy hardware fingerprint"
+                    >
+                      {copiedActivationField === 'hardwareId' ? (
+                        <CheckCircle2 className="h-4 w-4 text-emerald-200" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">

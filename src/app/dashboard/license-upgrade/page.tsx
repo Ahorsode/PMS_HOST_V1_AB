@@ -8,6 +8,8 @@ import { upgradeFarmSubscription } from '@/lib/actions/subscription-actions';
 import { purchaseDesktopLicenseBundle } from '@/lib/actions/licenses';
 import { useRouter } from 'next/navigation';
 
+const SHOW_USER_DESKTOP_LICENSES = process.env.NEXT_PUBLIC_SHOW_USER_DESKTOP_LICENSES === 'true';
+
 const tiers = [
   {
     name: 'Standard Pro',
@@ -66,6 +68,7 @@ const tiers = [
 export default function LicenseUpgradePage() {
   const [isUpgrading, setIsUpgrading] = React.useState<string | null>(null);
   const router = useRouter();
+  const visibleTiers = tiers.filter((tier) => SHOW_USER_DESKTOP_LICENSES || tier.tier !== 'DESKTOP');
 
   const handleUpgrade = async (tier: any) => {
     setIsUpgrading(tier);
@@ -114,7 +117,7 @@ export default function LicenseUpgradePage() {
 
       {/* Tiers Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7 items-stretch pt-7">
-        {tiers.map((tier) => (
+        {visibleTiers.map((tier) => (
           <div key={tier.name} className="relative group h-full">
             {tier.popular && (
               <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10 px-5 py-1.5 bg-amber-500 rounded-full text-black font-bold text-xs uppercase tracking-widest shadow-lg shadow-amber-500/40">

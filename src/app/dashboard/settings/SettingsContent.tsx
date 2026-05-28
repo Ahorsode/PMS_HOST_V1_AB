@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/Button';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MutationBoundary } from '@/components/ui/MutationFeedback';
 
+const SHOW_USER_DESKTOP_LICENSES = process.env.NEXT_PUBLIC_SHOW_USER_DESKTOP_LICENSES === 'true';
+
 interface InventoryItem {
   id: string;
   itemName: string;
@@ -32,7 +34,12 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
   useEffect(() => {
     if (activeTabFromUrl && activeTabFromUrl !== activeTab) {
       if (activeTabFromUrl === 'desktop-licenses') {
-        router.push('/dashboard/settings/desktop-licenses');
+        if (SHOW_USER_DESKTOP_LICENSES) {
+          router.push('/dashboard/settings/desktop-licenses');
+        } else {
+          setActiveTab('farm');
+          router.replace('/dashboard/settings');
+        }
       } else {
         setActiveTab(activeTabFromUrl);
       }
@@ -152,7 +159,7 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
     { id: 'preferences', label: 'Stock Levels', icon: SettingsIcon },
     { id: 'security', label: 'Security', icon: Shield },
     { id: 'desktop-licenses', label: 'Desktop Licenses', icon: Monitor },
-  ];
+  ].filter((tab) => SHOW_USER_DESKTOP_LICENSES || tab.id !== 'desktop-licenses');
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
@@ -162,7 +169,9 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
             key={tab.id}
             onClick={() => {
               if (tab.id === 'desktop-licenses') {
-                router.push('/dashboard/settings/desktop-licenses');
+                if (SHOW_USER_DESKTOP_LICENSES) {
+                  router.push('/dashboard/settings/desktop-licenses');
+                }
               } else {
                 setActiveTab(tab.id);
               }

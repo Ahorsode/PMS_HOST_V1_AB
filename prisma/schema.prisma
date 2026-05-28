@@ -33,6 +33,7 @@ model User {
   memberships           FarmMember[]
   farms                 Farm[]
   financialTransactions FinancialTransaction[]
+  issuedLicenses        IssuedLicense[]
   insertLogs            InsertLog[]
   inventory             Inventory[]
   mortalities           HealthMortality[]
@@ -94,6 +95,7 @@ model AdminUser {
   createdAt             DateTime               @default(now()) @map("created_at")
   updatedAt             DateTime               @updatedAt @map("updated_at")
   lastLoginAt           DateTime?              @map("last_login_at")
+  issuedLicenses        IssuedLicense[]
   manualLicensePayments ManualLicensePayment[]
 
   @@map("admin_user")
@@ -113,6 +115,7 @@ model Farm {
   customers             Customer[]
   feedingLogs           FeedingLog[]
   deviceRegistrations   DeviceRegistration[]
+  issuedLicenses        IssuedLicense[]
   manualLicensePayments ManualLicensePayment[]
   eggCategories         EggCategory[]
   eggProduction         EggProduction[]
@@ -802,6 +805,27 @@ model ManualLicensePayment {
   @@index([adminUserId])
   @@index([deviceRegistrationId])
   @@map("manual_license_payments")
+}
+
+model IssuedLicense {
+  id                  String    @id @default(cuid())
+  farmId              String    @map("farm_id")
+  adminUserId         String    @map("admin_user_id")
+  accountUserId       String?   @map("account_user_id")
+  hardwareId          String    @map("hardware_id")
+  desktopFarmId       String    @map("desktop_farm_id")
+  durationDays        Int       @map("duration_days")
+  targetExpiryDate    DateTime  @map("target_expiry_date")
+  activationToken     String    @unique @map("activation_token")
+  transactionReference String   @map("transaction_reference") @db.Text
+  issuedAt            DateTime  @default(now()) @map("issued_at")
+  adminUser           AdminUser @relation(fields: [adminUserId], references: [id])
+  farm                Farm      @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  accountUser         User?     @relation(fields: [accountUserId], references: [id], onDelete: SetNull)
+
+  @@index([farmId, issuedAt])
+  @@index([adminUserId, issuedAt])
+  @@map("issued_licenses")
 }
 
 model FinancialTransaction {

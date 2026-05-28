@@ -6,6 +6,10 @@ export function normalizeHardwareFingerprint(hardwareId: string) {
   return hardwareId.trim().replace(/\s+/g, '').toUpperCase()
 }
 
+export function normalizeDesktopFarmId(farmId: string) {
+  return farmId.trim().replace(/\s+/g, '').toUpperCase()
+}
+
 function getLicenseTokenSecret() {
   const secret =
     process.env.HATCHLOG_LICENSE_TOKEN_SECRET ||
@@ -66,3 +70,23 @@ export function generateActivationLicenseToken({
   return `HL-${durationDays}D-${tokenBody}`
 }
 
+export function generateIssuedLicenseToken({
+  hardwareId,
+  desktopFarmId,
+  targetExpiryDate,
+  durationDays,
+}: {
+  hardwareId: string
+  desktopFarmId: string
+  targetExpiryDate: Date
+  durationDays: number
+}) {
+  const normalizedHardwareId = normalizeHardwareFingerprint(hardwareId)
+  const normalizedFarmId = normalizeDesktopFarmId(desktopFarmId)
+  const expiryStamp = targetExpiryDate.toISOString()
+  const payload = `hatchlog-manual-v1:${normalizedHardwareId}:${normalizedFarmId}:${expiryStamp}`
+  const digest = createHmac('sha256', getLicenseTokenSecret()).update(payload).digest()
+  const tokenBody = groupTokenBody(encodeReadableDigest(digest, 16))
+
+  return `HL-${durationDays}D-${tokenBody}`
+}
