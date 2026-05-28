@@ -75,7 +75,6 @@ export async function getDesktopLicenses() {
       licenseKey: true,
       status: true,
       hardwareId: true,
-      licenseExpiresAt: true,
     },
     orderBy: {
       registeredAt: "asc"

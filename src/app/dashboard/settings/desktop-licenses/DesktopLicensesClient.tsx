@@ -13,7 +13,6 @@ interface License {
   licenseKey: string | null;
   status: string;
   hardwareId: string | null;
-  licenseExpiresAt?: Date | string | null;
 }
 
 interface DesktopLicensesClientProps {

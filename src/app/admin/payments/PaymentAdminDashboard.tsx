@@ -53,18 +53,24 @@ const statusDot: Record<LicenseStatus, string> = {
 function formatDateTime(value: string | null) {
   if (!value) return 'Not recorded'
 
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return 'Not recorded'
+
   return new Intl.DateTimeFormat('en-GH', {
     dateStyle: 'medium',
     timeStyle: 'short',
-  }).format(new Date(value))
+  }).format(date)
 }
 
 function formatDate(value: string | null) {
   if (!value) return 'Not set'
 
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return 'Not set'
+
   return new Intl.DateTimeFormat('en-GH', {
     dateStyle: 'medium',
-  }).format(new Date(value))
+  }).format(date)
 }
 
 function addDays(date: Date, days: number) {
@@ -110,16 +116,27 @@ function MetricRibbon({
   )
 }
 
-function StatusBadge({ status }: { status: LicenseStatus }) {
+function normalizeSearchValue(value: unknown) {
+  if (typeof value === 'string') return value
+  if (value == null) return ''
+  return String(value)
+}
+
+function StatusBadge({ status }: { status: LicenseStatus | string | null | undefined }) {
+  const normalizedStatus = (status || 'PENDING').toUpperCase() as LicenseStatus
+  const style = statusStyle[normalizedStatus] ?? statusStyle.PENDING
+  const dot = statusDot[normalizedStatus] ?? statusDot.PENDING
+  const label = normalizedStatus === 'TRIALING' ? 'Trialing' : normalizedStatus.toLowerCase()
+
   return (
     <span
       className={cn(
         'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[0.68rem] font-black uppercase tracking-[0.18em]',
-        statusStyle[status],
+        style,
       )}
     >
-      <span className={cn('h-2 w-2 rounded-full', statusDot[status])} />
-      {status === 'TRIALING' ? 'Trialing' : status.toLowerCase()}
+      <span className={cn('h-2 w-2 rounded-full', dot)} />
+      {label}
     </span>
   )
 }
@@ -171,8 +188,16 @@ export default function PaymentAdminDashboard({
   adminName: string
 }) {
   const router = useRouter()
-  const [rows, setRows] = useState(data.rows)
-  const [metrics, setMetrics] = useState(data.metrics)
+  const [rows, setRows] = useState<PaymentAdminRow[]>(Array.isArray(data?.rows) ? data.rows : [])
+  const [metrics, setMetrics] = useState(
+    data?.metrics ?? {
+      totalRegisteredFarms: 0,
+      activeFreeTrialsCurrentMonth: 0,
+      activePaidLicenses: 0,
+      expiredLicenses: 0,
+      totalManualRevenueGhs: 0,
+    },
+  )
   const [query, setQuery] = useState('')
   const [selectedRow, setSelectedRow] = useState<PaymentAdminRow | null>(null)
   const [durationDays, setDurationDays] = useState(90)
@@ -186,8 +211,16 @@ export default function PaymentAdminDashboard({
   const [isPending, startTransition] = useTransition()
 
   useEffect(() => {
-    setRows(data.rows)
-    setMetrics(data.metrics)
+    setRows(Array.isArray(data?.rows) ? data.rows : [])
+    setMetrics(
+      data?.metrics ?? {
+        totalRegisteredFarms: 0,
+        activeFreeTrialsCurrentMonth: 0,
+        activePaidLicenses: 0,
+        expiredLicenses: 0,
+        totalManualRevenueGhs: 0,
+      },
+    )
   }, [data])
 
   const filteredRows = useMemo(() => {
@@ -205,7 +238,7 @@ export default function PaymentAdminDashboard({
         row.rawStatus,
       ]
         .filter(Boolean)
-        .some((value) => value!.toLowerCase().includes(search)),
+        .some((value) => normalizeSearchValue(value).toLowerCase().includes(search)),
     )
   }, [query, rows])
 
