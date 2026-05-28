@@ -22,6 +22,7 @@ model User {
   phoneNumber           String?                @unique @map("phone_number")
   middleName            String?                @map("middle_name")
   password              String?
+  isPaymentAdmin        Boolean                @default(false) @map("is_payment_admin")
   mustChangePassword    Boolean                @default(false) @map("must_change_password")
   accounts              Account[]
   auditLogs             AuditLog[]
@@ -100,6 +101,7 @@ model Farm {
   customers             Customer[]
   feedingLogs           FeedingLog[]
   deviceRegistrations   DeviceRegistration[]
+  manualLicensePayments ManualLicensePayment[]
   eggCategories         EggCategory[]
   eggProduction         EggProduction[]
   expenses              Expense[]
@@ -742,22 +744,50 @@ model EggCategory {
 }
 
 model DeviceRegistration {
-  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  farmId       String   @map("farmId")
-  userId       String?  @map("userId")
-  deviceId     String?  @map("deviceId")
-  deviceName   String?  @map("deviceName")
-  deviceType   String?  @map("deviceType")
-  lastSync     DateTime @default(now()) @map("lastSync")
-  isActive     Boolean  @default(true) @map("isActive")
-  registeredAt DateTime @default(now()) @map("registeredAt")
-  licenseKey   String?  @unique @map("licenseKey")
-  status       String   @default("PENDING") @map("status")
-  hardwareId   String?  @map("hardwareId")
-  farm         Farm     @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  id                    String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  farmId                String                 @map("farmId")
+  userId                String?                @map("userId")
+  deviceId              String?                @map("deviceId")
+  deviceName            String?                @map("deviceName")
+  deviceType            String?                @map("deviceType")
+  lastSync              DateTime               @default(now()) @map("lastSync")
+  isActive              Boolean                @default(true) @map("isActive")
+  registeredAt          DateTime               @default(now()) @map("registeredAt")
+  licenseKey            String?                @unique @map("licenseKey")
+  status                String                 @default("PENDING") @map("status")
+  hardwareId            String?                @map("hardwareId")
+  licenseExpiresAt      DateTime?              @map("licenseExpiresAt")
+  lastActivationToken   String?                @map("lastActivationToken")
+  lastPaymentAt         DateTime?              @map("lastPaymentAt")
+  activatedByAdminId    String?                @map("activatedByAdminId")
+  farm                  Farm                   @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  manualLicensePayments ManualLicensePayment[]
 
   @@unique([farmId, deviceId])
+  @@index([status])
+  @@index([licenseExpiresAt])
   @@map("device_registrations")
+}
+
+model ManualLicensePayment {
+  id                   String             @id @default(cuid())
+  farmId               String             @map("farm_id")
+  deviceRegistrationId String             @map("device_registration_id") @db.Uuid
+  adminUserId          String             @map("admin_user_id")
+  hardwareId           String             @map("hardware_id")
+  amount               Decimal            @db.Decimal(15, 2)
+  currency             String             @default("GHS")
+  durationDays         Int                @map("duration_days")
+  targetExpiryDate     DateTime           @map("target_expiry_date")
+  paymentModeNote      String             @map("payment_mode_note") @db.Text
+  activationToken      String             @unique @map("activation_token")
+  createdAt            DateTime           @default(now()) @map("created_at")
+  deviceRegistration   DeviceRegistration @relation(fields: [deviceRegistrationId], references: [id], onDelete: Cascade)
+  farm                 Farm               @relation(fields: [farmId], references: [id], onDelete: Cascade)
+
+  @@index([farmId, createdAt])
+  @@index([deviceRegistrationId])
+  @@map("manual_license_payments")
 }
 
 model FinancialTransaction {
