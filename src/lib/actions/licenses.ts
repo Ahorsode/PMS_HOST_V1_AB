@@ -178,7 +178,7 @@ export async function getDesktopActivationHubData(): Promise<DesktopActivationHu
       status: true,
       licenseExpiresAt: true,
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: { registeredAt: "desc" },
   });
 
   return {
