@@ -771,6 +771,7 @@ model DeviceRegistration {
   isActive              Boolean                @default(true) @map("isActive")
   registeredAt          DateTime               @default(now()) @map("created_at")
   licenseKey            String?                @unique @map("licenseKey")
+  activationKeyStatus   String                 @default("UNUSED") @map("activation_key_status")
   status                String                 @default("CLOUD_TRIAL") @map("license_status")
   hardwareId            String?                @unique(map: "device_registrations_hardware_id_key") @map("hardware_id")
   licenseExpiresAt      DateTime?              @map("license_expires_at")

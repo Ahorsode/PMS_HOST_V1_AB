@@ -9,7 +9,40 @@ Use this in the Flutter desktop app where the local SQLite `farm_id` and Windows
   - `HARDWARE_ID=<systemGUID>`
 - Add **Copy Activation Package** button to copy the full block.
 
-## 2) Deterministic Token Validation
+## 2) Cloud Activation Key Verification
+
+Call the web backend after the user enters the single-use activation key from the dashboard:
+
+`POST /api/licenses/device/activate`
+
+```json
+{
+  "farm_id": "<cloud farm id>",
+  "activation_key": "PMS-XXXX-XXXX",
+  "hardware_id": "<systemGUID>",
+  "device_name": "Office Desktop",
+  "device_type": "Desktop"
+}
+```
+
+Successful responses include:
+
+```json
+{
+  "success": true,
+  "confirmation_code": "PMS-CONF-XXXXXXXXXX",
+  "registration_id": "...",
+  "farm_id": "...",
+  "hardware_id": "...",
+  "license_status": "CLOUD_TRIAL",
+  "license_expires_at": "2026-06-27T00:00:00.000Z",
+  "next_step": "CREATE_LOCAL_LOGIN"
+}
+```
+
+On success, create the local login and persist the returned license metadata.
+
+## 3) Deterministic Token Validation
 
 - Token formula must match backend:
   - payload = `hatchlog-manual-v1:{HARDWARE_ID_NORMALIZED}:{FARM_ID_NORMALIZED}:{EXPIRY_ISO}`
@@ -19,7 +52,7 @@ Use this in the Flutter desktop app where the local SQLite `farm_id` and Windows
 
 Use `docs/flutter/manual_license_validator.dart` as the implementation source.
 
-## 3) Persist Local Access
+## 4) Persist Local Access
 
 On successful validation, write to SQLite token config store:
 - `activation_token`
