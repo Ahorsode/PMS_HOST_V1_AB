@@ -40,6 +40,7 @@ model User {
   orders                Order[]
   sales                 Sale[]
   sessions              Session[]
+  deviceRegistrations   DeviceRegistration[]
   userPermissions       UserPermission[]
   weightRecords         WeightRecord[]
 
@@ -95,6 +96,7 @@ model AdminUser {
   createdAt             DateTime               @default(now()) @map("created_at")
   updatedAt             DateTime               @updatedAt @map("updated_at")
   lastLoginAt           DateTime?              @map("last_login_at")
+  licenseRenewalHistory AdminLicenseRenewalLog[]
   issuedLicenses        IssuedLicense[]
   manualLicensePayments ManualLicensePayment[]
 
@@ -760,28 +762,51 @@ model EggCategory {
 
 model DeviceRegistration {
   id                    String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  farmId                String                 @map("farmId")
-  userId                String?                @map("userId")
+  farmId                String                 @map("farm_id")
+  userId                String?                @map("user_id")
   deviceId              String?                @map("deviceId")
   deviceName            String?                @map("deviceName")
   deviceType            String?                @map("deviceType")
   lastSync              DateTime               @default(now()) @map("lastSync")
   isActive              Boolean                @default(true) @map("isActive")
-  registeredAt          DateTime               @default(now()) @map("registeredAt")
+  registeredAt          DateTime               @default(now()) @map("created_at")
   licenseKey            String?                @unique @map("licenseKey")
-  status                String                 @default("PENDING") @map("status")
-  hardwareId            String?                @map("hardwareId")
-  licenseExpiresAt      DateTime?              @map("licenseExpiresAt")
+  status                String                 @default("CLOUD_TRIAL") @map("license_status")
+  hardwareId            String?                @unique(map: "device_registrations_hardware_id_key") @map("hardware_id")
+  licenseExpiresAt      DateTime?              @map("license_expires_at")
+  graceRescueUsedAt     DateTime?              @map("grace_rescue_used_at")
   lastActivationToken   String?                @map("lastActivationToken")
   lastPaymentAt         DateTime?              @map("lastPaymentAt")
   activatedByAdminId    String?                @map("activatedByAdminId")
   farm                  Farm                   @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  user                  User?                  @relation(fields: [userId], references: [id], onDelete: SetNull)
+  renewalLogs           AdminLicenseRenewalLog[]
   manualLicensePayments ManualLicensePayment[]
 
   @@unique([farmId, deviceId])
   @@index([status])
   @@index([licenseExpiresAt])
   @@map("device_registrations")
+}
+
+model AdminLicenseRenewalLog {
+  id                    String             @id @default(cuid())
+  adminUserId           String             @map("admin_user_id")
+  deviceRegistrationId  String             @map("device_registration_id") @db.Uuid
+  hardwareId            String             @map("hardware_id")
+  durationMonths        Int                @map("duration_months")
+  previousLicenseStatus String?            @map("previous_license_status")
+  newLicenseStatus      String             @map("new_license_status")
+  previousExpiresAt     DateTime?          @map("previous_expires_at")
+  newExpiresAt          DateTime           @map("new_expires_at")
+  createdAt             DateTime           @default(now()) @map("created_at")
+  adminUser             AdminUser          @relation(fields: [adminUserId], references: [id], onDelete: Restrict)
+  deviceRegistration    DeviceRegistration @relation(fields: [deviceRegistrationId], references: [id], onDelete: Cascade)
+
+  @@index([adminUserId, createdAt])
+  @@index([deviceRegistrationId, createdAt])
+  @@index([hardwareId, createdAt])
+  @@map("admin_license_renewal_log")
 }
 
 model ManualLicensePayment {

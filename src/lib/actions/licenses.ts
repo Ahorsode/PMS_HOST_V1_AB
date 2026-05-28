@@ -44,7 +44,7 @@ export async function purchaseDesktopLicenseBundle(terminals: number) {
           userId: userId,
           licenseKey: uniqueLicenseKey,
           deviceName: `Terminal ${i + 1}`,
-          status: "PENDING",
+          status: "CLOUD_TRIAL",
           hardwareId: null, // Left empty until claimed
         });
       }

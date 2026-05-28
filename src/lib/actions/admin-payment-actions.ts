@@ -9,8 +9,8 @@ import {
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
-const PAID_STATUSES = ['PAID', 'ACTIVE', 'PAID_AND_ACTIVE']
-const TRIAL_STATUSES = ['TRIALING', 'TRIAL']
+const PAID_STATUSES = ['ACTIVE', 'PAID', 'PAID_AND_ACTIVE']
+const TRIAL_STATUSES = ['CLOUD_TRIAL', 'GRACE_PERIOD', 'TRIALING', 'TRIAL', 'PENDING']
 const EXPIRED_STATUSES = ['EXPIRED', 'LAPSED']
 const DURATION_OPTIONS = [30, 90, 180, 365] as const
 
@@ -288,7 +288,7 @@ export async function confirmManualLicensePayment(input: unknown): Promise<Confi
       await tx.deviceRegistration.update({
         where: { id: registration.id },
         data: {
-          status: 'PAID',
+          status: 'ACTIVE',
           licenseExpiresAt: targetExpiryDate,
           lastActivationToken: activationToken,
           lastPaymentAt: now,
