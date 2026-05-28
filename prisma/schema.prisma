@@ -22,7 +22,6 @@ model User {
   phoneNumber           String?                @unique @map("phone_number")
   middleName            String?                @map("middle_name")
   password              String?
-  isPaymentAdmin        Boolean                @default(false) @map("is_payment_admin")
   mustChangePassword    Boolean                @default(false) @map("must_change_password")
   accounts              Account[]
   auditLogs             AuditLog[]
@@ -85,6 +84,19 @@ model VerificationToken {
 
   @@unique([identifier, token])
   @@map("verification_tokens")
+}
+
+model AdminUser {
+  id                    String                 @id @default(cuid())
+  username              String                 @unique
+  passwordHash          String                 @map("password_hash")
+  isActive              Boolean                @default(true) @map("is_active")
+  createdAt             DateTime               @default(now()) @map("created_at")
+  updatedAt             DateTime               @updatedAt @map("updated_at")
+  lastLoginAt           DateTime?              @map("last_login_at")
+  manualLicensePayments ManualLicensePayment[]
+
+  @@map("admin_user")
 }
 
 model Farm {
@@ -782,10 +794,12 @@ model ManualLicensePayment {
   paymentModeNote      String             @map("payment_mode_note") @db.Text
   activationToken      String             @unique @map("activation_token")
   createdAt            DateTime           @default(now()) @map("created_at")
+  adminUser            AdminUser          @relation(fields: [adminUserId], references: [id])
   deviceRegistration   DeviceRegistration @relation(fields: [deviceRegistrationId], references: [id], onDelete: Cascade)
   farm                 Farm               @relation(fields: [farmId], references: [id], onDelete: Cascade)
 
   @@index([farmId, createdAt])
+  @@index([adminUserId])
   @@index([deviceRegistrationId])
   @@map("manual_license_payments")
 }

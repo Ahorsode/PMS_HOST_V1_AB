@@ -27,7 +27,7 @@ export default async function AdminPaymentsPage() {
   const adminUser = await requirePaymentAdminPage()
   const dashboardData = await getPaymentAdminDashboardData()
 
-  const adminName = [adminUser.firstname, adminUser.surname].filter(Boolean).join(' ') || adminUser.email || 'Payment admin'
+  const adminName = adminUser.username || 'Payment admin'
 
   return (
     <main

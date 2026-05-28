@@ -304,27 +304,6 @@ export async function confirmManualLicensePayment(input: unknown): Promise<Confi
         })
       }
 
-      await tx.auditLog.create({
-        data: {
-          tableName: 'device_registrations',
-          recordId: registration.id,
-          attributeName: 'license',
-          oldValue: JSON.stringify({
-            status: registration.status,
-            licenseExpiresAt: registration.licenseExpiresAt,
-          }),
-          newValue: JSON.stringify({
-            status: 'PAID',
-            licenseExpiresAt: targetExpiryDate,
-            paymentId: payment.id,
-          }),
-          actionType: 'MANUAL_LICENSE_PAYMENT_CONFIRMED',
-          description: `Manual GHS payment confirmed for ${registration.farm.name}`,
-          userId: admin.id,
-          farmId: registration.farmId,
-        },
-      })
-
       return {
         activationToken,
         expiresAt: targetExpiryDate.toISOString(),

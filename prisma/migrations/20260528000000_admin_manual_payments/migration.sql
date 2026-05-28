@@ -1,8 +1,4 @@
-﻿-- Add an internal-only payment admin flag. This fails closed until a trusted
--- HatchLog team account is explicitly granted access.
-ALTER TABLE "users" ADD COLUMN "is_payment_admin" BOOLEAN NOT NULL DEFAULT false;
-
--- Extend desktop device registrations so the payment dashboard can manage
+﻿-- Extend desktop device registrations so the payment dashboard can manage
 -- license lifecycle state directly on the device record.
 ALTER TABLE "device_registrations" ADD COLUMN "licenseExpiresAt" TIMESTAMP(3);
 ALTER TABLE "device_registrations" ADD COLUMN "lastActivationToken" TEXT;
@@ -52,3 +48,4 @@ FOREIGN KEY ("device_registration_id") REFERENCES "device_registrations"("id") O
 ALTER TABLE "manual_license_payments"
 ADD CONSTRAINT "manual_license_payments_farm_id_fkey"
 FOREIGN KEY ("farm_id") REFERENCES "farms"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+

@@ -1,88 +1,40 @@
-import { auth } from '@/auth'
 import prisma from '@/lib/db'
-import { notFound, redirect } from 'next/navigation'
+import { getAdminSession, sanitizeAdminCallbackUrl } from '@/lib/admin-session'
+import { redirect } from 'next/navigation'
 
-type PaymentAdminUser = {
-  id: string
-  firstname: string | null
-  surname: string | null
-  email: string | null
-  phoneNumber: string | null
-  isPaymentAdmin: boolean
-}
+async function getActiveAdminUser() {
+  const session = await getAdminSession()
+  if (!session) return null
 
-function parseAllowlist(...values: Array<string | undefined>) {
-  return values
-    .flatMap((value) => value?.split(',') ?? [])
-    .map((value) => value.trim())
-    .filter(Boolean)
-}
-
-function normalize(value: string | null | undefined) {
-  return value?.trim().toLowerCase() ?? ''
-}
-
-function isEnvAllowlisted(user: PaymentAdminUser) {
-  const adminIds = parseAllowlist(
-    process.env.HATCHLOG_PAYMENT_ADMIN_USER_IDS,
-    process.env.PAYMENT_ADMIN_USER_IDS,
-  )
-  const adminEmails = parseAllowlist(
-    process.env.HATCHLOG_PAYMENT_ADMIN_EMAILS,
-    process.env.PAYMENT_ADMIN_EMAILS,
-  ).map(normalize)
-  const adminPhones = parseAllowlist(
-    process.env.HATCHLOG_PAYMENT_ADMIN_PHONES,
-    process.env.PAYMENT_ADMIN_PHONES,
-  )
-
-  return (
-    adminIds.includes(user.id) ||
-    adminEmails.includes(normalize(user.email)) ||
-    adminPhones.includes(user.phoneNumber ?? '')
-  )
-}
-
-function isPaymentAdmin(user: PaymentAdminUser) {
-  return user.isPaymentAdmin || isEnvAllowlisted(user)
-}
-
-async function getSessionUser() {
-  const session = await auth()
-  if (!session?.user?.id) return null
-
-  return prisma.user.findUnique({
-    where: { id: session.user.id },
+  return prisma.adminUser.findFirst({
+    where: {
+      id: session.id,
+      username: session.username,
+      isActive: true,
+    },
     select: {
       id: true,
-      firstname: true,
-      surname: true,
-      email: true,
-      phoneNumber: true,
-      isPaymentAdmin: true,
+      username: true,
+      isActive: true,
     },
   })
 }
 
 export async function requirePaymentAdminPage() {
-  const user = await getSessionUser()
-  if (!user) {
-    redirect('/login?callbackUrl=/admin/payments')
+  const adminUser = await getActiveAdminUser()
+  if (!adminUser) {
+    redirect(`/admin/login?callbackUrl=${encodeURIComponent(sanitizeAdminCallbackUrl('/admin/payments'))}`)
   }
 
-  if (!isPaymentAdmin(user)) {
-    notFound()
-  }
-
-  return user
+  return adminUser
 }
 
 export async function requirePaymentAdminAction() {
-  const user = await getSessionUser()
-  if (!user || !isPaymentAdmin(user)) {
+  const adminUser = await getActiveAdminUser()
+  if (!adminUser) {
     throw new Error('Unauthorized payment admin request')
   }
 
-  return user
+  return adminUser
 }
 
