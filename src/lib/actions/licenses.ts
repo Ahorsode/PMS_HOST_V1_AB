@@ -169,7 +169,6 @@ export async function getDesktopActivationHubData(): Promise<DesktopActivationHu
       farmId: activeFarmId,
       hardwareId: null,
       licenseKey: { not: null },
-      activationKeyStatus: "UNUSED",
       status: { in: ["CLOUD_TRIAL", "GRACE_PERIOD", "ACTIVE"] },
     },
     select: {
