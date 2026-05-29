@@ -326,6 +326,9 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
                     type="text" 
                     required
                     placeholder="staff@example.com or 0540000000"
+                    onChange={() => {
+                      if (message?.type === 'error') setMessage(null);
+                    }}
                   />
                   <Select 
                     label="Assign Role"

@@ -20,9 +20,10 @@ export async function inviteWorker(data: {
     const { userId, activeFarmId } = await getAuthContext()
     if (!activeFarmId) throw new Error('No active farm selected')
 
-    const rateLimit = await checkRateLimit({ policy: 'team.invite', scope: 'inviteWorker', farmId: activeFarmId, userId })
-    if (!rateLimit.ok) return rateLimitActionError(rateLimit)
-    
+    // Rate limit disabled for demo — re-enable before production hardening:
+    // const rateLimit = await checkRateLimit({ policy: 'team.invite', scope: 'inviteWorker', farmId: activeFarmId, userId })
+    // if (!rateLimit.ok) return rateLimitActionError(rateLimit)
+
     const limitCheck = await canAddWorker(activeFarmId)
     if (!limitCheck.canAdd) {
       return { success: false, error: `Subscription limit reached. You can only have ${limitCheck.limit} workers.` }
