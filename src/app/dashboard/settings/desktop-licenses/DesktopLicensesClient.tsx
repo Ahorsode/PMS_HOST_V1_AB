@@ -32,6 +32,7 @@ function calculateCountdown(expiresAtIso: string | null): CountdownParts {
 
 export default function DesktopLicensesClient({ initialData }: DesktopLicensesClientProps) {
   const [generatedKey, setGeneratedKey] = useState(initialData.generatedKey);
+  const [generationError, setGenerationError] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState(false);
   const [isGenerating, startGenerateTransition] = useTransition();
   const hasActiveTerminal = initialData.hasActiveTerminal;
@@ -66,10 +67,14 @@ export default function DesktopLicensesClient({ initialData }: DesktopLicensesCl
   }, [expiresAt]);
 
   async function handleGenerateKey() {
+    setGenerationError(null);
     startGenerateTransition(async () => {
       const result = await generateDesktopActivationKey();
       if (result.success) {
         setGeneratedKey(result.licenseKey);
+        router.refresh();
+      } else {
+        setGenerationError(result.error);
       }
     });
   }
@@ -147,13 +152,21 @@ export default function DesktopLicensesClient({ initialData }: DesktopLicensesCl
           </div>
 
           {!generatedKey ? (
-            <Button
-              onClick={handleGenerateKey}
-              disabled={isGenerating}
-              className="w-full rounded-xl border border-emerald-300/30 bg-emerald-500/70 px-5 py-6 text-xs font-black tracking-[0.2em] text-black shadow-[0_12px_32px_rgba(16,185,129,0.35)] hover:bg-emerald-400"
-            >
-              {isGenerating ? "GENERATING..." : "[ GENERATE DESKTOP ACTIVATION KEY ]"}
-            </Button>
+            <div className="space-y-3">
+              <Button
+                onClick={handleGenerateKey}
+                disabled={isGenerating}
+                className="w-full rounded-xl border border-emerald-300/30 bg-emerald-500/70 px-5 py-6 text-xs font-black tracking-[0.2em] text-black shadow-[0_12px_32px_rgba(16,185,129,0.35)] hover:bg-emerald-400"
+              >
+                {isGenerating ? "GENERATING..." : "[ GENERATE DESKTOP ACTIVATION KEY ]"}
+              </Button>
+              {generationError ? (
+                <p className="flex items-start gap-2 rounded-xl border border-red-300/25 bg-red-500/10 p-3 text-xs font-semibold text-red-100">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-red-200" />
+                  {generationError}
+                </p>
+              ) : null}
+            </div>
           ) : (
             <div className="space-y-3 rounded-2xl border border-emerald-300/25 bg-emerald-500/10 p-4">
               <p className="text-xs uppercase tracking-[0.2em] text-emerald-100/80">Activation Key</p>

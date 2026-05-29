@@ -4,6 +4,11 @@ import prisma from "@/lib/db";
 import { getAuthContext } from "@/lib/auth-utils";
 import { revalidatePath } from "next/cache";
 
+function createActivationKey() {
+  const segment = () => Math.random().toString(36).substring(2, 6).toUpperCase();
+  return `PMS-${segment()}-${segment()}`;
+}
+
 function serializeLicense(registration: {
   id: string;
   farmId: string;
@@ -196,23 +201,56 @@ export async function generateDesktopActivationKey() {
   }
 
   try {
-    const result = await prisma.$queryRaw<Array<{ license_key: string }>>`
-      SELECT license_key
-      FROM public.generate_desktop_activation_key(${activeFarmId}, ${userId})
-    `;
+    const pendingRegistration = await prisma.deviceRegistration.findFirst({
+      where: {
+        farmId: activeFarmId,
+        hardwareId: null,
+        licenseKey: { not: null },
+        status: { in: ["CLOUD_TRIAL", "GRACE_PERIOD", "ACTIVE"] },
+      },
+      select: { licenseKey: true },
+      orderBy: { registeredAt: "desc" },
+    });
 
-    const licenseKey = result[0]?.license_key ?? null;
+    if (pendingRegistration?.licenseKey) {
+      return { success: true as const, licenseKey: pendingRegistration.licenseKey };
+    }
 
-    if (!licenseKey) {
+    const registration = await prisma.$transaction(async (tx) => {
+      for (let attempt = 0; attempt < 8; attempt += 1) {
+        try {
+          return await tx.deviceRegistration.create({
+            data: {
+              farmId: activeFarmId,
+              userId,
+              licenseKey: createActivationKey(),
+              deviceName: "Desktop Evaluation Terminal",
+              status: "CLOUD_TRIAL",
+              hardwareId: null,
+            },
+            select: { licenseKey: true },
+          });
+        } catch (error) {
+          if ((error as { code?: string }).code !== "P2002" || attempt === 7) {
+            throw error;
+          }
+        }
+      }
+
+      throw new Error("Could not generate a unique activation key.");
+    });
+
+    if (!registration.licenseKey) {
       return { success: false as const, error: "Could not generate activation key." };
     }
 
     revalidatePath("/dashboard/settings/desktop-licenses");
-    return { success: true as const, licenseKey };
+    return { success: true as const, licenseKey: registration.licenseKey };
   } catch (error) {
+    console.error("[generateDesktopActivationKey]", error);
     return {
       success: false as const,
-      error: error instanceof Error ? error.message : "Could not generate activation key.",
+      error: "Could not generate activation key. Please refresh the page and try again.",
     };
   }
 }
