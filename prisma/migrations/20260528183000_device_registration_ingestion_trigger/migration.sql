@@ -54,3 +54,57 @@ CREATE TRIGGER touch_device_registration_last_sync_before_insert
 BEFORE INSERT ON public.device_registrations
 FOR EACH ROW
 EXECUTE FUNCTION public.touch_device_registration_last_sync();
+
+-- Allow authenticated Supabase desktop clients to insert/select only rows
+-- connected to their own web profile and farm membership.
+ALTER TABLE public.device_registrations ENABLE ROW LEVEL SECURITY;
+
+GRANT SELECT, INSERT ON public.device_registrations TO authenticated;
+
+DROP POLICY IF EXISTS "desktop users can view their device registrations" ON public.device_registrations;
+CREATE POLICY "desktop users can view their device registrations"
+ON public.device_registrations
+FOR SELECT
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM public.users u
+    WHERE u.id = device_registrations.user_id
+      AND (
+        u.id = (SELECT auth.uid())::text
+        OR lower(coalesce(u.email, '')) = lower(coalesce((current_setting('request.jwt.claims', true)::jsonb ->> 'email'), ''))
+      )
+  )
+);
+
+DROP POLICY IF EXISTS "desktop users can insert their device registrations" ON public.device_registrations;
+CREATE POLICY "desktop users can insert their device registrations"
+ON public.device_registrations
+FOR INSERT
+TO authenticated
+WITH CHECK (
+  EXISTS (
+    SELECT 1
+    FROM public.users u
+    WHERE u.id = device_registrations.user_id
+      AND (
+        u.id = (SELECT auth.uid())::text
+        OR lower(coalesce(u.email, '')) = lower(coalesce((current_setting('request.jwt.claims', true)::jsonb ->> 'email'), ''))
+      )
+  )
+  AND EXISTS (
+    SELECT 1
+    FROM public.farms f
+    WHERE f.id = device_registrations.farm_id
+      AND (
+        f."userId" = device_registrations.user_id
+        OR EXISTS (
+          SELECT 1
+          FROM public.farm_members fm
+          WHERE fm."farmId" = f.id
+            AND fm."userId" = device_registrations.user_id
+        )
+      )
+  )
+);
