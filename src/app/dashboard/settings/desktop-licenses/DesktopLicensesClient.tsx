@@ -69,12 +69,18 @@ export default function DesktopLicensesClient({ initialData }: DesktopLicensesCl
   async function handleGenerateKey() {
     setGenerationError(null);
     startGenerateTransition(async () => {
-      const result = await generateDesktopActivationKey();
-      if (result.success) {
-        setGeneratedKey(result.licenseKey);
-        router.refresh();
-      } else {
-        setGenerationError(result.error);
+      try {
+        const result = await generateDesktopActivationKey();
+        if (result.success) {
+          setGeneratedKey(result.licenseKey);
+          router.refresh();
+        } else {
+          console.error("[generateDesktopActivationKey]", result.error);
+          setGenerationError(result.error);
+        }
+      } catch (error) {
+        console.error("[generateDesktopActivationKey]", error);
+        setGenerationError("Network failure while generating activation key. Please try again.");
       }
     });
   }
