@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Bird, Skull, Wheat, TrendingUp, Activity, ChevronRight } from 'lucide-react';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import Link from 'next/link';
+import { getBreedDisplayName } from '@/lib/livestock-breed-options';
 
 export default async function FlocksAnalyticsPage() {
   const batches = await getGlobalFlockStats();
@@ -54,7 +55,7 @@ export default async function FlocksAnalyticsPage() {
                     return (
                       <tr key={batch.id} className="hover:bg-white/[0.02] transition-colors group">
                         <td className="px-7 py-5">
-                           <p className="text-white font-bold text-sm tracking-normal">{batch.batchName || batch.breedType}</p>
+                           <p className="text-white font-bold text-sm tracking-normal">{batch.batchName || getBreedDisplayName(batch.breedType)}</p>
                            <p className="text-white/60 text-[8px] font-bold uppercase tracking-widest mt-1 italic">{batch.house?.name || 'Unassigned House'}</p>
                         </td>
                         <td className="px-7 py-5 text-center">

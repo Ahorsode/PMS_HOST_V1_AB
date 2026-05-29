@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { createFeedingLog, updateFeedingLog, deleteFeedingLog } from '@/lib/actions/feed-actions';
 import { useRouter } from 'next/navigation';
+import { getBreedDisplayName } from '@/lib/livestock-breed-options';
 
 interface FeedFormProps {
   batches: { id: number; breedType: string; batchName?: string | null }[];
@@ -107,7 +108,7 @@ export const FeedForm = ({ batches, inventory, formulations = [], log, mode, onC
     <form onSubmit={handleSubmit} className="space-y-3">
       <Select
         label="Batch"
-        options={batches.map((b, index) => ({ label: `${b.batchName || `Unit ${index + 1}`} (${b.breedType})`, value: b.id }))}
+        options={batches.map((b, index) => ({ label: `${b.batchName || `Unit ${index + 1}`} (${getBreedDisplayName(b.breedType)})`, value: b.id }))}
         value={formData.batchId}
         onChange={(e) => setFormData({ ...formData, batchId: Number(e.target.value) })}
         disabled={mode === 'edit'}

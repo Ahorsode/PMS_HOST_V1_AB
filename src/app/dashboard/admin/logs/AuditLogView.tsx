@@ -20,6 +20,7 @@ import { Dialog, DialogTitle, DialogDescription } from '@/components/ui/Dialog';
 import { restoreDeletedRecord } from '@/lib/actions/audit-actions';
 import { toast } from 'sonner';
 import { WorkerStamp } from '@/components/ui/WorkerStamp';
+import { getBreedDisplayName } from '@/lib/livestock-breed-options';
 
 import { restoreBatch } from '@/lib/actions/batch-actions';
 import { restoreEggProduction } from '@/lib/actions/egg-actions';
@@ -336,7 +337,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                           <div key={b.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-white/5 border border-white/10">
                             <div>
                               <p className="text-xs font-bold text-white">{b.batchName}</p>
-                              <p className="text-[10px] text-white/40">{b.breedType} · {b.currentCount} birds</p>
+                              <p className="text-[10px] text-white/40">{getBreedDisplayName(b.breedType)} · {b.currentCount} birds</p>
                             </div>
                             <button onClick={() => handleSoftRestore(restoreBatch, b.id, 'Batch')} disabled={isRestoring(`Batch:${b.id}`)} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/20 transition-all flex items-center gap-1 disabled:opacity-50">
                               {isRestoring(`Batch:${b.id}`) ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />} {isRestoring(`Batch:${b.id}`) ? 'Restoring...' : 'Restore'}

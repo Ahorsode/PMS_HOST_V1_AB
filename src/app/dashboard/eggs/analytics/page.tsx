@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Egg, TrendingUp, Calendar, Target, Activity } from 'lucide-react';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { formatDate } from '@/lib/utils';
+import { getBreedDisplayName } from '@/lib/livestock-breed-options';
 
 export default async function EggsAnalyticsPage() {
   const logs = await getGlobalEggStats();
@@ -52,7 +53,7 @@ export default async function EggsAnalyticsPage() {
                         {formatDate(log.logDate)}
                       </td>
                       <td className="px-7 py-5">
-                         <p className="text-white font-bold text-sm tracking-normal">{log.batch?.breedType}</p>
+                         <p className="text-white font-bold text-sm tracking-normal">{getBreedDisplayName(log.batch?.breedType)}</p>
                          <p className="text-white/60 text-[8px] font-bold uppercase tracking-widest mt-1">{log.batch?.batchName || `Collection ${index + 1}`}</p>
                       </td>
                       <td className="px-7 py-5 text-center">

@@ -2,15 +2,20 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/Button';
-import { Dialog } from '@/components/ui/Dialog';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
-import { createBatch, updateBatch, deleteBatch, logHealthEvent } from '@/lib/actions/batch-actions';
+import { BreedSelect } from '@/components/ui/BreedSelect';
+import { createBatch, updateBatch, logHealthEvent } from '@/lib/actions/batch-actions';
 import { createIsolationRoom } from '@/lib/actions/dashboard-actions';
-import { Activity, Skull, Home, AlertCircle } from 'lucide-react';
+import { Activity, Skull } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { MutationBoundary } from '@/components/ui/MutationFeedback';
+import {
+  getBreedOptionsForCategory,
+  LIVESTOCK_CATEGORY_OPTIONS,
+  normalizeBreedValue,
+} from '@/lib/livestock-breed-options';
 
 interface LivestockFormProps {
   houses: { id: string; name: string }[];
@@ -44,7 +49,8 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
   const [formData, setFormData] = useState({
     houseId: batch?.houseId || (houses[0]?.id || ''),
     batchName: batch?.batchName || '',
-    breedType: batch?.breedType || '',
+    type: batch?.type || 'POULTRY_BROILER',
+    breedType: normalizeBreedValue(batch?.breedType) || 'ross_308',
     initialCount: batch?.initialCount || '' as number | '',
     growthTargetOverride: batch?.growthTargetOverride || '',
     arrivalDate: batch?.arrivalDate ? new Date(batch.arrivalDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
@@ -58,6 +64,20 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
     newRoomName: '',
     newRoomCapacity: '',
   });
+  const breedOptions = React.useMemo(() => getBreedOptionsForCategory(formData.type), [formData.type]);
+
+  React.useEffect(() => {
+    const firstBreed = breedOptions[0]?.value ?? '';
+    const hasSelectedBreed = breedOptions.some((option) => option.value === formData.breedType);
+
+    if (firstBreed && !hasSelectedBreed) {
+      setFormData((current) => ({ ...current, breedType: firstBreed }));
+    }
+
+    if (!firstBreed && formData.breedType) {
+      setFormData((current) => ({ ...current, breedType: '' }));
+    }
+  }, [breedOptions, formData.breedType]);
 
   const handleSubmit = async (e: any) => {
     if (e && e.preventDefault) e.preventDefault();
@@ -69,7 +89,8 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
         res = await createBatch({
           houseId: String(formData.houseId),
           batchName: formData.batchName,
-          breedType: formData.breedType,
+          breedType: normalizeBreedValue(formData.breedType),
+          type: formData.type as any,
           initialCount: Number(formData.initialCount) || 0,
           arrivalDate: formData.arrivalDate,
         });
@@ -77,7 +98,8 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
         res = await updateBatch(batch.id, {
           houseId: String(formData.houseId),
           batchName: formData.batchName,
-          breedType: formData.breedType,
+          breedType: normalizeBreedValue(formData.breedType),
+          type: formData.type as any,
           growthTargetOverride: formData.growthTargetOverride,
           initialCount: Number(formData.initialCount) || 0,
           arrivalDate: formData.arrivalDate,
@@ -288,13 +310,23 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-             <Input
-               label="Breed Type"
-               value={formData.breedType}
-               onChange={(e) => setFormData({ ...formData, breedType: e.target.value })}
+             <Select
+               label="Livestock Category"
+               options={[...LIVESTOCK_CATEGORY_OPTIONS]}
+               value={formData.type}
+               onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                required
-               placeholder="e.g. Ross 308"
              />
+             <BreedSelect
+               label="Primary Breed / Specie"
+               options={breedOptions}
+               value={formData.breedType}
+               onChange={(breedType) => setFormData({ ...formData, breedType })}
+               required
+             />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
              {mode === 'edit' && (
                 <Select
                   label="Benchmark Override"

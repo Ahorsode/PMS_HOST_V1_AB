@@ -16,6 +16,7 @@ import { restoreOrder } from '@/lib/actions/order-actions'
 import { restoreInventory } from '@/lib/actions/inventory-actions'
 import { useRouter } from 'next/navigation'
 import { MutationBoundary } from '@/components/ui/MutationFeedback'
+import { getBreedDisplayName } from '@/lib/livestock-breed-options'
 
 type TrashItems = {
   batches: any[]
@@ -150,7 +151,7 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
         <Row key={b.id}>
           <div className="flex-1 min-w-0">
             <p className="font-bold text-sm text-white truncate">{b.batchName}</p>
-            <p className="text-xs text-white/50">{b.breedType} &bull; {b.initialCount} birds &bull; Arrived {fmt(b.arrivalDate)}</p>
+            <p className="text-xs text-white/50">{getBreedDisplayName(b.breedType)} &bull; {b.initialCount} birds &bull; Arrived {fmt(b.arrivalDate)}</p>
           </div>
           <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${c.badge}`}>{b.status}</span>
           <RestoreButton id={b.id} onRestore={restoreBatch} color={activeTabConfig.color} />

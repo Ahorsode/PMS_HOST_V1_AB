@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Wheat, AlertTriangle, Activity, Package, Battery, ChevronRight } from 'lucide-react';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import Link from 'next/link';
+import { getBreedDisplayName } from '@/lib/livestock-breed-options';
 
 export default async function FeedAnalyticsPage() {
   const inventory = await getGlobalFeedStats();
@@ -64,7 +65,7 @@ export default async function FeedAnalyticsPage() {
                   {inventory.flatMap((i: any) => i.feedingLogs).slice(0, 10).map((log: any, idx: number) => (
                     <div key={idx} className="hover:bg-white/[0.02] px-7 py-3 flex items-center justify-between">
                        <div>
-                          <p className="text-white font-bold text-xs">{log.batch?.breedType}</p>
+                          <p className="text-white font-bold text-xs">{getBreedDisplayName(log.batch?.breedType)}</p>
                           <p className="text-white/60 text-[8px] font-bold uppercase tracking-widest italic">{log.feedType}</p>
                        </div>
                        <div className="text-right">

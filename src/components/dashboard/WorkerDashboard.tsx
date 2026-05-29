@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Bird, Wheat, Skull, Activity, Plus, Package, Syringe, Clock } from 'lucide-react';
 import { HealthBadge } from '@/components/ui/HealthBadge';
 import { motion } from 'framer-motion';
+import { getBreedDisplayName } from '@/lib/livestock-breed-options';
 
 interface WorkerDashboardProps {
   stats: any;
@@ -98,7 +99,7 @@ export function WorkerDashboard({ stats, houses }: WorkerDashboardProps) {
                <div key={batch.numericId} className="p-3 bg-black/60 rounded-md border border-white/5 flex items-center justify-between">
                   <div>
                     <h4 className="text-white font-bold text-lg tracking-normal uppercase italic">{batch.batchName || `Unit ${index + 1}`}</h4>
-                    <p className="text-[9px] text-white/70 uppercase font-bold tracking-widest mt-1">House: {batch.houseNumber} • {batch.breed}</p>
+                    <p className="text-[9px] text-white/70 uppercase font-bold tracking-widest mt-1">House: {batch.houseNumber} • {getBreedDisplayName(batch.breed)}</p>
                   </div>
                   <div className="flex flex-col items-end gap-2">
                      <span className="text-emerald-400 font-bold text-xl tracking-normal">{batch.quantity.toLocaleString()}</span>

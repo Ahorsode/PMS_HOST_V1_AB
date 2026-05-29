@@ -6,6 +6,7 @@ import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
 import { revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
+import { LivestockType } from '@prisma/client'
 
 export async function createBatch(data: {
   houseId: string
@@ -13,6 +14,7 @@ export async function createBatch(data: {
   initialCount: number
   arrivalDate: string
   batchName?: string
+  type?: LivestockType
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
@@ -29,6 +31,7 @@ export async function createBatch(data: {
         houseId: data.houseId,
         farmId: activeFarmId,
         breedType: data.breedType,
+        type: data.type || LivestockType.POULTRY_BROILER,
         batchName: data.batchName || `Unit ${new Date().getTime()}`,
         initialCount: data.initialCount,
         currentCount: data.initialCount,
@@ -55,6 +58,7 @@ export async function updateBatch(id: string, data: {
   status?: string
   batchName?: string
   growthTargetOverride?: string
+  type?: LivestockType
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }

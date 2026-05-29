@@ -3,8 +3,9 @@
 import React, { useState } from 'react';
 import { Bird, Activity, Info, Zap, Waves, LayoutGrid } from 'lucide-react';
 import { FlockRowActions } from './FlockActions';
-import { formatLivestockType, getLivestockUnit } from '@/lib/utils/growth-utils';
+import { formatLivestockType } from '@/lib/utils/growth-utils';
 import { WorkerStamp } from '@/components/ui/WorkerStamp';
+import { getBreedDisplayName } from '@/lib/livestock-breed-options';
 
 interface LivestockTableProps {
   initialBatches: any[];
@@ -76,7 +77,7 @@ export function LivestockTable({ initialBatches, houses, isolationRooms, canEdit
                   </td>
                   <td className="px-5 py-3 whitespace-nowrap">
                     <div className="text-sm font-bold text-gray-900">{formatLivestockType(batch.type)}</div>
-                    <div className="text-xs text-gray-500 font-medium">{batch.breedType}</div>
+                    <div className="text-xs text-gray-500 font-medium">{getBreedDisplayName(batch.breedType)}</div>
                   </td>
                   <td className="px-5 py-3 whitespace-nowrap">
                     <div className="flex flex-col">

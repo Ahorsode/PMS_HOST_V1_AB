@@ -1,15 +1,17 @@
 "use client";
 
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { createBatch } from '@/lib/actions/dashboard-actions';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
+import { BreedSelect } from '@/components/ui/BreedSelect';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
+import { getBreedOptionsForCategory, LIVESTOCK_CATEGORY_OPTIONS, normalizeBreedValue } from '@/lib/livestock-breed-options';
 
 import { FinancialInitializationModal } from '@/components/modals/FinancialInitializationModal';
 import { LivestockType } from '@prisma/client';
@@ -51,6 +53,7 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
   
   const {
     register,
+    control,
     handleSubmit,
     watch,
     setValue,
@@ -59,12 +62,14 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
     resolver: zodResolver(formSchema),
     defaultValues: {
       type: LivestockType.POULTRY_BROILER,
-      breed: "Broiler",
+      breed: "ross_308",
     },
   });
 
   const selectedType = watch("type");
+  const selectedBreed = watch("breed");
   const selectedHouseId = watch("houseId");
+  const breedOptions = React.useMemo(() => getBreedOptionsForCategory(selectedType), [selectedType]);
 
   React.useEffect(() => {
     if (selectedHouseId === "NEW_HOUSE") {
@@ -72,6 +77,19 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
       setValue("houseId", ""); // Reset dropdown to placeholder
     }
   }, [selectedHouseId, setValue]);
+
+  React.useEffect(() => {
+    const firstBreed = breedOptions[0]?.value ?? "";
+    const hasSelectedBreed = breedOptions.some((option) => option.value === selectedBreed);
+
+    if (firstBreed && !hasSelectedBreed) {
+      setValue("breed", firstBreed, { shouldDirty: true, shouldValidate: true });
+    }
+
+    if (!firstBreed && selectedBreed) {
+      setValue("breed", "", { shouldDirty: true, shouldValidate: true });
+    }
+  }, [breedOptions, selectedBreed, setValue]);
 
   const handleCreateHouse = async () => {
     if (isCreatingHouse) return;
@@ -116,41 +134,13 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
 
   const houseOptions = houses.map(h => ({ label: h.name, value: h.id.toString() }));
   
-  const speciesOptions = [
-    { label: "Poultry (Meat)", value: LivestockType.POULTRY_BROILER },
-    { label: "Poultry (Eggs)", value: LivestockType.POULTRY_LAYER },
-    { label: "Cattle / Livestock", value: LivestockType.CATTLE },
-    { label: "Sheep / Goat", value: LivestockType.SHEEP_GOAT },
-    { label: "Pig / Swine", value: LivestockType.PIG },
-    { label: "Other / Generic", value: LivestockType.OTHER },
-  ];
-
-  const breedOptions = selectedType === LivestockType.POULTRY_BROILER 
-    ? [
-        { label: "Ross 308 (Standard)", value: "Ross 308" },
-        { label: "Cobb 500 (Efficient)", value: "Cobb 500" },
-        { label: "Hubbard (Hardy)", value: "Hubbard" },
-        { label: "Other Breed", value: "Other" }
-      ]
-    : selectedType === LivestockType.POULTRY_LAYER
-    ? [
-        { label: "Isa Brown (Standard)", value: "Isa Brown" },
-        { label: "Leghorn (White Eggs)", value: "Leghorn" },
-        { label: "Lohmann (High Yield)", value: "Lohmann" },
-        { label: "Other Breed", value: "Other" }
-      ]
-    : [
-        { label: "No Preference / Standard", value: "Standard" },
-        { label: "Specific Breed / Variety", value: "Other" }
-      ];
-
   const onSubmit = async (data: FormValues) => {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
       const result = await createBatch({
         houseId: data.houseId,
-        breedType: data.breed,
+        breedType: normalizeBreedValue(data.breed),
         initialCount: data.initialQuantity,
         arrivalDate: data.hatchDate,
         batchName: data.batchName,
@@ -192,18 +182,26 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
 
             <Select
               label="Livestock Category"
-              options={speciesOptions}
+              options={[...LIVESTOCK_CATEGORY_OPTIONS]}
               {...register("type")}
               error={errors.type?.message}
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Select
-              label="Primary Breed / Specie"
-              options={breedOptions}
-              {...register("breed")}
-              error={errors.breed?.message}
+            <Controller
+              name="breed"
+              control={control}
+              render={({ field }) => (
+                <BreedSelect
+                  label="Primary Breed / Specie"
+                  options={breedOptions}
+                  value={field.value}
+                  onChange={field.onChange}
+                  error={errors.breed?.message}
+                  required
+                />
+              )}
             />
 
             <Input

@@ -11,6 +11,7 @@ import { Dialog } from '@/components/ui/Dialog';
 import { formatCurrency } from '@/lib/utils';
 import { LivestockType, Role, SubscriptionTier } from '@prisma/client';
 import { formatLivestockType } from '@/lib/utils/growth-utils';
+import { getBreedDisplayName, normalizeBreedValue } from '@/lib/livestock-breed-options';
 import dynamic from 'next/dynamic';
 
 const RegisterBatchForm = dynamic(() => import('@/components/forms/RegisterBatchForm').then(mod => mod.RegisterBatchForm), {
@@ -127,7 +128,7 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
 
   const getGrowthProgress = (hatchDate: string, breed: string) => {
     const daysDiff = getAgeInDays(hatchDate);
-    const target = breed === 'Broiler' ? 42 : 700;
+    const target = normalizeBreedValue(breed) === 'ross_308' ? 42 : 700;
     const percent = Math.min(100, Math.max(0, (daysDiff / target) * 100));
     return { days: daysDiff, percent, target };
   };
@@ -443,7 +444,7 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
                               <span className="text-emerald-400 font-bold text-xs uppercase tracking-normal bg-emerald-500/20 px-2 py-0.5 rounded-lg border border-emerald-500/20 truncate">{batch.batchName || `Unit ${index + 1}`}</span>
                               <span className="text-white/70 font-bold text-xs uppercase tracking-widest truncate">{batch.houseNumber ? 'Assigned house' : 'House not assigned'}</span>
                            </div>
-                           <h4 className="text-white font-bold text-lg md:text-2xl tracking-normal capitalize truncate">{formatLivestockType(batch.type)} - {batch.breed}</h4>
+                           <h4 className="text-white font-bold text-lg md:text-2xl tracking-normal capitalize truncate">{formatLivestockType(batch.type)} - {getBreedDisplayName(batch.breed)}</h4>
                            <div className="text-white/70 text-xs font-bold uppercase tracking-widest mt-1">
                               Started {new Date(batch.hatchDate).toLocaleDateString()}
                            </div>

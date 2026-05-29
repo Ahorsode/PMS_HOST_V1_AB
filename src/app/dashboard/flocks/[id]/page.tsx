@@ -3,6 +3,7 @@ import { getBatchDetails } from '@/lib/actions/dashboard-actions';
 import { notFound } from 'next/navigation';
 import { FlockDetailClient } from './FlockDetailClient';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
+import { getBreedDisplayName } from '@/lib/livestock-breed-options';
 
 export default async function FlockDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -27,7 +28,7 @@ export default async function FlockDetailPage({ params }: { params: Promise<{ id
             Livestock <span className="text-emerald-400 italic">Management</span>
           </h2>
           <p className="text-white/70 font-bold uppercase tracking-widest text-xs mt-2 flex items-center gap-2 italic">
-             {batch.breedType} • {batch.house?.name || 'House not named'}
+             {getBreedDisplayName(batch.breedType)} • {batch.house?.name || 'House not named'}
           </p>
         </div>
         <div className="flex gap-3">
