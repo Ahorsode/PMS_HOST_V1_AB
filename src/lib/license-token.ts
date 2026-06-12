@@ -11,13 +11,10 @@ export function normalizeDesktopFarmId(farmId: string) {
 }
 
 function getLicenseTokenSecret() {
-  const secret =
-    process.env.HATCHLOG_LICENSE_TOKEN_SECRET ||
-    process.env.LICENSE_TOKEN_SECRET ||
-    process.env.AUTH_SECRET
+  const secret = process.env.HATCHLOG_LICENSE_TOKEN_SECRET
 
   if (!secret || secret.length < 16) {
-    throw new Error('Missing HATCHLOG_LICENSE_TOKEN_SECRET or AUTH_SECRET for license token generation')
+    throw new Error('Missing HATCHLOG_LICENSE_TOKEN_SECRET for license token generation')
   }
 
   return secret
