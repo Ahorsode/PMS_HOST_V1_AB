@@ -51,13 +51,11 @@ export async function canAddWorker(farmId: string): Promise<{ canAdd: boolean; l
     const limit = WORKER_LIMITS[tier];
     
     const [membersCount, invitationsCount] = await Promise.all([
-        prisma.farmMember.count({ where: { farmId } }),
+        prisma.farmMember.count({ where: { farmId, role: { not: 'OWNER' } } }),
         prisma.invitation.count({ where: { farmId, status: 'PENDING' } })
     ]);
     
     const current = membersCount + invitationsCount;
-    // Note: Absolute Owner (creator) often doesn't count towards the 'worker' limit in some models,
-    // but here we'll count everyone for simplicity unless specified.
     
     return {
         canAdd: current < limit,
