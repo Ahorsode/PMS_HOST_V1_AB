@@ -28,7 +28,9 @@ export async function checkSubscriptionFeature(farmId: string, feature: AppFeatu
     'feed-formulation'
   ]
 
-  const tier = subscription?.plan.tier || 'BASIC'
+  const now = new Date()
+  const isActive = subscription?.status === 'ACTIVE' && (!subscription.endDate || subscription.endDate > now)
+  const tier = (isActive ? subscription?.plan.tier : null) || 'BASIC'
 
   switch (tier) {
     case 'PREMIUM':
