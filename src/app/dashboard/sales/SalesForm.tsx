@@ -1,9 +1,20 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { createOrder } from '@/lib/actions/order-actions';
 import { toast } from 'sonner';
-import { Plus, Trash2, ShoppingCart, Percent } from 'lucide-react';
+import { AlertTriangle, Banknote, Calendar, Lock, Plus, ShieldCheck, ShoppingCart, Trash2 } from 'lucide-react';
+import { toLocalDateTimeInputValue } from '@/lib/financial-dates';
+
+type ProductType = 'inventory' | 'livestock' | 'custom';
+
+interface SaleItemState {
+  productType: ProductType;
+  productId: string;
+  description: string;
+  quantity: number | '';
+  unitPrice: number | '';
+}
 
 interface SalesFormProps {
   customers: any[];
@@ -11,450 +22,452 @@ interface SalesFormProps {
   livestock: any[];
   onSuccess: () => void;
   initialLivestockId?: string;
+  canOverridePrice?: boolean;
 }
 
-export function SalesForm({ customers, inventory, livestock, onSuccess, initialLivestockId }: SalesFormProps) {
-  const [items, setItems] = useState([{
-    description: initialLivestockId ? (livestock.find(l => l.id === initialLivestockId)?.batchName || 'Livestock') : '',
-    quantity: 1 as number | '',
-    unitPrice: 0 as number | '',
-    inventoryId: undefined as string | 'PENDING' | undefined,
-    livestockId: (initialLivestockId || undefined) as string | 'PENDING' | undefined
-  }]);
+function toMoney(value: number) {
+  return Math.round(value * 100) / 100;
+}
+
+function getInventorySalePrice(item: any) {
+  return Number(item?.sellingPrice ?? item?.eggCategory?.sellingPrice ?? item?.costPerUnit ?? 0);
+}
+
+function getBatchBasePrice(batch: any) {
+  const initialCost = Number(batch?.initialCostActual ?? batch?.initial_actual_cost ?? 0);
+  const initialCount = Number(batch?.initialCount ?? 0);
+  return initialCost > 0 && initialCount > 0 ? toMoney(initialCost / initialCount) : 0;
+}
+
+function getInitialItem(livestock: any[], initialLivestockId?: string): SaleItemState {
+  const batch = initialLivestockId ? livestock.find((item) => item.id === initialLivestockId) : null;
+
+  if (batch) {
+    return {
+      productType: 'livestock',
+      productId: batch.id,
+      description: batch.batchName || 'Livestock Sale',
+      quantity: 1,
+      unitPrice: getBatchBasePrice(batch)
+    };
+  }
+
+  return {
+    productType: 'inventory',
+    productId: '',
+    description: '',
+    quantity: 1,
+    unitPrice: 0
+  };
+}
+
+export function SalesForm({ customers, inventory, livestock, onSuccess, initialLivestockId, canOverridePrice = false }: SalesFormProps) {
+  const [items, setItems] = useState<SaleItemState[]>([getInitialItem(livestock, initialLivestockId)]);
   const [discountValue, setDiscountValue] = useState<number | ''>(0);
   const [discountType, setDiscountType] = useState<'flat' | 'percent'>('percent');
+  const [totalCashReceived, setTotalCashReceived] = useState<number | ''>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [customerId, setCustomerId] = useState('');
+  const [saleDate, setSaleDate] = useState(() => toLocalDateTimeInputValue());
 
-  const addItem = () => {
-    setItems([...items, {
-      description: '',
-      quantity: 1 as number | '',
-      unitPrice: 0 as number | '',
-      inventoryId: undefined as string | 'PENDING' | undefined,
-      livestockId: undefined as string | 'PENDING' | undefined
-    }]);
-  };
+  const eggInventory = useMemo(() => {
+    const eggs = inventory.filter((item: any) => item.category === 'EGGS' || String(item.itemName || '').toLowerCase().includes('egg'));
+    return eggs.length > 0 ? eggs : inventory;
+  }, [inventory]);
 
-  const removeItem = (idx: number) => {
-    if (items.length === 1) return;
-    setItems(items.filter((_, i) => i !== idx));
-  };
-
-  const updateItem = (idx: number, field: string, value: any) => {
-    if ((field === 'quantity' || field === 'unitPrice') && value !== '' && Number(value) < 0) return;
-
-    const newItems = [...items];
-    (newItems[idx] as any)[field] = value === '' && (field === 'quantity' || field === 'unitPrice') ? '' : value;
-
-    if (field === 'livestockId' && value && (value as unknown as string) !== 'PENDING') {
-      const live = livestock.find((l: any) => l.id === value);
-      if (live) newItems[idx].description = live.batchName;
-      newItems[idx].inventoryId = undefined;
+  const getItemBasePrice = (item: SaleItemState) => {
+    if (item.productType === 'inventory') {
+      return getInventorySalePrice(inventory.find((entry: any) => entry.id === item.productId));
     }
-
-    if (field === 'inventoryId' && value && (value as unknown as string) !== 'PENDING') {
-      const inv = inventory.find((i: any) => i.id === value);
-      if (inv) newItems[idx].description = inv.itemName;
-      newItems[idx].livestockId = undefined;
+    if (item.productType === 'livestock') {
+      return getBatchBasePrice(livestock.find((entry: any) => entry.id === item.productId));
     }
-
-    setItems(newItems);
+    return Number(item.unitPrice || 0);
   };
 
-  const subtotal = items.reduce((sum, i) => sum + (Number(i.quantity) * Number(i.unitPrice)), 0);
-  const calculatedDiscount = discountType === 'percent' 
-    ? (subtotal * (Number(discountValue) / 100))
-    : Number(discountValue);
-  const total = subtotal - calculatedDiscount;
+  const getEffectiveUnitPrice = (item: SaleItemState) => {
+    const basePrice = getItemBasePrice(item);
+    if (!canOverridePrice) return basePrice;
+    return Number(item.unitPrice || basePrice || 0);
+  };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (items.some(i => !i.description.trim())) {
-      toast.error('All items need a description');
-      setIsSubmitting(false);
+  const updateItem = (index: number, patch: Partial<SaleItemState>) => {
+    setItems((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item));
+  };
+
+  const updateProductType = (index: number, productType: ProductType) => {
+    updateItem(index, {
+      productType,
+      productId: '',
+      description: productType === 'custom' ? 'Custom Sale Item' : '',
+      unitPrice: 0
+    });
+  };
+
+  const updateProduct = (index: number, productId: string) => {
+    const item = items[index];
+    if (!item) return;
+
+    if (item.productType === 'inventory') {
+      const selected = inventory.find((entry: any) => entry.id === productId);
+      updateItem(index, {
+        productId,
+        description: selected?.itemName || '',
+        unitPrice: getInventorySalePrice(selected)
+      });
       return;
     }
 
-    // Stock validation
-    for (const item of items) {
-      if (item.inventoryId && (item.inventoryId as unknown as string) !== 'PENDING') {
-        const inv = inventory.find(i => i.id === item.inventoryId);
-        if (inv && Number(item.quantity) > Number(inv.stockLevel)) {
-          toast.error(`Not enough stock for ${inv.itemName}. Available: ${inv.stockLevel}`);
-          setIsSubmitting(false);
-          return;
-        }
-      }
-      if (item.livestockId && (item.livestockId as unknown as string) !== 'PENDING') {
-        const live = livestock.find(l => l.id === item.livestockId);
-        if (live && Number(item.quantity) > Number(live.currentCount)) {
-          toast.error(`Not enough birds in ${live.batchName}. Available: ${live.currentCount}`);
-          setIsSubmitting(false);
-          return;
-        }
-      }
+    if (item.productType === 'livestock') {
+      const selected = livestock.find((entry: any) => entry.id === productId);
+      updateItem(index, {
+        productId,
+        description: selected?.batchName || '',
+        unitPrice: getBatchBasePrice(selected)
+      });
+    }
+  };
+
+  const addItem = () => {
+    setItems((current) => [...current, getInitialItem(livestock)]);
+  };
+
+  const removeItem = (index: number) => {
+    if (items.length === 1) return;
+    setItems((current) => current.filter((_, itemIndex) => itemIndex !== index));
+  };
+
+  const subtotal = toMoney(items.reduce((sum, item) => sum + (Number(item.quantity || 0) * getEffectiveUnitPrice(item)), 0));
+  const calculatedDiscount = canOverridePrice
+    ? toMoney(discountType === 'percent' ? (subtotal * (Number(discountValue || 0) / 100)) : Number(discountValue || 0))
+    : 0;
+  const total = toMoney(Math.max(subtotal - calculatedDiscount, 0));
+  const cashValue = totalCashReceived === '' ? NaN : Number(totalCashReceived);
+  const cashBalances = Number.isFinite(cashValue) && Math.abs(toMoney(cashValue) - total) <= 0.01;
+
+  const validationErrors = items.flatMap((item) => {
+    const errors: string[] = [];
+    const quantity = Number(item.quantity || 0);
+    const basePrice = getItemBasePrice(item);
+
+    if (!item.description.trim()) errors.push('Select a product');
+    if (!Number.isInteger(quantity) || quantity <= 0) errors.push('Quantity must be a whole number');
+
+    if (item.productType === 'inventory') {
+      const selected = inventory.find((entry: any) => entry.id === item.productId);
+      if (!selected) errors.push('Inventory product is required');
+      if (selected && quantity > Number(selected.stockLevel)) errors.push(`${selected.itemName} only has ${selected.stockLevel} available`);
     }
 
+    if (item.productType === 'livestock') {
+      const selected = livestock.find((entry: any) => entry.id === item.productId);
+      if (!selected) errors.push('Livestock batch is required');
+      if (selected && quantity > Number(selected.currentCount)) errors.push(`${selected.batchName} only has ${selected.currentCount} birds available`);
+    }
+
+    if (!canOverridePrice && item.productType === 'custom') errors.push('Custom items require manager access');
+    if (!canOverridePrice && basePrice <= 0) errors.push(`${item.description || 'Selected product'} needs a configured base price`);
+    if (canOverridePrice && getEffectiveUnitPrice(item) <= 0) errors.push('Unit price must be greater than zero');
+
+    return errors;
+  });
+
+  if (!canOverridePrice && total > 0 && totalCashReceived !== '' && !cashBalances) {
+    validationErrors.push('Cash received must equal the locked sale total');
+  }
+
+  if (canOverridePrice && calculatedDiscount > subtotal) {
+    validationErrors.push('Discount cannot exceed the line subtotal');
+  }
+
+  if (!saleDate || Number.isNaN(new Date(saleDate).getTime())) {
+    validationErrors.push('Choose a valid sale date and time');
+  }
+
+  const canSubmit = validationErrors.length === 0
+    && total > 0
+    && Number.isFinite(cashValue)
+    && cashValue >= 0
+    && (canOverridePrice || cashBalances)
+    && !isSubmitting;
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!canSubmit) return;
+
     setIsSubmitting(true);
-    const res = await createOrder({
+    const response = await createOrder({
       customerId: customerId || undefined,
       discountAmount: calculatedDiscount,
-      items: items.map(i => ({
-        description: i.description,
-        quantity: Number(i.quantity) || 0,
-        unitPrice: Number(i.unitPrice) || 0,
-        inventoryId: i.inventoryId && (i.inventoryId as unknown as string) !== 'PENDING' ? i.inventoryId : undefined,
-        livestockId: i.livestockId && (i.livestockId as unknown as string) !== 'PENDING' ? i.livestockId : undefined
+      totalCashReceived: cashValue,
+      orderDate: saleDate,
+      items: items.map((item) => ({
+        description: item.description,
+        quantity: Number(item.quantity) || 0,
+        unitPrice: getEffectiveUnitPrice(item),
+        inventoryId: item.productType === 'inventory' ? item.productId : undefined,
+        livestockId: item.productType === 'livestock' ? item.productId : undefined
       }))
     });
     setIsSubmitting(false);
-    if (res.success) {
-      toast.success('Order recorded successfully');
+
+    if (response.success) {
+      toast.success('Farm-gate sale logged successfully');
+      setSaleDate(toLocalDateTimeInputValue());
       onSuccess();
     } else {
-      toast.error((res as any).error || 'Failed to record order');
+      toast.error((response as any).error || 'Failed to record sale');
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_240px_220px]">
         <div className="space-y-2">
-          <label className="text-xs font-bold uppercase text-white/90 tracking-widest px-1">Customer (Optional)</label>
+          <label className="px-1 text-xs font-bold uppercase tracking-widest text-white/90">Customer</label>
           <select
             value={customerId}
-            onChange={(e) => setCustomerId(e.target.value)}
-            className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-bold outline-none focus:border-emerald-500/50 transition-all"
+            onChange={(event) => setCustomerId(event.target.value)}
+            className="h-12 w-full rounded-md border border-white/10 bg-white/10 px-3 text-sm font-bold text-white outline-none transition-all focus:border-emerald-500/50"
           >
-            <option value="" className="bg-slate-900">Walk-in / No Customer</option>
-            {customers.map((c) => (
-              <option key={c.id} value={c.id} className="bg-slate-900">{c.name}</option>
+            <option value="" className="bg-slate-900">Walk-in Customer</option>
+            {customers.map((customer) => (
+              <option key={customer.id} value={customer.id} className="bg-slate-900">{customer.name}</option>
             ))}
           </select>
         </div>
 
         <div className="space-y-2">
-          <div className="flex justify-between items-center px-1">
-            <label className="text-xs font-bold uppercase text-white/90 tracking-widest">Discount ({discountType === 'percent' ? '%' : 'GHS'})</label>
-            <div className="flex gap-2">
-               <button 
-                 type="button"
-                 onClick={() => setDiscountType('percent')}
-                 className={`text-[9px] font-bold px-2 py-0.5 rounded border transition-all ${discountType === 'percent' ? 'bg-emerald-500 border-emerald-400 text-[#064e3b]' : 'border-white/10 text-white/40'}`}
-               >%</button>
-               <button 
-                 type="button"
-                 onClick={() => setDiscountType('flat')}
-                 className={`text-[9px] font-bold px-2 py-0.5 rounded border transition-all ${discountType === 'flat' ? 'bg-emerald-500 border-emerald-400 text-[#064e3b]' : 'border-white/10 text-white/40'}`}
-               >GHS</button>
-            </div>
+          <label className="flex items-center gap-1 px-1 text-xs font-bold uppercase tracking-widest text-white/90">
+            <Calendar className="h-3.5 w-3.5 text-emerald-300" />
+            Sale Date & Time
+          </label>
+          <input
+            type="datetime-local"
+            required
+            value={saleDate}
+            onChange={(event) => setSaleDate(event.target.value)}
+            className="h-12 w-full rounded-md border border-white/10 bg-white/10 px-3 text-sm font-bold text-white outline-none transition-all focus:border-emerald-500/50"
+          />
+        </div>
+
+        <div className="rounded-md border border-emerald-500/20 bg-emerald-500/10 p-3">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-emerald-300">
+            {canOverridePrice ? <ShieldCheck className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+            {canOverridePrice ? 'Manager Controls' : 'Locked Pricing'}
           </div>
-          <div className="relative">
-            {discountType === 'percent' ? (
-              <Percent className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400/50" />
-            ) : (
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-400/50">GHS</span>
-            )}
-            <input
-              type="number"
-              min="0"
-              value={discountValue}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (val === '') {
-                  setDiscountValue('');
-                } else {
-                  const num = Number(val);
-                  if (num >= 0) {
-                    if (discountType === 'percent' && num > 100) {
-                      setDiscountValue(100);
-                      toast.error('Discount percent cannot exceed 100%');
-                    } else {
-                      setDiscountValue(num);
-                    }
-                  }
-                }
-              }}
-              placeholder="0.00"
-              className="w-full bg-white/10 border border-white/10 rounded-md p-3 pl-11 text-white font-bold outline-none focus:border-emerald-500/50 transition-all"
-            />
-          </div>
+          <p className="mt-2 text-2xl font-bold text-white">GHS {total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
         </div>
       </div>
 
       <div className="space-y-3">
-        <div className="flex justify-between items-center px-1">
-          <label className="text-xs font-bold uppercase text-white/90 tracking-widest">Order Items</label>
+        <div className="flex items-center justify-between gap-3 px-1">
+          <label className="text-xs font-bold uppercase tracking-widest text-white/90">Sale Lines</label>
           <button
             type="button"
             onClick={addItem}
-            className="flex items-center gap-1 text-xs font-bold text-emerald-400 uppercase tracking-widest hover:text-emerald-300 transition-colors"
+            className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-widest text-emerald-400 transition-colors hover:text-emerald-300"
           >
-            <Plus className="w-3 h-3" /> Add Item
+            <Plus className="h-3 w-3" /> Add Line
           </button>
         </div>
 
-        <div className="space-y-4 max-h-[450px] overflow-y-auto custom-scrollbar pr-2">
-          {items.map((item, idx) => {
-            const isSelected = item.livestockId || item.inventoryId || item.description;
+        <div className="space-y-3">
+          {items.map((item, index) => {
+            const basePrice = getItemBasePrice(item);
+            const effectivePrice = getEffectiveUnitPrice(item);
+            const lineTotal = toMoney(Number(item.quantity || 0) * effectivePrice);
 
             return (
-              <div key={idx} className="bg-white/5 p-4 rounded-xl border border-white/10 flex flex-col gap-4 relative group transition-all hover:bg-white/[0.07]">
-                {!isSelected ? (
-                  <div className="py-2 space-y-3">
-                    <p className="text-[10px] font-bold uppercase text-white/40 tracking-[0.2em] text-center">What are you selling?</p>
-                    <div className="grid grid-cols-3 gap-3">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const newItems = [...items];
-                          (newItems[idx] as any).livestockId = 'PENDING'; // Special state to show selection
-                          setItems(newItems);
-                        }}
-                        className="flex flex-col items-center gap-2 p-3 rounded-lg border border-white/5 bg-white/5 hover:bg-emerald-500/10 hover:border-emerald-500/20 transition-all group/btn"
-                      >
-                        <div className="p-2 rounded-full bg-emerald-500/10 group-hover/btn:bg-emerald-500/20">
-                          <Plus className="w-4 h-4 text-emerald-400" />
-                        </div>
-                        <span className="text-[10px] font-bold uppercase text-white/60 tracking-widest">Livestock</span>
-                      </button>
+              <div key={index} className="rounded-md border border-white/10 bg-white/5 p-4">
+                <div className="grid grid-cols-1 gap-3 xl:grid-cols-[140px_1fr_150px_160px_44px]">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-white/50">Type</label>
+                    <select
+                      value={item.productType}
+                      onChange={(event) => updateProductType(index, event.target.value as ProductType)}
+                      className="h-11 w-full rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+                    >
+                      <option value="inventory">Eggs</option>
+                      <option value="livestock">Birds</option>
+                      {canOverridePrice && <option value="custom">Custom</option>}
+                    </select>
+                  </div>
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const newItems = [...items];
-                          (newItems[idx] as any).inventoryId = 'PENDING';
-                          setItems(newItems);
-                        }}
-                        className="flex flex-col items-center gap-2 p-3 rounded-lg border border-white/5 bg-white/5 hover:bg-blue-500/10 hover:border-blue-500/20 transition-all group/btn"
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-white/50">Product</label>
+                    {item.productType === 'custom' ? (
+                      <input
+                        value={item.description}
+                        onChange={(event) => updateItem(index, { description: event.target.value })}
+                        className="h-11 w-full rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+                      />
+                    ) : (
+                      <select
+                        value={item.productId}
+                        onChange={(event) => updateProduct(index, event.target.value)}
+                        className="h-11 w-full rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
                       >
-                        <div className="p-2 rounded-full bg-blue-500/10 group-hover/btn:bg-blue-500/20">
-                          <Plus className="w-4 h-4 text-blue-400" />
-                        </div>
-                        <span className="text-[10px] font-bold uppercase text-white/60 tracking-widest">Eggs</span>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => updateItem(idx, 'description', 'Manual Item')}
-                        className="flex flex-col items-center gap-2 p-3 rounded-lg border border-white/5 bg-white/5 hover:bg-purple-500/10 hover:border-purple-500/20 transition-all group/btn"
-                      >
-                        <div className="p-2 rounded-full bg-purple-500/10 group-hover/btn:bg-purple-500/20">
-                          <Plus className="w-4 h-4 text-purple-400" />
-                        </div>
-                        <span className="text-[10px] font-bold uppercase text-white/60 tracking-widest">Custom</span>
-                      </button>
-                    </div>
-                    {items.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeItem(idx)}
-                        className="absolute -top-2 -right-2 p-1.5 rounded-full bg-red-500/20 text-red-500 hover:bg-red-500 hover:text-white transition-all opacity-0 group-hover:opacity-100 shadow-lg"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
+                        <option value="" className="bg-slate-900">Select product</option>
+                        {(item.productType === 'inventory' ? eggInventory : livestock).map((entry: any) => (
+                          <option key={entry.id} value={entry.id} className="bg-slate-900">
+                            {item.productType === 'inventory'
+                              ? `${entry.itemName} (${Number(entry.stockLevel).toLocaleString()} ${entry.unit || 'units'})`
+                              : `${entry.batchName} (${entry.currentCount} birds)`}
+                          </option>
+                        ))}
+                      </select>
                     )}
                   </div>
-                ) : (
-                  <>
-                    <div className="grid grid-cols-1 gap-4">
-                      {/* Livestock Selection Mode */}
-                      {((item.livestockId as unknown as string) === 'PENDING' || item.livestockId) && (
-                        <div className="space-y-1">
-                          <p className="text-[9px] font-black uppercase text-emerald-400 mb-1 tracking-[0.2em]">Select Livestock Unit</p>
-                          <select
-                            autoFocus
-                            className="w-full bg-black/40 border border-emerald-500/20 rounded-lg p-3 text-white font-bold outline-none text-sm transition-all focus:border-emerald-500/50"
-                            value={(item.livestockId as unknown as string) === 'PENDING' ? '' : item.livestockId}
-                            onChange={(e) => updateItem(idx, 'livestockId', e.target.value)}
-                          >
-                            <option value="">-- Choose a livestock batch --</option>
-                            {livestock.map((l: any) => (
-                              <option key={l.id} value={l.id}>{l.batchName} ({l.currentCount} head left)</option>
-                            ))}
-                          </select>
-                        </div>
-                      )}
 
-                      {/* Egg Selection Mode */}
-                      {((item.inventoryId as unknown as string) === 'PENDING' || item.inventoryId) && (
-                        <div className="space-y-1">
-                          <p className="text-[9px] font-black uppercase text-blue-400 mb-1 tracking-[0.2em]">Select Egg Inventory</p>
-                          <select
-                            autoFocus
-                            className="w-full bg-black/40 border border-blue-500/20 rounded-lg p-3 text-white font-bold outline-none text-sm transition-all focus:border-blue-500/50"
-                            value={(item.inventoryId as unknown as string) === 'PENDING' ? '' : item.inventoryId}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              const newItems = [...items];
-                              (newItems[idx] as any).inventoryId = val ? val : 'PENDING';
-                              (newItems[idx] as any).livestockId = undefined;
-                              if (val && (val as unknown as string) !== 'PENDING') {
-                                const inv = inventory.find((i: any) => i.id === val);
-                                if (inv) newItems[idx].description = inv.itemName;
-                              }
-                              setItems(newItems);
-                            }}
-                          >
-                            <option value="">-- Choose egg inventory --</option>
-                            {inventory.filter((inv: any) => inv.category === 'EGGS').map((inv: any) => {
-                              const stock = Number(inv.stockLevel);
-                              const crates = Math.floor(stock / 30);
-                              const rem = stock % 30;
-                              const label = rem > 0 ? `${crates} crates + ${rem} remainder` : `${crates} crates`;
-                              return (
-                                <option key={inv.id} value={inv.id}>
-                                  {inv.itemName} — {label}
-                                </option>
-                              );
-                            })}
-                          </select>
-                        </div>
-                      )}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-white/50">Quantity Sold</label>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min="1"
+                      step="1"
+                      value={item.quantity}
+                      onChange={(event) => updateItem(index, { quantity: event.target.value === '' ? '' : Number(event.target.value) })}
+                      className="h-11 w-full rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+                    />
+                  </div>
 
-                      {/* Description & Action Icons Row */}
-                      {(item.livestockId as unknown as string) !== 'PENDING' && (item.inventoryId as unknown as string) !== 'PENDING' && (
-                        <div className="flex items-end gap-3">
-                          <div className="flex-1 space-y-1">
-                            <p className="text-[9px] font-black uppercase text-white/50 mb-1 tracking-[0.2em]">Item Description</p>
-                            <input
-                              placeholder="Description (e.g. 30 Crates Large Eggs)"
-                              className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white font-bold outline-none text-sm focus:border-emerald-500/30"
-                              value={item.description}
-                              onChange={(e) => updateItem(idx, 'description', e.target.value)}
-                              required
-                            />
-                          </div>
-                          <div className="flex gap-1 items-center mb-0.5">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const newItems = [...items];
-                                newItems[idx] = {
-                                  description: '',
-                                  quantity: 1,
-                                  unitPrice: 0,
-                                  inventoryId: undefined,
-                                  livestockId: undefined
-                                };
-                                setItems(newItems);
-                              }}
-                              className="p-3 rounded-lg hover:bg-white/5 text-white/30 hover:text-white transition-all group/reset"
-                               title="Reset selection"
-                            >
-                              <Plus className="w-4 h-4 rotate-45 group-hover/reset:text-emerald-400 transition-colors" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => removeItem(idx)}
-                              className="p-3 rounded-lg hover:bg-red-500/10 text-red-500/40 hover:text-red-500 transition-all"
-                              title="Remove item"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </div>
-                      )}
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-white/50">Unit Price</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-300/60">GHS</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={canOverridePrice ? item.unitPrice : basePrice}
+                        onChange={(event) => updateItem(index, { unitPrice: event.target.value === '' ? '' : Number(event.target.value) })}
+                        disabled={!canOverridePrice}
+                        className="h-11 w-full rounded-md border border-white/10 bg-slate-950/70 px-12 text-sm font-bold text-emerald-300 outline-none transition-all focus:border-emerald-500/50 disabled:cursor-not-allowed disabled:bg-slate-950/40 disabled:text-white/60"
+                      />
+                      {!canOverridePrice && <Lock className="absolute right-3 top-3.5 h-4 w-4 text-white/30" />}
                     </div>
+                  </div>
 
-                    {/* Quantity & Price - Side by Side */}
-                    {(item.livestockId as unknown as string) !== 'PENDING' && (item.inventoryId as unknown as string) !== 'PENDING' && (
-                      <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
-                        <div className="space-y-1">
-                          <div className="flex justify-between items-center">
-                            <p className="text-[9px] font-black uppercase text-white/50 mb-1 tracking-[0.2em]">Quantity</p>
-                            {/* Stock Warning UI */}
-                            {(() => {
-                              if (item.inventoryId && (item.inventoryId as unknown as string) !== 'PENDING') {
-                                const inv = inventory.find(i => i.id === item.inventoryId);
-                                if (inv && Number(item.quantity) > Number(inv.stockLevel)) {
-                                  return <span className="text-[9px] font-black text-red-400 animate-pulse">Exceeds {inv.stockLevel} stock</span>;
-                                }
-                              }
-                              if (item.livestockId && (item.livestockId as unknown as string) !== 'PENDING') {
-                                const live = livestock.find(l => l.id === item.livestockId);
-                                if (live && Number(item.quantity) > Number(live.currentCount)) {
-                                  return <span className="text-[9px] font-black text-red-400 animate-pulse">Exceeds {live.currentCount} birds</span>;
-                                }
-                              }
-                              return null;
-                            })()}
-                          </div>
-                          <input
-                            type="number"
-                            min="0"
-                            className={`w-full bg-white/5 border rounded-lg p-3 text-white font-bold outline-none text-sm transition-all ${
-                              (() => {
-                                if (item.inventoryId && (item.inventoryId as unknown as string) !== 'PENDING') {
-                                  const inv = inventory.find(i => i.id === item.inventoryId);
-                                  return inv && Number(item.quantity) > Number(inv.stockLevel) ? 'border-red-500/50' : 'border-white/10 focus:border-emerald-500/30';
-                                }
-                                if (item.livestockId && (item.livestockId as unknown as string) !== 'PENDING') {
-                                  const live = livestock.find(l => l.id === item.livestockId);
-                                  return live && Number(item.quantity) > Number(live.currentCount) ? 'border-red-500/50' : 'border-white/10 focus:border-emerald-500/30';
-                                }
-                                return 'border-white/10 focus:border-emerald-500/30';
-                              })()
-                            }`}
-                            value={item.quantity}
-                            onChange={(e) => updateItem(idx, 'quantity', e.target.value === '' ? '' : Number(e.target.value))}
-                            required
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <p className="text-[9px] font-black uppercase text-emerald-400/60 mb-1 tracking-[0.2em]">Unit Price (GHS)</p>
-                          <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-400/40">GHS</span>
-                            <input
-                              type="number"
-                              min="0"
-                              step="0.01"
-                              className="w-full bg-white/5 border border-white/10 rounded-lg p-3 pl-12 text-emerald-400 font-bold outline-none text-sm focus:border-emerald-500/30"
-                              value={item.unitPrice}
-                              onChange={(e) => updateItem(idx, 'unitPrice', e.target.value === '' ? '' : Number(e.target.value))}
-                              required
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                    )}
-                  </>
-                )}
+                  <div className="flex items-end justify-between gap-2 xl:justify-end">
+                    <div className="xl:hidden">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Line</p>
+                      <p className="text-sm font-bold text-emerald-300">GHS {lineTotal.toFixed(2)}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => removeItem(index)}
+                      disabled={items.length === 1}
+                      title="Remove line"
+                      className="h-11 w-11 rounded-md border border-transparent text-white/30 transition-all hover:border-red-500/20 hover:bg-red-500/10 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-30"
+                    >
+                      <Trash2 className="mx-auto h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-3">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">
+                    Base: GHS {basePrice.toFixed(2)}
+                  </span>
+                  <span className="hidden text-sm font-bold text-emerald-300 xl:block">Line Total: GHS {lineTotal.toFixed(2)}</span>
+                </div>
               </div>
             );
           })}
         </div>
-
       </div>
 
-      <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-md p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 backdrop-blur-md">
-        <div>
-          <p className="text-xs font-bold uppercase text-emerald-400/60 tracking-widest italic">Net Total (Subtotal - Discount)</p>
-          <div className="flex items-baseline gap-2">
-            <p className="text-3xl font-bold text-white italic tracking-normal">GHS {total.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-            {calculatedDiscount > 0 && (
-              <p className="text-xs font-bold text-white/70 line-through decoration-red-500/50">GHS {subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-            )}
+      {canOverridePrice && (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_180px]">
+          <div className="space-y-2">
+            <label className="px-1 text-xs font-bold uppercase tracking-widest text-white/90">Discount</label>
+            <div className="flex overflow-hidden rounded-md border border-white/10 bg-white/5">
+              <button
+                type="button"
+                onClick={() => setDiscountType('percent')}
+                className={`w-16 border-r border-white/10 text-xs font-bold transition-all ${discountType === 'percent' ? 'bg-emerald-500 text-[#064e3b]' : 'text-white/60'}`}
+              >
+                %
+              </button>
+              <button
+                type="button"
+                onClick={() => setDiscountType('flat')}
+                className={`w-20 border-r border-white/10 text-xs font-bold transition-all ${discountType === 'flat' ? 'bg-emerald-500 text-[#064e3b]' : 'text-white/60'}`}
+              >
+                GHS
+              </button>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={discountValue}
+                onChange={(event) => setDiscountValue(event.target.value === '' ? '' : Number(event.target.value))}
+                className="h-12 flex-1 bg-transparent px-3 text-sm font-bold text-white outline-none"
+              />
+            </div>
           </div>
-          {discountType === 'percent' && Number(discountValue) > 0 && (
-            <p className="text-[9px] font-bold text-emerald-400/50 uppercase tracking-widest mt-1">-{discountValue}% off applied</p>
-          )}
+          <div className="rounded-md border border-white/10 bg-white/5 p-3 text-right">
+            <p className="text-[10px] font-black uppercase tracking-widest text-white/50">Discount</p>
+            <p className="text-xl font-bold text-amber-300">GHS {calculatedDiscount.toFixed(2)}</p>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_260px]">
+        <div className="space-y-2">
+          <label className="px-1 text-xs font-bold uppercase tracking-widest text-white/90">Total Cash Received (GHS)</label>
+          <div className="relative">
+            <Banknote className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-emerald-300/70" />
+            <input
+              type="number"
+              inputMode="decimal"
+              min="0"
+              step="0.01"
+              value={totalCashReceived}
+              onChange={(event) => setTotalCashReceived(event.target.value === '' ? '' : Number(event.target.value))}
+              className={`h-14 w-full rounded-md border bg-slate-950/70 pl-12 pr-4 text-2xl font-bold text-white outline-none transition-all focus:border-emerald-500/60 ${
+                !canOverridePrice && totalCashReceived !== '' && !cashBalances ? 'border-red-500/60' : 'border-white/10'
+              }`}
+            />
+          </div>
+        </div>
+
+        <div className={`rounded-md border p-4 ${!canOverridePrice && totalCashReceived !== '' && !cashBalances ? 'border-red-500/30 bg-red-500/10' : 'border-emerald-500/20 bg-emerald-500/10'}`}>
+          <p className="text-[10px] font-black uppercase tracking-widest text-white/50">Balance Check</p>
+          <div className="mt-2 flex items-center gap-2">
+            {!canOverridePrice && totalCashReceived !== '' && !cashBalances ? (
+              <AlertTriangle className="h-5 w-5 text-red-300" />
+            ) : (
+              <ShieldCheck className="h-5 w-5 text-emerald-300" />
+            )}
+            <span className={`text-sm font-bold ${!canOverridePrice && totalCashReceived !== '' && !cashBalances ? 'text-red-200' : 'text-emerald-200'}`}>
+              {canOverridePrice ? 'Override audit enabled' : cashBalances ? 'Cash matches total' : 'Awaiting exact cash total'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {validationErrors.length > 0 && (
+        <div className="rounded-md border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm font-bold text-amber-200">
+          {validationErrors[0]}
+        </div>
+      )}
+
+      <div className="flex flex-col gap-3 rounded-md border border-white/10 bg-white/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-widest text-white/50">Subtotal</p>
+          <p className="text-sm font-bold text-white/80">GHS {subtotal.toFixed(2)}</p>
         </div>
         <button
           type="submit"
-          disabled={isSubmitting}
-          className="flex items-center gap-2 bg-emerald-500 text-[#064e3b] px-5 py-3 rounded-md font-bold uppercase tracking-widest text-[11px] transition-all hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed"
+          disabled={!canSubmit}
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-emerald-500 px-5 text-[11px] font-bold uppercase tracking-widest text-[#064e3b] transition-all hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
         >
-          {isSubmitting ? 'Processing...' : (
-            <>
-              <ShoppingCart className="w-4 h-4" /> Finalize Order
-            </>
-          )}
+          <ShoppingCart className="h-4 w-4" />
+          {isSubmitting ? 'Processing...' : 'Log Sale'}
         </button>
       </div>
     </form>
   );
 }
-

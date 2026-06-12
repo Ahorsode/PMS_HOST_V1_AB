@@ -1,19 +1,31 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Phone, ArrowRight, Loader2, Bird, Plus, Lock } from 'lucide-react';
+import { Phone, ArrowRight, Loader2, Plus, Lock, ShieldAlert } from 'lucide-react';
 import Background3D from '@/components/auth/Background3D';
+
+const SECURITY_NOTICE = 'Your security permissions have been updated. Please sign in again to activate your new features.';
 
 export default function LoginPage() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [securityMessage, setSecurityMessage] = useState('');
   const [success, setSuccess] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    if (searchParams.get('security') !== 'updated') return;
+
+    const storedMessage = window.sessionStorage.getItem('hatchlog_security_notice');
+    setSecurityMessage(storedMessage || SECURITY_NOTICE);
+    window.sessionStorage.removeItem('hatchlog_security_notice');
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,6 +132,17 @@ export default function LoginPage() {
                     </div>
 
                     <AnimatePresence>
+                      {securityMessage && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0, y: -10 }}
+                          animate={{ opacity: 1, height: 'auto', y: 0 }}
+                          exit={{ opacity: 0, height: 0, y: -10 }}
+                          className="flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-left text-sm font-bold text-amber-300"
+                        >
+                          <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
+                          <span>{securityMessage}</span>
+                        </motion.div>
+                      )}
                       {error && (
                         <motion.p
                           initial={{ opacity: 0, height: 0, y: -10 }}

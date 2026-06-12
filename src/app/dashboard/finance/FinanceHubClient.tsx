@@ -24,6 +24,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { createFinancialTransaction, settleTransaction, deleteFinancialTransaction } from '@/lib/actions/financial-transaction-actions'
+import { toLocalDateTimeInputValue } from '@/lib/financial-dates'
 import { SkeletonLine } from '@/components/ui/MutationFeedback'
 
 interface Transaction {
@@ -101,7 +102,7 @@ export function FinanceHubClient({
     paymentStatus: 'PAID' as 'PAID' | 'UNPAID' | 'PARTIALLY_PAID',
     paymentMethod: 'Cash',
     referenceNum: '',
-    transactionDate: new Date().toISOString().split('T')[0],
+    transactionDate: toLocalDateTimeInputValue(),
     description: ''
   })
 
@@ -171,7 +172,7 @@ export function FinanceHubClient({
           paymentStatus: 'PAID',
           paymentMethod: 'Cash',
           referenceNum: '',
-          transactionDate: new Date().toISOString().split('T')[0],
+          transactionDate: toLocalDateTimeInputValue(),
           description: ''
         })
       } else {
@@ -728,9 +729,9 @@ export function FinanceHubClient({
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1.5">Date</label>
+                    <label className="block text-slate-400 text-[10px] font-bold uppercase tracking-wider mb-1.5">Date & Time</label>
                     <input
-                      type="date"
+                      type="datetime-local"
                       required
                       value={formData.transactionDate}
                       onChange={e => setFormData(prev => ({ ...prev, transactionDate: e.target.value }))}

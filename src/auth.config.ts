@@ -8,8 +8,16 @@ export const authConfig = {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user?.id;
       const mustChangePassword = (auth?.user as any)?.mustChangePassword === true;
+      const securityInvalidated = (auth?.user as any)?.securityInvalidated === true;
       const isProtectedRoute = nextUrl.pathname.startsWith('/dashboard') || nextUrl.pathname.startsWith('/onboarding');
       const isAuthPage = nextUrl.pathname.startsWith('/login') || nextUrl.pathname.startsWith('/signup');
+
+      if (isLoggedIn && securityInvalidated) {
+        if (isProtectedRoute) {
+          return Response.redirect(new URL('/login?security=updated', nextUrl));
+        }
+        if (isAuthPage) return true;
+      }
       
       // Force change password if flag is set
       if (isLoggedIn && mustChangePassword && nextUrl.pathname !== '/change-password') {
@@ -32,6 +40,9 @@ export const authConfig = {
         token.role = (user as any).role;
         token.activeFarmId = (user as any).activeFarmId;
         token.mustChangePassword = (user as any).mustChangePassword;
+        token.sessionVersion = (user as any).sessionVersion ?? 1;
+        token.securityInvalidated = false;
+        token.securityNotice = null;
       }
       if (trigger === "update" && session) {
         token.mustChangePassword = session.mustChangePassword;
@@ -46,6 +57,9 @@ export const authConfig = {
         // Always carry activeFarmId from token — may be refreshed server-side via getAuthContext()
         (session.user as any).activeFarmId = token.activeFarmId as string | undefined;
         (session.user as any).mustChangePassword = token.mustChangePassword as boolean;
+        (session.user as any).sessionVersion = token.sessionVersion as number | undefined;
+        (session.user as any).securityInvalidated = token.securityInvalidated as boolean | undefined;
+        (session.user as any).securityNotice = token.securityNotice as string | null | undefined;
       }
       return session;
     },

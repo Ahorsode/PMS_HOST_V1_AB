@@ -7,6 +7,8 @@ import prisma from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import { normalizePhoneNumber, recordUserSession } from '@/lib/auth-utils';
 
+const SECURITY_PERMISSION_UPDATE_MESSAGE = 'Your security permissions have been updated. Please sign in again to activate your new features.';
+
 function splitName(name: string | null | undefined) {
   if (!name) return { firstname: '', surname: '', middleName: '' };
   const parts = name.trim().split(/\s+/);
@@ -41,12 +43,56 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   callbacks: {
     ...authConfig.callbacks,
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       // On login, set from user object
       if (user) {
         token.id = user.id;
         token.role = user.role;
         token.activeFarmId = (user as any).activeFarmId;
+        token.mustChangePassword = (user as any).mustChangePassword;
+        token.sessionVersion = (user as any).sessionVersion ?? 1;
+        token.securityInvalidated = false;
+        token.securityNotice = null;
+      }
+
+      if (trigger === "update" && session) {
+        token.mustChangePassword = (session as any).mustChangePassword;
+        if ((session as any).name) token.name = (session as any).name;
+      }
+
+      if (token.id) {
+        try {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: {
+              role: true,
+              mustChangePassword: true,
+              sessionVersion: true,
+              securityNotice: true
+            }
+          });
+
+          if (dbUser) {
+            const tokenVersion = typeof token.sessionVersion === 'number'
+              ? token.sessionVersion
+              : dbUser.sessionVersion;
+            const sessionWasRevoked = tokenVersion < dbUser.sessionVersion;
+
+            token.role = dbUser.role;
+            token.mustChangePassword = dbUser.mustChangePassword;
+
+            if (sessionWasRevoked) {
+              token.securityInvalidated = true;
+              token.securityNotice = dbUser.securityNotice || SECURITY_PERMISSION_UPDATE_MESSAGE;
+            } else {
+              token.sessionVersion = dbUser.sessionVersion;
+              token.securityInvalidated = false;
+              token.securityNotice = null;
+            }
+          }
+        } catch (err) {
+          console.error('[JWT] Failed to refresh security metadata:', err);
+        }
       }
       
       // If activeFarmId is missing from token (e.g. user onboarded after login)
@@ -116,6 +162,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             name: `${user.firstname} ${user.surname}`,
             role: user.role,
             mustChangePassword: user.mustChangePassword,
+            sessionVersion: user.sessionVersion,
             activeFarmId: membership?.farmId
           }; 
         }

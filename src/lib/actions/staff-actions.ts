@@ -2,7 +2,7 @@
 
 import prisma from '@/lib/db'
 import { revalidatePath } from 'next/cache'
-import { getAuthContext, normalizePhoneNumber } from '@/lib/auth-utils'
+import { getAuthContext, normalizePhoneNumber, SECURITY_PERMISSION_UPDATE_MESSAGE } from '@/lib/auth-utils'
 import { canAddWorker } from '@/lib/subscription-utils'
 import { Role } from '@prisma/client'
 import bcrypt from 'bcryptjs'
@@ -294,6 +294,124 @@ export async function deleteMember(memberId: string) {
   })
 }
 
+export async function updateFarmMemberRole(targetUserId: string, nextRole: Role) {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) throw new Error('No active farm selected')
+
+  const allowedRoles: Role[] = [Role.MANAGER, Role.WORKER, Role.ACCOUNTANT, Role.FINANCE_OFFICER, Role.CASHIER]
+  if (!allowedRoles.includes(nextRole)) {
+    return { success: false, error: 'Invalid role selection' }
+  }
+
+  if (targetUserId === userId) {
+    return { success: false, error: 'Owners cannot change their own role from this panel' }
+  }
+
+  const rateLimit = await checkRateLimit({ policy: 'team.permissions', scope: 'updateFarmMemberRole', farmId: activeFarmId, userId })
+  if (!rateLimit.ok) return rateLimitActionError(rateLimit)
+
+  try {
+    const result = await prisma.$transaction(async (tx: any) => {
+      const farm = await tx.farm.findUnique({
+        where: { id: activeFarmId },
+        select: { userId: true }
+      })
+
+      if (!farm || farm.userId !== userId) {
+        throw new Error('Unauthorized: Only the farm owner can update employee roles')
+      }
+
+      if (targetUserId === farm.userId) {
+        throw new Error('Cannot update the absolute farm owner role')
+      }
+
+      const membership = await tx.farmMember.findUnique({
+        where: {
+          farmId_userId: {
+            farmId: activeFarmId,
+            userId: targetUserId
+          }
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstname: true,
+              surname: true,
+              phoneNumber: true,
+              email: true,
+              role: true
+            }
+          }
+        }
+      })
+
+      if (!membership) {
+        throw new Error('Employee is not a member of this farm')
+      }
+
+      const oldRole = membership.role as Role
+      if (oldRole === nextRole) {
+        return { changed: false, role: nextRole }
+      }
+
+      const updatedMembership = await tx.farmMember.update({
+        where: {
+          farmId_userId: {
+            farmId: activeFarmId,
+            userId: targetUserId
+          }
+        },
+        data: { role: nextRole }
+      })
+
+      await tx.user.update({
+        where: { id: targetUserId },
+        data: {
+          role: nextRole,
+          sessionVersion: { increment: 1 },
+          securityNotice: SECURITY_PERMISSION_UPDATE_MESSAGE,
+          securityRevokedAt: new Date()
+        }
+      })
+
+      await tx.session.deleteMany({
+        where: { userId: targetUserId }
+      })
+
+      await tx.auditLog.create({
+        data: {
+          tableName: 'farm_members',
+          recordId: updatedMembership.id,
+          attributeName: 'role',
+          oldValue: oldRole,
+          newValue: nextRole,
+          reason: 'Owner role promotion update with forced session refresh',
+          userId,
+          farmId: activeFarmId,
+          actionType: 'ROLE_PROMOTION',
+          description: `Updated ${membership.user?.phoneNumber || membership.user?.email || targetUserId} from ${oldRole} to ${nextRole}`,
+          metadata: {
+            targetUserId,
+            oldRole,
+            newRole: nextRole,
+            invalidatedSessions: true
+          }
+        }
+      })
+
+      return { changed: true, role: nextRole }
+    })
+
+    revalidatePath('/dashboard/team')
+    revalidatePath('/dashboard', 'layout')
+    return { success: true, ...result }
+  } catch (error: any) {
+    console.error('Error updating farm member role:', error)
+    return { success: false, error: error.message || 'Failed to update role' }
+  }
+}
+
 /**
  * Updates granular worker permissions.
  * STRICT: Only the Absolute Owner (Creator) can manage granular permissions.
@@ -422,6 +540,19 @@ export async function updateWorkerPermissions(
           })
         }
       }
+
+      await tx.user.update({
+        where: { id: targetUserId },
+        data: {
+          sessionVersion: { increment: 1 },
+          securityNotice: SECURITY_PERMISSION_UPDATE_MESSAGE,
+          securityRevokedAt: new Date()
+        }
+      })
+
+      await tx.session.deleteMany({
+        where: { userId: targetUserId }
+      })
 
       revalidatePath('/dashboard', 'layout')
       return { success: true, permissions: updatedPerm }

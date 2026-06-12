@@ -1,23 +1,27 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Plus, MoreVertical, Eye, CheckCircle2, XCircle, Trash2, ShoppingCart, FileDown, CreditCard, Loader2 } from 'lucide-react';
+import { Plus, CheckCircle2, XCircle, FileDown, CreditCard, Loader2, MessageCircle } from 'lucide-react';
 import { Dialog } from '@/components/ui/Dialog';
 import { SalesForm } from './SalesForm';
 import { updateOrderStatus } from '@/lib/actions/order-actions';
 import { recordPayment } from '@/lib/actions/payment-actions';
-import { generateInvoicePDF } from '@/lib/actions/invoice-actions';
 import { toast } from 'sonner';
 import { MutationBoundary } from '@/components/ui/MutationFeedback';
+import { buildWhatsAppInvoiceUrl, downloadSalesInvoicePdf } from '@/lib/invoices/browser-invoice';
+import { useRouter } from 'next/navigation';
+import { toLocalDateTimeInputValue } from '@/lib/financial-dates';
 
-export function SalesActionsHeader({ customers, inventory, livestock, initialLivestockId, canEdit = true }: { 
+export function SalesActionsHeader({ customers, inventory, livestock, initialLivestockId, canEdit = true, canOverridePrice = false }: { 
   customers: any[], 
   inventory: any[],
   livestock: any[],
   initialLivestockId?: string,
-  canEdit?: boolean
+  canEdit?: boolean,
+  canOverridePrice?: boolean
 }) {
   const [isOpen, setIsOpen] = useState(!!initialLivestockId);
+  const router = useRouter();
 
   return (
     <>
@@ -34,7 +38,7 @@ export function SalesActionsHeader({ customers, inventory, livestock, initialLiv
       <Dialog 
         isOpen={isOpen} 
         onOpenChange={setIsOpen}
-        title="Create New Order"
+        title="Farm-Gate Sale Entry"
       >
         <div className="p-1">
           <SalesForm 
@@ -42,7 +46,11 @@ export function SalesActionsHeader({ customers, inventory, livestock, initialLiv
             inventory={inventory}
             livestock={livestock}
             initialLivestockId={initialLivestockId}
-            onSuccess={() => setIsOpen(false)} 
+            canOverridePrice={canOverridePrice}
+            onSuccess={() => {
+              setIsOpen(false);
+              router.refresh();
+            }} 
           />
         </div>
       </Dialog>
@@ -50,11 +58,13 @@ export function SalesActionsHeader({ customers, inventory, livestock, initialLiv
   );
 }
 
-export function SalesRowActions({ order, canEdit = true }: { order: any, canEdit?: boolean }) {
-  const [updatingAction, setUpdatingAction] = useState<'completed' | 'cancelled' | 'payment' | null>(null);
+export function SalesRowActions({ order, canEdit = true, canRecordPayment = false }: { order: any, canEdit?: boolean, canRecordPayment?: boolean }) {
+  const router = useRouter();
+  const [updatingAction, setUpdatingAction] = useState<'completed' | 'cancelled' | 'payment' | 'whatsapp' | null>(null);
   const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState(Number(order.totalAmount));
+  const [paymentDate, setPaymentDate] = useState(() => toLocalDateTimeInputValue());
 
   const handleStatusUpdate = async (status: string) => {
     if (updatingAction) return;
@@ -64,6 +74,7 @@ export function SalesRowActions({ order, canEdit = true }: { order: any, canEdit
       const res = await updateOrderStatus(order.id, status);
       if (res.success) {
         toast.success(`Order ${status.toLowerCase()} successfully`);
+        router.refresh();
       } else {
         toast.error(res.error || 'Failed to update order status');
       }
@@ -75,33 +86,28 @@ export function SalesRowActions({ order, canEdit = true }: { order: any, canEdit
   const handleDownloadInvoice = async () => {
     if (isDownloadingInvoice) return;
     setIsDownloadingInvoice(true);
-    toast.info('Generating PDF...');
+    toast.info('Generating invoice PDF...');
     try {
-      const res = await generateInvoicePDF(order.id) as any;
-      if (res.success && res.pdfBase64) {
-        const binStr = atob(res.pdfBase64);
-        const len = binStr.length;
-        const arr = new Uint8Array(len);
-        for (let i = 0; i < len; i++) {
-          arr[i] = binStr.charCodeAt(i);
-        }
-        const blob = new Blob([arr], { type: 'application/pdf' });
-        const url = URL.createObjectURL(blob);
-        
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = res.filename || 'Invoice.pdf';
-        link.click();
-        
-        setTimeout(() => URL.revokeObjectURL(url), 100);
-        toast.success('Invoice downloaded');
-      } else {
-        toast.error(res.error || 'Failed to generate invoice');
-      }
+      await downloadSalesInvoicePdf(order);
+      toast.success('Invoice downloaded');
     } catch (e: any) {
       toast.error(e?.message || 'Unexpected error generating PDF');
     } finally {
       setIsDownloadingInvoice(false);
+    }
+  };
+
+  const handleShareWhatsApp = async () => {
+    if (updatingAction || isDownloadingInvoice) return;
+    setUpdatingAction('whatsapp');
+    try {
+      await downloadSalesInvoicePdf(order);
+      window.open(buildWhatsAppInvoiceUrl(order), '_blank', 'noopener,noreferrer');
+      toast.success('Invoice downloaded. WhatsApp Web is opening.');
+    } catch (e: any) {
+      toast.error(e?.message || 'Failed to prepare WhatsApp invoice');
+    } finally {
+      setUpdatingAction(null);
     }
   };
 
@@ -113,11 +119,14 @@ export function SalesRowActions({ order, canEdit = true }: { order: any, canEdit
       const res = await recordPayment({
         customerId: order.customerId,
         amount: paymentAmount,
-        orderId: order.id
+        orderId: order.id,
+        paymentDate
       });
       if (res.success) {
         toast.success('Payment recorded and order marked PAID');
         setIsPaymentOpen(false);
+        setPaymentDate(toLocalDateTimeInputValue());
+        router.refresh();
       } else {
         toast.error(res.error || 'Failed to record payment');
       }
@@ -127,7 +136,7 @@ export function SalesRowActions({ order, canEdit = true }: { order: any, canEdit
   };
 
   return (
-    <MutationBoundary active={!!updatingAction || isDownloadingInvoice} label={updatingAction === 'payment' ? 'Recording payment...' : isDownloadingInvoice ? 'Generating invoice...' : 'Updating order...'} className="rounded-md">
+    <MutationBoundary active={!!updatingAction || isDownloadingInvoice} label={updatingAction === 'payment' ? 'Recording payment...' : updatingAction === 'whatsapp' ? 'Preparing WhatsApp...' : isDownloadingInvoice ? 'Generating invoice...' : 'Updating order...'} className="rounded-md">
     <div className="flex items-center justify-end gap-2 px-2">
       <button 
         onClick={handleDownloadInvoice}
@@ -137,12 +146,24 @@ export function SalesRowActions({ order, canEdit = true }: { order: any, canEdit
       >
         {isDownloadingInvoice ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
       </button>
+      <button
+        onClick={handleShareWhatsApp}
+        disabled={!!updatingAction || isDownloadingInvoice}
+        title="Download and Share to WhatsApp Web"
+        className="p-2.5 rounded-md hover:bg-emerald-500/10 text-emerald-500/40 hover:text-emerald-400 transition-all border border-transparent hover:border-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {updatingAction === 'whatsapp' ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageCircle className="w-4 h-4" />}
+      </button>
 
       {canEdit && (
         <>
-          {order.status === 'PENDING' && (
+          {canRecordPayment && order.customerId && order.status === 'PENDING' && (
             <button 
-              onClick={() => setIsPaymentOpen(true)}
+              onClick={() => {
+                setPaymentAmount(Number(order.totalAmount));
+                setPaymentDate(toLocalDateTimeInputValue());
+                setIsPaymentOpen(true);
+              }}
               title="Record Payment"
               className="p-2.5 rounded-md hover:bg-emerald-500/10 text-emerald-500/40 hover:text-emerald-400 transition-all border border-transparent hover:border-emerald-500/20"
             >
@@ -193,6 +214,17 @@ export function SalesRowActions({ order, canEdit = true }: { order: any, canEdit
                 min="0"
                 value={paymentAmount}
                 onChange={(e) => setPaymentAmount(Number(e.target.value))}
+                className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-bold outline-none focus:border-emerald-500/50 transition-all"
+                required
+              />
+           </div>
+
+           <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-white/70 tracking-widest px-1">Payment Date & Time</label>
+              <input
+                type="datetime-local"
+                value={paymentDate}
+                onChange={(e) => setPaymentDate(e.target.value)}
                 className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-bold outline-none focus:border-emerald-500/50 transition-all"
                 required
               />

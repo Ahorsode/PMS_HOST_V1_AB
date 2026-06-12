@@ -6,6 +6,7 @@ import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 import { revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
+import { parseFinancialLogDate } from '@/lib/financial-dates'
 
 export async function getFinancialTransactions() {
   const { userId, activeFarmId } = await getAuthContext()
@@ -50,7 +51,7 @@ export async function createFinancialTransaction(data: {
   paymentStatus: 'PAID' | 'UNPAID' | 'PARTIALLY_PAID'
   paymentMethod: string
   referenceNum?: string
-  transactionDate: string
+  transactionDate?: string
   description?: string
 }) {
   const { userId, activeFarmId } = await getAuthContext()
@@ -74,6 +75,8 @@ export async function createFinancialTransaction(data: {
   }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    const transactionDate = parseFinancialLogDate(data.transactionDate) ?? new Date()
+
     const transaction = await tx.financialTransaction.create({
       data: {
         farmId: activeFarmId,
@@ -84,7 +87,7 @@ export async function createFinancialTransaction(data: {
         paymentStatus: data.paymentStatus,
         paymentMethod: data.paymentMethod,
         referenceNum: data.referenceNum || null,
-        transactionDate: new Date(data.transactionDate),
+        transactionDate,
         description: data.description || null,
         isDeleted: false,
         deletedAt: null

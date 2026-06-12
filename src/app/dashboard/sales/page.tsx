@@ -11,9 +11,10 @@ import { SalesRowActions, SalesActionsHeader } from './SalesActions';
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
 import { WorkerStamp } from '@/components/ui/WorkerStamp';
 import Link from 'next/link';
+import { getAuthContext } from '@/lib/auth-utils';
 
 interface OrderItem {
-  id: number;
+  id: string;
   description: string;
   quantity: number;
   unitPrice: number;
@@ -21,13 +22,20 @@ interface OrderItem {
 }
 
 interface Order {
-  id: number;
+  id: string;
+  customerId?: string | null;
+  invoiceNumber?: number | null;
+  subtotalAmount?: number;
+  taxAmount?: number;
   totalAmount: any;
   discountAmount: any;
   status: string;
+  orderDate?: string | Date;
+  paidAt?: string | Date | null;
   customer: {
     name: string;
     phone: string | null;
+    balanceOwed?: number;
   } | null;
   items: OrderItem[];
   user?: {
@@ -46,6 +54,10 @@ interface Customer {
 export default async function SalesPage({ searchParams }: { searchParams: Promise<{ sellBatchId?: string }> }) {
   const hasAccess = await checkWorkerPermissions('sales', 'view');
   const canEdit = await checkWorkerPermissions('sales', 'edit');
+  const { role } = await getAuthContext();
+  const canOverridePrice = role === 'OWNER' || role === 'MANAGER';
+  const canCreateSale = canEdit || role === 'WORKER';
+  const canRecordPayment = role === 'OWNER' || role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER';
 
   if (!hasAccess) {
     redirect('/dashboard/unauthorized');
@@ -64,8 +76,8 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
   const orders = ordersRaw as unknown as Order[];
   const customers = customersRaw as unknown as Customer[];
 
-  const totalRevenue = orders.reduce((sum: number, order: Order) => sum + Number(order.totalAmount), 0);
-  const netRevenue = orders.reduce((sum: number, order: Order) => sum + (Number(order.totalAmount) - Number(order.discountAmount || 0)), 0);
+  const totalRevenue = orders.reduce((sum: number, order: Order) => sum + Number(order.subtotalAmount || order.totalAmount), 0);
+  const netRevenue = orders.reduce((sum: number, order: Order) => sum + Number(order.totalAmount), 0);
   const pendingOrders = orders.filter((o: Order) => o.status === 'PENDING').length;
 
   const stats = [
@@ -87,7 +99,8 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
           inventory={inventory}
           livestock={livestock}
           initialLivestockId={sellBatchId}
-          canEdit={canEdit}
+          canEdit={canCreateSale}
+          canOverridePrice={canOverridePrice}
         />
       </div>
 
@@ -161,7 +174,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                     </td>
                     <td className="px-7 py-5 text-right flex items-center justify-end gap-2">
                        <WorkerStamp user={order.user} />
-                       <SalesRowActions order={order} canEdit={canEdit} />
+                       <SalesRowActions order={order} canEdit={canEdit} canRecordPayment={canRecordPayment} />
                     </td>
                   </tr>
                 ))}
@@ -197,7 +210,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                  </div>
                  <div className="flex justify-between items-center pt-2 border-t border-white/5">
                     <span className="text-emerald-400 font-bold text-sm">{formatCurrency(Number(order.totalAmount))}</span>
-                    <div className="flex justify-end"><SalesRowActions order={order} canEdit={canEdit} /></div>
+                    <div className="flex justify-end"><SalesRowActions order={order} canEdit={canEdit} canRecordPayment={canRecordPayment} /></div>
                  </div>
               </div>
             ))}

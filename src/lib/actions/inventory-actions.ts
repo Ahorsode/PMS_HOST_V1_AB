@@ -182,6 +182,7 @@ export async function getAllInventory() {
     const items = await tx.inventory.findMany({
       where: { farmId: activeFarmId, isDeleted: false },
       include: {
+        eggCategory: true,
         user: {
           select: {
             firstname: true,
@@ -196,7 +197,13 @@ export async function getAllInventory() {
       ...item,
       stockLevel: Number(item.stockLevel),
       reorderLevel: item.reorderLevel ? Number(item.reorderLevel) : null,
-      costPerUnit: item.costPerUnit ? Number(item.costPerUnit) : null
+      costPerUnit: item.costPerUnit ? Number(item.costPerUnit) : null,
+      eggCategory: item.eggCategory ? {
+        ...item.eggCategory,
+        sellingPrice: Number(item.eggCategory.sellingPrice),
+        unitSize: Number(item.eggCategory.unitSize)
+      } : null,
+      sellingPrice: item.eggCategory?.sellingPrice != null ? Number(item.eggCategory.sellingPrice) : (item.costPerUnit ? Number(item.costPerUnit) : null)
     }))
   })
 }

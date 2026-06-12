@@ -1,6 +1,8 @@
 import { auth } from '@/auth'
 import prisma from '@/lib/db'
 
+export const SECURITY_PERMISSION_UPDATE_MESSAGE = 'Your security permissions have been updated. Please sign in again to activate your new features.'
+
 export function normalizePhoneNumber(phone: string | null | undefined): string | null {
   if (!phone) return null;
   // Remove all non-numeric characters except +
@@ -26,6 +28,28 @@ export async function getAuthContext() {
   }
   
   const userId = session.user.id
+  const sessionUser = session.user as any
+
+  if (sessionUser.securityInvalidated) {
+    throw new Error(`SESSION_REVOKED: ${sessionUser.securityNotice || SECURITY_PERMISSION_UPDATE_MESSAGE}`)
+  }
+
+  const authUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      sessionVersion: true,
+      securityNotice: true
+    }
+  })
+
+  if (!authUser) {
+    throw new Error('Unauthorized')
+  }
+
+  if (typeof sessionUser.sessionVersion === 'number' && sessionUser.sessionVersion < authUser.sessionVersion) {
+    throw new Error(`SESSION_REVOKED: ${authUser.securityNotice || SECURITY_PERMISSION_UPDATE_MESSAGE}`)
+  }
+
   let activeFarmId = (session.user as any).activeFarmId
 
   if (!activeFarmId) {
@@ -82,7 +106,7 @@ export function hasPermission(role: string, permissions: any, action: string): b
     case 'VIEW_SALES':
       return role === 'CASHIER' || role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER' || !!permissions?.canViewSales;
     case 'EDIT_SALES':
-      return role === 'CASHIER' || role === 'FINANCE_OFFICER' || !!permissions?.canEditSales;
+      return role === 'CASHIER' || role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER' || !!permissions?.canEditSales;
     case 'VIEW_CUSTOMERS':
       return role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER' || role === 'CASHIER' || !!permissions?.canViewCustomers;
     case 'EDIT_CUSTOMERS':

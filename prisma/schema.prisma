@@ -23,6 +23,9 @@ model User {
   middleName            String?                @map("middle_name")
   password              String?
   mustChangePassword    Boolean                @default(false) @map("must_change_password")
+  sessionVersion        Int                    @default(1) @map("session_version")
+  securityNotice        String?                @map("security_notice")
+  securityRevokedAt     DateTime?              @map("security_revoked_at")
   accounts              Account[]
   auditLogs             AuditLog[]
   batches               Livestock[]
@@ -122,6 +125,7 @@ model Farm {
   eggCategories         EggCategory[]
   eggProduction         EggProduction[]
   expenses              Expense[]
+  expenseAllocations    ExpenseAllocation[]
   members               FarmMember[]
   settings              FarmSettings?
   user                  User                   @relation(fields: [userId], references: [id])
@@ -198,6 +202,7 @@ model Livestock {
   feedingLogs          FeedingLog[]
   eggProduction        EggProduction[]
   expenses             Expense[]
+  expenseAllocations   ExpenseAllocation[]
   healthRecords        HealthRecord[]
   medications          MedicationSchedule[]
   mortalityRecords     HealthMortality[]
@@ -553,6 +558,7 @@ model Expense {
   supplierId  String?
   isDeleted   Boolean         @default(false) @map("is_deleted")
   deletedAt   DateTime?       @map("deleted_at")
+  allocations ExpenseAllocation[]
   batches     Livestock?      @relation(fields: [batch_id], references: [id])
   farm        Farm            @relation(fields: [farmId], references: [id], onDelete: Cascade)
   supplier    Supplier?       @relation(fields: [supplierId], references: [id])
@@ -565,6 +571,25 @@ model Expense {
   @@index([farmId, isDeleted])
   @@index([farmId, deletedAt])
   @@map("expenses")
+}
+
+model ExpenseAllocation {
+  id                   String    @id @default(cuid())
+  expenseId            String    @map("expense_id")
+  batchId              String    @map("batch_id")
+  farmId               String    @map("farm_id")
+  allocatedAmount      Decimal   @map("allocated_amount") @db.Decimal(15, 2)
+  allocationPercentage Decimal?  @map("allocation_percentage") @db.Decimal(7, 4)
+  createdAt            DateTime  @default(now()) @map("created_at")
+  batch                Livestock @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  expense              Expense   @relation(fields: [expenseId], references: [id], onDelete: Cascade)
+  farm                 Farm      @relation(fields: [farmId], references: [id], onDelete: Cascade)
+
+  @@unique([expenseId, batchId])
+  @@index([batchId])
+  @@index([farmId])
+  @@index([expenseId])
+  @@map("expense_allocations")
 }
 
 model UserPermission {
@@ -660,12 +685,16 @@ model Order {
   id             String      @id @default(cuid())
   farmId         String
   customerId     String?
+  invoiceNumber  Int?        @unique @default(dbgenerated("nextval('order_invoice_number_seq'::regclass)")) @map("invoice_number")
+  subtotalAmount Decimal     @default(0) @map("subtotal_amount") @db.Decimal(15, 2)
+  taxAmount      Decimal     @default(0) @map("tax_amount") @db.Decimal(15, 2)
   totalAmount    Decimal     @db.Decimal(15, 2)
   currency       String      @default("USD")
   status         String      @default("PENDING")
   discountAmount Decimal     @default(0) @db.Decimal(15, 2)
   createdAt      DateTime    @default(now()) @map("created_at")
-  orderDate      DateTime    @default(dbgenerated("'2024-01-01 00:00:00'::timestamp without time zone")) @map("order_date")
+  orderDate      DateTime    @default(now()) @map("order_date")
+  paidAt         DateTime?   @map("paid_at")
   updatedAt      DateTime    @updatedAt @map("updated_at")
   userId         String      @default("user_placeholder") @map("user_id")
   isDeleted      Boolean     @default(false) @map("is_deleted")

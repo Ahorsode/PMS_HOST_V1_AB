@@ -5,10 +5,90 @@ import { revalidatePath } from 'next/cache'
 import { getAuthContext, hasPermission } from '@/lib/auth-utils'
 import { revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
+import { parseFinancialLogDate } from '@/lib/financial-dates'
+
+const PRICE_OVERRIDE_ROLES = new Set(['OWNER', 'MANAGER'])
+const MONEY_EPSILON = 0.01
+
+function toMoney(value: number) {
+  return Math.round(value * 100) / 100
+}
+
+function isBalanced(expected: number, actual: number) {
+  return Math.abs(toMoney(expected) - toMoney(actual)) <= MONEY_EPSILON
+}
+
+async function getAuthoritativeSaleItem(tx: any, activeFarmId: string, item: {
+  description: string
+  quantity: number
+  unitPrice: number
+  inventoryId?: string
+  livestockId?: string
+}) {
+  if (item.inventoryId) {
+    const inventory = await tx.inventory.findFirst({
+      where: { id: item.inventoryId, farmId: activeFarmId, isDeleted: false },
+      include: { eggCategory: true }
+    })
+
+    if (!inventory) {
+      throw new Error('Selected inventory item is not available')
+    }
+
+    const categorySalePrice = inventory.eggCategory?.sellingPrice != null ? Number(inventory.eggCategory.sellingPrice) : null
+    const fallbackCost = inventory.costPerUnit != null ? Number(inventory.costPerUnit) : 0
+
+    return {
+      description: item.description?.trim() || inventory.itemName,
+      unitPrice: categorySalePrice && categorySalePrice > 0 ? categorySalePrice : fallbackCost,
+      basePriceSource: categorySalePrice && categorySalePrice > 0 ? 'egg_category.sellingPrice' : 'inventory.costPerUnit',
+      inventoryId: inventory.id as string,
+      livestockId: undefined,
+      availableQuantity: Number(inventory.stockLevel)
+    }
+  }
+
+  if (item.livestockId) {
+    const batch = await tx.livestock.findFirst({
+      where: { id: item.livestockId, farmId: activeFarmId, isDeleted: false }
+    })
+
+    if (!batch) {
+      throw new Error('Selected livestock batch is not available')
+    }
+
+    const initialCost = batch.initialCostActual != null
+      ? Number(batch.initialCostActual)
+      : batch.initial_actual_cost != null
+        ? Number(batch.initial_actual_cost)
+        : 0
+    const baseUnitPrice = batch.initialCount > 0 ? initialCost / batch.initialCount : 0
+
+    return {
+      description: item.description?.trim() || batch.batchName,
+      unitPrice: toMoney(baseUnitPrice),
+      basePriceSource: 'batch.initialCostActual / batch.initialCount',
+      inventoryId: undefined,
+      livestockId: batch.id as string,
+      availableQuantity: Number(batch.currentCount)
+    }
+  }
+
+  return {
+    description: item.description?.trim(),
+    unitPrice: Number(item.unitPrice || 0),
+    basePriceSource: 'manual.manager_override',
+    inventoryId: undefined,
+    livestockId: undefined,
+    availableQuantity: Number.POSITIVE_INFINITY
+  }
+}
 
 export async function createOrder(data: {
   customerId?: string
   discountAmount?: number
+  totalCashReceived?: number
+  orderDate?: string
   items: { 
     description: string; 
     quantity: number; 
@@ -20,28 +100,102 @@ export async function createOrder(data: {
   const { userId, role, activeFarmId, permissions } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
 
-  const discount = Number(data.discountAmount || 0)
-  const subtotal = data.items.reduce((sum, i) => sum + (i.quantity * i.unitPrice), 0)
-  const totalAmount = subtotal - discount
+  const canRecordLockedSale = role === 'WORKER'
+  if (!hasPermission(role, permissions, 'EDIT_SALES') && !canRecordLockedSale) {
+    return { success: false, error: 'Unauthorized: Missing sales entry permission' }
+  }
+
+  if (!data.items?.length) {
+    return { success: false, error: 'At least one sale item is required' }
+  }
 
   const limitResult = await checkRateLimit({ policy: 'orders.write', scope: 'createOrder', farmId: activeFarmId, userId })
   if (!limitResult.ok) return rateLimitActionError(limitResult)
 
   try {
     const result = await prisma.$transaction(async (tx) => {
+      const canOverridePrice = PRICE_OVERRIDE_ROLES.has(role)
+      const normalizedItems = []
+      const selectedOrderDate = parseFinancialLogDate(data.orderDate)
+
+      for (const item of data.items) {
+        const quantity = Number(item.quantity)
+        if (!Number.isInteger(quantity) || quantity <= 0) {
+          throw new Error('Quantity sold must be a positive whole number')
+        }
+
+        const authoritative = await getAuthoritativeSaleItem(tx, activeFarmId, {
+          ...item,
+          quantity,
+          unitPrice: Number(item.unitPrice || 0)
+        })
+
+        if (!canOverridePrice && !authoritative.inventoryId && !authoritative.livestockId) {
+          throw new Error('Workers cannot record custom sale items without an approved base product')
+        }
+
+        if (quantity > authoritative.availableQuantity) {
+          throw new Error(`Not enough stock for ${authoritative.description}. Available: ${authoritative.availableQuantity}`)
+        }
+
+        if (!canOverridePrice && authoritative.unitPrice <= 0) {
+          throw new Error(`${authoritative.description} needs an owner or manager to configure its base sale price first`)
+        }
+
+        const requestedUnitPrice = Number(item.unitPrice || 0)
+        const unitPrice = canOverridePrice && requestedUnitPrice > 0 ? requestedUnitPrice : authoritative.unitPrice
+
+        normalizedItems.push({
+          description: authoritative.description || 'Sale Item',
+          quantity,
+          unitPrice: toMoney(unitPrice),
+          baseUnitPrice: toMoney(authoritative.unitPrice),
+          basePriceSource: authoritative.basePriceSource,
+          totalPrice: toMoney(quantity * unitPrice),
+          inventoryId: authoritative.inventoryId,
+          livestockId: authoritative.livestockId
+        })
+      }
+
+      const subtotal = toMoney(normalizedItems.reduce((sum, item) => sum + item.totalPrice, 0))
+      const discount = canOverridePrice ? toMoney(Number(data.discountAmount || 0)) : 0
+      if (discount < 0 || discount > subtotal) {
+        throw new Error('Discount must be between 0 and the subtotal')
+      }
+
+      const taxAmount = 0
+      const totalAmount = toMoney(subtotal - discount + taxAmount)
+      const cashReceived = toMoney(Number(data.totalCashReceived ?? totalAmount))
+
+      if (cashReceived < 0) {
+        throw new Error('Total cash received cannot be negative')
+      }
+
+      if (!canOverridePrice && !isBalanced(totalAmount, cashReceived)) {
+        throw new Error(`Cash received must match the locked sale total of GHS ${totalAmount.toFixed(2)}`)
+      }
+
+      const isPaid = cashReceived + MONEY_EPSILON >= totalAmount
+      const outstandingBalance = toMoney(Math.max(totalAmount - cashReceived, 0))
+
       const order = await tx.order.create({
         data: {
           farmId: activeFarmId,
           userId,
           customerId: data.customerId || undefined,
+          subtotalAmount: subtotal,
+          taxAmount,
           totalAmount,
           discountAmount: discount,
+          currency: 'GHS',
+          status: isPaid ? 'PAID' : 'PENDING',
+          ...(selectedOrderDate ? { orderDate: selectedOrderDate } : {}),
           items: {
-            create: data.items.map(i => ({
+            create: normalizedItems.map(i => ({
               description: i.description,
               quantity: i.quantity,
               unitPrice: i.unitPrice,
-              totalPrice: i.quantity * i.unitPrice,
+              totalPrice: i.totalPrice,
               inventoryId: i.inventoryId,
               livestockId: i.livestockId
             }))
@@ -49,15 +203,94 @@ export async function createOrder(data: {
         } as any
       })
 
+      if (isPaid) {
+        if (selectedOrderDate) {
+          await tx.order.update({
+            where: { id: order.id },
+            data: { paidAt: selectedOrderDate }
+          })
+        } else {
+          await tx.$executeRaw`UPDATE "orders" SET "paid_at" = NOW() WHERE "id" = ${order.id}`
+        }
+      }
+
 
       // Only update customer balance if a customer is linked
-      if (data.customerId) {
+      if (data.customerId && outstandingBalance > 0) {
         await tx.customer.update({
           where: { id: data.customerId, farmId: activeFarmId },
           data: {
-            balanceOwed: { increment: totalAmount }
+            balanceOwed: { increment: outstandingBalance }
           }
         })
+      }
+
+      await tx.auditLog.create({
+        data: {
+          tableName: 'orders',
+          recordId: order.id,
+          attributeName: 'create',
+          oldValue: null,
+          newValue: JSON.stringify({ totalAmount, cashReceived, status: isPaid ? 'PAID' : 'PENDING' }),
+          reason: 'Farm-gate sales entry',
+          userId,
+          farmId: activeFarmId,
+          actionType: 'ORDER_CREATED',
+          description: canOverridePrice ? 'Sales order created by privileged operator' : 'Sales order created with locked server-side pricing',
+          metadata: {
+            cashReceived,
+            subtotal,
+            discount,
+            taxAmount,
+            selectedOrderDate: selectedOrderDate?.toISOString() || null,
+            canOverridePrice,
+            items: normalizedItems.map(({ description, quantity, unitPrice, baseUnitPrice, basePriceSource }) => ({
+              description,
+              quantity,
+              unitPrice,
+              baseUnitPrice,
+              basePriceSource
+            }))
+          }
+        }
+      })
+
+      if (canOverridePrice) {
+        for (const [index, item] of normalizedItems.entries()) {
+          if (item.baseUnitPrice > 0 && !isBalanced(item.baseUnitPrice, item.unitPrice)) {
+            await tx.auditLog.create({
+              data: {
+                tableName: 'orders',
+                recordId: order.id,
+                attributeName: `items.${index}.unitPrice`,
+                oldValue: item.baseUnitPrice.toFixed(2),
+                newValue: item.unitPrice.toFixed(2),
+                reason: 'Manager/owner price override',
+                userId,
+                farmId: activeFarmId,
+                actionType: 'PRICE_OVERRIDE',
+                description: `${item.description} unit price overridden during sale`
+              }
+            })
+          }
+        }
+
+        if (discount > 0) {
+          await tx.auditLog.create({
+            data: {
+              tableName: 'orders',
+              recordId: order.id,
+              attributeName: 'discountAmount',
+              oldValue: '0.00',
+              newValue: discount.toFixed(2),
+              reason: 'Manager/owner discount override',
+              userId,
+              farmId: activeFarmId,
+              actionType: 'DISCOUNT_OVERRIDE',
+              description: 'Discount applied during sales entry'
+            }
+          })
+        }
       }
 
       return order
@@ -68,9 +301,9 @@ export async function createOrder(data: {
     revalidatePath('/dashboard')
     revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, order: result }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating order:', error)
-    return { success: false, error: 'Failed to create order' }
+    return { success: false, error: error.message || 'Failed to create order' }
   }
 }
 
@@ -98,8 +331,12 @@ export async function getAllOrders() {
 
   return orders.map(order => ({
     ...order,
+    subtotalAmount: Number((order as any).subtotalAmount || 0),
+    taxAmount: Number((order as any).taxAmount || 0),
     totalAmount: Number(order.totalAmount),
     discountAmount: Number(order.discountAmount),
+    invoiceNumber: (order as any).invoiceNumber ?? null,
+    paidAt: (order as any).paidAt ?? null,
     customer: order.customer ? {
       ...order.customer,
       balanceOwed: Number(order.customer.balanceOwed)
@@ -233,10 +470,9 @@ export async function deleteOrder(id: string, reason: string) {
   const { userId, role, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
   
-  // Only Admin/Owner or Accountant can delete orders
-  const authorizedRoles = ['OWNER', 'MANAGER', 'ACCOUNTANT']
+  const authorizedRoles = ['OWNER', 'MANAGER']
   if (!authorizedRoles.includes(role)) {
-    return { success: false, error: 'Unauthorized: Only Managers can delete orders' }
+    return { success: false, error: 'Unauthorized: Only owners and managers can delete orders' }
   }
 
   if (!reason || reason.trim().length < 5) return { success: false, error: 'A valid reason is required for deletion' }
@@ -276,9 +512,9 @@ export async function restoreOrder(id: string) {
   const { userId, role, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
 
-  const authorizedRoles = ['OWNER', 'MANAGER', 'ACCOUNTANT']
+  const authorizedRoles = ['OWNER', 'MANAGER']
   if (!authorizedRoles.includes(role)) {
-    return { success: false, error: 'Unauthorized: Only Managers can restore orders' }
+    return { success: false, error: 'Unauthorized: Only owners and managers can restore orders' }
   }
 
   const limitResult = await checkRateLimit({ policy: 'orders.write', scope: 'restoreOrder', farmId: activeFarmId, userId })

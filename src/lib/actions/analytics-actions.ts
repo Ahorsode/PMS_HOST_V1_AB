@@ -5,6 +5,13 @@ import { unstable_cache } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
 import { farmCacheTags } from '@/lib/performance/cache-tags'
+import {
+  buildWeeklyFcrTrend,
+  calculateBatchBiomassGain,
+  calculateFeedConversionRatio,
+  calculateMortalityRatePercentage,
+  calculateNetProfitability,
+} from '@/lib/analytics/batch-performance'
 
 export async function getBatchAnalytics(batchId: string) {
   const { userId, activeFarmId } = await getAuthContext()
@@ -87,4 +94,181 @@ export async function getMortalityTrends(farmId: string) {
   })
 
   return loader()
+}
+
+export async function getBatchPerformanceReports() {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return { batches: [], selectedBatchId: null, canViewFinance: false }
+
+  const hasBatchAccess = await checkWorkerPermissions('batches', 'view')
+  if (!hasBatchAccess) return { batches: [], selectedBatchId: null, canViewFinance: false }
+
+  const canViewFinance = await checkWorkerPermissions('finance', 'view')
+
+  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    const batches = await tx.livestock.findMany({
+      where: {
+        farmId: activeFarmId,
+        isDeleted: false,
+      },
+      include: {
+        house: {
+          select: { name: true },
+        },
+        feedingLogs: {
+          where: { isDeleted: false },
+          orderBy: { logDate: 'asc' },
+          select: { amountConsumed: true, logDate: true },
+        },
+        eggProduction: {
+          where: { isDeleted: false },
+          orderBy: { logDate: 'asc' },
+          select: { eggsCollected: true, logDate: true },
+        },
+        mortalityRecords: {
+          where: { type: 'DEAD', isDeleted: false },
+          select: { count: true, logDate: true },
+        },
+        weightRecords: {
+          orderBy: { logDate: 'asc' },
+          select: { averageWeight: true, logDate: true },
+        },
+        expenses: canViewFinance
+          ? {
+              where: { isDeleted: false },
+              select: { amount: true },
+            }
+          : false,
+        expenseAllocations: canViewFinance
+          ? {
+              include: {
+                expense: {
+                  select: { isDeleted: true },
+                },
+              },
+            }
+          : false,
+        orderItems: canViewFinance
+          ? {
+              include: {
+                order: {
+                  select: {
+                    farmId: true,
+                    status: true,
+                    isDeleted: true,
+                    totalAmount: true,
+                  },
+                },
+              },
+            }
+          : false,
+      },
+      orderBy: [
+        { status: 'asc' },
+        { batchName: 'asc' },
+      ],
+    })
+
+    const reports = batches.map((batch: any) => {
+      const totalFeed = batch.feedingLogs.reduce(
+        (sum: number, log: any) => sum + Number(log.amountConsumed || 0),
+        0
+      )
+      const totalEggs = batch.eggProduction.reduce(
+        (sum: number, log: any) => sum + Number(log.eggsCollected || 0),
+        0
+      )
+      const totalDead = batch.mortalityRecords.reduce(
+        (sum: number, log: any) => sum + Number(log.count || 0),
+        0
+      )
+      const initialWeight = Number(batch.weightRecords[0]?.averageWeight || 0)
+      const latestWeight = Number(batch.weightRecords.at(-1)?.averageWeight || initialWeight || 0)
+      const biomassGain = calculateBatchBiomassGain({
+        initialAverageWeight: initialWeight,
+        latestAverageWeight: latestWeight,
+        currentBirdCount: batch.currentCount,
+      })
+
+      const directExpenses = canViewFinance
+        ? batch.expenses.reduce((sum: number, expense: any) => sum + Number(expense.amount || 0), 0)
+        : 0
+      const allocatedExpenses = canViewFinance
+        ? batch.expenseAllocations
+            .filter((allocation: any) => !allocation.expense?.isDeleted)
+            .reduce((sum: number, allocation: any) => sum + Number(allocation.allocatedAmount || 0), 0)
+        : 0
+      const totalRevenue = canViewFinance
+        ? batch.orderItems
+            .filter((item: any) => (
+              item.order?.farmId === activeFarmId &&
+              !item.order?.isDeleted &&
+              String(item.order?.status || '').toUpperCase() !== 'CANCELLED'
+            ))
+            .reduce((sum: number, item: any) => sum + Number(item.totalPrice || 0), 0)
+        : 0
+
+      const fcrTrend = buildWeeklyFcrTrend({
+        livestockType: batch.type,
+        feedingLogs: batch.feedingLogs.map((log: any) => ({
+          date: log.logDate,
+          amount: Number(log.amountConsumed || 0),
+        })),
+        eggLogs: batch.eggProduction.map((log: any) => ({
+          date: log.logDate,
+          count: Number(log.eggsCollected || 0),
+        })),
+        weightRecords: batch.weightRecords.map((record: any) => ({
+          date: record.logDate,
+          averageWeight: Number(record.averageWeight || 0),
+        })),
+        currentBirdCount: batch.currentCount,
+      })
+
+      return {
+        id: batch.id,
+        name: batch.batchName || `Batch ${batch.localBatchId || batch.id}`,
+        status: batch.status,
+        type: batch.type,
+        breedType: batch.breedType,
+        houseName: batch.house?.name || 'Unassigned',
+        initialCount: batch.initialCount,
+        currentCount: batch.currentCount,
+        totalFeed,
+        totalEggs,
+        totalDead,
+        latestWeight,
+        biomassGain,
+        fcr: calculateFeedConversionRatio({
+          livestockType: batch.type,
+          totalFeed,
+          eggOutput: totalEggs,
+          birdBiomassGain: biomassGain,
+        }),
+        mortalityRate: calculateMortalityRatePercentage({
+          totalDeadBirds: totalDead,
+          initialPopulation: batch.initialCount,
+        }),
+        directExpenses,
+        allocatedExpenses,
+        totalExpenses: directExpenses + allocatedExpenses,
+        totalRevenue,
+        netProfitability: calculateNetProfitability({
+          totalRevenue,
+          directExpenses,
+          allocatedExpenses,
+        }),
+        fcrTrend,
+      }
+    })
+
+    return {
+      batches: reports,
+      selectedBatchId: reports.find((batch: any) => batch.status === 'active')?.id || reports[0]?.id || null,
+      canViewFinance,
+    }
+  }).catch((error: any) => {
+    console.error('Error fetching batch performance reports:', error)
+    return { batches: [], selectedBatchId: null, canViewFinance }
+  })
 }

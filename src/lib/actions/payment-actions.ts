@@ -3,12 +3,14 @@
 import prisma from '@/lib/db'
 import { revalidatePath } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
+import { parseFinancialLogDate } from '@/lib/financial-dates'
 
 export async function recordPayment(data: {
   customerId: string
   amount: number
   orderId?: string
   paymentMethod?: string
+  paymentDate?: string
 }) {
   const { userId, role, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
@@ -21,6 +23,7 @@ export async function recordPayment(data: {
 
   const amount = Number(data.amount)
   if (amount <= 0) return { success: false, error: 'Invalid payment amount' }
+  const paymentDate = parseFinancialLogDate(data.paymentDate) ?? new Date()
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -36,7 +39,7 @@ export async function recordPayment(data: {
       if (data.orderId) {
         await tx.order.update({
           where: { id: data.orderId, farmId: activeFarmId },
-          data: { status: 'PAID' }
+          data: { status: 'PAID', paidAt: paymentDate }
         })
       }
 

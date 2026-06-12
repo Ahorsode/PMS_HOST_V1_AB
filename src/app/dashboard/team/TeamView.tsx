@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Users, Mail, Shield, UserPlus, Loader2, CheckCircle2, XCircle, Trash2, ShieldCheck, UserCheck, Settings, AlertCircle } from 'lucide-react';
-import { inviteWorker, getFarmMembers, deleteMember, deleteInvitation, updateWorkerPermissions } from '@/lib/actions/staff-actions';
+import { Users, Mail, Shield, UserPlus, Loader2, CheckCircle2, XCircle, Trash2, ShieldCheck, UserCheck, Settings, AlertCircle, Phone } from 'lucide-react';
+import { inviteWorker, getFarmMembers, deleteMember, deleteInvitation, updateWorkerPermissions, updateFarmMemberRole } from '@/lib/actions/staff-actions';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { Input } from '@/components/ui/Input';
@@ -11,6 +11,7 @@ import { Select } from '@/components/ui/Select';
 import { PermissionsModal } from '@/components/ui/PermissionsModal';
 import { useRouter } from 'next/navigation';
 import { MutationBoundary } from '@/components/ui/MutationFeedback';
+import { toast } from 'sonner';
 
 export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
   const router = useRouter();
@@ -20,6 +21,7 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
   const [isInviting, setIsInviting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSavingPermissions, setIsSavingPermissions] = useState(false);
+  const [updatingRoleUserId, setUpdatingRoleUserId] = useState<string | null>(null);
   const [currentUserRole, setCurrentUserRole] = useState<string>('WORKER');
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string, type: 'member' | 'invite' } | null>(null);
@@ -112,12 +114,39 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
     }
   };
 
+  const handleRoleChange = async (member: any, nextRole: string) => {
+    if (member.role === nextRole || updatingRoleUserId) return;
+
+    const previousRole = member.role;
+    setUpdatingRoleUserId(member.userId);
+    setMembers((current) => current.map((item) => item.id === member.id ? { ...item, role: nextRole, user: { ...item.user, role: nextRole } } : item));
+
+    try {
+      const response = await updateFarmMemberRole(member.userId, nextRole as any) as any;
+      if (response?.success) {
+        toast.success('Role updated. Active sessions will be refreshed.');
+        router.refresh();
+        await loadTeam();
+      } else {
+        setMembers((current) => current.map((item) => item.id === member.id ? { ...item, role: previousRole, user: { ...item.user, role: previousRole } } : item));
+        toast.error(response?.error || 'Failed to update role');
+      }
+    } catch (err: any) {
+      setMembers((current) => current.map((item) => item.id === member.id ? { ...item, role: previousRole, user: { ...item.user, role: previousRole } } : item));
+      toast.error(err.message || 'Failed to update role');
+    } finally {
+      setUpdatingRoleUserId(null);
+    }
+  };
+
   const getRoleBadge = (role: string) => {
     const configs: any = {
       OWNER: { class: 'bg-purple-50 text-purple-700 border-purple-100', icon: ShieldCheck },
       MANAGER: { class: 'bg-blue-50 text-blue-700 border-blue-100', icon: Shield },
       WORKER: { class: 'bg-green-50 text-green-700 border-green-100', icon: UserCheck },
-      ACCOUNTANT: { class: 'bg-emerald-50 text-emerald-700 border-emerald-100', icon: ShieldCheck }
+      ACCOUNTANT: { class: 'bg-emerald-50 text-emerald-700 border-emerald-100', icon: ShieldCheck },
+      FINANCE_OFFICER: { class: 'bg-teal-50 text-teal-700 border-teal-100', icon: ShieldCheck },
+      CASHIER: { class: 'bg-amber-50 text-amber-700 border-amber-100', icon: UserCheck }
     };
     const config = configs[role] || { class: 'bg-gray-50 text-gray-700 border-gray-100', icon: Users };
     const Icon = config.icon;
@@ -164,9 +193,10 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
                 <div className="space-y-3">
                   {members.map((member) => {
                     const isMutatingMember = isDeleting && deleteTarget?.type === 'member' && deleteTarget.id === member.id;
+                    const isUpdatingRole = updatingRoleUserId === member.userId;
 
                     return (
-                    <MutationBoundary key={member.id} active={isMutatingMember} label="Revoking access...">
+                    <MutationBoundary key={member.id} active={isMutatingMember || isUpdatingRole} label={isUpdatingRole ? 'Updating role...' : 'Revoking access...'}>
                     <div className="p-4 rounded-lg border border-white/5 bg-white/10 hover:border-emerald-500/30 hover:bg-white/[0.08] transition-all flex items-center justify-between group relative overflow-hidden">
                       <div className="flex items-center space-x-4">
                         <div className="w-14 h-14 rounded-md bg-emerald-500/10 flex items-center justify-center text-emerald-400 font-bold text-xl shadow-lg border border-emerald-500/20">
@@ -176,14 +206,42 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
                           <p className="font-bold text-white text-lg tracking-normal">
                             {member.user.firstname} {member.user.surname}
                           </p>
-                          <p className="text-xs text-white/70 font-bold tracking-normal">{member.user.email}</p>
+                          <div className="mt-1 flex flex-wrap items-center gap-2">
+                            {member.user.phoneNumber && (
+                              <span className="inline-flex items-center gap-1 text-xs text-emerald-300/90 font-bold tracking-normal">
+                                <Phone className="w-3 h-3" />
+                                {member.user.phoneNumber}
+                              </span>
+                            )}
+                            <span className="text-xs text-white/70 font-bold tracking-normal">{member.user.email || 'No email on file'}</span>
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        {getRoleBadge(member.role)}
+                        {currentUserRole === 'OWNER' && member.role !== 'OWNER' ? (
+                          <div className="relative">
+                            <select
+                              value={member.role}
+                              onChange={(event) => handleRoleChange(member, event.target.value)}
+                              disabled={!canEdit || isUpdatingRole}
+                              className="h-10 rounded-md border border-white/10 bg-slate-950/80 px-3 pr-9 text-xs font-bold uppercase tracking-widest text-white outline-none transition-all focus:border-emerald-400/60 disabled:cursor-not-allowed disabled:opacity-50"
+                              title="Update employee role"
+                            >
+                              <option value="WORKER">Worker</option>
+                              <option value="CASHIER">Cashier</option>
+                              <option value="MANAGER">Manager</option>
+                              <option value="ACCOUNTANT">Accountant</option>
+                              <option value="FINANCE_OFFICER">Finance Officer</option>
+                            </select>
+                            {isUpdatingRole && <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-emerald-400" />}
+                          </div>
+                        ) : (
+                          getRoleBadge(member.role)
+                        )}
                         {canEdit && currentUserRole === 'OWNER' && member.userId !== (members.find(m => m.role === 'OWNER')?.userId || '') && (
                           <button 
                             onClick={() => setPermissionTarget(member)}
+                            title="Edit granular permissions"
                             className="p-2.5 text-blue-400 hover:bg-blue-500/10 rounded-md transition-all opacity-0 group-hover:opacity-100 border border-transparent hover:border-blue-500/20"
                           >
                             <Settings className="w-5 h-5" />
@@ -335,8 +393,10 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
                     name="role"
                     options={[
                       { label: 'Worker', value: 'WORKER' },
+                      { label: 'Cashier', value: 'CASHIER' },
                       { label: 'Manager', value: 'MANAGER' },
-                      { label: 'Accountant', value: 'ACCOUNTANT' }
+                      { label: 'Accountant', value: 'ACCOUNTANT' },
+                      { label: 'Finance Officer', value: 'FINANCE_OFFICER' }
                     ]}
                     defaultValue="WORKER"
                   />
