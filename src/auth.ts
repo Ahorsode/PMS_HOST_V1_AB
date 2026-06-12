@@ -6,6 +6,7 @@ import { authConfig } from './auth.config';
 import prisma from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import { normalizePhoneNumber, recordUserSession } from '@/lib/auth-utils';
+import { getCachedSessionVersion, setCachedSessionVersion } from '@/lib/performance/session-version-cache';
 
 const SECURITY_PERMISSION_UPDATE_MESSAGE = 'Your security permissions have been updated. Please sign in again to activate your new features.';
 
@@ -64,32 +65,40 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       if (token.id) {
         try {
-          const dbUser = await prisma.user.findUnique({
-            where: { id: token.id as string },
-            select: {
-              role: true,
-              mustChangePassword: true,
-              sessionVersion: true,
-              securityNotice: true
-            }
-          });
+          const userId = token.id as string;
+          const tokenVersion = typeof token.sessionVersion === 'number' ? token.sessionVersion : null;
+          const cachedVersion = await getCachedSessionVersion(userId);
 
-          if (dbUser) {
-            const tokenVersion = typeof token.sessionVersion === 'number'
-              ? token.sessionVersion
-              : dbUser.sessionVersion;
-            const sessionWasRevoked = tokenVersion < dbUser.sessionVersion;
+          if (tokenVersion !== null && cachedVersion !== null && cachedVersion <= tokenVersion) {
+            token.securityInvalidated = false;
+            token.securityNotice = null;
+          } else {
+            const dbUser = await prisma.user.findUnique({
+              where: { id: userId },
+              select: {
+                role: true,
+                mustChangePassword: true,
+                sessionVersion: true,
+                securityNotice: true
+              }
+            });
 
-            token.role = dbUser.role;
-            token.mustChangePassword = dbUser.mustChangePassword;
+            if (dbUser) {
+              const currentTokenVersion = tokenVersion ?? dbUser.sessionVersion;
+              const sessionWasRevoked = currentTokenVersion < dbUser.sessionVersion;
 
-            if (sessionWasRevoked) {
-              token.securityInvalidated = true;
-              token.securityNotice = dbUser.securityNotice || SECURITY_PERMISSION_UPDATE_MESSAGE;
-            } else {
-              token.sessionVersion = dbUser.sessionVersion;
-              token.securityInvalidated = false;
-              token.securityNotice = null;
+              token.role = dbUser.role;
+              token.mustChangePassword = dbUser.mustChangePassword;
+              await setCachedSessionVersion(userId, dbUser.sessionVersion);
+
+              if (sessionWasRevoked) {
+                token.securityInvalidated = true;
+                token.securityNotice = dbUser.securityNotice || SECURITY_PERMISSION_UPDATE_MESSAGE;
+              } else {
+                token.sessionVersion = dbUser.sessionVersion;
+                token.securityInvalidated = false;
+                token.securityNotice = null;
+              }
             }
           }
         } catch (err) {
