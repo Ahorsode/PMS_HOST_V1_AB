@@ -34,57 +34,50 @@ export async function getAuthContext() {
     throw new Error(`SESSION_REVOKED: ${sessionUser.securityNotice || SECURITY_PERMISSION_UPDATE_MESSAGE}`)
   }
 
-  const authUser = await prisma.user.findUnique({
+  const activeFarmIdFromSession = (session.user as any).activeFarmId as string | undefined
+
+  const data = await prisma.user.findUnique({
     where: { id: userId },
     select: {
+      role: true,
       sessionVersion: true,
-      securityNotice: true
+      securityNotice: true,
+      farms: {
+        select: { id: true }
+      },
+      memberships: {
+        select: {
+          farmId: true,
+          role: true
+        }
+      },
+      userPermissions: true
     }
   })
 
-  if (!authUser) {
+  if (!data) {
     throw new Error('Unauthorized')
   }
 
-  if (typeof sessionUser.sessionVersion === 'number' && sessionUser.sessionVersion < authUser.sessionVersion) {
-    throw new Error(`SESSION_REVOKED: ${authUser.securityNotice || SECURITY_PERMISSION_UPDATE_MESSAGE}`)
+  if (typeof sessionUser.sessionVersion === 'number' && sessionUser.sessionVersion < data.sessionVersion) {
+    throw new Error(`SESSION_REVOKED: ${data.securityNotice || SECURITY_PERMISSION_UPDATE_MESSAGE}`)
   }
 
-  let activeFarmId = (session.user as any).activeFarmId
+  const activeFarmId =
+    activeFarmIdFromSession ||
+    data.farms[0]?.id ||
+    data.memberships[0]?.farmId
 
-  if (!activeFarmId) {
-    const farm = await prisma.farm.findFirst({
-      where: {
-        OR: [
-          { userId: userId },
-          { members: { some: { userId: userId } } }
-        ]
-      }
-    })
-    
-    if (farm) {
-      activeFarmId = farm.id
-    }
-  }
+  const membership = activeFarmId
+    ? data.memberships.find((item) => item.farmId === activeFarmId)
+    : null
+  const permissions = activeFarmId
+    ? data.userPermissions.find((item) => item.farmId === activeFarmId) || null
+    : null
+  const isFarmOwner = !!activeFarmId && data.farms.some((farm) => farm.id === activeFarmId)
+  const role = membership?.role || (isFarmOwner ? 'OWNER' : data.role || sessionUser.role || 'WORKER')
 
-  // Fetch the actual current role for this farm context
-  let role = (session.user as any).role || 'WORKER';
-  let permissions = null;
-
-  if (activeFarmId) {
-    const membership = await prisma.farmMember.findFirst({
-      where: { farmId: activeFarmId, userId: userId }
-    });
-    if (membership) {
-      role = membership.role;
-    }
-
-    permissions = await prisma.userPermission.findUnique({
-      where: { userId_farmId: { userId, farmId: activeFarmId } }
-    });
-  }
-
-  return { userId, activeFarmId, role, permissions }
+  return { userId, activeFarmId, role, permissions, isFarmOwner }
 }
 
 export function hasPermission(role: string, permissions: any, action: string): boolean {

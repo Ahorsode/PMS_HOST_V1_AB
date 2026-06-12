@@ -575,60 +575,38 @@ export async function checkWorkerPermissions(
   module: 'finance' | 'inventory' | 'batches' | 'sales' | 'eggs' | 'feeding' | 'houses' | 'mortality' | 'customers' | 'team', 
   action: 'view' | 'edit'
 ) {
-  const { userId, activeFarmId } = await getAuthContext()
+  const { role, activeFarmId, permissions, isFarmOwner } = await getAuthContext()
   if (!activeFarmId) return false
   
   try {
-    // 1. Fetch Farm for Absolute Ownership Check
-    const farm = await prisma.farm.findUnique({
-      where: { id: activeFarmId },
-      select: { userId: true }
-    })
-    if (!farm) return false
-    
     // Absolute Creator Bypass
-    if (farm.userId === userId) return true
+    if (isFarmOwner) return true
+    if (!role) return false
     
-    // 2. Fetch Contextual Role (FarmMember)
-    const membership = await prisma.farmMember.findUnique({
-      where: {
-        farmId_userId: {
-          farmId: activeFarmId,
-          userId: userId
-        }
-      }
-    })
-    if (!membership) return false
+    // Role-based defaults for privileged roles (not overrideable by UserPermission)
+    if (role === 'MANAGER') return true
     
-    // 3. Load Overrides
-    const perm = await prisma.userPermission.findFirst({
-      where: { userId: userId, farmId: activeFarmId }
-    })
-    
-    // 3. Role-based defaults for privileged roles (not overrideable by UserPermission)
-    if (membership.role === 'MANAGER') return true
-    
-    if (membership.role === 'ACCOUNTANT' || membership.role === 'FINANCE_OFFICER') {
+    if (role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER') {
       return module === 'finance' || module === 'sales' || module === 'customers'
     }
     
-    if (membership.role === 'CASHIER') {
+    if (role === 'CASHIER') {
       return module === 'finance' || module === 'sales'
     }
     
-    // 4. WORKER: apply granular UserPermission overrides if they exist
-    if (membership.role === 'WORKER') {
-      if (perm) {
-        if (module === 'finance')    return action === 'view' ? perm.canViewFinance    : perm.canEditFinance
-        if (module === 'inventory')  return action === 'view' ? perm.canViewInventory  : perm.canEditInventory
-        if (module === 'batches')    return action === 'view' ? perm.canViewBatches    : perm.canEditBatches
-        if (module === 'sales')      return action === 'view' ? perm.canViewSales      : perm.canEditSales
-        if (module === 'eggs')       return action === 'view' ? perm.canViewEggs       : perm.canEditEggs
-        if (module === 'feeding')    return action === 'view' ? perm.canViewFeeding    : perm.canEditFeeding
-        if (module === 'houses')     return action === 'view' ? perm.canViewHouses     : perm.canEditHouses
-        if (module === 'mortality')  return action === 'view' ? perm.canViewMortality  : perm.canEditMortality
-        if (module === 'customers')  return action === 'view' ? perm.canViewCustomers  : perm.canEditCustomers
-        if (module === 'team')       return action === 'view' ? perm.canViewTeam       : perm.canEditTeam
+    // WORKER: apply granular UserPermission overrides if they exist
+    if (role === 'WORKER') {
+      if (permissions) {
+        if (module === 'finance')    return action === 'view' ? permissions.canViewFinance    : permissions.canEditFinance
+        if (module === 'inventory')  return action === 'view' ? permissions.canViewInventory  : permissions.canEditInventory
+        if (module === 'batches')    return action === 'view' ? permissions.canViewBatches    : permissions.canEditBatches
+        if (module === 'sales')      return action === 'view' ? permissions.canViewSales      : permissions.canEditSales
+        if (module === 'eggs')       return action === 'view' ? permissions.canViewEggs       : permissions.canEditEggs
+        if (module === 'feeding')    return action === 'view' ? permissions.canViewFeeding    : permissions.canEditFeeding
+        if (module === 'houses')     return action === 'view' ? permissions.canViewHouses     : permissions.canEditHouses
+        if (module === 'mortality')  return action === 'view' ? permissions.canViewMortality  : permissions.canEditMortality
+        if (module === 'customers')  return action === 'view' ? permissions.canViewCustomers  : permissions.canEditCustomers
+        if (module === 'team')       return action === 'view' ? permissions.canViewTeam       : permissions.canEditTeam
       }
       // Worker with no explicit permissions: view-only by default
       return action === 'view'
