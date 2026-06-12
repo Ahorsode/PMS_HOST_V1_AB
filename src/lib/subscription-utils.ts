@@ -7,18 +7,26 @@ export type Feature =
   | 'ADVANCED_ACCOUNTING'
   | 'ANALYTICS_BENCHMARKING'
   | 'MULTI_CURRENCY'
-  | 'WORKER_LIMIT';
+  | 'WORKER_LIMIT'
+  | 'multi-livestock'
+  | 'marketing'
+  | 'feed-formulation'
+  | 'advanced-finance';
 
 const TIER_MAPPING: Record<SubscriptionTier, Feature[]> = {
   BASIC: ['PDF_INVOICES'],
-  STANDARD: ['PDF_INVOICES', 'CRM', 'WORKER_LIMIT'],
+  STANDARD: ['PDF_INVOICES', 'CRM', 'WORKER_LIMIT', 'multi-livestock', 'advanced-finance'],
   PREMIUM: [
     'PDF_INVOICES', 
     'CRM', 
     'ADVANCED_ACCOUNTING', 
     'ANALYTICS_BENCHMARKING', 
     'MULTI_CURRENCY', 
-    'WORKER_LIMIT'
+    'WORKER_LIMIT',
+    'multi-livestock',
+    'advanced-finance',
+    'marketing',
+    'feed-formulation'
   ],
 };
 
@@ -29,6 +37,17 @@ const WORKER_LIMITS: Record<SubscriptionTier, number> = {
 };
 
 export async function getFarmTier(farmId: string): Promise<SubscriptionTier> {
+  const subscription = await prisma.subscription.findUnique({
+    where: { farmId },
+    include: { plan: true }
+  });
+
+  if (subscription) {
+    const now = new Date();
+    const isActive = subscription.status === 'ACTIVE' && (!subscription.endDate || subscription.endDate > now);
+    return isActive ? subscription.plan.tier : SubscriptionTier.BASIC;
+  }
+
   const farm = await prisma.farm.findUnique({
     where: { id: farmId },
     select: { subscriptionTier: true }
