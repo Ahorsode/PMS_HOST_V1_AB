@@ -5,6 +5,8 @@ import { revalidatePath } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 import { parseFinancialLogDate } from '@/lib/financial-dates'
 
+const MONEY_EPSILON = 0.01
+
 export async function recordPayment(data: {
   customerId: string
   amount: number
@@ -28,6 +30,20 @@ export async function recordPayment(data: {
   try {
     await prisma.$transaction(async (tx) => {
       // 1. Reduce Customer Balance
+      const customer = await tx.customer.findFirst({
+        where: { id: data.customerId, farmId: activeFarmId },
+        select: { balanceOwed: true }
+      })
+
+      if (!customer) {
+        throw new Error('Customer not found')
+      }
+
+      const currentBalance = Number(customer.balanceOwed)
+      if (amount - currentBalance > MONEY_EPSILON) {
+        throw new Error('Payment amount exceeds customer balance')
+      }
+
       await tx.customer.update({
         where: { id: data.customerId, farmId: activeFarmId },
         data: {
@@ -54,6 +70,9 @@ export async function recordPayment(data: {
     return { success: true, message: 'Payment recorded successfully' }
   } catch (error) {
     console.error('Error recording payment:', error)
+    if (error instanceof Error && ['Customer not found', 'Payment amount exceeds customer balance'].includes(error.message)) {
+      return { success: false, error: error.message }
+    }
     return { success: false, error: 'Failed to record payment' }
   }
 }
