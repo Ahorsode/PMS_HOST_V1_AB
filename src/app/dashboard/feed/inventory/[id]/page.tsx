@@ -4,8 +4,9 @@ import { notFound } from 'next/navigation';
 import { InventoryDetailClient } from './InventoryDetailClient';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 
-export default async function InventoryDetailPage({ params }: { params: { id: string } }) {
-  const item = await getInventoryDetails(params.id);
+export default async function InventoryDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const item = await getInventoryDetails(id);
 
   if (!item) {
     notFound();

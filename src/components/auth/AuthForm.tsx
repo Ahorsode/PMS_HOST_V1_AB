@@ -36,9 +36,9 @@ export default function AuthForm({ mode }: AuthFormProps) {
       // Mock delay
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      if (password.length < 6) {
+      if (password.length < 8) {
         setShake(true);
-        setError("Password must be at least 6 characters");
+        setError("Password must be at least 8 characters");
         setTimeout(() => setShake(false), 500);
         return;
       }

@@ -6,6 +6,7 @@ import { getAuthContext, normalizePhoneNumber, SECURITY_PERMISSION_UPDATE_MESSAG
 import { canAddWorker } from '@/lib/subscription-utils'
 import { Role } from '@prisma/client'
 import bcrypt from 'bcryptjs'
+import { randomBytes } from 'crypto'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 
 /**
@@ -20,9 +21,8 @@ export async function inviteWorker(data: {
     const { userId, activeFarmId } = await getAuthContext()
     if (!activeFarmId) throw new Error('No active farm selected')
 
-    // Rate limit disabled for demo — re-enable before production hardening:
-    // const rateLimit = await checkRateLimit({ policy: 'team.invite', scope: 'inviteWorker', farmId: activeFarmId, userId })
-    // if (!rateLimit.ok) return rateLimitActionError(rateLimit)
+    const rateLimit = await checkRateLimit({ policy: 'team.invite', scope: 'inviteWorker', farmId: activeFarmId, userId })
+    if (!rateLimit.ok) return rateLimitActionError(rateLimit)
 
     const limitCheck = await canAddWorker(activeFarmId)
     if (!limitCheck.canAdd) {
@@ -98,7 +98,8 @@ export async function inviteWorker(data: {
       })
 
       if (!existingUser) {
-        const hashedDefault = await bcrypt.hash('123456', 10)
+        const tempPassword = randomBytes(16).toString('hex') // 32-char random string
+        const hashedDefault = await bcrypt.hash(tempPassword, 10)
         await tx.user.create({
           data: {
             email: email,

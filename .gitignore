@@ -36,3 +36,11 @@ client_secret*.json
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Dev artifacts
+scratch.ts
+scratch/
+skills-lock.json
+task.md
+walkthrough.md
+build_log.txt

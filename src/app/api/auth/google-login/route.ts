@@ -52,6 +52,17 @@ export async function POST(req: Request) {
       },
     });
 
+    // After user upsert:
+    const membership = await prisma.farmMember.findFirst({
+      where: { userId: user.id },
+      select: { farmId: true, role: true }
+    });
+
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { role: true, mustChangePassword: true, sessionVersion: true }
+    });
+
     // Create a NextAuth session JWT
     const token = await encode({
       token: {
@@ -59,6 +70,12 @@ export async function POST(req: Request) {
         email: user.email,
         name: user.name,
         picture: user.image,
+        role: dbUser?.role ?? 'OWNER',
+        activeFarmId: membership?.farmId ?? null,
+        mustChangePassword: dbUser?.mustChangePassword ?? false,
+        sessionVersion: dbUser?.sessionVersion ?? 1,
+        securityInvalidated: false,
+        securityNotice: null,
       },
       secret: authSecret,
       salt: "authjs.session-token",

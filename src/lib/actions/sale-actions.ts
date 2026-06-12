@@ -16,7 +16,7 @@ export async function createSale(data: {
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
   const hasEditAccess = await checkWorkerPermissions('finance', 'edit')
-  if (!hasEditAccess) throw new Error('Unauthorized: Missing Edit Finance Permission')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Finance Permission' }
 
   const limitResult = await checkRateLimit({ policy: 'sales.write', scope: 'createSale', farmId: activeFarmId, userId })
   if (!limitResult.ok) return rateLimitActionError(limitResult)
@@ -65,7 +65,7 @@ export async function deleteSale(id: string, reason: string) {
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
   const hasEditAccess = await checkWorkerPermissions('finance', 'edit')
-  if (!hasEditAccess) throw new Error('Unauthorized: Missing Edit Finance Permission')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Finance Permission' }
 
   if (!reason || reason.trim().length < 5) return { success: false, error: 'A valid reason is required for deletion' }
 
@@ -104,7 +104,7 @@ export async function restoreSale(id: string) {
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
   const hasEditAccess = await checkWorkerPermissions('finance', 'edit')
-  if (!hasEditAccess) throw new Error('Unauthorized: Missing Edit Finance Permission')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Finance Permission' }
 
   const limitResult = await checkRateLimit({ policy: 'sales.write', scope: 'restoreSale', farmId: activeFarmId, userId })
   if (!limitResult.ok) return rateLimitActionError(limitResult)

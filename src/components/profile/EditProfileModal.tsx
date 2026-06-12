@@ -17,7 +17,7 @@ const profileSchema = z.object({
   surname: z.string().min(2, "Surname is required"),
   changePassword: z.boolean(),
   currentPassword: z.string().optional(),
-  newPassword: z.string().min(6, "Password must be at least 6 characters").optional().or(z.literal('')),
+  newPassword: z.string().min(8, "Password must be at least 8 characters").optional().or(z.literal('')),
   confirmPassword: z.string().optional().or(z.literal('')),
 }).refine((data) => {
   if (data.changePassword) {

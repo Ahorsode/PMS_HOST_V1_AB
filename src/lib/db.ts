@@ -34,10 +34,10 @@ const prismaClientSingleton = () => {
       },
     },
     client: {
-      async $withFarmContext(userId: string, farmId: number, callback: (tx: any) => Promise<any>) {
+      async $withFarmContext(userId: string, farmId: string, callback: (tx: any) => Promise<any>) {
         return await (this as any).$transaction(async (tx: any) => {
-          await tx.$executeRawUnsafe(`SET app.current_user_id = '${userId}';`);
-          await tx.$executeRawUnsafe(`SET app.current_farm_id = '${farmId}';`);
+          await tx.$executeRaw`SELECT set_config('app.current_user_id', ${userId}, true)`;
+          await tx.$executeRaw`SELECT set_config('app.current_farm_id', ${String(farmId)}, true)`;
           return await callback(tx);
         }, {
           timeout: 15000
@@ -46,8 +46,8 @@ const prismaClientSingleton = () => {
       // Keep $withUser for backward compatibility but update it to set farm_id to null or default
       async $withUser(userId: string, callback: (tx: any) => Promise<any>) {
         return await (this as any).$transaction(async (tx: any) => {
-          await tx.$executeRawUnsafe(`SET app.current_user_id = '${userId}';`);
-          await tx.$executeRawUnsafe(`SET app.current_farm_id = '';`); // Clear farm context
+          await tx.$executeRaw`SELECT set_config('app.current_user_id', ${userId}, true)`;
+          await tx.$executeRaw`SELECT set_config('app.current_farm_id', ${''}, true)`;
           return await callback(tx);
         }, {
           timeout: 15000
@@ -66,4 +66,3 @@ const prisma = globalThis.prisma ?? prismaClientSingleton()
 export default prisma
 
 if (process.env.NODE_ENV !== 'production') globalThis.prisma = prisma
-

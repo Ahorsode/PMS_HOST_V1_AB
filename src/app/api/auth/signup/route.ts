@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import bcrypt from 'bcryptjs';
+import { randomBytes } from 'crypto';
 import { normalizePhoneNumber } from '@/lib/auth-utils';
 import { checkRateLimit, rateLimitHeaders } from '@/lib/performance/rate-limit';
 
@@ -64,8 +65,8 @@ export async function POST(req: Request) {
     });
 
     // Handle password
-    // If invited, we use '123456' as default if no password provided
-    const rawPassword = password || (invitation ? '123456' : null);
+    // If invited, we use a secure random token as default if no password provided
+    const rawPassword = password || (invitation ? randomBytes(16).toString('hex') : null);
     
     if (!rawPassword) {
       return NextResponse.json({ message: 'Password is required' }, { status: 400 });

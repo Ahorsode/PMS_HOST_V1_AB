@@ -43,8 +43,7 @@ const RATE_LIMIT_POLICIES: Record<RateLimitPolicyName, RateLimitPolicy> = {
   "auth.signup": { limit: 8, window: "1 m", sensitivity: "public" },
   "farm.onboarding": { limit: 6, window: "1 m", sensitivity: "authenticated" },
   "farm.profile": { limit: 10, window: "1 m", sensitivity: "authenticated" },
-  // Raised for demo/testing — restore to 10 for production hardening
-  "team.invite": { limit: 500, window: "1 m", sensitivity: "authenticated" },
+  "team.invite": { limit: 10, window: "1 m", sensitivity: "authenticated" },
   "team.permissions": { limit: 20, window: "1 m", sensitivity: "admin" },
   "finance.write": { limit: 12, window: "1 m", sensitivity: "financial" },
   "inventory.write": { limit: 20, window: "1 m", sensitivity: "authenticated" },
