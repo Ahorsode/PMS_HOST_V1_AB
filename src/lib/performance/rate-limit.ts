@@ -19,6 +19,7 @@ export type RateLimitPolicyName =
   | "feed.write"
   | "sales.write"
   | "orders.write"
+  | "license.activate"
   | "audit.restore";
 
 type RateLimitInput = {
@@ -51,6 +52,7 @@ const RATE_LIMIT_POLICIES: Record<RateLimitPolicyName, RateLimitPolicy> = {
   "feed.write": { limit: 20, window: "1 m", sensitivity: "authenticated" },
   "sales.write": { limit: 18, window: "1 m", sensitivity: "financial" },
   "orders.write": { limit: 18, window: "1 m", sensitivity: "financial" },
+  "license.activate": { limit: 10, window: "1 m", sensitivity: "public" },
   "audit.restore": { limit: 8, window: "1 m", sensitivity: "admin" },
 };
 
@@ -210,4 +212,3 @@ export function rateLimitActionError(result: RateLimitResult) {
     retryAfterSec: result.retryAfterSec,
   };
 }
-

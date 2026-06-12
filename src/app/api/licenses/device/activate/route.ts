@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import prisma from '@/lib/db'
 import { normalizeHardwareFingerprint } from '@/lib/license-token'
+import { checkRateLimit, rateLimitHeaders } from '@/lib/performance/rate-limit'
 
 const requestSchema = z
   .object({
@@ -89,6 +90,26 @@ function statusForErrorCode(errorCode: string | null) {
 
 export async function POST(request: Request) {
   try {
+    const forwarded = request.headers.get('x-forwarded-for')
+    const ip = forwarded?.split(',')[0]?.trim() || 'unknown'
+    const limit = await checkRateLimit({
+      policy: 'license.activate',
+      scope: 'device-activate',
+      ip,
+    })
+
+    if (!limit.ok) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Too many activation attempts. Please wait and try again.',
+          code: 429,
+          retryAfterSec: limit.retryAfterSec,
+        },
+        { status: 429, headers: rateLimitHeaders(limit) },
+      )
+    }
+
     const payload = await request.json()
     const parsed = requestSchema.safeParse(payload)
     if (!parsed.success) {
