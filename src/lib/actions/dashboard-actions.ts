@@ -6,7 +6,6 @@ import { getAuthContext } from '@/lib/auth-utils'
 import bcrypt from 'bcryptjs'
 import { redirect } from 'next/navigation'
 import { checkWorkerPermissions } from './staff-actions'
-import { LivestockType } from '@prisma/client'
 import { signOut } from '@/auth'
 import { farmCacheTags, revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
@@ -302,55 +301,6 @@ export async function getDashboardStats() {
   })
 }
 
-
-export async function createBatch(data: {
-  houseId: string
-  breedType: string
-  initialCount: number
-  arrivalDate: string
-  batchName?: string
-  type?: LivestockType
-}) {
-  const { userId, activeFarmId } = await getAuthContext()
-  if (!activeFarmId) throw new Error('No active farm selected')
-
-  const hasAccess = await checkWorkerPermissions('batches', 'edit')
-  if (!hasAccess) throw new Error('Unauthorized')
-
-  const limitResult = await checkRateLimit({
-    policy: 'production.write',
-    scope: 'createBatch',
-    farmId: activeFarmId,
-    userId,
-  })
-  if (!limitResult.ok) {
-    return rateLimitActionError(limitResult)
-  }
-
-  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    const batch = await tx.livestock.create({
-      data: {
-        houseId: data.houseId,
-        farmId: activeFarmId,
-        batchName: data.batchName || 'New Batch',
-        type: data.type || LivestockType.POULTRY_BROILER,
-        breedType: data.breedType,
-        initialCount: data.initialCount,
-        currentCount: data.initialCount,
-        arrivalDate: new Date(data.arrivalDate),
-        status: 'active',
-        userId: userId
-      }
-    })
-    revalidatePath('/dashboard')
-    revalidatePath('/dashboard/flocks')
-    revalidateFarmPerformanceCaches(activeFarmId)
-    return { success: true, id: batch.id }
-  }).catch((error: any) => {
-    console.error('Error creating livestock:', error)
-    return { success: false, error: 'Failed to create livestock' }
-  })
-}
 
 /**
  * Updates the initial investment financials for a livestock unit.
@@ -1099,29 +1049,6 @@ export async function getAllFeedingLogs() {
     }))
   }).catch((error: any) => {
     console.error('Error fetching feeding logs:', error)
-    return []
-  })
-}
-
-export async function getAllInventory() {
-  const { userId, activeFarmId } = await getAuthContext()
-  if (!activeFarmId) return []
-
-  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    const items = await tx.inventory.findMany({
-      where: { farmId: activeFarmId },
-      orderBy: {
-        itemName: 'asc',
-      },
-    })
-    return items.map((item: any) => ({
-      ...item,
-      stockLevel: Number(item.stockLevel),
-      reorderLevel: item.reorderLevel ? Number(item.reorderLevel) : null,
-      costPerUnit: item.costPerUnit ? Number(item.costPerUnit) : null
-    }))
-  }).catch((error: any) => {
-    console.error('Error fetching inventory:', error)
     return []
   })
 }

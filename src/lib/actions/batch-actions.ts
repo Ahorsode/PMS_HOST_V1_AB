@@ -42,7 +42,7 @@ export async function createBatch(data: {
     })
     revalidatePath('/dashboard/flocks')
     revalidateFarmPerformanceCaches(activeFarmId)
-    return { success: true, batch }
+    return { success: true, id: batch.id, batch }
   }).catch((error: any) => {
     console.error('Error creating batch:', error)
     return { success: false, error: 'Failed to create batch' }
