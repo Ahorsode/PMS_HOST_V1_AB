@@ -74,7 +74,7 @@ export async function POST(req: Request) {
 
     const hashedPassword = await bcrypt.hash(rawPassword, 10);
     
-    // Set mustChangePassword if it's an invitation or if the password is the default '123456'
+    // Invited users must set a password they know after the random temporary credential.
     const mustChangePassword = !!invitation || rawPassword === '123456';
 
     // Create or Update the user and associated resources in a transaction
@@ -156,6 +156,6 @@ export async function POST(req: Request) {
     }, { status: 201 });
   } catch (error: any) {
     console.error('Error during signup:', error);
-    return NextResponse.json({ message: 'Internal server error', error: error.message }, { status: 500 });
+    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
   }
 }

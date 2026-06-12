@@ -87,7 +87,7 @@ export async function inviteWorker(data: {
         }
       })
 
-      // NEW: Auto-create User record so they can login directly with 123456
+      // Auto-create User record with an unknowable temporary password.
       const existingUser = await tx.user.findFirst({
         where: {
           OR: [
