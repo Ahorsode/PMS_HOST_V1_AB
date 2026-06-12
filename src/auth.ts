@@ -23,6 +23,8 @@ function splitName(name: string | null | undefined) {
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
+  trustHost: true,
   adapter: PrismaAdapter(prisma) as any,
   session: { strategy: "jwt" },
   events: {
@@ -115,11 +117,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
   providers: [
-    Google({
-      clientId: process.env.AUTH_GOOGLE_ID,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET,
-      allowDangerousEmailAccountLinking: true
-    }),
+    ...(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET ? [
+      Google({
+        clientId: process.env.AUTH_GOOGLE_ID,
+        clientSecret: process.env.AUTH_GOOGLE_SECRET,
+        allowDangerousEmailAccountLinking: true
+      })
+    ] : []),
     Credentials({
       name: 'Credentials',
       credentials: {
@@ -172,4 +176,3 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
 });
-
