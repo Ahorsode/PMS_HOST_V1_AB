@@ -381,6 +381,15 @@ export async function updateOrderStatus(id: string, status: string) {
       if (status === 'COMPLETED' && order.status !== 'COMPLETED') {
         for (const item of order.items) {
           if (item.inventoryId) {
+            const current = await tx.inventory.findFirst({
+              where: { id: item.inventoryId, farmId: activeFarmId },
+              select: { stockLevel: true, itemName: true }
+            })
+
+            if (Number(current?.stockLevel ?? 0) < item.quantity) {
+              throw new Error(`Insufficient stock for ${current?.itemName || item.description}`)
+            }
+
             await tx.inventory.update({
               where: { id: item.inventoryId },
               data: { stockLevel: { decrement: item.quantity } }
