@@ -259,6 +259,7 @@ model InsertLog {
   insertedAt  DateTime @default(now()) @map("inserted_at")
   user        User     @relation(fields: [userId], references: [id])
 
+  @@index([farmId])
   @@map("insert_logs")
 }
 
@@ -272,6 +273,7 @@ model DeleteLog {
   reason         String?
   user           User     @relation(fields: [userId], references: [id])
 
+  @@index([farmId])
   @@map("delete_logs")
 }
 
@@ -456,6 +458,7 @@ model FarmMember {
   user      User     @relation(fields: [userId], references: [id])
 
   @@unique([farmId, userId])
+  @@index([farmId])
   @@map("farm_members")
 }
 
@@ -519,6 +522,7 @@ model FarmSettings {
   eggsPerCrate           Int      @default(30)
   farm                   Farm     @relation(fields: [farmId], references: [id], onDelete: Cascade)
 
+  @@index([farmId])
   @@map("farm_settings")
 }
 
@@ -662,6 +666,7 @@ model Subscription {
   farm      Farm             @relation(fields: [farmId], references: [id])
   plan      SubscriptionPlan @relation(fields: [planId], references: [id])
 
+  @@index([farmId])
   @@map("subscriptions")
 }
 
@@ -678,6 +683,7 @@ model Customer {
   farm        Farm     @relation(fields: [farmId], references: [id])
   orders      Order[]
 
+  @@index([farmId])
   @@map("customers")
 }
 
@@ -740,6 +746,7 @@ model FeedFormulation {
   ingredients     FeedFormulationIngredient[]
   farm            Farm                        @relation(fields: [farmId], references: [id])
 
+  @@index([farmId])
   @@map("feed_formulations")
 }
 
@@ -769,6 +776,7 @@ model Supplier {
   inventory   Inventory[]
   farm        Farm        @relation(fields: [farmId], references: [id])
 
+  @@index([farmId])
   @@map("suppliers")
 }
 
@@ -786,6 +794,7 @@ model EggCategory {
   eggProductions  EggProduction[]
   inventoryItems  Inventory[]
 
+  @@index([farmId])
   @@map("egg_categories")
 }
 
@@ -814,6 +823,7 @@ model DeviceRegistration {
   manualLicensePayments ManualLicensePayment[]
 
   @@unique([farmId, deviceId])
+  @@index([farmId])
   @@index([status])
   @@index([licenseExpiresAt])
   @@map("device_registrations")
