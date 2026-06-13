@@ -140,7 +140,8 @@ async function consumeMemoryLimit(input: RateLimitInput, key: string, policy: Ra
 }
 
 function isRateLimitDisabled() {
-  return process.env.RATE_LIMIT_DISABLED === "true" || process.env.NODE_ENV === "development";
+  // Only local development may bypass limits; production cannot be disabled by env toggle.
+  return process.env.NODE_ENV === "development";
 }
 
 function allowResult(input: RateLimitInput, policy: RateLimitPolicy, key: string): RateLimitResult {

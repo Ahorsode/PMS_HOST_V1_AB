@@ -1,4 +1,5 @@
 import NextAuth from 'next-auth';
+import type { Adapter } from 'next-auth/adapters';
 import Credentials from 'next-auth/providers/credentials';
 import Google from 'next-auth/providers/google';
 import { PrismaAdapter } from "@auth/prisma-adapter";
@@ -9,6 +10,11 @@ import { normalizePhoneNumber, recordUserSession } from '@/lib/auth-utils';
 import { getCachedSessionVersion, setCachedSessionVersion } from '@/lib/performance/session-version-cache';
 
 const SECURITY_PERMISSION_UPDATE_MESSAGE = 'Your security permissions have been updated. Please sign in again to activate your new features.';
+
+type SessionUpdatePayload = {
+  mustChangePassword?: boolean;
+  name?: string;
+};
 
 function splitName(name: string | null | undefined) {
   if (!name) return { firstname: '', surname: '', middleName: '' };
@@ -26,15 +32,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   trustHost: true,
-  adapter: PrismaAdapter(prisma) as any,
+  adapter: PrismaAdapter(prisma) as Adapter,
   session: { strategy: "jwt" },
   events: {
     async createUser({ user }) {
       if (user.name) {
         const { firstname, surname, middleName } = splitName(user.name);
-        await (prisma.user as any).update({
+        await prisma.user.update({
           where: { id: user.id },
-          data: { firstname, surname, middleName } as any
+          data: { firstname, surname, middleName }
         });
       }
     },
@@ -51,16 +57,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (user) {
         token.id = user.id;
         token.role = user.role;
-        token.activeFarmId = (user as any).activeFarmId;
-        token.mustChangePassword = (user as any).mustChangePassword;
-        token.sessionVersion = (user as any).sessionVersion ?? 1;
+        token.activeFarmId = user.activeFarmId;
+        token.mustChangePassword = user.mustChangePassword;
+        token.sessionVersion = user.sessionVersion ?? 1;
         token.securityInvalidated = false;
         token.securityNotice = null;
       }
 
       if (trigger === "update" && session) {
-        token.mustChangePassword = (session as any).mustChangePassword;
-        if ((session as any).name) token.name = (session as any).name;
+        const update = session as SessionUpdatePayload;
+        token.mustChangePassword = update.mustChangePassword;
+        if (update.name) token.name = update.name;
       }
 
       if (token.id) {

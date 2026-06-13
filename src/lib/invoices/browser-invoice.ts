@@ -1,5 +1,3 @@
-import { jsPDF } from 'jspdf';
-
 const configuredTaxRate = Number(process.env.NEXT_PUBLIC_INVOICE_TAX_RATE ?? '0.15');
 const DEFAULT_TAX_RATE = Number.isFinite(configuredTaxRate) && configuredTaxRate >= 0 ? configuredTaxRate : 0.15;
 
@@ -77,6 +75,8 @@ async function loadLogoDataUrl() {
 }
 
 export async function downloadSalesInvoicePdf(order: BrowserInvoiceOrder) {
+  // Load jsPDF only when the user requests a browser-side invoice download.
+  const { jsPDF } = await import('jspdf');
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
   const pageWidth = doc.internal.pageSize.getWidth();
   const invoiceNumber = formatInvoiceNumber(order);

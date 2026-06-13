@@ -44,6 +44,7 @@ model User {
   sales                 Sale[]
   sessions              Session[]
   deviceRegistrations   DeviceRegistration[]
+  subscriptionEvents     SubscriptionEvent[]
   userPermissions       UserPermission[]
   weightRecords         WeightRecord[]
 
@@ -66,6 +67,8 @@ model Account {
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  // Index relation columns so auth account lookups avoid table scans at scale.
+  @@index([userId])
   @@map("accounts")
 }
 
@@ -79,6 +82,7 @@ model Session {
   loginTime    DateTime @default(now()) @map("login_time")
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
   @@map("sessions")
 }
 
@@ -92,13 +96,13 @@ model VerificationToken {
 }
 
 model AdminUser {
-  id                    String                 @id @default(cuid())
-  username              String                 @unique
-  passwordHash          String                 @map("password_hash")
-  isActive              Boolean                @default(true) @map("is_active")
-  createdAt             DateTime               @default(now()) @map("created_at")
-  updatedAt             DateTime               @updatedAt @map("updated_at")
-  lastLoginAt           DateTime?              @map("last_login_at")
+  id                    String                   @id @default(cuid())
+  username              String                   @unique
+  passwordHash          String                   @map("password_hash")
+  isActive              Boolean                  @default(true) @map("is_active")
+  createdAt             DateTime                 @default(now()) @map("created_at")
+  updatedAt             DateTime                 @updatedAt @map("updated_at")
+  lastLoginAt           DateTime?                @map("last_login_at")
   licenseRenewalHistory AdminLicenseRenewalLog[]
   issuedLicenses        IssuedLicense[]
   manualLicensePayments ManualLicensePayment[]
@@ -120,6 +124,7 @@ model Farm {
   customers             Customer[]
   feedingLogs           FeedingLog[]
   deviceRegistrations   DeviceRegistration[]
+  subscriptionEvents     SubscriptionEvent[]
   issuedLicenses        IssuedLicense[]
   manualLicensePayments ManualLicensePayment[]
   eggCategories         EggCategory[]
@@ -214,6 +219,7 @@ model Livestock {
   @@index([type])
   @@index([userId])
   @@index([farmId])
+  @@index([houseId])
   @@index([farmId, isDeleted])
   @@index([farmId, deletedAt])
   @@map("batches")
@@ -245,6 +251,8 @@ model Inventory {
 
   @@index([userId])
   @@index([farmId])
+  @@index([eggCategoryId])
+  @@index([supplierId])
   @@index([farmId, isDeleted])
   @@index([farmId, deletedAt])
   @@map("inventory")
@@ -260,6 +268,7 @@ model InsertLog {
   user        User     @relation(fields: [userId], references: [id])
 
   @@index([farmId])
+  @@index([userId])
   @@map("insert_logs")
 }
 
@@ -274,6 +283,7 @@ model DeleteLog {
   user           User     @relation(fields: [userId], references: [id])
 
   @@index([farmId])
+  @@index([userId])
   @@map("delete_logs")
 }
 
@@ -297,6 +307,8 @@ model FeedingLog {
   @@index([batchId, logDate])
   @@index([userId])
   @@index([farmId])
+  @@index([feedTypeId])
+  @@index([formulationId])
   @@index([farmId, isDeleted])
   @@index([farmId, deletedAt])
   @@map("daily_feeding_logs")
@@ -313,6 +325,7 @@ model HealthRecord {
   farm        Farm       @relation(fields: [farmId], references: [id])
 
   @@index([farmId])
+  @@index([batchId])
   @@map("health_records")
 }
 
@@ -343,6 +356,7 @@ model EggProduction {
   @@index([batchId, logDate])
   @@index([userId])
   @@index([farmId])
+  @@index([categoryId])
   @@index([farmId, isDeleted])
   @@index([farmId, deletedAt])
   @@map("egg_production")
@@ -387,6 +401,7 @@ model HealthMortality {
   @@index([batchId, logDate])
   @@index([userId])
   @@index([farmId])
+  @@index([isolationRoomId])
   @@index([farmId, isDeleted])
   @@index([farmId, deletedAt])
   @@map("mortality")
@@ -406,6 +421,7 @@ model WeightRecord {
 
   @@index([userId])
   @@index([farmId])
+  @@index([batchId])
   @@map("weight_records")
 }
 
@@ -444,6 +460,7 @@ model SaleItem {
   sale        Sale    @relation(fields: [saleId], references: [id])
 
   @@index([farmId])
+  @@index([saleId])
   @@map("sale_items")
 }
 
@@ -459,6 +476,7 @@ model FarmMember {
 
   @@unique([farmId, userId])
   @@index([farmId])
+  @@index([userId])
   @@map("farm_members")
 }
 
@@ -549,29 +567,30 @@ model AuditLog {
 }
 
 model Expense {
-  id          String          @id @default(cuid())
+  id          String              @id @default(cuid())
   farmId      String
-  userId      String          @map("user_id")
-  amount      Decimal         @db.Decimal(15, 2)
+  userId      String              @map("user_id")
+  amount      Decimal             @db.Decimal(15, 2)
   category    ExpenseCategory
   description String?
-  expenseDate DateTime        @default(now()) @map("expense_date")
-  createdAt   DateTime        @default(now()) @map("created_at")
-  updatedAt   DateTime        @updatedAt @map("updated_at")
+  expenseDate DateTime            @default(now()) @map("expense_date")
+  createdAt   DateTime            @default(now()) @map("created_at")
+  updatedAt   DateTime            @updatedAt @map("updated_at")
   batch_id    String?
   supplierId  String?
-  isDeleted   Boolean         @default(false) @map("is_deleted")
-  deletedAt   DateTime?       @map("deleted_at")
+  isDeleted   Boolean             @default(false) @map("is_deleted")
+  deletedAt   DateTime?           @map("deleted_at")
   allocations ExpenseAllocation[]
-  batches     Livestock?      @relation(fields: [batch_id], references: [id])
-  farm        Farm            @relation(fields: [farmId], references: [id], onDelete: Cascade)
-  supplier    Supplier?       @relation(fields: [supplierId], references: [id])
-  user        User            @relation(fields: [userId], references: [id])
+  batches     Livestock?          @relation(fields: [batch_id], references: [id])
+  farm        Farm                @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  supplier    Supplier?           @relation(fields: [supplierId], references: [id])
+  user        User                @relation(fields: [userId], references: [id])
 
   @@index([expenseDate, category])
   @@index([farmId])
   @@index([userId])
   @@index([batch_id])
+  @@index([supplierId])
   @@index([farmId, isDeleted])
   @@index([farmId, deletedAt])
   @@map("expenses")
@@ -667,6 +686,7 @@ model Subscription {
   plan      SubscriptionPlan @relation(fields: [planId], references: [id])
 
   @@index([farmId])
+  @@index([planId])
   @@map("subscriptions")
 }
 
@@ -711,6 +731,8 @@ model Order {
   user           User        @relation(fields: [userId], references: [id])
 
   @@index([orderDate, status])
+  @@index([customerId])
+  @@index([userId])
   @@index([farmId, isDeleted])
   @@index([farmId, deletedAt])
   @@map("orders")
@@ -729,6 +751,9 @@ model OrderItem {
   batch       Livestock? @relation(fields: [livestockId], references: [id])
   order       Order      @relation(fields: [orderId], references: [id])
 
+  @@index([orderId])
+  @@index([inventoryId])
+  @@index([livestockId])
   @@map("order_items")
 }
 
@@ -759,6 +784,8 @@ model FeedFormulationIngredient {
   formulation   FeedFormulation @relation(fields: [formulationId], references: [id])
   inventory     Inventory       @relation(fields: [inventoryId], references: [id])
 
+  @@index([formulationId])
+  @@index([inventoryId])
   @@map("feed_formulation_ingredients")
 }
 
@@ -799,31 +826,32 @@ model EggCategory {
 }
 
 model DeviceRegistration {
-  id                    String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  farmId                String                 @map("farm_id")
-  userId                String?                @map("user_id")
-  deviceId              String?                @map("deviceId")
-  deviceName            String?                @map("deviceName")
-  deviceType            String?                @map("deviceType")
-  lastSync              DateTime               @default(now()) @map("lastSync")
-  isActive              Boolean                @default(true) @map("isActive")
-  registeredAt          DateTime               @default(now()) @map("created_at")
-  licenseKey            String?                @unique @map("licenseKey")
-  activationKeyStatus   String                 @default("UNUSED") @map("activation_key_status")
-  status                String                 @default("CLOUD_TRIAL") @map("license_status")
-  hardwareId            String?                @unique(map: "device_registrations_hardware_id_key") @map("hardware_id")
-  licenseExpiresAt      DateTime?              @map("license_expires_at")
-  graceRescueUsedAt     DateTime?              @map("grace_rescue_used_at")
-  lastActivationToken   String?                @map("lastActivationToken")
-  lastPaymentAt         DateTime?              @map("lastPaymentAt")
-  activatedByAdminId    String?                @map("activatedByAdminId")
-  farm                  Farm                   @relation(fields: [farmId], references: [id], onDelete: Cascade)
-  user                  User?                  @relation(fields: [userId], references: [id], onDelete: SetNull)
+  id                    String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  farmId                String                   @map("farm_id")
+  userId                String?                  @map("user_id")
+  deviceId              String?                  @map("deviceId")
+  deviceName            String?                  @map("deviceName")
+  deviceType            String?                  @map("deviceType")
+  lastSync              DateTime                 @default(now()) @map("lastSync")
+  isActive              Boolean                  @default(true) @map("isActive")
+  registeredAt          DateTime                 @default(now()) @map("created_at")
+  licenseKey            String?                  @unique @map("licenseKey")
+  activationKeyStatus   String                   @default("UNUSED") @map("activation_key_status")
+  status                String                   @default("CLOUD_TRIAL") @map("license_status")
+  hardwareId            String?                  @unique(map: "device_registrations_hardware_id_key") @map("hardware_id")
+  licenseExpiresAt      DateTime?                @map("license_expires_at")
+  graceRescueUsedAt     DateTime?                @map("grace_rescue_used_at")
+  lastActivationToken   String?                  @map("lastActivationToken")
+  lastPaymentAt         DateTime?                @map("lastPaymentAt")
+  activatedByAdminId    String?                  @map("activatedByAdminId")
+  farm                  Farm                     @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  user                  User?                    @relation(fields: [userId], references: [id], onDelete: SetNull)
   renewalLogs           AdminLicenseRenewalLog[]
   manualLicensePayments ManualLicensePayment[]
 
   @@unique([farmId, deviceId])
   @@index([farmId])
+  @@index([userId])
   @@index([status])
   @@index([licenseExpiresAt])
   @@map("device_registrations")
@@ -872,24 +900,40 @@ model ManualLicensePayment {
   @@map("manual_license_payments")
 }
 
+model SubscriptionEvent {
+  id        String   @id @default(dbgenerated("gen_random_uuid()::text"))
+  farmId    String   @map("farm_id")
+  userId    String   @map("user_id")
+  eventType String   @map("event_type")
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("created_at")
+  farm      Farm     @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([farmId])
+  @@index([farmId, createdAt])
+  @@map("subscription_events")
+}
+
 model IssuedLicense {
-  id                  String    @id @default(cuid())
-  farmId              String    @map("farm_id")
-  adminUserId         String    @map("admin_user_id")
-  accountUserId       String?   @map("account_user_id")
-  hardwareId          String    @map("hardware_id")
-  desktopFarmId       String    @map("desktop_farm_id")
-  durationDays        Int       @map("duration_days")
-  targetExpiryDate    DateTime  @map("target_expiry_date")
-  activationToken     String    @unique @map("activation_token")
-  transactionReference String   @map("transaction_reference") @db.Text
-  issuedAt            DateTime  @default(now()) @map("issued_at")
-  adminUser           AdminUser @relation(fields: [adminUserId], references: [id])
-  farm                Farm      @relation(fields: [farmId], references: [id], onDelete: Cascade)
-  accountUser         User?     @relation(fields: [accountUserId], references: [id], onDelete: SetNull)
+  id                   String    @id @default(cuid())
+  farmId               String    @map("farm_id")
+  adminUserId          String    @map("admin_user_id")
+  accountUserId        String?   @map("account_user_id")
+  hardwareId           String    @map("hardware_id")
+  desktopFarmId        String    @map("desktop_farm_id")
+  durationDays         Int       @map("duration_days")
+  targetExpiryDate     DateTime  @map("target_expiry_date")
+  activationToken      String    @unique @map("activation_token")
+  transactionReference String    @map("transaction_reference") @db.Text
+  issuedAt             DateTime  @default(now()) @map("issued_at")
+  adminUser            AdminUser @relation(fields: [adminUserId], references: [id])
+  farm                 Farm      @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  accountUser          User?     @relation(fields: [accountUserId], references: [id], onDelete: SetNull)
 
   @@index([farmId, issuedAt])
   @@index([adminUserId, issuedAt])
+  @@index([accountUserId])
   @@map("issued_licenses")
 }
 
@@ -914,6 +958,7 @@ model FinancialTransaction {
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([farmId, type, transactionDate])
+  @@index([userId])
   @@index([farmId, deletedAt])
   @@index([farmId, isDeleted])
   @@map("financial_transactions")

@@ -5,10 +5,7 @@ import { Crown, Check, Shield, Zap, Sparkles, Building2, LayoutDashboard, Finger
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { upgradeFarmSubscription } from '@/lib/actions/subscription-actions';
-import { purchaseDesktopLicenseBundle } from '@/lib/actions/licenses';
 import { useRouter } from 'next/navigation';
-
-const SHOW_USER_DESKTOP_LICENSES = process.env.NEXT_PUBLIC_SHOW_USER_DESKTOP_LICENSES === 'true';
 
 const tiers = [
   {
@@ -68,29 +65,18 @@ const tiers = [
 export default function LicenseUpgradePage() {
   const [isUpgrading, setIsUpgrading] = React.useState<string | null>(null);
   const router = useRouter();
-  const visibleTiers = tiers.filter((tier) => SHOW_USER_DESKTOP_LICENSES || tier.tier !== 'DESKTOP');
+  const visibleTiers = tiers.filter((tier) => tier.tier !== 'DESKTOP');
 
   const handleUpgrade = async (tier: any) => {
     setIsUpgrading(tier);
     try {
-      if (tier === 'DESKTOP') {
-        const result = await purchaseDesktopLicenseBundle(3);
-        if (result.success) {
-          alert('Successfully purchased Desktop Node License!');
-          router.push('/dashboard/settings?tab=desktop-licenses');
-          router.refresh();
-        } else {
-          alert("Error: " + result.error);
-        }
+      const result = await upgradeFarmSubscription(tier);
+      if (result.success) {
+        alert(`Successfully upgraded to ${tier} Tier! (Dev Mode Bypass Active)`);
+        router.push('/dashboard/profile');
+        router.refresh();
       } else {
-        const result = await upgradeFarmSubscription(tier);
-        if (result.success) {
-          alert(`Successfully upgraded to ${tier} Tier! (Dev Mode Bypass Active)`);
-          router.push('/dashboard/profile');
-          router.refresh();
-        } else {
-          alert("Error: " + result.error);
-        }
+        alert("Error: " + result.error);
       }
     } catch (error) {
       alert("An unexpected error occurred.");

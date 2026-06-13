@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { LivestockType } from '@prisma/client';
 
 export function useLivestockStats() {

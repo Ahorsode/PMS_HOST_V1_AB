@@ -1,0 +1,11 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    ignore:
+      # Keep Auth.js beta upgrades under manual review while production is pinned.
+      - dependency-name: next-auth
+        versions: ["5.x"]

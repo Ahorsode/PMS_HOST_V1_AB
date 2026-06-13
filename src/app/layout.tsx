@@ -1,7 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Toaster } from "sonner";
+import { validateEnv } from "@/lib/env-check";
 import "./globals.css";
+
+// Fail fast on missing runtime config unless CI explicitly skips validation.
+validateEnv();
 
 export const metadata: Metadata = {
   title: "Agri-ERP | Enterprise Farm Management System",
