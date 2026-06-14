@@ -44,3 +44,6 @@ skills-lock.json
 task.md
 walkthrough.md
 build_log.txt
+
+# Sentry Config File
+.env.sentry-build-plugin
