@@ -18,29 +18,44 @@ export default async function DashboardLayout({
     redirect('/login');
   }
 
-  const dbUser = await prisma.user.findUnique({
-    where: { id: session.user.id }
-  });
+  let dbUser: Awaited<ReturnType<typeof prisma.user.findUnique>>;
+  let farm: Awaited<ReturnType<typeof prisma.farm.findFirst>>;
+
+  try {
+    [dbUser, farm] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: session.user.id }
+      }),
+      prisma.farm.findFirst({
+        where: {
+          OR: [
+            { userId: session.user.id },
+            { members: { some: { userId: session.user.id } } }
+          ]
+        }
+      }),
+    ]);
+  } catch (error) {
+    console.error('[DashboardLayout] Database error:', error);
+    redirect('/login?error=db');
+  }
 
   if (!dbUser) {
     redirect('/login');
   }
-
-  const farm = await prisma.farm.findFirst({
-    where: { 
-      OR: [
-        { userId: session.user.id },
-        { members: { some: { userId: session.user.id } } }
-      ]
-    }
-  });
 
   const isPlaceholder = farm && farm.capacity === 0 && farm.location === '';
 
   if (!farm || isPlaceholder) {
     if (!farm) {
       // Check if they were invited and accept it automatically!
-      const inviteCheck = await acceptInvitation(false);
+      let inviteCheck: { success?: boolean } | null = null;
+      try {
+        inviteCheck = await acceptInvitation(false);
+      } catch (error) {
+        console.error('[DashboardLayout] Invitation check failed:', error);
+      }
+
       if (inviteCheck?.success) {
         // Force a hard redirect to clear caches and allow DB replication to catch up
         redirect('/dashboard');
@@ -84,14 +99,19 @@ export default async function DashboardLayout({
 
   let userPermissions = null;
   if (farm && dbUser?.id) {
-    userPermissions = await (prisma as any).userPermission.findUnique({
-      where: {
-        userId_farmId: {
-          userId: dbUser.id,
-          farmId: farm.id
+    try {
+      userPermissions = await (prisma as any).userPermission.findUnique({
+        where: {
+          userId_farmId: {
+            userId: dbUser.id,
+            farmId: farm.id
+          }
         }
-      }
-    });
+      });
+    } catch (error) {
+      console.error('[DashboardLayout] Permission lookup failed:', error);
+      userPermissions = null;
+    }
   }
 
   return (

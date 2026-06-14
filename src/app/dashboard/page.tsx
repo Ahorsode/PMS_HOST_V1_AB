@@ -5,9 +5,25 @@ import prisma from '@/lib/db';
 import { getAuthContext } from '@/lib/auth-utils';
 import { getMonthlyProductionSummary } from '@/lib/actions/preference-actions';
 import { PullToRefresh } from '@/components/layout/PullToRefresh';
+import { redirect } from 'next/navigation';
 
 export default async function DashboardPage() {
-  const { userId, activeFarmId } = await getAuthContext();
+  let userId: string;
+  let activeFarmId: string | undefined;
+
+  try {
+    const ctx = await getAuthContext();
+    userId = ctx.userId;
+    activeFarmId = ctx.activeFarmId;
+  } catch (err: any) {
+    const message = err?.message ?? '';
+    if (message.startsWith('SESSION_REVOKED:')) {
+      redirect('/login?reason=session_revoked');
+    }
+
+    redirect('/login');
+  }
+
   if (!activeFarmId) {
     return (
       <div className="p-7 text-center bg-yellow-50 rounded-lg border border-yellow-200">
