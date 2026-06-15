@@ -9,6 +9,7 @@ import GoogleButton from "./GoogleButton";
 import LoadingOverlay from "./LoadingOverlay";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { MIN_PASSWORD_LENGTH } from "@/lib/password-policy";
 
 interface AuthFormProps {
   mode: "login" | "signup";
@@ -36,9 +37,9 @@ export default function AuthForm({ mode }: AuthFormProps) {
       // Mock delay
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      if (password.length < 8) {
+      if (password.length < MIN_PASSWORD_LENGTH) {
         setShake(true);
-        setError("Password must be at least 8 characters");
+        setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`);
         setTimeout(() => setShake(false), 500);
         return;
       }

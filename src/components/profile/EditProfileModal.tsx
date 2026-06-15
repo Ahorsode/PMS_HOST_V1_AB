@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { updateProfile } from '@/lib/actions/dashboard-actions';
 import { useRouter } from 'next/navigation';
 import { User, Fingerprint, Shield } from 'lucide-react';
+import { MIN_PASSWORD_LENGTH } from '@/lib/password-policy';
 
 const profileSchema = z.object({
   firstname: z.string().min(2, "First name is required"),
@@ -17,7 +18,7 @@ const profileSchema = z.object({
   surname: z.string().min(2, "Surname is required"),
   changePassword: z.boolean(),
   currentPassword: z.string().optional(),
-  newPassword: z.string().min(8, "Password must be at least 8 characters").optional().or(z.literal('')),
+  newPassword: z.string().min(MIN_PASSWORD_LENGTH, `Password must be at least ${MIN_PASSWORD_LENGTH} characters`).optional().or(z.literal('')),
   confirmPassword: z.string().optional().or(z.literal('')),
 }).refine((data) => {
   if (data.changePassword) {

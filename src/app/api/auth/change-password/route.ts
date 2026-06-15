@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import { auth } from '@/auth';
+import { passwordPolicyError } from '@/lib/password-policy';
 
 export async function POST(req: Request) {
   try {
@@ -12,8 +13,9 @@ export async function POST(req: Request) {
 
     const { firstname, surname, newPassword } = await req.json();
 
-    if (!newPassword || newPassword.length < 8) {
-      return NextResponse.json({ message: 'Password must be at least 8 characters long' }, { status: 400 });
+    const passwordError = passwordPolicyError(newPassword);
+    if (passwordError) {
+      return NextResponse.json({ message: passwordError }, { status: 400 });
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);

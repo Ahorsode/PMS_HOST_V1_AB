@@ -6,6 +6,7 @@ import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Phone, ArrowRight, Loader2, Bird, User, Mail, Lock } from 'lucide-react';
 import Background3D from '@/components/auth/Background3D';
+import { MIN_PASSWORD_LENGTH } from '@/lib/password-policy';
 
 export default function SignUpPage() {
   const [formData, setFormData] = useState({
@@ -28,6 +29,11 @@ export default function SignUpPage() {
     e.preventDefault();
     if (isLoading) return;
     if (!formData.phoneNumber || !formData.password) return;
+
+    if (formData.password.length < MIN_PASSWORD_LENGTH) {
+      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters long.`);
+      return;
+    }
     
     setIsLoading(true);
     setError('');
@@ -174,7 +180,7 @@ export default function SignUpPage() {
                         name="password"
                         value={formData.password}
                         onChange={handleChange}
-                        placeholder="Create Password"
+                        placeholder="Create Password (12+ characters)"
                         required
                         disabled={isLoading}
                         className="w-full h-12 pl-9 pr-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"

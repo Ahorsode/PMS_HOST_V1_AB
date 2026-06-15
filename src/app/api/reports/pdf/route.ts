@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
     doc.fillColor('#0f172a').fontSize(10)
     doc.text(`Report Period: ${startFormatted} to ${endFormatted}`, 40, 100)
     doc.text(`Generated On: ${new Date().toLocaleString()}`, 40, 115)
-    doc.text(`Active Farm ID: ${activeFarmId}`, 40, 130)
+    doc.text('Report generated for your active farm', 40, 130)
 
     // KPI Summary Section
     doc.rect(40, 155, 515, 80).fill('#f8fafc')
@@ -174,7 +174,7 @@ export async function GET(request: NextRequest) {
       doc.switchToPage(i)
       doc.font('Helvetica').fillColor('#94a3b8').fontSize(7)
       doc.text(
-        `Poultry PMS Report System | Page ${i + 1} of ${pageCount} | Tenant Verified: ${activeFarmId}`,
+        `Poultry PMS Report System | Page ${i + 1} of ${pageCount} | Tenant session verified`,
         40,
         800,
         { align: 'center', width: 515 }

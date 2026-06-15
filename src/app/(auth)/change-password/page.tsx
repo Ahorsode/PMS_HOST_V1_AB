@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Lock, ArrowRight, Loader2, Bird, CheckCircle2 } from 'lucide-react';
 import Background3D from '@/components/auth/Background3D';
+import { MIN_PASSWORD_LENGTH } from '@/lib/password-policy';
 
 export default function ChangePasswordPage() {
   const [firstname, setFirstname] = useState('');
@@ -22,8 +23,8 @@ export default function ChangePasswordPage() {
     e.preventDefault();
     if (isLoading) return;
     
-    if (newPassword.length < 6) {
-      setError('Password must be at least 6 characters long.');
+    if (newPassword.length < MIN_PASSWORD_LENGTH) {
+      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters long.`);
       return;
     }
 

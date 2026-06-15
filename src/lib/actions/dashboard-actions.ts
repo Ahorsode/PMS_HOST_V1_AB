@@ -9,6 +9,7 @@ import { checkWorkerPermissions } from './staff-actions'
 import { signOut } from '@/auth'
 import { farmCacheTags, revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
+import { passwordPolicyError } from '@/lib/password-policy'
 
 export async function getDashboardStats() {
   const { userId, activeFarmId } = await getAuthContext()
@@ -926,6 +927,9 @@ export async function updateProfile(data: { firstname: string; surname: string; 
     };
 
     if (data.newPassword) {
+      const passwordError = passwordPolicyError(data.newPassword);
+      if (passwordError) return { success: false, error: passwordError };
+
       updateData.password = await bcrypt.hash(data.newPassword, 10);
       updateData.mustChangePassword = false;
     }
@@ -964,6 +968,11 @@ export async function updatePassword(data: { current: string; new: string }) {
     const isValid = await bcrypt.compare(data.current, user.password)
     if (!isValid) {
       return { success: false, error: 'Current password is incorrect' }
+    }
+
+    const passwordError = passwordPolicyError(data.new)
+    if (passwordError) {
+      return { success: false, error: passwordError }
     }
 
     const hashedPassword = await bcrypt.hash(data.new, 10)

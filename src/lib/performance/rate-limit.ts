@@ -77,6 +77,14 @@ function buildKey(input: RateLimitInput) {
   return `rl:${input.policy}:${scope}:${farm}:${principal}`;
 }
 
+export function getRateLimitIp(req: Pick<Request, "headers">) {
+  return (
+    req.headers.get("x-real-ip") ||
+    req.headers.get("x-forwarded-for")?.split(",").at(-1)?.trim() ||
+    "unknown"
+  );
+}
+
 function getRedis() {
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -103,8 +111,7 @@ function getLimiter(policyName: RateLimitPolicyName) {
 }
 
 function productionFallbackResult(input: RateLimitInput, key: string, policy: RateLimitPolicy): RateLimitResult {
-  const isSensitive = policy.sensitivity === "financial" || policy.sensitivity === "admin";
-  const failClosed = process.env.RATE_LIMIT_FAIL_OPEN !== "true" && isSensitive;
+  const failClosed = process.env.RATE_LIMIT_FAIL_OPEN !== "true";
   return {
     ok: !failClosed,
     limit: policy.limit,
@@ -167,7 +174,11 @@ export async function checkRateLimit(input: RateLimitInput): Promise<RateLimitRe
   const limiter = getLimiter(input.policy);
 
   if (!limiter) {
-    // Use in-memory sliding window when Redis is unavailable (avoids fail-closed on demo/staging)
+    if (process.env.NODE_ENV === "production") {
+      return productionFallbackResult(input, key, policy);
+    }
+
+    // Use in-memory sliding window outside production when Redis is unavailable.
     return consumeMemoryLimit(input, key, policy);
   }
 

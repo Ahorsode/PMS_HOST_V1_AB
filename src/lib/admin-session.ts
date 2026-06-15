@@ -14,10 +14,21 @@ export type AdminSession = {
 }
 
 function getAdminSessionSecret() {
-  const secret =
-    process.env.HATCHLOG_ADMIN_SESSION_SECRET ||
-    process.env.AUTH_SECRET ||
-    process.env.NEXTAUTH_SECRET
+  const adminSecret = process.env.HATCHLOG_ADMIN_SESSION_SECRET
+
+  if (adminSecret) {
+    if (adminSecret.length < 16) {
+      throw new Error('HATCHLOG_ADMIN_SESSION_SECRET must be at least 16 characters')
+    }
+
+    return adminSecret
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('Missing HATCHLOG_ADMIN_SESSION_SECRET for production admin sessions')
+  }
+
+  const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET
 
   if (!secret || secret.length < 16) {
     throw new Error('Missing HATCHLOG_ADMIN_SESSION_SECRET or AUTH_SECRET for admin sessions')
@@ -75,7 +86,7 @@ export async function createAdminSession(adminUser: { id: string; username: stri
     }),
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: 'strict',
     path: '/admin',
     maxAge: SESSION_TTL_SECONDS,
   })
@@ -88,7 +99,7 @@ export async function destroyAdminSession() {
     value: '',
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    sameSite: 'strict',
     path: '/admin',
     maxAge: 0,
   })

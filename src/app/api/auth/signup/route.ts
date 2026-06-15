@@ -3,16 +3,30 @@ import prisma from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import { randomBytes } from 'crypto';
 import { normalizePhoneNumber } from '@/lib/auth-utils';
-import { checkRateLimit, rateLimitHeaders } from '@/lib/performance/rate-limit';
+import { checkRateLimit, getRateLimitIp, rateLimitHeaders } from '@/lib/performance/rate-limit';
+import { MAX_PASSWORD_LENGTH, passwordPolicyError } from '@/lib/password-policy';
+import { z } from 'zod';
+
+const signupSchema = z.object({
+  firstname: z.string().trim().min(1, 'First name is required').max(100),
+  surname: z.string().trim().max(100).optional().default(''),
+  email: z.preprocess(
+    (value) => (typeof value === 'string' && value.trim() === '' ? null : value),
+    z.string().trim().email('Invalid email address').max(255).nullable().optional(),
+  ),
+  phoneNumber: z.string().trim().min(7, 'Phone number too short').max(20),
+  password: z.preprocess(
+    (value) => (typeof value === 'string' && value.length === 0 ? undefined : value),
+    z.string().max(MAX_PASSWORD_LENGTH, `Password must be ${MAX_PASSWORD_LENGTH} characters or fewer`).optional(),
+  ),
+});
 
 export async function POST(req: Request) {
   try {
-    const forwarded = req.headers.get('x-forwarded-for');
-    const ip = forwarded?.split(',')[0]?.trim() || 'unknown';
     const limit = await checkRateLimit({
       policy: 'auth.signup',
       scope: 'api-signup',
-      ip,
+      ip: getRateLimitIp(req),
     });
 
     if (!limit.ok) {
@@ -26,16 +40,20 @@ export async function POST(req: Request) {
       );
     }
 
-    const { firstname, surname, email, phoneNumber, password } = await req.json();
-
-    if (!phoneNumber) {
-      return NextResponse.json({ message: 'Phone number is required' }, { status: 400 });
+    const body = await req.json();
+    const parsed = signupSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { message: parsed.error.issues[0]?.message ?? 'Invalid input' },
+        { status: 400 },
+      );
     }
 
+    const { firstname, surname, email, phoneNumber, password } = parsed.data;
     const normalizedPhone = normalizePhoneNumber(phoneNumber);
 
     // Ensure email is null if empty string to avoid unique constraint issues
-    const cleanEmail = email && email.trim() !== '' ? email.trim() : null;
+    const cleanEmail = email ?? null;
 
     // Check if user already exists
     const existingUser = await prisma.user.findFirst({
@@ -72,10 +90,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: 'Password is required' }, { status: 400 });
     }
 
+    const passwordError = passwordPolicyError(rawPassword);
+    if (passwordError) {
+      return NextResponse.json({ message: passwordError }, { status: 400 });
+    }
+
     const hashedPassword = await bcrypt.hash(rawPassword, 10);
     
     // Invited users must set a password they know after the random temporary credential.
-    const mustChangePassword = !!invitation || rawPassword === '123456';
+    const mustChangePassword = !!invitation;
 
     // Create or Update the user and associated resources in a transaction
     const user = await prisma.$transaction(async (tx) => {

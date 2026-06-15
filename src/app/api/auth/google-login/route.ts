@@ -3,6 +3,7 @@ import { OAuth2Client } from "google-auth-library";
 import prisma from "@/lib/db";
 import { encode } from "next-auth/jwt";
 import { recordUserSession } from "@/lib/auth-utils";
+import { checkRateLimit, getRateLimitIp, rateLimitHeaders } from "@/lib/performance/rate-limit";
 
 const client = new OAuth2Client(process.env.AUTH_GOOGLE_ID);
 
@@ -21,6 +22,19 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing idToken" }, { status: 400 });
     }
 
+    const limit = await checkRateLimit({
+      policy: "auth.signup",
+      scope: "google-login",
+      ip: getRateLimitIp(req),
+    });
+
+    if (!limit.ok) {
+      return NextResponse.json(
+        { error: "Too many requests. Try again later." },
+        { status: 429, headers: rateLimitHeaders(limit) },
+      );
+    }
+
     // Verify the ID token from Flutter
     const ticket = await client.verifyIdToken({
       idToken,
@@ -34,25 +48,35 @@ export async function POST(req: Request) {
 
     const { email, name, picture, sub: googleId } = payload;
 
-    // Synchronize user in database
-    const user = await prisma.user.upsert({
-      where: { email },
-      update: { name, image: picture },
-      create: {
-        email,
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email },
+          {
+            accounts: {
+              some: { provider: "google", providerAccountId: googleId },
+            },
+          },
+        ],
+      },
+      select: { id: true },
+    });
+
+    if (!existingUser) {
+      return NextResponse.json(
+        { error: "No account found for this Google account. Please register via the web app first." },
+        { status: 403 },
+      );
+    }
+
+    const user = await prisma.user.update({
+      where: { id: existingUser.id },
+      data: {
         name,
         image: picture,
-        accounts: {
-          create: {
-            type: "oauth",
-            provider: "google",
-            providerAccountId: googleId,
-          },
-        },
       },
     });
 
-    // After user upsert:
     const membership = await prisma.farmMember.findFirst({
       where: { userId: user.id },
       select: { farmId: true, role: true }

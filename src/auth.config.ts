@@ -11,11 +11,16 @@ export const authConfig = {
       const isLoggedIn = !!auth?.user?.id;
       const mustChangePassword = auth?.user?.mustChangePassword === true;
       const securityInvalidated = auth?.user?.securityInvalidated === true;
-      const isProtectedRoute = nextUrl.pathname.startsWith('/dashboard') || nextUrl.pathname.startsWith('/onboarding');
+      const isProtectedRoute =
+        nextUrl.pathname.startsWith('/dashboard') ||
+        nextUrl.pathname.startsWith('/onboarding');
+      const isAdminRoute =
+        nextUrl.pathname.startsWith('/admin') &&
+        !nextUrl.pathname.startsWith('/admin/login');
       const isAuthPage = nextUrl.pathname.startsWith('/login') || nextUrl.pathname.startsWith('/signup');
 
       if (isLoggedIn && securityInvalidated) {
-        if (isProtectedRoute) {
+        if (isProtectedRoute || isAdminRoute) {
           return Response.redirect(new URL('/login?security=updated', nextUrl));
         }
         if (isAuthPage) return true;
@@ -24,6 +29,10 @@ export const authConfig = {
       // Force change password if flag is set
       if (isLoggedIn && mustChangePassword && nextUrl.pathname !== '/change-password') {
         return Response.redirect(new URL('/change-password', nextUrl));
+      }
+
+      if (isAdminRoute && !isLoggedIn) {
+        return Response.redirect(new URL('/admin/login', nextUrl));
       }
 
       if (isProtectedRoute) {
