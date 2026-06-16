@@ -5,7 +5,7 @@ import { getAllInventory } from '@/lib/actions/inventory-actions';
 import { getAllBatches } from '@/lib/actions/dashboard-actions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { formatCurrency } from '@/lib/utils';
-import { Banknote, ShoppingCart, Users, TrendingUp, Clock, CheckCircle2 } from 'lucide-react';
+import { Banknote, ShoppingCart, Users, TrendingUp, Clock, CheckCircle2, XCircle } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { SalesRowActions, SalesActionsHeader } from './SalesActions';
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
@@ -56,8 +56,8 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
   const canEdit = await checkWorkerPermissions('sales', 'edit');
   const { role } = await getAuthContext();
   const canOverridePrice = role === 'OWNER' || role === 'MANAGER';
-  const canCreateSale = canEdit || role === 'WORKER';
-  const canRecordPayment = role === 'OWNER' || role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER';
+  const canCreateSale = canEdit;
+  const canRecordPayment = role === 'OWNER' || role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER' || role === 'CASHIER';
 
   if (!hasAccess) {
     redirect('/dashboard/unauthorized');
@@ -79,6 +79,50 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
   const totalRevenue = orders.reduce((sum: number, order: Order) => sum + Number(order.subtotalAmount || order.totalAmount), 0);
   const netRevenue = orders.reduce((sum: number, order: Order) => sum + Number(order.totalAmount), 0);
   const pendingOrders = orders.filter((o: Order) => o.status === 'PENDING').length;
+
+  const orderDates = orders
+    .map((o: Order) => new Date(o.orderDate as string).getTime())
+    .filter(Boolean);
+
+  const daySpan = orderDates.length > 1
+    ? Math.max(
+        1,
+        Math.ceil((Math.max(...orderDates) - Math.min(...orderDates)) / (1000 * 60 * 60 * 24))
+      )
+    : 30;
+
+  const avgDailyRevenue = totalRevenue / daySpan;
+
+  const now = new Date();
+  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+  const thisMonthRevenue = orders
+    .filter((o: Order) => new Date(o.orderDate as string) >= thisMonthStart)
+    .reduce((sum: number, o: Order) => sum + Number(o.totalAmount), 0);
+
+  const lastMonthRevenue = orders
+    .filter((o: Order) => {
+      const date = new Date(o.orderDate as string);
+      return date >= lastMonthStart && date < thisMonthStart;
+    })
+    .reduce((sum: number, o: Order) => sum + Number(o.totalAmount), 0);
+
+  const monthOverMonthChange = lastMonthRevenue > 0
+    ? ((thisMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100
+    : null;
+
+  const customerRevenue = orders.reduce((acc: Record<string, number>, order: Order) => {
+    if (!order.customerId) return acc;
+
+    acc[order.customerId] = (acc[order.customerId] ?? 0) + Number(order.totalAmount);
+    return acc;
+  }, {} as Record<string, number>);
+
+  const topCustomers = [...customers]
+    .filter((customer: Customer) => customerRevenue[customer.id])
+    .sort((a: Customer, b: Customer) => (customerRevenue[b.id] ?? 0) - (customerRevenue[a.id] ?? 0))
+    .slice(0, 5);
 
   const stats = [
     { name: 'Total Revenue', value: formatCurrency(totalRevenue), icon: Banknote, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
@@ -234,16 +278,29 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                      <TrendingUp className="w-6 h-6 text-emerald-400" />
                    </div>
                    <div>
-                     <p className="text-2xl font-bold text-white">{formatCurrency(totalRevenue / 30)}</p>
+                     <p className="text-2xl font-bold text-white">{formatCurrency(avgDailyRevenue)}</p>
                      <p className="text-xs font-bold uppercase text-white/70 tracking-widest">Avg Daily Revenue</p>
                    </div>
                 </div>
                 <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden border border-white/5">
                    <div className="h-full bg-emerald-500 w-[65%]" />
                 </div>
-                <p className="text-[9px] font-bold text-emerald-400/70 mt-2 uppercase tracking-widest flex items-center gap-2">
-                   <CheckCircle2 className="w-3 h-3" /> 18% Increase from last month
-                </p>
+                {monthOverMonthChange !== null ? (
+                  <p className={`text-[9px] font-bold mt-2 uppercase tracking-widest flex items-center gap-2 ${
+                    monthOverMonthChange >= 0 ? 'text-emerald-400/70' : 'text-red-400/70'
+                  }`}>
+                    {monthOverMonthChange >= 0 ? (
+                      <CheckCircle2 className="w-3 h-3" />
+                    ) : (
+                      <XCircle className="w-3 h-3" />
+                    )}
+                    {monthOverMonthChange >= 0 ? '+' : ''}{monthOverMonthChange.toFixed(1)}% vs last month
+                  </p>
+                ) : (
+                  <p className="text-[9px] font-bold text-white/30 mt-2 uppercase tracking-widest">
+                    No prior month data
+                  </p>
+                )}
               </CardContent>
            </Card>
 
@@ -253,15 +310,17 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                 <Users className="w-5 h-5 text-white/20" />
               </CardHeader>
               <CardContent className="space-y-3">
-                 {customers.slice(0, 5).map((cust: Customer, idx: number) => (
-                   <div key={cust.id} className="flex justify-between items-center bg-black/20 p-2 rounded-md border border-white/5">
-                      <div className="flex items-center gap-2">
+                 {topCustomers.length === 0 ? (
+                   <p className="text-xs text-white/40 text-center py-4">No customer sales yet.</p>
+                 ) : topCustomers.map((cust: Customer, idx: number) => (
+                   <div key={cust.id} className="flex justify-between items-center gap-3 bg-black/20 p-2 rounded-md border border-white/5">
+                      <div className="flex items-center gap-2 min-w-0">
                          <div className="w-8 h-8 rounded-md bg-white/10 flex items-center justify-center text-xs font-bold text-white/70 border border-white/10">
                            {idx + 1}
                          </div>
                          <span className="text-xs font-bold text-white/90 truncate">{cust.name}</span>
                       </div>
-                      <span className="text-xs font-bold text-emerald-400 tracking-normal shrink-0">VIP Client</span>
+                      <span className="text-xs font-bold text-emerald-400 tracking-normal shrink-0">{formatCurrency(customerRevenue[cust.id] ?? 0)}</span>
                    </div>
                  ))}
                  <Link href="/dashboard/sales/customers" className="block text-center w-full py-2 rounded-md bg-white/10 border border-white/10 text-xs font-bold uppercase tracking-widest text-white/70 hover:bg-white/20 hover:text-white transition-all mt-2">
