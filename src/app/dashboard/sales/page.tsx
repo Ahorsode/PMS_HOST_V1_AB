@@ -51,6 +51,44 @@ interface Customer {
   phone: string | null;
 }
 
+function toNumber(value: unknown) {
+  const number = Number(value ?? 0);
+  return Number.isFinite(number) ? number : 0;
+}
+
+function toIsoString(value: string | Date | null | undefined) {
+  if (!value) return null;
+
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
+}
+
+function normalizeOrder(order: Order) {
+  return {
+    ...order,
+    subtotalAmount: toNumber(order.subtotalAmount || order.totalAmount),
+    taxAmount: toNumber(order.taxAmount),
+    totalAmount: toNumber(order.totalAmount),
+    discountAmount: toNumber(order.discountAmount),
+    orderDate: toIsoString(order.orderDate),
+    paidAt: toIsoString(order.paidAt),
+    customer: order.customer ? {
+      name: order.customer.name,
+      phone: order.customer.phone,
+      balanceOwed: toNumber(order.customer.balanceOwed),
+    } : null,
+    items: order.items.map((item: OrderItem) => ({
+      id: item.id,
+      description: item.description,
+      quantity: item.quantity,
+      unitPrice: toNumber(item.unitPrice),
+      totalPrice: toNumber(item.totalPrice),
+    })),
+  };
+}
+
+type SalesOrder = ReturnType<typeof normalizeOrder>;
+
 export default async function SalesPage({ searchParams }: { searchParams: Promise<{ sellBatchId?: string }> }) {
   const hasAccess = await checkWorkerPermissions('sales', 'view');
   const canEdit = await checkWorkerPermissions('sales', 'edit');
@@ -66,22 +104,51 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
   const resolvedParams = await searchParams;
   const sellBatchId = resolvedParams.sellBatchId;
 
-  const [ordersRaw, customersRaw, inventory, livestock] = await Promise.all([
+  const [ordersRaw, customersRaw, inventoryRaw, livestockRaw] = await Promise.all([
     getAllOrders(),
     getAllCustomers(),
     getAllInventory(),
     getAllBatches()
   ]);
 
-  const orders = ordersRaw as unknown as Order[];
-  const customers = customersRaw as unknown as Customer[];
+  const orders: SalesOrder[] = (ordersRaw as unknown as Order[]).map(normalizeOrder);
+  const customers = (customersRaw as unknown as Customer[]).map((customer: Customer) => ({
+    id: customer.id,
+    name: customer.name,
+    phone: customer.phone,
+  }));
+  const inventory = (inventoryRaw as any[]).map((item: any) => ({
+    id: item.id,
+    itemName: item.itemName,
+    stockLevel: toNumber(item.stockLevel),
+    unit: item.unit,
+    category: item.category,
+    costPerUnit: item.costPerUnit == null ? null : toNumber(item.costPerUnit),
+    sellingPrice: item.sellingPrice == null ? null : toNumber(item.sellingPrice),
+    eggCategory: item.eggCategory ? {
+      id: item.eggCategory.id,
+      name: item.eggCategory.name,
+      sellingPrice: toNumber(item.eggCategory.sellingPrice),
+      unitSize: toNumber(item.eggCategory.unitSize),
+    } : null,
+  }));
+  const livestock = (livestockRaw as any[]).map((batch: any) => ({
+    id: batch.id,
+    batchName: batch.batchName,
+    currentCount: toNumber(batch.currentCount),
+    initialCount: toNumber(batch.initialCount),
+    initialCostActual: batch.initialCostActual == null ? null : toNumber(batch.initialCostActual),
+    initial_actual_cost: batch.initial_actual_cost == null ? null : toNumber(batch.initial_actual_cost),
+    status: batch.status,
+    type: batch.type,
+  }));
 
-  const totalRevenue = orders.reduce((sum: number, order: Order) => sum + Number(order.subtotalAmount || order.totalAmount), 0);
-  const netRevenue = orders.reduce((sum: number, order: Order) => sum + Number(order.totalAmount), 0);
-  const pendingOrders = orders.filter((o: Order) => o.status === 'PENDING').length;
+  const totalRevenue = orders.reduce((sum: number, order) => sum + Number(order.subtotalAmount || order.totalAmount), 0);
+  const netRevenue = orders.reduce((sum: number, order) => sum + Number(order.totalAmount), 0);
+  const pendingOrders = orders.filter((order) => order.status === 'PENDING').length;
 
   const orderDates = orders
-    .map((o: Order) => new Date(o.orderDate as string).getTime())
+    .map((order) => new Date(order.orderDate as string).getTime())
     .filter(Boolean);
 
   const daySpan = orderDates.length > 1
@@ -98,21 +165,21 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
   const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
   const thisMonthRevenue = orders
-    .filter((o: Order) => new Date(o.orderDate as string) >= thisMonthStart)
-    .reduce((sum: number, o: Order) => sum + Number(o.totalAmount), 0);
+    .filter((order) => new Date(order.orderDate as string) >= thisMonthStart)
+    .reduce((sum: number, order) => sum + Number(order.totalAmount), 0);
 
   const lastMonthRevenue = orders
-    .filter((o: Order) => {
-      const date = new Date(o.orderDate as string);
+    .filter((order) => {
+      const date = new Date(order.orderDate as string);
       return date >= lastMonthStart && date < thisMonthStart;
     })
-    .reduce((sum: number, o: Order) => sum + Number(o.totalAmount), 0);
+    .reduce((sum: number, order) => sum + Number(order.totalAmount), 0);
 
   const monthOverMonthChange = lastMonthRevenue > 0
     ? ((thisMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100
     : null;
 
-  const customerRevenue = orders.reduce((acc: Record<string, number>, order: Order) => {
+  const customerRevenue = orders.reduce((acc: Record<string, number>, order) => {
     if (!order.customerId) return acc;
 
     acc[order.customerId] = (acc[order.customerId] ?? 0) + Number(order.totalAmount);
@@ -191,7 +258,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {orders.map((order: Order, index: number) => (
+                {orders.map((order: SalesOrder, index: number) => (
                   <tr key={order.id} className="hover:bg-white/5 transition-colors group">
                     <td className="px-7 py-5">
                       <span className="text-white font-bold text-sm tracking-normal uppercase tabular-nums">Order {index + 1}</span>
@@ -234,7 +301,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
           </div>
 
           <div className="block md:hidden p-3 space-y-3">
-            {orders.map((order: Order, index: number) => (
+            {orders.map((order: SalesOrder, index: number) => (
               <div key={order.id} className="bg-black/20 rounded-md p-3 border border-white/5 flex flex-col space-y-2">
                  <div className="flex justify-between items-center">
                    <span className="text-white font-bold text-sm tracking-normal uppercase tabular-nums">Order {index + 1}</span>
