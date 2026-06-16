@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Users, Mail, Shield, UserPlus, Loader2, CheckCircle2, XCircle, Trash2, ShieldCheck, UserCheck, Settings, AlertCircle, Phone } from 'lucide-react';
-import { inviteWorker, getFarmMembers, deleteMember, deleteInvitation, updateWorkerPermissions, updateFarmMemberRole } from '@/lib/actions/staff-actions';
+import { Users, Mail, Shield, UserPlus, Loader2, CheckCircle2, XCircle, Trash2, ShieldCheck, UserCheck, Settings, AlertCircle, Phone, ChevronDown } from 'lucide-react';
+import { inviteWorker, getFarmMembers, deleteMember, deleteInvitation, updateWorkerPermissions, updateFarmMemberRole, getUserForInvite } from '@/lib/actions/staff-actions';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { Input } from '@/components/ui/Input';
@@ -27,10 +27,23 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
   const [deleteTarget, setDeleteTarget] = useState<{ id: string, type: 'member' | 'invite' } | null>(null);
   const [permissionTarget, setPermissionTarget] = useState<any>(null);
   const [limitCheck, setLimitCheck] = useState<{ canAdd: boolean, limit: number, current: number } | null>(null);
+  const [showPermissions, setShowPermissions] = useState(false);
+  const [inviteRole, setInviteRole] = useState<string>('WORKER');
+  const [pendingPermissions, setPendingPermissions] = useState<Record<string, boolean>>({});
+  const [editPermissionsInvite, setEditPermissionsInvite] = useState<{
+    inviteId: string;
+    userId: string;
+    name: string;
+    currentPermissions: any;
+  } | null>(null);
 
   useEffect(() => {
     loadTeam();
   }, []);
+
+  useEffect(() => {
+    setPendingPermissions({});
+  }, [inviteRole]);
 
   const loadTeam = async () => {
     setIsLoading(true);
@@ -58,13 +71,21 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
     const form = e.currentTarget;
     const formData = new FormData(form);
     const emailOrPhone = formData.get('emailOrPhone') as string;
-    const role = formData.get('role') as any;
+    const role = inviteRole as any;
 
     try {
-      const result = await inviteWorker({ emailOrPhone, role }) as any;
+      const result = await inviteWorker({
+        emailOrPhone,
+        role,
+        permissions: Object.keys(pendingPermissions).length > 0 ? pendingPermissions : undefined,
+      }) as any;
       if (result?.success) {
         setMessage({ type: 'success', text: `Invitation sent to ${emailOrPhone}!` });
         form.reset();
+        setInviteRole('WORKER');
+        setPendingPermissions({});
+        setShowPermissions(false);
+        router.refresh();
         await loadTeam();
       } else {
         setMessage({ type: 'error', text: (result as any)?.error || 'Failed to send invitation.' });
@@ -109,6 +130,25 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
       }
     } catch (err: any) {
       alert(err.message || 'Unknown error');
+    } finally {
+      setIsSavingPermissions(false);
+    }
+  };
+
+  const handleSavePendingInvitePermissions = async (permissions: any) => {
+    if (!editPermissionsInvite || isSavingPermissions) return;
+    setIsSavingPermissions(true);
+    try {
+      const response = await updateWorkerPermissions(editPermissionsInvite.userId, permissions) as any;
+      if (response?.success) {
+        setEditPermissionsInvite(null);
+        router.refresh();
+        await loadTeam();
+      } else {
+        toast.error(response?.error || 'Failed to save pending invite permissions');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to save pending invite permissions');
     } finally {
       setIsSavingPermissions(false);
     }
@@ -300,6 +340,27 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
                       <div className="flex items-center gap-3">
                         {getRoleBadge(invite.role)}
                         <span className="text-xs bg-amber-500/10 text-amber-400 px-2 py-1 rounded-full font-bold uppercase tracking-widest border border-amber-500/20">Pending</span>
+                        {canEdit && currentUserRole === 'OWNER' && (
+                          <button
+                            onClick={async () => {
+                              const result = await getUserForInvite(invite.id) as any;
+                              if (result?.userId) {
+                                setEditPermissionsInvite({
+                                  inviteId: invite.id,
+                                  userId: result.userId,
+                                  name: invite.email || invite.phoneNumber || 'Pending User',
+                                  currentPermissions: result.permissions,
+                                });
+                              } else {
+                                toast.error('Could not load pending invite permissions');
+                              }
+                            }}
+                            className="p-2 text-white/20 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                            title="Edit access control"
+                          >
+                            <Settings className="w-4 h-4" />
+                          </button>
+                        )}
                         {canEdit && (currentUserRole === 'OWNER' || currentUserRole === 'MANAGER') && (
                           <button 
                             onClick={() => setDeleteTarget({ id: invite.id, type: 'invite' })}
@@ -391,6 +452,8 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
                   <Select 
                     label="Assign Role"
                     name="role"
+                    value={inviteRole}
+                    onChange={(event) => setInviteRole(event.target.value)}
                     options={[
                       { label: 'Worker', value: 'WORKER' },
                       { label: 'Cashier', value: 'CASHIER' },
@@ -398,8 +461,35 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
                       { label: 'Accountant', value: 'ACCOUNTANT' },
                       { label: 'Finance Officer', value: 'FINANCE_OFFICER' }
                     ]}
-                    defaultValue="WORKER"
                   />
+                  <div className="border border-white/10 rounded-lg overflow-hidden bg-white/[0.03]">
+                    <button
+                      type="button"
+                      aria-expanded={showPermissions}
+                      aria-controls="invite-permission-toggles"
+                      onClick={() => setShowPermissions((current) => !current)}
+                      className="w-full flex items-center justify-between gap-3 px-4 py-3 text-xs font-bold uppercase tracking-widest text-white/70 hover:text-white hover:bg-white/5 transition-all"
+                    >
+                      <span className="flex items-center gap-2">
+                        <Shield className="w-4 h-4 text-emerald-400" />
+                        Configure Access Control
+                      </span>
+                      <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${showPermissions ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    {showPermissions && (
+                      <div id="invite-permission-toggles" className="px-4 pb-4 pt-2 space-y-2 border-t border-white/10">
+                        <p className="text-xs text-white/50 mb-3 leading-relaxed">
+                          Default access based on role is pre-selected. Customise before sending the invitation.
+                        </p>
+                        <InlinePermissionToggles
+                          role={inviteRole}
+                          value={pendingPermissions}
+                          onChange={setPendingPermissions}
+                        />
+                      </div>
+                    )}
+                  </div>
                   <Button 
                     type="submit" 
                     disabled={!!(isInviting || (limitCheck && !limitCheck.canAdd))}
@@ -470,6 +560,135 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
           onSave={handleSavePermissions}
         />
       )}
+
+      {editPermissionsInvite && (
+        <PermissionsModal
+          isOpen={!!editPermissionsInvite}
+          onClose={() => setEditPermissionsInvite(null)}
+          staffName={`${editPermissionsInvite.name} (Pending)`}
+          initialPermissions={editPermissionsInvite.currentPermissions}
+          isLoading={isSavingPermissions}
+          onSave={handleSavePendingInvitePermissions}
+        />
+      )}
+    </div>
+  );
+}
+
+const PERMISSION_MODULES = [
+  { label: 'Finance', view: 'canViewFinance', edit: 'canEditFinance' },
+  { label: 'Inventory', view: 'canViewInventory', edit: 'canEditInventory' },
+  { label: 'Livestock / Batches', view: 'canViewBatches', edit: 'canEditBatches' },
+  { label: 'Sales', view: 'canViewSales', edit: 'canEditSales' },
+  { label: 'Eggs', view: 'canViewEggs', edit: 'canEditEggs' },
+  { label: 'Feeding', view: 'canViewFeeding', edit: 'canEditFeeding' },
+  { label: 'Houses', view: 'canViewHouses', edit: 'canEditHouses' },
+  { label: 'Mortality / Quarantine', view: 'canViewMortality', edit: 'canEditMortality' },
+  { label: 'Customers / Suppliers', view: 'canViewCustomers', edit: 'canEditCustomers' },
+  { label: 'Team Management', view: 'canViewTeam', edit: 'canEditTeam' },
+] as const;
+
+function getInviteRoleDefaults(role: string): Record<string, boolean> {
+  const allPermissions = Object.fromEntries(
+    PERMISSION_MODULES.flatMap((module) => [[module.view, true], [module.edit, true]])
+  );
+
+  if (role === 'MANAGER') return allPermissions;
+
+  if (role === 'WORKER') {
+    return {
+      canViewEggs: true,
+      canEditEggs: true,
+      canViewFeeding: true,
+      canEditFeeding: true,
+      canViewMortality: true,
+      canEditMortality: true,
+      canViewBatches: true,
+    };
+  }
+
+  if (role === 'ACCOUNTANT') {
+    return {
+      canViewFinance: true,
+      canEditFinance: true,
+      canViewSales: true,
+      canViewInventory: true,
+    };
+  }
+
+  if (role === 'FINANCE_OFFICER') {
+    return {
+      canViewFinance: true,
+      canEditFinance: true,
+      canViewSales: true,
+      canEditSales: true,
+      canViewInventory: true,
+    };
+  }
+
+  if (role === 'CASHIER') {
+    return {
+      canViewSales: true,
+      canEditSales: true,
+      canViewFinance: true,
+    };
+  }
+
+  return {};
+}
+
+function InlinePermissionToggles({
+  role,
+  value,
+  onChange,
+}: {
+  role: string;
+  value: Record<string, boolean>;
+  onChange: (value: Record<string, boolean>) => void;
+}) {
+  const effective = { ...getInviteRoleDefaults(role), ...value };
+
+  function toggle(key: string) {
+    const next = { ...value, [key]: !effective[key] };
+
+    if (key.startsWith('canView') && !next[key]) {
+      next[key.replace('canView', 'canEdit')] = false;
+    }
+
+    if (key.startsWith('canEdit') && next[key]) {
+      next[key.replace('canEdit', 'canView')] = true;
+    }
+
+    onChange(next);
+  }
+
+  return (
+    <div className="space-y-2">
+      {PERMISSION_MODULES.map((module) => (
+        <div key={module.label} className="flex items-center justify-between gap-3 py-2 border-b border-white/5 last:border-0">
+          <span className="text-xs font-bold text-white/75 tracking-normal">{module.label}</span>
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-1.5 text-xs text-white/60 cursor-pointer">
+              <input
+                type="checkbox"
+                className="accent-emerald-400"
+                checked={!!effective[module.view]}
+                onChange={() => toggle(module.view)}
+              />
+              View
+            </label>
+            <label className="flex items-center gap-1.5 text-xs text-white/60 cursor-pointer">
+              <input
+                type="checkbox"
+                className="accent-emerald-400"
+                checked={!!effective[module.edit]}
+                onChange={() => toggle(module.edit)}
+              />
+              Edit
+            </label>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

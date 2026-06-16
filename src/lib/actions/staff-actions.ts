@@ -9,13 +9,178 @@ import bcrypt from 'bcryptjs'
 import { randomBytes } from 'crypto'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 
+type StaffRole = 'OWNER' | 'MANAGER' | 'WORKER' | 'ACCOUNTANT' | 'FINANCE_OFFICER' | 'CASHIER'
+
+type StaffPermissions = {
+  canViewFinance?: boolean
+  canEditFinance?: boolean
+  canViewInventory?: boolean
+  canEditInventory?: boolean
+  canViewBatches?: boolean
+  canEditBatches?: boolean
+  canViewSales?: boolean
+  canEditSales?: boolean
+  canViewEggs?: boolean
+  canEditEggs?: boolean
+  canViewFeeding?: boolean
+  canEditFeeding?: boolean
+  canViewHouses?: boolean
+  canEditHouses?: boolean
+  canViewMortality?: boolean
+  canEditMortality?: boolean
+  canViewCustomers?: boolean
+  canEditCustomers?: boolean
+  canViewTeam?: boolean
+  canEditTeam?: boolean
+}
+
+function defaultPermissionsForRole(
+  role: string,
+  overrides?: StaffPermissions
+): Required<StaffPermissions> {
+  const base: Required<StaffPermissions> = {
+    canViewFinance: false,
+    canEditFinance: false,
+    canViewInventory: false,
+    canEditInventory: false,
+    canViewBatches: false,
+    canEditBatches: false,
+    canViewSales: false,
+    canEditSales: false,
+    canViewEggs: false,
+    canEditEggs: false,
+    canViewFeeding: false,
+    canEditFeeding: false,
+    canViewHouses: false,
+    canEditHouses: false,
+    canViewMortality: false,
+    canEditMortality: false,
+    canViewCustomers: false,
+    canEditCustomers: false,
+    canViewTeam: false,
+    canEditTeam: false,
+  }
+
+  const roleDefaults: Record<string, Partial<Required<StaffPermissions>>> = {
+    WORKER: {
+      canViewEggs: true,
+      canEditEggs: true,
+      canViewFeeding: true,
+      canEditFeeding: true,
+      canViewMortality: true,
+      canEditMortality: true,
+      canViewBatches: true,
+    },
+    MANAGER: Object.fromEntries(Object.keys(base).map((key) => [key, true])) as Required<StaffPermissions>,
+    ACCOUNTANT: {
+      canViewFinance: true,
+      canEditFinance: true,
+      canViewSales: true,
+      canViewInventory: true,
+    },
+    FINANCE_OFFICER: {
+      canViewFinance: true,
+      canEditFinance: true,
+      canViewSales: true,
+      canEditSales: true,
+      canViewInventory: true,
+    },
+    CASHIER: {
+      canViewSales: true,
+      canEditSales: true,
+      canViewFinance: true,
+    },
+  }
+
+  const sanitizedOverrides = Object.fromEntries(
+    Object.entries(overrides ?? {}).filter(([, value]) => typeof value === 'boolean')
+  ) as Partial<Required<StaffPermissions>>
+
+  return { ...base, ...(roleDefaults[role] ?? {}), ...sanitizedOverrides }
+}
+
+async function findOrCreateInvitedUser(
+  tx: any,
+  {
+    email,
+    phone,
+    role,
+  }: {
+    email: string | null
+    phone: string | null
+    role: StaffRole
+  }
+) {
+  const identifiers = [
+    ...(email ? [{ email }] : []),
+    ...(phone ? [{ phoneNumber: phone }] : []),
+  ]
+
+  if (identifiers.length === 0) {
+    throw new Error('Enter a valid email address or phone number')
+  }
+
+  const existingUser = await tx.user.findFirst({
+    where: { OR: identifiers },
+  })
+
+  if (existingUser) return existingUser
+
+  const tempPassword = randomBytes(16).toString('hex')
+  const hashedDefault = await bcrypt.hash(tempPassword, 10)
+
+  return await tx.user.create({
+    data: {
+      email,
+      phoneNumber: phone,
+      role,
+      password: hashedDefault,
+      mustChangePassword: true,
+      // Firstname/Surname will be updated during change-password.
+    },
+  })
+}
+
+async function upsertInvitedUserPermissions(
+  tx: any,
+  {
+    userId,
+    farmId,
+    role,
+    permissions,
+  }: {
+    userId: string
+    farmId: string
+    role: StaffRole
+    permissions?: StaffPermissions
+  }
+) {
+  const permissionsToApply = defaultPermissionsForRole(role, permissions)
+
+  return await tx.userPermission.upsert({
+    where: {
+      userId_farmId: {
+        userId,
+        farmId,
+      },
+    },
+    create: {
+      userId,
+      farmId,
+      ...permissionsToApply,
+    },
+    update: permissionsToApply,
+  })
+}
+
 /**
  * Invites a worker to a farm.
  * Only the Absolute Owner (creator) or a Manager can invite others.
  */
 export async function inviteWorker(data: { 
   emailOrPhone: string, 
-  role: 'OWNER' | 'MANAGER' | 'WORKER' | 'ACCOUNTANT' | 'FINANCE_OFFICER' | 'CASHIER' 
+  role: StaffRole
+  permissions?: StaffPermissions
 }) {
   try {
     const { userId, activeFarmId } = await getAuthContext()
@@ -73,6 +238,13 @@ export async function inviteWorker(data: {
           where: { id: existingInvite.id },
           data: { role: data.role }
         })
+        const invitedUser = await findOrCreateInvitedUser(tx, { email, phone, role: data.role })
+        await upsertInvitedUserPermissions(tx, {
+          userId: invitedUser.id,
+          farmId: activeFarmId,
+          role: data.role,
+          permissions: data.permissions,
+        })
         revalidatePath('/dashboard/team')
         return { success: true, invitation }
       }
@@ -87,30 +259,14 @@ export async function inviteWorker(data: {
         }
       })
 
-      // Auto-create User record with an unknowable temporary password.
-      const existingUser = await tx.user.findFirst({
-        where: {
-          OR: [
-            ...(email ? [{ email }] : []),
-            ...(phone ? [{ phoneNumber: phone }] : [])
-          ]
-        }
+      // Auto-create User record and controlled permissions for pending access.
+      const invitedUser = await findOrCreateInvitedUser(tx, { email, phone, role: data.role })
+      await upsertInvitedUserPermissions(tx, {
+        userId: invitedUser.id,
+        farmId: activeFarmId,
+        role: data.role,
+        permissions: data.permissions,
       })
-
-      if (!existingUser) {
-        const tempPassword = randomBytes(16).toString('hex') // 32-char random string
-        const hashedDefault = await bcrypt.hash(tempPassword, 10)
-        await tx.user.create({
-          data: {
-            email: email,
-            phoneNumber: phone,
-            role: data.role,
-            password: hashedDefault,
-            mustChangePassword: true,
-            // Firstname/Surname will be updated during change-password
-          }
-        })
-      }
 
       revalidatePath('/dashboard/team')
       return { success: true, invitation }
@@ -267,6 +423,50 @@ export async function deleteInvitation(invitationId: string) {
     console.error('Error deleting invitation:', error)
     return { success: false, error: error.message }
   })
+}
+
+export async function getUserForInvite(inviteId: string) {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return null
+
+  const farm = await prisma.farm.findUnique({
+    where: { id: activeFarmId },
+    select: { userId: true },
+  })
+
+  if (farm?.userId !== userId) return null
+
+  const invite = await prisma.invitation.findFirst({
+    where: { id: inviteId, farmId: activeFarmId },
+  })
+
+  if (!invite) return null
+
+  const identifiers = [
+    ...(invite.email ? [{ email: invite.email }] : []),
+    ...(invite.phoneNumber ? [{ phoneNumber: invite.phoneNumber }] : []),
+  ]
+
+  if (identifiers.length === 0) return null
+
+  const invitedUser = await prisma.user.findFirst({
+    where: { OR: identifiers },
+    select: {
+      id: true,
+      firstname: true,
+      userPermissions: {
+        where: { farmId: activeFarmId },
+        take: 1,
+      },
+    },
+  })
+
+  if (!invitedUser) return null
+
+  return {
+    userId: invitedUser.id,
+    permissions: invitedUser.userPermissions[0] ?? null,
+  }
 }
 
 /**
@@ -450,7 +650,7 @@ export async function updateWorkerPermissions(
   if (!rateLimit.ok) return rateLimitActionError(rateLimit)
 
   try {
-    return await prisma.$transaction(async (tx: any) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       // 1. Fetch Farm for Absolute Ownership Check
       const farm = await tx.farm.findUnique({
         where: { id: activeFarmId }
@@ -555,9 +755,12 @@ export async function updateWorkerPermissions(
         where: { userId: targetUserId }
       })
 
-      revalidatePath('/dashboard', 'layout')
       return { success: true, permissions: updatedPerm }
     })
+
+    revalidatePath('/dashboard', 'layout')
+    revalidatePath('/dashboard/team')
+    return result
   } catch (error: any) {
     console.error('Permission Update Contention/Error:', error)
     if (error.code === 'P2002' || error.code === 'P2034') {
@@ -608,8 +811,8 @@ export async function checkWorkerPermissions(
         if (module === 'customers')  return action === 'view' ? permissions.canViewCustomers  : permissions.canEditCustomers
         if (module === 'team')       return action === 'view' ? permissions.canViewTeam       : permissions.canEditTeam
       }
-      // Worker with no explicit permissions: view-only by default
-      return action === 'view'
+      // Worker with no explicit permissions cannot access protected modules.
+      return false
     }
     
     return false

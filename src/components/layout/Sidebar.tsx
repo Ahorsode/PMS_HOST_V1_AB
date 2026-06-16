@@ -71,30 +71,29 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
         <nav className="flex-1 px-3 space-y-7 overflow-y-auto custom-scrollbar overflow-x-hidden">
           {categories.map((category) => {
             const visibleItems = category.items.filter(item => {
+              const permissionMap: Record<string, string[]> = {
+                'Finance Control': ['canViewFinance', 'canEditFinance'],
+                'Reports': ['canViewFinance', 'canEditFinance'],
+                'Livestock': ['canViewBatches', 'canEditBatches'],
+                'Analytics': ['canViewBatches', 'canEditBatches'],
+                'Inventory': ['canViewInventory', 'canEditInventory'],
+                'Sales': ['canViewSales', 'canEditSales'],
+                'Eggs': ['canViewEggs', 'canEditEggs'],
+                'Feeding': ['canViewFeeding', 'canEditFeeding'],
+                'Houses': ['canViewHouses', 'canEditHouses'],
+                'Mortality': ['canViewMortality', 'canEditMortality'],
+                'Quarantine': ['canViewMortality', 'canEditMortality'],
+                'Customers': ['canViewCustomers', 'canEditCustomers'],
+                'Suppliers': ['canViewCustomers', 'canEditCustomers'],
+                'Team Management': ['canViewTeam', 'canEditTeam'],
+                'Settings': ['canViewSettings', 'canEditSettings']
+              };
+
               // 1. Owner bypass (Absolute Creator)
               if (role === 'OWNER') return true;
 
               // 2. Explicit Permission Overrides
               if (permissions) {
-                // Map item names to their respective permission keys
-                const permissionMap: Record<string, string[]> = {
-                  'Finance Control': ['canViewFinance', 'canEditFinance'],
-                  'Reports': ['canViewFinance', 'canEditFinance'],
-                  'Livestock': ['canViewBatches', 'canEditBatches'],
-                  'Analytics': ['canViewBatches', 'canEditBatches'],
-                  'Inventory': ['canViewInventory', 'canEditInventory'],
-                  'Sales': ['canViewSales', 'canEditSales'],
-                  'Eggs': ['canViewEggs', 'canEditEggs'],
-                  'Feeding': ['canViewFeeding', 'canEditFeeding'],
-                  'Houses': ['canViewHouses', 'canEditHouses'],
-                  'Mortality': ['canViewMortality', 'canEditMortality'],
-                  'Quarantine': ['canViewMortality', 'canEditMortality'],
-                  'Customers': ['canViewCustomers', 'canEditCustomers'],
-                  'Suppliers': ['canViewCustomers', 'canEditCustomers'],
-                  'Team Management': ['canViewTeam', 'canEditTeam'],
-                  'Settings': ['canViewSettings', 'canEditSettings']
-                };
-
                 const keys = permissionMap[item.name];
                 if (keys) {
                   // If we have explicit permission overrides for this module, use them
@@ -116,8 +115,8 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
                 return item.name === 'Finance Control' || item.name === 'Sales' || item.name === 'Dashboard';
               }
 
-              // Workers can view their allowed modules by default if not restricted by permissions above
-              if (role === 'WORKER') return true;
+              // Workers only see unmapped items, such as Dashboard, without explicit permissions.
+              if (role === 'WORKER') return !permissionMap[item.name];
 
               return false;
             });

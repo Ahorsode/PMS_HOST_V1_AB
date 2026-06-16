@@ -33,28 +33,28 @@ export const BottomNav = ({ role = 'OWNER', permissions }: { role?: string, perm
   ];
 
   const navItems = allNavItems.filter(item => {
+    const permissionMap: Record<string, string[]> = {
+      'Finance Hub': ['canViewFinance', 'canEditFinance'],
+      'Reports': ['canViewFinance', 'canEditFinance'],
+      'Sales': ['canViewSales', 'canEditSales'],
+      'Livestock': ['canViewBatches', 'canEditBatches'],
+      'Analytics': ['canViewBatches', 'canEditBatches'],
+      'Inventory': ['canViewInventory', 'canEditInventory'],
+      'Eggs': ['canViewEggs', 'canEditEggs'],
+      'Feeding': ['canViewFeeding', 'canEditFeeding'],
+      'Houses': ['canViewHouses', 'canEditHouses'],
+      'Mortality': ['canViewMortality', 'canEditMortality'],
+      'Quarantine': ['canViewMortality', 'canEditMortality'],
+      'Customers': ['canViewCustomers', 'canEditCustomers'],
+      'Team': ['canViewTeam', 'canEditTeam'],
+      'Settings': ['canViewSettings', 'canEditSettings']
+    };
+
     // 1. Owner bypass (Absolute Creator)
     if (role === 'OWNER') return true;
 
     // 2. Explicit Permission Overrides
     if (permissions) {
-      const permissionMap: Record<string, string[]> = {
-        'Finance Hub': ['canViewFinance', 'canEditFinance'],
-        'Reports': ['canViewFinance', 'canEditFinance'],
-        'Sales': ['canViewSales', 'canEditSales'],
-        'Livestock': ['canViewBatches', 'canEditBatches'],
-        'Analytics': ['canViewBatches', 'canEditBatches'],
-        'Inventory': ['canViewInventory', 'canEditInventory'],
-        'Eggs': ['canViewEggs', 'canEditEggs'],
-        'Feeding': ['canViewFeeding', 'canEditFeeding'],
-        'Houses': ['canViewHouses', 'canEditHouses'],
-        'Mortality': ['canViewMortality', 'canEditMortality'],
-        'Quarantine': ['canViewMortality', 'canEditMortality'],
-        'Customers': ['canViewCustomers', 'canEditCustomers'],
-        'Team': ['canViewTeam', 'canEditTeam'],
-        'Settings': ['canViewSettings', 'canEditSettings']
-      };
-
       const keys = permissionMap[item.name];
       if (keys) {
         return keys.some(k => !!permissions[k]);
@@ -73,8 +73,8 @@ export const BottomNav = ({ role = 'OWNER', permissions }: { role?: string, perm
         return allowedForAccountant.includes(item.name);
     }
     
-    // Workers can view most things by default if not restricted by permissions above
-    if (role === 'WORKER') return true;
+    // Workers only see unmapped items, such as Dashboard/Profile, without explicit permissions.
+    if (role === 'WORKER') return !permissionMap[item.name];
 
     return false;
   });
