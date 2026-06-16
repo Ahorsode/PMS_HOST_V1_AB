@@ -7,8 +7,8 @@ import LicenseIssuePanel from './LicenseIssuePanel'
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Issue Licenses | HatchLog Admin',
-  description: 'Internal HatchLog manual license key issuance panel.',
+  title: 'Extend Farm Access | HatchLog Admin',
+  description: 'Internal HatchLog farm subscription management panel.',
 }
 
 const spaceGrotesk = Space_Grotesk({

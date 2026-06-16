@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   AlertTriangle,
+  ArrowRight,
   Banknote,
   CalendarClock,
   CheckCircle2,
@@ -13,11 +14,13 @@ import {
   KeyRound,
   Loader2,
   LockKeyhole,
+  Monitor,
   RadioTower,
   RefreshCcw,
   Search,
   ServerCog,
   ShieldCheck,
+  Smartphone,
   X,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -27,6 +30,8 @@ import {
   type PaymentAdminDashboardData,
   type PaymentAdminRow,
 } from '@/lib/actions/admin-payment-actions'
+import { getDevicesForFarm, type AdminFarmDevice } from '@/lib/actions/admin-device-actions'
+import { adminUpgradeFarmTier } from '@/lib/actions/admin-subscription-actions'
 import { cn, formatCurrency } from '@/lib/utils'
 
 const durationPacks = [
@@ -49,6 +54,8 @@ const statusDot: Record<LicenseStatus, string> = {
   EXPIRED: 'bg-red-300',
   PENDING: 'bg-stone-300',
 }
+
+const DAY_MS = 24 * 60 * 60 * 1000
 
 function formatDateTime(value: string | null) {
   if (!value) return 'Not recorded'
@@ -141,43 +148,27 @@ function StatusBadge({ status }: { status: LicenseStatus | string | null | undef
   )
 }
 
-function TokenPanel({
-  token,
-  expiresAt,
-  copied,
-  onCopy,
-}: {
-  token: string
-  expiresAt: string | null
-  copied: boolean
-  onCopy: () => void
-}) {
-  return (
-    <div className="rounded-[1.35rem] border border-emerald-300/25 bg-emerald-300/10 p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-[0.65rem] font-black uppercase tracking-[0.22em] text-emerald-100/100">
-            Activation License Token
-          </p>
-          <p className="mt-2 break-all font-[var(--font-payment-admin-mono)] text-xl font-black tracking-[0.12em] text-emerald-50">
-            {token}
-          </p>
-          <p className="mt-2 text-xs font-semibold text-emerald-100/70">
-            Valid until {formatDate(expiresAt)}
-          </p>
-        </div>
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={onCopy}
-          className="border-emerald-200/20 bg-emerald-100/15 text-emerald-50 hover:bg-emerald-100/25"
-        >
-          {copied ? <CheckCircle2 className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-          {copied ? 'Copied' : 'Copy Code'}
-        </Button>
-      </div>
-    </div>
-  )
+function getDeviceAccessLabel(device: AdminFarmDevice) {
+  const normalizedStatus = (device.status || 'PENDING').toUpperCase()
+  const expiresAt = device.licenseExpiresAt ? new Date(device.licenseExpiresAt) : null
+  const expiryTime = expiresAt && !Number.isNaN(expiresAt.getTime()) ? expiresAt.getTime() : null
+  const now = Date.now()
+
+  if (normalizedStatus === 'EXPIRED' || (expiryTime !== null && expiryTime < now)) {
+    const daysAgo = expiryTime === null ? null : Math.max(0, Math.ceil((now - expiryTime) / DAY_MS))
+    return daysAgo === null ? 'EXPIRED' : `EXPIRED · ${daysAgo} days ago`
+  }
+
+  if (normalizedStatus === 'CLOUD_TRIAL' && expiryTime !== null) {
+    const daysLeft = Math.max(0, Math.ceil((expiryTime - now) / DAY_MS))
+    return `CLOUD_TRIAL · ${daysLeft} days remaining`
+  }
+
+  if (normalizedStatus === 'ACTIVE' && expiryTime !== null) {
+    return `ACTIVE · expires ${formatDate(device.licenseExpiresAt)}`
+  }
+
+  return normalizedStatus
 }
 
 export default function PaymentAdminDashboard({
@@ -199,16 +190,22 @@ export default function PaymentAdminDashboard({
     },
   )
   const [query, setQuery] = useState('')
+  const [deviceOverviewRow, setDeviceOverviewRow] = useState<PaymentAdminRow | null>(null)
+  const [farmDevices, setFarmDevices] = useState<AdminFarmDevice[]>([])
+  const [isLoadingDevices, setIsLoadingDevices] = useState(false)
+  const [devicesError, setDevicesError] = useState<string | null>(null)
   const [selectedRow, setSelectedRow] = useState<PaymentAdminRow | null>(null)
   const [durationDays, setDurationDays] = useState(90)
   const [amount, setAmount] = useState('300')
   const [paymentModeNote, setPaymentModeNote] = useState('')
   const [generatedToken, setGeneratedToken] = useState<string | null>(null)
   const [generatedExpiry, setGeneratedExpiry] = useState<string | null>(null)
-  const [copiedToken, setCopiedToken] = useState(false)
-  const [copiedActivationField, setCopiedActivationField] = useState<string | null>(null)
+  const [copiedSubscriptionField, setCopiedSubscriptionField] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
+  const [tierUpgradeMessage, setTierUpgradeMessage] = useState<string | null>(null)
+  const [tierUpgradeError, setTierUpgradeError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const [isTierPending, startTierTransition] = useTransition()
 
   useEffect(() => {
     setRows(Array.isArray(data?.rows) ? data.rows : [])
@@ -222,6 +219,45 @@ export default function PaymentAdminDashboard({
       },
     )
   }, [data])
+
+  useEffect(() => {
+    if (!deviceOverviewRow) {
+      setFarmDevices([])
+      setDevicesError(null)
+      setIsLoadingDevices(false)
+      return
+    }
+
+    let cancelled = false
+    setIsLoadingDevices(true)
+    setDevicesError(null)
+
+    getDevicesForFarm(deviceOverviewRow.farmId)
+      .then((response) => {
+        if (cancelled) return
+
+        if (!response.success) {
+          setFarmDevices([])
+          setDevicesError('Unable to load connected devices for this farm.')
+          return
+        }
+
+        setFarmDevices(response.devices)
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setFarmDevices([])
+          setDevicesError('Unable to load connected devices for this farm.')
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoadingDevices(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [deviceOverviewRow])
 
   const filteredRows = useMemo(() => {
     const search = query.trim().toLowerCase()
@@ -247,17 +283,19 @@ export default function PaymentAdminDashboard({
     [selectedRow, durationDays],
   )
 
-  function openActivationModal(row: PaymentAdminRow) {
+  function openPaymentModal(row: PaymentAdminRow) {
     const defaultPack = durationPacks.find((pack) => pack.value === 90) ?? durationPacks[0]
+    setDeviceOverviewRow(row)
     setSelectedRow(row)
     setDurationDays(defaultPack.value)
     setAmount(defaultPack.amount)
     setPaymentModeNote('')
     setGeneratedToken(null)
     setGeneratedExpiry(null)
-    setCopiedToken(false)
-    setCopiedActivationField(null)
+    setCopiedSubscriptionField(null)
     setFormError(null)
+    setTierUpgradeMessage(null)
+    setTierUpgradeError(null)
   }
 
   function closeModal() {
@@ -265,9 +303,10 @@ export default function PaymentAdminDashboard({
     setSelectedRow(null)
     setGeneratedToken(null)
     setGeneratedExpiry(null)
-    setCopiedToken(false)
-    setCopiedActivationField(null)
+    setCopiedSubscriptionField(null)
     setFormError(null)
+    setTierUpgradeMessage(null)
+    setTierUpgradeError(null)
   }
 
   function handleDurationChange(value: string) {
@@ -277,18 +316,12 @@ export default function PaymentAdminDashboard({
     if (pack) setAmount(pack.amount)
   }
 
-  async function copyToken(token: string) {
-    await navigator.clipboard.writeText(token)
-    setCopiedToken(true)
-    window.setTimeout(() => setCopiedToken(false), 1800)
-  }
-
-  async function copyActivationField(field: string, value: string | null | undefined) {
+  async function copySubscriptionField(field: string, value: string | null | undefined) {
     if (!value) return
 
     await navigator.clipboard.writeText(value)
-    setCopiedActivationField(field)
-    window.setTimeout(() => setCopiedActivationField(null), 1800)
+    setCopiedSubscriptionField(field)
+    window.setTimeout(() => setCopiedSubscriptionField(null), 1800)
   }
 
   function handleConfirmPayment(event: React.FormEvent<HTMLFormElement>) {
@@ -298,7 +331,8 @@ export default function PaymentAdminDashboard({
     setFormError(null)
     setGeneratedToken(null)
     setGeneratedExpiry(null)
-    setCopiedToken(false)
+    setTierUpgradeMessage(null)
+    setTierUpgradeError(null)
 
     startTransition(async () => {
       const result = await confirmManualLicensePayment({
@@ -353,6 +387,41 @@ export default function PaymentAdminDashboard({
     })
   }
 
+  function handleUpgradeSelectedFarm() {
+    if (!selectedRow || isTierPending) return
+
+    setTierUpgradeMessage(null)
+    setTierUpgradeError(null)
+
+    startTierTransition(async () => {
+      const result = await adminUpgradeFarmTier(selectedRow.farmId, 'STANDARD', durationDays)
+
+      if (!result.success) {
+        setTierUpgradeError(result.error || 'Could not upgrade this farm tier.')
+        return
+      }
+
+      setTierUpgradeMessage('Farm upgraded to Standard. Connected devices are active.')
+      setRows((currentRows) =>
+        currentRows.map((row) =>
+          row.farmId === selectedRow.farmId
+            ? {
+                ...row,
+                licenseStatus: 'PAID',
+                rawStatus: 'ACTIVE',
+                accessValidUntil: generatedExpiry ?? addDays(new Date(), durationDays).toISOString(),
+              }
+            : row,
+        ),
+      )
+
+      const refreshed = await getDevicesForFarm(selectedRow.farmId)
+      if (refreshed.success) setFarmDevices(refreshed.devices)
+
+      router.refresh()
+    })
+  }
+
   return (
     <div className="relative min-h-screen overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_15%,rgba(218,168,70,0.20),transparent_32%),radial-gradient(circle_at_85%_5%,rgba(61,156,132,0.24),transparent_30%),linear-gradient(135deg,#10120c_0%,#171611_42%,#221b0f_100%)]" />
@@ -366,11 +435,11 @@ export default function PaymentAdminDashboard({
               Internal billing ops
             </div>
             <h1 className="mt-4 max-w-4xl text-4xl font-black tracking-[-0.04em] text-[#fff9e8] sm:text-5xl">
-              Payment Management and Offline License Activation
+              Payment Management and Subscription Access
             </h1>
             <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-[#d7ccb0]/100 sm:text-base">
               Track registrations, inspect hardware fingerprints, confirm physical cash or MoMo receipts,
-              and issue deterministic HatchLog activation tokens for desktop installs.
+              and keep farm subscriptions active across connected devices.
             </p>
           </div>
           <div className="flex flex-col justify-between gap-4 rounded-[1.5rem] border border-[#f7f1df]/10 bg-black/25 p-4 lg:min-w-72">
@@ -433,6 +502,61 @@ export default function PaymentAdminDashboard({
           />
         </section>
 
+        <section className="rounded-[2rem] border border-[#f7f1df]/10 bg-[#14150f]/105 p-5 shadow-2xl shadow-black/30 backdrop-blur-2xl lg:p-6">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[0.65rem] font-black uppercase tracking-[0.24em] text-[#d8c78f]/70">
+                Connected Devices Overview
+              </p>
+              <h2 className="mt-2 text-xl font-black tracking-tight text-[#fff9e8]">
+                {deviceOverviewRow ? `Connected devices for ${deviceOverviewRow.farmName}` : 'Select a farm to inspect devices'}
+              </h2>
+            </div>
+            {deviceOverviewRow ? <StatusBadge status={deviceOverviewRow.licenseStatus} /> : null}
+          </div>
+
+          <div className="mt-5 rounded-[1.35rem] border border-[#f7f1df]/10 bg-black/20 p-4">
+            {!deviceOverviewRow ? (
+              <p className="text-sm font-semibold text-[#c5ba9a]/75">
+                Click a farm row or use Record Payment to load its connected desktop and mobile devices.
+              </p>
+            ) : isLoadingDevices ? (
+              <p className="inline-flex items-center gap-2 text-sm font-bold text-[#fff9e8]">
+                <Loader2 className="h-4 w-4 animate-spin text-[#d8c78f]" />
+                Loading connected devices...
+              </p>
+            ) : devicesError ? (
+              <p className="rounded-xl border border-red-300/25 bg-red-300/10 p-3 text-sm font-bold text-red-100">
+                {devicesError}
+              </p>
+            ) : farmDevices.length === 0 ? (
+              <p className="text-sm font-semibold text-[#c5ba9a]/75">Owner hasn&apos;t connected a desktop yet.</p>
+            ) : (
+              <div className="grid gap-3">
+                {farmDevices.map((device) => {
+                  const DeviceIcon = device.deviceType?.toUpperCase() === 'MOBILE' ? Smartphone : Monitor
+                  return (
+                    <div
+                      key={device.id}
+                      className="flex flex-col gap-2 rounded-2xl border border-[#f7f1df]/10 bg-[#f7f1df]/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div className="flex min-w-0 items-center gap-3">
+                        <DeviceIcon className="h-4 w-4 shrink-0 text-[#9bd6c5]" />
+                        <span className="truncate font-[var(--font-payment-admin-mono)] text-sm font-bold text-[#fff9e8]">
+                          {device.hardwareId || device.deviceName || 'Pending hardware fingerprint'}
+                        </span>
+                      </div>
+                      <span className="text-xs font-black uppercase tracking-[0.16em] text-[#d8c78f]/90">
+                        {getDeviceAccessLabel(device)}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </section>
+
         <section className="overflow-hidden rounded-[2rem] border border-[#f7f1df]/10 bg-[#14150f]/105 shadow-2xl shadow-black/30 backdrop-blur-2xl">
           <div className="flex flex-col gap-4 border-b border-[#f7f1df]/10 p-5 lg:flex-row lg:items-center lg:justify-between lg:p-6">
             <div>
@@ -469,7 +593,14 @@ export default function PaymentAdminDashboard({
               </thead>
               <tbody className="divide-y divide-[#f7f1df]/10">
                 {filteredRows.map((row) => (
-                  <tr key={row.id} className="transition hover:bg-[#f7f1df]/5">
+                  <tr
+                    key={row.id}
+                    onClick={() => setDeviceOverviewRow(row)}
+                    className={cn(
+                      'cursor-pointer transition',
+                      deviceOverviewRow?.farmId === row.farmId ? 'bg-[#f7f1df]/7' : 'hover:bg-[#f7f1df]/5',
+                    )}
+                  >
                     <td className="px-5 py-5 align-top">
                       <div className="font-black text-[#fff9e8]">{row.farmName}</div>
                       <div className="mt-1 text-sm font-semibold text-[#c5ba9a]/100">{row.ownerName}</div>
@@ -514,7 +645,7 @@ export default function PaymentAdminDashboard({
                         type="button"
                         variant={row.hardwareId ? 'primary' : 'secondary'}
                         disabled={!row.hardwareId}
-                        onClick={() => openActivationModal(row)}
+                        onClick={() => openPaymentModal(row)}
                         className={cn(
                           'min-w-40',
                           row.hardwareId
@@ -522,8 +653,8 @@ export default function PaymentAdminDashboard({
                             : 'border-[#f7f1df]/10 bg-[#f7f1df]/10 text-[#c5ba9a]',
                         )}
                       >
-                        <KeyRound className="h-4 w-4" />
-                        {row.hardwareId ? 'Activate/Renew' : 'No hardware'}
+                        <Banknote className="h-4 w-4" />
+                        {row.hardwareId ? 'Record Payment' : 'No hardware'}
                       </Button>
                     </td>
                   </tr>
@@ -555,7 +686,7 @@ export default function PaymentAdminDashboard({
               <div>
                 <div className="inline-flex items-center gap-2 rounded-full border border-[#d8c78f]/25 bg-[#d8c78f]/10 px-3 py-1 text-[0.65rem] font-black uppercase tracking-[0.24em] text-[#fff0b8]">
                   <ClipboardCopy className="h-3.5 w-3.5" />
-                  Manual activation
+                  Manual payment
                 </div>
                 <h3 className="mt-3 text-2xl font-black tracking-tight text-[#fff9e8]">{selectedRow.farmName}</h3>
                 <p className="mt-1 text-sm font-semibold text-[#c5ba9a]/100">
@@ -567,7 +698,7 @@ export default function PaymentAdminDashboard({
                 onClick={closeModal}
                 disabled={isPending}
                 className="rounded-full border border-[#f7f1df]/10 bg-[#f7f1df]/10 p-2 text-[#fff9e8] transition hover:bg-[#f7f1df]/20 disabled:opacity-50"
-                aria-label="Close activation modal"
+                aria-label="Close payment modal"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -579,7 +710,7 @@ export default function PaymentAdminDashboard({
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="text-[0.65rem] font-black uppercase tracking-[0.22em] text-[#d8c78f]/90">
-                        Farm ID for activation
+                        Farm ID for subscription
                       </p>
                       <p className="mt-2 break-all font-[var(--font-payment-admin-mono)] text-sm font-black leading-6 text-[#fff9e8]">
                         {selectedRow.farmId}
@@ -587,12 +718,12 @@ export default function PaymentAdminDashboard({
                     </div>
                     <button
                       type="button"
-                      onClick={() => copyActivationField('farmId', selectedRow.farmId)}
+                      onClick={() => copySubscriptionField('farmId', selectedRow.farmId)}
                       className="rounded-xl border border-[#f7f1df]/10 bg-[#f7f1df]/10 p-2 text-[#fff9e8] transition hover:bg-[#f7f1df]/20"
                       aria-label="Copy farm ID"
                       title="Copy farm ID"
                     >
-                      {copiedActivationField === 'farmId' ? (
+                      {copiedSubscriptionField === 'farmId' ? (
                         <CheckCircle2 className="h-4 w-4 text-emerald-200" />
                       ) : (
                         <Copy className="h-4 w-4" />
@@ -600,7 +731,7 @@ export default function PaymentAdminDashboard({
                     </button>
                   </div>
                   <p className="mt-3 text-xs font-semibold text-[#c5ba9a]/80">
-                    Send this with the license token to bind the farmer&apos;s desktop app to the right farm.
+                    Internal farm identifier for support, billing, and subscription records.
                   </p>
                 </div>
 
@@ -616,12 +747,12 @@ export default function PaymentAdminDashboard({
                     </div>
                     <button
                       type="button"
-                      onClick={() => copyActivationField('hardwareId', selectedRow.hardwareId)}
+                      onClick={() => copySubscriptionField('hardwareId', selectedRow.hardwareId)}
                       className="rounded-xl border border-[#f7f1df]/10 bg-[#f7f1df]/10 p-2 text-[#fff9e8] transition hover:bg-[#f7f1df]/20"
                       aria-label="Copy hardware fingerprint"
                       title="Copy hardware fingerprint"
                     >
-                      {copiedActivationField === 'hardwareId' ? (
+                      {copiedSubscriptionField === 'hardwareId' ? (
                         <CheckCircle2 className="h-4 w-4 text-emerald-200" />
                       ) : (
                         <Copy className="h-4 w-4" />
@@ -686,7 +817,7 @@ export default function PaymentAdminDashboard({
                   </p>
                   <p className="mt-2 text-lg font-black text-[#fff9e8]">{formatDate(expectedExpiry.toISOString())}</p>
                   <p className="mt-1 text-xs font-semibold text-[#c5ba9a]/70">
-                    Deterministic token is bound to this date and hardware ID.
+                    Connected devices inherit access from the farm subscription.
                   </p>
                 </div>
               </div>
@@ -699,12 +830,26 @@ export default function PaymentAdminDashboard({
               )}
 
               {generatedToken && (
-                <TokenPanel
-                  token={generatedToken}
-                  expiresAt={generatedExpiry}
-                  copied={copiedToken}
-                  onCopy={() => copyToken(generatedToken)}
-                />
+                <div className="rounded-[1.35rem] border border-emerald-300/25 bg-emerald-300/10 p-4">
+                  <p className="inline-flex items-center gap-2 text-sm font-black text-emerald-50">
+                    Payment recorded. <CheckCircle2 className="h-4 w-4" />
+                  </p>
+                  <p className="mt-2 text-xs font-semibold text-emerald-100/70">
+                    Access valid until {formatDate(generatedExpiry)}.
+                  </p>
+                </div>
+              )}
+
+              {tierUpgradeMessage && (
+                <div className="rounded-[1.25rem] border border-emerald-300/25 bg-emerald-300/10 p-4 text-sm font-bold text-emerald-100">
+                  {tierUpgradeMessage}
+                </div>
+              )}
+
+              {tierUpgradeError && (
+                <div className="rounded-[1.25rem] border border-red-300/25 bg-red-300/10 p-4 text-sm font-bold text-red-100">
+                  {tierUpgradeError}
+                </div>
               )}
 
               <div className="flex flex-col-reverse gap-3 border-t border-[#f7f1df]/10 pt-5 sm:flex-row sm:justify-end">
@@ -712,21 +857,34 @@ export default function PaymentAdminDashboard({
                   type="button"
                   variant="secondary"
                   onClick={closeModal}
-                  disabled={isPending}
+                  disabled={isPending || isTierPending}
                   className="border-[#f7f1df]/10 bg-[#f7f1df]/10 text-[#fff9e8] hover:bg-[#f7f1df]/15"
                 >
                   {generatedToken ? 'Close' : 'Cancel'}
                 </Button>
-                <Button
-                  type="submit"
-                  isLoading={isPending}
-                  loadingText="Confirming..."
-                  disabled={isPending || !selectedRow.hardwareId}
-                  className="bg-gradient-to-r from-[#d9a441] to-[#2f9f83] text-[#11140d] shadow-[#d9a441]/20"
-                >
-                  {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Banknote className="h-4 w-4" />}
-                  Confirm Cash Payment
-                </Button>
+                {generatedToken ? (
+                  <Button
+                    type="button"
+                    onClick={handleUpgradeSelectedFarm}
+                    isLoading={isTierPending}
+                    loadingText="Upgrading..."
+                    disabled={isTierPending}
+                    className="bg-gradient-to-r from-[#d9a441] to-[#2f9f83] text-[#11140d] shadow-[#d9a441]/20"
+                  >
+                    Also Upgrade to Standard <ArrowRight className="h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    isLoading={isPending}
+                    loadingText="Confirming..."
+                    disabled={isPending || !selectedRow.hardwareId}
+                    className="bg-gradient-to-r from-[#d9a441] to-[#2f9f83] text-[#11140d] shadow-[#d9a441]/20"
+                  >
+                    {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Banknote className="h-4 w-4" />}
+                    Confirm Cash Payment
+                  </Button>
+                )}
               </div>
             </form>
           </div>

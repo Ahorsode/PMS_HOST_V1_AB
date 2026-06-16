@@ -158,7 +158,7 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
     { id: 'notifications', label: 'Reminders', icon: Bell },
     { id: 'preferences', label: 'Stock Levels', icon: SettingsIcon },
     { id: 'security', label: 'Security', icon: Shield },
-    { id: 'desktop-licenses', label: 'Desktop Licenses', icon: Monitor },
+    { id: 'desktop-licenses', label: 'Connected Devices', icon: Monitor },
   ].filter((tab) => SHOW_USER_DESKTOP_LICENSES || tab.id !== 'desktop-licenses');
 
   return (

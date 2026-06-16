@@ -8,6 +8,8 @@ function serializeLicense(registration: {
   farmId: string;
   status: string;
   hardwareId: string | null;
+  deviceName: string | null;
+  deviceType: string | null;
   licenseExpiresAt: Date | null;
   lastSync: Date | null;
 }) {
@@ -16,6 +18,8 @@ function serializeLicense(registration: {
     farmId: registration.farmId,
     status: registration.status,
     hardwareId: registration.hardwareId,
+    deviceName: registration.deviceName,
+    deviceType: registration.deviceType,
     licenseExpiresAt: registration.licenseExpiresAt?.toISOString() ?? null,
     lastSync: registration.lastSync?.toISOString() ?? null,
   };
@@ -37,6 +41,8 @@ export async function getDesktopLicenses() {
       farmId: true,
       status: true,
       hardwareId: true,
+      deviceName: true,
+      deviceType: true,
       licenseExpiresAt: true,
       lastSync: true,
     },

@@ -27,6 +27,7 @@ export type AdminLicenseAccountOption = {
   userId: string
   farmId: string
   farmName: string
+  subscriptionTier: string
   ownerName: string
   ownerEmail: string | null
   ownerPhone: string | null
@@ -39,6 +40,7 @@ export async function getAdminLicenseAccountOptions() {
     select: {
       id: true,
       name: true,
+      subscriptionTier: true,
       user: {
         select: {
           id: true,
@@ -60,6 +62,7 @@ export async function getAdminLicenseAccountOptions() {
       userId: farm.user.id,
       farmId: farm.id,
       farmName: farm.name,
+      subscriptionTier: farm.subscriptionTier,
       ownerName,
       ownerEmail: farm.user.email,
       ownerPhone: farm.user.phoneNumber,
