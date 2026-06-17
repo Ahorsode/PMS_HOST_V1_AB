@@ -582,7 +582,7 @@ export function FinanceHubClient({
                       </td>
                       {canEdit && (
                         <td className="py-4 px-6 text-center">
-                          <div className="flex items-center justify-center gap-2 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex items-center justify-center gap-2">
                             {tx.paymentStatus !== 'PAID' && (
                               <button
                                 onClick={() => {

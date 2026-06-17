@@ -282,7 +282,7 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
                           <button 
                             onClick={() => setPermissionTarget(member)}
                             title="Edit granular permissions"
-                            className="p-2.5 text-blue-400 hover:bg-blue-500/10 rounded-md transition-all opacity-0 group-hover:opacity-100 border border-transparent hover:border-blue-500/20"
+                            className="p-2.5 text-blue-400 hover:bg-blue-500/10 rounded-md transition-all border border-transparent hover:border-blue-500/20"
                           >
                             <Settings className="w-5 h-5" />
                           </button>
@@ -290,7 +290,7 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
                         {canEdit && (currentUserRole === 'OWNER' || currentUserRole === 'MANAGER') && (member.role !== 'OWNER') && (
                           <button 
                             onClick={() => setDeleteTarget({ id: member.id, type: 'member' })}
-                            className="p-2.5 text-white/20 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-all opacity-0 group-hover:opacity-100 border border-transparent hover:border-red-500/20"
+                            className="p-2.5 text-red-400 hover:bg-red-500/10 rounded-md transition-all border border-transparent hover:border-red-500/20"
                           >
                             <Trash2 className="w-5 h-5" />
                           </button>
@@ -355,7 +355,7 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
                                 toast.error('Could not load pending invite permissions');
                               }
                             }}
-                            className="p-2 text-white/20 hover:text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                            className="p-2 text-blue-400 hover:bg-blue-500/10 rounded-lg transition-all"
                             title="Edit access control"
                           >
                             <Settings className="w-4 h-4" />
@@ -364,7 +364,7 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
                         {canEdit && (currentUserRole === 'OWNER' || currentUserRole === 'MANAGER') && (
                           <button 
                             onClick={() => setDeleteTarget({ id: invite.id, type: 'invite' })}
-                            className="p-2 text-white/20 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                            className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
