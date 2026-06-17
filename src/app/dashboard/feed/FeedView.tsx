@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { 
@@ -18,7 +18,7 @@ import { getAllFeedFormulations, getConsumptionEfficiency } from '@/lib/actions/
 import { getAllInventory } from '@/lib/actions/inventory-actions'
 import { getAllBatches } from '@/lib/actions/dashboard-actions'
 
-export default function FeedDashboard({ canEdit = true }: { canEdit?: boolean }) {
+export default function FeedDashboard({ canEdit = true, openLogOnLoad = false }: { canEdit?: boolean; openLogOnLoad?: boolean }) {
   const [formulations, setFormulations] = useState<any[]>([])
   const [efficiency, setEfficiency] = useState<any[]>([])
   const [inventory, setInventory] = useState<any[]>([])
@@ -27,10 +27,19 @@ export default function FeedDashboard({ canEdit = true }: { canEdit?: boolean })
   const [showLogForm, setShowLogForm] = useState(false)
   const [selectedFormulation, setSelectedFormulation] = useState<number | undefined>(undefined)
   const [loading, setLoading] = useState(true)
+  const openedInitialLog = useRef(false)
 
   useEffect(() => {
     loadData()
   }, [])
+
+  useEffect(() => {
+    if (!openLogOnLoad || !canEdit || loading || openedInitialLog.current) return
+
+    openedInitialLog.current = true
+    setSelectedFormulation(undefined)
+    setShowLogForm(true)
+  }, [canEdit, loading, openLogOnLoad])
 
   const loadData = async () => {
     setLoading(true)

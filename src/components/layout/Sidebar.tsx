@@ -11,6 +11,7 @@ import {
   LogOut, Wallet, Crown, ShieldCheck, BarChart3, Truck, Trash2, FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { canShowNavigationItem } from '@/lib/navigation-permissions';
 
 export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permissions?: any }) => {
   const pathname = usePathname();
@@ -71,54 +72,12 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
         <nav className="flex-1 px-3 space-y-7 overflow-y-auto custom-scrollbar overflow-x-hidden">
           {categories.map((category) => {
             const visibleItems = category.items.filter(item => {
-              const permissionMap: Record<string, string[]> = {
-                'Finance Control': ['canViewFinance', 'canEditFinance'],
-                'Reports': ['canViewFinance', 'canEditFinance'],
-                'Livestock': ['canViewBatches', 'canEditBatches'],
-                'Analytics': ['canViewBatches', 'canEditBatches'],
-                'Inventory': ['canViewInventory', 'canEditInventory'],
-                'Sales': ['canViewSales', 'canEditSales'],
-                'Eggs': ['canViewEggs', 'canEditEggs'],
-                'Feeding': ['canViewFeeding', 'canEditFeeding'],
-                'Houses': ['canViewHouses', 'canEditHouses'],
-                'Mortality': ['canViewMortality', 'canEditMortality'],
-                'Quarantine': ['canViewMortality', 'canEditMortality'],
-                'Customers': ['canViewCustomers', 'canEditCustomers'],
-                'Suppliers': ['canViewCustomers', 'canEditCustomers'],
-                'Team Management': ['canViewTeam', 'canEditTeam'],
-                'Settings': ['canViewSettings', 'canEditSettings']
-              };
-
-              // 1. Owner bypass (Absolute Creator)
-              if (role === 'OWNER') return true;
-
-              // 2. Explicit Permission Overrides
-              if (permissions) {
-                const keys = permissionMap[item.name];
-                if (keys) {
-                  // If we have explicit permission overrides for this module, use them
-                  return keys.some(k => !!permissions[k]);
-                }
-              }
-
-              // 3. Role-based bypass (MANAGER/WORKER default behaviors)
-              if (role === 'MANAGER') return true;
-              
-              // 4. Role-based membership check
-              if (!item.roles.includes(role)) return false;
-
-              // 5. Role-specific Fallbacks (Accountant/Finance/Cashier)
-              if (role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER') {
-                return item.name === 'Finance Control' || item.name === 'Reports' || item.name === 'Dashboard';
-              }
-              if (role === 'CASHIER') {
-                return item.name === 'Finance Control' || item.name === 'Sales' || item.name === 'Dashboard';
-              }
-
-              // Workers only see unmapped items, such as Dashboard, without explicit permissions.
-              if (role === 'WORKER') return !permissionMap[item.name];
-
-              return false;
+              return canShowNavigationItem({
+                name: item.name,
+                role,
+                roles: item.roles,
+                permissions,
+              });
             });
 
             if (visibleItems.length === 0) return null;

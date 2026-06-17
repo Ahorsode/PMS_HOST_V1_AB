@@ -6,13 +6,15 @@ import { formatDate } from '@/lib/utils';
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
 import { redirect } from 'next/navigation';
 
-export default async function EggsPage() {
+export default async function EggsPage({ searchParams }: { searchParams: Promise<{ quick?: string }> }) {
   const hasAccess = await checkWorkerPermissions('eggs', 'view');
   const canEdit = await checkWorkerPermissions('eggs', 'edit');
 
   if (!hasAccess) {
     redirect('/dashboard/unauthorized');
   }
+
+  const resolvedParams = await searchParams;
 
   const [batches, productionHistory] = await Promise.all([
     getAllBatches(),
@@ -41,7 +43,7 @@ export default async function EggsPage() {
           <h2 className="text-3xl font-extrabold text-gray-900 tracking-normal">Egg Production</h2>
           <p className="text-gray-500 mt-1">Track daily egg yields across your layer flocks.</p>
         </div>
-        <EggActionsHeader batches={layerBatches} canEdit={canEdit} />
+        <EggActionsHeader batches={layerBatches} canEdit={canEdit} initialOpen={resolvedParams.quick === 'log'} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">

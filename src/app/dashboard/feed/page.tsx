@@ -3,7 +3,7 @@ import FeedDashboard from './FeedView';
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
 import { redirect } from 'next/navigation';
 
-export default async function FeedPage() {
+export default async function FeedPage({ searchParams }: { searchParams: Promise<{ quick?: string }> }) {
   const hasAccess = await checkWorkerPermissions('feeding', 'view');
   const canEdit = await checkWorkerPermissions('feeding', 'edit');
 
@@ -11,5 +11,7 @@ export default async function FeedPage() {
     redirect('/dashboard/unauthorized');
   }
 
-  return <FeedDashboard canEdit={canEdit} />;
+  const resolvedParams = await searchParams;
+
+  return <FeedDashboard canEdit={canEdit} openLogOnLoad={resolvedParams.quick === 'log'} />;
 }

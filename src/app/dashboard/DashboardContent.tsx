@@ -138,7 +138,7 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
   }
 
   if (role === 'WORKER' || role === 'CASHIER') {
-    return <WorkerDashboard stats={stats} houses={houses} />;
+    return <WorkerDashboard stats={stats} houses={houses} permissions={permissions} />;
   }
 
   if (role === 'OWNER' && subscriptionTier === 'PREMIUM') {

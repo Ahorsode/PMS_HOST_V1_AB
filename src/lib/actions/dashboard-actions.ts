@@ -407,7 +407,7 @@ export async function logFeeding(data: {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
 
-  const hasAccess = await checkWorkerPermissions('inventory', 'edit')
+  const hasAccess = await checkWorkerPermissions('feeding', 'edit')
   if (!hasAccess) throw new Error('Unauthorized')
 
   const limitResult = await checkRateLimit({
@@ -590,7 +590,11 @@ export async function logProduction(data: {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
 
-  const hasAccess = await checkWorkerPermissions('batches', 'edit')
+  const canLogEggs = data.eggsCollected > 0 || data.damagedEggs > 0
+  const canLogMortality = data.mortalityCount > 0
+  const hasEggAccess = !canLogEggs || (await checkWorkerPermissions('eggs', 'edit'))
+  const hasMortalityAccess = !canLogMortality || (await checkWorkerPermissions('mortality', 'edit'))
+  const hasAccess = hasEggAccess && hasMortalityAccess
   if (!hasAccess) throw new Error('Unauthorized')
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {

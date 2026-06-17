@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import { LayoutDashboard, PawPrint, XCircle, User, Egg, ThermometerSun, Banknote, Wheat, Wallet, Users, Settings, Crown, LogOut, ShieldCheck, BarChart3, Activity, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { signOut } from 'next-auth/react';
+import { canShowNavigationItem } from '@/lib/navigation-permissions';
 
 export const BottomNav = ({ role = 'OWNER', permissions }: { role?: string, permissions?: any }) => {
   const pathname = usePathname();
@@ -32,52 +33,12 @@ export const BottomNav = ({ role = 'OWNER', permissions }: { role?: string, perm
     { name: 'Settings', icon: Settings, href: '/dashboard/settings', roles: ['OWNER', 'MANAGER'] },
   ];
 
-  const navItems = allNavItems.filter(item => {
-    const permissionMap: Record<string, string[]> = {
-      'Finance Hub': ['canViewFinance', 'canEditFinance'],
-      'Reports': ['canViewFinance', 'canEditFinance'],
-      'Sales': ['canViewSales', 'canEditSales'],
-      'Livestock': ['canViewBatches', 'canEditBatches'],
-      'Analytics': ['canViewBatches', 'canEditBatches'],
-      'Inventory': ['canViewInventory', 'canEditInventory'],
-      'Eggs': ['canViewEggs', 'canEditEggs'],
-      'Feeding': ['canViewFeeding', 'canEditFeeding'],
-      'Houses': ['canViewHouses', 'canEditHouses'],
-      'Mortality': ['canViewMortality', 'canEditMortality'],
-      'Quarantine': ['canViewMortality', 'canEditMortality'],
-      'Customers': ['canViewCustomers', 'canEditCustomers'],
-      'Team': ['canViewTeam', 'canEditTeam'],
-      'Settings': ['canViewSettings', 'canEditSettings']
-    };
-
-    // 1. Owner bypass (Absolute Creator)
-    if (role === 'OWNER') return true;
-
-    // 2. Explicit Permission Overrides
-    if (permissions) {
-      const keys = permissionMap[item.name];
-      if (keys) {
-        return keys.some(k => !!permissions[k]);
-      }
-    }
-
-    // 3. Role-based bypass (MANAGER default behavior)
-    if (role === 'MANAGER') return true;
-
-    // 4. Role-based membership check
-    if (!item.roles.includes(role)) return false;
-
-    // 5. Role-specific Fallbacks (Accountant/Finance/Cashier)
-    if (role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER') {
-        const allowedForAccountant = ['Dashboard', 'Sales', 'Customers', 'Finance Hub', 'Reports', 'My Profile'];
-        return allowedForAccountant.includes(item.name);
-    }
-    
-    // Workers only see unmapped items, such as Dashboard/Profile, without explicit permissions.
-    if (role === 'WORKER') return !permissionMap[item.name];
-
-    return false;
-  });
+  const navItems = allNavItems.filter(item => canShowNavigationItem({
+    name: item.name,
+    role,
+    roles: item.roles,
+    permissions,
+  }));
 
   return (
     <motion.div

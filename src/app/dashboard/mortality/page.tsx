@@ -64,7 +64,7 @@ export default async function MortalityPage() {
 
       {/* Quick Logger */}
       {canEdit && (
-        <div className="bg-[#111827] p-6 rounded-xl shadow-xl border border-gray-800">
+        <div id="quick-logger" className="scroll-mt-6 bg-[#111827] p-6 rounded-xl shadow-xl border border-gray-800">
           <QuickMortalityLogger activeBatches={activeBatches} isolationRooms={[]} defaultType="DEAD" />
         </div>
       )}

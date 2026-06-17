@@ -180,7 +180,7 @@ export async function logHealthEvent(data: {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
-  const hasEditAccess = await checkWorkerPermissions('batches', 'edit')
+  const hasEditAccess = await checkWorkerPermissions('mortality', 'edit')
   if (!hasEditAccess) return { success: false, error: 'Unauthorized' }
 
   const limitResult = await checkRateLimit({ policy: 'production.write', scope: 'logHealthEvent', farmId: activeFarmId, userId })
@@ -239,7 +239,7 @@ export async function transferToIsolation(id: string, count: number) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
-  const hasEditAccess = await checkWorkerPermissions('batches', 'edit')
+  const hasEditAccess = await checkWorkerPermissions('mortality', 'edit')
   if (!hasEditAccess) return { success: false, error: 'Unauthorized' }
 
   const limitResult = await checkRateLimit({ policy: 'production.write', scope: 'transferToIsolation', farmId: activeFarmId, userId })

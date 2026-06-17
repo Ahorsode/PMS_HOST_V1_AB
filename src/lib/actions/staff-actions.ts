@@ -786,36 +786,25 @@ export async function checkWorkerPermissions(
     if (isFarmOwner) return true
     if (!role) return false
     
-    // Role-based defaults for privileged roles (not overrideable by UserPermission)
+    // Owner/manager bypass. Other staff roles are controlled by UserPermission.
     if (role === 'MANAGER') return true
-    
-    if (role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER') {
-      return module === 'finance' || module === 'sales' || module === 'customers'
-    }
-    
-    if (role === 'CASHIER') {
-      return module === 'finance' || module === 'sales'
-    }
-    
-    // WORKER: apply granular UserPermission overrides if they exist
-    if (role === 'WORKER') {
-      if (permissions) {
-        if (module === 'finance')    return action === 'view' ? permissions.canViewFinance    : permissions.canEditFinance
-        if (module === 'inventory')  return action === 'view' ? permissions.canViewInventory  : permissions.canEditInventory
-        if (module === 'batches')    return action === 'view' ? permissions.canViewBatches    : permissions.canEditBatches
-        if (module === 'sales')      return action === 'view' ? permissions.canViewSales      : permissions.canEditSales
-        if (module === 'eggs')       return action === 'view' ? permissions.canViewEggs       : permissions.canEditEggs
-        if (module === 'feeding')    return action === 'view' ? permissions.canViewFeeding    : permissions.canEditFeeding
-        if (module === 'houses')     return action === 'view' ? permissions.canViewHouses     : permissions.canEditHouses
-        if (module === 'mortality')  return action === 'view' ? permissions.canViewMortality  : permissions.canEditMortality
-        if (module === 'customers')  return action === 'view' ? permissions.canViewCustomers  : permissions.canEditCustomers
-        if (module === 'team')       return action === 'view' ? permissions.canViewTeam       : permissions.canEditTeam
-      }
-      // Worker with no explicit permissions cannot access protected modules.
-      return false
-    }
-    
-    return false
+
+    const permissionMap = {
+      finance: ['canViewFinance', 'canEditFinance'],
+      inventory: ['canViewInventory', 'canEditInventory'],
+      batches: ['canViewBatches', 'canEditBatches'],
+      sales: ['canViewSales', 'canEditSales'],
+      eggs: ['canViewEggs', 'canEditEggs'],
+      feeding: ['canViewFeeding', 'canEditFeeding'],
+      houses: ['canViewHouses', 'canEditHouses'],
+      mortality: ['canViewMortality', 'canEditMortality'],
+      customers: ['canViewCustomers', 'canEditCustomers'],
+      team: ['canViewTeam', 'canEditTeam'],
+    } as const
+
+    const [viewKey, editKey] = permissionMap[module]
+    if (action === 'view') return !!permissions?.[viewKey] || !!permissions?.[editKey]
+    return !!permissions?.[editKey]
   } catch (error) {
     console.error('Permission check failure:', error)
     return false

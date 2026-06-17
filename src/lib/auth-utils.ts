@@ -85,43 +85,43 @@ export function hasPermission(role: string, permissions: any, action: string): b
 
   switch (action) {
     case 'VIEW_FINANCE':
-      return role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER' || !!permissions?.canViewFinance;
+      return !!permissions?.canViewFinance || !!permissions?.canEditFinance;
     case 'EDIT_FINANCE':
-      return role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER' || !!permissions?.canEditFinance;
+      return !!permissions?.canEditFinance;
     case 'VIEW_INVENTORY':
-      return role === 'MANAGER' || role === 'WORKER' || !!permissions?.canViewInventory;
+      return !!permissions?.canViewInventory || !!permissions?.canEditInventory;
     case 'EDIT_INVENTORY':
-      return role === 'MANAGER' || role === 'WORKER' || !!permissions?.canEditInventory;
+      return !!permissions?.canEditInventory;
     case 'VIEW_BATCHES':
-      return true; // Everyone can see livestock?
+      return !!permissions?.canViewBatches || !!permissions?.canEditBatches;
     case 'EDIT_BATCHES':
-      return role === 'MANAGER' || role === 'WORKER' || !!permissions?.canEditBatches;
+      return !!permissions?.canEditBatches;
     case 'VIEW_SALES':
-      return role === 'CASHIER' || role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER' || !!permissions?.canViewSales;
+      return !!permissions?.canViewSales || !!permissions?.canEditSales;
     case 'EDIT_SALES':
-      return role === 'CASHIER' || role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER' || !!permissions?.canEditSales;
+      return !!permissions?.canEditSales;
     case 'VIEW_CUSTOMERS':
-      return role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER' || role === 'CASHIER' || !!permissions?.canViewCustomers;
+      return !!permissions?.canViewCustomers || !!permissions?.canEditCustomers;
     case 'EDIT_CUSTOMERS':
-      return role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER' || !!permissions?.canEditCustomers;
+      return !!permissions?.canEditCustomers;
     case 'VIEW_EGGS':
-      return !!permissions?.canViewEggs;
+      return !!permissions?.canViewEggs || !!permissions?.canEditEggs;
     case 'EDIT_EGGS':
       return !!permissions?.canEditEggs;
     case 'VIEW_FEEDING':
-      return !!permissions?.canViewFeeding;
+      return !!permissions?.canViewFeeding || !!permissions?.canEditFeeding;
     case 'EDIT_FEEDING':
       return !!permissions?.canEditFeeding;
     case 'VIEW_HOUSES':
-      return !!permissions?.canViewHouses;
+      return !!permissions?.canViewHouses || !!permissions?.canEditHouses;
     case 'EDIT_HOUSES':
       return !!permissions?.canEditHouses;
     case 'VIEW_MORTALITY':
-      return !!permissions?.canViewMortality;
+      return !!permissions?.canViewMortality || !!permissions?.canEditMortality;
     case 'EDIT_MORTALITY':
       return !!permissions?.canEditMortality;
     case 'VIEW_TEAM':
-      return !!permissions?.canViewTeam;
+      return !!permissions?.canViewTeam || !!permissions?.canEditTeam;
     case 'EDIT_TEAM':
       return !!permissions?.canEditTeam;
     default:

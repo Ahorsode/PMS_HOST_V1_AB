@@ -9,8 +9,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { DeleteConfirmationModal } from '@/components/modals/DeleteConfirmationModal';
 
-export const EggActionsHeader = ({ batches, canEdit = true }: { batches: any[], canEdit?: boolean }) => {
-  const [isOpen, setIsOpen] = useState(false);
+export const EggActionsHeader = ({ batches, canEdit = true, initialOpen = false }: { batches: any[], canEdit?: boolean, initialOpen?: boolean }) => {
+  const [isOpen, setIsOpen] = useState(initialOpen && canEdit);
 
   return (
     <>

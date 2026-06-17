@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Bird, Wheat, Skull, Activity, Plus, Package, Syringe, Clock } from 'lucide-react';
 import { HealthBadge } from '@/components/ui/HealthBadge';
@@ -10,11 +11,46 @@ import { getBreedDisplayName } from '@/lib/livestock-breed-options';
 interface WorkerDashboardProps {
   stats: any;
   houses: any[];
+  permissions?: any;
 }
 
-export function WorkerDashboard({ stats, houses }: WorkerDashboardProps) {
+export function WorkerDashboard({ stats, houses, permissions }: WorkerDashboardProps) {
   const alerts = stats.alerts || [];
   const lowFeed = stats.lowFeedItems || [];
+  const quickActions = [
+    {
+      label: 'Log Feed',
+      href: '/dashboard/feed?quick=log',
+      canShow: !!permissions?.canEditFeeding,
+      className: 'bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/20',
+      iconClassName: 'bg-emerald-500/20',
+      icon: <Wheat className="w-6 h-6 text-emerald-400" />,
+    },
+    {
+      label: 'Log Eggs',
+      href: '/dashboard/eggs?quick=log',
+      canShow: !!permissions?.canEditEggs,
+      className: 'bg-blue-500/10 border-blue-500/20 hover:bg-blue-500/20',
+      iconClassName: 'bg-blue-500/20',
+      icon: <Package className="w-6 h-6 text-blue-400" />,
+    },
+    {
+      label: 'Mortality',
+      href: '/dashboard/mortality#quick-logger',
+      canShow: !!permissions?.canEditMortality,
+      className: 'bg-red-500/10 border-red-500/20 hover:bg-red-500/20',
+      iconClassName: 'bg-red-500/20',
+      icon: <Skull className="w-6 h-6 text-red-500" />,
+    },
+    {
+      label: 'Medical',
+      href: '/dashboard/quarantine#quick-logger',
+      canShow: !!permissions?.canEditMortality,
+      className: 'bg-purple-500/10 border-purple-500/20 hover:bg-purple-500/20',
+      iconClassName: 'bg-purple-500/20',
+      icon: <Syringe className="w-6 h-6 text-purple-400" />,
+    },
+  ].filter((action) => action.canShow);
 
   return (
     <div className="space-y-7 pb-11">
@@ -25,33 +61,22 @@ export function WorkerDashboard({ stats, houses }: WorkerDashboardProps) {
         </p>
       </header>
 
-      {/* Primary Task Actions (Large Buttons for easy tapping) */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-         <button className="flex flex-col items-center justify-center gap-2 h-40 bg-emerald-500/10 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/20 transition-all duration-300 group">
-            <div className="w-12 h-12 bg-emerald-500/20 rounded-md flex items-center justify-center group-hover:scale-110 transition-transform">
-               <Wheat className="w-6 h-6 text-emerald-400" />
-            </div>
-            <span className="text-white font-bold text-xs uppercase tracking-widest">Log Feed</span>
-         </button>
-         <button className="flex flex-col items-center justify-center gap-2 h-40 bg-blue-500/10 border border-blue-500/20 rounded-lg hover:bg-blue-500/20 transition-all duration-300 group">
-            <div className="w-12 h-12 bg-blue-500/20 rounded-md flex items-center justify-center group-hover:scale-110 transition-transform">
-               <Package className="w-6 h-6 text-blue-400" />
-            </div>
-            <span className="text-white font-bold text-xs uppercase tracking-widest">Log Eggs</span>
-         </button>
-         <button className="flex flex-col items-center justify-center gap-2 h-40 bg-red-500/10 border border-red-500/20 rounded-lg hover:bg-red-500/20 transition-all duration-300 group">
-            <div className="w-12 h-12 bg-red-500/20 rounded-md flex items-center justify-center group-hover:scale-110 transition-transform">
-               <Skull className="w-6 h-6 text-red-500" />
-            </div>
-            <span className="text-white font-bold text-xs uppercase tracking-widest">Mortality</span>
-         </button>
-         <button className="flex flex-col items-center justify-center gap-2 h-40 bg-purple-500/10 border border-purple-500/20 rounded-lg hover:bg-purple-500/20 transition-all duration-300 group">
-            <div className="w-12 h-12 bg-purple-500/20 rounded-md flex items-center justify-center group-hover:scale-110 transition-transform">
-               <Syringe className="w-6 h-6 text-purple-400" />
-            </div>
-            <span className="text-white font-bold text-xs uppercase tracking-widest">Medical</span>
-         </button>
-      </div>
+      {quickActions.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {quickActions.map((action) => (
+            <Link
+              key={action.label}
+              href={action.href}
+              className={`flex flex-col items-center justify-center gap-2 h-40 border rounded-lg transition-all duration-300 group ${action.className}`}
+            >
+              <div className={`w-12 h-12 rounded-md flex items-center justify-center group-hover:scale-110 transition-transform ${action.iconClassName}`}>
+                {action.icon}
+              </div>
+              <span className="text-white font-bold text-xs uppercase tracking-widest">{action.label}</span>
+            </Link>
+          ))}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-7">
         {/* Urgent Attention / Alerts */}

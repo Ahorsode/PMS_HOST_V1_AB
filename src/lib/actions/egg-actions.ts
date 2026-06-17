@@ -23,8 +23,8 @@ export async function createEggProduction(data: {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
-  const hasEditAccess = await checkWorkerPermissions('batches', 'edit')
-  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Batches Permission' }
+  const hasEditAccess = await checkWorkerPermissions('eggs', 'edit')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Egg Production Permission' }
 
   const limitResult = await checkRateLimit({
     policy: 'production.write',
@@ -143,8 +143,8 @@ export async function updateEggProduction(id: string, data: {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
-  const hasEditAccess = await checkWorkerPermissions('batches', 'edit')
-  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Batches Permission' }
+  const hasEditAccess = await checkWorkerPermissions('eggs', 'edit')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Egg Production Permission' }
 
   const limitResult = await checkRateLimit({
     policy: 'production.write',
@@ -177,8 +177,8 @@ export async function deleteEggProduction(id: string, reason: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
-  const hasEditAccess = await checkWorkerPermissions('batches', 'edit')
-  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Batches Permission' }
+  const hasEditAccess = await checkWorkerPermissions('eggs', 'edit')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Egg Production Permission' }
 
   if (!reason || reason.trim().length < 5) return { success: false, error: 'A valid reason is required for deletion' }
 
