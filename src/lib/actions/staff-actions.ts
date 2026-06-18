@@ -8,6 +8,7 @@ import { Role } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 import { randomBytes } from 'crypto'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
+import { setCachedSessionVersion } from '@/lib/performance/session-version-cache'
 
 type StaffRole = 'OWNER' | 'MANAGER' | 'WORKER' | 'ACCOUNTANT' | 'FINANCE_OFFICER' | 'CASHIER'
 
@@ -757,6 +758,18 @@ export async function updateWorkerPermissions(
 
       return { success: true, permissions: updatedPerm }
     })
+
+    // Immediately push the new sessionVersion into the Redis cache.
+    // Without this, the JWT callback short-circuits on the cached (stale)
+    // version and never detects the revocation - the worker keeps their
+    // old sidebar permissions until the 30-second TTL expires.
+    const refreshed = await prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: { sessionVersion: true },
+    })
+    if (refreshed?.sessionVersion != null) {
+      await setCachedSessionVersion(targetUserId, refreshed.sessionVersion)
+    }
 
     revalidatePath('/dashboard', 'layout')
     revalidatePath('/dashboard/team')
