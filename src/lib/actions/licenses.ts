@@ -12,7 +12,21 @@ function serializeLicense(registration: {
   deviceType: string | null;
   licenseExpiresAt: Date | null;
   lastSync: Date | null;
+  user: {
+    firstname: string | null;
+    surname: string | null;
+    email: string | null;
+    name: string | null;
+  } | null;
 }) {
+  const displayName =
+    [registration.user?.firstname, registration.user?.surname]
+      .filter(Boolean)
+      .join(" ")
+      .trim() ||
+    registration.user?.name ||
+    null;
+
   return {
     id: registration.id,
     farmId: registration.farmId,
@@ -22,6 +36,8 @@ function serializeLicense(registration: {
     deviceType: registration.deviceType,
     licenseExpiresAt: registration.licenseExpiresAt?.toISOString() ?? null,
     lastSync: registration.lastSync?.toISOString() ?? null,
+    userName: displayName,
+    userEmail: registration.user?.email ?? null,
   };
 }
 
@@ -45,6 +61,14 @@ export async function getDesktopLicenses() {
       deviceType: true,
       licenseExpiresAt: true,
       lastSync: true,
+      user: {
+        select: {
+          firstname: true,
+          surname: true,
+          email: true,
+          name: true,
+        },
+      },
     },
     orderBy: {
       lastSync: "desc"

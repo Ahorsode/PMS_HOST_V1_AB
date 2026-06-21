@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import { signOut } from 'next-auth/react';
 import { canShowNavigationItem } from '@/lib/navigation-permissions';
 
-export const BottomNav = ({ role = 'OWNER', permissions }: { role?: string, permissions?: any }) => {
+export const BottomNav = ({ role, permissions }: { role?: string, permissions?: any }) => {
   const pathname = usePathname();
 
   // Mobile navigation items

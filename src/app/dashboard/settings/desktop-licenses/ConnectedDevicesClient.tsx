@@ -146,7 +146,8 @@ export default function ConnectedDevicesClient({ licenses }: ConnectedDevicesCli
         </CardHeader>
         <CardContent>
           <div className="overflow-hidden rounded-lg border border-white/10">
-            <div className="grid grid-cols-[minmax(0,1fr)_120px_130px_220px_160px] gap-4 border-b border-white/10 bg-white/5 px-4 py-3 text-xs font-bold uppercase tracking-widest text-white/50 max-xl:hidden">
+            <div className="grid grid-cols-[180px_minmax(0,1fr)_120px_130px_220px_160px] gap-4 border-b border-white/10 bg-white/5 px-4 py-3 text-xs font-bold uppercase tracking-widest text-white/50 max-xl:hidden">
+              <span>User</span>
               <span>Device Name</span>
               <span>Type</span>
               <span>Status</span>
@@ -163,15 +164,21 @@ export default function ConnectedDevicesClient({ licenses }: ConnectedDevicesCli
                 return (
                   <div
                     key={license.id}
-                    className="grid grid-cols-1 gap-3 px-4 py-4 text-sm text-white/80 xl:grid-cols-[minmax(0,1fr)_120px_130px_220px_160px] xl:items-center xl:gap-4"
+                    className="grid grid-cols-1 gap-3 px-4 py-4 text-sm text-white/80 xl:grid-cols-[180px_minmax(0,1fr)_120px_130px_220px_160px] xl:items-center xl:gap-4"
                   >
+                    <div className="min-w-0 text-sm">
+                      <p className="truncate font-semibold text-white">{license.userName ?? "-"}</p>
+                      {license.userEmail ? (
+                        <p className="mt-0.5 truncate text-xs text-white/45">{license.userEmail}</p>
+                      ) : null}
+                    </div>
                     <div className="flex min-w-0 items-center gap-3">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/5 text-emerald-200">
                         <DeviceIcon className="h-5 w-5" />
                       </div>
                       <div className="min-w-0">
                         <p className="truncate font-semibold text-white">{deviceName}</p>
-                        {license.hardwareId && license.hardwareId !== deviceName ? (
+                        {license.hardwareId ? (
                           <p className="mt-1 truncate font-[var(--font-payment-admin-mono)] text-xs text-white/45">
                             {license.hardwareId}
                           </p>

@@ -40,8 +40,10 @@ export default async function DashboardLayout({
     redirect('/login?error=db');
   }
 
+  // If the session references a deleted or non-existent user, stop before
+  // passing an undefined role into the client navigation shell.
   if (!dbUser) {
-    redirect('/login');
+    redirect('/login?error=user_not_found');
   }
 
   const isPlaceholder = farm && farm.capacity === 0 && farm.location === '';
@@ -98,7 +100,7 @@ export default async function DashboardLayout({
   }
 
   let userPermissions = null;
-  if (farm && dbUser?.id) {
+  if (farm && dbUser.id) {
     try {
       userPermissions = await (prisma as any).userPermission.findUnique({
         where: {
@@ -115,7 +117,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <SidebarWrapper role={dbUser?.role as any} permissions={userPermissions}>
+    <SidebarWrapper role={dbUser.role as any} permissions={userPermissions}>
       <div className="md:hidden sticky top-[-1.5rem] z-40 -mx-4 mb-5 px-3 py-2 bg-[#0a0a0a]/80 backdrop-blur-xl border-b border-white/10 flex items-center justify-between">
         <h1 className="text-sm font-bold text-emerald-400 tracking-widest uppercase truncate">
           {farm?.name || "My Farm"}

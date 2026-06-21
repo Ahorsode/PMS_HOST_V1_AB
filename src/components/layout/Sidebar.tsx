@@ -13,8 +13,10 @@ import {
 import { cn } from '@/lib/utils';
 import { canShowNavigationItem } from '@/lib/navigation-permissions';
 
-export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permissions?: any }) => {
+export const Sidebar = ({ role, permissions }: { role?: string, permissions?: any }) => {
   const pathname = usePathname();
+  const roleInitial = role?.charAt(0) ?? '?';
+  const roleLabel = role?.toLowerCase() ?? 'unknown';
 
   const categories = [
     {
@@ -135,11 +137,11 @@ export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permis
               className="flex items-center hover:bg-white/5 rounded-md p-2 transition-all cursor-pointer group/profile"
             >
               <div className="w-10 h-10 rounded-md bg-emerald-400/10 flex items-center justify-center text-emerald-400 font-bold shrink-0 group-hover/profile:bg-emerald-400/20 transition-colors uppercase">
-                {role.charAt(0)}
+                {roleInitial}
               </div>
               <div className="ml-2 overflow-hidden opacity-0 group-hover:opacity-100 transition-all duration-300">
                 <p className="text-xs font-bold text-white truncate">My Profile</p>
-                <p className="text-xs text-white/70 font-bold uppercase tracking-wider">{role.toLowerCase()}</p>
+                <p className="text-xs text-white/70 font-bold uppercase tracking-wider">{roleLabel}</p>
               </div>
             </Link>
 
