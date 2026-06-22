@@ -7,8 +7,8 @@ export const farmCacheTags = {
 };
 
 export function revalidateFarmPerformanceCaches(farmId: string) {
-  revalidateTag(farmCacheTags.dashboard(farmId));
-  revalidateTag(farmCacheTags.analytics(farmId));
-  revalidateTag(farmCacheTags.reports(farmId));
+  revalidateTag(farmCacheTags.dashboard(farmId), "max");
+  revalidateTag(farmCacheTags.analytics(farmId), "max");
+  revalidateTag(farmCacheTags.reports(farmId), "max");
 }
 
