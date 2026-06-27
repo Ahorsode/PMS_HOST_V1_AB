@@ -14,13 +14,14 @@ export const authConfig = {
       const isProtectedRoute =
         nextUrl.pathname.startsWith('/dashboard') ||
         nextUrl.pathname.startsWith('/onboarding');
-      const isAdminRoute =
-        nextUrl.pathname.startsWith('/admin') &&
-        !nextUrl.pathname.startsWith('/admin/login');
       const isAuthPage = nextUrl.pathname.startsWith('/login') || nextUrl.pathname.startsWith('/signup');
 
+      // Note: /admin routes are protected by the HMAC admin-session cookie in
+      // middleware.ts (bypassing NextAuth), so they are intentionally not
+      // handled here.
+
       if (isLoggedIn && securityInvalidated) {
-        if (isProtectedRoute || isAdminRoute) {
+        if (isProtectedRoute) {
           return Response.redirect(new URL('/login?security=updated', nextUrl));
         }
         if (isAuthPage) return true;
@@ -29,10 +30,6 @@ export const authConfig = {
       // Force change password if flag is set
       if (isLoggedIn && mustChangePassword && nextUrl.pathname !== '/change-password') {
         return Response.redirect(new URL('/change-password', nextUrl));
-      }
-
-      if (isAdminRoute && !isLoggedIn) {
-        return Response.redirect(new URL('/admin/login', nextUrl));
       }
 
       if (isProtectedRoute) {

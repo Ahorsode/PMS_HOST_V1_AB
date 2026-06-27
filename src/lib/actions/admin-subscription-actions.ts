@@ -9,8 +9,9 @@ export async function adminUpgradeFarmTier(
   tier: 'STANDARD' | 'PREMIUM',
   durationDays: number,
 ) {
+  let admin: { id: string; username: string }
   try {
-    await requirePaymentAdminAction()
+    admin = await requirePaymentAdminAction()
   } catch {
     return { success: false, error: 'Unauthorized' }
   }
@@ -24,11 +25,25 @@ export async function adminUpgradeFarmTier(
 
   try {
     await prisma.$transaction(async (tx) => {
+      const before = await tx.farm.findUnique({
+        where: { id: farmId },
+        select: {
+          userId: true,
+          subscriptionTier: true,
+          masterLicenseStatus: true,
+          trialExpiresAt: true,
+        },
+      })
+
+      if (!before) throw new Error('Farm not found')
+
       await tx.farm.update({
         where: { id: farmId },
         data: {
           subscriptionTier: tier,
-          masterLicenseStatus: 'PAID_AND_ACTIVE',
+          masterLicenseStatus: `PAID_${tier}`,
+          trialExpiresAt: periodEnd,
+          trialExhaustedAt: null,
         },
       })
 
@@ -39,6 +54,24 @@ export async function adminUpgradeFarmTier(
           licenseExpiresAt: periodEnd,
           lastPaymentAt: new Date(),
           isActive: true,
+        },
+      })
+
+      await tx.subscriptionEvent.create({
+        data: {
+          farmId,
+          userId: before.userId,
+          eventType: 'TIER_UPGRADED',
+          metadata: {
+            adminId: admin.id,
+            adminUsername: admin.username,
+            tier,
+            durationDays,
+            newExpiresAt: periodEnd.toISOString(),
+            previousTier: before.subscriptionTier,
+            previousStatus: before.masterLicenseStatus,
+            previousExpiresAt: before.trialExpiresAt?.toISOString() ?? null,
+          },
         },
       })
     })

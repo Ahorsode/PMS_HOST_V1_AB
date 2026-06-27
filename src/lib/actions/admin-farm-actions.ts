@@ -87,6 +87,55 @@ function revalidateFarmAdminPaths(farmId: string) {
   revalidatePath('/admin/licenses/issue')
 }
 
+export type AdminActivityRow = {
+  id: string
+  farmId: string
+  farmName: string | null
+  eventType: string
+  adminUsername: string | null
+  metadata: Record<string, unknown> | null
+  createdAt: string
+}
+
+export async function adminListActivity(limit = 100): Promise<AdminActivityRow[]> {
+  await requirePaymentAdminAction()
+
+  const take = Math.min(Math.max(limit, 1), 200)
+
+  const events = await prisma.subscriptionEvent.findMany({
+    orderBy: { createdAt: 'desc' },
+    take,
+    select: {
+      id: true,
+      farmId: true,
+      eventType: true,
+      metadata: true,
+      createdAt: true,
+      farm: { select: { name: true } },
+    },
+  })
+
+  return events.map((event) => {
+    const metadata =
+      event.metadata && typeof event.metadata === 'object' && !Array.isArray(event.metadata)
+        ? (event.metadata as Record<string, unknown>)
+        : null
+
+    const adminUsername =
+      metadata && typeof metadata.adminUsername === 'string' ? metadata.adminUsername : null
+
+    return {
+      id: event.id,
+      farmId: event.farmId,
+      farmName: event.farm?.name ?? null,
+      eventType: event.eventType,
+      adminUsername,
+      metadata,
+      createdAt: event.createdAt.toISOString(),
+    }
+  })
+}
+
 export async function adminListFarms(): Promise<AdminFarmRow[]> {
   await requirePaymentAdminAction()
 
@@ -220,8 +269,9 @@ export async function adminExtendTrial(
   farmId: string,
   extraDays: number,
 ): Promise<AdminFarmActionResult> {
+  let admin: { id: string; username: string }
   try {
-    await requirePaymentAdminAction()
+    admin = await requirePaymentAdminAction()
   } catch {
     return { success: false, error: 'Unauthorized' }
   }
@@ -238,6 +288,7 @@ export async function adminExtendTrial(
         where: { id: farmId },
         select: {
           id: true,
+          userId: true,
           subscriptionTier: true,
           masterLicenseStatus: true,
           trialStartedAt: true,
@@ -275,6 +326,21 @@ export async function adminExtendTrial(
           isActive: true,
         },
       })
+
+      await tx.subscriptionEvent.create({
+        data: {
+          farmId,
+          userId: farm.userId,
+          eventType: 'TRIAL_EXTENDED',
+          metadata: {
+            adminId: admin.id,
+            adminUsername: admin.username,
+            extraDays,
+            newExpiresAt: trialExpiresAt.toISOString(),
+            previousExpiresAt: farm.trialExpiresAt?.toISOString() ?? null,
+          },
+        },
+      })
     })
 
     revalidateFarmAdminPaths(farmId)
@@ -291,8 +357,9 @@ export async function adminExtendTrial(
 }
 
 export async function adminRevokeFarmAccess(farmId: string): Promise<AdminFarmActionResult> {
+  let admin: { id: string; username: string }
   try {
-    await requirePaymentAdminAction()
+    admin = await requirePaymentAdminAction()
   } catch {
     return { success: false, error: 'Unauthorized' }
   }
@@ -301,20 +368,35 @@ export async function adminRevokeFarmAccess(farmId: string): Promise<AdminFarmAc
     const now = new Date()
 
     await prisma.$transaction(async (tx) => {
-      await tx.farm.update({
+      const farm = await tx.farm.update({
         where: { id: farmId },
         data: {
           masterLicenseStatus: 'REVOKED',
           trialExhaustedAt: now,
         },
+        select: { userId: true },
       })
 
-      await tx.deviceRegistration.updateMany({
+      const deviceResult = await tx.deviceRegistration.updateMany({
         where: { farmId },
         data: {
           status: 'EXPIRED',
           licenseExpiresAt: now,
           isActive: false,
+        },
+      })
+
+      await tx.subscriptionEvent.create({
+        data: {
+          farmId,
+          userId: farm.userId,
+          eventType: 'ACCESS_REVOKED',
+          metadata: {
+            adminId: admin.id,
+            adminUsername: admin.username,
+            revokedAt: now.toISOString(),
+            deviceCount: deviceResult.count,
+          },
         },
       })
     })

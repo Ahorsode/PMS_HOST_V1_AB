@@ -9,6 +9,7 @@ type RateLimitPolicy = {
 
 export type RateLimitPolicyName =
   | "auth.signup"
+  | "admin.login"
   | "farm.onboarding"
   | "farm.profile"
   | "team.invite"
@@ -42,6 +43,7 @@ type RateLimitResult = {
 
 const RATE_LIMIT_POLICIES: Record<RateLimitPolicyName, RateLimitPolicy> = {
   "auth.signup": { limit: 8, window: "1 m", sensitivity: "public" },
+  "admin.login": { limit: 5, window: "15 m", sensitivity: "admin" },
   "farm.onboarding": { limit: 6, window: "1 m", sensitivity: "authenticated" },
   "farm.profile": { limit: 10, window: "1 m", sensitivity: "authenticated" },
   "team.invite": { limit: 10, window: "1 m", sensitivity: "authenticated" },

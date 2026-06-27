@@ -119,7 +119,7 @@ model Farm {
   updatedAt             DateTime               @updatedAt
   userId                String                 @default("user_placeholder")
   subscriptionTier      SubscriptionTier       @default(BASIC)
-  masterLicenseStatus   String?                @default("UNPAID") @map("master_license_status")
+  masterLicenseStatus   String?                @default("NO_TRIAL") @map("master_license_status")
   trialStartedAt        DateTime?              @map("trial_started_at")
   trialExpiresAt        DateTime?              @map("trial_expires_at")
   trialExhaustedAt      DateTime?              @map("trial_exhausted_at")

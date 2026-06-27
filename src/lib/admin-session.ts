@@ -3,7 +3,9 @@ import 'server-only'
 import { createHmac, timingSafeEqual } from 'crypto'
 import { cookies } from 'next/headers'
 
-export const ADMIN_SESSION_COOKIE = 'hatchlog_admin_session'
+import { ADMIN_SESSION_COOKIE } from '@/lib/admin-session-constants'
+
+export { ADMIN_SESSION_COOKIE }
 
 const SESSION_TTL_SECONDS = 60 * 60 * 12
 
@@ -107,7 +109,7 @@ export async function destroyAdminSession() {
 
 export function sanitizeAdminCallbackUrl(value: string | null | undefined) {
   if (!value || !value.startsWith('/admin/') || value.startsWith('/admin/login')) {
-    return '/admin/payments'
+    return '/admin/farms'
   }
 
   return value

@@ -22,6 +22,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <Link href="/admin/payments" className="text-zinc-400 transition-colors hover:text-white">
               Payments
             </Link>
+            <Link href="/admin/activity" className="text-zinc-400 transition-colors hover:text-white">
+              Activity
+            </Link>
             <Link href="/admin/users/map" className="text-zinc-400 transition-colors hover:text-white">
               User Map
             </Link>

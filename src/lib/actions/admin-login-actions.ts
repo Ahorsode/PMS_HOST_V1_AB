@@ -1,12 +1,14 @@
 'use server'
 
 import bcrypt from 'bcryptjs'
+import { headers } from 'next/headers'
 import prisma from '@/lib/db'
 import {
   createAdminSession,
   destroyAdminSession,
   sanitizeAdminCallbackUrl,
 } from '@/lib/admin-session'
+import { checkRateLimit } from '@/lib/performance/rate-limit'
 import { z } from 'zod'
 
 const adminLoginSchema = z.object({
@@ -27,6 +29,25 @@ type AdminLoginResult =
 
 export async function loginAdmin(input: unknown): Promise<AdminLoginResult> {
   try {
+    const headersList = await headers()
+    const ip =
+      headersList.get('x-real-ip') ||
+      headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+      'unknown'
+
+    const rateCheck = await checkRateLimit({
+      policy: 'admin.login',
+      scope: 'admin',
+      ip,
+    })
+
+    if (!rateCheck.ok) {
+      return {
+        success: false,
+        error: `Too many login attempts. Try again in ${rateCheck.retryAfterSec} seconds.`,
+      }
+    }
+
     const parsed = adminLoginSchema.safeParse(input)
 
     if (!parsed.success) {
