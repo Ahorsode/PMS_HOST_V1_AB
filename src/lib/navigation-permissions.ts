@@ -41,6 +41,7 @@ const NAV_PERMISSION_MAP: Record<string, string[]> = {
   Houses: ['canViewHouses', 'canEditHouses'],
   Mortality: ['canViewMortality', 'canEditMortality'],
   Quarantine: ['canViewMortality', 'canEditMortality'],
+  Health: ['canViewMortality', 'canEditMortality'],
   Customers: ['canViewCustomers', 'canEditCustomers'],
   Suppliers: ['canViewCustomers', 'canEditCustomers'],
   'Team Management': ['canViewTeam', 'canEditTeam'],

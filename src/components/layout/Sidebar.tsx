@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, Bird, PawPrint, Egg, ThermometerSun, 
   Wheat, Settings, Users, XCircle, Banknote, Activity,
-  LogOut, Wallet, Crown, ShieldCheck, BarChart3, Truck, Trash2, FileText
+  LogOut, Wallet, Crown, ShieldCheck, BarChart3, Truck, Trash2, FileText, HeartPulse
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { canShowNavigationItem, formatRoleLabel } from '@/lib/navigation-permissions';
@@ -30,6 +30,7 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
         { name: 'Feeding', icon: Wheat, href: '/dashboard/feed', roles: ['OWNER', 'MANAGER', 'WORKER'] },
         { name: 'Mortality', icon: XCircle, href: '/dashboard/mortality', roles: ['OWNER', 'MANAGER', 'WORKER'] },
         { name: 'Quarantine', icon: Activity, href: '/dashboard/quarantine', roles: ['OWNER', 'MANAGER', 'WORKER'] },
+        { name: 'Health', icon: HeartPulse, href: '/dashboard/health', roles: ['OWNER', 'MANAGER', 'WORKER'] },
       ]
     },
     {

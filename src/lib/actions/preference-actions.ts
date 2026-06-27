@@ -53,11 +53,14 @@ export async function createVaccinationSchedule(data: {
       batchId: data.livestockId,
       vaccineName: data.vaccineName,
       scheduledDate: data.scheduledDate,
-      notes: data.notes
+      notes: data.notes,
+      farmId: activeFarmId,
     },
   });
 
   revalidatePath(`/dashboard/livestock/${data.livestockId}`);
+  revalidatePath(`/dashboard/flocks/${data.livestockId}`);
+  revalidatePath(`/dashboard/health`);
   return schedule;
 }
 
@@ -75,11 +78,14 @@ export async function createMedicationSchedule(data: {
       batchId: data.livestockId,
       medicationName: data.medicationName,
       scheduledDate: data.scheduledDate,
-      notes: data.notes
+      notes: data.notes,
+      farmId: activeFarmId,
     },
   });
 
   revalidatePath(`/dashboard/livestock/${data.livestockId}`);
+  revalidatePath(`/dashboard/flocks/${data.livestockId}`);
+  revalidatePath(`/dashboard/health`);
   return schedule;
 }
 
