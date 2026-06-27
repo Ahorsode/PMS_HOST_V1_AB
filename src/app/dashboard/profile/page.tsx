@@ -4,9 +4,10 @@ import prisma from '@/lib/db';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { User, Mail, Shield, Building, Calendar } from 'lucide-react';
 import { EditProfileButton } from '@/components/profile/EditProfileButton';
+import { formatRoleLabel } from '@/lib/navigation-permissions';
 
 export default async function ProfilePage() {
-  const { userId, activeFarmId } = await getAuthContext();
+  const { userId, activeFarmId, role } = await getAuthContext();
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -37,7 +38,7 @@ export default async function ProfilePage() {
                <div className="flex flex-col md:flex-row md:items-center gap-2 justify-center md:justify-start">
                   <h1 className="text-4xl font-bold text-white tracking-normal">{user?.name || 'Farm User'}</h1>
                   <span className="px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-widest rounded-full h-fit flex items-center gap-1.5 self-center">
-                     <Shield className="w-3 h-3" /> {membership?.role || 'Member'}
+                     <Shield className="w-3 h-3" /> {formatRoleLabel(role)}
                   </span>
                </div>
                <p className="text-white/80 font-medium flex items-center justify-center md:justify-start gap-2">

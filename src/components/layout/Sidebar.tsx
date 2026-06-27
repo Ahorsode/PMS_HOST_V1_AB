@@ -11,12 +11,12 @@ import {
   LogOut, Wallet, Crown, ShieldCheck, BarChart3, Truck, Trash2, FileText
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { canShowNavigationItem } from '@/lib/navigation-permissions';
+import { canShowNavigationItem, formatRoleLabel } from '@/lib/navigation-permissions';
 
 export const Sidebar = ({ role, permissions }: { role?: string, permissions?: any }) => {
   const pathname = usePathname();
   const roleInitial = role?.charAt(0) ?? '?';
-  const roleLabel = role?.toLowerCase() ?? 'unknown';
+  const roleLabel = formatRoleLabel(role);
 
   const categories = [
     {

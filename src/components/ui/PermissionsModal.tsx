@@ -1,87 +1,73 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Shield, ShieldCheck, Database, LayoutDashboard, Settings, Egg, Wheat, ThermometerSun, XCircle, Users, Banknote } from 'lucide-react';
+import { X, Shield, ShieldCheck, Database, LayoutDashboard, Settings, Egg, Wheat, ThermometerSun, XCircle, Users, Banknote, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import type { StaffPermissions } from '@/lib/staff-permission-defaults';
+
+type PermissionState = Required<StaffPermissions>;
 
 interface PermissionsModalProps {
   isOpen: boolean;
   onClose: () => void;
   staffName: string;
-  initialPermissions?: {
-    canViewFinance: boolean;
-    canEditFinance: boolean;
-    canViewInventory: boolean;
-    canEditInventory: boolean;
-    canViewBatches: boolean;
-    canEditBatches: boolean;
-    canViewSales: boolean;
-    canEditSales: boolean;
-    canViewEggs: boolean;
-    canEditEggs: boolean;
-    canViewFeeding: boolean;
-    canEditFeeding: boolean;
-    canViewHouses: boolean;
-    canEditHouses: boolean;
-    canViewMortality: boolean;
-    canEditMortality: boolean;
-    canViewCustomers: boolean;
-    canEditCustomers: boolean;
-    canViewTeam: boolean;
-    canEditTeam: boolean;
-  };
-  onSave: (permissions: any) => Promise<void>;
+  role: string;
+  defaultPermissions: PermissionState;
+  initialPermissions?: Partial<PermissionState>;
+  onSave: (permissions: PermissionState) => Promise<void>;
+  onResetToDefaults?: () => Promise<void>;
   isLoading: boolean;
 }
 
-export function PermissionsModal({ isOpen, onClose, staffName, initialPermissions, onSave, isLoading }: PermissionsModalProps) {
-  const defaults = {
-    canViewFinance: false,
-    canEditFinance: false,
-    canViewInventory: false,
-    canEditInventory: false,
-    canViewBatches: true,
-    canEditBatches: false,
-    canViewSales: false,
-    canEditSales: false,
-    canViewEggs: true,
-    canEditEggs: true,
-    canViewFeeding: true,
-    canEditFeeding: true,
-    canViewHouses: true,
-    canEditHouses: false,
-    canViewMortality: true,
-    canEditMortality: true,
-    canViewCustomers: false,
-    canEditCustomers: false,
-    canViewTeam: false,
-    canEditTeam: false,
+function buildPermissionState(
+  initialPermissions: Partial<PermissionState> | undefined,
+  defaultPermissions: PermissionState
+): PermissionState {
+  return {
+    canViewFinance: initialPermissions?.canViewFinance ?? defaultPermissions.canViewFinance,
+    canEditFinance: initialPermissions?.canEditFinance ?? defaultPermissions.canEditFinance,
+    canViewInventory: initialPermissions?.canViewInventory ?? defaultPermissions.canViewInventory,
+    canEditInventory: initialPermissions?.canEditInventory ?? defaultPermissions.canEditInventory,
+    canViewBatches: initialPermissions?.canViewBatches ?? defaultPermissions.canViewBatches,
+    canEditBatches: initialPermissions?.canEditBatches ?? defaultPermissions.canEditBatches,
+    canViewSales: initialPermissions?.canViewSales ?? defaultPermissions.canViewSales,
+    canEditSales: initialPermissions?.canEditSales ?? defaultPermissions.canEditSales,
+    canViewEggs: initialPermissions?.canViewEggs ?? defaultPermissions.canViewEggs,
+    canEditEggs: initialPermissions?.canEditEggs ?? defaultPermissions.canEditEggs,
+    canViewFeeding: initialPermissions?.canViewFeeding ?? defaultPermissions.canViewFeeding,
+    canEditFeeding: initialPermissions?.canEditFeeding ?? defaultPermissions.canEditFeeding,
+    canViewHouses: initialPermissions?.canViewHouses ?? defaultPermissions.canViewHouses,
+    canEditHouses: initialPermissions?.canEditHouses ?? defaultPermissions.canEditHouses,
+    canViewMortality: initialPermissions?.canViewMortality ?? defaultPermissions.canViewMortality,
+    canEditMortality: initialPermissions?.canEditMortality ?? defaultPermissions.canEditMortality,
+    canViewCustomers: initialPermissions?.canViewCustomers ?? defaultPermissions.canViewCustomers,
+    canEditCustomers: initialPermissions?.canEditCustomers ?? defaultPermissions.canEditCustomers,
+    canViewTeam: initialPermissions?.canViewTeam ?? defaultPermissions.canViewTeam,
+    canEditTeam: initialPermissions?.canEditTeam ?? defaultPermissions.canEditTeam,
   };
+}
 
-  const [permissions, setPermissions] = useState({
-    canViewFinance: initialPermissions?.canViewFinance ?? defaults.canViewFinance,
-    canEditFinance: initialPermissions?.canEditFinance ?? defaults.canEditFinance,
-    canViewInventory: initialPermissions?.canViewInventory ?? defaults.canViewInventory,
-    canEditInventory: initialPermissions?.canEditInventory ?? defaults.canEditInventory,
-    canViewBatches: initialPermissions?.canViewBatches ?? defaults.canViewBatches,
-    canEditBatches: initialPermissions?.canEditBatches ?? defaults.canEditBatches,
-    canViewSales: initialPermissions?.canViewSales ?? defaults.canViewSales,
-    canEditSales: initialPermissions?.canEditSales ?? defaults.canEditSales,
-    canViewEggs: initialPermissions?.canViewEggs ?? defaults.canViewEggs,
-    canEditEggs: initialPermissions?.canEditEggs ?? defaults.canEditEggs,
-    canViewFeeding: initialPermissions?.canViewFeeding ?? defaults.canViewFeeding,
-    canEditFeeding: initialPermissions?.canEditFeeding ?? defaults.canEditFeeding,
-    canViewHouses: initialPermissions?.canViewHouses ?? defaults.canViewHouses,
-    canEditHouses: initialPermissions?.canEditHouses ?? defaults.canEditHouses,
-    canViewMortality: initialPermissions?.canViewMortality ?? defaults.canViewMortality,
-    canEditMortality: initialPermissions?.canEditMortality ?? defaults.canEditMortality,
-    canViewCustomers: initialPermissions?.canViewCustomers ?? defaults.canViewCustomers,
-    canEditCustomers: initialPermissions?.canEditCustomers ?? defaults.canEditCustomers,
-    canViewTeam: initialPermissions?.canViewTeam ?? defaults.canViewTeam,
-    canEditTeam: initialPermissions?.canEditTeam ?? defaults.canEditTeam,
-  });
+export function PermissionsModal({
+  isOpen,
+  onClose,
+  staffName,
+  role,
+  defaultPermissions,
+  initialPermissions,
+  onSave,
+  onResetToDefaults,
+  isLoading,
+}: PermissionsModalProps) {
+  const [permissions, setPermissions] = useState<PermissionState>(() =>
+    buildPermissionState(initialPermissions, defaultPermissions)
+  );
 
+  useEffect(() => {
+    if (isOpen) {
+      setPermissions(buildPermissionState(initialPermissions, defaultPermissions));
+    }
+  }, [isOpen, initialPermissions, defaultPermissions]);
 
   const handleToggle = (key: keyof typeof permissions) => {
     setPermissions(prev => {
@@ -170,6 +156,9 @@ export function PermissionsModal({ isOpen, onClose, staffName, initialPermission
                       Configure individual access rights for this staff member. 
                       Changes are logged for security auditing.
                     </p>
+                    <p className="text-white/50 text-[11px] font-bold uppercase tracking-widest">
+                      Role: {role}
+                    </p>
                   </div>
                   
                   <div className="space-y-5">
@@ -212,7 +201,29 @@ export function PermissionsModal({ isOpen, onClose, staffName, initialPermission
                 </div>
 
                 {/* Footer - Sticky */}
-                <div className="p-4 sm:p-8 border-t border-white/10 flex flex-col sm:flex-row justify-end gap-2 bg-white/10 flex-shrink-0">
+                <div className="p-4 sm:p-8 border-t border-white/10 flex flex-col gap-2 bg-white/10 flex-shrink-0">
+                  {onResetToDefaults ? (
+                    <Button
+                      variant="outline"
+                      onClick={() => onResetToDefaults()}
+                      disabled={isLoading}
+                      className="w-full rounded-md border-amber-500/30 text-amber-300 hover:bg-amber-500/10 text-[11px] uppercase font-bold"
+                    >
+                      <RotateCcw className="w-4 h-4 mr-2 inline" />
+                      Reset to {role} Defaults
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      onClick={() => setPermissions(defaultPermissions)}
+                      disabled={isLoading}
+                      className="w-full rounded-md border-amber-500/30 text-amber-300 hover:bg-amber-500/10 text-[11px] uppercase font-bold"
+                    >
+                      <RotateCcw className="w-4 h-4 mr-2 inline" />
+                      Reset to {role} Defaults
+                    </Button>
+                  )}
+                  <div className="flex flex-col sm:flex-row justify-end gap-2">
                   <Button 
                     variant="outline" 
                     onClick={onClose} 
@@ -228,6 +239,7 @@ export function PermissionsModal({ isOpen, onClose, staffName, initialPermission
                   >
                     Save & Apply
                   </Button>
+                  </div>
                 </div>
               </div>
             </motion.div>

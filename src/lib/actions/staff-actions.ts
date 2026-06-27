@@ -9,96 +9,12 @@ import bcrypt from 'bcryptjs'
 import { randomBytes } from 'crypto'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 import { setCachedSessionVersion } from '@/lib/performance/session-version-cache'
+import {
+  getDefaultPermissionsForRole,
+  type StaffPermissions,
+} from '@/lib/staff-permission-defaults'
 
 type StaffRole = 'OWNER' | 'MANAGER' | 'WORKER' | 'ACCOUNTANT' | 'FINANCE_OFFICER' | 'CASHIER'
-
-type StaffPermissions = {
-  canViewFinance?: boolean
-  canEditFinance?: boolean
-  canViewInventory?: boolean
-  canEditInventory?: boolean
-  canViewBatches?: boolean
-  canEditBatches?: boolean
-  canViewSales?: boolean
-  canEditSales?: boolean
-  canViewEggs?: boolean
-  canEditEggs?: boolean
-  canViewFeeding?: boolean
-  canEditFeeding?: boolean
-  canViewHouses?: boolean
-  canEditHouses?: boolean
-  canViewMortality?: boolean
-  canEditMortality?: boolean
-  canViewCustomers?: boolean
-  canEditCustomers?: boolean
-  canViewTeam?: boolean
-  canEditTeam?: boolean
-}
-
-function defaultPermissionsForRole(
-  role: string,
-  overrides?: StaffPermissions
-): Required<StaffPermissions> {
-  const base: Required<StaffPermissions> = {
-    canViewFinance: false,
-    canEditFinance: false,
-    canViewInventory: false,
-    canEditInventory: false,
-    canViewBatches: false,
-    canEditBatches: false,
-    canViewSales: false,
-    canEditSales: false,
-    canViewEggs: false,
-    canEditEggs: false,
-    canViewFeeding: false,
-    canEditFeeding: false,
-    canViewHouses: false,
-    canEditHouses: false,
-    canViewMortality: false,
-    canEditMortality: false,
-    canViewCustomers: false,
-    canEditCustomers: false,
-    canViewTeam: false,
-    canEditTeam: false,
-  }
-
-  const roleDefaults: Record<string, Partial<Required<StaffPermissions>>> = {
-    WORKER: {
-      canViewEggs: true,
-      canEditEggs: true,
-      canViewFeeding: true,
-      canEditFeeding: true,
-      canViewMortality: true,
-      canEditMortality: true,
-      canViewBatches: true,
-    },
-    MANAGER: Object.fromEntries(Object.keys(base).map((key) => [key, true])) as Required<StaffPermissions>,
-    ACCOUNTANT: {
-      canViewFinance: true,
-      canEditFinance: true,
-      canViewSales: true,
-      canViewInventory: true,
-    },
-    FINANCE_OFFICER: {
-      canViewFinance: true,
-      canEditFinance: true,
-      canViewSales: true,
-      canEditSales: true,
-      canViewInventory: true,
-    },
-    CASHIER: {
-      canViewSales: true,
-      canEditSales: true,
-      canViewFinance: true,
-    },
-  }
-
-  const sanitizedOverrides = Object.fromEntries(
-    Object.entries(overrides ?? {}).filter(([, value]) => typeof value === 'boolean')
-  ) as Partial<Required<StaffPermissions>>
-
-  return { ...base, ...(roleDefaults[role] ?? {}), ...sanitizedOverrides }
-}
 
 async function findOrCreateInvitedUser(
   tx: any,
@@ -156,7 +72,7 @@ async function upsertInvitedUserPermissions(
     permissions?: StaffPermissions
   }
 ) {
-  const permissionsToApply = defaultPermissionsForRole(role, permissions)
+  const permissionsToApply = getDefaultPermissionsForRole(role, permissions)
 
   return await tx.userPermission.upsert({
     where: {
@@ -313,6 +229,11 @@ export async function acceptInvitation(shouldRevalidate = true) {
           userId: userId,
           role: invitation.role
         }
+      })
+
+      await tx.user.update({
+        where: { id: userId },
+        data: { role: invitation.role },
       })
 
       // Update invitation status
@@ -781,6 +702,46 @@ export async function updateWorkerPermissions(
     }
     return { success: false, error: error.message }
   }
+}
+
+/**
+ * Resets a staff member's permissions to the defaults for their current farm role.
+ */
+export async function resetWorkerPermissions(targetUserId: string) {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) throw new Error('No active farm selected')
+
+  const farm = await prisma.farm.findUnique({ where: { id: activeFarmId } })
+  if (!farm) return { success: false, error: 'Farm not found' }
+
+  if (farm.userId !== userId) {
+    return { success: false, error: 'Unauthorized: Only the farm creator can reset worker permissions' }
+  }
+
+  if (targetUserId === userId) {
+    return { success: false, error: 'Cannot reset permissions for the absolute owner' }
+  }
+
+  const membership = await prisma.farmMember.findUnique({
+    where: {
+      farmId_userId: {
+        farmId: activeFarmId,
+        userId: targetUserId,
+      },
+    },
+    select: { role: true },
+  })
+
+  if (!membership) {
+    return { success: false, error: 'Employee is not a member of this farm' }
+  }
+
+  if (membership.role === 'OWNER') {
+    return { success: false, error: 'Cannot reset permissions for the farm owner' }
+  }
+
+  const defaults = getDefaultPermissionsForRole(membership.role)
+  return updateWorkerPermissions(targetUserId, defaults)
 }
 
 /**

@@ -4,6 +4,7 @@ import prisma from '@/lib/db';
 import { redirect } from 'next/navigation';
 import { SidebarWrapper } from '@/components/layout/SidebarWrapper';
 import { acceptInvitation } from '@/lib/actions/staff-actions';
+import { resolveFarmNavigationRole } from '@/lib/navigation-permissions';
 import { XCircle } from 'lucide-react';
 import Link from 'next/link';
 
@@ -100,24 +101,47 @@ export default async function DashboardLayout({
   }
 
   let userPermissions = null;
+  let membershipRole: string | null = null;
   if (farm && dbUser.id) {
     try {
-      userPermissions = await (prisma as any).userPermission.findUnique({
-        where: {
-          userId_farmId: {
-            userId: dbUser.id,
-            farmId: farm.id
-          }
-        }
-      });
+      const [permissions, membership] = await Promise.all([
+        (prisma as any).userPermission.findUnique({
+          where: {
+            userId_farmId: {
+              userId: dbUser.id,
+              farmId: farm.id,
+            },
+          },
+        }),
+        prisma.farmMember.findUnique({
+          where: {
+            farmId_userId: {
+              farmId: farm.id,
+              userId: dbUser.id,
+            },
+          },
+          select: { role: true },
+        }),
+      ]);
+      userPermissions = permissions;
+      membershipRole = membership?.role ?? null;
     } catch (error) {
       console.error('[DashboardLayout] Permission lookup failed:', error);
       userPermissions = null;
     }
   }
 
+  const navigationRole = farm
+    ? resolveFarmNavigationRole({
+        farmOwnerId: farm.userId,
+        userId: dbUser.id,
+        userRole: dbUser.role,
+        membershipRole,
+      })
+    : dbUser.role;
+
   return (
-    <SidebarWrapper role={dbUser.role as any} permissions={userPermissions}>
+    <SidebarWrapper role={navigationRole} permissions={userPermissions}>
       <div className="md:hidden sticky top-[-1.5rem] z-40 -mx-4 mb-5 px-3 py-2 bg-[#0a0a0a]/80 backdrop-blur-xl border-b border-white/10 flex items-center justify-between">
         <h1 className="text-sm font-bold text-emerald-400 tracking-widest uppercase truncate">
           {farm?.name || "My Farm"}

@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Users, Mail, Shield, UserPlus, Loader2, CheckCircle2, XCircle, Trash2, ShieldCheck, UserCheck, Settings, AlertCircle, Phone, ChevronDown } from 'lucide-react';
-import { inviteWorker, getFarmMembers, deleteMember, deleteInvitation, updateWorkerPermissions, updateFarmMemberRole, getUserForInvite } from '@/lib/actions/staff-actions';
+import { Users, Mail, Shield, UserPlus, Loader2, CheckCircle2, XCircle, Trash2, ShieldCheck, UserCheck, Settings, AlertCircle, Phone, ChevronDown, RotateCcw } from 'lucide-react';
+import { inviteWorker, getFarmMembers, deleteMember, deleteInvitation, updateWorkerPermissions, resetWorkerPermissions, updateFarmMemberRole, getUserForInvite } from '@/lib/actions/staff-actions';
+import { getDefaultPermissionsForRole } from '@/lib/staff-permission-defaults';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { Input } from '@/components/ui/Input';
@@ -21,6 +22,7 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
   const [isInviting, setIsInviting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSavingPermissions, setIsSavingPermissions] = useState(false);
+  const [resettingPermissionsUserId, setResettingPermissionsUserId] = useState<string | null>(null);
   const [updatingRoleUserId, setUpdatingRoleUserId] = useState<string | null>(null);
   const [currentUserRole, setCurrentUserRole] = useState<string>('WORKER');
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -34,6 +36,7 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
     inviteId: string;
     userId: string;
     name: string;
+    role: string;
     currentPermissions: any;
   } | null>(null);
 
@@ -122,16 +125,44 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
     try {
       const response = await updateWorkerPermissions(permissionTarget.userId, permissions) as any;
       if (response?.success) {
+        toast.success('Permissions updated. Active sessions will be refreshed.');
         setPermissionTarget(null);
         router.refresh();
         await loadTeam();
       } else {
-        alert((response as any)?.error || 'Failed to save permissions');
+        toast.error((response as any)?.error || 'Failed to save permissions');
       }
     } catch (err: any) {
-      alert(err.message || 'Unknown error');
+      toast.error(err.message || 'Unknown error');
     } finally {
       setIsSavingPermissions(false);
+    }
+  };
+
+  const handleResetPermissions = async (targetUserId: string, staffName: string, role: string) => {
+    if (isSavingPermissions || resettingPermissionsUserId) return;
+
+    const confirmed = window.confirm(
+      `Reset ${staffName.trim() || 'this staff member'} to the default ${role} permissions? Their active session will be refreshed.`
+    );
+    if (!confirmed) return;
+
+    setResettingPermissionsUserId(targetUserId);
+    try {
+      const response = await resetWorkerPermissions(targetUserId) as any;
+      if (response?.success) {
+        toast.success('Permissions reset to role defaults.');
+        setPermissionTarget(null);
+        setEditPermissionsInvite(null);
+        router.refresh();
+        await loadTeam();
+      } else {
+        toast.error(response?.error || 'Failed to reset permissions');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to reset permissions');
+    } finally {
+      setResettingPermissionsUserId(null);
     }
   };
 
@@ -279,6 +310,7 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
                           getRoleBadge(member.role)
                         )}
                         {canEdit && currentUserRole === 'OWNER' && member.userId !== (members.find(m => m.role === 'OWNER')?.userId || '') && (
+                          <>
                           <button 
                             onClick={() => setPermissionTarget(member)}
                             title="Edit granular permissions"
@@ -286,6 +318,23 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
                           >
                             <Settings className="w-5 h-5" />
                           </button>
+                          <button
+                            onClick={() => handleResetPermissions(
+                              member.userId,
+                              `${member.user.firstname || ''} ${member.user.surname || ''}`,
+                              member.role
+                            )}
+                            disabled={resettingPermissionsUserId === member.userId}
+                            title="Reset to role default permissions"
+                            className="p-2.5 text-amber-400 hover:bg-amber-500/10 rounded-md transition-all border border-transparent hover:border-amber-500/20 disabled:opacity-50"
+                          >
+                            {resettingPermissionsUserId === member.userId ? (
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                              <RotateCcw className="w-5 h-5" />
+                            )}
+                          </button>
+                          </>
                         )}
                         {canEdit && (currentUserRole === 'OWNER' || currentUserRole === 'MANAGER') && (member.role !== 'OWNER') && (
                           <button 
@@ -341,6 +390,7 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
                         {getRoleBadge(invite.role)}
                         <span className="text-xs bg-amber-500/10 text-amber-400 px-2 py-1 rounded-full font-bold uppercase tracking-widest border border-amber-500/20">Pending</span>
                         {canEdit && currentUserRole === 'OWNER' && (
+                          <>
                           <button
                             onClick={async () => {
                               const result = await getUserForInvite(invite.id) as any;
@@ -350,6 +400,7 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
                                   userId: result.userId,
                                   name: invite.email || invite.phoneNumber || 'Pending User',
                                   currentPermissions: result.permissions,
+                                  role: invite.role,
                                 });
                               } else {
                                 toast.error('Could not load pending invite permissions');
@@ -360,6 +411,26 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
                           >
                             <Settings className="w-4 h-4" />
                           </button>
+                          <button
+                            onClick={async () => {
+                              const result = await getUserForInvite(invite.id) as any;
+                              if (result?.userId) {
+                                await handleResetPermissions(
+                                  result.userId,
+                                  invite.email || invite.phoneNumber || 'Pending User',
+                                  invite.role
+                                );
+                              } else {
+                                toast.error('Could not load pending invite permissions');
+                              }
+                            }}
+                            disabled={resettingPermissionsUserId !== null}
+                            className="p-2 text-amber-400 hover:bg-amber-500/10 rounded-lg transition-all disabled:opacity-50"
+                            title="Reset to role default permissions"
+                          >
+                            <RotateCcw className="w-4 h-4" />
+                          </button>
+                          </>
                         )}
                         {canEdit && (currentUserRole === 'OWNER' || currentUserRole === 'MANAGER') && (
                           <button 
@@ -487,6 +558,15 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
                           value={pendingPermissions}
                           onChange={setPendingPermissions}
                         />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setPendingPermissions({})}
+                          className="w-full mt-3 border-amber-500/30 text-amber-300 hover:bg-amber-500/10 text-[11px] uppercase font-bold"
+                        >
+                          <RotateCcw className="w-4 h-4 mr-2 inline" />
+                          Reset to {inviteRole} Defaults
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -555,9 +635,16 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
           isOpen={!!permissionTarget}
           onClose={() => setPermissionTarget(null)}
           staffName={`${permissionTarget.user?.firstname || ''} ${permissionTarget.user?.surname || ''}`}
+          role={permissionTarget.role}
+          defaultPermissions={getDefaultPermissionsForRole(permissionTarget.role)}
           initialPermissions={permissionTarget.user?.userPermissions?.[0]}
-          isLoading={isSavingPermissions}
+          isLoading={isSavingPermissions || resettingPermissionsUserId === permissionTarget.userId}
           onSave={handleSavePermissions}
+          onResetToDefaults={() => handleResetPermissions(
+            permissionTarget.userId,
+            `${permissionTarget.user?.firstname || ''} ${permissionTarget.user?.surname || ''}`,
+            permissionTarget.role
+          )}
         />
       )}
 
@@ -566,9 +653,16 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
           isOpen={!!editPermissionsInvite}
           onClose={() => setEditPermissionsInvite(null)}
           staffName={`${editPermissionsInvite.name} (Pending)`}
+          role={editPermissionsInvite.role}
+          defaultPermissions={getDefaultPermissionsForRole(editPermissionsInvite.role)}
           initialPermissions={editPermissionsInvite.currentPermissions}
-          isLoading={isSavingPermissions}
+          isLoading={isSavingPermissions || resettingPermissionsUserId === editPermissionsInvite.userId}
           onSave={handleSavePendingInvitePermissions}
+          onResetToDefaults={() => handleResetPermissions(
+            editPermissionsInvite.userId,
+            editPermissionsInvite.name,
+            editPermissionsInvite.role
+          )}
         />
       )}
     </div>
@@ -589,52 +683,7 @@ const PERMISSION_MODULES = [
 ] as const;
 
 function getInviteRoleDefaults(role: string): Record<string, boolean> {
-  const allPermissions = Object.fromEntries(
-    PERMISSION_MODULES.flatMap((module) => [[module.view, true], [module.edit, true]])
-  );
-
-  if (role === 'MANAGER') return allPermissions;
-
-  if (role === 'WORKER') {
-    return {
-      canViewEggs: true,
-      canEditEggs: true,
-      canViewFeeding: true,
-      canEditFeeding: true,
-      canViewMortality: true,
-      canEditMortality: true,
-      canViewBatches: true,
-    };
-  }
-
-  if (role === 'ACCOUNTANT') {
-    return {
-      canViewFinance: true,
-      canEditFinance: true,
-      canViewSales: true,
-      canViewInventory: true,
-    };
-  }
-
-  if (role === 'FINANCE_OFFICER') {
-    return {
-      canViewFinance: true,
-      canEditFinance: true,
-      canViewSales: true,
-      canEditSales: true,
-      canViewInventory: true,
-    };
-  }
-
-  if (role === 'CASHIER') {
-    return {
-      canViewSales: true,
-      canEditSales: true,
-      canViewFinance: true,
-    };
-  }
-
-  return {};
+  return getDefaultPermissionsForRole(role);
 }
 
 function InlinePermissionToggles({

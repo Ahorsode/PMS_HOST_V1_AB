@@ -75,7 +75,7 @@ export async function getAuthContext() {
     ? data.userPermissions.find((item) => item.farmId === activeFarmId) || null
     : null
   const isFarmOwner = !!activeFarmId && data.farms.some((farm) => farm.id === activeFarmId)
-  const role = membership?.role || (isFarmOwner ? 'OWNER' : data.role || sessionUser.role || 'WORKER')
+  const role = membership?.role || (isFarmOwner ? 'OWNER' : (data.role === 'OWNER' ? 'WORKER' : data.role || sessionUser.role || 'WORKER'))
 
   return { userId, activeFarmId, role, permissions, isFarmOwner }
 }
