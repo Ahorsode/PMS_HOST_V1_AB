@@ -32,6 +32,7 @@ export interface HealthInventoryOption {
   itemName: string;
   stockLevel: number;
   unit: string;
+  usageType: string | null;
 }
 
 /**
@@ -57,7 +58,7 @@ export async function getHealthInventory(): Promise<{
           isDeleted: false,
           category: { in: ALL_HEALTH_CATEGORIES },
         },
-        select: { id: true, itemName: true, stockLevel: true, unit: true, category: true },
+        select: { id: true, itemName: true, stockLevel: true, unit: true, category: true, usageType: true },
         orderBy: { itemName: "asc" },
       });
 
@@ -69,6 +70,7 @@ export async function getHealthInventory(): Promise<{
           itemName: item.itemName,
           stockLevel: Number(item.stockLevel),
           unit: item.unit,
+          usageType: item.usageType ?? null,
         };
         if (VACCINE_CATEGORIES.includes(String(item.category).toUpperCase())) {
           vaccine.push(option);
@@ -230,6 +232,7 @@ export async function createHealthSchedulesBulk(entries: HealthScheduleInput[]) 
                 stockLevel: e.quantity ?? 0,
                 unit: e.unit || "dose",
                 category,
+                usageType: e.usageType,
                 costPerUnit: null, // finance is prompted to fill this in
                 userId,
                 farmId: activeFarmId,

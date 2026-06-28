@@ -4,7 +4,7 @@ import React, { useState, useEffect, useTransition } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Package, Plus, Trash2, Pencil, Egg, Wheat, FlaskConical,
-  X, Save, AlertTriangle, ShoppingBag, TrendingDown, CheckCircle2
+  X, Save, AlertTriangle, ShoppingBag, TrendingDown, CheckCircle2, Syringe
 } from 'lucide-react';
 import { WorkerStamp } from '@/components/ui/WorkerStamp';
 import {
@@ -38,6 +38,7 @@ const CATEGORY_META: Record<string, { icon: React.ElementType; color: string; la
   EGGS:      { icon: Egg,           color: 'from-amber-500/20 to-yellow-500/10 border-amber-500/30',  label: 'Eggs'        },
   FEED:      { icon: Wheat,         color: 'from-emerald-500/20 to-green-500/10 border-emerald-500/30', label: 'Feed'      },
   MEDICINE:  { icon: FlaskConical,  color: 'from-blue-500/20 to-cyan-500/10 border-blue-500/30',       label: 'Medicine'  },
+  VACCINE:   { icon: Syringe,       color: 'from-amber-500/20 to-orange-500/10 border-amber-500/30',   label: 'Vaccine'   },
   OTHER:     { icon: Package,       color: 'from-white/10 to-white/5 border-white/10',                 label: 'Other'     },
 };
 
@@ -48,6 +49,7 @@ type InventoryItem = {
   unit: string;
   category: string;
   costPerUnit?: number | null;
+  usageType?: string | null;
   supplierId?: string | null;
   user?: {
     firstname: string | null;
@@ -66,7 +68,11 @@ type FormState = {
   supplierId: string;
   paymentPlan: string;
   amountPaid: string;
+  usageType: string;
 };
+
+// Health stock can declare how it is consumed.
+const HEALTH_CATEGORIES = ['MEDICINE', 'VACCINE'];
 
 
 /* ───────────────────── main component ───────────────────── */
@@ -82,7 +88,7 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<InventoryItem | null>(null);
   const [form, setForm] = useState<FormState>({
-    itemName: '', stockLevel: '', unit: 'bags', category: 'FEED', costPerUnit: '', supplierId: '', paymentPlan: 'full', amountPaid: ''
+    itemName: '', stockLevel: '', unit: 'bags', category: 'FEED', costPerUnit: '', supplierId: '', paymentPlan: 'full', amountPaid: '', usageType: 'QUANTITY'
   });
 
 
@@ -105,7 +111,7 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
   const openAdd = () => {
     if (!canEdit) return;
     setEditing(null);
-    setForm({ itemName: '', stockLevel: '', unit: 'bags', category: 'FEED', costPerUnit: '', supplierId: '', paymentPlan: 'full', amountPaid: '' });
+    setForm({ itemName: '', stockLevel: '', unit: 'bags', category: 'FEED', costPerUnit: '', supplierId: '', paymentPlan: 'full', amountPaid: '', usageType: 'QUANTITY' });
     setShowForm(true);
   };
 
@@ -120,7 +126,8 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
       costPerUnit: item.costPerUnit != null ? String(item.costPerUnit) : '',
       supplierId: item.supplierId ? String(item.supplierId) : '',
       paymentPlan: 'full',
-      amountPaid: ''
+      amountPaid: '',
+      usageType: item.usageType || 'QUANTITY'
     });
     setShowForm(true);
   };
@@ -142,6 +149,7 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
           category: form.category,
           ...(form.costPerUnit ? { costPerUnit: parseFloat(form.costPerUnit) } : {}),
           ...(form.supplierId && form.supplierId !== 'onetime' ? { supplierId: form.supplierId } : { supplierId: undefined }),
+          ...(HEALTH_CATEGORIES.includes(form.category) ? { usageType: form.usageType } : {}),
         });
       } else {
         res = await createInventoryItem({
@@ -151,6 +159,7 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
           category: form.category,
           ...(form.costPerUnit ? { costPerUnit: parseFloat(form.costPerUnit) } : {}),
           ...(form.supplierId && form.supplierId !== 'onetime' ? { supplierId: form.supplierId } : { supplierId: undefined }),
+          ...(HEALTH_CATEGORIES.includes(form.category) ? { usageType: form.usageType } : {}),
           paymentPlan: form.paymentPlan,
           ...(form.paymentPlan === 'installments' && form.amountPaid ? { amountPaid: parseFloat(form.amountPaid) } : {}),
         });
@@ -251,11 +260,12 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
       )}
 
       {/* ── Summary Cards ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {[
           { label: 'Total SKUs', value: items.length, icon: Package, color: 'text-white' },
           { label: 'Feed Items', value: (grouped['FEED'] || []).length, icon: Wheat, color: 'text-emerald-400' },
           { label: 'Medicine', value: (grouped['MEDICINE'] || []).length, icon: FlaskConical, color: 'text-blue-400' },
+          { label: 'Vaccine', value: (grouped['VACCINE'] || []).length, icon: Syringe, color: 'text-amber-400' },
           { label: 'Other', value: (grouped['OTHER'] || []).length, icon: ShoppingBag, color: 'text-purple-400' },
         ].map(card => (
           <div key={card.label} className="glass-pill rounded-md p-3 flex items-center gap-2">
@@ -368,11 +378,15 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
               {/* Category */}
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-white/70 uppercase tracking-wider">Category</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {['FEED', 'MEDICINE', 'OTHER'].map(cat => (
+                <div className="grid grid-cols-2 gap-2">
+                  {['FEED', 'MEDICINE', 'VACCINE', 'OTHER'].map(cat => (
                     <button
                       key={cat}
-                      onClick={() => setForm(p => ({ ...p, category: cat, unit: cat === 'FEED' ? 'bags' : 'units' }))}
+                      onClick={() => setForm(p => ({
+                        ...p,
+                        category: cat,
+                        unit: cat === 'FEED' ? 'bags' : cat === 'VACCINE' ? 'doses' : 'units',
+                      }))}
                       className={`py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${form.category === cat ? 'bg-emerald-500 text-black' : 'bg-white/10 text-white/70 hover:bg-white/10'}`}
                     >
                       {cat}
@@ -380,6 +394,34 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
                   ))}
                 </div>
               </div>
+
+              {/* Usage — only for health stock (vaccines/medicines) */}
+              {HEALTH_CATEGORIES.includes(form.category) && (
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-white/70 uppercase tracking-wider">Usage</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setForm(p => ({ ...p, usageType: 'ONE_TIME' }))}
+                      className={`py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${form.usageType === 'ONE_TIME' ? 'bg-emerald-500 text-black' : 'bg-white/10 text-white/70 hover:bg-white/10'}`}
+                    >
+                      One-time use
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setForm(p => ({ ...p, usageType: 'QUANTITY' }))}
+                      className={`py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${form.usageType === 'QUANTITY' ? 'bg-emerald-500 text-black' : 'bg-white/10 text-white/70 hover:bg-white/10'}`}
+                    >
+                      Quantity-tracked
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-white/40 italic">
+                    {form.usageType === 'ONE_TIME'
+                      ? 'Applied once per schedule, regardless of count.'
+                      : 'Tracked by stock quantity and unit.'}
+                  </p>
+                </div>
+              )}
 
               {/* Name */}
               <div className="space-y-1.5">

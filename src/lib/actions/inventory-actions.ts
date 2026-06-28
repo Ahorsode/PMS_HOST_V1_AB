@@ -16,6 +16,7 @@ export async function createInventoryItem(data: {
   supplierId?: string
   paymentPlan?: string
   amountPaid?: number
+  usageType?: string
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
@@ -34,6 +35,7 @@ export async function createInventoryItem(data: {
         unit: data.unit,
         category: data.category,
         costPerUnit: data.costPerUnit,
+        usageType: data.usageType,
         supplierId: data.supplierId,
         userId: userId,
         farmId: activeFarmId
@@ -85,6 +87,7 @@ export async function updateInventoryItem(id: string, data: {
   category?: string
   costPerUnit?: number
   supplierId?: string
+  usageType?: string
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }

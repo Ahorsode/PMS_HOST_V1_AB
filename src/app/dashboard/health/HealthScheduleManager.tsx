@@ -80,6 +80,7 @@ interface InventoryOption {
   itemName: string;
   stockLevel: number;
   unit: string;
+  usageType?: string | null;
 }
 
 interface ScheduleRecord {
@@ -205,6 +206,19 @@ export function HealthScheduleManager({
     setType(next);
     setNamePreset("");
     setCustomName("");
+  }
+
+  // Picking a stocked item pre-fills its declared usage + unit so the
+  // schedule matches how that item was set up in Inventory.
+  function handleNameChange(value: string) {
+    setNamePreset(value);
+    const match = inventory.find((i) => i.itemName === value);
+    if (match) {
+      if (match.usageType === "ONE_TIME" || match.usageType === "QUANTITY") {
+        setUsageType(match.usageType);
+      }
+      if (match.unit) setUnit(match.unit);
+    }
   }
 
   function clearItemFields() {
@@ -371,7 +385,7 @@ export function HealthScheduleManager({
                   label={isVaccine ? "Vaccine" : "Medication"}
                   options={nameOptions}
                   value={namePreset}
-                  onChange={(e) => setNamePreset(e.target.value)}
+                  onChange={(e) => handleNameChange(e.target.value)}
                 />
               </div>
 

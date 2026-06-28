@@ -240,6 +240,7 @@ model Inventory {
   farmId                     String                      @default("farm_placeholder")
   reorderLevel               Decimal?                    @default(500.00) @db.Decimal(15, 2)
   costPerUnit                Decimal?                    @db.Decimal(15, 2)
+  usageType                  String?
   eggCategoryId              String?
   supplierId                 String?
   isDeleted                  Boolean                     @default(false) @map("is_deleted")
