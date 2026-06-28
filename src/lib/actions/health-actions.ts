@@ -13,6 +13,47 @@ function serialize<T>(value: T): T {
   return JSON.parse(JSON.stringify(value));
 }
 
+export interface MedicineInventoryOption {
+  id: string;
+  itemName: string;
+  stockLevel: number;
+  unit: string;
+}
+
+/**
+ * Return the farm's medicine/veterinary inventory items so the medication
+ * schedule form sources its options from real on-hand stock rather than a
+ * hard-coded list. Items with no remaining stock are still shown (the schedule
+ * may be planned ahead), but the UI flags them.
+ */
+export async function getMedicineInventory(): Promise<MedicineInventoryOption[]> {
+  const { userId, activeFarmId } = await getAuthContext();
+  if (!activeFarmId) return [];
+
+  return await (prisma as any).$withFarmContext(
+    userId,
+    activeFarmId,
+    async (tx: any) => {
+      const items = await tx.inventory.findMany({
+        where: {
+          farmId: activeFarmId,
+          isDeleted: false,
+          category: { in: ["MEDICINE", "MEDICATION", "VETERINARY", "HEALTH"] },
+        },
+        select: { id: true, itemName: true, stockLevel: true, unit: true },
+        orderBy: { itemName: "asc" },
+      });
+
+      return items.map((item: any) => ({
+        id: item.id,
+        itemName: item.itemName,
+        stockLevel: Number(item.stockLevel),
+        unit: item.unit,
+      }));
+    }
+  );
+}
+
 /**
  * Fetch every vaccination and medication schedule for the active farm,
  * along with their owning batch so the UI can label them.

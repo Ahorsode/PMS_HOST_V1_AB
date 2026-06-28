@@ -13,6 +13,7 @@ import {
   Circle,
   XCircle,
   Loader2,
+  Boxes,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -42,19 +43,6 @@ const VACCINE_PRESETS = [
   "Deworming",
 ];
 
-const MEDICATION_PRESETS = [
-  "Amprolium (Coccidiostat)",
-  "Oxytetracycline",
-  "Tylosin",
-  "Enrofloxacin",
-  "Multivitamin / Electrolytes",
-  "Dewormer (Piperazine)",
-  "Dewormer (Levamisole)",
-  "Probiotics",
-  "Vitamin A/D/E",
-  "Antibiotic (General)",
-];
-
 const STATUS_OPTIONS = [
   { label: "Pending", value: "PENDING" },
   { label: "Completed", value: "COMPLETED" },
@@ -65,6 +53,13 @@ interface Batch {
   id: string;
   batchName?: string | null;
   type?: string | null;
+}
+
+interface MedicineOption {
+  id: string;
+  itemName: string;
+  stockLevel: number;
+  unit: string;
 }
 
 interface ScheduleRecord {
@@ -81,6 +76,7 @@ interface Props {
   vaccinations: ScheduleRecord[];
   medications: ScheduleRecord[];
   activeBatches: Batch[];
+  medicineInventory: MedicineOption[];
   canEdit: boolean;
 }
 
@@ -92,6 +88,7 @@ export function HealthScheduleManager({
   vaccinations,
   medications,
   activeBatches,
+  medicineInventory,
   canEdit,
 }: Props) {
   const router = useRouter();
@@ -121,13 +118,26 @@ export function HealthScheduleManager({
   );
 
   const nameOptions = useMemo(() => {
-    const presets = isVaccine ? VACCINE_PRESETS : MEDICATION_PRESETS;
+    if (isVaccine) {
+      return [
+        { label: "Select a vaccine…", value: "" },
+        ...VACCINE_PRESETS.map((p) => ({ label: p, value: p })),
+        { label: "➕ Add new (type your own)", value: CUSTOM },
+      ];
+    }
+    // Medication options come from the farm's own Medicine inventory stock.
     return [
-      { label: `Select a ${isVaccine ? "vaccine" : "medication"}…`, value: "" },
-      ...presets.map((p) => ({ label: p, value: p })),
-      { label: "➕ Add new (type your own)", value: CUSTOM },
+      { label: "Select from inventory…", value: "" },
+      ...medicineInventory.map((m) => ({
+        label:
+          m.stockLevel > 0
+            ? `${m.itemName} — ${m.stockLevel} ${m.unit} in stock`
+            : `${m.itemName} — out of stock`,
+        value: m.itemName,
+      })),
+      { label: "➕ Add new (not in inventory)", value: CUSTOM },
     ];
-  }, [isVaccine]);
+  }, [isVaccine, medicineInventory]);
 
   const resolvedName = namePreset === CUSTOM ? customName.trim() : namePreset;
   const canSubmit =
@@ -257,6 +267,15 @@ export function HealthScheduleManager({
                   required
                 />
               </div>
+
+              {!isVaccine && (
+                <p className="-mt-1 flex items-center gap-1.5 text-xs text-white/50 italic">
+                  <Boxes className="w-3.5 h-3.5 text-sky-400/70" />
+                  {medicineInventory.length > 0
+                    ? "Medications are sourced from your Inventory › Medicine stock."
+                    : "No medicine in inventory yet — add stock under Inventory, or use “Add new”."}
+                </p>
+              )}
 
               {namePreset === CUSTOM && (
                 <Input
