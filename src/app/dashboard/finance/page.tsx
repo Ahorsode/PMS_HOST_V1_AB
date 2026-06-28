@@ -6,6 +6,8 @@ import prisma from '@/lib/db';
 import { getFinancialTransactions } from '@/lib/actions/financial-transaction-actions';
 import { FinanceHubClient } from './FinanceHubClient';
 import { MissingCostPrompt } from '@/components/finance/MissingCostPrompt';
+import { MissingHealthCostPrompt } from '@/components/finance/MissingHealthCostPrompt';
+import { getHealthItemsMissingCost } from '@/lib/actions/health-actions';
 
 export default async function FinancePage() {
   const { activeFarmId } = await getAuthContext();
@@ -40,12 +42,19 @@ export default async function FinancePage() {
     }
   }) : [];
 
+  // Health stock (vaccines/medications) a worker added without a cost.
+  const missingHealthCosts = canEdit ? await getHealthItemsMissingCost() : [];
+
   const transactions = await getFinancialTransactions();
 
   return (
     <div className="p-5 space-y-5 max-w-7xl mx-auto animate-in fade-in duration-700">
       {canEdit && missingCostBatches.length > 0 && (
         <MissingCostPrompt batches={missingCostBatches} />
+      )}
+
+      {canEdit && missingCostBatches.length === 0 && missingHealthCosts.length > 0 && (
+        <MissingHealthCostPrompt items={missingHealthCosts} />
       )}
       
       <FinanceHubClient 

@@ -506,6 +506,9 @@ model VaccinationSchedule {
   scheduledDate DateTime
   status        String    @default("PENDING")
   notes         String?
+  quantity      Decimal?  @db.Decimal(15, 2)
+  usageType     String?
+  unit          String?
   farmId        String    @default("farm_placeholder")
   batch         Livestock @relation(fields: [batchId], references: [id], onDelete: Cascade)
   farm          Farm      @relation(fields: [farmId], references: [id], onDelete: Cascade)
@@ -522,6 +525,9 @@ model MedicationSchedule {
   scheduledDate  DateTime
   status         String    @default("PENDING")
   notes          String?
+  quantity       Decimal?  @db.Decimal(15, 2)
+  usageType      String?
+  unit           String?
   farmId         String    @default("farm_placeholder")
   batch          Livestock @relation(fields: [batchId], references: [id], onDelete: Cascade)
   farm           Farm      @relation(fields: [farmId], references: [id], onDelete: Cascade)

@@ -14,6 +14,8 @@ import {
   XCircle,
   Loader2,
   Boxes,
+  ListPlus,
+  Sparkles,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -22,10 +24,12 @@ import { Button } from "@/components/ui/Button";
 import { cn, formatDate } from "@/lib/utils";
 import { formatLivestockType } from "@/lib/utils/growth-utils";
 import {
-  createHealthSchedule,
+  createHealthSchedulesBulk,
   updateHealthScheduleStatus,
   deleteHealthSchedule,
   type HealthScheduleType,
+  type HealthUsageType,
+  type HealthScheduleInput,
 } from "@/lib/actions/health-actions";
 
 const CUSTOM = "__custom__";
@@ -49,13 +53,29 @@ const STATUS_OPTIONS = [
   { label: "Cancelled", value: "CANCELLED" },
 ];
 
+const UNIT_OPTIONS = [
+  "dose",
+  "doses",
+  "ml",
+  "L",
+  "bottle",
+  "vial",
+  "sachet",
+  "tablet",
+  "capsule",
+  "g",
+  "kg",
+  "bag",
+  "unit",
+].map((u) => ({ label: u, value: u }));
+
 interface Batch {
   id: string;
   batchName?: string | null;
   type?: string | null;
 }
 
-interface MedicineOption {
+interface InventoryOption {
   id: string;
   itemName: string;
   stockLevel: number;
@@ -67,16 +87,26 @@ interface ScheduleRecord {
   scheduledDate: string;
   status: string;
   notes?: string | null;
+  quantity?: number | string | null;
+  usageType?: string | null;
+  unit?: string | null;
   vaccineName?: string;
   medicationName?: string;
   batch?: { id: string; batchName?: string | null; type?: string | null } | null;
+}
+
+// A pending row the user has staged but not yet saved.
+interface DraftEntry extends HealthScheduleInput {
+  _key: string;
+  batchLabel: string;
 }
 
 interface Props {
   vaccinations: ScheduleRecord[];
   medications: ScheduleRecord[];
   activeBatches: Batch[];
-  medicineInventory: MedicineOption[];
+  vaccineInventory: InventoryOption[];
+  medicineInventory: InventoryOption[];
   canEdit: boolean;
 }
 
@@ -88,6 +118,7 @@ export function HealthScheduleManager({
   vaccinations,
   medications,
   activeBatches,
+  vaccineInventory,
   medicineInventory,
   canEdit,
 }: Props) {
@@ -100,11 +131,23 @@ export function HealthScheduleManager({
   const [batchId, setBatchId] = useState<string>("");
   const [namePreset, setNamePreset] = useState<string>("");
   const [customName, setCustomName] = useState<string>("");
+  const [usageType, setUsageType] = useState<HealthUsageType>("ONE_TIME");
+  const [quantity, setQuantity] = useState<string>("");
+  const [unit, setUnit] = useState<string>("dose");
   const [scheduledDate, setScheduledDate] = useState<string>(todayInputValue());
   const [status, setStatus] = useState<string>("PENDING");
   const [notes, setNotes] = useState<string>("");
 
+  // Staged rows for "add multiple at once".
+  const [drafts, setDrafts] = useState<DraftEntry[]>([]);
+
   const isVaccine = type === "VACCINATION";
+  const inventory = isVaccine ? vaccineInventory : medicineInventory;
+
+  const inventoryNameSet = useMemo(
+    () => new Set(inventory.map((i) => i.itemName.toLowerCase())),
+    [inventory]
+  );
 
   const batchOptions = useMemo(
     () => [
@@ -117,66 +160,132 @@ export function HealthScheduleManager({
     [activeBatches]
   );
 
+  // Both vaccine and medication options come from the farm's own inventory.
+  // For vaccines we also surface the common presets — any preset not already
+  // in stock is registered as new inventory (and triggers the finance prompt).
   const nameOptions = useMemo(() => {
-    if (isVaccine) {
-      return [
-        { label: "Select a vaccine…", value: "" },
-        ...VACCINE_PRESETS.map((p) => ({ label: p, value: p })),
-        { label: "➕ Add new (type your own)", value: CUSTOM },
-      ];
-    }
-    // Medication options come from the farm's own Medicine inventory stock.
+    const fromStock = inventory.map((m) => ({
+      label:
+        m.stockLevel > 0
+          ? `${m.itemName} — ${m.stockLevel} ${m.unit} in stock`
+          : `${m.itemName} — out of stock`,
+      value: m.itemName,
+    }));
+
+    const presets = isVaccine
+      ? VACCINE_PRESETS.filter((p) => !inventoryNameSet.has(p.toLowerCase())).map(
+          (p) => ({ label: `${p} (new)`, value: p })
+        )
+      : [];
+
     return [
       { label: "Select from inventory…", value: "" },
-      ...medicineInventory.map((m) => ({
-        label:
-          m.stockLevel > 0
-            ? `${m.itemName} — ${m.stockLevel} ${m.unit} in stock`
-            : `${m.itemName} — out of stock`,
-        value: m.itemName,
-      })),
-      { label: "➕ Add new (not in inventory)", value: CUSTOM },
+      ...fromStock,
+      ...presets,
+      { label: "➕ Add new (type your own)", value: CUSTOM },
     ];
-  }, [isVaccine, medicineInventory]);
+  }, [inventory, inventoryNameSet, isVaccine]);
 
   const resolvedName = namePreset === CUSTOM ? customName.trim() : namePreset;
-  const canSubmit =
-    canEdit && !!batchId && !!resolvedName && !!scheduledDate && !isPending;
+  const isNewItem =
+    !!resolvedName && !inventoryNameSet.has(resolvedName.toLowerCase());
+  const batchLabel =
+    batchOptions.find((o) => o.value === batchId)?.label ?? "Unknown batch";
+
+  const currentEntryValid =
+    !!batchId &&
+    !!resolvedName &&
+    !!scheduledDate &&
+    (usageType === "ONE_TIME" || (Number(quantity) > 0));
+
+  const totalToSave = drafts.length + (currentEntryValid ? 1 : 0);
+  const canSave = canEdit && totalToSave > 0 && !isPending;
 
   function switchType(next: HealthScheduleType) {
     setType(next);
-    // Names differ per type — reset the name selection to avoid mismatches.
     setNamePreset("");
     setCustomName("");
   }
 
-  function resetForm() {
-    setBatchId("");
+  function clearItemFields() {
     setNamePreset("");
     setCustomName("");
-    setScheduledDate(todayInputValue());
-    setStatus("PENDING");
+    setUsageType("ONE_TIME");
+    setQuantity("");
+    setUnit("dose");
     setNotes("");
+  }
+
+  function buildCurrentEntry(): DraftEntry | null {
+    if (!currentEntryValid) return null;
+    return {
+      _key: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      type,
+      batchId,
+      batchLabel,
+      name: resolvedName,
+      isNewItem,
+      scheduledDate,
+      status,
+      usageType,
+      quantity: usageType === "QUANTITY" ? Number(quantity) : 1,
+      unit: usageType === "QUANTITY" ? unit : "dose",
+      notes: notes.trim() || undefined,
+    };
+  }
+
+  function handleAddToList() {
+    setError(null);
+    const entry = buildCurrentEntry();
+    if (!entry) {
+      setError("Fill in the batch, name, date and quantity first.");
+      return;
+    }
+    setDrafts((prev) => [...prev, entry]);
+    clearItemFields();
+  }
+
+  function removeDraft(key: string) {
+    setDrafts((prev) => prev.filter((d) => d._key !== key));
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!canSubmit) return;
+    if (!canSave) return;
     setError(null);
+
+    const all = [...drafts];
+    const current = buildCurrentEntry();
+    if (current) all.push(current);
+    if (all.length === 0) {
+      setError("Add at least one vaccine or medication.");
+      return;
+    }
+
+    const payload: HealthScheduleInput[] = all.map((d) => ({
+      type: d.type,
+      batchId: d.batchId,
+      name: d.name,
+      isNewItem: d.isNewItem,
+      scheduledDate: d.scheduledDate,
+      status: d.status,
+      usageType: d.usageType,
+      quantity: d.quantity,
+      unit: d.unit,
+      notes: d.notes,
+    }));
+
     startTransition(async () => {
       try {
-        await createHealthSchedule({
-          type,
-          batchId,
-          name: resolvedName,
-          scheduledDate,
-          status,
-          notes: notes.trim() || undefined,
-        });
-        resetForm();
+        await createHealthSchedulesBulk(payload);
+        setDrafts([]);
+        setBatchId("");
+        clearItemFields();
+        setScheduledDate(todayInputValue());
+        setStatus("PENDING");
         router.refresh();
       } catch (err: any) {
-        setError(err?.message || "Failed to save schedule");
+        setError(err?.message || "Failed to save schedules");
       }
     });
   }
@@ -257,25 +366,21 @@ export function HealthScheduleManager({
                   options={batchOptions}
                   value={batchId}
                   onChange={(e) => setBatchId(e.target.value)}
-                  required
                 />
                 <Select
                   label={isVaccine ? "Vaccine" : "Medication"}
                   options={nameOptions}
                   value={namePreset}
                   onChange={(e) => setNamePreset(e.target.value)}
-                  required
                 />
               </div>
 
-              {!isVaccine && (
-                <p className="-mt-1 flex items-center gap-1.5 text-xs text-white/50 italic">
-                  <Boxes className="w-3.5 h-3.5 text-sky-400/70" />
-                  {medicineInventory.length > 0
-                    ? "Medications are sourced from your Inventory › Medicine stock."
-                    : "No medicine in inventory yet — add stock under Inventory, or use “Add new”."}
-                </p>
-              )}
+              <p className="-mt-1 flex items-center gap-1.5 text-xs text-white/50 italic">
+                <Boxes className="w-3.5 h-3.5 text-sky-400/70" />
+                {inventory.length > 0
+                  ? `${isVaccine ? "Vaccines" : "Medications"} are sourced from your Inventory stock.`
+                  : `No ${isVaccine ? "vaccine" : "medicine"} in inventory yet — use “Add new” and finance will be asked to price it.`}
+              </p>
 
               {namePreset === CUSTOM && (
                 <Input
@@ -284,8 +389,71 @@ export function HealthScheduleManager({
                   value={customName}
                   onChange={(e) => setCustomName(e.target.value)}
                   autoFocus
-                  required
                 />
+              )}
+
+              {isNewItem && resolvedName && (
+                <p className="-mt-1 flex items-center gap-1.5 text-xs text-emerald-300/80 italic">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  “{resolvedName}” will be added to inventory — a finance user
+                  will be prompted to set its cost.
+                </p>
+              )}
+
+              {/* Usage type: one-time vs a specific quantity */}
+              <div>
+                <label className="text-xs font-bold uppercase tracking-widest text-white/70 block mb-2">
+                  Usage
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setUsageType("ONE_TIME")}
+                    className={cn(
+                      "flex-1 px-3 py-2.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all",
+                      usageType === "ONE_TIME"
+                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                        : "bg-white/5 text-white/60 border-white/10 hover:bg-white/10"
+                    )}
+                  >
+                    One-time use
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setUsageType("QUANTITY")}
+                    className={cn(
+                      "flex-1 px-3 py-2.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all",
+                      usageType === "QUANTITY"
+                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                        : "bg-white/5 text-white/60 border-white/10 hover:bg-white/10"
+                    )}
+                  >
+                    Set quantity
+                  </button>
+                </div>
+              </div>
+
+              {usageType === "QUANTITY" && (
+                <div className="grid grid-cols-2 gap-4">
+                  <Input
+                    label="Quantity"
+                    type="number"
+                    min="0"
+                    step="any"
+                    placeholder="e.g. 250"
+                    value={quantity}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      if (v === "" || Number(v) >= 0) setQuantity(v);
+                    }}
+                  />
+                  <Select
+                    label="Unit"
+                    options={UNIT_OPTIONS}
+                    value={unit}
+                    onChange={(e) => setUnit(e.target.value)}
+                  />
+                </div>
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -294,7 +462,6 @@ export function HealthScheduleManager({
                   type="date"
                   value={scheduledDate}
                   onChange={(e) => setScheduledDate(e.target.value)}
-                  required
                 />
                 <Select
                   label="Status"
@@ -311,15 +478,65 @@ export function HealthScheduleManager({
                 onChange={(e) => setNotes(e.target.value)}
               />
 
+              {/* Staged list for multi-add */}
+              {drafts.length > 0 && (
+                <div className="rounded-lg border border-white/10 bg-white/5 p-3 space-y-2">
+                  <p className="text-xs font-bold uppercase tracking-widest text-white/60">
+                    Staged ({drafts.length})
+                  </p>
+                  {drafts.map((d) => (
+                    <div
+                      key={d._key}
+                      className="flex items-center gap-2 text-xs bg-black/20 rounded-md px-3 py-2"
+                    >
+                      {d.type === "VACCINATION" ? (
+                        <Syringe className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      ) : (
+                        <Pill className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                      )}
+                      <span className="font-bold text-white truncate">{d.name}</span>
+                      <span className="text-white/40">·</span>
+                      <span className="text-white/60 truncate">{d.batchLabel}</span>
+                      <span className="text-white/40">·</span>
+                      <span className="text-white/60">
+                        {d.usageType === "QUANTITY"
+                          ? `${d.quantity} ${d.unit}`
+                          : "One-time"}
+                      </span>
+                      {d.isNewItem && (
+                        <span className="text-emerald-300/80">· new</span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => removeDraft(d._key)}
+                        className="ml-auto text-red-400/70 hover:text-red-400"
+                        aria-label="Remove staged item"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               {error && (
                 <p className="text-xs text-red-400 font-bold uppercase tracking-wider">
                   {error}
                 </p>
               )}
 
-              <div className="flex justify-end">
-                <Button type="submit" isLoading={isPending} disabled={!canSubmit}>
-                  <Plus className="w-4 h-4" /> Add Schedule
+              <div className="flex flex-col sm:flex-row justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleAddToList}
+                  disabled={!currentEntryValid || isPending}
+                >
+                  <ListPlus className="w-4 h-4" /> Add another
+                </Button>
+                <Button type="submit" isLoading={isPending} disabled={!canSave}>
+                  <Plus className="w-4 h-4" />
+                  {totalToSave > 1 ? `Save ${totalToSave} schedules` : "Add Schedule"}
                 </Button>
               </div>
             </form>
@@ -358,6 +575,15 @@ export function HealthScheduleManager({
       </div>
     </div>
   );
+}
+
+function usageLabel(rec: ScheduleRecord): string | null {
+  const qty = rec.quantity != null ? Number(rec.quantity) : null;
+  if (rec.usageType === "QUANTITY" && qty && qty > 0) {
+    return `${qty} ${rec.unit || "units"}`;
+  }
+  if (rec.usageType === "ONE_TIME") return "One-time";
+  return null;
 }
 
 function ScheduleList({
@@ -418,6 +644,7 @@ function ScheduleList({
             const isPast = date < today;
             const isDone = rec.status === "COMPLETED";
             const isCancelled = rec.status === "CANCELLED";
+            const usage = usageLabel(rec);
 
             return (
               <motion.div
@@ -440,14 +667,21 @@ function ScheduleList({
                 )}
 
                 <div className="flex-1 min-w-0">
-                  <p
-                    className={cn(
-                      "text-sm font-bold truncate",
-                      isCancelled ? "text-gray-500 line-through" : "text-white"
+                  <div className="flex items-center gap-2">
+                    <p
+                      className={cn(
+                        "text-sm font-bold truncate",
+                        isCancelled ? "text-gray-500 line-through" : "text-white"
+                      )}
+                    >
+                      {name}
+                    </p>
+                    {usage && (
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-white/10 text-white/60 border border-white/10 flex-shrink-0">
+                        {usage}
+                      </span>
                     )}
-                  >
-                    {name}
-                  </p>
+                  </div>
                   <div className="flex items-center gap-2 text-xs text-white/60 mt-0.5">
                     <span className="font-medium truncate">
                       {rec.batch?.batchName || "Unknown batch"}

@@ -1,7 +1,7 @@
 import React from "react";
 import { redirect } from "next/navigation";
 import { HeartPulse } from "lucide-react";
-import { getHealthSchedules, getMedicineInventory } from "@/lib/actions/health-actions";
+import { getHealthSchedules, getHealthInventory } from "@/lib/actions/health-actions";
 import { getAllBatches } from "@/lib/actions/dashboard-actions";
 import { checkWorkerPermissions } from "@/lib/actions/staff-actions";
 import { HealthScheduleManager } from "./HealthScheduleManager";
@@ -14,11 +14,11 @@ export default async function HealthPage() {
     redirect("/dashboard/unauthorized");
   }
 
-  const [{ vaccinations, medications }, batches, medicineInventory] =
+  const [{ vaccinations, medications }, batches, { vaccine, medicine }] =
     await Promise.all([
       getHealthSchedules(),
       getAllBatches(),
-      getMedicineInventory(),
+      getHealthInventory(),
     ]);
 
   const activeBatches = JSON.parse(
@@ -54,7 +54,8 @@ export default async function HealthPage() {
         vaccinations={vaccinations}
         medications={medications}
         activeBatches={activeBatches}
-        medicineInventory={medicineInventory}
+        vaccineInventory={vaccine}
+        medicineInventory={medicine}
         canEdit={canEdit}
       />
     </div>
