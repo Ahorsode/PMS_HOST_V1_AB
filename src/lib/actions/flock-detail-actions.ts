@@ -65,10 +65,13 @@ export async function getFlockDeepDive(id: string) {
     let directExpenses: any[] = []
     let allocations: any[] = []
     let revenueItems: any[] = []
-    let allocationBatches: any[] = []
+    // "General" expenses: farm-level costs not tied to a single batch and not
+    // explicitly allocated. These get spread across batches by headcount share.
+    let generalExpenses: any[] = []
+    let activeBatchesForAlloc: any[] = []
 
     if (canViewFinance) {
-      ;[directExpenses, allocations, revenueItems] = await Promise.all([
+      ;[directExpenses, allocations, revenueItems, generalExpenses, activeBatchesForAlloc] = await Promise.all([
         tx.expense.findMany({
           where: { batch_id: id, farmId: activeFarmId, isDeleted: false },
           orderBy: { expenseDate: 'desc' },
@@ -82,16 +85,27 @@ export async function getFlockDeepDive(id: string) {
           where: { livestockId: id, order: { farmId: activeFarmId, isDeleted: false } },
           include: { order: { select: { orderDate: true, status: true } } },
         }),
+        tx.expense.findMany({
+          where: { farmId: activeFarmId, isDeleted: false, batch_id: null, allocations: { none: {} } },
+          orderBy: { expenseDate: 'desc' },
+        }),
+        tx.livestock.findMany({
+          where: { farmId: activeFarmId, status: 'active', isDeleted: false },
+          select: { id: true, batchName: true, currentCount: true, localBatchId: true },
+          orderBy: { batchName: 'asc' },
+        }),
       ])
     }
 
-    if (canEditFinance) {
-      allocationBatches = await tx.livestock.findMany({
-        where: { farmId: activeFarmId, status: 'active', isDeleted: false },
-        select: { id: true, batchName: true, currentCount: true, localBatchId: true },
-        orderBy: { batchName: 'asc' },
-      })
-    }
+    const allocationBatches = canEditFinance ? activeBatchesForAlloc : []
+
+    // This batch's proportional share of total active livestock headcount.
+    const headcountMap = new Map<string, number>(
+      activeBatchesForAlloc.map((b: any) => [b.id, b.currentCount || 0])
+    )
+    if (!headcountMap.has(batch.id)) headcountMap.set(batch.id, batch.currentCount || 0)
+    const totalHeadcount = Array.from(headcountMap.values()).reduce((s, v) => s + v, 0)
+    const headcountShare = totalHeadcount > 0 ? (batch.currentCount || 0) / totalHeadcount : 0
 
     // Health inventory options for the schedule form (only if user can edit)
     let vaccineInventory: any[] = []
@@ -145,7 +159,9 @@ export async function getFlockDeepDive(id: string) {
     const directExpenseTotal = directExpenses.reduce((s: number, e: any) => s + Number(e.amount || 0), 0)
     const allocatedList = allocations.filter((a: any) => !a.expense?.isDeleted)
     const allocatedExpenseTotal = allocatedList.reduce((s: number, a: any) => s + Number(a.allocatedAmount || 0), 0)
-    const totalExpenses = directExpenseTotal + allocatedExpenseTotal
+    const generalPoolTotal = generalExpenses.reduce((s: number, e: any) => s + Number(e.amount || 0), 0)
+    const generalAllocatedTotal = generalPoolTotal * headcountShare
+    const totalExpenses = directExpenseTotal + allocatedExpenseTotal + generalAllocatedTotal
     const netProfit = totalRevenue - totalExpenses
 
     // ---- Finance monthly series (Expenses vs Revenue) ---------------------
@@ -159,6 +175,9 @@ export async function getFlockDeepDive(id: string) {
     directExpenses.forEach((e: any) => bump(monthKey(new Date(e.expenseDate)), 'expenses', Number(e.amount || 0)))
     allocatedList.forEach((a: any) =>
       bump(monthKey(new Date(a.expense.expenseDate)), 'expenses', Number(a.allocatedAmount || 0))
+    )
+    generalExpenses.forEach((e: any) =>
+      bump(monthKey(new Date(e.expenseDate)), 'expenses', Number(e.amount || 0) * headcountShare)
     )
     const financeMonthly = Array.from(financeMap.entries())
       .sort(([a], [b]) => a.localeCompare(b))
@@ -231,6 +250,15 @@ export async function getFlockDeepDive(id: string) {
         kind: 'Allocated' as const,
         percentage: a.allocationPercentage != null ? Number(a.allocationPercentage) : null,
       })),
+      ...generalExpenses.map((e: any) => ({
+        id: e.id,
+        date: e.expenseDate,
+        category: e.category,
+        description: e.description || '—',
+        amount: Number(e.amount || 0) * headcountShare,
+        kind: 'General' as const,
+        percentage: Math.round(headcountShare * 10000) / 100,
+      })),
     ]
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
       .slice(0, 25)
@@ -277,6 +305,9 @@ export async function getFlockDeepDive(id: string) {
         canEditFinance,
         directExpenseTotal,
         allocatedExpenseTotal,
+        generalAllocatedTotal,
+        generalPoolTotal,
+        headcountSharePct: Math.round(headcountShare * 10000) / 100,
         totalExpenses,
         totalRevenue,
         netProfit,

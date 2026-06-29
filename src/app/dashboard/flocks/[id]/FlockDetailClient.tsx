@@ -87,7 +87,17 @@ export const FlockDetailClient = ({ data }: FlockDetailClientProps) => {
       {finance.canViewFinance ? (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
           <MetricCard title="Total Revenue" value={formatCurrency(finance.totalRevenue, 'GHS')} icon={Wallet} color="sky" subtext="From sales" />
-          <MetricCard title="Total Expenses" value={formatCurrency(finance.totalExpenses, 'GHS')} icon={Banknote} color="orange" subtext="Direct + allocated" />
+          <MetricCard
+            title="Total Expenses"
+            value={formatCurrency(finance.totalExpenses, 'GHS')}
+            icon={Banknote}
+            color="orange"
+            subtext={
+              finance.generalAllocatedTotal > 0
+                ? `Incl. ${finance.headcountSharePct}% general share`
+                : 'Direct + allocated'
+            }
+          />
           <MetricCard
             title="Net Profit"
             value={formatCurrency(finance.netProfit, 'GHS')}
@@ -231,7 +241,11 @@ function ExpenseBreakdown({ items }: { items: any[] }) {
                   <span
                     className={cn(
                       'rounded px-1.5 py-0.5',
-                      item.kind === 'Allocated' ? 'bg-sky-500/10 text-sky-300' : 'bg-emerald-500/10 text-emerald-300'
+                      item.kind === 'Allocated'
+                        ? 'bg-sky-500/10 text-sky-300'
+                        : item.kind === 'General'
+                          ? 'bg-amber-500/10 text-amber-300'
+                          : 'bg-emerald-500/10 text-emerald-300'
                     )}
                   >
                     {item.kind}
