@@ -16,6 +16,7 @@ import {
   Boxes,
   ListPlus,
   Sparkles,
+  Zap,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -33,19 +34,6 @@ import {
 } from "@/lib/actions/health-actions";
 
 const CUSTOM = "__custom__";
-
-const VACCINE_PRESETS = [
-  "Newcastle Disease (ND)",
-  "Infectious Bronchitis (IB)",
-  "Gumboro (IBD)",
-  "Marek's Disease",
-  "Fowl Pox",
-  "Fowl Cholera",
-  "Avian Influenza (AI)",
-  "Infectious Coryza",
-  "ND + IB Combo",
-  "Deworming",
-];
 
 const STATUS_OPTIONS = [
   { label: "Pending", value: "PENDING" },
@@ -115,6 +103,10 @@ function todayInputValue() {
   return new Date().toISOString().split("T")[0];
 }
 
+function normalizeUsage(value?: string | null): HealthUsageType {
+  return value === "ONE_TIME" || value === "QUANTITY" ? value : "QUANTITY";
+}
+
 export function HealthScheduleManager({
   vaccinations,
   medications,
@@ -132,7 +124,8 @@ export function HealthScheduleManager({
   const [batchId, setBatchId] = useState<string>("");
   const [namePreset, setNamePreset] = useState<string>("");
   const [customName, setCustomName] = useState<string>("");
-  const [usageType, setUsageType] = useState<HealthUsageType>("ONE_TIME");
+  // Usage type the user picks ONLY when defining a brand-new item.
+  const [newUsageType, setNewUsageType] = useState<HealthUsageType>("ONE_TIME");
   const [quantity, setQuantity] = useState<string>("");
   const [unit, setUnit] = useState<string>("dose");
   const [scheduledDate, setScheduledDate] = useState<string>(todayInputValue());
@@ -161,43 +154,46 @@ export function HealthScheduleManager({
     [activeBatches]
   );
 
-  // Both vaccine and medication options come from the farm's own inventory.
-  // For vaccines we also surface the common presets — any preset not already
-  // in stock is registered as new inventory (and triggers the finance prompt).
+  // Vaccines AND medications both come strictly from the farm's own inventory
+  // stock — no hardcoded preset list. "Add new" defines a brand-new item.
   const nameOptions = useMemo(() => {
-    const fromStock = inventory.map((m) => ({
-      label:
-        m.stockLevel > 0
-          ? `${m.itemName} — ${m.stockLevel} ${m.unit} in stock`
-          : `${m.itemName} — out of stock`,
-      value: m.itemName,
-    }));
-
-    const presets = isVaccine
-      ? VACCINE_PRESETS.filter((p) => !inventoryNameSet.has(p.toLowerCase())).map(
-          (p) => ({ label: `${p} (new)`, value: p })
-        )
-      : [];
-
     return [
       { label: "Select from inventory…", value: "" },
-      ...fromStock,
-      ...presets,
+      ...inventory.map((m) => ({
+        label:
+          m.stockLevel > 0
+            ? `${m.itemName} — ${m.stockLevel} ${m.unit} in stock`
+            : `${m.itemName} — out of stock`,
+        value: m.itemName,
+      })),
       { label: "➕ Add new (type your own)", value: CUSTOM },
     ];
-  }, [inventory, inventoryNameSet, isVaccine]);
+  }, [inventory]);
 
-  const resolvedName = namePreset === CUSTOM ? customName.trim() : namePreset;
+  const isAddingNew = namePreset === CUSTOM;
+  const resolvedName = isAddingNew ? customName.trim() : namePreset;
+  const selectedItem = isAddingNew
+    ? undefined
+    : inventory.find((i) => i.itemName === namePreset);
+
   const isNewItem =
-    !!resolvedName && !inventoryNameSet.has(resolvedName.toLowerCase());
+    isAddingNew &&
+    !!resolvedName &&
+    !inventoryNameSet.has(resolvedName.toLowerCase());
+
+  // When adding new, the user chooses the usage. When an existing item is
+  // selected, the usage is whatever was set when that item was created.
+  const effectiveUsageType: HealthUsageType = isAddingNew
+    ? newUsageType
+    : normalizeUsage(selectedItem?.usageType);
+  const showQuantity = effectiveUsageType === "QUANTITY";
+
   const batchLabel =
     batchOptions.find((o) => o.value === batchId)?.label ?? "Unknown batch";
 
+  const quantityOk = !showQuantity || Number(quantity) > 0;
   const currentEntryValid =
-    !!batchId &&
-    !!resolvedName &&
-    !!scheduledDate &&
-    (usageType === "ONE_TIME" || (Number(quantity) > 0));
+    !!batchId && !!resolvedName && !!scheduledDate && quantityOk;
 
   const totalToSave = drafts.length + (currentEntryValid ? 1 : 0);
   const canSave = canEdit && totalToSave > 0 && !isPending;
@@ -206,25 +202,29 @@ export function HealthScheduleManager({
     setType(next);
     setNamePreset("");
     setCustomName("");
+    setNewUsageType("ONE_TIME");
+    setQuantity("");
+    setUnit("dose");
   }
 
-  // Picking a stocked item pre-fills its declared usage + unit so the
-  // schedule matches how that item was set up in Inventory.
+  // Selecting a name resolves its usage + unit from inventory (existing item)
+  // or resets to defaults for a brand-new item.
   function handleNameChange(value: string) {
     setNamePreset(value);
-    const match = inventory.find((i) => i.itemName === value);
-    if (match) {
-      if (match.usageType === "ONE_TIME" || match.usageType === "QUANTITY") {
-        setUsageType(match.usageType);
-      }
-      if (match.unit) setUnit(match.unit);
+    setQuantity("");
+    if (value === CUSTOM) {
+      setNewUsageType("ONE_TIME");
+      setUnit("dose");
+      return;
     }
+    const match = inventory.find((i) => i.itemName === value);
+    if (match?.unit) setUnit(match.unit);
   }
 
   function clearItemFields() {
     setNamePreset("");
     setCustomName("");
-    setUsageType("ONE_TIME");
+    setNewUsageType("ONE_TIME");
     setQuantity("");
     setUnit("dose");
     setNotes("");
@@ -241,9 +241,11 @@ export function HealthScheduleManager({
       isNewItem,
       scheduledDate,
       status,
-      usageType,
-      quantity: usageType === "QUANTITY" ? Number(quantity) : 1,
-      unit: usageType === "QUANTITY" ? unit : "dose",
+      usageType: effectiveUsageType,
+      quantity: showQuantity ? Number(quantity) : 1,
+      unit: showQuantity
+        ? unit || selectedItem?.unit || "unit"
+        : selectedItem?.unit || "dose",
       notes: notes.trim() || undefined,
     };
   }
@@ -393,10 +395,10 @@ export function HealthScheduleManager({
                 <Boxes className="w-3.5 h-3.5 text-sky-400/70" />
                 {inventory.length > 0
                   ? `${isVaccine ? "Vaccines" : "Medications"} are sourced from your Inventory stock.`
-                  : `No ${isVaccine ? "vaccine" : "medicine"} in inventory yet — use “Add new” and finance will be asked to price it.`}
+                  : `No ${isVaccine ? "vaccine" : "medicine"} in inventory yet — use “Add new”, or stock it under Inventory first.`}
               </p>
 
-              {namePreset === CUSTOM && (
+              {isAddingNew && (
                 <Input
                   label={isVaccine ? "New Vaccine Name" : "New Medication Name"}
                   placeholder={isVaccine ? "e.g. Newcastle Lasota" : "e.g. Florfenicol"}
@@ -404,6 +406,41 @@ export function HealthScheduleManager({
                   onChange={(e) => setCustomName(e.target.value)}
                   autoFocus
                 />
+              )}
+
+              {/* Usage type — ONLY shown when adding a brand-new item. */}
+              {isAddingNew && (
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-white/70 block mb-2">
+                    Usage (set once for this new item)
+                  </label>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setNewUsageType("ONE_TIME")}
+                      className={cn(
+                        "flex-1 px-3 py-2.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all",
+                        newUsageType === "ONE_TIME"
+                          ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                          : "bg-white/5 text-white/60 border-white/10 hover:bg-white/10"
+                      )}
+                    >
+                      One-time use
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNewUsageType("QUANTITY")}
+                      className={cn(
+                        "flex-1 px-3 py-2.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all",
+                        newUsageType === "QUANTITY"
+                          ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                          : "bg-white/5 text-white/60 border-white/10 hover:bg-white/10"
+                      )}
+                    >
+                      Set quantity
+                    </button>
+                  </div>
+                </div>
               )}
 
               {isNewItem && resolvedName && (
@@ -414,40 +451,18 @@ export function HealthScheduleManager({
                 </p>
               )}
 
-              {/* Usage type: one-time vs a specific quantity */}
-              <div>
-                <label className="text-xs font-bold uppercase tracking-widest text-white/70 block mb-2">
-                  Usage
-                </label>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setUsageType("ONE_TIME")}
-                    className={cn(
-                      "flex-1 px-3 py-2.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all",
-                      usageType === "ONE_TIME"
-                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
-                        : "bg-white/5 text-white/60 border-white/10 hover:bg-white/10"
-                    )}
-                  >
-                    One-time use
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setUsageType("QUANTITY")}
-                    className={cn(
-                      "flex-1 px-3 py-2.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all",
-                      usageType === "QUANTITY"
-                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
-                        : "bg-white/5 text-white/60 border-white/10 hover:bg-white/10"
-                    )}
-                  >
-                    Set quantity
-                  </button>
-                </div>
-              </div>
+              {/* For an EXISTING item, show its locked usage type (read-only). */}
+              {!isAddingNew && selectedItem && (
+                <p className="-mt-1 flex items-center gap-1.5 text-xs text-white/50 italic">
+                  <Zap className="w-3.5 h-3.5 text-emerald-400/70" />
+                  {showQuantity
+                    ? `Quantity-tracked item (in ${selectedItem.unit}).`
+                    : "One-time use item — no quantity needed."}
+                </p>
+              )}
 
-              {usageType === "QUANTITY" && (
+              {/* Quantity inputs — shown whenever the resolved usage is QUANTITY. */}
+              {showQuantity && (
                 <div className="grid grid-cols-2 gap-4">
                   <Input
                     label="Quantity"
@@ -461,12 +476,16 @@ export function HealthScheduleManager({
                       if (v === "" || Number(v) >= 0) setQuantity(v);
                     }}
                   />
-                  <Select
-                    label="Unit"
-                    options={UNIT_OPTIONS}
-                    value={unit}
-                    onChange={(e) => setUnit(e.target.value)}
-                  />
+                  {isAddingNew ? (
+                    <Select
+                      label="Unit"
+                      options={UNIT_OPTIONS}
+                      value={unit}
+                      onChange={(e) => setUnit(e.target.value)}
+                    />
+                  ) : (
+                    <Input label="Unit" value={selectedItem?.unit || unit} disabled />
+                  )}
                 </div>
               )}
 
@@ -496,7 +515,7 @@ export function HealthScheduleManager({
               {drafts.length > 0 && (
                 <div className="rounded-lg border border-white/10 bg-white/5 p-3 space-y-2">
                   <p className="text-xs font-bold uppercase tracking-widest text-white/60">
-                    Staged ({drafts.length})
+                    Staged to save ({drafts.length})
                   </p>
                   {drafts.map((d) => (
                     <div
@@ -538,6 +557,11 @@ export function HealthScheduleManager({
                   {error}
                 </p>
               )}
+
+              <p className="flex items-center gap-1.5 text-xs text-white/40 italic">
+                <ListPlus className="w-3.5 h-3.5" />
+                Add several at once: stage each with “Add another”, then “Save”.
+              </p>
 
               <div className="flex flex-col sm:flex-row justify-end gap-2">
                 <Button
