@@ -8,6 +8,20 @@ import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-lim
 import { revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 import { parseFinancialLogDate } from '@/lib/financial-dates'
 
+// Maps the Expense table's enum categories to the human-readable labels
+// the Finance Hub uses for manual ledger entries, so both sources read alike.
+const EXPENSE_CATEGORY_LABELS: Record<string, string> = {
+  FEED: 'Feed Purchases',
+  MEDICATION: 'Flock Vaccines & Medication',
+  EQUIPMENT: 'Equipment & Maintenance',
+  UTILITIES: 'Utilities',
+  SALARY: 'Labor & Salaries',
+  MAINTENANCE: 'Equipment & Maintenance',
+  OTHER: 'Other OpEx',
+  LIVESTOCK_PURCHASE: 'Day-Old Chicks Purchase',
+  TRANSPORT: 'Transport',
+}
+
 export async function getFinancialTransactions() {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return []
@@ -16,28 +30,70 @@ export async function getFinancialTransactions() {
   if (!hasViewAccess) return []
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    const transactions = await tx.financialTransaction.findMany({
-      where: {
-        farmId: activeFarmId,
-        isDeleted: false,
-        deletedAt: null
-      },
-      include: {
-        user: {
-          select: {
-            firstname: true,
-            surname: true,
-            role: true
+    // Pull manual ledger entries and operational expenses in parallel.
+    const [transactions, expenses] = await Promise.all([
+      tx.financialTransaction.findMany({
+        where: {
+          farmId: activeFarmId,
+          isDeleted: false,
+          deletedAt: null
+        },
+        include: {
+          user: {
+            select: {
+              firstname: true,
+              surname: true,
+              role: true
+            }
           }
-        }
-      },
-      orderBy: { transactionDate: 'desc' }
-    })
+        },
+        orderBy: { transactionDate: 'desc' }
+      }),
+      tx.expense.findMany({
+        where: {
+          farmId: activeFarmId,
+          isDeleted: false
+        },
+        include: {
+          user: {
+            select: {
+              firstname: true,
+              surname: true,
+              role: true
+            }
+          }
+        },
+        orderBy: { expenseDate: 'desc' }
+      })
+    ])
 
-    return transactions.map((t: any) => ({
+    const ledgerRows = transactions.map((t: any) => ({
       ...t,
-      amount: Number(t.amount)
+      amount: Number(t.amount),
+      source: 'LEDGER' as const
     }))
+
+    // Operational expenses (feed, inventory, health costs, allocations) are
+    // already-incurred outflows. Surface them as read-only PAID expense rows.
+    const expenseRows = expenses.map((e: any) => ({
+      id: e.id,
+      type: 'EXPENSE' as const,
+      category: EXPENSE_CATEGORY_LABELS[e.category] || e.category || 'Other OpEx',
+      amount: Number(e.amount),
+      paymentStatus: 'PAID',
+      paymentMethod: 'Operational',
+      referenceNum: null,
+      transactionDate: e.expenseDate,
+      description: e.description,
+      user: e.user,
+      source: 'EXPENSE' as const
+    }))
+
+    return [...ledgerRows, ...expenseRows].sort(
+      (a, b) =>
+        new Date(b.transactionDate).getTime() -
+        new Date(a.transactionDate).getTime()
+    )
   }).catch((error: any) => {
     console.error('Error fetching financial transactions:', error)
     return []

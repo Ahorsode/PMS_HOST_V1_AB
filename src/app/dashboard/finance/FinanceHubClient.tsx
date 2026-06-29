@@ -37,6 +37,7 @@ interface Transaction {
   referenceNum: string | null
   transactionDate: string
   description: string | null
+  source?: 'LEDGER' | 'EXPENSE'
   user?: {
     firstname: string | null
     surname: string | null
@@ -582,31 +583,40 @@ export function FinanceHubClient({
                       </td>
                       {canEdit && (
                         <td className="py-4 px-6 text-center">
-                          <div className="flex items-center justify-center gap-2">
-                            {tx.paymentStatus !== 'PAID' && (
+                          {tx.source === 'EXPENSE' ? (
+                            <span
+                              className="inline-flex items-center gap-1 bg-slate-700/40 text-slate-400 px-2.5 py-1 rounded text-[9px] font-bold uppercase tracking-wider border border-slate-600/40"
+                              title="Auto-logged operational expense — manage it from Inventory, Health, or the source module"
+                            >
+                              Auto-Logged
+                            </span>
+                          ) : (
+                            <div className="flex items-center justify-center gap-2">
+                              {tx.paymentStatus !== 'PAID' && (
+                                <button
+                                  onClick={() => {
+                                    setSelectedTx(tx)
+                                    setIsSettleOpen(true)
+                                  }}
+                                  className="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-white px-2.5 py-1 rounded text-[10px] font-bold transition-all border border-emerald-500/30 flex items-center gap-1"
+                                  title="Settle Outstanding Balance"
+                                >
+                                  <Check className="w-3.5 h-3.5" />
+                                  Settle
+                                </button>
+                              )}
                               <button
                                 onClick={() => {
                                   setSelectedTx(tx)
-                                  setIsSettleOpen(true)
+                                  setIsDeleteOpen(true)
                                 }}
-                                className="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-white px-2.5 py-1 rounded text-[10px] font-bold transition-all border border-emerald-500/30 flex items-center gap-1"
-                                title="Settle Outstanding Balance"
+                                className="bg-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-white p-1 rounded transition-all border border-rose-500/30"
+                                title="Delete Transaction (Soft)"
                               >
-                                <Check className="w-3.5 h-3.5" />
-                                Settle
+                                <Trash2 className="w-3.5 h-3.5" />
                               </button>
-                            )}
-                            <button
-                              onClick={() => {
-                                setSelectedTx(tx)
-                                setIsDeleteOpen(true)
-                              }}
-                              className="bg-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-white p-1 rounded transition-all border border-rose-500/30"
-                              title="Delete Transaction (Soft)"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
+                            </div>
+                          )}
                         </td>
                       )}
                     </tr>
