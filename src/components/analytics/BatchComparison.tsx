@@ -1,329 +1,755 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card'
-import { 
-  BarChart, Bar, 
-  XAxis, YAxis, CartesianGrid, 
-  Legend, ResponsiveContainer,
-  Cell, LineChart, Line, AreaChart, Area, ReferenceLine
+import React, { useMemo, useState } from 'react'
+import Link from 'next/link'
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ComposedChart,
+  Legend,
+  Line,
+  ReferenceLine,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from 'recharts'
-import { format } from 'date-fns'
-import { Check, Info, TrendingUp, AlertTriangle, Trophy, Target, Eye, EyeOff, Sparkles } from 'lucide-react'
+import {
+  Activity,
+  AlertTriangle,
+  ArrowLeft,
+  Banknote,
+  Check,
+  Egg,
+  Eye,
+  EyeOff,
+  Layers,
+  Skull,
+  Sparkles,
+  Target,
+  TrendingUp,
+  Trophy,
+  Wallet,
+} from 'lucide-react'
+import { cn, formatCurrency } from '@/lib/utils'
 
-interface BatchData {
-  id: number
-  batchName: string
-  arrivalDate: string
+type BatchReport = {
+  id: string
+  name: string
+  status: string
+  type: string
+  houseName: string
+  initialCount: number
+  currentCount: number
+  totalFeed: number
+  totalEggs: number
+  totalDead: number
   fcr: number
   mortalityRate: number
-  productionIndex: number
+  directExpenses: number
+  allocatedExpenses: number
+  totalExpenses: number
+  totalRevenue: number
+  netProfitability: number
 }
 
 interface BatchComparisonProps {
-  batches: BatchData[]
+  batches: BatchReport[]
+  canViewFinance: boolean
 }
 
-export function BatchComparison({ batches }: BatchComparisonProps) {
-  const [selectedMetric, setSelectedMetric] = useState<'fcr' | 'mortalityRate' | 'productionIndex'>('productionIndex')
-  const [selectedBatchIds, setSelectedBatchIds] = useState<number[]>(
-    batches.slice(0, 3).map(b => b.id)
-  )
+const PALETTE = ['#34d399', '#38bdf8', '#fbbf24', '#a78bfa', '#f472b6', '#22d3ee', '#fb7185', '#4ade80']
+const chartText = '#94a3b8'
+const gridStroke = 'rgba(255,255,255,0.07)'
+
+const compactNumber = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 })
+const fullNumber = new Intl.NumberFormat('en-US')
+
+type MetricKey = 'netProfit' | 'revenue' | 'expenses' | 'eggs' | 'fcr' | 'mortalityRate'
+
+type MetricDef = {
+  label: string
+  short: string
+  accessor: (b: BatchReport) => number
+  format: (v: number) => string
+  benchmark?: number
+  lowerIsBetter?: boolean
+  finance?: boolean
+}
+
+const METRICS: Record<MetricKey, MetricDef> = {
+  netProfit: {
+    label: 'Net Profitability',
+    short: 'Profit',
+    accessor: (b) => b.netProfitability,
+    format: (v) => formatCurrency(v, 'GHS'),
+    finance: true,
+  },
+  revenue: {
+    label: 'Total Revenue',
+    short: 'Revenue',
+    accessor: (b) => b.totalRevenue,
+    format: (v) => formatCurrency(v, 'GHS'),
+    finance: true,
+  },
+  expenses: {
+    label: 'Total Expenses',
+    short: 'Expenses',
+    accessor: (b) => b.totalExpenses,
+    format: (v) => formatCurrency(v, 'GHS'),
+    lowerIsBetter: true,
+    finance: true,
+  },
+  eggs: {
+    label: 'Eggs Collected',
+    short: 'Eggs',
+    accessor: (b) => b.totalEggs,
+    format: (v) => `${fullNumber.format(v)} eggs`,
+  },
+  fcr: {
+    label: 'Feed Conversion Ratio',
+    short: 'FCR',
+    accessor: (b) => b.fcr,
+    format: (v) => v.toFixed(2),
+    benchmark: 1.6,
+    lowerIsBetter: true,
+  },
+  mortalityRate: {
+    label: 'Mortality Rate',
+    short: 'Mortality',
+    accessor: (b) => b.mortalityRate,
+    format: (v) => `${v.toFixed(2)}%`,
+    benchmark: 3.5,
+    lowerIsBetter: true,
+  },
+}
+
+function shortName(name: string) {
+  return name.length > 14 ? `${name.slice(0, 13)}…` : name
+}
+
+export function BatchComparison({ batches, canViewFinance }: BatchComparisonProps) {
+  const availableMetrics = useMemo<MetricKey[]>(() => {
+    const keys = Object.keys(METRICS) as MetricKey[]
+    return keys.filter((key) => canViewFinance || !METRICS[key].finance)
+  }, [canViewFinance])
+
+  const [selectedMetric, setSelectedMetric] = useState<MetricKey>(availableMetrics[0])
+  const [selectedBatchIds, setSelectedBatchIds] = useState<string[]>(batches.slice(0, 4).map((b) => b.id))
+  const [hiddenBatches, setHiddenBatches] = useState<string[]>([])
   const [showBenchmark, setShowBenchmark] = useState(true)
-  const [hiddenBatches, setHiddenBatches] = useState<number[]>([])
 
-  const metricLabels = {
-    fcr: 'Feed Conversion Ratio (FCR)',
-    mortalityRate: 'Mortality Rate (%)',
-    productionIndex: 'Production Index (EPEF)'
+  const colorById = useMemo(() => {
+    const map = new Map<string, string>()
+    batches.forEach((b, i) => map.set(b.id, PALETTE[i % PALETTE.length]))
+    return map
+  }, [batches])
+
+  const activeBatches = useMemo(
+    () => batches.filter((b) => selectedBatchIds.includes(b.id) && !hiddenBatches.includes(b.id)),
+    [batches, selectedBatchIds, hiddenBatches]
+  )
+
+  const metric = METRICS[selectedMetric]
+
+  const chartData = useMemo(
+    () =>
+      activeBatches.map((b) => ({
+        id: b.id,
+        name: shortName(b.name),
+        value: metric.accessor(b),
+        color: colorById.get(b.id) || PALETTE[0],
+      })),
+    [activeBatches, metric, colorById]
+  )
+
+  const financeData = useMemo(
+    () =>
+      activeBatches.map((b) => ({
+        name: shortName(b.name),
+        Revenue: b.totalRevenue,
+        Expenses: b.totalExpenses,
+        Profit: b.netProfitability,
+      })),
+    [activeBatches]
+  )
+
+  const eggData = useMemo(
+    () =>
+      activeBatches.map((b) => ({
+        id: b.id,
+        name: shortName(b.name),
+        eggs: b.totalEggs,
+        color: colorById.get(b.id) || PALETTE[0],
+      })),
+    [activeBatches, colorById]
+  )
+
+  const totals = useMemo(() => {
+    return activeBatches.reduce(
+      (acc, b) => {
+        acc.revenue += b.totalRevenue
+        acc.expenses += b.totalExpenses
+        acc.profit += b.netProfitability
+        acc.eggs += b.totalEggs
+        acc.birds += b.currentCount
+        return acc
+      },
+      { revenue: 0, expenses: 0, profit: 0, eggs: 0, birds: 0 }
+    )
+  }, [activeBatches])
+
+  const leader = useMemo(() => {
+    if (activeBatches.length === 0) return null
+    const ranked = [...activeBatches].sort((a, b) => {
+      if (canViewFinance) return b.netProfitability - a.netProfitability
+      return b.totalEggs - a.totalEggs
+    })
+    return ranked[0]
+  }, [activeBatches, canViewFinance])
+
+  const toggleBatch = (id: string) => {
+    setSelectedBatchIds((prev) => (prev.includes(id) ? prev.filter((bid) => bid !== id) : [...prev, id]))
   }
 
-  const benchmarks = {
-    fcr: 1.6,
-    mortalityRate: 3.5,
-    productionIndex: 380
+  const toggleVisibility = (id: string) => {
+    setHiddenBatches((prev) => (prev.includes(id) ? prev.filter((bid) => bid !== id) : [...prev, id]))
   }
 
-  const toggleBatch = (id: number) => {
-    setSelectedBatchIds(prev => 
-      prev.includes(id) 
-        ? prev.filter(bid => bid !== id) 
-        : [...prev, id]
+  if (batches.length === 0) {
+    return (
+      <div className="space-y-6">
+        <PageHeader count={0} />
+        <div className="glass-morphism flex flex-col items-center justify-center rounded-2xl p-16 text-center">
+          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
+            <AlertTriangle className="h-8 w-8 text-amber-300" />
+          </div>
+          <p className="text-xl font-black text-white">No batch data yet</p>
+          <p className="mt-2 max-w-sm text-sm font-medium text-white/50">
+            Add livestock batches and start logging feed, eggs, and finance to unlock comparative analytics.
+          </p>
+        </div>
+      </div>
     )
   }
-
-  const toggleVisibility = (id: number) => {
-    setHiddenBatches(prev => 
-      prev.includes(id) ? prev.filter(bid => bid !== id) : [...prev, id]
-    )
-  }
-
-  const filteredData = useMemo(() => {
-    return batches
-      .filter(b => selectedBatchIds.includes(b.id) && !hiddenBatches.includes(b.id))
-      .map(batch => ({
-        name: batch.batchName,
-        value: batch[selectedMetric],
-        full: batch,
-        date: format(new Date(batch.arrivalDate), 'MMM d, yyyy')
-      }))
-  }, [batches, selectedBatchIds, selectedMetric, hiddenBatches])
-
-  const winner = useMemo(() => {
-    if (batches.length === 0) return null;
-    return [...batches].sort((a, b) => b.productionIndex - a.productionIndex)[0];
-  }, [batches]);
-
-  const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-700">
-      {/* Quick Comparison Card - Winner Summary */}
-      {winner && (
-        <div className="relative overflow-hidden bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500 rounded-3xl p-8 shadow-2xl shadow-emerald-200/50">
-          <div className="absolute top-0 right-0 p-8 opacity-10">
-            <Trophy className="w-40 h-40 text-white" />
+    <div className="space-y-6 duration-700 animate-in fade-in">
+      <PageHeader count={batches.length} />
+
+      {/* Aggregate KPI strip */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+        <KpiPill icon={Layers} label="Comparing" value={`${activeBatches.length} batches`} tone="slate" />
+        <KpiPill icon={Egg} label="Eggs" value={compactNumber.format(totals.eggs)} tone="amber" />
+        {canViewFinance ? (
+          <>
+            <KpiPill icon={Banknote} label="Revenue" value={formatCurrency(totals.revenue, 'GHS')} tone="sky" />
+            <KpiPill icon={Wallet} label="Expenses" value={formatCurrency(totals.expenses, 'GHS')} tone="orange" />
+            <KpiPill
+              icon={TrendingUp}
+              label="Net Profit"
+              value={formatCurrency(totals.profit, 'GHS')}
+              tone={totals.profit >= 0 ? 'emerald' : 'rose'}
+            />
+          </>
+        ) : (
+          <KpiPill icon={Activity} label="Live Birds" value={compactNumber.format(totals.birds)} tone="emerald" />
+        )}
+      </div>
+
+      {/* Leader hero */}
+      {leader ? (
+        <div className="relative overflow-hidden rounded-2xl border border-emerald-400/20 bg-gradient-to-br from-emerald-600/90 via-emerald-500/80 to-teal-500/80 p-6 shadow-2xl shadow-emerald-900/40 md:p-8">
+          <div className="pointer-events-none absolute -right-6 -top-6 opacity-10">
+            <Trophy className="h-40 w-40 text-white" />
           </div>
-          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="relative z-10 flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
             <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/20 backdrop-blur-md rounded-full text-white text-[10px] font-black uppercase tracking-widest">
-                <Sparkles className="w-3 h-3" />
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white backdrop-blur-md">
+                <Sparkles className="h-3 w-3" />
                 Performance Leader
               </div>
-              <h2 className="text-4xl font-black text-white tracking-tight">{winner.batchName}</h2>
-              <p className="text-emerald-50 font-medium text-lg max-w-md">
-                This unit is <span className="font-black text-white italic">{(winner.productionIndex / 300 * 100 - 100).toFixed(0)}% more efficient</span> than the regional average, setting a new operational gold standard.
+              <h2 className="text-3xl font-black tracking-tight text-white md:text-4xl">{leader.name}</h2>
+              <p className="max-w-md text-sm font-medium text-emerald-50/90">
+                {leader.houseName} · {leader.type.replaceAll('_', ' ')} · Top performer across your active comparison
+                set.
               </p>
             </div>
-            <div className="flex gap-6 items-center">
-              <div className="text-center px-6 py-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 min-w-[120px]">
-                <p className="text-[10px] font-bold text-emerald-100 uppercase mb-1">EPEF Score</p>
-                <p className="text-3xl font-black text-white">{winner.productionIndex}</p>
-              </div>
-              <div className="text-center px-6 py-4 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 min-w-[120px]">
-                <p className="text-[10px] font-bold text-emerald-100 uppercase mb-1">FCR Focus</p>
-                <p className="text-3xl font-black text-white">{winner.fcr.toFixed(2)}</p>
-              </div>
+            <div className="flex flex-wrap gap-3">
+              {canViewFinance ? (
+                <HeroStat label="Net Profit" value={formatCurrency(leader.netProfitability, 'GHS')} />
+              ) : null}
+              <HeroStat label="Eggs" value={fullNumber.format(leader.totalEggs)} />
+              <HeroStat label="FCR" value={leader.fcr ? leader.fcr.toFixed(2) : '0.00'} />
+              <HeroStat label="Mortality" value={`${leader.mortalityRate.toFixed(1)}%`} />
             </div>
           </div>
         </div>
-      )}
+      ) : null}
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Advanced Interactive Selection Sidebar */}
-        <Card className="lg:col-span-1 bg-white/80 backdrop-blur-md border-gray-100 shadow-xl shadow-gray-200/30 rounded-3xl overflow-hidden border-none ring-1 ring-gray-100">
-          <CardHeader className="bg-gray-50/50 pb-6 pt-8">
-            <CardTitle className="text-lg font-black text-gray-900 flex items-center gap-2">
-              <TrendingUp className="w-5 h-5 text-emerald-600" />
-              Intelligence Hub
-            </CardTitle>
-            <CardDescription className="text-[10px] uppercase font-black text-gray-400 tracking-wider">
-              Multivariate Batch Analysis
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="p-4 space-y-6">
-            <div className="space-y-1 pr-1 custom-scrollbar">
-              {batches.map((batch) => (
+      {/* Selector + metric comparison */}
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-4">
+        {/* Sidebar */}
+        <div className="glass-morphism rounded-2xl p-4 lg:col-span-1">
+          <div className="mb-4 flex items-center gap-2 px-2">
+            <TrendingUp className="h-4 w-4 text-emerald-400" />
+            <span className="text-sm font-black text-white">Intelligence Hub</span>
+          </div>
+          <div className="custom-scrollbar max-h-[360px] space-y-1.5 overflow-y-auto pr-1">
+            {batches.map((batch) => {
+              const isSelected = selectedBatchIds.includes(batch.id)
+              const isHidden = hiddenBatches.includes(batch.id)
+              const color = colorById.get(batch.id) || PALETTE[0]
+              return (
                 <div key={batch.id} className="group relative">
                   <button
                     onClick={() => toggleBatch(batch.id)}
-                    className={`w-full flex items-center justify-between p-4 rounded-2xl text-left transition-all duration-300 ${
-                      selectedBatchIds.includes(batch.id)
-                        ? 'bg-emerald-50 text-emerald-900 ring-1 ring-emerald-200'
-                        : 'hover:bg-gray-50 text-gray-500'
-                    }`}
-                  >
-                    <div className="flex flex-col min-w-0">
-                      <span className="text-xs font-black truncate">{batch.batchName}</span>
-                      <span className="text-[10px] font-bold opacity-60">
-                        {format(new Date(batch.arrivalDate), 'MMMM yyyy')}
-                      </span>
-                    </div>
-                    {selectedBatchIds.includes(batch.id) && (
-                      <Check className="w-4 h-4 text-emerald-500" />
+                    className={cn(
+                      'flex w-full items-center justify-between rounded-xl p-3 text-left transition-all duration-300',
+                      isSelected ? 'bg-white/10 ring-1 ring-white/15' : 'hover:bg-white/5'
                     )}
+                  >
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <span
+                        className="h-2.5 w-2.5 shrink-0 rounded-full"
+                        style={{ backgroundColor: isSelected ? color : 'rgba(255,255,255,0.2)' }}
+                      />
+                      <div className="flex min-w-0 flex-col">
+                        <span className={cn('truncate text-xs font-black', isSelected ? 'text-white' : 'text-white/50')}>
+                          {batch.name}
+                        </span>
+                        <span className="truncate text-[10px] font-bold uppercase tracking-wider text-white/30">
+                          {batch.houseName}
+                        </span>
+                      </div>
+                    </div>
+                    {isSelected ? <Check className="ml-2 h-4 w-4 shrink-0 text-emerald-400" /> : null}
                   </button>
-                  {selectedBatchIds.includes(batch.id) && (
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); toggleVisibility(batch.id); }}
-                      className="absolute right-12 top-1/2 -translate-y-1/2 p-2 hover:bg-emerald-100 rounded-full transition-colors"
+                  {isSelected ? (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        toggleVisibility(batch.id)
+                      }}
+                      className="absolute right-9 top-1/2 -translate-y-1/2 rounded-lg p-1.5 transition-colors hover:bg-white/10"
                     >
-                      {hiddenBatches.includes(batch.id) ? <EyeOff className="w-3.5 h-3.5 text-emerald-300" /> : <Eye className="w-3.5 h-3.5 text-emerald-600" />}
+                      {isHidden ? (
+                        <EyeOff className="h-3.5 w-3.5 text-white/30" />
+                      ) : (
+                        <Eye className="h-3.5 w-3.5 text-emerald-400" />
+                      )}
                     </button>
-                  )}
+                  ) : null}
                 </div>
-              ))}
-            </div>
+              )
+            })}
+          </div>
 
-            <div className="pt-6 border-t border-gray-100">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Global Settings</span>
-              </div>
+          {metric.benchmark != null ? (
+            <div className="mt-4 border-t border-white/10 pt-4">
               <button
-                onClick={() => setShowBenchmark(!showBenchmark)}
-                className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all ${
-                  showBenchmark ? 'bg-blue-50 text-blue-700 ring-1 ring-blue-100' : 'bg-gray-50 text-gray-400'
-                }`}
+                onClick={() => setShowBenchmark((v) => !v)}
+                className={cn(
+                  'flex w-full items-center justify-between rounded-xl p-3 transition-all',
+                  showBenchmark ? 'bg-sky-500/10 ring-1 ring-sky-400/20' : 'bg-white/5'
+                )}
               >
-                <div className="flex items-center gap-3">
-                  <Target className={`w-4 h-4 ${showBenchmark ? 'text-blue-500' : 'text-gray-400'}`} />
-                  <span className="text-xs font-black">Industry Benchmark</span>
+                <div className="flex items-center gap-2.5">
+                  <Target className={cn('h-4 w-4', showBenchmark ? 'text-sky-400' : 'text-white/40')} />
+                  <span className="text-xs font-black text-white/80">Industry Benchmark</span>
                 </div>
-                <div className={`w-8 h-4 rounded-full relative transition-colors ${showBenchmark ? 'bg-blue-500' : 'bg-gray-200'}`}>
-                  <div className={`absolute top-1 w-2 h-2 rounded-full bg-white transition-all ${showBenchmark ? 'right-1' : 'left-1'}`} />
+                <div className={cn('relative h-4 w-8 rounded-full transition-colors', showBenchmark ? 'bg-sky-500' : 'bg-white/10')}>
+                  <div
+                    className={cn(
+                      'absolute top-1 h-2 w-2 rounded-full bg-white transition-all',
+                      showBenchmark ? 'right-1' : 'left-1'
+                    )}
+                  />
                 </div>
               </button>
             </div>
-          </CardContent>
-        </Card>
+          ) : null}
+        </div>
 
-        {/* World-Class Glassmorphism Chart Container */}
-        <Card className="lg:col-span-3 bg-white border-none shadow-2xl shadow-gray-200/60 rounded-3xl overflow-hidden ring-1 ring-gray-100">
-          <CardHeader className="flex flex-col md:flex-row justify-between items-start md:items-center p-8 border-b border-gray-50">
+        {/* Main metric chart */}
+        <div className="glass-morphism rounded-2xl lg:col-span-3">
+          <div className="flex flex-col justify-between gap-4 border-b border-white/10 p-5 md:flex-row md:items-center">
             <div>
-              <CardTitle className="text-2xl font-black text-gray-900 tracking-tight">
-                {metricLabels[selectedMetric]}
-              </CardTitle>
-              <CardDescription className="text-sm font-medium text-gray-400 mt-1">
-                Comparative performance across <span className="text-emerald-600 font-bold">{selectedBatchIds.length - hiddenBatches.length}</span> active data streams.
-              </CardDescription>
+              <h3 className="text-xl font-black tracking-tight text-white">{metric.label}</h3>
+              <p className="mt-0.5 text-xs font-medium text-white/40">
+                Comparing <span className="font-bold text-emerald-400">{activeBatches.length}</span> active data
+                streams{metric.lowerIsBetter ? ' · lower is better' : ''}
+              </p>
             </div>
-            <div className="flex gap-2 p-1.5 bg-gray-100/80 backdrop-blur-sm rounded-2xl mt-6 md:mt-0">
-              {Object.keys(metricLabels).map((key) => (
+            <div className="custom-scrollbar -mx-1 flex gap-1 overflow-x-auto rounded-xl bg-black/20 p-1">
+              {availableMetrics.map((key) => (
                 <button
                   key={key}
-                  onClick={() => setSelectedMetric(key as any)}
-                  className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-300 ${
-                    selectedMetric === key
-                      ? 'bg-white text-emerald-600 shadow-xl shadow-gray-200 shadow-emerald-100'
-                      : 'text-gray-400 hover:text-gray-600'
-                  }`}
+                  onClick={() => setSelectedMetric(key)}
+                  className={cn(
+                    'whitespace-nowrap rounded-lg px-3.5 py-2 text-[11px] font-black uppercase tracking-wider transition-all',
+                    selectedMetric === key ? 'bg-white text-slate-900 shadow-lg' : 'text-white/50 hover:text-white'
+                  )}
                 >
-                  {key === 'fcr' ? 'FCR' : key === 'mortalityRate' ? 'Mortality' : 'EPEF'}
+                  {METRICS[key].short}
                 </button>
               ))}
             </div>
-          </CardHeader>
-          <CardContent className="p-8">
-            {filteredData.length > 0 ? (
-              <div className="h-[450px] w-full">
+          </div>
+          <div className="p-4">
+            {chartData.length > 0 ? (
+              <div className="h-[420px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={filteredData} margin={{ top: 20, right: 20, left: 0, bottom: 60 }}>
-                    <defs>
-                      {COLORS.map((color, i) => (
-                        <linearGradient key={`grad-${i}`} id={`barGrad-${i}`} x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor={color} stopOpacity={1} />
-                          <stop offset="100%" stopColor={color} stopOpacity={0.6} />
-                        </linearGradient>
-                      ))}
-                      <linearGradient id="benchmarkGrad" x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.1} />
-                        <stop offset="50%" stopColor="#3b82f6" stopOpacity={0.3} />
-                        <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.1} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f1f5f9" />
-                    <XAxis 
-                      dataKey="name" 
+                  <BarChart data={chartData} margin={{ top: 16, right: 16, left: 0, bottom: 40 }}>
+                    <CartesianGrid stroke={gridStroke} strokeDasharray="4 4" vertical={false} />
+                    <XAxis
+                      dataKey="name"
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 800 }}
-                      angle={-30}
+                      tick={{ fill: chartText, fontSize: 11, fontWeight: 700 }}
+                      angle={-25}
                       textAnchor="end"
                       interval={0}
-                      dy={10}
+                      height={60}
                     />
-                    <YAxis 
+                    <YAxis
                       axisLine={false}
                       tickLine={false}
-                      tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 800 }}
-                      tickFormatter={(value) => selectedMetric === 'mortalityRate' ? `${value}%` : value}
+                      tick={{ fill: chartText, fontSize: 11, fontWeight: 700 }}
+                      width={56}
+                      tickFormatter={(v) =>
+                        metric.finance ? `₵${compactNumber.format(Number(v))}` : compactNumber.format(Number(v))
+                      }
                     />
-
-                    {showBenchmark && (
-                      <ReferenceLine 
-                        y={benchmarks[selectedMetric]} 
-                        stroke="#3b82f6" 
-                        strokeDasharray="8 8" 
+                    <Tooltip
+                      cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+                      content={<MetricTooltip format={metric.format} label={metric.label} />}
+                    />
+                    {showBenchmark && metric.benchmark != null ? (
+                      <ReferenceLine
+                        y={metric.benchmark}
+                        stroke="#38bdf8"
+                        strokeDasharray="8 6"
                         strokeWidth={2}
-                        label={{ 
-                          value: 'Industry Standard', 
-                          position: 'right', 
-                          fill: '#3b82f6', 
-                          fontSize: 9, 
-                          fontWeight: 900
-                        }} 
+                        label={{ value: 'Industry Standard', position: 'right', fill: '#38bdf8', fontSize: 9, fontWeight: 900 }}
                       />
-                    )}
-                    <Bar 
-                      dataKey="value" 
-                      radius={[12, 12, 12, 12]} 
-                      barSize={40}
-                      animationBegin={200}
-                      animationDuration={2000}
-                    >
-                      {filteredData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={`url(#barGrad-${index % COLORS.length})`} />
+                    ) : null}
+                    <Bar dataKey="value" radius={[10, 10, 10, 10]} barSize={42} animationDuration={900}>
+                      {chartData.map((entry) => (
+                        <Cell key={entry.id} fill={entry.color} />
                       ))}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             ) : (
-              <div className="h-[450px] flex flex-col items-center justify-center text-gray-400 bg-gray-50/50 rounded-[40px] border-2 border-dashed border-gray-100">
-                <div className="p-6 bg-white rounded-full shadow-xl shadow-gray-100 mb-6">
-                  <AlertTriangle className="w-12 h-12 text-amber-300" />
-                </div>
-                <p className="font-black text-gray-900 text-xl tracking-tight">Intelligence Feed Empty</p>
-                <p className="text-sm font-medium text-gray-400 mt-2">Select and unhide units from the sidebar to visualize trends.</p>
-              </div>
+              <EmptyState />
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
 
-      {/* Visual Analytics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-        {batches.filter(b => selectedBatchIds.includes(b.id)).map((batch, index) => (
-          <div 
-            key={batch.id} 
-            className={`relative p-6 bg-white rounded-[32px] border-none shadow-xl shadow-gray-200/40 transition-all duration-500 hover:-translate-y-2 group overflow-hidden ${hiddenBatches.includes(batch.id) ? 'opacity-40 grayscale' : ''}`}
-          >
-            <div 
-              className="absolute top-0 left-0 w-2 h-full" 
-              style={{ backgroundColor: COLORS[index % COLORS.length] }}
-            />
-            <div className="flex justify-between items-start mb-6">
-              <h4 className="font-black text-gray-900 truncate pr-4 text-lg">
-                {batch.batchName}
-              </h4>
-              <div className="bg-gray-50 p-2 rounded-xl group-hover:bg-emerald-50 transition-colors">
-                <Sparkles className="w-4 h-4 text-gray-300 group-hover:text-emerald-500" />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">FCR Efficiency</p>
-                <p className="text-xl font-black text-gray-700">{batch.fcr.toFixed(2)}</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Performance</p>
-                <p className="text-xl font-black text-emerald-600">{batch.productionIndex}</p>
-              </div>
-            </div>
-            <div className="mt-6 pt-4 border-t border-gray-50 flex items-center justify-between">
-              <span className="text-[10px] font-bold text-gray-400 italic">
-                Started {format(new Date(batch.arrivalDate), 'MMM yyyy')}
-              </span>
-              <div className="flex -space-x-2">
-                 {[1,2,3].map(i => (
-                   <div key={i} className="w-5 h-5 rounded-full border-2 border-white bg-gray-100" />
-                 ))}
-              </div>
-            </div>
+      {/* Finance: Revenue vs Expenses vs Profit */}
+      {canViewFinance ? (
+        <div className="glass-morphism rounded-2xl">
+          <div className="flex items-center gap-2 border-b border-white/10 p-5">
+            <Banknote className="h-4 w-4 text-sky-400" />
+            <h3 className="text-lg font-black tracking-tight text-white">Revenue vs Expenses</h3>
+            <span className="ml-auto hidden text-[10px] font-bold uppercase tracking-widest text-white/40 sm:block">
+              Profit overlay
+            </span>
           </div>
-        ))}
+          <div className="p-4">
+            {financeData.length > 0 ? (
+              <div className="h-[400px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <ComposedChart data={financeData} margin={{ top: 16, right: 16, left: 10, bottom: 40 }}>
+                    <CartesianGrid stroke={gridStroke} strokeDasharray="4 4" vertical={false} />
+                    <XAxis
+                      dataKey="name"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: chartText, fontSize: 11, fontWeight: 700 }}
+                      angle={-25}
+                      textAnchor="end"
+                      interval={0}
+                      height={60}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fill: chartText, fontSize: 11, fontWeight: 700 }}
+                      width={60}
+                      tickFormatter={(v) => `₵${compactNumber.format(Number(v))}`}
+                    />
+                    <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} content={<CurrencyTooltip />} />
+                    <Legend wrapperStyle={{ color: chartText, fontSize: 12, fontWeight: 700, paddingTop: 8 }} />
+                    <Bar dataKey="Revenue" fill="#38bdf8" radius={[6, 6, 0, 0]} barSize={26} />
+                    <Bar dataKey="Expenses" fill="#fb923c" radius={[6, 6, 0, 0]} barSize={26} />
+                    <Line
+                      type="monotone"
+                      dataKey="Profit"
+                      stroke="#34d399"
+                      strokeWidth={3}
+                      dot={{ r: 4, fill: '#0f172a', stroke: '#34d399', strokeWidth: 2 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  </ComposedChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <EmptyState />
+            )}
+          </div>
+        </div>
+      ) : null}
+
+      {/* Egg production */}
+      <div className="glass-morphism rounded-2xl">
+        <div className="flex items-center gap-2 border-b border-white/10 p-5">
+          <Egg className="h-4 w-4 text-amber-300" />
+          <h3 className="text-lg font-black tracking-tight text-white">Egg Production</h3>
+          <span className="ml-auto text-[10px] font-bold uppercase tracking-widest text-white/40">
+            {fullNumber.format(totals.eggs)} total eggs
+          </span>
+        </div>
+        <div className="p-4">
+          {eggData.some((d) => d.eggs > 0) ? (
+            <div className="h-[340px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={eggData} margin={{ top: 16, right: 16, left: 0, bottom: 40 }}>
+                  <defs>
+                    <linearGradient id="eggGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#fbbf24" stopOpacity={0.95} />
+                      <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.55} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid stroke={gridStroke} strokeDasharray="4 4" vertical={false} />
+                  <XAxis
+                    dataKey="name"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: chartText, fontSize: 11, fontWeight: 700 }}
+                    angle={-25}
+                    textAnchor="end"
+                    interval={0}
+                    height={60}
+                  />
+                  <YAxis
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: chartText, fontSize: 11, fontWeight: 700 }}
+                    width={56}
+                    tickFormatter={(v) => compactNumber.format(Number(v))}
+                  />
+                  <Tooltip
+                    cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+                    content={<MetricTooltip format={(v) => `${fullNumber.format(v)} eggs`} label="Eggs Collected" />}
+                  />
+                  <Bar dataKey="eggs" fill="url(#eggGrad)" radius={[10, 10, 0, 0]} barSize={42} animationDuration={900} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="flex h-[200px] flex-col items-center justify-center rounded-xl border border-dashed border-white/10 text-center">
+              <Egg className="mb-3 h-8 w-8 text-white/20" />
+              <p className="text-sm font-bold text-white/50">No egg production logged for the selected batches.</p>
+            </div>
+          )}
+        </div>
       </div>
+
+      {/* Detail cards */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {activeBatches.map((batch) => {
+          const color = colorById.get(batch.id) || PALETTE[0]
+          return (
+            <div
+              key={batch.id}
+              className="glass-morphism group relative overflow-hidden rounded-2xl p-5 transition-all duration-300 hover:-translate-y-1"
+            >
+              <div className="absolute left-0 top-0 h-full w-1.5" style={{ backgroundColor: color }} />
+              <div className="mb-4 flex items-start justify-between">
+                <div className="min-w-0">
+                  <h4 className="truncate pr-3 text-base font-black text-white">{batch.name}</h4>
+                  <p className="truncate text-[10px] font-bold uppercase tracking-widest text-white/40">
+                    {batch.houseName} · {batch.type.replaceAll('_', ' ')}
+                  </p>
+                </div>
+                <span
+                  className={cn(
+                    'shrink-0 rounded-full px-2.5 py-1 text-[9px] font-black uppercase tracking-widest',
+                    batch.status === 'active'
+                      ? 'bg-emerald-500/15 text-emerald-300'
+                      : 'bg-white/10 text-white/50'
+                  )}
+                >
+                  {batch.status}
+                </span>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <DetailStat icon={Activity} label="FCR" value={batch.fcr ? batch.fcr.toFixed(2) : '0.00'} />
+                <DetailStat
+                  icon={Skull}
+                  label="Mortality"
+                  value={`${batch.mortalityRate.toFixed(1)}%`}
+                  danger={batch.mortalityRate > 5}
+                />
+                <DetailStat icon={Egg} label="Eggs" value={compactNumber.format(batch.totalEggs)} />
+                {canViewFinance ? (
+                  <DetailStat
+                    icon={Banknote}
+                    label="Net Profit"
+                    value={formatCurrency(batch.netProfitability, 'GHS')}
+                    danger={batch.netProfitability < 0}
+                  />
+                ) : (
+                  <DetailStat icon={Activity} label="Birds" value={compactNumber.format(batch.currentCount)} />
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function PageHeader({ count }: { count: number }) {
+  return (
+    <div className="glass-morphism flex flex-col items-start justify-between gap-4 rounded-2xl p-6 sm:flex-row sm:items-center">
+      <div>
+        <Link
+          href="/dashboard"
+          className="mb-3 inline-flex items-center rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-emerald-300 transition-colors hover:bg-white/10"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Dashboard
+        </Link>
+        <h1 className="text-2xl font-black tracking-tight text-white md:text-4xl">
+          Comparative <span className="italic text-emerald-400">Analytics</span>
+        </h1>
+        <p className="mt-1 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-white/40 md:text-xs">
+          <TrendingUp className="h-3 w-3 text-emerald-400 md:h-4 md:w-4" />
+          Performance · Egg Production · Finance
+        </p>
+      </div>
+      <div className="flex items-center gap-2 rounded-xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-2 text-sm font-bold text-emerald-300">
+        <Layers className="h-4 w-4" />
+        {count} Batch{count !== 1 ? 'es' : ''}
+      </div>
+    </div>
+  )
+}
+
+function HeroStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-[110px] rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-center backdrop-blur-xl">
+      <p className="mb-0.5 text-[10px] font-bold uppercase tracking-widest text-emerald-50/80">{label}</p>
+      <p className="truncate text-xl font-black text-white">{value}</p>
+    </div>
+  )
+}
+
+const KPI_TONES: Record<string, string> = {
+  slate: 'border-white/10 bg-white/[0.04] text-white/70',
+  emerald: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300',
+  amber: 'border-amber-500/20 bg-amber-500/10 text-amber-300',
+  sky: 'border-sky-500/20 bg-sky-500/10 text-sky-300',
+  orange: 'border-orange-500/20 bg-orange-500/10 text-orange-300',
+  rose: 'border-rose-500/20 bg-rose-500/10 text-rose-300',
+}
+
+function KpiPill({
+  icon: Icon,
+  label,
+  value,
+  tone,
+}: {
+  icon: React.ElementType
+  label: string
+  value: string
+  tone: keyof typeof KPI_TONES
+}) {
+  return (
+    <div className="glass-morphism rounded-2xl p-4">
+      <div className="flex items-center gap-2">
+        <div className={cn('flex h-8 w-8 items-center justify-center rounded-lg border', KPI_TONES[tone])}>
+          <Icon className="h-4 w-4" />
+        </div>
+        <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">{label}</span>
+      </div>
+      <p className="mt-2.5 truncate text-lg font-black text-white">{value}</p>
+    </div>
+  )
+}
+
+function DetailStat({
+  icon: Icon,
+  label,
+  value,
+  danger = false,
+}: {
+  icon: React.ElementType
+  label: string
+  value: string
+  danger?: boolean
+}) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
+      <div className="mb-1 flex items-center gap-1.5">
+        <Icon className={cn('h-3 w-3', danger ? 'text-rose-400' : 'text-white/40')} />
+        <span className="text-[9px] font-black uppercase tracking-widest text-white/40">{label}</span>
+      </div>
+      <p className={cn('truncate text-sm font-black', danger ? 'text-rose-300' : 'text-white')}>{value}</p>
+    </div>
+  )
+}
+
+function EmptyState() {
+  return (
+    <div className="flex h-[420px] flex-col items-center justify-center rounded-xl border-2 border-dashed border-white/10 text-center">
+      <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
+        <AlertTriangle className="h-7 w-7 text-amber-300" />
+      </div>
+      <p className="text-lg font-black text-white">No active data streams</p>
+      <p className="mt-1.5 text-sm font-medium text-white/40">Select or unhide batches from the Intelligence Hub.</p>
+    </div>
+  )
+}
+
+function MetricTooltip({
+  active,
+  payload,
+  label,
+  format,
+}: {
+  active?: boolean
+  payload?: any[]
+  label?: string
+  format: (v: number) => string
+}) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="rounded-xl border border-white/10 bg-slate-950/95 p-3 text-xs shadow-2xl backdrop-blur-md">
+      <p className="font-black text-white">{label}</p>
+      <p className="mt-1 font-bold text-emerald-300">{payload[0]?.payload?.name}</p>
+      <p className="mt-1 text-white/70">{format(Number(payload[0]?.value || 0))}</p>
+    </div>
+  )
+}
+
+function CurrencyTooltip({ active, payload, label }: { active?: boolean; payload?: any[]; label?: string }) {
+  if (!active || !payload?.length) return null
+  return (
+    <div className="rounded-xl border border-white/10 bg-slate-950/95 p-3 text-xs shadow-2xl backdrop-blur-md">
+      <p className="mb-1 font-black text-white">{label}</p>
+      {payload.map((item: any) => (
+        <p key={item.dataKey} style={{ color: item.color || item.stroke }} className="font-bold">
+          {item.dataKey}: {formatCurrency(Number(item.value || 0), 'GHS')}
+        </p>
+      ))}
     </div>
   )
 }
