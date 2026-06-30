@@ -1,14 +1,16 @@
 'use client';
 
-import React, { useState, useEffect, useTransition } from 'react';
+import React, { useState, useEffect, useTransition, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Package, Plus, Trash2, Pencil, Egg, Wheat, FlaskConical,
-  X, Save, AlertTriangle, ShoppingBag, TrendingDown, CheckCircle2, Syringe
+  X, Save, AlertTriangle, ShoppingBag, TrendingDown, CheckCircle2, Syringe, History, Archive
 } from 'lucide-react';
 import { WorkerStamp } from '@/components/ui/WorkerStamp';
 import {
   getAllInventory,
+  getUsedUpInventoryCount,
   createInventoryItem,
   updateInventoryItem,
   deleteInventoryItem
@@ -77,8 +79,11 @@ const HEALTH_CATEGORIES = ['MEDICINE', 'VACCINE'];
 
 /* ───────────────────── main component ───────────────────── */
 export default function InventoryView({ canEdit = true }: { canEdit?: boolean }) {
+  const router = useRouter();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showUsedUp, setShowUsedUp] = useState(false);
+  const [usedUpCount, setUsedUpCount] = useState(0);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<InventoryItem | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -92,16 +97,24 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
   });
 
 
-  const fetchItems = async () => {
+  const fetchItems = useCallback(async (mode: 'active' | 'used_up') => {
     setLoading(true);
-    const data = await getAllInventory();
+    const [data, count] = await Promise.all([
+      getAllInventory({ filter: mode }),
+      getUsedUpInventoryCount(),
+    ]);
     setItems((data as InventoryItem[]).map(i => ({ ...i, stockLevel: Number(i.stockLevel) })));
-    const sups = await getSuppliers();
-    setSuppliers(sups);
+    setUsedUpCount(count);
+    if (mode === 'active') {
+      const sups = await getSuppliers();
+      setSuppliers(sups);
+    }
     setLoading(false);
-  };
+  }, []);
 
-  useEffect(() => { fetchItems(); }, []);
+  useEffect(() => { fetchItems(showUsedUp ? 'used_up' : 'active'); }, [showUsedUp, fetchItems]);
+
+  const refreshList = () => fetchItems(showUsedUp ? 'used_up' : 'active');
 
   const showToast = (msg: string, ok = true) => {
     setToast({ msg, ok });
@@ -167,7 +180,7 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
       if (res?.success) {
         showToast(editing ? 'Item updated!' : 'Item added!');
         setShowForm(false);
-        fetchItems();
+        refreshList();
       } else {
         showToast(res?.error || 'Something went wrong', false);
       }
@@ -185,7 +198,7 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
     if (isPending) return;
     startTransition(async () => {
       const res = await deleteInventoryItem(itemToDelete.id, reason);
-      if (res?.success) { showToast('Item removed'); fetchItems(); setShowDeleteModal(false); }
+      if (res?.success) { showToast('Item removed'); refreshList(); setShowDeleteModal(false); }
       else showToast(res?.error || 'Delete failed', false);
     });
   };
@@ -228,8 +241,45 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
         )}
       </div>
 
+      <div className="flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          onClick={() => setShowUsedUp(false)}
+          className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-bold transition-all ${
+            !showUsedUp
+              ? 'bg-emerald-500 text-black'
+              : 'bg-white/10 text-white/70 hover:bg-white/15 hover:text-white'
+          }`}
+        >
+          <Package className="h-4 w-4" />
+          In stock
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowUsedUp(true)}
+          className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-bold transition-all ${
+            showUsedUp
+              ? 'bg-amber-500 text-black'
+              : 'bg-white/10 text-white/70 hover:bg-white/15 hover:text-white'
+          }`}
+        >
+          <Archive className="h-4 w-4" />
+          Used up
+          {usedUpCount > 0 ? (
+            <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ${showUsedUp ? 'bg-black/20 text-black' : 'bg-amber-500/20 text-amber-300'}`}>
+              {usedUpCount}
+            </span>
+          ) : null}
+        </button>
+        {showUsedUp ? (
+          <p className="text-xs font-medium text-white/45">
+            Fully depleted items — click a row to see who used them and when.
+          </p>
+        ) : null}
+      </div>
+
       {/* ── Egg Inventory Card ── */}
-      {eggItem && (
+      {!showUsedUp && eggItem && (
         <motion.div
           initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
           className="rounded-lg border bg-gradient-to-br from-amber-500/20 to-yellow-500/10 border-amber-500/30 p-5 flex flex-col sm:flex-row items-center justify-between gap-5"
@@ -280,11 +330,17 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
 
       {/* ── Category Tables ── */}
       {loading ? (
-        <div className="flex items-center justify-center py-16 text-white/70 text-sm animate-pulse">Loading inventory…</div>
-      ) : otherItems.length === 0 && !eggItem ? (
+        <div className="flex items-center justify-center py-16 text-white/70 text-sm animate-pulse">
+          Loading {showUsedUp ? 'used-up' : 'active'} inventory…
+        </div>
+      ) : otherItems.length === 0 && (!eggItem || showUsedUp) ? (
         <div className="flex flex-col items-center justify-center py-20 gap-2">
-          <Package className="w-12 h-12 text-white/10" />
-          <p className="text-white/70 text-sm">No inventory items yet. Add your first item above.</p>
+          {showUsedUp ? <Archive className="w-12 h-12 text-white/10" /> : <Package className="w-12 h-12 text-white/10" />}
+          <p className="text-white/70 text-sm">
+            {showUsedUp
+              ? 'No used-up items yet.'
+              : 'No inventory items in stock. Add your first item above.'}
+          </p>
         </div>
       ) : (
         Object.entries(grouped).map(([cat, catItems]) => {
@@ -309,19 +365,30 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
                       const isMutatingItem = mutatingItemId === item.id;
 
                       return (
-                      <tr key={item.id} className={`${idx < catItems.length - 1 ? 'border-b border-white/5' : ''} hover:bg-white/5 transition-colors ${isMutatingItem ? 'bg-emerald-500/10 animate-pulse' : ''}`}>
+                      <tr
+                        key={item.id}
+                        onClick={() => router.push(`/dashboard/inventory/${item.id}`)}
+                        className={`${idx < catItems.length - 1 ? 'border-b border-white/5' : ''} hover:bg-white/5 transition-colors cursor-pointer ${isMutatingItem ? 'bg-emerald-500/10 animate-pulse' : ''}`}
+                      >
                         <td className="px-4 py-2 font-semibold text-white">
-                          {isMutatingItem ? <SkeletonLine className="h-4 w-32" /> : item.itemName}
+                          <div className="flex items-center gap-2">
+                            {isMutatingItem ? <SkeletonLine className="h-4 w-32" /> : item.itemName}
+                            {!isMutatingItem ? (
+                              <History className="h-3.5 w-3.5 text-white/25" aria-hidden />
+                            ) : null}
+                          </div>
                         </td>
-                        <td className={`px-4 py-3 text-right font-black text-lg ${item.stockLevel <= 5 ? 'text-red-400 animate-pulse' : 'text-emerald-400'}`}>
+                        <td className={`px-4 py-3 text-right font-black text-lg ${showUsedUp ? 'text-red-400' : item.stockLevel <= 5 ? 'text-red-400 animate-pulse' : 'text-emerald-400'}`}>
                           {isMutatingItem ? (
                             <SkeletonLine className="ml-auto h-4 w-16" />
+                          ) : showUsedUp ? (
+                            <span className="text-sm font-bold uppercase tracking-wider">Used up</span>
                           ) : item.unit === 'bags' ? (
                             <span>{item.stockLevel} <span className="text-white/60 font-bold text-sm uppercase">bags</span></span>
                           ) : (
                             item.stockLevel.toLocaleString()
                           )}
-                          {item.stockLevel <= 5 && <TrendingDown className="inline w-4 h-4 ml-2" />}
+                          {!showUsedUp && item.stockLevel <= 5 && <TrendingDown className="inline w-4 h-4 ml-2" />}
                         </td>
                         <td className="px-4 py-3 text-right">
                           {isMutatingItem ? (
@@ -333,9 +400,9 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
                         <td className="px-4 py-2 text-right text-white/70">
                           {isMutatingItem ? <SkeletonLine className="ml-auto h-3 w-12" /> : item.unit}
                         </td>
-                        <td className="px-4 py-2 text-right flex items-center justify-end gap-2">
+                        <td className="px-4 py-2 text-right flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
                            <WorkerStamp user={item.user} />
-                           {canEdit && (
+                           {canEdit && !showUsedUp && (
                              <>
                                <button onClick={() => openEdit(item)} className="p-1.5 rounded-md hover:bg-white/10 text-white/70 hover:text-white transition-colors">
                                  <Pencil className="w-4 h-4" />

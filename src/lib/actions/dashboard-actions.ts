@@ -358,7 +358,8 @@ export async function updateBatchFinancials(id: string, data: {
           amount: exp.amount,
           category: exp.category as any,
           description: exp.description,
-          expenseDate: batch.arrivalDate
+          expenseDate: batch.arrivalDate,
+          batch_id: id,
         }
       })
     }

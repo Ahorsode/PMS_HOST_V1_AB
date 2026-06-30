@@ -177,37 +177,191 @@ export async function restoreInventory(id: string) {
   })
 }
 
-export async function getAllInventory() {
+function mapInventoryRow(item: any) {
+  return {
+    ...item,
+    stockLevel: Number(item.stockLevel),
+    reorderLevel: item.reorderLevel ? Number(item.reorderLevel) : null,
+    costPerUnit: item.costPerUnit ? Number(item.costPerUnit) : null,
+    eggCategory: item.eggCategory
+      ? {
+          ...item.eggCategory,
+          sellingPrice: Number(item.eggCategory.sellingPrice),
+          unitSize: Number(item.eggCategory.unitSize),
+        }
+      : null,
+    sellingPrice:
+      item.eggCategory?.sellingPrice != null
+        ? Number(item.eggCategory.sellingPrice)
+        : item.costPerUnit
+          ? Number(item.costPerUnit)
+          : null,
+  }
+}
+
+const INVENTORY_INCLUDE = {
+  eggCategory: true,
+  user: {
+    select: {
+      firstname: true,
+      surname: true,
+      role: true,
+    },
+  },
+}
+
+export type InventoryListFilter = 'active' | 'used_up' | 'all'
+
+export async function getAllInventory(options?: { filter?: InventoryListFilter }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return []
 
+  const filter = options?.filter ?? 'active'
+
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    const stockFilter =
+      filter === 'active'
+        ? { stockLevel: { gt: 0 } }
+        : filter === 'used_up'
+          ? { stockLevel: { lte: 0 } }
+          : {}
+
     const items = await tx.inventory.findMany({
-      where: { farmId: activeFarmId, isDeleted: false },
-      include: {
-        eggCategory: true,
-        user: {
-          select: {
-            firstname: true,
-            surname: true,
-            role: true
-          }
-        }
-      },
-      orderBy: { itemName: 'asc' }
+      where: { farmId: activeFarmId, isDeleted: false, ...stockFilter },
+      include: INVENTORY_INCLUDE,
+      orderBy: { itemName: 'asc' },
     })
-    return items.map((item: any) => ({
-      ...item,
-      stockLevel: Number(item.stockLevel),
-      reorderLevel: item.reorderLevel ? Number(item.reorderLevel) : null,
-      costPerUnit: item.costPerUnit ? Number(item.costPerUnit) : null,
-      eggCategory: item.eggCategory ? {
-        ...item.eggCategory,
-        sellingPrice: Number(item.eggCategory.sellingPrice),
-        unitSize: Number(item.eggCategory.unitSize)
-      } : null,
-      sellingPrice: item.eggCategory?.sellingPrice != null ? Number(item.eggCategory.sellingPrice) : (item.costPerUnit ? Number(item.costPerUnit) : null)
-    }))
+    return items.map(mapInventoryRow)
+  })
+}
+
+export async function getUsedUpInventoryCount() {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return 0
+
+  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    return tx.inventory.count({
+      where: { farmId: activeFarmId, isDeleted: false, stockLevel: { lte: 0 } },
+    })
+  })
+}
+
+export type InventoryUsageEvent = {
+  id: string
+  date: string
+  quantity: number
+  unit: string
+  batchId: string | null
+  batchName: string | null
+  kind: 'FEED' | 'VACCINATION' | 'MEDICATION'
+  status: string | null
+  recordedBy: string | null
+}
+
+export async function getInventoryItemWithUsage(id: string) {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return null
+
+  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    const item = await tx.inventory.findFirst({
+      where: { id, farmId: activeFarmId, isDeleted: false },
+      include: INVENTORY_INCLUDE,
+    })
+    if (!item) return null
+
+    const category = String(item.category || '').toUpperCase()
+    const usageHistory: InventoryUsageEvent[] = []
+
+    if (category === 'FEED') {
+      const logs = await tx.feedingLog.findMany({
+        where: { feedTypeId: id, farmId: activeFarmId, isDeleted: false },
+        include: {
+          batch: { select: { id: true, batchName: true, localBatchId: true } },
+          user: { select: { firstname: true, surname: true } },
+        },
+        orderBy: { logDate: 'desc' },
+      })
+      for (const log of logs) {
+        usageHistory.push({
+          id: log.id,
+          date: log.logDate.toISOString(),
+          quantity: Number(log.amountConsumed),
+          unit: item.unit,
+          batchId: log.batchId,
+          batchName:
+            log.batch?.batchName ||
+            (log.batch?.localBatchId ? `Batch ${log.batch.localBatchId}` : null),
+          kind: 'FEED',
+          status: null,
+          recordedBy: log.user
+            ? [log.user.firstname, log.user.surname].filter(Boolean).join(' ') || null
+            : null,
+        })
+      }
+    }
+
+    const healthCategories = ['MEDICINE', 'MEDICATION', 'MEDICATIONS', 'VETERINARY', 'HEALTH', 'VACCINE', 'VACCINATION', 'VACCINES']
+    if (healthCategories.includes(category)) {
+      const [vaccinations, medications] = await Promise.all([
+        tx.vaccinationSchedule.findMany({
+          where: {
+            farmId: activeFarmId,
+            vaccineName: { equals: item.itemName, mode: 'insensitive' },
+            status: { not: 'CANCELLED' },
+          },
+          include: { batch: { select: { id: true, batchName: true, localBatchId: true } } },
+          orderBy: { scheduledDate: 'desc' },
+        }),
+        tx.medicationSchedule.findMany({
+          where: {
+            farmId: activeFarmId,
+            medicationName: { equals: item.itemName, mode: 'insensitive' },
+            status: { not: 'CANCELLED' },
+          },
+          include: { batch: { select: { id: true, batchName: true, localBatchId: true } } },
+          orderBy: { scheduledDate: 'desc' },
+        }),
+      ])
+
+      for (const row of vaccinations) {
+        usageHistory.push({
+          id: row.id,
+          date: row.scheduledDate.toISOString(),
+          quantity: Number(row.quantity || 1),
+          unit: row.unit || item.unit,
+          batchId: row.batchId,
+          batchName:
+            row.batch?.batchName ||
+            (row.batch?.localBatchId ? `Batch ${row.batch.localBatchId}` : null),
+          kind: 'VACCINATION',
+          status: row.status,
+          recordedBy: null,
+        })
+      }
+      for (const row of medications) {
+        usageHistory.push({
+          id: row.id,
+          date: row.scheduledDate.toISOString(),
+          quantity: Number(row.quantity || 1),
+          unit: row.unit || item.unit,
+          batchId: row.batchId,
+          batchName:
+            row.batch?.batchName ||
+            (row.batch?.localBatchId ? `Batch ${row.batch.localBatchId}` : null),
+          kind: 'MEDICATION',
+          status: row.status,
+          recordedBy: null,
+        })
+      }
+    }
+
+    usageHistory.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+
+    return {
+      item: mapInventoryRow(item),
+      usageHistory,
+      isUsedUp: Number(item.stockLevel) <= 0,
+    }
   })
 }
 

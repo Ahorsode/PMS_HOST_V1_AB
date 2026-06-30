@@ -93,9 +93,13 @@ export const FlockDetailClient = ({ data }: FlockDetailClientProps) => {
             icon={Banknote}
             color="orange"
             subtext={
-              finance.generalAllocatedTotal > 0
-                ? `Incl. ${finance.headcountSharePct}% general share`
-                : 'Direct + allocated'
+              finance.initialInvestment > 0
+                ? `Incl. ${formatCurrency(finance.initialInvestment, 'GHS')} initial`
+                : finance.consumptionAllocatedTotal > 0
+                  ? `Incl. ${formatCurrency(finance.consumptionAllocatedTotal, 'GHS')} feed & med by usage`
+                  : finance.generalAllocatedTotal > 0
+                    ? `Incl. ${finance.headcountSharePct}% general share`
+                    : 'Operating costs'
             }
           />
           <MetricCard
@@ -111,7 +115,11 @@ export const FlockDetailClient = ({ data }: FlockDetailClientProps) => {
       <div className="grid grid-cols-1 gap-7 lg:grid-cols-3">
         {/* Charts column */}
         <div className="space-y-7 lg:col-span-2">
-          <FinanceTrendPanel data={series.financeMonthly} locked={!finance.canViewFinance} />
+          <FinanceTrendPanel
+            summary={series.financeSummary}
+            monthly={series.financeMonthly}
+            locked={!finance.canViewFinance}
+          />
           {showEggs ? <EggTrendPanel data={series.eggDaily} /> : null}
           <MortalityTrendPanel data={series.mortalityDaily} />
           {showSales ? <SalesTrendPanel data={series.salesDaily} /> : null}
@@ -241,11 +249,15 @@ function ExpenseBreakdown({ items }: { items: any[] }) {
                   <span
                     className={cn(
                       'rounded px-1.5 py-0.5',
-                      item.kind === 'Allocated'
-                        ? 'bg-sky-500/10 text-sky-300'
-                        : item.kind === 'General'
-                          ? 'bg-amber-500/10 text-amber-300'
-                          : 'bg-emerald-500/10 text-emerald-300'
+                      item.kind === 'Initial'
+                        ? 'bg-violet-500/10 text-violet-300'
+                        : item.kind === 'Allocated'
+                          ? 'bg-sky-500/10 text-sky-300'
+                          : item.kind === 'Consumption'
+                            ? 'bg-emerald-500/10 text-emerald-300'
+                            : item.kind === 'General'
+                              ? 'bg-amber-500/10 text-amber-300'
+                              : 'bg-orange-500/10 text-orange-300'
                     )}
                   >
                     {item.kind}

@@ -56,6 +56,7 @@ export async function getHealthInventory(): Promise<{
         where: {
           farmId: activeFarmId,
           isDeleted: false,
+          stockLevel: { gt: 0 },
           category: { in: ALL_HEALTH_CATEGORIES },
         },
         select: { id: true, itemName: true, stockLevel: true, unit: true, category: true, usageType: true },

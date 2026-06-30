@@ -3,6 +3,8 @@
 import prisma from '@/lib/db'
 import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
+import { computeBatchFinance } from '@/lib/analytics/batch-finance'
+import { buildConsumptionContext } from '@/lib/analytics/batch-consumption-finance'
 
 const VACCINE_CATEGORIES = ['VACCINE', 'VACCINATION', 'VACCINES']
 const MEDICINE_CATEGORIES = ['MEDICINE', 'MEDICATION', 'MEDICATIONS', 'VETERINARY', 'HEALTH']
@@ -11,15 +13,6 @@ const FEED_CATEGORIES = ['FEED', 'FEEDS', 'FEED_RAW', 'FEED_FINISHED']
 
 function serialize<T>(value: T): T {
   return JSON.parse(JSON.stringify(value))
-}
-
-function monthKey(date: Date) {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-}
-
-function monthLabel(key: string) {
-  const [year, month] = key.split('-').map(Number)
-  return new Date(year, month - 1, 1).toLocaleDateString(undefined, { month: 'short', year: '2-digit' })
 }
 
 function dayKey(date: Date) {
@@ -70,8 +63,23 @@ export async function getFlockDeepDive(id: string) {
     let generalExpenses: any[] = []
     let activeBatchesForAlloc: any[] = []
 
+    let farmFeedingLogs: any[] = []
+    let farmVaccinations: any[] = []
+    let farmMedications: any[] = []
+    let inventoryItems: any[] = []
+
     if (canViewFinance) {
-      ;[directExpenses, allocations, revenueItems, generalExpenses, activeBatchesForAlloc] = await Promise.all([
+      ;[
+        directExpenses,
+        allocations,
+        revenueItems,
+        generalExpenses,
+        activeBatchesForAlloc,
+        farmFeedingLogs,
+        farmVaccinations,
+        farmMedications,
+        inventoryItems,
+      ] = await Promise.all([
         tx.expense.findMany({
           where: { batch_id: id, farmId: activeFarmId, isDeleted: false },
           orderBy: { expenseDate: 'desc' },
@@ -94,18 +102,61 @@ export async function getFlockDeepDive(id: string) {
           select: { id: true, batchName: true, currentCount: true, localBatchId: true },
           orderBy: { batchName: 'asc' },
         }),
+        tx.feedingLog.findMany({
+          where: { farmId: activeFarmId, isDeleted: false },
+          select: { batchId: true, feedTypeId: true, amountConsumed: true },
+        }),
+        tx.vaccinationSchedule.findMany({
+          where: { farmId: activeFarmId },
+          select: { batchId: true, vaccineName: true, quantity: true, status: true },
+        }),
+        tx.medicationSchedule.findMany({
+          where: { farmId: activeFarmId },
+          select: { batchId: true, medicationName: true, quantity: true, status: true },
+        }),
+        tx.inventory.findMany({
+          where: { farmId: activeFarmId, isDeleted: false },
+          select: { id: true, itemName: true },
+        }),
       ])
     }
 
+    const consumptionContext = buildConsumptionContext({
+      feedingLogs: farmFeedingLogs,
+      vaccinations: farmVaccinations.map((v: any) => ({
+        batchId: v.batchId,
+        name: v.vaccineName,
+        quantity: v.quantity,
+        status: v.status,
+      })),
+      medications: farmMedications.map((m: any) => ({
+        batchId: m.batchId,
+        name: m.medicationName,
+        quantity: m.quantity,
+        status: m.status,
+      })),
+      inventoryItems,
+    })
+
     const allocationBatches = canEditFinance ? activeBatchesForAlloc : []
 
-    // This batch's proportional share of total active livestock headcount.
-    const headcountMap = new Map<string, number>(
-      activeBatchesForAlloc.map((b: any) => [b.id, b.currentCount || 0])
-    )
-    if (!headcountMap.has(batch.id)) headcountMap.set(batch.id, batch.currentCount || 0)
-    const totalHeadcount = Array.from(headcountMap.values()).reduce((s, v) => s + v, 0)
-    const headcountShare = totalHeadcount > 0 ? (batch.currentCount || 0) / totalHeadcount : 0
+    const batchFinance = canViewFinance
+      ? computeBatchFinance({
+          batchId: batch.id,
+          arrivalDate: batch.arrivalDate,
+          batch: {
+            initialCostActual: batch.initialCostActual,
+            initialCostCarriage: batch.initialCostCarriage,
+            initialCostOther: batch.initialCostOther,
+          },
+          directExpenses,
+          allocations,
+          generalExpenses,
+          revenueItems,
+          activeBatches: activeBatchesForAlloc,
+          consumptionContext,
+        })
+      : null
 
     // Health inventory options for the schedule form (only if user can edit)
     let vaccineInventory: any[] = []
@@ -152,42 +203,6 @@ export async function getFlockDeepDive(id: string) {
     const latestWeight = Number(batch.weightRecords[0]?.averageWeight || 0)
     const fcr = latestWeight > 0 ? totalFeed / (batch.currentCount * latestWeight) : 0
 
-    const validRevenueItems = revenueItems.filter(
-      (item: any) => String(item.order?.status || '').toUpperCase() !== 'CANCELLED'
-    )
-    const totalRevenue = validRevenueItems.reduce((s: number, i: any) => s + Number(i.totalPrice || 0), 0)
-    const directExpenseTotal = directExpenses.reduce((s: number, e: any) => s + Number(e.amount || 0), 0)
-    const allocatedList = allocations.filter((a: any) => !a.expense?.isDeleted)
-    const allocatedExpenseTotal = allocatedList.reduce((s: number, a: any) => s + Number(a.allocatedAmount || 0), 0)
-    const generalPoolTotal = generalExpenses.reduce((s: number, e: any) => s + Number(e.amount || 0), 0)
-    const generalAllocatedTotal = generalPoolTotal * headcountShare
-    const totalExpenses = directExpenseTotal + allocatedExpenseTotal + generalAllocatedTotal
-    const netProfit = totalRevenue - totalExpenses
-
-    // ---- Finance monthly series (Expenses vs Revenue) ---------------------
-    const financeMap = new Map<string, { revenue: number; expenses: number }>()
-    const bump = (key: string, field: 'revenue' | 'expenses', value: number) => {
-      const row = financeMap.get(key) || { revenue: 0, expenses: 0 }
-      row[field] += value
-      financeMap.set(key, row)
-    }
-    validRevenueItems.forEach((i: any) => bump(monthKey(new Date(i.order.orderDate)), 'revenue', Number(i.totalPrice || 0)))
-    directExpenses.forEach((e: any) => bump(monthKey(new Date(e.expenseDate)), 'expenses', Number(e.amount || 0)))
-    allocatedList.forEach((a: any) =>
-      bump(monthKey(new Date(a.expense.expenseDate)), 'expenses', Number(a.allocatedAmount || 0))
-    )
-    generalExpenses.forEach((e: any) =>
-      bump(monthKey(new Date(e.expenseDate)), 'expenses', Number(e.amount || 0) * headcountShare)
-    )
-    const financeMonthly = Array.from(financeMap.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([key, v]) => ({
-        label: monthLabel(key),
-        revenue: Math.round(v.revenue * 100) / 100,
-        expenses: Math.round(v.expenses * 100) / 100,
-        profit: Math.round((v.revenue - v.expenses) * 100) / 100,
-      }))
-
     // ---- Egg daily series -------------------------------------------------
     const eggMap = new Map<string, number>()
     batch.eggProduction.forEach((e: any) =>
@@ -218,6 +233,9 @@ export async function getFlockDeepDive(id: string) {
 
     // ---- Sales daily series ----------------------------------------------
     const salesMap = new Map<string, { revenue: number; units: number }>()
+    const validRevenueItems = revenueItems.filter(
+      (item: any) => String(item.order?.status || '').toUpperCase() !== 'CANCELLED'
+    )
     validRevenueItems.forEach((i: any) => {
       const key = dayKey(new Date(i.order.orderDate))
       const row = salesMap.get(key) || { revenue: 0, units: 0 }
@@ -229,39 +247,6 @@ export async function getFlockDeepDive(id: string) {
       .sort(([a], [b]) => a.localeCompare(b))
       .slice(-30)
       .map(([key, v]) => ({ label: dayLabel(key), revenue: Math.round(v.revenue * 100) / 100, units: v.units }))
-
-    // ---- Expense breakdown (combined direct + allocated) ------------------
-    const expenseBreakdown = [
-      ...directExpenses.map((e: any) => ({
-        id: e.id,
-        date: e.expenseDate,
-        category: e.category,
-        description: e.description || '—',
-        amount: Number(e.amount || 0),
-        kind: 'Direct' as const,
-        percentage: null as number | null,
-      })),
-      ...allocatedList.map((a: any) => ({
-        id: a.id,
-        date: a.expense.expenseDate,
-        category: a.expense.category,
-        description: a.expense.description || '—',
-        amount: Number(a.allocatedAmount || 0),
-        kind: 'Allocated' as const,
-        percentage: a.allocationPercentage != null ? Number(a.allocationPercentage) : null,
-      })),
-      ...generalExpenses.map((e: any) => ({
-        id: e.id,
-        date: e.expenseDate,
-        category: e.category,
-        description: e.description || '—',
-        amount: Number(e.amount || 0) * headcountShare,
-        kind: 'General' as const,
-        percentage: Math.round(headcountShare * 10000) / 100,
-      })),
-    ]
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, 25)
 
     const isLayer = batch.type === 'POULTRY_LAYER'
 
@@ -303,17 +288,26 @@ export async function getFlockDeepDive(id: string) {
       finance: {
         canViewFinance,
         canEditFinance,
-        directExpenseTotal,
-        allocatedExpenseTotal,
-        generalAllocatedTotal,
-        generalPoolTotal,
-        headcountSharePct: Math.round(headcountShare * 10000) / 100,
-        totalExpenses,
-        totalRevenue,
-        netProfit,
-        expenseBreakdown,
+        directExpenseTotal: batchFinance?.directExpenseTotal ?? 0,
+        allocatedExpenseTotal: batchFinance?.allocatedExpenseTotal ?? 0,
+        initialInvestment: batchFinance?.initialInvestment ?? 0,
+        operatingExpenses: batchFinance?.operatingExpenses ?? 0,
+        consumptionAllocatedTotal: batchFinance?.consumptionAllocatedTotal ?? 0,
+        generalAllocatedTotal: batchFinance?.generalAllocatedTotal ?? 0,
+        generalPoolTotal: batchFinance?.generalPoolTotal ?? 0,
+        headcountSharePct: batchFinance?.headcountSharePct ?? 0,
+        totalExpenses: batchFinance?.totalExpenses ?? 0,
+        totalRevenue: batchFinance?.totalRevenue ?? 0,
+        netProfit: batchFinance?.netProfit ?? 0,
+        expenseBreakdown: batchFinance?.expenseBreakdown ?? [],
       },
-      series: { financeMonthly, eggDaily, mortalityDaily, salesDaily },
+      series: {
+        financeMonthly: batchFinance?.financeMonthly ?? [],
+        financeSummary: batchFinance?.financeSummary ?? [],
+        eggDaily,
+        mortalityDaily,
+        salesDaily,
+      },
       forms: {
         canEditHealth,
         vaccineInventory,

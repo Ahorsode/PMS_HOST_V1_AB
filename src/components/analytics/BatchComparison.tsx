@@ -48,8 +48,12 @@ type BatchReport = {
   totalDead: number
   fcr: number
   mortalityRate: number
+  initialInvestment: number
   directExpenses: number
   allocatedExpenses: number
+  operatingExpenses: number
+  consumptionShare: number
+  generalShare: number
   totalExpenses: number
   totalRevenue: number
   netProfitability: number
@@ -169,8 +173,11 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
     () =>
       activeBatches.map((b) => ({
         name: shortName(b.name),
+        Initial: b.initialInvestment,
+        Operating: Math.max(0, b.directExpenses + b.allocatedExpenses),
+        Consumption: b.consumptionShare,
+        General: b.generalShare,
         Revenue: b.totalRevenue,
-        Expenses: b.totalExpenses,
         Profit: b.netProfitability,
       })),
     [activeBatches]
@@ -458,14 +465,14 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
             <Banknote className="h-4 w-4 text-sky-400" />
             <h3 className="text-lg font-black tracking-tight text-white">Revenue vs Expenses</h3>
             <span className="ml-auto hidden text-[10px] font-bold uppercase tracking-widest text-white/40 sm:block">
-              Profit overlay
+              Initial stays on batch · Feed & med by usage · General by headcount
             </span>
           </div>
           <div className="p-4">
             {financeData.length > 0 ? (
-              <div className="h-[400px] w-full">
+              <div className="h-[420px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={financeData} margin={{ top: 16, right: 16, left: 10, bottom: 40 }}>
+                  <BarChart data={financeData} margin={{ top: 16, right: 16, left: 10, bottom: 40 }}>
                     <CartesianGrid stroke={gridStroke} strokeDasharray="4 4" vertical={false} />
                     <XAxis
                       dataKey="name"
@@ -486,17 +493,12 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
                     />
                     <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} content={<CurrencyTooltip />} />
                     <Legend wrapperStyle={{ color: chartText, fontSize: 12, fontWeight: 700, paddingTop: 8 }} />
-                    <Bar dataKey="Revenue" fill="#38bdf8" radius={[6, 6, 0, 0]} barSize={26} />
-                    <Bar dataKey="Expenses" fill="#fb923c" radius={[6, 6, 0, 0]} barSize={26} />
-                    <Line
-                      type="monotone"
-                      dataKey="Profit"
-                      stroke="#34d399"
-                      strokeWidth={3}
-                      dot={{ r: 4, fill: '#0f172a', stroke: '#34d399', strokeWidth: 2 }}
-                      activeDot={{ r: 6 }}
-                    />
-                  </ComposedChart>
+                    <Bar dataKey="Initial" stackId="expense" fill="#a78bfa" name="Initial (batch only)" radius={[0, 0, 0, 0]} barSize={28} />
+                    <Bar dataKey="Operating" stackId="expense" fill="#fb923c" name="Operating" radius={[0, 0, 0, 0]} barSize={28} />
+                    <Bar dataKey="Consumption" stackId="expense" fill="#34d399" name="Feed & med (by usage)" radius={[0, 0, 0, 0]} barSize={28} />
+                    <Bar dataKey="General" stackId="expense" fill="#fbbf24" name="General share" radius={[6, 6, 0, 0]} barSize={28} />
+                    <Bar dataKey="Revenue" fill="#38bdf8" name="Revenue" radius={[6, 6, 0, 0]} barSize={28} />
+                  </BarChart>
                 </ResponsiveContainer>
               </div>
             ) : (

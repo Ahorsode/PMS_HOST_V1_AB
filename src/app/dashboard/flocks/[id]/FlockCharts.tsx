@@ -4,6 +4,7 @@ import React from 'react'
 import {
   Area,
   Bar,
+  BarChart,
   CartesianGrid,
   ComposedChart,
   Legend,
@@ -22,7 +23,17 @@ const gridStroke = 'rgba(255,255,255,0.07)'
 const compact = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 })
 const fullNumber = new Intl.NumberFormat('en-US')
 
-type FinancePoint = { label: string; revenue: number; expenses: number; profit: number }
+type FinancePoint = {
+  label: string
+  revenue: number
+  initial: number
+  operating: number
+  consumption: number
+  general: number
+  expenses: number
+  profit: number
+}
+type FinanceSummaryPoint = { label: string; key: string; amount: number }
 type EggPoint = { label: string; eggs: number }
 type MortalityPoint = { label: string; deaths: number; rate: number }
 type SalesPoint = { label: string; revenue: number; units: number }
@@ -76,7 +87,20 @@ function MoneyTooltip({ active, payload, label }: any) {
   )
 }
 
-export function FinanceTrendPanel({ data, locked }: { data: FinancePoint[]; locked?: boolean }) {
+export function FinanceTrendPanel({
+  summary,
+  monthly,
+  locked,
+}: {
+  summary: FinanceSummaryPoint[]
+  monthly: FinancePoint[]
+  locked?: boolean
+}) {
+  const netProfit = summary.reduce((sum, row) => {
+    if (row.key === 'revenue') return sum + row.amount
+    return sum - row.amount
+  }, 0)
+
   return (
     <ChartCard
       title="Expenses vs Revenue"
@@ -84,50 +108,85 @@ export function FinanceTrendPanel({ data, locked }: { data: FinancePoint[]; lock
       iconClass="text-sky-400"
       right={
         <span className="hidden text-[10px] font-bold uppercase tracking-widest text-white/40 sm:block">
-          Monthly · Net profit overlay
+          Lifetime breakdown · Monthly bars
         </span>
       }
     >
       {locked ? (
         <ChartEmpty label="Finance permission is required to view revenue & expenses." />
-      ) : data.length > 0 ? (
-        <div className="h-[320px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <ComposedChart data={data} margin={{ top: 16, right: 12, left: 4, bottom: 6 }}>
-              <defs>
-                <linearGradient id="revFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.35} />
-                  <stop offset="100%" stopColor="#38bdf8" stopOpacity={0.02} />
-                </linearGradient>
-                <linearGradient id="expFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#fb923c" stopOpacity={0.3} />
-                  <stop offset="100%" stopColor="#fb923c" stopOpacity={0.02} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid stroke={gridStroke} strokeDasharray="3 3" vertical={false} />
-              <XAxis dataKey="label" tick={{ fill: chartText, fontSize: 11, fontWeight: 700 }} axisLine={false} tickLine={false} />
-              <YAxis
-                tick={{ fill: chartText, fontSize: 11, fontWeight: 700 }}
-                axisLine={false}
-                tickLine={false}
-                width={52}
-                tickFormatter={(v) => `₵${compact.format(Number(v))}`}
-              />
-              <Tooltip content={<MoneyTooltip />} cursor={{ stroke: 'rgba(255,255,255,0.1)' }} />
-              <Legend wrapperStyle={{ color: chartText, fontSize: 12, fontWeight: 700, paddingTop: 8 }} />
-              <Area type="monotone" dataKey="revenue" name="Revenue" stroke="#38bdf8" strokeWidth={2} fill="url(#revFill)" />
-              <Area type="monotone" dataKey="expenses" name="Expenses" stroke="#fb923c" strokeWidth={2} fill="url(#expFill)" />
-              <Line
-                type="monotone"
-                dataKey="profit"
-                name="Net Profit"
-                stroke="#34d399"
-                strokeWidth={3}
-                dot={{ r: 3, fill: '#0f172a', stroke: '#34d399', strokeWidth: 2 }}
-                activeDot={{ r: 5 }}
-              />
-            </ComposedChart>
-          </ResponsiveContainer>
+      ) : summary.some((row) => row.amount > 0) || monthly.length > 0 ? (
+        <div className="space-y-6">
+          <div>
+            <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-white/45">Lifetime cost structure</p>
+            <div className="h-[220px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={[
+                    {
+                      label: 'Batch',
+                      Initial: summary.find((r) => r.key === 'initial')?.amount ?? 0,
+                      Operating: summary.find((r) => r.key === 'operating')?.amount ?? 0,
+                      Consumption: summary.find((r) => r.key === 'consumption')?.amount ?? 0,
+                      General: summary.find((r) => r.key === 'general')?.amount ?? 0,
+                      Revenue: summary.find((r) => r.key === 'revenue')?.amount ?? 0,
+                    },
+                  ]}
+                  margin={{ top: 8, right: 12, left: 4, bottom: 6 }}
+                >
+                  <CartesianGrid stroke={gridStroke} strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="label" tick={{ fill: chartText, fontSize: 11, fontWeight: 700 }} axisLine={false} tickLine={false} />
+                  <YAxis
+                    tick={{ fill: chartText, fontSize: 11, fontWeight: 700 }}
+                    axisLine={false}
+                    tickLine={false}
+                    width={52}
+                    tickFormatter={(v) => `₵${compact.format(Number(v))}`}
+                  />
+                  <Tooltip content={<MoneyTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
+                  <Legend wrapperStyle={{ color: chartText, fontSize: 12, fontWeight: 700, paddingTop: 8 }} />
+                  <Bar dataKey="Initial" stackId="expense" fill="#a78bfa" name="Initial (batch only)" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="Operating" stackId="expense" fill="#fb923c" name="Operating" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="Consumption" stackId="expense" fill="#34d399" name="Feed & med (by usage)" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="General" stackId="expense" fill="#fbbf24" name="General share" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="Revenue" fill="#38bdf8" name="Revenue" radius={[6, 6, 0, 0]} barSize={48} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3">
+              <span className="text-xs font-bold uppercase tracking-widest text-white/50">Net position</span>
+              <span className={cn('text-lg font-bold', netProfit >= 0 ? 'text-emerald-400' : 'text-red-400')}>
+                {formatCurrency(netProfit, 'GHS')}
+              </span>
+            </div>
+          </div>
+
+          {monthly.length > 0 ? (
+            <div>
+              <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-white/45">Monthly activity</p>
+              <div className="h-[280px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={monthly} margin={{ top: 8, right: 12, left: 4, bottom: 6 }}>
+                    <CartesianGrid stroke={gridStroke} strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="label" tick={{ fill: chartText, fontSize: 11, fontWeight: 700 }} axisLine={false} tickLine={false} />
+                    <YAxis
+                      tick={{ fill: chartText, fontSize: 11, fontWeight: 700 }}
+                      axisLine={false}
+                      tickLine={false}
+                      width={52}
+                      tickFormatter={(v) => `₵${compact.format(Number(v))}`}
+                    />
+                    <Tooltip content={<MoneyTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
+                    <Legend wrapperStyle={{ color: chartText, fontSize: 12, fontWeight: 700, paddingTop: 8 }} />
+                    <Bar dataKey="revenue" fill="#38bdf8" name="Revenue" radius={[6, 6, 0, 0]} barSize={22} />
+                    <Bar dataKey="initial" stackId="monthlyExp" fill="#a78bfa" name="Initial" />
+                    <Bar dataKey="operating" stackId="monthlyExp" fill="#fb923c" name="Operating" />
+                    <Bar dataKey="consumption" stackId="monthlyExp" fill="#34d399" name="Feed & med (by usage)" />
+                    <Bar dataKey="general" stackId="monthlyExp" fill="#fbbf24" name="General share" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          ) : null}
         </div>
       ) : (
         <ChartEmpty label="No revenue or expense activity recorded yet." />
