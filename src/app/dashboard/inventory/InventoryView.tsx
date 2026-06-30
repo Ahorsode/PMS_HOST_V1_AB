@@ -149,8 +149,11 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
     if (!canEdit) return;
     if (isPending) return;
     if (!form.itemName.trim()) return showToast('Item name is required', false);
-    const stockNum = parseFloat(form.stockLevel);
+    let stockNum = parseFloat(form.stockLevel);
     if (isNaN(stockNum) || stockNum < 0) return showToast('Invalid stock level', false);
+    if (HEALTH_CATEGORIES.includes(form.category) && form.usageType === 'ONE_TIME') {
+      stockNum = 1;
+    }
 
     startTransition(async () => {
       let res: any;
@@ -469,7 +472,7 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
-                      onClick={() => setForm(p => ({ ...p, usageType: 'ONE_TIME' }))}
+                      onClick={() => setForm(p => ({ ...p, usageType: 'ONE_TIME', stockLevel: '1' }))}
                       className={`py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${form.usageType === 'ONE_TIME' ? 'bg-emerald-500 text-black' : 'bg-white/10 text-white/70 hover:bg-white/10'}`}
                     >
                       One-time use
@@ -484,7 +487,7 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
                   </div>
                   <p className="text-[11px] text-white/40 italic">
                     {form.usageType === 'ONE_TIME'
-                      ? 'Applied once per schedule, regardless of count.'
+                      ? 'Single application only — stock is capped at 1 and depletes when marked completed on a batch.'
                       : 'Tracked by stock quantity and unit.'}
                   </p>
                 </div>

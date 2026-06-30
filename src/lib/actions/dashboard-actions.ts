@@ -10,6 +10,14 @@ import { signOut } from '@/auth'
 import { farmCacheTags, revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 import { passwordPolicyError } from '@/lib/password-policy'
+import {
+  buildRevenueVelocitySeries,
+  buildStrategicPriorities,
+  computeBatchFcr,
+  computeGlobalFcr,
+  computeProfitTrend,
+  getFcrTarget,
+} from '@/lib/analytics/executive-metrics'
 
 export async function getDashboardStats() {
   const { userId, activeFarmId } = await getAuthContext()
@@ -45,7 +53,11 @@ export async function getDashboardStats() {
       recentOrders,
       supplierDebt,
       customerDebt,
-      totalExpenses
+      totalExpenses,
+      topSupplier,
+      feedInventoryItems,
+      activeBatchesForFcr,
+      recentExpenses
     ] = await Promise.all([
       tx.livestock.aggregate({
         where: { status: 'active', farmId: activeFarmId },
@@ -107,9 +119,9 @@ export async function getDashboardStats() {
         select: { logDate: true, eggsCollected: true }
       }),
       tx.feedingLog.findMany({
-        where: { logDate: { gte: sevenDaysAgo }, farmId: activeFarmId },
+        where: { logDate: { gte: sevenDaysAgo }, farmId: activeFarmId, isDeleted: false },
         orderBy: { logDate: 'asc' },
-        select: { logDate: true, amountConsumed: true }
+        select: { logDate: true, amountConsumed: true, feedTypeId: true }
       }),
       canViewFinance ? tx.sale.findMany({
         where: { saleDate: { gte: sevenDaysAgo }, farmId: activeFarmId },
@@ -137,7 +149,60 @@ export async function getDashboardStats() {
       tx.expense.aggregate({
         where: { farmId: activeFarmId },
         _sum: { amount: true }
-      })
+      }),
+      canViewFinance
+        ? tx.supplier.findFirst({
+            where: { farmId: activeFarmId, balanceOwed: { gt: 0 } },
+            orderBy: { balanceOwed: 'desc' },
+            select: { name: true, balanceOwed: true },
+          })
+        : Promise.resolve(null),
+      canViewInventory
+        ? tx.inventory.findMany({
+            where: {
+              farmId: activeFarmId,
+              isDeleted: false,
+              category: { in: ['feed', 'FEED', 'FEEDS', 'FEED_RAW', 'FEED_FINISHED'] },
+              stockLevel: { gt: 0 },
+            },
+            select: { id: true, itemName: true, stockLevel: true, unit: true },
+          })
+        : Promise.resolve([]),
+      canViewBatches
+        ? tx.livestock.findMany({
+            where: { farmId: activeFarmId, status: 'active', isDeleted: false },
+            select: {
+              id: true,
+              batchName: true,
+              localBatchId: true,
+              type: true,
+              currentCount: true,
+              initialCount: true,
+              feedingLogs: {
+                where: { isDeleted: false },
+                select: { amountConsumed: true },
+              },
+              eggProduction: {
+                where: { isDeleted: false },
+                select: { eggsCollected: true },
+              },
+              weightRecords: {
+                orderBy: { logDate: 'asc' },
+                select: { averageWeight: true },
+              },
+            },
+          })
+        : Promise.resolve([]),
+      canViewFinance
+        ? tx.expense.findMany({
+            where: {
+              farmId: activeFarmId,
+              isDeleted: false,
+              expenseDate: { gte: new Date(Date.now() - 13 * 24 * 60 * 60 * 1000) },
+            },
+            select: { amount: true, expenseDate: true },
+          })
+        : Promise.resolve([]),
     ])
 
     const eggInventoryStock = eggInventoryItem ? Number(eggInventoryItem.stockLevel) : 0
@@ -240,6 +305,92 @@ export async function getDashboardStats() {
       }))
     ]
 
+    const consumptionByFeedId = new Map<string, number>()
+    for (const log of recentFeed) {
+      if (!log.feedTypeId) continue
+      consumptionByFeedId.set(
+        log.feedTypeId,
+        (consumptionByFeedId.get(log.feedTypeId) || 0) + Number(log.amountConsumed || 0)
+      )
+    }
+
+    const feedShortfalls = feedInventoryItems
+      .map((item: any) => {
+        const consumed = consumptionByFeedId.get(item.id) || 0
+        const avgDaily = consumed / 7
+        const stockLevel = Number(item.stockLevel || 0)
+        const reserveHours = avgDaily > 0 ? (stockLevel / avgDaily) * 24 : 0
+        return {
+          name: item.itemName,
+          stockLevel,
+          unit: item.unit || 'units',
+          hoursOfReserve: reserveHours,
+          isShortfall: avgDaily > 0 ? stockLevel < avgDaily * 2 : stockLevel < 500,
+        }
+      })
+      .filter((item: any) => item.isShortfall)
+      .sort((a: any, b: any) => a.hoursOfReserve - b.hoursOfReserve)
+
+    const batchFcrSnapshots = activeBatchesForFcr.map((batch: any) => {
+      const fcr = computeBatchFcr({
+        livestockType: batch.type,
+        feedingLogs: batch.feedingLogs,
+        eggProduction: batch.eggProduction,
+        weightRecords: batch.weightRecords,
+        currentCount: batch.currentCount,
+        initialCount: batch.initialCount,
+      })
+      const targetFcr = getFcrTarget(batch.type)
+      return {
+        id: batch.id,
+        name: batch.batchName || `Batch ${batch.localBatchId || batch.id}`,
+        type: batch.type,
+        fcr,
+        targetFcr,
+      }
+    })
+
+    const worstFcrBatch =
+      batchFcrSnapshots
+        .filter((batch: { fcr: number; targetFcr: number }) => batch.fcr > batch.targetFcr && batch.fcr > 0)
+        .sort((a: { fcr: number }, b: { fcr: number }) => b.fcr - a.fcr)[0] || null
+
+    const strategicPriorities = buildStrategicPriorities({
+      topSupplier: topSupplier
+        ? { name: topSupplier.name, balanceOwed: Number(topSupplier.balanceOwed) }
+        : null,
+      feedShortfalls,
+      worstFcrBatch,
+    })
+
+    const revenueVelocityData = buildRevenueVelocitySeries({ revenueTrendData })
+
+    const fourteenDaysAgo = new Date()
+    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 13)
+    fourteenDaysAgo.setHours(0, 0, 0, 0)
+    const sevenDaysAgoMid = new Date(sevenDaysAgo)
+    sevenDaysAgoMid.setHours(0, 0, 0, 0)
+
+    const currentPeriodRevenue = revenueTrendData.reduce((sum, point) => sum + point.count, 0)
+    const previousPeriodRevenue = canViewFinance
+      ? recentSales
+          .filter((sale: any) => formatDate(sale.saleDate) < formatDate(sevenDaysAgoMid))
+          .reduce((sum: number, sale: any) => sum + Number(sale.totalAmount), 0) +
+        recentOrders
+          .filter((order: any) => formatDate(order.orderDate) < formatDate(sevenDaysAgoMid))
+          .reduce((sum: number, order: any) => sum + Number(order.totalAmount), 0)
+      : 0
+
+    const currentPeriodExpenses = canViewFinance
+      ? recentExpenses
+          .filter((expense: any) => formatDate(expense.expenseDate) >= formatDate(sevenDaysAgoMid))
+          .reduce((sum: number, expense: any) => sum + Number(expense.amount), 0)
+      : 0
+
+    const netProfitEstimate = currentPeriodRevenue - currentPeriodExpenses
+    const profitTrend = computeProfitTrend({ currentPeriodRevenue, previousPeriodRevenue })
+    const globalFcr = computeGlobalFcr(batchFcrSnapshots)
+
     return {
       totalBirds: totalBirds._sum.currentCount || 0,
       mortalityRate: mortalityRate.toFixed(2),
@@ -280,15 +431,17 @@ export async function getDashboardStats() {
         customerName: s.customer?.name || 'Walk-in'
       })),
       executiveStats: {
-        totalProfit: Number(totalInitialBirds._sum.initialCount || 0) * 10, // Mocked unit profit
-        profitTrend: 5.2,
-        globalFcr: 1.65,
+        totalProfit: netProfitEstimate,
+        profitTrend: Number(profitTrend.toFixed(1)),
+        globalFcr: Number(globalFcr.toFixed(2)),
         totalDebt: Number(supplierDebt._sum.balanceOwed || 0) + Number(customerDebt._sum.balanceOwed || 0),
         supplierDebt: Number(supplierDebt._sum.balanceOwed || 0),
         customerDebt: Number(customerDebt._sum.balanceOwed || 0),
         activeLivestock: totalBirds._sum.currentCount || 0,
         mortalityRate: Number(mortalityRate.toFixed(2))
-      }
+      },
+      strategicPriorities,
+      revenueVelocityData,
     }
     })
   }, [`dashboard-stats:${activeFarmId}:${canViewFinance ? 1 : 0}:${canViewInventory ? 1 : 0}:${canViewBatches ? 1 : 0}`], {

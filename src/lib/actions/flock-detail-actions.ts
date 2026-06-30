@@ -5,10 +5,8 @@ import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
 import { computeBatchFinance } from '@/lib/analytics/batch-finance'
 import { buildConsumptionContext } from '@/lib/analytics/batch-consumption-finance'
+import { getHealthInventory } from '@/lib/actions/health-actions'
 
-const VACCINE_CATEGORIES = ['VACCINE', 'VACCINATION', 'VACCINES']
-const MEDICINE_CATEGORIES = ['MEDICINE', 'MEDICATION', 'MEDICATIONS', 'VETERINARY', 'HEALTH']
-const ALL_HEALTH_CATEGORIES = [...VACCINE_CATEGORIES, ...MEDICINE_CATEGORIES]
 const FEED_CATEGORIES = ['FEED', 'FEEDS', 'FEED_RAW', 'FEED_FINISHED']
 
 function serialize<T>(value: T): T {
@@ -163,22 +161,9 @@ export async function getFlockDeepDive(id: string) {
     let medicineInventory: any[] = []
     let feedInventory: any[] = []
     if (canEditHealth) {
-      const healthItems = await tx.inventory.findMany({
-        where: { farmId: activeFarmId, isDeleted: false, category: { in: ALL_HEALTH_CATEGORIES } },
-        select: { id: true, itemName: true, stockLevel: true, unit: true, category: true, usageType: true },
-        orderBy: { itemName: 'asc' },
-      })
-      for (const item of healthItems) {
-        const opt = {
-          id: item.id,
-          itemName: item.itemName,
-          stockLevel: Number(item.stockLevel),
-          unit: item.unit,
-          usageType: item.usageType ?? null,
-        }
-        if (VACCINE_CATEGORIES.includes(String(item.category).toUpperCase())) vaccineInventory.push(opt)
-        else medicineInventory.push(opt)
-      }
+      const healthStock = await getHealthInventory()
+      vaccineInventory = healthStock.vaccine
+      medicineInventory = healthStock.medicine
     }
 
     feedInventory = await tx.inventory

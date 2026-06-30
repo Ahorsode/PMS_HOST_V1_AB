@@ -7,6 +7,26 @@ import { checkWorkerPermissions } from './staff-actions'
 import { revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 
+const HEALTH_INVENTORY_CATEGORIES = [
+  'MEDICINE',
+  'MEDICATION',
+  'MEDICATIONS',
+  'VETERINARY',
+  'HEALTH',
+  'VACCINE',
+  'VACCINATION',
+  'VACCINES',
+]
+
+function normalizeHealthInventoryInput<T extends { category?: string; usageType?: string; stockLevel?: number }>(
+  data: T
+): T {
+  const category = String(data.category || '').toUpperCase()
+  if (!HEALTH_INVENTORY_CATEGORIES.includes(category)) return data
+  if (data.usageType !== 'ONE_TIME') return data
+  return { ...data, stockLevel: 1 }
+}
+
 export async function createInventoryItem(data: {
   itemName: string
   stockLevel: number
@@ -28,21 +48,22 @@ export async function createInventoryItem(data: {
   if (!limitResult.ok) return rateLimitActionError(limitResult)
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    const payload = normalizeHealthInventoryInput(data)
     const item = await tx.inventory.create({
       data: {
-        itemName: data.itemName,
-        stockLevel: data.stockLevel,
-        unit: data.unit,
-        category: data.category,
-        costPerUnit: data.costPerUnit,
-        usageType: data.usageType,
-        supplierId: data.supplierId,
+        itemName: payload.itemName,
+        stockLevel: payload.stockLevel,
+        unit: payload.unit,
+        category: payload.category,
+        costPerUnit: payload.costPerUnit,
+        usageType: payload.usageType,
+        supplierId: payload.supplierId,
         userId: userId,
         farmId: activeFarmId
       }
     })
 
-    const totalCost = data.stockLevel * (data.costPerUnit || 0)
+    const totalCost = payload.stockLevel * (payload.costPerUnit || 0)
     const amountToLog = data.paymentPlan === 'full' ? totalCost : (data.amountPaid || 0)
 
     if (amountToLog > 0) {
@@ -53,7 +74,7 @@ export async function createInventoryItem(data: {
           amount: amountToLog,
           category: data.category === 'FEED' ? 'FEED' : 
                     data.category === 'MEDICINE' ? 'MEDICATION' : 'OTHER',
-          description: `Inventory Purchase: ${data.itemName} (${data.stockLevel} ${data.unit})`,
+          description: `Inventory Purchase: ${payload.itemName} (${payload.stockLevel} ${payload.unit})`,
           supplierId: data.supplierId,
           expenseDate: new Date()
         }
@@ -99,9 +120,10 @@ export async function updateInventoryItem(id: string, data: {
   if (!limitResult.ok) return rateLimitActionError(limitResult)
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    const payload = normalizeHealthInventoryInput(data)
     const item = await tx.inventory.update({
       where: { id, farmId: activeFarmId },
-      data
+      data: payload
     })
     revalidatePath('/dashboard/inventory')
     revalidatePath('/dashboard')

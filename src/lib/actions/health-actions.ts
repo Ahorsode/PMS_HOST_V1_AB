@@ -23,6 +23,152 @@ const MEDICINE_CATEGORIES = [
 ];
 const ALL_HEALTH_CATEGORIES = [...VACCINE_CATEGORIES, ...MEDICINE_CATEGORIES];
 
+function normalizeHealthUsageType(value: string | null | undefined): HealthUsageType {
+  return value === "QUANTITY" ? "QUANTITY" : "ONE_TIME";
+}
+
+async function findHealthInventoryItem(tx: any, farmId: string, name: string) {
+  return tx.inventory.findFirst({
+    where: {
+      farmId,
+      isDeleted: false,
+      category: { in: ALL_HEALTH_CATEGORIES },
+      itemName: { equals: name, mode: "insensitive" },
+    },
+    select: { id: true, itemName: true, stockLevel: true, unit: true, usageType: true },
+  });
+}
+
+/** One-time items are fully depleted after a single completed use. */
+async function consumeHealthInventory(
+  tx: any,
+  farmId: string,
+  params: { name: string; usageType: string | null; quantity: number | null }
+) {
+  const item = await findHealthInventoryItem(tx, farmId, params.name);
+  if (!item) return;
+
+  const usageType = normalizeHealthUsageType(params.usageType ?? item.usageType);
+  const stock = Number(item.stockLevel) || 0;
+  if (stock <= 0) {
+    throw new Error(`"${params.name}" is no longer in stock.`);
+  }
+
+  if (usageType === "ONE_TIME") {
+    await tx.inventory.update({
+      where: { id: item.id },
+      data: { stockLevel: 0 },
+    });
+    return;
+  }
+
+  const deduct = Number(params.quantity) || 0;
+  if (deduct <= 0) {
+    throw new Error(`Enter a valid quantity for "${params.name}".`);
+  }
+  if (stock < deduct) {
+    throw new Error(
+      `Not enough "${params.name}" in stock (${stock} ${item.unit} available, ${deduct} requested).`
+    );
+  }
+
+  await tx.inventory.update({
+    where: { id: item.id },
+    data: { stockLevel: Math.max(0, stock - deduct) },
+  });
+}
+
+async function restoreHealthInventory(
+  tx: any,
+  farmId: string,
+  params: { name: string; usageType: string | null; quantity: number | null }
+) {
+  const item = await findHealthInventoryItem(tx, farmId, params.name);
+  if (!item) return;
+
+  const usageType = normalizeHealthUsageType(params.usageType ?? item.usageType);
+  const stock = Number(item.stockLevel) || 0;
+
+  if (usageType === "ONE_TIME") {
+    await tx.inventory.update({
+      where: { id: item.id },
+      data: { stockLevel: 1 },
+    });
+    return;
+  }
+
+  const restore = Number(params.quantity) || 0;
+  if (restore <= 0) return;
+
+  await tx.inventory.update({
+    where: { id: item.id },
+    data: { stockLevel: stock + restore },
+  });
+}
+
+async function assertOneTimeHealthItemAvailable(tx: any, farmId: string, name: string) {
+  const item = await findHealthInventoryItem(tx, farmId, name);
+  if (!item) return;
+
+  const usageType = normalizeHealthUsageType(item.usageType);
+  if (usageType !== "ONE_TIME") return;
+
+  const stock = Number(item.stockLevel) || 0;
+  if (stock <= 0) {
+    throw new Error(`"${name}" is one-time use and has already been used.`);
+  }
+
+  const [vaxUsed, medUsed] = await Promise.all([
+    tx.vaccinationSchedule.count({
+      where: {
+        farmId,
+        status: "COMPLETED",
+        usageType: "ONE_TIME",
+        vaccineName: { equals: name, mode: "insensitive" },
+      },
+    }),
+    tx.medicationSchedule.count({
+      where: {
+        farmId,
+        status: "COMPLETED",
+        usageType: "ONE_TIME",
+        medicationName: { equals: name, mode: "insensitive" },
+      },
+    }),
+  ]);
+
+  if (vaxUsed + medUsed > 0) {
+    throw new Error(`"${name}" is one-time use and has already been applied.`);
+  }
+}
+
+async function isOneTimeItemUsedUp(tx: any, farmId: string, itemName: string) {
+  const item = await findHealthInventoryItem(tx, farmId, itemName);
+  if (!item || normalizeHealthUsageType(item.usageType) !== "ONE_TIME") return false;
+  if (Number(item.stockLevel) <= 0) return true;
+
+  const [vaxUsed, medUsed] = await Promise.all([
+    tx.vaccinationSchedule.count({
+      where: {
+        farmId,
+        status: "COMPLETED",
+        usageType: "ONE_TIME",
+        vaccineName: { equals: itemName, mode: "insensitive" },
+      },
+    }),
+    tx.medicationSchedule.count({
+      where: {
+        farmId,
+        status: "COMPLETED",
+        usageType: "ONE_TIME",
+        medicationName: { equals: itemName, mode: "insensitive" },
+      },
+    }),
+  ]);
+
+  return vaxUsed + medUsed > 0;
+}
+
 function serialize<T>(value: T): T {
   return JSON.parse(JSON.stringify(value));
 }
@@ -66,6 +212,10 @@ export async function getHealthInventory(): Promise<{
       const vaccine: HealthInventoryOption[] = [];
       const medicine: HealthInventoryOption[] = [];
       for (const item of items) {
+        if (await isOneTimeItemUsedUp(tx, activeFarmId, item.itemName)) {
+          continue;
+        }
+
         const option: HealthInventoryOption = {
           id: item.id,
           itemName: item.itemName,
@@ -230,7 +380,7 @@ export async function createHealthSchedulesBulk(entries: HealthScheduleInput[]) 
             await tx.inventory.create({
               data: {
                 itemName: e.name,
-                stockLevel: e.quantity ?? 0,
+                stockLevel: e.usageType === "ONE_TIME" ? 1 : (e.quantity ?? 0),
                 unit: e.unit || "dose",
                 category,
                 usageType: e.usageType,
@@ -240,6 +390,8 @@ export async function createHealthSchedulesBulk(entries: HealthScheduleInput[]) 
               },
             });
           }
+        } else if (e.usageType === "ONE_TIME") {
+          await assertOneTimeHealthItemAvailable(tx, activeFarmId, e.name);
         }
 
         if (e.type === "VACCINATION") {
@@ -269,6 +421,14 @@ export async function createHealthSchedulesBulk(entries: HealthScheduleInput[]) 
               unit: e.unit,
               farmId: activeFarmId,
             },
+          });
+        }
+
+        if (e.status === "COMPLETED") {
+          await consumeHealthInventory(tx, activeFarmId, {
+            name: e.name,
+            usageType: e.usageType,
+            quantity: e.quantity,
           });
         }
       }
@@ -312,13 +472,37 @@ export async function updateHealthScheduleStatus(data: {
           ? tx.vaccinationSchedule
           : tx.medicationSchedule;
 
-      const result = await model.updateMany({
+      const schedule = await model.findFirst({
+        where: { id: data.id, farmId: activeFarmId },
+      });
+      if (!schedule) throw new Error("Schedule not found");
+
+      const name =
+        data.type === "VACCINATION" ? schedule.vaccineName : schedule.medicationName;
+      const oldStatus = schedule.status as HealthStatus;
+      const usageType = schedule.usageType;
+      const quantity = schedule.quantity != null ? Number(schedule.quantity) : null;
+
+      if (status === "COMPLETED" && oldStatus !== "COMPLETED") {
+        if (normalizeHealthUsageType(usageType) === "ONE_TIME") {
+          await assertOneTimeHealthItemAvailable(tx, activeFarmId, name);
+        }
+        await consumeHealthInventory(tx, activeFarmId, { name, usageType, quantity });
+      } else if (oldStatus === "COMPLETED" && status !== "COMPLETED") {
+        await restoreHealthInventory(tx, activeFarmId, { name, usageType, quantity });
+      }
+
+      await model.updateMany({
         where: { id: data.id, farmId: activeFarmId },
         data: { status },
       });
-      if (result.count === 0) throw new Error("Schedule not found");
 
       revalidatePath("/dashboard/health");
+      revalidatePath("/dashboard/inventory");
+      revalidatePath("/dashboard/finance");
+      if (schedule.batchId) {
+        revalidatePath(`/dashboard/flocks/${schedule.batchId}`);
+      }
       return { success: true };
     }
   );

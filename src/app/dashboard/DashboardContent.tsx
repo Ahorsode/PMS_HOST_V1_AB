@@ -73,6 +73,12 @@ interface DashboardContentProps {
       supplierDebt: number
       customerDebt: number
     };
+    strategicPriorities?: Array<{
+      title: string
+      detail: string
+      type: 'finance' | 'stock' | 'performance'
+    }>;
+    revenueVelocityData?: Array<{ date: string; revenue: number; target: number }>;
   };
   houses: Array<{
     id: number;
@@ -142,7 +148,14 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
   }
 
   if (role === 'OWNER' && subscriptionTier === 'PREMIUM') {
-    return <ExecutiveDashboard stats={stats.executiveStats!} currency={currency} />;
+    return (
+      <ExecutiveDashboard
+        stats={stats.executiveStats!}
+        strategicPriorities={stats.strategicPriorities}
+        revenueVelocityData={stats.revenueVelocityData}
+        currency={currency}
+      />
+    );
   }
 
   const renderZeroState = () => (
