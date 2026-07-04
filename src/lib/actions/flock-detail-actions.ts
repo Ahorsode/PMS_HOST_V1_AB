@@ -5,7 +5,7 @@ import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
 import { computeBatchFinance } from '@/lib/analytics/batch-finance'
 import { buildConsumptionContext } from '@/lib/analytics/batch-consumption-finance'
-import { getHealthInventory } from '@/lib/actions/health-actions'
+import { getHealthInventory, repairMissingHealthStockExpenses } from '@/lib/actions/health-actions'
 
 const FEED_CATEGORIES = ['FEED', 'FEEDS', 'FEED_RAW', 'FEED_FINISHED']
 
@@ -35,6 +35,10 @@ export async function getFlockDeepDive(id: string) {
     checkWorkerPermissions('finance', 'edit'),
     checkWorkerPermissions('health', 'edit'),
   ])
+
+  if (canEditFinance) {
+    await repairMissingHealthStockExpenses()
+  }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const batch = await tx.livestock.findUnique({

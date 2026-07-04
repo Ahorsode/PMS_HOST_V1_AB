@@ -7,7 +7,7 @@ import { getFinancialTransactions } from '@/lib/actions/financial-transaction-ac
 import { FinanceHubClient } from './FinanceHubClient';
 import { MissingCostPrompt } from '@/components/finance/MissingCostPrompt';
 import { MissingHealthCostPrompt } from '@/components/finance/MissingHealthCostPrompt';
-import { getHealthItemsMissingCost } from '@/lib/actions/health-actions';
+import { getHealthItemsMissingCost, repairMissingHealthStockExpenses } from '@/lib/actions/health-actions';
 
 export default async function FinancePage() {
   const { activeFarmId } = await getAuthContext();
@@ -44,6 +44,10 @@ export default async function FinancePage() {
 
   // Health stock (vaccines/medications) a worker added without a cost.
   const missingHealthCosts = canEdit ? await getHealthItemsMissingCost() : [];
+
+  if (canEdit) {
+    await repairMissingHealthStockExpenses();
+  }
 
   const transactions = await getFinancialTransactions();
 

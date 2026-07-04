@@ -6,6 +6,10 @@ import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
 import { revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
+import {
+  fetchBatchIdsForHealthItem,
+  upsertHealthStockCostExpense,
+} from '@/lib/inventory/health-stock-expense'
 
 const HEALTH_INVENTORY_CATEGORIES = [
   'MEDICINE',
@@ -120,11 +124,48 @@ export async function updateInventoryItem(id: string, data: {
   if (!limitResult.ok) return rateLimitActionError(limitResult)
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    const existing = await tx.inventory.findFirst({
+      where: { id, farmId: activeFarmId, isDeleted: false },
+      select: { id: true, itemName: true, stockLevel: true, unit: true, category: true, costPerUnit: true },
+    })
+    if (!existing) return { success: false, error: 'Item not found' }
+
     const payload = normalizeHealthInventoryInput(data)
     const item = await tx.inventory.update({
       where: { id, farmId: activeFarmId },
       data: payload
     })
+
+    const category = String(existing.category || '').toUpperCase()
+    const isHealthItem = HEALTH_INVENTORY_CATEGORIES.includes(category)
+    const newCost =
+      data.costPerUnit != null && Number.isFinite(Number(data.costPerUnit))
+        ? Number(data.costPerUnit)
+        : undefined
+    const hadCost = existing.costPerUnit != null
+
+    if (
+      isHealthItem &&
+      newCost != null &&
+      newCost >= 0 &&
+      (!hadCost || Number(existing.costPerUnit) !== newCost)
+    ) {
+      await upsertHealthStockCostExpense(tx, {
+        farmId: activeFarmId,
+        userId,
+        itemName: existing.itemName,
+        unit: existing.unit,
+        stockLevel: item.stockLevel,
+        costPerUnit: newCost,
+      })
+      const batchIds = await fetchBatchIdsForHealthItem(tx, activeFarmId, existing.itemName)
+      revalidatePath('/dashboard/finance')
+      revalidatePath('/dashboard/reports')
+      for (const batchId of batchIds) {
+        revalidatePath(`/dashboard/flocks/${batchId}`)
+      }
+    }
+
     revalidatePath('/dashboard/inventory')
     revalidatePath('/dashboard')
     revalidateFarmPerformanceCaches(activeFarmId)

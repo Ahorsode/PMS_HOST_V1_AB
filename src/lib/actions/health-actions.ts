@@ -4,6 +4,11 @@ import prisma from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { getAuthContext } from "@/lib/auth-utils";
 import { checkWorkerPermissions } from "@/lib/actions/staff-actions";
+import {
+  fetchBatchIdsForHealthItem,
+  upsertHealthStockCostExpense,
+} from "@/lib/inventory/health-stock-expense";
+import { revalidateFarmPerformanceCaches } from "@/lib/performance/cache-tags";
 
 export type HealthScheduleType = "VACCINATION" | "MEDICATION";
 export type HealthUsageType = "ONE_TIME" | "QUANTITY";
@@ -711,23 +716,90 @@ export async function setHealthItemCost(data: {
         data: { costPerUnit: cost },
       });
 
-      const stock = Number(item.stockLevel) || 0;
-      const total = cost * stock;
-      if (total > 0) {
-        await tx.expense.create({
-          data: {
-            farmId: activeFarmId,
-            userId,
-            amount: total,
-            category: "MEDICATION",
-            description: `Health stock cost: ${item.itemName} (${stock} ${item.unit})`,
-          },
-        });
+      const expenseResult = await upsertHealthStockCostExpense(tx, {
+        farmId: activeFarmId,
+        userId,
+        itemName: item.itemName,
+        unit: item.unit,
+        stockLevel: item.stockLevel,
+        costPerUnit: cost,
+      });
+
+      if (cost > 0 && !expenseResult.logged) {
+        return {
+          success: false,
+          error: `Could not log expense for "${item.itemName}" — no stock or scheduled doses to price.`,
+        };
       }
 
+      const batchIds = await fetchBatchIdsForHealthItem(tx, activeFarmId, item.itemName);
       revalidatePath("/dashboard/finance");
       revalidatePath("/dashboard/inventory");
+      revalidatePath("/dashboard/reports");
+      revalidateFarmPerformanceCaches(activeFarmId);
+      for (const batchId of batchIds) {
+        revalidatePath(`/dashboard/flocks/${batchId}`);
+      }
+
       return { success: true };
+    }
+  );
+}
+
+/**
+ * Backfill expense rows for health stock that was priced while on-hand qty was 0
+ * (e.g. vaccination applied before cost was recorded).
+ */
+export async function repairMissingHealthStockExpenses() {
+  const { userId, activeFarmId } = await getAuthContext();
+  if (!activeFarmId) return { repaired: 0 };
+
+  const canEdit = await checkWorkerPermissions("finance", "edit");
+  if (!canEdit) return { repaired: 0 };
+
+  return await (prisma as any).$withFarmContext(
+    userId,
+    activeFarmId,
+    async (tx: any) => {
+      const items = await tx.inventory.findMany({
+        where: {
+          farmId: activeFarmId,
+          isDeleted: false,
+          category: { in: ALL_HEALTH_CATEGORIES },
+          costPerUnit: { not: null, gt: 0 },
+        },
+        select: { id: true, itemName: true, stockLevel: true, unit: true, costPerUnit: true },
+      });
+
+      let repaired = 0;
+      for (const item of items) {
+        const existing = await tx.expense.findFirst({
+          where: {
+            farmId: activeFarmId,
+            isDeleted: false,
+            description: { startsWith: `Health stock cost: ${item.itemName}` },
+          },
+        });
+        if (existing) continue;
+
+        const result = await upsertHealthStockCostExpense(tx, {
+          farmId: activeFarmId,
+          userId,
+          itemName: item.itemName,
+          unit: item.unit,
+          stockLevel: item.stockLevel,
+          costPerUnit: Number(item.costPerUnit),
+        });
+        if (result.logged) repaired += 1;
+      }
+
+      if (repaired > 0) {
+        revalidatePath("/dashboard/finance");
+        revalidatePath("/dashboard/reports");
+        revalidateFarmPerformanceCaches(activeFarmId);
+      }
+
+      return { repaired };
     }
   );
 }

@@ -94,7 +94,8 @@ export function MissingHealthCostPrompt({ items }: Props) {
           <div className="min-w-0">
             <p className="text-sm font-bold text-white truncate">{current.itemName}</p>
             <p className="text-xs text-white/50">
-              {isVaccine ? 'Vaccine' : 'Medication'} · {current.stockLevel} {current.unit} in stock
+              {isVaccine ? 'Vaccine' : 'Medication'} · {current.stockLevel} {current.unit} on hand
+              {current.stockLevel <= 0 ? ' (doses may already be scheduled or applied — cost still logs)' : ''}
             </p>
           </div>
         </div>

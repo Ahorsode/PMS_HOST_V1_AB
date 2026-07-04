@@ -75,7 +75,7 @@ export function buildConsumptionContext(input: {
 
   const healthRows = [...input.vaccinations, ...input.medications]
   for (const row of healthRows) {
-    if (String(row.status || '').toUpperCase() !== 'COMPLETED') continue
+    if (String(row.status || '').toUpperCase() === 'CANCELLED') continue
     const qty = Number(row.quantity || 0)
     if (!row.batchId || qty <= 0 || !row.name) continue
     addUsage(healthByItemName, normalizeName(row.name), row.batchId, qty)
