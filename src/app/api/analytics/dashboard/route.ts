@@ -4,6 +4,7 @@ import { getAuthContext } from '@/lib/auth-utils'
 import prisma from '@/lib/db'
 import { getBatchAnalytics, getMortalityTrends } from '@/lib/actions/analytics-actions'
 import { farmCacheTags } from '@/lib/performance/cache-tags'
+import { feedCategoryFilter, isLowStock } from '@/lib/inventory/feed-categories'
 
 export async function GET(req: Request) {
   const { userId, activeFarmId } = await getAuthContext()
@@ -53,9 +54,11 @@ export async function GET(req: Request) {
         const lowInventory = await tx.inventory.findMany({
           where: {
             farmId: farmId,
-            stockLevel: { lt: 500 } // Example threshold
-          }
-        })
+            isDeleted: false,
+            category: feedCategoryFilter(),
+          },
+          select: { id: true, itemName: true, stockLevel: true, reorderLevel: true, unit: true, category: true },
+        }).then((rows: any[]) => rows.filter(isLowStock))
 
         return NextResponse.json({
           batchStats,

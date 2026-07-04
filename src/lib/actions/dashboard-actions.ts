@@ -18,6 +18,9 @@ import {
   computeProfitTrend,
   getFcrTarget,
 } from '@/lib/analytics/executive-metrics'
+import { computeFarmProductivityIndex } from '@/lib/analytics/productivity-index'
+import { feedCategoryFilter, getReorderThreshold, isLowStock } from '@/lib/inventory/feed-categories'
+import { buildDailyReminderAlerts } from '@/lib/reminders/farm-reminders'
 
 export async function getDashboardStats() {
   const { userId, activeFarmId } = await getAuthContext()
@@ -82,10 +85,10 @@ export async function getDashboardStats() {
       tx.inventory.findMany({
         where: {
           farmId: activeFarmId,
-          category: 'feed',
-          stockLevel: { lt: 500 }
+          isDeleted: false,
+          category: feedCategoryFilter(),
         },
-        select: { itemName: true, stockLevel: true, unit: true }
+        select: { itemName: true, stockLevel: true, unit: true, category: true, reorderLevel: true },
       }),
       tx.livestock.findMany({
         where: { status: 'active', farmId: activeFarmId },
@@ -162,10 +165,10 @@ export async function getDashboardStats() {
             where: {
               farmId: activeFarmId,
               isDeleted: false,
-              category: { in: ['feed', 'FEED', 'FEEDS', 'FEED_RAW', 'FEED_FINISHED'] },
+              category: feedCategoryFilter(),
               stockLevel: { gt: 0 },
             },
-            select: { id: true, itemName: true, stockLevel: true, unit: true },
+            select: { id: true, itemName: true, stockLevel: true, unit: true, reorderLevel: true },
           })
         : Promise.resolve([]),
       canViewBatches
@@ -176,6 +179,8 @@ export async function getDashboardStats() {
               batchName: true,
               localBatchId: true,
               type: true,
+              breedType: true,
+              arrivalDate: true,
               currentCount: true,
               initialCount: true,
               feedingLogs: {
@@ -188,7 +193,7 @@ export async function getDashboardStats() {
               },
               weightRecords: {
                 orderBy: { logDate: 'asc' },
-                select: { averageWeight: true },
+                select: { averageWeight: true, logDate: true },
               },
             },
           })
@@ -270,19 +275,28 @@ export async function getDashboardStats() {
       include: { batch: true }
     })
 
-    const batchesNeedingEggs = await tx.livestock.findMany({
-      where: {
-        farmId: activeFarmId,
-        status: 'active',
-        eggProduction: {
-          none: {
-            logDate: {
-              gte: today
-            }
-          }
-        }
-      }
+    const [farmSettings, growthStandards] = await Promise.all([
+      tx.farmSettings.findUnique({ where: { farmId: activeFarmId } }),
+      tx.growthStandards.findMany({
+        select: { ageInDays: true, targetWeight: true, livestockType: true },
+      }),
+    ])
+
+    const hasEggLogToday = (todayEggs._sum.eggsCollected || 0) > 0
+    const hasFeedLogToday = recentFeed.some((f: any) => formatDate(f.logDate) === todayStr)
+    const activeLayerBatchCount = activeBatches.filter(
+      (b: any) => String(b.type || '').includes('LAYER'),
+    ).length
+
+    const reminderAlerts = buildDailyReminderAlerts({
+      eggRecordReminderTime: farmSettings?.eggRecordReminderTime,
+      feedRecordReminderTime: farmSettings?.feedRecordReminderTime,
+      hasEggLogToday,
+      hasFeedLogToday,
+      activeLayerBatchCount,
     })
+
+    const lowFeedAlertsResolved = lowFeedAlerts.filter((item: any) => isLowStock(item))
 
     const dynamicAlerts = [
       ...upcomingVaccinations.map((v: any) => ({
@@ -297,12 +311,12 @@ export async function getDashboardStats() {
         message: `${m.medicationName} for ${m.batch.batchName || m.batchId}`,
         severity: 'error'
       })),
-      ...batchesNeedingEggs.map((b: any) => ({
-        type: 'EGGS',
-        title: 'Egg Collection Due',
-        message: `Flock ${b.batchName || b.id} needs collection`,
-        severity: 'info'
-      }))
+      ...reminderAlerts.map((alert) => ({
+        type: alert.type,
+        title: alert.title,
+        message: alert.message,
+        severity: alert.severity,
+      })),
     ]
 
     const consumptionByFeedId = new Map<string, number>()
@@ -319,13 +333,14 @@ export async function getDashboardStats() {
         const consumed = consumptionByFeedId.get(item.id) || 0
         const avgDaily = consumed / 7
         const stockLevel = Number(item.stockLevel || 0)
+        const threshold = getReorderThreshold(item)
         const reserveHours = avgDaily > 0 ? (stockLevel / avgDaily) * 24 : 0
         return {
           name: item.itemName,
           stockLevel,
           unit: item.unit || 'units',
           hoursOfReserve: reserveHours,
-          isShortfall: avgDaily > 0 ? stockLevel < avgDaily * 2 : stockLevel < 500,
+          isShortfall: avgDaily > 0 ? stockLevel < avgDaily * 2 : stockLevel < threshold,
         }
       })
       .filter((item: any) => item.isShortfall)
@@ -390,6 +405,15 @@ export async function getDashboardStats() {
     const netProfitEstimate = currentPeriodRevenue - currentPeriodExpenses
     const profitTrend = computeProfitTrend({ currentPeriodRevenue, previousPeriodRevenue })
     const globalFcr = computeGlobalFcr(batchFcrSnapshots)
+    const productivityIndex = computeFarmProductivityIndex(
+      activeBatchesForFcr.map((batch: any) => ({
+        arrivalDate: batch.arrivalDate,
+        breedType: batch.breedType,
+        type: batch.type,
+        weightRecords: batch.weightRecords,
+      })),
+      growthStandards,
+    )
 
     return {
       totalBirds: totalBirds._sum.currentCount || 0,
@@ -398,8 +422,8 @@ export async function getDashboardStats() {
       todayDead: todayMortality._sum.count || 0,
       totalEggs: eggInventoryStock,
       todayEggs: todayEggs._sum.eggsCollected || 0,
-      lowFeedAlertsCount: lowFeedAlerts.length,
-      lowFeedItems: lowFeedAlerts.map((i: any) => ({ name: i.itemName, stockLevel: Number(i.stockLevel), category: i.category })),
+      lowFeedAlertsCount: lowFeedAlertsResolved.length,
+      lowFeedItems: lowFeedAlertsResolved.map((i: any) => ({ name: i.itemName, stockLevel: Number(i.stockLevel), category: i.category })),
       alerts: dynamicAlerts,
       eggTrendData,
       feedTrendData,
@@ -416,7 +440,7 @@ export async function getDashboardStats() {
         status: batch.status,
         houseNumber: batch.house?.name || 'N/A'
       })),
-      productivityIndex: 94.2, // Mocked for initial launch, would compute via growth-utils
+      productivityIndex,
       canViewFinance,
       canViewInventory,
       canViewBatches,

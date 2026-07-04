@@ -7,8 +7,8 @@ import { checkWorkerPermissions } from "@/lib/actions/staff-actions";
 import { HealthScheduleManager } from "./HealthScheduleManager";
 
 export default async function HealthPage() {
-  const hasAccess = await checkWorkerPermissions("mortality", "view");
-  const canEdit = await checkWorkerPermissions("mortality", "edit");
+  const hasAccess = await checkWorkerPermissions("health", "view");
+  const canEdit = await checkWorkerPermissions("health", "edit");
 
   if (!hasAccess) {
     redirect("/dashboard/unauthorized");

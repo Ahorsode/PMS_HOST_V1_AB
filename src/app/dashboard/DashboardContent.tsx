@@ -311,7 +311,7 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
                         <span className="text-3xl md:text-5xl font-bold text-white tracking-normal truncate">
                           {stats.activeBatches.length > 0
                             ? (stats.activeBatches.reduce((acc: number, batch: any) => acc + getGrowthProgress(batch.hatchDate, batch.breed).percent, 0) / stats.activeBatches.length).toFixed(1)
-                            : stats.productivityIndex || 94.2}%
+                            : (stats.productivityIndex ?? 0)}%
                         </span>
                         <span className="text-[10px] font-bold uppercase text-purple-400 tracking-widest italic shrink-0">Efficiency</span>
                      </div>
@@ -319,7 +319,7 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
                     <div className="h-2 w-full bg-white/10 rounded-full mt-2 overflow-hidden border border-white/5">
                        <motion.div 
                          initial={{ width: 0 }}
-                         animate={{ width: `${stats.activeBatches.length > 0 ? (stats.activeBatches.reduce((acc: number, batch: any) => acc + getGrowthProgress(batch.hatchDate, batch.breed).percent, 0) / stats.activeBatches.length) : (stats.productivityIndex || 94.2)}%` }}
+                         animate={{ width: `${stats.activeBatches.length > 0 ? (stats.activeBatches.reduce((acc: number, batch: any) => acc + getGrowthProgress(batch.hatchDate, batch.breed).percent, 0) / stats.activeBatches.length) : (stats.productivityIndex ?? 0)}%` }}
                          transition={{ duration: 1.5, delay: 0.5 }}
                          className="h-full bg-gradient-to-r from-purple-600 to-purple-400"
                        />
@@ -376,7 +376,8 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
                 {stats.alerts.map((alert: any, idx: number) => {
                   const Icon = alert.type === 'VACCINE' ? Syringe : 
                                alert.type === 'MEDICATION' ? Activity : 
-                               alert.type === 'EGGS' ? Package : Wheat;
+                               alert.type === 'EGGS' ? Package :
+                               alert.type === 'FEED' ? Wheat : Wheat;
                   
                   const bgClass = alert.severity === 'error' ? 'bg-red-500/15 border-red-500/20' :
                                  alert.severity === 'warning' ? 'bg-amber-500/15 border-amber-500/20' :

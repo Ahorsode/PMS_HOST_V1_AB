@@ -645,6 +645,8 @@ model UserPermission {
   canEditHouses    Boolean @default(false) @map("can_edit_houses")
   canViewMortality Boolean @default(false) @map("can_view_mortality")
   canEditMortality Boolean @default(false) @map("can_edit_mortality")
+  canViewHealth    Boolean @default(false) @map("can_view_health")
+  canEditHealth    Boolean @default(false) @map("can_edit_health")
   canViewCustomers Boolean @default(false) @map("can_view_customers")
   canEditCustomers Boolean @default(false) @map("can_edit_customers")
   canViewTeam      Boolean @default(false) @map("can_view_team")

@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatDate } from '@/lib/utils';
+import { getReorderThreshold, isLowStock } from '@/lib/inventory/feed-categories';
 
 interface InventoryDetailClientProps {
   item: any;
@@ -38,8 +39,8 @@ export const InventoryDetailClient = ({ item }: InventoryDetailClientProps) => {
     ? Math.floor(Number(item.stockLevel) / avgUsagePerDay) 
     : Infinity;
 
-  const lowStockThreshold = 500;
-  const isLowStock = Number(item.stockLevel) < lowStockThreshold;
+  const lowStockThreshold = getReorderThreshold(item);
+  const isLowStockItem = isLowStock(item);
 
   return (
     <div className="space-y-7 animate-in fade-in slide-in-from-bottom-4 duration-1000">
@@ -49,8 +50,8 @@ export const InventoryDetailClient = ({ item }: InventoryDetailClientProps) => {
           title="Current Stock" 
           value={`${Number(item.stockLevel).toLocaleString()} ${item.unit}`} 
           icon={Package} 
-          color={isLowStock ? 'red' : 'emerald'} 
-          subtext={isLowStock ? "Below Critical Level" : "Adequate Supply"}
+          color={isLowStockItem ? 'red' : 'emerald'} 
+          subtext={isLowStockItem ? "Below Critical Level" : "Adequate Supply"}
         />
         <MetricCard 
           title="Forecasted Lifespan" 
@@ -120,7 +121,7 @@ export const InventoryDetailClient = ({ item }: InventoryDetailClientProps) => {
 
         {/* Sidebar Info */}
         <div className="space-y-7">
-           {isLowStock && (
+           {isLowStockItem && (
              <motion.div 
                animate={{ scale: [1, 1.02, 1] }}
                transition={{ duration: 2, repeat: Infinity }}

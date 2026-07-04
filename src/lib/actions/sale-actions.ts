@@ -15,8 +15,8 @@ export async function createSale(data: {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
-  const hasEditAccess = await checkWorkerPermissions('finance', 'edit')
-  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Finance Permission' }
+  const hasEditAccess = await checkWorkerPermissions('sales', 'edit')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Sales Permission' }
 
   const limitResult = await checkRateLimit({ policy: 'sales.write', scope: 'createSale', farmId: activeFarmId, userId })
   if (!limitResult.ok) return rateLimitActionError(limitResult)
@@ -64,8 +64,8 @@ export async function deleteSale(id: string, reason: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
-  const hasEditAccess = await checkWorkerPermissions('finance', 'edit')
-  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Finance Permission' }
+  const hasEditAccess = await checkWorkerPermissions('sales', 'edit')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Sales Permission' }
 
   if (!reason || reason.trim().length < 5) return { success: false, error: 'A valid reason is required for deletion' }
 
@@ -103,8 +103,8 @@ export async function restoreSale(id: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
-  const hasEditAccess = await checkWorkerPermissions('finance', 'edit')
-  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Finance Permission' }
+  const hasEditAccess = await checkWorkerPermissions('sales', 'edit')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Sales Permission' }
 
   const limitResult = await checkRateLimit({ policy: 'sales.write', scope: 'restoreSale', farmId: activeFarmId, userId })
   if (!limitResult.ok) return rateLimitActionError(limitResult)

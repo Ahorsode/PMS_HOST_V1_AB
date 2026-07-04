@@ -17,6 +17,7 @@ import { FeedForm } from './FeedForm'
 import { getAllFeedFormulations, getConsumptionEfficiency } from '@/lib/actions/feed-actions'
 import { getAllInventory } from '@/lib/actions/inventory-actions'
 import { getAllBatches } from '@/lib/actions/dashboard-actions'
+import { getReorderThreshold, isLowStock } from '@/lib/inventory/feed-categories'
 
 export default function FeedDashboard({ canEdit = true, openLogOnLoad = false }: { canEdit?: boolean; openLogOnLoad?: boolean }) {
   const [formulations, setFormulations] = useState<any[]>([])
@@ -201,7 +202,7 @@ export default function FeedDashboard({ canEdit = true, openLogOnLoad = false }:
                        {inventory.slice(0, 4).map(item => (
                          <div key={item.id} className="flex justify-between items-center bg-white/5 p-2 rounded-md border border-white/10">
                            <span className="text-lg font-bold text-emerald-100">{item.itemName}</span>
-                           <span className={`text-sm font-bold px-3 py-1.5 rounded-md border ${item.stockLevel < 100 ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'}`}>
+                           <span className={`text-sm font-bold px-3 py-1.5 rounded-md border ${isLowStock(item) ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'}`}>
                               {Number(item.stockLevel).toLocaleString()} {item.unit}
                            </span>
                          </div>

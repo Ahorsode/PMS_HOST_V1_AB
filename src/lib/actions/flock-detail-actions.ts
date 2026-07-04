@@ -33,7 +33,7 @@ export async function getFlockDeepDive(id: string) {
   const [canViewFinance, canEditFinance, canEditHealth] = await Promise.all([
     checkWorkerPermissions('finance', 'view'),
     checkWorkerPermissions('finance', 'edit'),
-    checkWorkerPermissions('mortality', 'edit'),
+    checkWorkerPermissions('health', 'edit'),
   ])
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {

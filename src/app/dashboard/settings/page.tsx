@@ -4,6 +4,7 @@ import { auth } from '@/auth';
 import { SettingsContent } from './SettingsContent';
 import { getAuthContext } from '@/lib/auth-utils';
 import { Settings } from 'lucide-react';
+import { feedCategoryFilter } from '@/lib/inventory/feed-categories';
 
 export default async function SettingsPage() {
   const { userId, activeFarmId } = await getAuthContext();
@@ -23,7 +24,7 @@ export default async function SettingsPage() {
 
   const inventory = activeFarmId
     ? await prisma.inventory.findMany({
-        where: { farmId: activeFarmId, category: 'feed' },
+        where: { farmId: activeFarmId, isDeleted: false, category: feedCategoryFilter() },
         orderBy: { itemName: 'asc' },
       })
     : [];

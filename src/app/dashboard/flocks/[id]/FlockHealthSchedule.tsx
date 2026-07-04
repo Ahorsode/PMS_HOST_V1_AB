@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useMemo, useState, useTransition } from 'react'
+import React, { useMemo, useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Syringe,
@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/Button'
 import { cn, formatDate } from '@/lib/utils'
 import {
   createHealthSchedulesBulk,
+  registerHealthInventoryItem,
   updateHealthScheduleStatus,
   deleteHealthSchedule,
   type HealthScheduleType,
@@ -93,7 +94,10 @@ export function FlockHealthSchedule({
 }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
+  const [isSavingItem, setIsSavingItem] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [successMsg, setSuccessMsg] = useState<string | null>(null)
+  const [pendingInventorySelection, setPendingInventorySelection] = useState<string | null>(null)
   const [showForm, setShowForm] = useState(false)
 
   const [type, setType] = useState<HealthScheduleType>('VACCINATION')
@@ -133,7 +137,26 @@ export function FlockHealthSchedule({
   const quantityOk = !showQuantity || Number(quantity) > 0
   const currentEntryValid = !!resolvedName && !!scheduledDate && quantityOk
   const totalToSave = drafts.length + (currentEntryValid ? 1 : 0)
-  const canSave = canEdit && totalToSave > 0 && !isPending
+  const canSave = canEdit && totalToSave > 0 && !isPending && !isSavingItem
+  const canSaveToInventory =
+    canEdit &&
+    isAddingNew &&
+    !!resolvedName &&
+    isNewItem &&
+    quantityOk &&
+    !isPending &&
+    !isSavingItem
+
+  useEffect(() => {
+    if (!pendingInventorySelection) return
+    const match = inventory.find(
+      (item) => item.itemName.toLowerCase() === pendingInventorySelection.toLowerCase()
+    )
+    if (!match) return
+    setNamePreset(match.itemName)
+    setCustomName('')
+    setPendingInventorySelection(null)
+  }, [inventory, pendingInventorySelection])
 
   function switchType(next: HealthScheduleType) {
     setType(next)
@@ -193,10 +216,43 @@ export function FlockHealthSchedule({
     clearItemFields()
   }
 
+  function handleSaveToInventory() {
+    if (!canSaveToInventory) return
+    setError(null)
+    setSuccessMsg(null)
+    setIsSavingItem(true)
+
+    startTransition(async () => {
+      try {
+        const result = await registerHealthInventoryItem({
+          type,
+          name: resolvedName,
+          usageType: effectiveUsageType,
+          quantity: showQuantity ? Number(quantity) : undefined,
+          unit: unit || selectedItem?.unit || 'dose',
+        })
+
+        if (!result.success) {
+          setError(result.error || 'Failed to add item to inventory')
+          return
+        }
+
+        setSuccessMsg(result.message || `"${resolvedName}" saved to inventory.`)
+        setPendingInventorySelection(result.itemName || resolvedName)
+        router.refresh()
+      } catch (err: any) {
+        setError(err?.message || 'Failed to add item to inventory')
+      } finally {
+        setIsSavingItem(false)
+      }
+    })
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!canSave) return
     setError(null)
+    setSuccessMsg(null)
 
     const all = [...drafts]
     const current = buildCurrentEntry()
@@ -356,7 +412,8 @@ export function FlockHealthSchedule({
 
             {isNewItem && resolvedName ? (
               <p className="-mt-1 flex items-center gap-1.5 text-xs italic text-emerald-300/80">
-                <Sparkles className="h-3.5 w-3.5" />“{resolvedName}” will be added to inventory.
+                <Sparkles className="h-3.5 w-3.5" />
+                Save to inventory first, then select it — or Add Schedule to save both together.
               </p>
             ) : null}
 
@@ -423,9 +480,26 @@ export function FlockHealthSchedule({
             ) : null}
 
             {error ? <p className="text-xs font-bold uppercase tracking-wider text-red-400">{error}</p> : null}
+            {successMsg ? <p className="text-xs font-bold uppercase tracking-wider text-emerald-400">{successMsg}</p> : null}
+
+            {isAddingNew && resolvedName ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleSaveToInventory}
+                disabled={!canSaveToInventory}
+                isLoading={isSavingItem}
+                loadingText="Saving…"
+                className="w-full border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/20"
+              >
+                <Boxes className="h-4 w-4" />
+                Save “{resolvedName}” to inventory
+              </Button>
+            ) : null}
 
             <p className="flex items-center gap-1.5 text-xs italic text-white/40">
-              <ListPlus className="h-3.5 w-3.5" /> Add several at once: stage each, then save.
+              <ListPlus className="h-3.5 w-3.5" /> Then pick it from the list and Add Schedule.
             </p>
 
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">

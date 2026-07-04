@@ -15,6 +15,8 @@ export type StaffPermissions = {
   canEditHouses?: boolean
   canViewMortality?: boolean
   canEditMortality?: boolean
+  canViewHealth?: boolean
+  canEditHealth?: boolean
   canViewCustomers?: boolean
   canEditCustomers?: boolean
   canViewTeam?: boolean
@@ -42,6 +44,8 @@ export function getDefaultPermissionsForRole(
     canEditHouses: false,
     canViewMortality: false,
     canEditMortality: false,
+    canViewHealth: false,
+    canEditHealth: false,
     canViewCustomers: false,
     canEditCustomers: false,
     canViewTeam: false,
@@ -56,6 +60,8 @@ export function getDefaultPermissionsForRole(
       canEditFeeding: true,
       canViewMortality: true,
       canEditMortality: true,
+      canViewHealth: true,
+      canEditHealth: true,
       canViewBatches: true,
     },
     MANAGER: Object.fromEntries(Object.keys(base).map((key) => [key, true])) as Required<StaffPermissions>,

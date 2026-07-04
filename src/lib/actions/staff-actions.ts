@@ -559,6 +559,8 @@ export async function updateWorkerPermissions(
     canEditHouses?: boolean
     canViewMortality?: boolean
     canEditMortality?: boolean
+    canViewHealth?: boolean
+    canEditHealth?: boolean
     canViewCustomers?: boolean
     canEditCustomers?: boolean
     canViewTeam?: boolean
@@ -620,6 +622,8 @@ export async function updateWorkerPermissions(
           canEditHouses: permissions.canEditHouses ?? false,
           canViewMortality: permissions.canViewMortality ?? false,
           canEditMortality: permissions.canEditMortality ?? false,
+          canViewHealth: permissions.canViewHealth ?? false,
+          canEditHealth: permissions.canEditHealth ?? false,
           canViewCustomers: permissions.canViewCustomers ?? false,
           canEditCustomers: permissions.canEditCustomers ?? false,
           canViewTeam: permissions.canViewTeam ?? false,
@@ -640,6 +644,7 @@ export async function updateWorkerPermissions(
         'canViewFeeding', 'canEditFeeding',
         'canViewHouses', 'canEditHouses',
         'canViewMortality', 'canEditMortality',
+        'canViewHealth', 'canEditHealth',
         'canViewCustomers', 'canEditCustomers',
         'canViewTeam', 'canEditTeam'
       ]
@@ -749,7 +754,7 @@ export async function resetWorkerPermissions(targetUserId: string) {
  * Identifies role based on farm membership, not global user role.
  */
 export async function checkWorkerPermissions(
-  module: 'finance' | 'inventory' | 'batches' | 'sales' | 'eggs' | 'feeding' | 'houses' | 'mortality' | 'customers' | 'team', 
+  module: 'finance' | 'inventory' | 'batches' | 'sales' | 'eggs' | 'feeding' | 'houses' | 'mortality' | 'health' | 'customers' | 'team', 
   action: 'view' | 'edit'
 ) {
   const { role, activeFarmId, permissions, isFarmOwner } = await getAuthContext()
@@ -772,6 +777,7 @@ export async function checkWorkerPermissions(
       feeding: ['canViewFeeding', 'canEditFeeding'],
       houses: ['canViewHouses', 'canEditHouses'],
       mortality: ['canViewMortality', 'canEditMortality'],
+      health: ['canViewHealth', 'canEditHealth'],
       customers: ['canViewCustomers', 'canEditCustomers'],
       team: ['canViewTeam', 'canEditTeam'],
     } as const

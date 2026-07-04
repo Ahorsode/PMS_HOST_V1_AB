@@ -120,6 +120,10 @@ export function hasPermission(role: string, permissions: any, action: string): b
       return !!permissions?.canViewMortality || !!permissions?.canEditMortality;
     case 'EDIT_MORTALITY':
       return !!permissions?.canEditMortality;
+    case 'VIEW_HEALTH':
+      return !!permissions?.canViewHealth || !!permissions?.canEditHealth;
+    case 'EDIT_HEALTH':
+      return !!permissions?.canEditHealth;
     case 'VIEW_TEAM':
       return !!permissions?.canViewTeam || !!permissions?.canEditTeam;
     case 'EDIT_TEAM':

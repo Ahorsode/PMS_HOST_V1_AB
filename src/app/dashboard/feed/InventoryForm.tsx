@@ -20,7 +20,7 @@ export const InventoryForm = ({ item, mode, onClose }: InventoryFormProps) => {
     itemName: item?.itemName || '',
     stockLevel: item?.stockLevel || 0,
     unit: item?.unit || 'bags',
-    category: item?.category || 'feed',
+    category: item?.category || 'FEED',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {

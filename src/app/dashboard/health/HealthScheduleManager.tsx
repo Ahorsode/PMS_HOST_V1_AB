@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState, useTransition } from "react";
+import React, { useMemo, useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
@@ -26,6 +26,7 @@ import { cn, formatDate } from "@/lib/utils";
 import { formatLivestockType } from "@/lib/utils/growth-utils";
 import {
   createHealthSchedulesBulk,
+  registerHealthInventoryItem,
   updateHealthScheduleStatus,
   deleteHealthSchedule,
   type HealthScheduleType,
@@ -117,7 +118,10 @@ export function HealthScheduleManager({
 }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [isSavingItem, setIsSavingItem] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [pendingInventorySelection, setPendingInventorySelection] = useState<string | null>(null);
 
   // Form state
   const [type, setType] = useState<HealthScheduleType>("VACCINATION");
@@ -196,7 +200,26 @@ export function HealthScheduleManager({
     !!batchId && !!resolvedName && !!scheduledDate && quantityOk;
 
   const totalToSave = drafts.length + (currentEntryValid ? 1 : 0);
-  const canSave = canEdit && totalToSave > 0 && !isPending;
+  const canSave = canEdit && totalToSave > 0 && !isPending && !isSavingItem;
+  const canSaveToInventory =
+    canEdit &&
+    isAddingNew &&
+    !!resolvedName &&
+    isNewItem &&
+    quantityOk &&
+    !isPending &&
+    !isSavingItem;
+
+  useEffect(() => {
+    if (!pendingInventorySelection) return;
+    const match = inventory.find(
+      (item) => item.itemName.toLowerCase() === pendingInventorySelection.toLowerCase()
+    );
+    if (!match) return;
+    setNamePreset(match.itemName);
+    setCustomName("");
+    setPendingInventorySelection(null);
+  }, [inventory, pendingInventorySelection]);
 
   function switchType(next: HealthScheduleType) {
     setType(next);
@@ -252,6 +275,7 @@ export function HealthScheduleManager({
 
   function handleAddToList() {
     setError(null);
+    setSuccessMsg(null);
     const entry = buildCurrentEntry();
     if (!entry) {
       setError("Fill in the batch, name, date and quantity first.");
@@ -265,10 +289,43 @@ export function HealthScheduleManager({
     setDrafts((prev) => prev.filter((d) => d._key !== key));
   }
 
+  function handleSaveToInventory() {
+    if (!canSaveToInventory) return;
+    setError(null);
+    setSuccessMsg(null);
+    setIsSavingItem(true);
+
+    startTransition(async () => {
+      try {
+        const result = await registerHealthInventoryItem({
+          type,
+          name: resolvedName,
+          usageType: effectiveUsageType,
+          quantity: showQuantity ? Number(quantity) : undefined,
+          unit: unit || selectedItem?.unit || "dose",
+        });
+
+        if (!result.success) {
+          setError(result.error || "Failed to add item to inventory");
+          return;
+        }
+
+        setSuccessMsg(result.message || `"${resolvedName}" saved to inventory.`);
+        setPendingInventorySelection(result.itemName || resolvedName);
+        router.refresh();
+      } catch (err: any) {
+        setError(err?.message || "Failed to add item to inventory");
+      } finally {
+        setIsSavingItem(false);
+      }
+    });
+  }
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!canSave) return;
     setError(null);
+    setSuccessMsg(null);
 
     const all = [...drafts];
     const current = buildCurrentEntry();
@@ -446,8 +503,8 @@ export function HealthScheduleManager({
               {isNewItem && resolvedName && (
                 <p className="-mt-1 flex items-center gap-1.5 text-xs text-emerald-300/80 italic">
                   <Sparkles className="w-3.5 h-3.5" />
-                  “{resolvedName}” will be added to inventory — a finance user
-                  will be prompted to set its cost.
+                  Save “{resolvedName}” to inventory first, then select it here — or pick a batch
+                  and use Add Schedule to save the item and schedule together.
                 </p>
               )}
 
@@ -558,9 +615,38 @@ export function HealthScheduleManager({
                 </p>
               )}
 
+              {successMsg && (
+                <p className="text-xs text-emerald-400 font-bold uppercase tracking-wider">
+                  {successMsg}
+                </p>
+              )}
+
+              {isAddingNew && resolvedName && (
+                <div className="rounded-lg border border-emerald-500/25 bg-emerald-500/10 p-3">
+                  <p className="text-xs font-bold uppercase tracking-widest text-emerald-300 mb-2">
+                    Step 1 — Stock this item
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleSaveToInventory}
+                    disabled={!canSaveToInventory}
+                    isLoading={isSavingItem}
+                    loadingText="Saving…"
+                    className="w-full sm:w-auto border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/20"
+                  >
+                    <Boxes className="w-4 h-4" />
+                    Save “{resolvedName}” to inventory
+                  </Button>
+                  <p className="mt-2 text-xs text-white/50 italic">
+                    No batch required. After saving, it appears in the {isVaccine ? "Vaccine" : "Medication"} dropdown above.
+                  </p>
+                </div>
+              )}
+
               <p className="flex items-center gap-1.5 text-xs text-white/40 italic">
                 <ListPlus className="w-3.5 h-3.5" />
-                Add several at once: stage each with “Add another”, then “Save”.
+                Step 2 — Select a batch, then Add Schedule (or stage several with “Add another”).
               </p>
 
               <div className="flex flex-col sm:flex-row justify-end gap-2">

@@ -27,7 +27,6 @@ export async function updateHouse(id: string, data: {
       where: { id, farmId: activeFarmId },
       data
     })
-    revalidatePath('/dashboard/climate')
     revalidatePath('/dashboard/settings')
     revalidatePath('/dashboard/houses')
     return { 
@@ -62,7 +61,6 @@ export async function deleteHouse(id: string) {
     await tx.house.delete({
       where: { id, farmId: activeFarmId }
     })
-    revalidatePath('/dashboard/climate')
     revalidatePath('/dashboard/settings')
     revalidatePath('/dashboard/houses')
     return { success: true }

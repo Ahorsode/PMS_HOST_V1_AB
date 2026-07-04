@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Home, Settings as SettingsIcon, Bell, Shield, Plus, Loader2, Save, CheckCircle2, Monitor } from 'lucide-react';
+import { Home, Settings as SettingsIcon, Bell, Shield, Plus, Loader2, Save, CheckCircle2, Monitor, Trash2 } from 'lucide-react';
 import { updateFarmInfo, createHouse } from '@/lib/actions/dashboard-actions';
 import { updateFarmSettings, getFarmSettings } from '@/lib/actions/preference-actions';
 import { Input } from '@/components/ui/Input';
@@ -158,6 +158,7 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
     { id: 'notifications', label: 'Reminders', icon: Bell },
     { id: 'preferences', label: 'Stock Levels', icon: SettingsIcon },
     { id: 'security', label: 'Security', icon: Shield },
+    { id: 'trash', label: 'Data Recovery', icon: Trash2, href: '/dashboard/settings/trash' },
     { id: 'desktop-licenses', label: 'Connected Devices', icon: Monitor },
   ].filter((tab) => SHOW_USER_DESKTOP_LICENSES || tab.id !== 'desktop-licenses');
 
@@ -172,6 +173,8 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
                 if (SHOW_USER_DESKTOP_LICENSES) {
                   router.push('/dashboard/settings/desktop-licenses');
                 }
+              } else if ('href' in tab && tab.href) {
+                router.push(tab.href);
               } else {
                 setActiveTab(tab.id);
               }
@@ -277,6 +280,17 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
                     />
                   </div>
 
+                  <div className="p-4 rounded-md bg-orange-500/10 border border-orange-500/20 space-y-2">
+                    <p className="text-sm font-bold text-orange-400 uppercase tracking-widest">🌾 Feed Log Reminder</p>
+                    <p className="text-xs text-white/70">Alert if no feeding record is logged by this time each day.</p>
+                    <input
+                      type="time"
+                      value={feedReminderTime}
+                      onChange={e => setFeedReminderTime(e.target.value)}
+                      className="bg-black/60 border border-white/10 text-white rounded-md px-3 py-2 text-sm font-bold focus:outline-none focus:border-orange-400/60 focus:ring-1 focus:ring-orange-400/30"
+                    />
+                  </div>
+
                   <div className="p-4 rounded-md bg-purple-500/10 border border-purple-500/20 space-y-2">
                     <p className="text-sm font-bold text-purple-400 uppercase tracking-widest">💰 Farm Currency</p>
                     <p className="text-xs text-white/70">Used for sales, orders, and financial reporting.</p>
@@ -308,7 +322,7 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
                   </div>
 
                   <Button onClick={handleSaveReminders} isLoading={isSavingPrefs} className="w-full">
-                    <Save className="w-4 h-4 mr-2" /> Save Reminder Times
+                    <Save className="w-4 h-4 mr-2" /> Save Reminder Settings
                   </Button>
                 </div>
               )}

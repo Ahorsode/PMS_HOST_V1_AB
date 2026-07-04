@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Shield, ShieldCheck, Database, LayoutDashboard, Settings, Egg, Wheat, ThermometerSun, XCircle, Users, Banknote, RotateCcw } from 'lucide-react';
+import { X, Shield, ShieldCheck, Database, LayoutDashboard, Settings, Egg, Wheat, ThermometerSun, XCircle, Users, Banknote, RotateCcw, HeartPulse } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import type { StaffPermissions } from '@/lib/staff-permission-defaults';
 
@@ -41,6 +41,8 @@ function buildPermissionState(
     canEditHouses: initialPermissions?.canEditHouses ?? defaultPermissions.canEditHouses,
     canViewMortality: initialPermissions?.canViewMortality ?? defaultPermissions.canViewMortality,
     canEditMortality: initialPermissions?.canEditMortality ?? defaultPermissions.canEditMortality,
+    canViewHealth: initialPermissions?.canViewHealth ?? defaultPermissions.canViewHealth,
+    canEditHealth: initialPermissions?.canEditHealth ?? defaultPermissions.canEditHealth,
     canViewCustomers: initialPermissions?.canViewCustomers ?? defaultPermissions.canViewCustomers,
     canEditCustomers: initialPermissions?.canEditCustomers ?? defaultPermissions.canEditCustomers,
     canViewTeam: initialPermissions?.canViewTeam ?? defaultPermissions.canViewTeam,
@@ -180,6 +182,7 @@ export function PermissionsModal({
                         <PermissionRow title="Eggs" viewKey="canViewEggs" editKey="canEditEggs" icon={Egg} />
                         <PermissionRow title="Feeding" viewKey="canViewFeeding" editKey="canEditFeeding" icon={Wheat} />
                         <PermissionRow title="Mortality" viewKey="canViewMortality" editKey="canEditMortality" icon={XCircle} />
+                        <PermissionRow title="Health (Vaccines & Meds)" viewKey="canViewHealth" editKey="canEditHealth" icon={HeartPulse} />
                       </div>
                     </div>
 

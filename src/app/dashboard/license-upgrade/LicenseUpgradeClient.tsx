@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Check, Clock3, Crown, Monitor, Shield, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
-import { upgradeFarmSubscription } from "@/lib/actions/subscription-actions";
+import { requestSubscriptionUpgrade } from "@/lib/actions/subscription-actions";
 import { type DesktopLicenseRow } from "@/lib/actions/licenses";
 import { type SubscriptionTier } from "@prisma/client";
 import { cn } from "@/lib/utils";
@@ -183,14 +183,17 @@ export default function LicenseUpgradeClient({
 
   function handleUpgrade(tier: PaidTier) {
     startTransition(async () => {
-      const result = await upgradeFarmSubscription(tier);
+      const result = await requestSubscriptionUpgrade(tier, selectedMonths);
 
       if (!result.success) {
-        toast.error(result.error || "Failed to update subscription");
+        toast.error(result.error || "Failed to submit upgrade request");
         return;
       }
 
-      toast.success("Subscription updated! All connected devices will unlock shortly.");
+      toast.success(
+        result.message ||
+          "Upgrade request submitted. Complete payment to activate your plan.",
+      );
       router.refresh();
     });
   }
@@ -361,8 +364,7 @@ export default function LicenseUpgradeClient({
                           : "bg-amber-500 text-[#451a03] shadow-amber-500/20 hover:bg-amber-400",
                       )}
                     >
-                      <Sparkles className="h-4 w-4" />
-                      Upgrade to {plan.name}
+                      Request Upgrade — {plan.name}
                     </Button>
                   )}
                 </CardContent>

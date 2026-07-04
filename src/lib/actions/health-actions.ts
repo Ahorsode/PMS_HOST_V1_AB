@@ -332,7 +332,7 @@ export async function createHealthSchedulesBulk(entries: HealthScheduleInput[]) 
   const { userId, activeFarmId } = await getAuthContext();
   if (!activeFarmId) throw new Error("No active farm found");
 
-  const canEdit = await checkWorkerPermissions("mortality", "edit");
+  const canEdit = await checkWorkerPermissions("health", "edit");
   if (!canEdit) throw new Error("Unauthorized: missing health edit permission");
 
   if (!Array.isArray(entries) || entries.length === 0) {
@@ -448,6 +448,96 @@ export async function createHealthSchedulesBulk(entries: HealthScheduleInput[]) 
 /** Backwards-compatible single-entry create (delegates to the bulk path). */
 export async function createHealthSchedule(data: HealthScheduleInput) {
   return createHealthSchedulesBulk([data]);
+}
+
+/**
+ * Register a new vaccine or medication in inventory without creating a schedule.
+ * Lets users stock an item first, then select it from the dropdown for scheduling.
+ */
+export async function registerHealthInventoryItem(data: {
+  type: HealthScheduleType;
+  name: string;
+  usageType: HealthUsageType;
+  quantity?: number;
+  unit?: string;
+}) {
+  const { userId, activeFarmId } = await getAuthContext();
+  if (!activeFarmId) return { success: false, error: "No active farm found" };
+
+  const canEdit = await checkWorkerPermissions("health", "edit");
+  if (!canEdit) {
+    return { success: false, error: "Unauthorized: missing health edit permission" };
+  }
+
+  const name = data.name?.trim();
+  if (!name) return { success: false, error: "Enter a name for the item" };
+
+  const usageType: HealthUsageType =
+    data.usageType === "QUANTITY" ? "QUANTITY" : "ONE_TIME";
+  const unit = data.unit?.trim() || (usageType === "ONE_TIME" ? "dose" : "unit");
+
+  let stockLevel: number;
+  if (usageType === "ONE_TIME") {
+    stockLevel = 1;
+  } else {
+    stockLevel = Number(data.quantity);
+    if (!Number.isFinite(stockLevel) || stockLevel <= 0) {
+      return { success: false, error: `Enter a valid opening stock quantity for "${name}"` };
+    }
+  }
+
+  try {
+    const result = await (prisma as any).$withFarmContext(
+      userId,
+      activeFarmId,
+      async (tx: any) => {
+        const existing = await findHealthInventoryItem(tx, activeFarmId, name);
+        if (existing) {
+          return {
+            item: existing,
+            created: false,
+            itemName: existing.itemName as string,
+          };
+        }
+
+        const category = data.type === "VACCINATION" ? "VACCINE" : "MEDICINE";
+        const item = await tx.inventory.create({
+          data: {
+            itemName: name,
+            stockLevel,
+            unit,
+            category,
+            usageType,
+            costPerUnit: null,
+            userId,
+            farmId: activeFarmId,
+          },
+        });
+
+        return {
+          item,
+          created: true,
+          itemName: name,
+        };
+      }
+    );
+
+    revalidatePath("/dashboard/health");
+    revalidatePath("/dashboard/inventory");
+    revalidatePath("/dashboard/finance");
+
+    return {
+      success: true,
+      created: result.created,
+      itemName: result.itemName,
+      message: result.created
+        ? `"${result.itemName}" added to inventory — select it below to schedule.`
+        : `"${result.itemName}" is already in inventory — select it below.`,
+    };
+  } catch (error) {
+    console.error("Error registering health inventory item:", error);
+    return { success: false, error: "Failed to add item to inventory" };
+  }
 }
 
 /** Toggle the lifecycle status of a schedule (PENDING / COMPLETED / CANCELLED). */

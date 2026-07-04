@@ -1,14 +1,15 @@
-import React from 'react';
 import { getGlobalFeedStats } from '@/lib/actions/dashboard-actions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Wheat, AlertTriangle, Activity, Package, Battery, ChevronRight } from 'lucide-react';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import Link from 'next/link';
 import { getBreedDisplayName } from '@/lib/livestock-breed-options';
+import { getReorderThreshold, isFeedCategory, isLowStock } from '@/lib/inventory/feed-categories';
 
 export default async function FeedAnalyticsPage() {
   const inventory = await getGlobalFeedStats();
-  const lowStock = inventory.filter((item: any) => item.stockLevel < 50);
+  const feedInventory = inventory.filter((item: any) => isFeedCategory(item.category));
+  const lowStock = feedInventory.filter((item: any) => isLowStock(item));
 
   return (
     <div className="max-w-7xl mx-auto px-3 py-7 space-y-7">
@@ -26,7 +27,7 @@ export default async function FeedAnalyticsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        <MetricBox title="Inventory Items" value={inventory.length.toString()} icon={Package} color="text-emerald-400" bgColor="bg-emerald-500/10" />
+        <MetricBox title="Inventory Items" value={feedInventory.length.toString()} icon={Package} color="text-emerald-400" bgColor="bg-emerald-500/10" />
         <MetricBox title="Low Stock Alerts" value={lowStock.length.toString()} icon={AlertTriangle} color="text-red-400" bgColor="bg-red-500/10" />
         <MetricBox title="Active Consumption" value="7.2 bags / day" icon={Activity} color="text-blue-400" bgColor="bg-blue-500/10" />
         <MetricBox title="Avg. Stock Depth" value="84%" icon={Battery} color="text-emerald-400" bgColor="bg-emerald-500/10" />
@@ -38,22 +39,25 @@ export default async function FeedAnalyticsPage() {
                <h3 className="text-white font-bold italic uppercase tracking-widest text-sm">Strategic Stock Levels</h3>
             </div>
             <div className="p-7 space-y-5">
-               {inventory.map((item: any) => (
+               {feedInventory.map((item: any) => {
+                 const threshold = getReorderThreshold(item);
+                 const low = isLowStock(item);
+                 return (
                  <div key={item.id} className="space-y-2">
                     <div className="flex justify-between items-center">
-                       <p className="text-white font-bold text-sm">{item.name}</p>
-                       <span className={`text-xs font-bold ${item.stockLevel < 50 ? 'text-red-400' : 'text-emerald-400'}`}>
-                          {item.stockLevel} bags left
+                       <p className="text-white font-bold text-sm">{item.itemName}</p>
+                       <span className={`text-xs font-bold ${low ? 'text-red-400' : 'text-emerald-400'}`}>
+                          {item.stockLevel} {item.unit || 'bags'} left
                        </span>
                     </div>
                     <div className="h-2 bg-white/10 rounded-full overflow-hidden border border-white/5">
                        <div 
-                         className={`h-full transition-all duration-1000 ${item.stockLevel < 50 ? 'bg-gradient-to-r from-red-500 to-amber-500' : 'bg-gradient-to-r from-emerald-500 to-teal-500'}`}
-                         style={{ width: `${Math.min(100, (item.stockLevel / 200) * 100)}%` }}
+                         className={`h-full transition-all duration-1000 ${low ? 'bg-gradient-to-r from-red-500 to-amber-500' : 'bg-gradient-to-r from-emerald-500 to-teal-500'}`}
+                         style={{ width: `${Math.min(100, threshold > 0 ? (item.stockLevel / threshold) * 100 : 0)}%` }}
                        />
                     </div>
                  </div>
-               ))}
+               )})}
             </div>
          </div>
 
