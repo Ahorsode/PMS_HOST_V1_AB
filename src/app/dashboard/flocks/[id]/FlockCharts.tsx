@@ -87,6 +87,37 @@ function MoneyTooltip({ active, payload, label }: any) {
   )
 }
 
+function summaryAmount(summary: FinanceSummaryPoint[], key: string) {
+  return summary.find((r) => r.key === key)?.amount ?? 0
+}
+
+function CategoryTotals({ summary }: { summary: FinanceSummaryPoint[] }) {
+  const rows = [
+    { key: 'initial', label: 'Initial', color: 'text-violet-400', bg: 'bg-violet-500/10 border-violet-500/20' },
+    { key: 'operating', label: 'Operating', color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/20' },
+    { key: 'consumption', label: 'Feed & med', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
+    { key: 'general', label: 'General share', color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
+    { key: 'revenue', label: 'Revenue', color: 'text-sky-400', bg: 'bg-sky-500/10 border-sky-500/20' },
+  ]
+
+  const visible = rows
+    .map((row) => ({ ...row, amount: summaryAmount(summary, row.key) }))
+    .filter((row) => row.amount > 0)
+
+  if (visible.length === 0) return null
+
+  return (
+    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+      {visible.map((row) => (
+        <div key={row.key} className={cn('rounded-lg border px-3 py-2', row.bg)}>
+          <p className="text-[9px] font-bold uppercase tracking-widest text-white/45">{row.label}</p>
+          <p className={cn('text-sm font-bold', row.color)}>{formatCurrency(row.amount, 'GHS')}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function FinanceTrendPanel({
   summary,
   monthly,
@@ -96,10 +127,21 @@ export function FinanceTrendPanel({
   monthly: FinancePoint[]
   locked?: boolean
 }) {
+  const initial = summaryAmount(summary, 'initial')
+  const operating = summaryAmount(summary, 'operating')
+  const consumption = summaryAmount(summary, 'consumption')
+  const general = summaryAmount(summary, 'general')
+  const revenue = summaryAmount(summary, 'revenue')
+  const operatingMixTotal = operating + consumption + general
+
   const netProfit = summary.reduce((sum, row) => {
     if (row.key === 'revenue') return sum + row.amount
     return sum - row.amount
   }, 0)
+
+  const monthlyOperating = monthly.filter(
+    (m) => m.operating + m.consumption + m.general + m.revenue > 0
+  )
 
   return (
     <ChartCard
@@ -116,56 +158,91 @@ export function FinanceTrendPanel({
         <ChartEmpty label="Finance permission is required to view revenue & expenses." />
       ) : summary.some((row) => row.amount > 0) || monthly.length > 0 ? (
         <div className="space-y-6">
+          <CategoryTotals summary={summary} />
+
+          {initial > 0 ? (
+            <div>
+              <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-white/45">Initial investment (batch only)</p>
+              <div className="h-[120px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={[{ label: 'Purchase & setup', amount: initial }]}
+                    margin={{ top: 8, right: 12, left: 4, bottom: 6 }}
+                  >
+                    <CartesianGrid stroke={gridStroke} strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="label" tick={{ fill: chartText, fontSize: 11, fontWeight: 700 }} axisLine={false} tickLine={false} />
+                    <YAxis
+                      tick={{ fill: chartText, fontSize: 11, fontWeight: 700 }}
+                      axisLine={false}
+                      tickLine={false}
+                      width={52}
+                      tickFormatter={(v) => `₵${compact.format(Number(v))}`}
+                    />
+                    <Tooltip content={<MoneyTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
+                    <Bar dataKey="amount" fill="#a78bfa" name="Initial investment" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          ) : null}
+
           <div>
-            <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-white/45">Lifetime cost structure</p>
-            <div className="h-[220px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={[
-                    {
-                      label: 'Batch',
-                      Initial: summary.find((r) => r.key === 'initial')?.amount ?? 0,
-                      Operating: summary.find((r) => r.key === 'operating')?.amount ?? 0,
-                      Consumption: summary.find((r) => r.key === 'consumption')?.amount ?? 0,
-                      General: summary.find((r) => r.key === 'general')?.amount ?? 0,
-                      Revenue: summary.find((r) => r.key === 'revenue')?.amount ?? 0,
-                    },
-                  ]}
-                  margin={{ top: 8, right: 12, left: 4, bottom: 6 }}
-                >
-                  <CartesianGrid stroke={gridStroke} strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="label" tick={{ fill: chartText, fontSize: 11, fontWeight: 700 }} axisLine={false} tickLine={false} />
-                  <YAxis
-                    tick={{ fill: chartText, fontSize: 11, fontWeight: 700 }}
-                    axisLine={false}
-                    tickLine={false}
-                    width={52}
-                    tickFormatter={(v) => `₵${compact.format(Number(v))}`}
-                  />
-                  <Tooltip content={<MoneyTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
-                  <Legend wrapperStyle={{ color: chartText, fontSize: 12, fontWeight: 700, paddingTop: 8 }} />
-                  <Bar dataKey="Initial" stackId="expense" fill="#a78bfa" name="Initial (batch only)" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="Operating" stackId="expense" fill="#fb923c" name="Operating" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="Consumption" stackId="expense" fill="#34d399" name="Feed & med (by usage)" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="General" stackId="expense" fill="#fbbf24" name="General share" radius={[6, 6, 0, 0]} />
-                  <Bar dataKey="Revenue" fill="#38bdf8" name="Revenue" radius={[6, 6, 0, 0]} barSize={48} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3">
-              <span className="text-xs font-bold uppercase tracking-widest text-white/50">Net position</span>
-              <span className={cn('text-lg font-bold', netProfit >= 0 ? 'text-emerald-400' : 'text-red-400')}>
-                {formatCurrency(netProfit, 'GHS')}
-              </span>
-            </div>
+            <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-white/45">
+              Operating costs (feed, med, general & revenue)
+            </p>
+            {operatingMixTotal + revenue > 0 ? (
+              <div className="h-[220px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={[
+                      {
+                        label: 'Batch',
+                        Operating: operating,
+                        Consumption: consumption,
+                        General: general,
+                        Revenue: revenue,
+                      },
+                    ]}
+                    margin={{ top: 8, right: 12, left: 4, bottom: 6 }}
+                  >
+                    <CartesianGrid stroke={gridStroke} strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="label" tick={{ fill: chartText, fontSize: 11, fontWeight: 700 }} axisLine={false} tickLine={false} />
+                    <YAxis
+                      tick={{ fill: chartText, fontSize: 11, fontWeight: 700 }}
+                      axisLine={false}
+                      tickLine={false}
+                      width={52}
+                      tickFormatter={(v) => `₵${compact.format(Number(v))}`}
+                    />
+                    <Tooltip content={<MoneyTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
+                    <Legend wrapperStyle={{ color: chartText, fontSize: 12, fontWeight: 700, paddingTop: 8 }} />
+                    <Bar dataKey="Operating" stackId="expense" fill="#fb923c" name="Operating" radius={[0, 0, 0, 0]} />
+                    <Bar dataKey="Consumption" stackId="expense" fill="#34d399" name="Feed & med (by usage)" radius={[0, 0, 0, 0]} />
+                    <Bar dataKey="General" stackId="expense" fill="#fbbf24" name="General share" radius={[6, 6, 0, 0]} />
+                    <Bar dataKey="Revenue" fill="#38bdf8" name="Revenue" radius={[6, 6, 0, 0]} barSize={48} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <ChartEmpty label="No operating, feed, med, or revenue activity yet." />
+            )}
           </div>
 
-          {monthly.length > 0 ? (
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3">
+            <span className="text-xs font-bold uppercase tracking-widest text-white/50">Net position</span>
+            <span className={cn('text-lg font-bold', netProfit >= 0 ? 'text-emerald-400' : 'text-red-400')}>
+              {formatCurrency(netProfit, 'GHS')}
+            </span>
+          </div>
+
+          {monthlyOperating.length > 0 ? (
             <div>
-              <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-white/45">Monthly activity</p>
+              <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-white/45">
+                Monthly operating activity (excludes initial purchase)
+              </p>
               <div className="h-[280px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={monthly} margin={{ top: 8, right: 12, left: 4, bottom: 6 }}>
+                  <BarChart data={monthlyOperating} margin={{ top: 8, right: 12, left: 4, bottom: 6 }}>
                     <CartesianGrid stroke={gridStroke} strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="label" tick={{ fill: chartText, fontSize: 11, fontWeight: 700 }} axisLine={false} tickLine={false} />
                     <YAxis
@@ -178,7 +255,6 @@ export function FinanceTrendPanel({
                     <Tooltip content={<MoneyTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
                     <Legend wrapperStyle={{ color: chartText, fontSize: 12, fontWeight: 700, paddingTop: 8 }} />
                     <Bar dataKey="revenue" fill="#38bdf8" name="Revenue" radius={[6, 6, 0, 0]} barSize={22} />
-                    <Bar dataKey="initial" stackId="monthlyExp" fill="#a78bfa" name="Initial" />
                     <Bar dataKey="operating" stackId="monthlyExp" fill="#fb923c" name="Operating" />
                     <Bar dataKey="consumption" stackId="monthlyExp" fill="#34d399" name="Feed & med (by usage)" />
                     <Bar dataKey="general" stackId="monthlyExp" fill="#fbbf24" name="General share" radius={[6, 6, 0, 0]} />

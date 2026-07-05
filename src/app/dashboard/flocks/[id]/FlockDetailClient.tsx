@@ -93,13 +93,15 @@ export const FlockDetailClient = ({ data }: FlockDetailClientProps) => {
             icon={Banknote}
             color="orange"
             subtext={
-              finance.initialInvestment > 0
-                ? `Incl. ${formatCurrency(finance.initialInvestment, 'GHS')} initial`
-                : finance.consumptionAllocatedTotal > 0
-                  ? `Incl. ${formatCurrency(finance.consumptionAllocatedTotal, 'GHS')} feed & med by usage`
-                  : finance.generalAllocatedTotal > 0
-                    ? `Incl. ${finance.headcountSharePct}% general share`
-                    : 'Operating costs'
+              [
+                finance.initialInvestment > 0 ? `${formatCurrency(finance.initialInvestment, 'GHS')} initial` : null,
+                finance.consumptionAllocatedTotal > 0
+                  ? `${formatCurrency(finance.consumptionAllocatedTotal, 'GHS')} feed & med`
+                  : null,
+                finance.generalAllocatedTotal > 0 ? `${finance.headcountSharePct}% general` : null,
+              ]
+                .filter(Boolean)
+                .join(' · ') || 'Operating costs'
             }
           />
           <MetricCard
