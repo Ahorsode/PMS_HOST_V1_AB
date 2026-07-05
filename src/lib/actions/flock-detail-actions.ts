@@ -5,7 +5,7 @@ import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
 import { computeBatchFinance } from '@/lib/analytics/batch-finance'
 import { buildConsumptionContext } from '@/lib/analytics/batch-consumption-finance'
-import { getHealthInventory, repairMissingHealthStockExpenses } from '@/lib/actions/health-actions'
+import { getHealthInventory } from '@/lib/actions/health-actions'
 
 const FEED_CATEGORIES = ['FEED', 'FEEDS', 'FEED_RAW', 'FEED_FINISHED']
 
@@ -36,10 +36,19 @@ export async function getFlockDeepDive(id: string) {
     checkWorkerPermissions('health', 'edit'),
   ])
 
-  if (canEditFinance) {
-    await repairMissingHealthStockExpenses()
+  let vaccineInventory: any[] = []
+  let medicineInventory: any[] = []
+  if (canEditHealth) {
+    try {
+      const healthStock = await getHealthInventory()
+      vaccineInventory = healthStock.vaccine
+      medicineInventory = healthStock.medicine
+    } catch (error) {
+      console.error('Error loading health inventory for flock page:', error)
+    }
   }
 
+  try {
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const batch = await tx.livestock.findUnique({
       where: { id, farmId: activeFarmId },
@@ -160,17 +169,8 @@ export async function getFlockDeepDive(id: string) {
         })
       : null
 
-    // Health inventory options for the schedule form (only if user can edit)
-    let vaccineInventory: any[] = []
-    let medicineInventory: any[] = []
-    let feedInventory: any[] = []
-    if (canEditHealth) {
-      const healthStock = await getHealthInventory()
-      vaccineInventory = healthStock.vaccine
-      medicineInventory = healthStock.medicine
-    }
-
-    feedInventory = await tx.inventory
+    // Health inventory options for the schedule form (loaded before this transaction).
+    const feedInventory = await tx.inventory
       .findMany({
         where: { farmId: activeFarmId, isDeleted: false, category: { in: FEED_CATEGORIES } },
         select: { id: true, itemName: true, stockLevel: true, unit: true },
@@ -313,4 +313,8 @@ export async function getFlockDeepDive(id: string) {
     console.error('Error fetching flock deep dive:', error)
     return null
   })
+  } catch (error) {
+    console.error('Error fetching flock deep dive:', error)
+    return null
+  }
 }

@@ -750,56 +750,63 @@ export async function setHealthItemCost(data: {
  * Backfill expense rows for health stock that was priced while on-hand qty was 0
  * (e.g. vaccination applied before cost was recorded).
  */
-export async function repairMissingHealthStockExpenses() {
+export async function repairMissingHealthStockExpenses(options?: { revalidate?: boolean }) {
   const { userId, activeFarmId } = await getAuthContext();
   if (!activeFarmId) return { repaired: 0 };
 
   const canEdit = await checkWorkerPermissions("finance", "edit");
   if (!canEdit) return { repaired: 0 };
 
-  return await (prisma as any).$withFarmContext(
-    userId,
-    activeFarmId,
-    async (tx: any) => {
-      const items = await tx.inventory.findMany({
-        where: {
-          farmId: activeFarmId,
-          isDeleted: false,
-          category: { in: ALL_HEALTH_CATEGORIES },
-          costPerUnit: { not: null, gt: 0 },
-        },
-        select: { id: true, itemName: true, stockLevel: true, unit: true, costPerUnit: true },
-      });
-
-      let repaired = 0;
-      for (const item of items) {
-        const existing = await tx.expense.findFirst({
+  try {
+    const result = await (prisma as any).$withFarmContext(
+      userId,
+      activeFarmId,
+      async (tx: any) => {
+        const items = await tx.inventory.findMany({
           where: {
             farmId: activeFarmId,
             isDeleted: false,
-            description: { startsWith: `Health stock cost: ${item.itemName}` },
+            category: { in: ALL_HEALTH_CATEGORIES },
+            costPerUnit: { gt: 0 },
           },
+          select: { id: true, itemName: true, stockLevel: true, unit: true, costPerUnit: true },
         });
-        if (existing) continue;
 
-        const result = await upsertHealthStockCostExpense(tx, {
-          farmId: activeFarmId,
-          userId,
-          itemName: item.itemName,
-          unit: item.unit,
-          stockLevel: item.stockLevel,
-          costPerUnit: Number(item.costPerUnit),
-        });
-        if (result.logged) repaired += 1;
+        let repaired = 0;
+        for (const item of items) {
+          const existing = await tx.expense.findFirst({
+            where: {
+              farmId: activeFarmId,
+              isDeleted: false,
+              description: { startsWith: `Health stock cost: ${item.itemName}` },
+            },
+          });
+          if (existing) continue;
+
+          const upsert = await upsertHealthStockCostExpense(tx, {
+            farmId: activeFarmId,
+            userId,
+            itemName: item.itemName,
+            unit: item.unit,
+            stockLevel: item.stockLevel,
+            costPerUnit: Number(item.costPerUnit),
+          });
+          if (upsert.logged) repaired += 1;
+        }
+
+        return { repaired };
       }
+    );
 
-      if (repaired > 0) {
-        revalidatePath("/dashboard/finance");
-        revalidatePath("/dashboard/reports");
-        revalidateFarmPerformanceCaches(activeFarmId);
-      }
-
-      return { repaired };
+    if (options?.revalidate && result.repaired > 0) {
+      revalidatePath("/dashboard/finance");
+      revalidatePath("/dashboard/reports");
+      revalidateFarmPerformanceCaches(activeFarmId);
     }
-  );
+
+    return result;
+  } catch (error) {
+    console.error("repairMissingHealthStockExpenses failed:", error);
+    return { repaired: 0 };
+  }
 }
