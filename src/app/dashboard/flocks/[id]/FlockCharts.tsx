@@ -92,25 +92,64 @@ function summaryAmount(summary: FinanceSummaryPoint[], key: string) {
   return summary.find((r) => r.key === key)?.amount ?? 0
 }
 
+/** Fixed category order/colors — must match batch-finance financeSummary keys. */
+const LIFETIME_CATEGORIES = [
+  { key: 'initial', shortLabel: 'Initial', fill: '#a78bfa', name: 'Initial (batch only)' },
+  { key: 'consumption', shortLabel: 'Feed & med', fill: '#34d399', name: 'Feed & med (by usage)' },
+  { key: 'operating', shortLabel: 'Operating', fill: '#fb923c', name: 'Operating' },
+  { key: 'general', shortLabel: 'General', fill: '#fbbf24', name: 'General share' },
+  { key: 'revenue', shortLabel: 'Revenue', fill: '#38bdf8', name: 'Revenue' },
+] as const
+
+function buildLifetimeBars(summary: FinanceSummaryPoint[]) {
+  return LIFETIME_CATEGORIES.map((category) => {
+    const amount = summaryAmount(summary, category.key)
+    return {
+      key: category.key,
+      label: category.shortLabel,
+      fill: category.fill,
+      name: category.name,
+      amount,
+      // Log scale cannot plot 0 — use null so the slot stays on the axis without breaking scale.
+      chartAmount: amount > 0 ? amount : null,
+    }
+  })
+}
+
 function CategoryTotals({ summary }: { summary: FinanceSummaryPoint[] }) {
-  const rows = [
-    { key: 'initial', label: 'Initial', color: 'text-violet-400', bg: 'bg-violet-500/10 border-violet-500/20' },
-    { key: 'operating', label: 'Operating', color: 'text-orange-400', bg: 'bg-orange-500/10 border-orange-500/20' },
-    { key: 'consumption', label: 'Feed & med', color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
-    { key: 'general', label: 'General share', color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
-    { key: 'revenue', label: 'Revenue', color: 'text-sky-400', bg: 'bg-sky-500/10 border-sky-500/20' },
-  ]
-
-  const visible = rows
-    .map((row) => ({ ...row, amount: summaryAmount(summary, row.key) }))
-    .filter((row) => row.amount > 0)
-
-  if (visible.length === 0) return null
+  const rows = LIFETIME_CATEGORIES.map((category) => ({
+    key: category.key,
+    label: category.shortLabel === 'Feed & med' ? 'Feed & med' : category.shortLabel === 'General' ? 'General share' : category.shortLabel,
+    color:
+      category.key === 'initial'
+        ? 'text-violet-400'
+        : category.key === 'operating'
+          ? 'text-orange-400'
+          : category.key === 'consumption'
+            ? 'text-emerald-400'
+            : category.key === 'general'
+              ? 'text-amber-400'
+              : 'text-sky-400',
+    bg:
+      category.key === 'initial'
+        ? 'bg-violet-500/10 border-violet-500/20'
+        : category.key === 'operating'
+          ? 'bg-orange-500/10 border-orange-500/20'
+          : category.key === 'consumption'
+            ? 'bg-emerald-500/10 border-emerald-500/20'
+            : category.key === 'general'
+              ? 'bg-amber-500/10 border-amber-500/20'
+              : 'bg-sky-500/10 border-sky-500/20',
+    amount: summaryAmount(summary, category.key),
+  }))
 
   return (
     <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-      {visible.map((row) => (
-        <div key={row.key} className={cn('rounded-lg border px-3 py-2', row.bg)}>
+      {rows.map((row) => (
+        <div
+          key={row.key}
+          className={cn('rounded-lg border px-3 py-2 transition-opacity', row.bg, row.amount <= 0 && 'opacity-45')}
+        >
           <p className="text-[9px] font-bold uppercase tracking-widest text-white/45">{row.label}</p>
           <p className={cn('text-sm font-bold', row.color)}>{formatCurrency(row.amount, 'GHS')}</p>
         </div>
@@ -128,29 +167,17 @@ export function FinanceTrendPanel({
   monthly: FinancePoint[]
   locked?: boolean
 }) {
-  const initial = summaryAmount(summary, 'initial')
-  const operating = summaryAmount(summary, 'operating')
-  const consumption = summaryAmount(summary, 'consumption')
-  const general = summaryAmount(summary, 'general')
-  const revenue = summaryAmount(summary, 'revenue')
-
   const netProfit = summary.reduce((sum, row) => {
     if (row.key === 'revenue') return sum + row.amount
     return sum - row.amount
   }, 0)
 
-  const lifetimeBars = [
-    { label: 'Initial', amount: initial, fill: '#a78bfa', name: 'Initial (batch only)' },
-    { label: 'Feed & med', amount: consumption, fill: '#34d399', name: 'Feed & med (by usage)' },
-    { label: 'Operating', amount: operating, fill: '#fb923c', name: 'Operating' },
-    { label: 'General', amount: general, fill: '#fbbf24', name: 'General share' },
-    { label: 'Revenue', amount: revenue, fill: '#38bdf8', name: 'Revenue' },
-  ].filter((row) => row.amount > 0)
-
-  const positiveAmounts = lifetimeBars.map((row) => row.amount)
+  const lifetimeBars = buildLifetimeBars(summary)
+  const positiveAmounts = lifetimeBars.map((row) => row.amount).filter((amount) => amount > 0)
   const useLogScale =
     positiveAmounts.length >= 2 &&
     Math.max(...positiveAmounts) / Math.min(...positiveAmounts) >= 25
+  const hasAnyActivity = positiveAmounts.length > 0 || monthly.length > 0
 
   return (
     <ChartCard
@@ -165,7 +192,7 @@ export function FinanceTrendPanel({
     >
       {locked ? (
         <ChartEmpty label="Finance permission is required to view revenue & expenses." />
-      ) : summary.some((row) => row.amount > 0) || monthly.length > 0 ? (
+      ) : hasAnyActivity || summary.length > 0 ? (
         <div className="space-y-6">
           <CategoryTotals summary={summary} />
 
@@ -178,20 +205,27 @@ export function FinanceTrendPanel({
                 </span>
               ) : null}
             </div>
-            <div className="h-[280px] w-full">
+            <div className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={lifetimeBars} margin={{ top: 8, right: 12, left: 4, bottom: 6 }}>
+                <BarChart data={lifetimeBars} margin={{ top: 8, right: 12, left: 4, bottom: 20 }}>
                   <CartesianGrid stroke={gridStroke} strokeDasharray="3 3" vertical={false} />
                   <XAxis
                     dataKey="label"
-                    tick={{ fill: chartText, fontSize: 10, fontWeight: 700 }}
+                    tick={{ fill: chartText, fontSize: 9, fontWeight: 700 }}
                     axisLine={false}
                     tickLine={false}
                     interval={0}
+                    angle={-20}
+                    textAnchor="end"
+                    height={52}
                   />
                   <YAxis
                     scale={useLogScale ? 'log' : 'auto'}
-                    domain={useLogScale ? [Math.max(1, Math.min(...positiveAmounts) * 0.5), 'auto'] : [0, 'auto']}
+                    domain={
+                      useLogScale
+                        ? [Math.max(1, Math.min(...positiveAmounts) * 0.5), 'auto']
+                        : [0, 'auto']
+                    }
                     tick={{ fill: chartText, fontSize: 11, fontWeight: 700 }}
                     axisLine={false}
                     tickLine={false}
@@ -199,22 +233,49 @@ export function FinanceTrendPanel({
                     tickFormatter={(v) => `₵${compact.format(Number(v))}`}
                     allowDataOverflow
                   />
-                  <Tooltip content={<MoneyTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
-                  <Bar dataKey="amount" radius={[6, 6, 0, 0]} barSize={48}>
+                  <Tooltip
+                    content={({ active, payload, label }) => {
+                      if (!active || !payload?.[0]) return null
+                      const row = payload[0].payload as (typeof lifetimeBars)[number]
+                      return (
+                        <div className="rounded-lg border border-white/10 bg-slate-950/95 p-3 text-xs shadow-2xl backdrop-blur-md">
+                          <p className="mb-1 font-bold text-white">{label}</p>
+                          <p style={{ color: row.fill }} className="font-bold">
+                            {row.name}: {formatCurrency(row.amount, 'GHS')}
+                          </p>
+                        </div>
+                      )
+                    }}
+                    cursor={{ fill: 'rgba(255,255,255,0.04)' }}
+                  />
+                  <Bar dataKey={useLogScale ? 'chartAmount' : 'amount'} radius={[6, 6, 0, 0]} barSize={36} minPointSize={4}>
                     {lifetimeBars.map((row) => (
-                      <Cell key={row.label} fill={row.fill} />
+                      <Cell key={row.key} fill={row.fill} fillOpacity={row.amount > 0 ? 1 : 0.25} />
                     ))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
             <div className="mt-3 flex flex-wrap gap-3">
-              {lifetimeBars.map((row) => (
-                <div key={row.label} className="flex items-center gap-1.5 text-[10px] font-bold text-white/60">
-                  <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: row.fill }} />
-                  {row.name}
-                </div>
-              ))}
+              {LIFETIME_CATEGORIES.map((category) => {
+                const amount = summaryAmount(summary, category.key)
+                return (
+                  <div
+                    key={category.key}
+                    className={cn(
+                      'flex items-center gap-1.5 text-[10px] font-bold',
+                      amount > 0 ? 'text-white/70' : 'text-white/35'
+                    )}
+                  >
+                    <span
+                      className="h-2.5 w-2.5 rounded-sm"
+                      style={{ backgroundColor: category.fill, opacity: amount > 0 ? 1 : 0.35 }}
+                    />
+                    {category.name}
+                    <span className="text-white/30">({formatCurrency(amount, 'GHS')})</span>
+                  </div>
+                )
+              })}
             </div>
           </div>
 

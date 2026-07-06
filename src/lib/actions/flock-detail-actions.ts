@@ -338,7 +338,17 @@ export async function getFlockDeepDive(id: string) {
       },
       series: {
         financeMonthly: batchFinance?.financeMonthly ?? [],
-        financeSummary: batchFinance?.financeSummary ?? [],
+        financeSummary:
+          batchFinance?.financeSummary ??
+          (canViewFinance
+            ? [
+                { label: 'Initial Investment', key: 'initial', amount: 0 },
+                { label: 'Operating', key: 'operating', amount: 0 },
+                { label: 'Feed & Med (by usage)', key: 'consumption', amount: 0 },
+                { label: 'General Share', key: 'general', amount: 0 },
+                { label: 'Revenue', key: 'revenue', amount: 0 },
+              ]
+            : []),
         eggDaily,
         mortalityDaily,
         salesDaily,

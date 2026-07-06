@@ -3,6 +3,7 @@ import { getFlockDeepDive } from '@/lib/actions/flock-detail-actions';
 import { notFound } from 'next/navigation';
 import { FlockDetailClient } from './FlockDetailClient';
 import { FlockLogsHistory } from './FlockLogsHistory';
+import { FlockReportGenerator } from './FlockReportGenerator';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { getBreedDisplayName } from '@/lib/livestock-breed-options';
 
@@ -34,8 +35,9 @@ export default async function FlockDetailPage({ params }: { params: Promise<{ id
              {getBreedDisplayName(batch.breedType)} • {batch.house?.name || 'House not named'}
           </p>
         </div>
-        <div className="relative z-10">
+        <div className="relative z-10 flex flex-wrap items-center gap-2">
           <FlockLogsHistory data={data} />
+          <FlockReportGenerator data={data} />
         </div>
       </div>
 
