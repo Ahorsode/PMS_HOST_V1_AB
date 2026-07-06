@@ -703,7 +703,7 @@ export async function getAllBatches() {
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const batches = await tx.livestock.findMany({
-      where: { farmId: activeFarmId },
+      where: { farmId: activeFarmId, isDeleted: false },
       include: {
         house: true,
         user: {
