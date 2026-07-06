@@ -41,7 +41,20 @@ function getBatchBasePrice(batch: any) {
   return initialCost > 0 && initialCount > 0 ? toMoney(initialCost / initialCount) : 0;
 }
 
-function getInitialItem(livestock: any[], initialLivestockId?: string): SaleItemState {
+function getEggInventory(inventory: any[]) {
+  const eggs = inventory.filter(
+    (item: any) =>
+      item.category === 'EGGS' ||
+      String(item.itemName || '').toLowerCase().includes('egg'),
+  );
+  return eggs.length > 0 ? eggs : inventory;
+}
+
+function getInitialItem(
+  livestock: any[],
+  eggInventory: any[],
+  initialLivestockId?: string,
+): SaleItemState {
   const batch = initialLivestockId ? livestock.find((item) => item.id === initialLivestockId) : null;
 
   if (batch) {
@@ -54,6 +67,28 @@ function getInitialItem(livestock: any[], initialLivestockId?: string): SaleItem
     };
   }
 
+  if (eggInventory.length > 0) {
+    const entry = eggInventory[0];
+    return {
+      productType: 'inventory',
+      productId: entry.id,
+      description: entry.itemName || 'Eggs',
+      quantity: 1,
+      unitPrice: getInventorySalePrice(entry)
+    };
+  }
+
+  if (livestock.length === 1) {
+    const entry = livestock[0];
+    return {
+      productType: 'livestock',
+      productId: entry.id,
+      description: entry.batchName || 'Livestock Sale',
+      quantity: 1,
+      unitPrice: getBatchBasePrice(entry)
+    };
+  }
+
   return {
     productType: 'inventory',
     productId: '',
@@ -63,8 +98,68 @@ function getInitialItem(livestock: any[], initialLivestockId?: string): SaleItem
   };
 }
 
+function shouldHideProductPicker(
+  item: SaleItemState,
+  eggInventory: any[],
+  livestock: any[],
+) {
+  if (item.productType === 'custom') {
+    return false;
+  }
+  const catalog = item.productType === 'inventory' ? eggInventory : livestock;
+  if (catalog.length === 0) {
+    return false;
+  }
+  if (catalog.length === 1) {
+    return true;
+  }
+  return item.productType === 'inventory' && eggInventory.length > 0;
+}
+
+function buildAutoSelectedProduct(
+  productType: ProductType,
+  eggInventory: any[],
+  livestock: any[],
+): Pick<SaleItemState, 'productId' | 'description' | 'unitPrice'> {
+  if (productType === 'custom') {
+    return {
+      productId: '',
+      description: 'Custom Sale Item',
+      unitPrice: 0,
+    };
+  }
+
+  const catalog = productType === 'inventory' ? eggInventory : livestock;
+  if (catalog.length === 0) {
+    return { productId: '', description: '', unitPrice: 0 };
+  }
+
+  const shouldAutoSelect =
+    catalog.length === 1 || (productType === 'inventory' && eggInventory.length > 0);
+  if (!shouldAutoSelect) {
+    return { productId: '', description: '', unitPrice: 0 };
+  }
+
+  const entry = catalog[0];
+  if (productType === 'inventory') {
+    return {
+      productId: entry.id,
+      description: entry.itemName || 'Eggs',
+      unitPrice: getInventorySalePrice(entry),
+    };
+  }
+
+  return {
+    productId: entry.id,
+    description: entry.batchName || 'Livestock Sale',
+    unitPrice: getBatchBasePrice(entry),
+  };
+}
+
 export function SalesForm({ customers, inventory, livestock, onSuccess, initialLivestockId, canOverridePrice = false, canAddCustomer = true }: SalesFormProps) {
-  const [items, setItems] = useState<SaleItemState[]>([getInitialItem(livestock, initialLivestockId)]);
+  const [items, setItems] = useState<SaleItemState[]>(() => [
+    getInitialItem(livestock, getEggInventory(inventory), initialLivestockId),
+  ]);
   const [customerOptions, setCustomerOptions] = useState<SaleCustomer[]>(
     () => customers.map((c) => ({ id: c.id, name: c.name, phone: c.phone }))
   );
@@ -75,10 +170,7 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
   const [customerId, setCustomerId] = useState('');
   const [saleDate, setSaleDate] = useState(() => toLocalDateTimeInputValue());
 
-  const eggInventory = useMemo(() => {
-    const eggs = inventory.filter((item: any) => item.category === 'EGGS' || String(item.itemName || '').toLowerCase().includes('egg'));
-    return eggs.length > 0 ? eggs : inventory;
-  }, [inventory]);
+  const eggInventory = useMemo(() => getEggInventory(inventory), [inventory]);
 
   const getItemBasePrice = (item: SaleItemState) => {
     if (item.productType === 'inventory') {
@@ -103,9 +195,7 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
   const updateProductType = (index: number, productType: ProductType) => {
     updateItem(index, {
       productType,
-      productId: '',
-      description: productType === 'custom' ? 'Custom Sale Item' : '',
-      unitPrice: 0
+      ...buildAutoSelectedProduct(productType, eggInventory, livestock),
     });
   };
 
@@ -134,7 +224,16 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
   };
 
   const addItem = () => {
-    setItems((current) => [...current, getInitialItem(livestock)]);
+    setItems((current) => [
+      ...current,
+      buildAutoSelectedProduct('inventory', eggInventory, livestock).productId
+        ? {
+            productType: 'inventory',
+            quantity: 1,
+            ...buildAutoSelectedProduct('inventory', eggInventory, livestock),
+          }
+        : getInitialItem(livestock, eggInventory, initialLivestockId),
+    ]);
   };
 
   const removeItem = (index: number) => {
@@ -320,6 +419,11 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
                         onChange={(event) => updateItem(index, { description: event.target.value })}
                         className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
                       />
+                    ) : shouldHideProductPicker(item, eggInventory, livestock) ? (
+                      <div className="flex h-11 min-w-0 items-center rounded-md border border-white/10 bg-slate-950/40 px-3 text-sm font-bold text-white">
+                        {item.description ||
+                          (item.productType === 'inventory' ? 'Eggs' : 'Livestock batch')}
+                      </div>
                     ) : (
                       <select
                         value={item.productId}
