@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions'
 import { generateComprehensiveFarmReport } from '@/lib/actions/reports'
+import { getAllBatches } from '@/lib/actions/dashboard-actions'
 import { ReportsClient } from './ReportsClient'
 
 export default async function ReportsPage() {
@@ -16,7 +17,6 @@ export default async function ReportsPage() {
     redirect('/dashboard/unauthorized')
   }
 
-  // Default to past 30 days
   const end = new Date()
   const start = new Date()
   start.setDate(end.getDate() - 30)
@@ -24,17 +24,27 @@ export default async function ReportsPage() {
   const startStr = start.toISOString().split('T')[0]
   const endStr = end.toISOString().split('T')[0]
 
-  const report = await generateComprehensiveFarmReport(activeFarmId, start, end)
+  const [report, rawBatches] = await Promise.all([
+    generateComprehensiveFarmReport(activeFarmId, start, end),
+    getAllBatches(),
+  ])
 
   if (!report) {
     return (
-      <div className="p-8 text-center text-rose-400 font-bold uppercase border border-rose-500/20 bg-rose-500/10 rounded-xl">
+      <div className="rounded-lg border border-rose-500/20 bg-rose-500/10 p-8 text-center text-sm font-bold uppercase text-rose-400">
         Failed to fetch farm data. Please ensure the farm is correctly initialized.
       </div>
     )
   }
 
-  // Client callback server-action wrapper
+  const batches = (rawBatches as any[]).map((batch) => ({
+    id: batch.id,
+    batchName: batch.batchName,
+    currentCount: batch.currentCount,
+    status: batch.status,
+    house: batch.house ? { name: batch.house.name } : null,
+  }))
+
   async function fetchReport(s: string, e: string) {
     'use server'
     const { activeFarmId: currentFarmId } = await getAuthContext()
@@ -43,8 +53,8 @@ export default async function ReportsPage() {
   }
 
   return (
-    <div className="p-5 max-w-7xl mx-auto animate-in fade-in duration-700">
-      <ReportsClient initialReport={report} onDateChange={fetchReport} />
+    <div className="relative mx-auto max-w-7xl animate-in fade-in px-3 py-7 duration-700">
+      <ReportsClient initialReport={report} batches={batches} onDateChange={fetchReport} />
     </div>
   )
 }
