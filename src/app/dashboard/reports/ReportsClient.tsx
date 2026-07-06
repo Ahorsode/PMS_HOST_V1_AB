@@ -4,8 +4,6 @@ import React, { useState } from 'react'
 import Link from 'next/link'
 import {
   Activity,
-  ArrowRight,
-  Bird,
   Calendar,
   Egg,
   FileText,
@@ -17,6 +15,7 @@ import {
   Wheat,
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { ReportGeneratorLauncher } from '@/components/reports/ReportGeneratorLauncher'
 import { ComprehensiveReport } from '@/lib/actions/reports'
 import { cn, formatCurrency } from '@/lib/utils'
 
@@ -133,53 +132,43 @@ export function ReportsClient({
             Farm-wide analytics · Batch exports from livestock management
           </p>
         </div>
-        <Link
-          href="/dashboard/flocks"
-          className="inline-flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-2.5 text-[11px] font-bold uppercase tracking-widest text-emerald-300 transition-colors hover:bg-emerald-500/15"
-        >
-          <Bird className="h-4 w-4" />
-          Open livestock management
-        </Link>
+        <ReportGeneratorLauncher batches={batchRows} buttonSize="md" />
       </div>
 
       <section className="glass-morphism overflow-hidden rounded-lg border border-emerald-500/20 shadow-2xl">
         <div className="border-b border-white/10 bg-emerald-500/[0.06] px-6 py-5">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <h2 className="flex items-center gap-2 text-sm font-bold uppercase italic text-white">
-                <FileText className="h-4 w-4 text-emerald-400" />
-                Generate batch reports here
-              </h2>
-              <p className="mt-1 max-w-2xl text-xs font-medium leading-relaxed text-white/60">
-                Downloadable PDF and Word reports are created per batch on the livestock management page.
-                Choose duration, data sections, format, preview, and WhatsApp share from the batch header.
-              </p>
-            </div>
+          <div>
+            <h2 className="flex items-center gap-2 text-sm font-bold uppercase italic text-white">
+              <FileText className="h-4 w-4 text-emerald-400" />
+              Batch reports
+            </h2>
+            <p className="mt-1 max-w-2xl text-xs font-medium leading-relaxed text-white/60">
+              Click a batch name to open livestock management. Use Generate Report to download PDF or Word for that unit.
+            </p>
           </div>
         </div>
         <div className="divide-y divide-white/5">
           {batchRows.length === 0 ? (
             <div className="px-6 py-10 text-center text-xs font-bold uppercase italic tracking-widest text-white/40">
-              No livestock batches yet. Create a batch first, then generate reports from its management page.
+              No livestock batches yet. Create a batch first, then generate reports here.
             </div>
           ) : (
             batchRows.map((batch) => (
               <div key={batch.id} className="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-bold text-white">{batch.batchName || 'Unnamed batch'}</p>
+                  <Link
+                    href={`/dashboard/flocks/${batch.id}`}
+                    className="truncate text-sm font-bold text-white transition-colors hover:text-emerald-300"
+                  >
+                    {batch.batchName || 'Unnamed batch'}
+                  </Link>
                   <p className="mt-0.5 text-[10px] font-bold uppercase tracking-wider text-white/45">
                     {batch.currentCount?.toLocaleString?.() ?? batch.currentCount} birds ·{' '}
                     {String(batch.status || 'active').toUpperCase()}
                     {'house' in batch && batch.house?.name ? ` · ${batch.house.name}` : ''}
                   </p>
                 </div>
-                <Link
-                  href={`/dashboard/flocks/${batch.id}`}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-white/75 transition-colors hover:border-emerald-500/30 hover:text-emerald-300"
-                >
-                  Open & generate report
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
+                <ReportGeneratorLauncher batches={batchRows} presetBatchId={batch.id} />
               </div>
             ))
           )}

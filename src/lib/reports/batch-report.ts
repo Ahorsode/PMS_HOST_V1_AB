@@ -201,6 +201,80 @@ export function buildBatchReport(
   return report
 }
 
+export function earliestBatchArrivalDate(payloads: any[]) {
+  if (payloads.length === 0) return new Date()
+  return payloads.reduce((earliest, payload) => {
+    const date = new Date(payload.batch.arrivalDate)
+    return date < earliest ? date : earliest
+  }, new Date(payloads[0].batch.arrivalDate))
+}
+
+export function buildCombinedBatchReport(
+  payloads: any[],
+  range: DateRange,
+  sections: ReportSectionKey[]
+): BatchReportDocument {
+  const singleReports = payloads.map((payload) => buildBatchReport(payload, range, sections))
+  const canViewFinance = payloads.some((payload) => payload.finance?.canViewFinance)
+
+  const entries = singleReports.flatMap((report) =>
+    report.entries.map((entry) => ({
+      ...entry,
+      id: `${report.batchName}-${entry.id}`,
+      title: `[${report.batchName}] ${entry.title}`,
+    }))
+  )
+
+  const metrics = singleReports.reduce(
+    (acc, report) => ({
+      currentCount: acc.currentCount + report.metrics.currentCount,
+      initialCount: acc.initialCount + report.metrics.initialCount,
+      ageInDays: Math.max(acc.ageInDays, report.metrics.ageInDays),
+      totalFeed: acc.totalFeed + report.metrics.totalFeed,
+      totalEggs: acc.totalEggs + report.metrics.totalEggs,
+      totalMortality: acc.totalMortality + report.metrics.totalMortality,
+      mortalityRate: 0,
+    }),
+    { currentCount: 0, initialCount: 0, ageInDays: 0, totalFeed: 0, totalEggs: 0, totalMortality: 0, mortalityRate: 0 }
+  )
+  metrics.mortalityRate = metrics.initialCount > 0 ? (metrics.totalMortality / metrics.initialCount) * 100 : 0
+
+  const combined: BatchReportDocument = {
+    batchName: `All batches (${payloads.length})`,
+    breed: `${payloads.length} livestock units`,
+    house: 'Multiple houses',
+    status: 'COMBINED',
+    periodLabel: range.label,
+    generatedAt: new Date().toLocaleString(),
+    sections,
+    metrics,
+    entries: entries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+  }
+
+  if (sections.includes('finance') && canViewFinance) {
+    combined.finance = singleReports.reduce(
+      (acc, report) => ({
+        totalRevenue: acc.totalRevenue + (report.finance?.totalRevenue ?? 0),
+        totalExpenses: acc.totalExpenses + (report.finance?.totalExpenses ?? 0),
+        netProfit: acc.netProfit + (report.finance?.netProfit ?? 0),
+        initialInvestment: acc.initialInvestment + (report.finance?.initialInvestment ?? 0),
+      }),
+      { totalRevenue: 0, totalExpenses: 0, netProfit: 0, initialInvestment: 0 }
+    )
+  }
+
+  return combined
+}
+
+export function buildReportFromSources(
+  payloads: any[],
+  range: DateRange,
+  sections: ReportSectionKey[]
+) {
+  if (payloads.length === 1) return buildBatchReport(payloads[0], range, sections)
+  return buildCombinedBatchReport(payloads, range, sections)
+}
+
 function escapeHtml(value: string) {
   return value
     .replace(/&/g, '&amp;')
