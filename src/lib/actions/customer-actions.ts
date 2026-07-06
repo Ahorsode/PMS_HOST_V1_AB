@@ -26,6 +26,7 @@ export async function createCustomer(data: {
       }
     })
     revalidatePath('/dashboard/customers')
+    revalidatePath('/dashboard/sales')
     return { success: true, customer }
   } catch (error) {
     console.error('Error creating customer:', error)

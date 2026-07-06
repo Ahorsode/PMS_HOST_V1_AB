@@ -47,6 +47,7 @@ export function SalesActionsHeader({ customers, inventory, livestock, initialLiv
             livestock={livestock}
             initialLivestockId={initialLivestockId}
             canOverridePrice={canOverridePrice}
+            canAddCustomer={canEdit}
             onSuccess={() => {
               setIsOpen(false);
               router.refresh();

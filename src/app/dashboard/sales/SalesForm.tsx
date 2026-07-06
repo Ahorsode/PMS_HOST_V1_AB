@@ -5,6 +5,7 @@ import { createOrder } from '@/lib/actions/order-actions';
 import { toast } from 'sonner';
 import { AlertTriangle, Banknote, Calendar, Lock, Plus, ShieldCheck, ShoppingCart, Trash2 } from 'lucide-react';
 import { toLocalDateTimeInputValue } from '@/lib/financial-dates';
+import { QuickAddCustomerButton, type SaleCustomer } from './QuickAddCustomerButton';
 
 type ProductType = 'inventory' | 'livestock' | 'custom';
 
@@ -23,6 +24,7 @@ interface SalesFormProps {
   onSuccess: () => void;
   initialLivestockId?: string;
   canOverridePrice?: boolean;
+  canAddCustomer?: boolean;
 }
 
 function toMoney(value: number) {
@@ -61,8 +63,11 @@ function getInitialItem(livestock: any[], initialLivestockId?: string): SaleItem
   };
 }
 
-export function SalesForm({ customers, inventory, livestock, onSuccess, initialLivestockId, canOverridePrice = false }: SalesFormProps) {
+export function SalesForm({ customers, inventory, livestock, onSuccess, initialLivestockId, canOverridePrice = false, canAddCustomer = true }: SalesFormProps) {
   const [items, setItems] = useState<SaleItemState[]>([getInitialItem(livestock, initialLivestockId)]);
+  const [customerOptions, setCustomerOptions] = useState<SaleCustomer[]>(
+    () => customers.map((c) => ({ id: c.id, name: c.name, phone: c.phone }))
+  );
   const [discountValue, setDiscountValue] = useState<number | ''>(0);
   const [discountType, setDiscountType] = useState<'flat' | 'percent'>('flat');
   const [totalCashReceived, setTotalCashReceived] = useState<number | ''>('');
@@ -231,10 +236,21 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
             className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-white/10 px-3 text-sm font-bold text-white outline-none transition-all focus:border-emerald-500/50"
           >
             <option value="" className="bg-slate-900">Walk-in Customer</option>
-            {customers.map((customer) => (
+            {customerOptions.map((customer) => (
               <option key={customer.id} value={customer.id} className="bg-slate-900">{customer.name}</option>
             ))}
           </select>
+          {canAddCustomer ? (
+            <QuickAddCustomerButton
+              onCreated={(customer) => {
+                setCustomerOptions((current) => {
+                  if (current.some((row) => row.id === customer.id)) return current
+                  return [...current, customer].sort((a, b) => a.name.localeCompare(b.name))
+                })
+                setCustomerId(customer.id)
+              }}
+            />
+          ) : null}
         </div>
 
         <div className="space-y-2 min-w-0">
