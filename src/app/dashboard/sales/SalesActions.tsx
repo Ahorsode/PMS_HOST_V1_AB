@@ -39,9 +39,9 @@ export function SalesActionsHeader({ customers, inventory, livestock, initialLiv
         isOpen={isOpen} 
         onOpenChange={setIsOpen}
         title="Farm-Gate Sale Entry"
+        className="max-w-4xl"
       >
-        <div className="p-1">
-          <SalesForm 
+        <SalesForm 
             customers={customers} 
             inventory={inventory}
             livestock={livestock}
@@ -52,7 +52,6 @@ export function SalesActionsHeader({ customers, inventory, livestock, initialLiv
               router.refresh();
             }} 
           />
-        </div>
       </Dialog>
     </>
   );

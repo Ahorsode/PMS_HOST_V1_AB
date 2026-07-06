@@ -64,7 +64,7 @@ function getInitialItem(livestock: any[], initialLivestockId?: string): SaleItem
 export function SalesForm({ customers, inventory, livestock, onSuccess, initialLivestockId, canOverridePrice = false }: SalesFormProps) {
   const [items, setItems] = useState<SaleItemState[]>([getInitialItem(livestock, initialLivestockId)]);
   const [discountValue, setDiscountValue] = useState<number | ''>(0);
-  const [discountType, setDiscountType] = useState<'flat' | 'percent'>('percent');
+  const [discountType, setDiscountType] = useState<'flat' | 'percent'>('flat');
   const [totalCashReceived, setTotalCashReceived] = useState<number | ''>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [customerId, setCustomerId] = useState('');
@@ -221,14 +221,14 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_240px_220px]">
-        <div className="space-y-2">
+    <form onSubmit={handleSubmit} className="space-y-5 overflow-hidden">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="space-y-2 min-w-0">
           <label className="px-1 text-xs font-bold uppercase tracking-widest text-white/90">Customer</label>
           <select
             value={customerId}
             onChange={(event) => setCustomerId(event.target.value)}
-            className="h-12 w-full rounded-md border border-white/10 bg-white/10 px-3 text-sm font-bold text-white outline-none transition-all focus:border-emerald-500/50"
+            className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-white/10 px-3 text-sm font-bold text-white outline-none transition-all focus:border-emerald-500/50"
           >
             <option value="" className="bg-slate-900">Walk-in Customer</option>
             {customers.map((customer) => (
@@ -237,9 +237,9 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
           </select>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-2 min-w-0">
           <label className="flex items-center gap-1 px-1 text-xs font-bold uppercase tracking-widest text-white/90">
-            <Calendar className="h-3.5 w-3.5 text-emerald-300" />
+            <Calendar className="h-3.5 w-3.5 shrink-0 text-emerald-300" />
             Sale Date & Time
           </label>
           <input
@@ -247,16 +247,18 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
             required
             value={saleDate}
             onChange={(event) => setSaleDate(event.target.value)}
-            className="h-12 w-full rounded-md border border-white/10 bg-white/10 px-3 text-sm font-bold text-white outline-none transition-all focus:border-emerald-500/50"
+            className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-white/10 px-3 text-sm font-bold text-white outline-none transition-all focus:border-emerald-500/50"
           />
         </div>
+      </div>
 
-        <div className="rounded-md border border-emerald-500/20 bg-emerald-500/10 p-3">
+      <div className="rounded-md border border-emerald-500/20 bg-emerald-500/10 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-emerald-300">
-            {canOverridePrice ? <ShieldCheck className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+            {canOverridePrice ? <ShieldCheck className="h-4 w-4 shrink-0" /> : <Lock className="h-4 w-4 shrink-0" />}
             {canOverridePrice ? 'Manager Controls' : 'Locked Pricing'}
           </div>
-          <p className="mt-2 text-2xl font-bold text-white">GHS {total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+          <p className="text-2xl font-bold text-white">GHS {total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
         </div>
       </div>
 
@@ -279,14 +281,14 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
             const lineTotal = toMoney(Number(item.quantity || 0) * effectivePrice);
 
             return (
-              <div key={index} className="rounded-md border border-white/10 bg-white/5 p-4">
-                <div className="grid grid-cols-1 gap-3 xl:grid-cols-[140px_1fr_150px_160px_44px]">
-                  <div className="space-y-1">
+              <div key={index} className="overflow-hidden rounded-md border border-white/10 bg-white/5 p-4">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="space-y-1 min-w-0">
                     <label className="text-[10px] font-black uppercase tracking-widest text-white/50">Type</label>
                     <select
                       value={item.productType}
                       onChange={(event) => updateProductType(index, event.target.value as ProductType)}
-                      className="h-11 w-full rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+                      className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
                     >
                       <option value="inventory">Eggs</option>
                       <option value="livestock">Birds</option>
@@ -294,19 +296,19 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
                     </select>
                   </div>
 
-                  <div className="space-y-1">
+                  <div className="space-y-1 min-w-0">
                     <label className="text-[10px] font-black uppercase tracking-widest text-white/50">Product</label>
                     {item.productType === 'custom' ? (
                       <input
                         value={item.description}
                         onChange={(event) => updateItem(index, { description: event.target.value })}
-                        className="h-11 w-full rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+                        className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
                       />
                     ) : (
                       <select
                         value={item.productId}
                         onChange={(event) => updateProduct(index, event.target.value)}
-                        className="h-11 w-full rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+                        className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
                       >
                         <option value="" className="bg-slate-900">Select product</option>
                         {(item.productType === 'inventory' ? eggInventory : livestock).map((entry: any) => (
@@ -319,8 +321,10 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
                       </select>
                     )}
                   </div>
+                </div>
 
-                  <div className="space-y-1">
+                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+                  <div className="space-y-1 min-w-0">
                     <label className="text-[10px] font-black uppercase tracking-widest text-white/50">Quantity Sold</label>
                     <input
                       type="number"
@@ -329,14 +333,14 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
                       step="1"
                       value={item.quantity}
                       onChange={(event) => updateItem(index, { quantity: event.target.value === '' ? '' : Number(event.target.value) })}
-                      className="h-11 w-full rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+                      className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
                     />
                   </div>
 
-                  <div className="space-y-1">
+                  <div className="space-y-1 min-w-0">
                     <label className="text-[10px] font-black uppercase tracking-widest text-white/50">Unit Price</label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-300/60">GHS</span>
+                    <div className="relative min-w-0">
+                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-300/60">GHS</span>
                       <input
                         type="number"
                         min="0"
@@ -344,33 +348,30 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
                         value={canOverridePrice ? item.unitPrice : basePrice}
                         onChange={(event) => updateItem(index, { unitPrice: event.target.value === '' ? '' : Number(event.target.value) })}
                         disabled={!canOverridePrice}
-                        className="h-11 w-full rounded-md border border-white/10 bg-slate-950/70 px-12 text-sm font-bold text-emerald-300 outline-none transition-all focus:border-emerald-500/50 disabled:cursor-not-allowed disabled:bg-slate-950/40 disabled:text-white/60"
+                        className="box-border h-11 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 py-0 pl-11 pr-10 text-sm font-bold text-emerald-300 outline-none transition-all focus:border-emerald-500/50 disabled:cursor-not-allowed disabled:bg-slate-950/40 disabled:text-white/60"
                       />
-                      {!canOverridePrice && <Lock className="absolute right-3 top-3.5 h-4 w-4 text-white/30" />}
+                      {!canOverridePrice && <Lock className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />}
                     </div>
                   </div>
 
-                  <div className="flex items-end justify-between gap-2 xl:justify-end">
-                    <div className="xl:hidden">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-white/40">Line</p>
-                      <p className="text-sm font-bold text-emerald-300">GHS {lineTotal.toFixed(2)}</p>
-                    </div>
+                  <div className="flex items-end sm:justify-end">
                     <button
                       type="button"
                       onClick={() => removeItem(index)}
                       disabled={items.length === 1}
                       title="Remove line"
-                      className="h-11 w-11 rounded-md border border-transparent text-white/30 transition-all hover:border-red-500/20 hover:bg-red-500/10 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-30"
+                      className="h-11 w-11 shrink-0 rounded-md border border-transparent text-white/30 transition-all hover:border-red-500/20 hover:bg-red-500/10 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-30"
                     >
                       <Trash2 className="mx-auto h-4 w-4" />
                     </button>
                   </div>
                 </div>
+
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-3">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">
                     Base: GHS {basePrice.toFixed(2)}
                   </span>
-                  <span className="hidden text-sm font-bold text-emerald-300 xl:block">Line Total: GHS {lineTotal.toFixed(2)}</span>
+                  <span className="text-sm font-bold text-emerald-300">Line Total: GHS {lineTotal.toFixed(2)}</span>
                 </div>
               </div>
             );
@@ -379,23 +380,23 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
       </div>
 
       {canOverridePrice && (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_180px]">
-          <div className="space-y-2">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_160px]">
+          <div className="space-y-2 min-w-0">
             <label className="px-1 text-xs font-bold uppercase tracking-widest text-white/90">Discount</label>
-            <div className="flex overflow-hidden rounded-md border border-white/10 bg-white/5">
-              <button
-                type="button"
-                onClick={() => setDiscountType('percent')}
-                className={`w-16 border-r border-white/10 text-xs font-bold transition-all ${discountType === 'percent' ? 'bg-emerald-500 text-[#064e3b]' : 'text-white/60'}`}
-              >
-                %
-              </button>
+            <div className="flex min-w-0 overflow-hidden rounded-md border border-white/10 bg-white/5">
               <button
                 type="button"
                 onClick={() => setDiscountType('flat')}
-                className={`w-20 border-r border-white/10 text-xs font-bold transition-all ${discountType === 'flat' ? 'bg-emerald-500 text-[#064e3b]' : 'text-white/60'}`}
+                className={`shrink-0 border-r border-white/10 px-4 py-3 text-xs font-bold transition-all ${discountType === 'flat' ? 'bg-emerald-500 text-[#064e3b]' : 'text-white/60'}`}
               >
                 GHS
+              </button>
+              <button
+                type="button"
+                onClick={() => setDiscountType('percent')}
+                className={`shrink-0 border-r border-white/10 px-4 py-3 text-xs font-bold transition-all ${discountType === 'percent' ? 'bg-emerald-500 text-[#064e3b]' : 'text-white/60'}`}
+              >
+                %
               </button>
               <input
                 type="number"
@@ -403,7 +404,7 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
                 step="0.01"
                 value={discountValue}
                 onChange={(event) => setDiscountValue(event.target.value === '' ? '' : Number(event.target.value))}
-                className="h-12 flex-1 bg-transparent px-3 text-sm font-bold text-white outline-none"
+                className="h-12 min-w-0 flex-1 bg-transparent px-3 text-sm font-bold text-white outline-none"
               />
             </div>
           </div>
@@ -414,11 +415,11 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_260px]">
-        <div className="space-y-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_240px]">
+        <div className="space-y-2 min-w-0">
           <label className="px-1 text-xs font-bold uppercase tracking-widest text-white/90">Total Cash Received (GHS)</label>
-          <div className="relative">
-            <Banknote className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-emerald-300/70" />
+          <div className="relative min-w-0">
+            <Banknote className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-emerald-300/70" />
             <input
               type="number"
               inputMode="decimal"
@@ -426,22 +427,22 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
               step="0.01"
               value={totalCashReceived}
               onChange={(event) => setTotalCashReceived(event.target.value === '' ? '' : Number(event.target.value))}
-              className={`h-14 w-full rounded-md border bg-slate-950/70 pl-12 pr-4 text-2xl font-bold text-white outline-none transition-all focus:border-emerald-500/60 ${
+              className={`box-border h-14 w-full min-w-0 rounded-md border bg-slate-950/70 pl-12 pr-4 text-xl font-bold text-white outline-none transition-all focus:border-emerald-500/60 sm:text-2xl ${
                 !canOverridePrice && totalCashReceived !== '' && !cashBalances ? 'border-red-500/60' : 'border-white/10'
               }`}
             />
           </div>
         </div>
 
-        <div className={`rounded-md border p-4 ${!canOverridePrice && totalCashReceived !== '' && !cashBalances ? 'border-red-500/30 bg-red-500/10' : 'border-emerald-500/20 bg-emerald-500/10'}`}>
+        <div className={`min-w-0 rounded-md border p-4 ${!canOverridePrice && totalCashReceived !== '' && !cashBalances ? 'border-red-500/30 bg-red-500/10' : 'border-emerald-500/20 bg-emerald-500/10'}`}>
           <p className="text-[10px] font-black uppercase tracking-widest text-white/50">Balance Check</p>
-          <div className="mt-2 flex items-center gap-2">
+          <div className="mt-2 flex items-start gap-2">
             {!canOverridePrice && totalCashReceived !== '' && !cashBalances ? (
-              <AlertTriangle className="h-5 w-5 text-red-300" />
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-300" />
             ) : (
-              <ShieldCheck className="h-5 w-5 text-emerald-300" />
+              <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300" />
             )}
-            <span className={`text-sm font-bold ${!canOverridePrice && totalCashReceived !== '' && !cashBalances ? 'text-red-200' : 'text-emerald-200'}`}>
+            <span className={`text-sm font-bold leading-snug ${!canOverridePrice && totalCashReceived !== '' && !cashBalances ? 'text-red-200' : 'text-emerald-200'}`}>
               {canOverridePrice ? 'Override audit enabled' : cashBalances ? 'Cash matches total' : 'Awaiting exact cash total'}
             </span>
           </div>

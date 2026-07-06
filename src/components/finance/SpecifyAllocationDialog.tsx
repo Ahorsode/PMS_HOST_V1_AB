@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useMemo, useState } from 'react'
-import { AlertCircle, CheckCircle2, GitBranch, ListPlus, Percent, Trash2, Users } from 'lucide-react'
+import { AlertCircle, Banknote, CheckCircle2, GitBranch, ListPlus, Percent, Trash2, Users } from 'lucide-react'
 import { Dialog } from '@/components/ui/Dialog'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -56,7 +56,7 @@ export function SpecifyAllocationDialog({ isOpen, onOpenChange, totalAmount, onS
   const [batches, setBatches] = useState<AllocationBatch[]>([])
   const [loading, setLoading] = useState(true)
   const [preset, setPreset] = useState<Preset>('EVEN')
-  const [allocationMode, setAllocationMode] = useState<AllocationMode>('PERCENTAGE')
+  const [allocationMode, setAllocationMode] = useState<AllocationMode>('AMOUNT')
   const [rows, setRows] = useState<AllocationRow[]>([makeRow(), makeRow()])
   const [error, setError] = useState<string | null>(null)
 
@@ -90,7 +90,7 @@ export function SpecifyAllocationDialog({ isOpen, onOpenChange, totalAmount, onS
       )
     } else {
       setPreset('EVEN')
-      setAllocationMode('PERCENTAGE')
+      setAllocationMode('AMOUNT')
       setRows([makeRow(), makeRow()])
     }
     setError(null)
@@ -179,6 +179,7 @@ export function SpecifyAllocationDialog({ isOpen, onOpenChange, totalAmount, onS
       onOpenChange={onOpenChange}
       title="Specify allocation"
       description={`Divide GH₵ ${formatMoney(totalAmount)} across your active livestock units.`}
+      className="max-w-2xl"
     >
       <div className="space-y-5 pt-2">
         {loading ? (
@@ -211,18 +212,18 @@ export function SpecifyAllocationDialog({ isOpen, onOpenChange, totalAmount, onS
               />
             </div>
 
-            <div className="inline-grid grid-cols-2 rounded-md border border-white/10 bg-black/30 p-1">
+            <div className="grid w-full grid-cols-2 gap-1 rounded-md border border-white/10 bg-black/30 p-1">
+              <ModeButton
+                active={allocationMode === 'AMOUNT'}
+                icon={Banknote}
+                label="Amount (GHS)"
+                onClick={() => setAllocationMode('AMOUNT')}
+              />
               <ModeButton
                 active={allocationMode === 'PERCENTAGE'}
                 icon={Percent}
-                label="Percentage"
+                label="Percentage (%)"
                 onClick={() => setAllocationMode('PERCENTAGE')}
-              />
-              <ModeButton
-                active={allocationMode === 'AMOUNT'}
-                icon={GitBranch}
-                label="Amount"
-                onClick={() => setAllocationMode('AMOUNT')}
               />
             </div>
 
@@ -253,7 +254,7 @@ export function SpecifyAllocationDialog({ isOpen, onOpenChange, totalAmount, onS
                           const value = e.target.value
                           if (value === '' || Number(value) >= 0) updateRow(row.key, { value })
                         }}
-                        placeholder={allocationMode === 'PERCENTAGE' ? '0.00 %' : '0.00'}
+                        placeholder={allocationMode === 'PERCENTAGE' ? '0.00 %' : 'GH₵ 0.00'}
                         className="bg-black/40 border-white/10 text-white"
                       />
                       <Button
@@ -282,12 +283,19 @@ export function SpecifyAllocationDialog({ isOpen, onOpenChange, totalAmount, onS
             ) : (
               <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3 space-y-2 max-h-48 overflow-y-auto">
                 {buildPresetPreview(batches, totalAmount, preset, allocationMode).map((row) => (
-                  <div key={row.batchId} className="flex items-center justify-between text-xs">
-                    <span className="text-white/70">{row.name}</span>
-                    <span className="font-bold text-emerald-400">
-                      {allocationMode === 'PERCENTAGE'
-                        ? `${row.percentage?.toFixed(2)}%`
-                        : `GH₵ ${formatMoney(row.amount || 0)}`}
+                  <div key={row.batchId} className="flex items-center justify-between gap-3 text-xs">
+                    <span className="min-w-0 truncate text-white/70">{row.name}</span>
+                    <span className="shrink-0 text-right font-bold text-emerald-400">
+                      {row.amount != null && row.amount > 0 ? (
+                        <>
+                          GH₵ {formatMoney(row.amount)}
+                          {row.percentage != null ? (
+                            <span className="ml-1.5 font-semibold text-white/45">· {row.percentage.toFixed(2)}%</span>
+                          ) : null}
+                        </>
+                      ) : (
+                        `${row.percentage?.toFixed(2)}%`
+                      )}
                     </span>
                   </div>
                 ))}
@@ -391,7 +399,7 @@ function ModeButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-bold transition-all',
+        'inline-flex w-full items-center justify-center gap-1.5 rounded-md px-2 py-2.5 text-[11px] font-bold transition-all sm:text-xs',
         active ? 'bg-emerald-500 text-black' : 'text-white/60 hover:text-white'
       )}
     >
