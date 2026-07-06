@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createOrder } from '@/lib/actions/order-actions';
 import { toast } from 'sonner';
 import { AlertTriangle, Banknote, Calendar, Lock, Plus, ShieldCheck, ShoppingCart, Trash2 } from 'lucide-react';
@@ -20,6 +20,7 @@ interface SaleItemState {
 interface SalesFormProps {
   customers: any[];
   inventory: any[];
+  eggInventory: any[];
   livestock: any[];
   onSuccess: () => void;
   initialLivestockId?: string;
@@ -39,15 +40,6 @@ function getBatchBasePrice(batch: any) {
   const initialCost = Number(batch?.initialCostActual ?? batch?.initial_actual_cost ?? 0);
   const initialCount = Number(batch?.initialCount ?? 0);
   return initialCost > 0 && initialCount > 0 ? toMoney(initialCost / initialCount) : 0;
-}
-
-function getEggInventory(inventory: any[]) {
-  const eggs = inventory.filter(
-    (item: any) =>
-      item.category === 'EGGS' ||
-      String(item.itemName || '').toLowerCase().includes('egg'),
-  );
-  return eggs.length > 0 ? eggs : inventory;
 }
 
 function getInitialItem(
@@ -113,7 +105,7 @@ function shouldHideProductPicker(
   if (catalog.length === 1) {
     return true;
   }
-  return item.productType === 'inventory' && eggInventory.length > 0;
+  return false;
 }
 
 function buildAutoSelectedProduct(
@@ -134,8 +126,7 @@ function buildAutoSelectedProduct(
     return { productId: '', description: '', unitPrice: 0 };
   }
 
-  const shouldAutoSelect =
-    catalog.length === 1 || (productType === 'inventory' && eggInventory.length > 0);
+  const shouldAutoSelect = catalog.length === 1;
   if (!shouldAutoSelect) {
     return { productId: '', description: '', unitPrice: 0 };
   }
@@ -156,9 +147,9 @@ function buildAutoSelectedProduct(
   };
 }
 
-export function SalesForm({ customers, inventory, livestock, onSuccess, initialLivestockId, canOverridePrice = false, canAddCustomer = true }: SalesFormProps) {
+export function SalesForm({ customers, inventory, eggInventory, livestock, onSuccess, initialLivestockId, canOverridePrice = false, canAddCustomer = true }: SalesFormProps) {
   const [items, setItems] = useState<SaleItemState[]>(() => [
-    getInitialItem(livestock, getEggInventory(inventory), initialLivestockId),
+    getInitialItem(livestock, eggInventory, initialLivestockId),
   ]);
   const [customerOptions, setCustomerOptions] = useState<SaleCustomer[]>(
     () => customers.map((c) => ({ id: c.id, name: c.name, phone: c.phone }))
@@ -170,11 +161,11 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
   const [customerId, setCustomerId] = useState('');
   const [saleDate, setSaleDate] = useState(() => toLocalDateTimeInputValue());
 
-  const eggInventory = useMemo(() => getEggInventory(inventory), [inventory]);
+  const isWalkIn = customerId === '';
 
   const getItemBasePrice = (item: SaleItemState) => {
     if (item.productType === 'inventory') {
-      return getInventorySalePrice(inventory.find((entry: any) => entry.id === item.productId));
+      return getInventorySalePrice(eggInventory.find((entry: any) => entry.id === item.productId));
     }
     if (item.productType === 'livestock') {
       return getBatchBasePrice(livestock.find((entry: any) => entry.id === item.productId));
@@ -204,7 +195,7 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
     if (!item) return;
 
     if (item.productType === 'inventory') {
-      const selected = inventory.find((entry: any) => entry.id === productId);
+      const selected = eggInventory.find((entry: any) => entry.id === item.productId);
       updateItem(index, {
         productId,
         description: selected?.itemName || '',
@@ -249,6 +240,11 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
   const cashValue = totalCashReceived === '' ? NaN : Number(totalCashReceived);
   const cashBalances = Number.isFinite(cashValue) && Math.abs(toMoney(cashValue) - total) <= 0.01;
 
+  useEffect(() => {
+    if (!isWalkIn) return;
+    setTotalCashReceived(total);
+  }, [isWalkIn, total]);
+
   const validationErrors = items.flatMap((item) => {
     const errors: string[] = [];
     const quantity = Number(item.quantity || 0);
@@ -258,7 +254,8 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
     if (!Number.isInteger(quantity) || quantity <= 0) errors.push('Quantity must be a whole number');
 
     if (item.productType === 'inventory') {
-      const selected = inventory.find((entry: any) => entry.id === item.productId);
+      if (eggInventory.length === 0) errors.push('No egg products available');
+      const selected = eggInventory.find((entry: any) => entry.id === item.productId);
       if (!selected) errors.push('Inventory product is required');
       if (selected && quantity > Number(selected.stockLevel)) errors.push(`${selected.itemName} only has ${selected.stockLevel} available`);
     }
@@ -276,7 +273,7 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
     return errors;
   });
 
-  if (!canOverridePrice && total > 0 && totalCashReceived !== '' && !cashBalances) {
+  if (!isWalkIn && !canOverridePrice && total > 0 && totalCashReceived !== '' && !cashBalances) {
     validationErrors.push('Cash received must equal the locked sale total');
   }
 
@@ -292,7 +289,7 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
     && total > 0
     && Number.isFinite(cashValue)
     && cashValue >= 0
-    && (canOverridePrice || cashBalances)
+    && (isWalkIn || canOverridePrice || cashBalances)
     && !isSubmitting;
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -419,6 +416,10 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
                         onChange={(event) => updateItem(index, { description: event.target.value })}
                         className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
                       />
+                    ) : item.productType === 'inventory' && eggInventory.length === 0 ? (
+                      <div className="flex h-11 min-w-0 items-center rounded-md border border-amber-500/30 bg-amber-500/10 px-3 text-sm font-bold text-amber-200">
+                        No eggs in stock — log egg production first
+                      </div>
                     ) : shouldHideProductPicker(item, eggInventory, livestock) ? (
                       <div className="flex h-11 min-w-0 items-center rounded-md border border-white/10 bg-slate-950/40 px-3 text-sm font-bold text-white">
                         {item.description ||
@@ -548,22 +549,28 @@ export function SalesForm({ customers, inventory, livestock, onSuccess, initialL
               value={totalCashReceived}
               onChange={(event) => setTotalCashReceived(event.target.value === '' ? '' : Number(event.target.value))}
               className={`box-border h-14 w-full min-w-0 rounded-md border bg-slate-950/70 pl-12 pr-4 text-xl font-bold text-white outline-none transition-all focus:border-emerald-500/60 sm:text-2xl ${
-                !canOverridePrice && totalCashReceived !== '' && !cashBalances ? 'border-red-500/60' : 'border-white/10'
+                !isWalkIn && !canOverridePrice && totalCashReceived !== '' && !cashBalances ? 'border-red-500/60' : 'border-white/10'
               }`}
             />
           </div>
         </div>
 
-        <div className={`min-w-0 rounded-md border p-4 ${!canOverridePrice && totalCashReceived !== '' && !cashBalances ? 'border-red-500/30 bg-red-500/10' : 'border-emerald-500/20 bg-emerald-500/10'}`}>
+        <div className={`min-w-0 rounded-md border p-4 ${!isWalkIn && !canOverridePrice && totalCashReceived !== '' && !cashBalances ? 'border-red-500/30 bg-red-500/10' : 'border-emerald-500/20 bg-emerald-500/10'}`}>
           <p className="text-[10px] font-black uppercase tracking-widest text-white/50">Balance Check</p>
           <div className="mt-2 flex items-start gap-2">
-            {!canOverridePrice && totalCashReceived !== '' && !cashBalances ? (
+            {!isWalkIn && !canOverridePrice && totalCashReceived !== '' && !cashBalances ? (
               <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-300" />
             ) : (
               <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300" />
             )}
-            <span className={`text-sm font-bold leading-snug ${!canOverridePrice && totalCashReceived !== '' && !cashBalances ? 'text-red-200' : 'text-emerald-200'}`}>
-              {canOverridePrice ? 'Override audit enabled' : cashBalances ? 'Cash matches total' : 'Awaiting exact cash total'}
+            <span className={`text-sm font-bold leading-snug ${!isWalkIn && !canOverridePrice && totalCashReceived !== '' && !cashBalances ? 'text-red-200' : 'text-emerald-200'}`}>
+              {isWalkIn
+                ? 'Walk-in sale: cash defaults to total and can be adjusted'
+                : canOverridePrice
+                  ? 'Credit sale: override audit enabled'
+                  : cashBalances
+                    ? 'Cash matches total'
+                    : 'Awaiting exact cash total'}
             </span>
           </div>
         </div>

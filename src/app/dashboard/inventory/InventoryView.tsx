@@ -11,6 +11,7 @@ import { WorkerStamp } from '@/components/ui/WorkerStamp';
 import {
   getAllInventory,
   getUsedUpInventoryCount,
+  getActiveBatchEggStock,
   createInventoryItem,
   updateInventoryItem,
   deleteInventoryItem
@@ -81,6 +82,7 @@ const HEALTH_CATEGORIES = ['MEDICINE', 'VACCINE'];
 export default function InventoryView({ canEdit = true }: { canEdit?: boolean }) {
   const router = useRouter();
   const [items, setItems] = useState<InventoryItem[]>([]);
+  const [eggStock, setEggStock] = useState<{ totalEggs: number; batches: Array<{ batchId: string; batchName: string; eggsRemaining: number }> }>({ totalEggs: 0, batches: [] });
   const [loading, setLoading] = useState(true);
   const [showUsedUp, setShowUsedUp] = useState(false);
   const [usedUpCount, setUsedUpCount] = useState(0);
@@ -99,11 +101,13 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
 
   const fetchItems = useCallback(async (mode: 'active' | 'used_up') => {
     setLoading(true);
-    const [data, count] = await Promise.all([
+    const [data, count, activeEggStock] = await Promise.all([
       getAllInventory({ filter: mode }),
       getUsedUpInventoryCount(),
+      mode === 'active' ? getActiveBatchEggStock() : Promise.resolve({ totalEggs: 0, batches: [] }),
     ]);
     setItems((data as InventoryItem[]).map(i => ({ ...i, stockLevel: Number(i.stockLevel) })));
+    setEggStock(activeEggStock);
     setUsedUpCount(count);
     if (mode === 'active') {
       const sups = await getSuppliers();
@@ -212,8 +216,7 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
 
 
   // separate eggs from everything else
-  const eggItem = items.find(i => i.category === 'EGGS' && i.itemName === 'Eggs');
-  const otherItems = items.filter(i => !(i.category === 'EGGS' && i.itemName === 'Eggs'));
+  const otherItems = items.filter(i => String(i.category || '').toUpperCase() !== 'EGGS');
   const mutatingItemId = isPending ? itemToDelete?.id ?? editing?.id ?? null : null;
 
   const grouped: Record<string, InventoryItem[]> = {};
@@ -282,33 +285,55 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
       </div>
 
       {/* ── Egg Inventory Card ── */}
-      {!showUsedUp && eggItem && (
+      {!showUsedUp && eggStock.totalEggs > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-          className="rounded-lg border bg-gradient-to-br from-amber-500/20 to-yellow-500/10 border-amber-500/30 p-5 flex flex-col sm:flex-row items-center justify-between gap-5"
+          className="rounded-lg border bg-gradient-to-br from-amber-500/20 to-yellow-500/10 border-amber-500/30 p-5 space-y-4"
         >
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-md bg-amber-500/20 flex items-center justify-center shadow-inner">
-              <Egg className="w-8 h-8 text-amber-400" />
-            </div>
-            <div>
-              <p className="text-white/80 text-sm uppercase tracking-widest font-black mb-1">Egg Inventory</p>
-              <p className="text-5xl font-black text-white leading-tight">
-                {eggDisplay(eggItem.stockLevel).crates}
-                <span className="text-2xl font-bold text-white/80 ml-1">crates</span>
-              </p>
-              {eggDisplay(eggItem.stockLevel).remainder > 0 && (
-                <p className="text-amber-400 text-base font-bold mt-1">
-                  + {eggDisplay(eggItem.stockLevel).remainder} remainder
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-5">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 rounded-md bg-amber-500/20 flex items-center justify-center shadow-inner">
+                <Egg className="w-8 h-8 text-amber-400" />
+              </div>
+              <div>
+                <p className="text-white/80 text-sm uppercase tracking-widest font-black mb-1">Egg Inventory (Active Batches)</p>
+                <p className="text-5xl font-black text-white leading-tight">
+                  {eggDisplay(eggStock.totalEggs).crates}
+                  <span className="text-2xl font-bold text-white/80 ml-1">crates</span>
                 </p>
-              )}
+                {eggDisplay(eggStock.totalEggs).remainder > 0 && (
+                  <p className="text-amber-400 text-base font-bold mt-1">
+                    + {eggDisplay(eggStock.totalEggs).remainder} remainder
+                  </p>
+                )}
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-white/80 text-sm font-bold mb-1">Raw count</p>
+              <p className="text-3xl font-black text-white">{eggStock.totalEggs.toLocaleString()}</p>
+              <p className="text-white/80 text-sm font-bold">eggs from active layer batches</p>
             </div>
           </div>
-          <div className="text-right">
-            <p className="text-white/80 text-sm font-bold mb-1">Raw count</p>
-            <p className="text-3xl font-black text-white">{eggItem.stockLevel.toLocaleString()}</p>
-            <p className="text-white/80 text-sm font-bold">eggs in stock</p>
-          </div>
+          {eggStock.batches.length > 0 && (
+            <div className="rounded-md border border-amber-500/20 bg-black/10 overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-white/10">
+                    <th className="text-left px-4 py-2 text-white/70 font-black uppercase tracking-wider text-xs">Batch</th>
+                    <th className="text-right px-4 py-2 text-white/70 font-black uppercase tracking-wider text-xs">Eggs Remaining</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {eggStock.batches.map((batch) => (
+                    <tr key={batch.batchId} className="border-b border-white/5 last:border-0">
+                      <td className="px-4 py-2 font-bold text-white">{batch.batchName}</td>
+                      <td className="px-4 py-2 text-right font-bold text-amber-300">{batch.eggsRemaining.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </motion.div>
       )}
 
@@ -336,7 +361,7 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
         <div className="flex items-center justify-center py-16 text-white/70 text-sm animate-pulse">
           Loading {showUsedUp ? 'used-up' : 'active'} inventory…
         </div>
-      ) : otherItems.length === 0 && (!eggItem || showUsedUp) ? (
+      ) : otherItems.length === 0 && (showUsedUp || eggStock.totalEggs === 0) ? (
         <div className="flex flex-col items-center justify-center py-20 gap-2">
           {showUsedUp ? <Archive className="w-12 h-12 text-white/10" /> : <Package className="w-12 h-12 text-white/10" />}
           <p className="text-white/70 text-sm">

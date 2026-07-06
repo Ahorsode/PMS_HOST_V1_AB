@@ -1,7 +1,7 @@
 import React from 'react';
 import { getAllOrders } from '@/lib/actions/order-actions';
 import { getAllCustomers } from '@/lib/actions/customer-actions';
-import { getAllInventory } from '@/lib/actions/inventory-actions';
+import { getAllInventory, getSellableEggInventory } from '@/lib/actions/inventory-actions';
 import { getAllBatches } from '@/lib/actions/dashboard-actions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { formatCurrency } from '@/lib/utils';
@@ -104,10 +104,11 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
   const resolvedParams = await searchParams;
   const sellBatchId = resolvedParams.sellBatchId;
 
-  const [ordersRaw, customersRaw, inventoryRaw, livestockRaw] = await Promise.all([
+  const [ordersRaw, customersRaw, inventoryRaw, eggInventoryRaw, livestockRaw] = await Promise.all([
     getAllOrders(),
     getAllCustomers(),
     getAllInventory(),
+    getSellableEggInventory(),
     getAllBatches()
   ]);
 
@@ -118,6 +119,21 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
     phone: customer.phone,
   }));
   const inventory = (inventoryRaw as any[]).map((item: any) => ({
+    id: item.id,
+    itemName: item.itemName,
+    stockLevel: toNumber(item.stockLevel),
+    unit: item.unit,
+    category: item.category,
+    costPerUnit: item.costPerUnit == null ? null : toNumber(item.costPerUnit),
+    sellingPrice: item.sellingPrice == null ? null : toNumber(item.sellingPrice),
+    eggCategory: item.eggCategory ? {
+      id: item.eggCategory.id,
+      name: item.eggCategory.name,
+      sellingPrice: toNumber(item.eggCategory.sellingPrice),
+      unitSize: toNumber(item.eggCategory.unitSize),
+    } : null,
+  }));
+  const eggInventory = (eggInventoryRaw as any[]).map((item: any) => ({
     id: item.id,
     itemName: item.itemName,
     stockLevel: toNumber(item.stockLevel),
@@ -208,6 +224,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
         <SalesActionsHeader 
           customers={customers} 
           inventory={inventory}
+          eggInventory={eggInventory}
           livestock={livestock}
           initialLivestockId={sellBatchId}
           canEdit={canCreateSale}

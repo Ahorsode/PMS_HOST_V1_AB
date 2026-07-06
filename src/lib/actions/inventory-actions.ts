@@ -438,3 +438,87 @@ export async function getEggInventoryStock(): Promise<number> {
   })
   return eggItem ? Number(eggItem.stockLevel) : 0
 }
+
+/** Sellable egg SKUs for farm-gate sales (in-stock EGGS category only). */
+export async function getSellableEggInventory() {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return []
+
+  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    const items = await tx.inventory.findMany({
+      where: {
+        farmId: activeFarmId,
+        isDeleted: false,
+        category: 'EGGS',
+        stockLevel: { gt: 0 },
+      },
+      include: INVENTORY_INCLUDE,
+      orderBy: { itemName: 'asc' },
+    })
+    return items.map(mapInventoryRow)
+  })
+}
+
+export type ActiveBatchEggStock = {
+  totalEggs: number
+  batches: Array<{
+    batchId: string
+    batchName: string
+    eggsRemaining: number
+  }>
+}
+
+/** Total eggs remaining from active layer batches only. */
+export async function getActiveBatchEggStock(): Promise<ActiveBatchEggStock> {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) {
+    return { totalEggs: 0, batches: [] }
+  }
+
+  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    const logs = await tx.eggProduction.findMany({
+      where: {
+        farmId: activeFarmId,
+        isDeleted: false,
+        eggsRemaining: { gt: 0 },
+        batch: {
+          status: 'active',
+          type: 'POULTRY_LAYER',
+          isDeleted: false,
+        },
+      },
+      select: {
+        eggsRemaining: true,
+        batch: {
+          select: {
+            id: true,
+            batchName: true,
+          },
+        },
+      },
+    })
+
+    const byBatch = new Map<string, { batchId: string; batchName: string; eggsRemaining: number }>()
+    for (const log of logs) {
+      const batchId = log.batch?.id
+      if (!batchId) continue
+      const existing = byBatch.get(batchId)
+      const remaining = Number(log.eggsRemaining || 0)
+      if (existing) {
+        existing.eggsRemaining += remaining
+      } else {
+        byBatch.set(batchId, {
+          batchId,
+          batchName: log.batch?.batchName || 'Batch',
+          eggsRemaining: remaining,
+        })
+      }
+    }
+
+    const batches = Array.from(byBatch.values()).sort((a, b) =>
+      a.batchName.localeCompare(b.batchName),
+    )
+    const totalEggs = batches.reduce((sum, row) => sum + row.eggsRemaining, 0)
+    return { totalEggs, batches }
+  })
+}
