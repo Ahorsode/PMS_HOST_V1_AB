@@ -6,6 +6,7 @@ import { checkWorkerPermissions } from './staff-actions'
 import { computeBatchFinance } from '@/lib/analytics/batch-finance'
 import { buildConsumptionContext } from '@/lib/analytics/batch-consumption-finance'
 import { getHealthInventory } from '@/lib/actions/health-actions'
+import { LEDGER_ALLOC_PREFIX, parseLedgerAllocation } from '@/lib/finance/ledger-allocation'
 
 const FEED_CATEGORIES = ['FEED', 'FEEDS', 'FEED_RAW', 'FEED_FINISHED']
 
@@ -78,6 +79,7 @@ export async function getFlockDeepDive(id: string) {
     let farmVaccinations: any[] = []
     let farmMedications: any[] = []
     let inventoryItems: any[] = []
+    let ledgerRevenueTransactions: any[] = []
 
     if (canViewFinance) {
       ;[
@@ -90,6 +92,7 @@ export async function getFlockDeepDive(id: string) {
         farmVaccinations,
         farmMedications,
         inventoryItems,
+        ledgerRevenueTransactions,
       ] = await Promise.all([
         tx.expense.findMany({
           where: { batch_id: id, farmId: activeFarmId, isDeleted: false },
@@ -129,7 +132,31 @@ export async function getFlockDeepDive(id: string) {
           where: { farmId: activeFarmId, isDeleted: false },
           select: { id: true, itemName: true },
         }),
+        tx.financialTransaction.findMany({
+          where: {
+            farmId: activeFarmId,
+            type: 'REVENUE',
+            isDeleted: false,
+            description: { contains: LEDGER_ALLOC_PREFIX },
+          },
+          select: { amount: true, transactionDate: true, description: true },
+        }),
       ])
+
+      const ledgerRevenueForBatch: any[] = []
+      for (const txRow of ledgerRevenueTransactions) {
+        const parsed = parseLedgerAllocation(txRow.description)
+        if (!parsed) continue
+        for (const row of parsed) {
+          if (row.batchId !== id) continue
+          ledgerRevenueForBatch.push({
+            totalPrice: row.amount,
+            quantity: 1,
+            order: { orderDate: txRow.transactionDate, status: 'COMPLETED' },
+          })
+        }
+      }
+      revenueItems = [...revenueItems, ...ledgerRevenueForBatch]
     }
 
     const consumptionContext = buildConsumptionContext({

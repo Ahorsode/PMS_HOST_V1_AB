@@ -19,13 +19,19 @@ import {
   Filter,
   Check,
   X,
-  CreditCard
+  CreditCard,
+  GitBranch,
+  XCircle
 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { createFinancialTransaction, settleTransaction, deleteFinancialTransaction } from '@/lib/actions/financial-transaction-actions'
 import { toLocalDateTimeInputValue } from '@/lib/financial-dates'
 import { SkeletonLine } from '@/components/ui/MutationFeedback'
+import {
+  SpecifyAllocationDialog,
+  type SavedAllocation,
+} from '@/components/finance/SpecifyAllocationDialog'
 
 interface Transaction {
   id: string
@@ -106,6 +112,8 @@ export function FinanceHubClient({
     transactionDate: toLocalDateTimeInputValue(),
     description: ''
   })
+  const [savedAllocation, setSavedAllocation] = useState<SavedAllocation | null>(null)
+  const [isAllocationOpen, setIsAllocationOpen] = useState(false)
 
   // Settle form state
   const [settleRef, setSettleRef] = useState('')
@@ -158,13 +166,16 @@ export function FinanceHubClient({
     try {
       const res = await createFinancialTransaction({
         ...formData,
-        amount: amt
+        amount: amt,
+        allocationMode: savedAllocation?.allocationMode,
+        allocations: savedAllocation?.allocations,
       })
 
       if (res.success && res.transaction) {
         // Safely prepend the new transaction
         setTransactions(prev => [res.transaction as any, ...prev])
         setIsAddOpen(false)
+        setSavedAllocation(null)
         // reset form
         setFormData({
           type: 'EXPENSE',
@@ -771,6 +782,45 @@ export function FinanceHubClient({
                     className="w-full bg-slate-800 border border-slate-700 rounded-lg text-sm text-white px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none resize-none"
                   />
                 </div>
+
+                <div className="rounded-lg border border-slate-700 bg-slate-800/60 p-4 space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-wider text-white">Specify allocation</p>
+                      <p className="text-[11px] text-slate-400">Split this entry across livestock batches</p>
+                    </div>
+                    <Button
+                      type="button"
+                      onClick={() => setIsAllocationOpen(true)}
+                      disabled={!formData.amount || Number(formData.amount) <= 0}
+                      className="bg-slate-700 hover:bg-slate-600 text-white font-bold text-xs"
+                    >
+                      <GitBranch className="w-4 h-4" />
+                      {savedAllocation ? 'Edit allocation' : 'Specify allocation'}
+                    </Button>
+                  </div>
+                  {savedAllocation ? (
+                    <div className="flex items-center justify-between rounded-md border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-xs">
+                      <span className="font-bold text-emerald-300">{savedAllocation.label}</span>
+                      <button
+                        type="button"
+                        onClick={() => setSavedAllocation(null)}
+                        className="inline-flex items-center gap-1 text-rose-300 hover:text-rose-200"
+                      >
+                        <XCircle className="w-3.5 h-3.5" />
+                        Clear
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+
+                <SpecifyAllocationDialog
+                  isOpen={isAllocationOpen}
+                  onOpenChange={setIsAllocationOpen}
+                  totalAmount={Number(formData.amount) || 0}
+                  initial={savedAllocation}
+                  onSave={setSavedAllocation}
+                />
 
                 <div className="flex gap-3 justify-end pt-2">
                   <Button

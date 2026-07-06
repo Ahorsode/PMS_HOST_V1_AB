@@ -398,6 +398,9 @@ export async function createExpense(data: {
     revalidatePath('/dashboard/reports')
     revalidatePath('/dashboard')
     revalidateFarmPerformanceCaches(activeFarmId)
+    for (const row of prepared.rows) {
+      revalidatePath(`/dashboard/flocks/${row.batch_id}`)
+    }
     return { success: true, expense }
   } catch (error: any) {
     console.error('Error creating expense:', error)

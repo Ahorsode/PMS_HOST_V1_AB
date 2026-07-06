@@ -7,6 +7,14 @@ import { checkWorkerPermissions } from './staff-actions'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 import { revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 import { parseFinancialLogDate } from '@/lib/financial-dates'
+import { createExpense } from '@/lib/actions/expense-actions'
+import {
+  encodeLedgerAllocation,
+  mapLedgerCategoryToExpense,
+  resolveAllocationAmounts,
+  type AllocationMode,
+  type LedgerAllocationInput,
+} from '@/lib/finance/ledger-allocation'
 
 // Maps the Expense table's enum categories to the human-readable labels
 // the Finance Hub uses for manual ledger entries, so both sources read alike.
@@ -109,6 +117,8 @@ export async function createFinancialTransaction(data: {
   referenceNum?: string
   transactionDate?: string
   description?: string
+  allocationMode?: AllocationMode
+  allocations?: LedgerAllocationInput[]
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
@@ -119,6 +129,90 @@ export async function createFinancialTransaction(data: {
   if (!data.amount || data.amount <= 0) {
     return { success: false, error: 'Amount must be a positive number' }
   }
+
+  const hasAllocations = Array.isArray(data.allocations) && data.allocations.length > 0
+  if (hasAllocations && !data.allocationMode) {
+    return { success: false, error: 'Choose percentage or amount allocation before submitting.' }
+  }
+
+  if (hasAllocations && data.type === 'EXPENSE') {
+    const paymentNote = `Payment: ${data.paymentMethod} · ${data.paymentStatus}`
+    const description = [data.description?.trim(), paymentNote].filter(Boolean).join(' | ')
+    const expenseResult = await createExpense({
+      amount: data.amount,
+      category: mapLedgerCategoryToExpense(data.category),
+      description,
+      expenseDate: data.transactionDate,
+      reference: data.referenceNum,
+      allocationMode: data.allocationMode,
+      allocations: data.allocations,
+    })
+
+    if (!expenseResult.success) {
+      return { success: false, error: expenseResult.error || 'Failed to create allocated expense' }
+    }
+
+    const expense = (expenseResult as { expense: any }).expense
+    if (!expense) {
+      return { success: false, error: 'Failed to create allocated expense' }
+    }
+
+    return {
+      success: true,
+      transaction: {
+        id: expense.id,
+        type: 'EXPENSE' as const,
+        category: data.category,
+        amount: Number(expense.amount),
+        paymentStatus: data.paymentStatus,
+        paymentMethod: data.paymentMethod,
+        referenceNum: data.referenceNum || null,
+        transactionDate: expense.expense_date || expense.expenseDate || data.transactionDate || new Date(),
+        description: expense.description,
+        source: 'EXPENSE' as const,
+      },
+    }
+  }
+
+  if (hasAllocations && data.type === 'REVENUE') {
+    const resolved = resolveAllocationAmounts(data.amount, data.allocationMode!, data.allocations!)
+    const allocTotal = resolved.reduce((sum, row) => sum + row.amount, 0)
+    if (Math.round(allocTotal * 100) !== Math.round(data.amount * 100)) {
+      return { success: false, error: 'Allocated amounts must use the full revenue amount.' }
+    }
+
+    const baseDescription = data.description?.trim() || ''
+    const description = `${baseDescription}${baseDescription ? ' ' : ''}${encodeLedgerAllocation(resolved)}`.trim()
+
+    const result = await insertFinancialTransactionRecord({
+      ...data,
+      description,
+    })
+
+    if (result.success) {
+      for (const row of resolved) {
+        revalidatePath(`/dashboard/flocks/${row.batchId}`)
+      }
+    }
+
+    return result
+  }
+
+  return insertFinancialTransactionRecord(data)
+}
+
+async function insertFinancialTransactionRecord(data: {
+  type: 'REVENUE' | 'EXPENSE'
+  category: string
+  amount: number
+  paymentStatus: 'PAID' | 'UNPAID' | 'PARTIALLY_PAID'
+  paymentMethod: string
+  referenceNum?: string
+  transactionDate?: string
+  description?: string
+}) {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
   const limitResult = await checkRateLimit({
     policy: 'finance.write',
