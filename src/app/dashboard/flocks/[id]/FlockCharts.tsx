@@ -6,6 +6,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  Cell,
   ComposedChart,
   Legend,
   Line,
@@ -79,8 +80,8 @@ function MoneyTooltip({ active, payload, label }: any) {
     <div className="rounded-lg border border-white/10 bg-slate-950/95 p-3 text-xs shadow-2xl backdrop-blur-md">
       <p className="mb-1 font-bold text-white">{label}</p>
       {payload.map((item: any) => (
-        <p key={item.dataKey} style={{ color: item.color || item.stroke }} className="font-bold">
-          {item.name}: {formatCurrency(Number(item.value || 0), 'GHS')}
+        <p key={item.dataKey} style={{ color: item.color || item.payload?.fill || item.stroke }} className="font-bold">
+          {item.payload?.name || item.name}: {formatCurrency(Number(item.value || 0), 'GHS')}
         </p>
       ))}
     </div>
@@ -138,6 +139,19 @@ export function FinanceTrendPanel({
     return sum - row.amount
   }, 0)
 
+  const lifetimeBars = [
+    { label: 'Initial', amount: initial, fill: '#a78bfa', name: 'Initial (batch only)' },
+    { label: 'Feed & med', amount: consumption, fill: '#34d399', name: 'Feed & med (by usage)' },
+    { label: 'Operating', amount: operating, fill: '#fb923c', name: 'Operating' },
+    { label: 'General', amount: general, fill: '#fbbf24', name: 'General share' },
+    { label: 'Revenue', amount: revenue, fill: '#38bdf8', name: 'Revenue' },
+  ].filter((row) => row.amount > 0)
+
+  const positiveAmounts = lifetimeBars.map((row) => row.amount)
+  const useLogScale =
+    positiveAmounts.length >= 2 &&
+    Math.max(...positiveAmounts) / Math.min(...positiveAmounts) >= 25
+
   return (
     <ChartCard
       title="Expenses vs Revenue"
@@ -156,40 +170,51 @@ export function FinanceTrendPanel({
           <CategoryTotals summary={summary} />
 
           <div>
-            <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-white/45">Lifetime cost structure</p>
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-white/45">Lifetime cost structure</p>
+              {useLogScale ? (
+                <span className="text-[9px] font-bold uppercase tracking-widest text-white/35">
+                  Log scale — smaller costs stay visible
+                </span>
+              ) : null}
+            </div>
             <div className="h-[280px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={[
-                    {
-                      label: 'Batch',
-                      Initial: initial,
-                      Operating: operating,
-                      Consumption: consumption,
-                      General: general,
-                      Revenue: revenue,
-                    },
-                  ]}
-                  margin={{ top: 8, right: 12, left: 4, bottom: 6 }}
-                >
+                <BarChart data={lifetimeBars} margin={{ top: 8, right: 12, left: 4, bottom: 6 }}>
                   <CartesianGrid stroke={gridStroke} strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="label" tick={{ fill: chartText, fontSize: 11, fontWeight: 700 }} axisLine={false} tickLine={false} />
+                  <XAxis
+                    dataKey="label"
+                    tick={{ fill: chartText, fontSize: 10, fontWeight: 700 }}
+                    axisLine={false}
+                    tickLine={false}
+                    interval={0}
+                  />
                   <YAxis
+                    scale={useLogScale ? 'log' : 'auto'}
+                    domain={useLogScale ? [Math.max(1, Math.min(...positiveAmounts) * 0.5), 'auto'] : [0, 'auto']}
                     tick={{ fill: chartText, fontSize: 11, fontWeight: 700 }}
                     axisLine={false}
                     tickLine={false}
                     width={52}
                     tickFormatter={(v) => `₵${compact.format(Number(v))}`}
+                    allowDataOverflow
                   />
                   <Tooltip content={<MoneyTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
-                  <Legend wrapperStyle={{ color: chartText, fontSize: 12, fontWeight: 700, paddingTop: 8 }} />
-                  <Bar dataKey="Initial" stackId="expense" fill="#a78bfa" name="Initial (batch only)" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="Operating" stackId="expense" fill="#fb923c" name="Operating" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="Consumption" stackId="expense" fill="#34d399" name="Feed & med (by usage)" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="General" stackId="expense" fill="#fbbf24" name="General share" radius={[6, 6, 0, 0]} />
-                  <Bar dataKey="Revenue" fill="#38bdf8" name="Revenue" radius={[6, 6, 0, 0]} barSize={48} />
+                  <Bar dataKey="amount" radius={[6, 6, 0, 0]} barSize={48}>
+                    {lifetimeBars.map((row) => (
+                      <Cell key={row.label} fill={row.fill} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
+            </div>
+            <div className="mt-3 flex flex-wrap gap-3">
+              {lifetimeBars.map((row) => (
+                <div key={row.label} className="flex items-center gap-1.5 text-[10px] font-bold text-white/60">
+                  <span className="h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: row.fill }} />
+                  {row.name}
+                </div>
+              ))}
             </div>
           </div>
 

@@ -264,6 +264,18 @@ export async function getFlockDeepDive(id: string) {
       .slice(-30)
       .map(([key, v]) => ({ label: dayLabel(key), revenue: Math.round(v.revenue * 100) / 100, units: v.units }))
 
+    const salesRecords = validRevenueItems
+      .map((item: any) => ({
+        id: item.id,
+        description: item.description,
+        quantity: Number(item.quantity || 0),
+        unitPrice: Number(item.unitPrice || 0),
+        totalPrice: Number(item.totalPrice || 0),
+        logDate: item.order.orderDate,
+        orderStatus: item.order.status,
+      }))
+      .sort((a: any, b: any) => new Date(b.logDate).getTime() - new Date(a.logDate).getTime())
+
     const isLayer = batch.type === 'POULTRY_LAYER'
 
     return serialize({
@@ -288,8 +300,15 @@ export async function getFlockDeepDive(id: string) {
         feedingLogs: batch.feedingLogs.map((l: any) => ({ ...l, amountConsumed: Number(l.amountConsumed) })),
         eggProduction: batch.eggProduction,
         mortalityRecords: batch.mortalityRecords,
-        vaccinations: batch.vaccinations,
-        medications: batch.medications,
+        vaccinations: batch.vaccinations.map((v: any) => ({
+          ...v,
+          quantity: v.quantity != null ? Number(v.quantity) : null,
+        })),
+        medications: batch.medications.map((m: any) => ({
+          ...m,
+          quantity: m.quantity != null ? Number(m.quantity) : null,
+        })),
+        salesRecords: canViewFinance ? salesRecords : [],
       },
       metrics: {
         ageInDays,
