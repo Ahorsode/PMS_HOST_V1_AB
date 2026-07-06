@@ -1205,6 +1205,40 @@ export async function getAllEggProduction() {
   })
 }
 
+export async function getEggSalesHistory() {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return []
+
+  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    return tx.orderItem.findMany({
+      where: {
+        inventory: { category: 'EGGS', isDeleted: false },
+        order: {
+          farmId: activeFarmId,
+          status: 'COMPLETED',
+          isDeleted: false,
+        },
+      },
+      include: {
+        inventory: { select: { itemName: true, unit: true } },
+        order: {
+          select: {
+            orderDate: true,
+            customer: { select: { name: true } },
+          },
+        },
+      },
+      orderBy: {
+        order: { orderDate: 'desc' },
+      },
+      take: 100,
+    })
+  }).catch((error: any) => {
+    console.error('Error fetching egg sales history:', error)
+    return []
+  })
+}
+
 export async function getAllFeedingLogs() {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return []
