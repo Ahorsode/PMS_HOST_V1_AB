@@ -140,6 +140,8 @@ export const FlockDetailClient = ({ data }: FlockDetailClientProps) => {
             canEdit={forms.canEditHealth}
           />
 
+          {finance.canViewFinance ? <RevenueBreakdown items={finance.revenueBreakdown} /> : null}
+
           {finance.canViewFinance ? <ExpenseBreakdown items={finance.expenseBreakdown} /> : null}
 
           <div className="glass-morphism rounded-lg border-dashed p-7 shadow-2xl">
@@ -226,6 +228,64 @@ function ActivityTimeline({ logs }: { logs: any }) {
         </div>
       )}
     </ChartCard>
+  )
+}
+
+function RevenueBreakdown({ items }: { items: any[] }) {
+  const total = items.reduce((sum, item) => sum + Number(item.amount || 0), 0)
+  return (
+    <div className="glass-morphism overflow-hidden rounded-lg shadow-2xl">
+      <div className="flex items-center gap-2 border-b border-white/10 bg-white/[0.04] px-5 py-4">
+        <Wallet className="h-4 w-4 text-sky-400" />
+        <h3 className="text-sm font-bold uppercase italic tracking-normal text-white">Revenue Breakdown</h3>
+      </div>
+      {items.length === 0 ? (
+        <div className="py-8 text-center text-xs italic text-white/40">No revenue recorded for this batch.</div>
+      ) : (
+        <div className="max-h-80 divide-y divide-white/5 overflow-y-auto custom-scrollbar">
+          {items.map((item) => (
+            <div key={item.id} className="flex items-center justify-between gap-3 px-5 py-3">
+              <div className="min-w-0">
+                <p className="truncate text-xs font-bold text-white">{item.description}</p>
+                <div className="mt-0.5 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-white/45">
+                  <span>{new Date(item.date).toLocaleDateString()}</span>
+                  {item.quantity != null ? (
+                    <>
+                      <span className="text-white/20">·</span>
+                      <span>{item.quantity} units</span>
+                    </>
+                  ) : null}
+                  <span
+                    className={cn(
+                      'rounded px-1.5 py-0.5',
+                      item.kind === 'Direct'
+                        ? 'bg-sky-500/10 text-sky-300'
+                        : item.kind === 'Allocated'
+                          ? 'bg-emerald-500/10 text-emerald-300'
+                          : item.kind === 'EggBatch'
+                            ? 'bg-blue-500/10 text-blue-300'
+                            : item.kind === 'Ledger'
+                              ? 'bg-violet-500/10 text-violet-300'
+                              : 'bg-amber-500/10 text-amber-300'
+                    )}
+                  >
+                    {item.kind}
+                    {item.percentage != null ? ` ${item.percentage}%` : ''}
+                  </span>
+                </div>
+              </div>
+              <span className="shrink-0 text-sm font-bold text-emerald-400">{formatCurrency(item.amount, 'GHS')}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="flex items-center justify-between border-t border-white/10 bg-white/[0.03] px-5 py-3">
+        <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">
+          {items.length} entr{items.length === 1 ? 'y' : 'ies'}
+        </span>
+        <span className="text-sm font-bold text-sky-300">{formatCurrency(total, 'GHS')}</span>
+      </div>
+    </div>
   )
 }
 
