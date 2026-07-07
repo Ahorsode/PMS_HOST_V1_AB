@@ -11,6 +11,7 @@ import {
   type EggAllocationMode,
   type EggBatchStockOption,
 } from '@/lib/egg-sale-allocation-utils';
+import { toLocalDateTimeInputValue } from '@/lib/financial-dates';
 import { QuickAddCustomerButton, type SaleCustomer } from './QuickAddCustomerButton';
 
 type ProductType = 'inventory' | 'livestock' | 'custom';
