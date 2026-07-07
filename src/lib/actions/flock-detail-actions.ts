@@ -80,12 +80,14 @@ export async function getFlockDeepDive(id: string) {
     let farmMedications: any[] = []
     let inventoryItems: any[] = []
     let ledgerRevenueTransactions: any[] = []
+    let eggBatchRevenueItems: any[] = []
 
     if (canViewFinance) {
       ;[
         directExpenses,
         allocations,
         revenueItems,
+        eggBatchRevenueItems,
         generalExpenses,
         activeBatchesForAlloc,
         farmFeedingLogs,
@@ -106,6 +108,16 @@ export async function getFlockDeepDive(id: string) {
         tx.orderItem.findMany({
           where: { livestockId: id, order: { farmId: activeFarmId, isDeleted: false } },
           include: { order: { select: { orderDate: true, status: true } } },
+        }),
+        tx.orderItemBatchAllocation.findMany({
+          where: { batchId: id, farmId: activeFarmId },
+          include: {
+            orderItem: {
+              include: {
+                order: { select: { orderDate: true, status: true } },
+              },
+            },
+          },
         }),
         tx.expense.findMany({
           where: { farmId: activeFarmId, isDeleted: false, batch_id: null, allocations: { none: {} } },
@@ -156,7 +168,17 @@ export async function getFlockDeepDive(id: string) {
           })
         }
       }
-      revenueItems = [...revenueItems, ...ledgerRevenueForBatch]
+      revenueItems = [
+        ...revenueItems,
+        ...eggBatchRevenueItems
+          .filter((row: any) => String(row.orderItem?.order?.status || '').toUpperCase() !== 'CANCELLED')
+          .map((row: any) => ({
+            totalPrice: row.revenueAmount,
+            quantity: row.eggsUsed,
+            order: row.orderItem.order,
+          })),
+        ...ledgerRevenueForBatch,
+      ]
     }
 
     const consumptionContext = buildConsumptionContext({

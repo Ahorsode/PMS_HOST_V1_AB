@@ -13,6 +13,14 @@ import {
   type EggSaleQuantityUnit,
 } from '@/lib/sale-quantity-utils'
 import {
+  deductEggFifoWithAllocations,
+  getFifoEggAvailability,
+  isEggInventoryCategory,
+  moneyBalances,
+} from '@/lib/egg-fifo-utils'
+import { completeOrderInTransaction } from '@/lib/complete-order'
+import { upsertOrderLedger } from '@/lib/order-ledger-sync'
+import {
   normalizeSalePaymentMethod,
   validateSalePaymentFields,
   type SalePaymentMethod,
@@ -20,6 +28,26 @@ import {
 
 const PRICE_OVERRIDE_ROLES = new Set(['OWNER', 'MANAGER'])
 const MONEY_EPSILON = 0.01
+
+function mapOrderItemsForCompletion(items: any[]) {
+  return items.map((item) => ({
+    id: item.id,
+    description: item.description,
+    quantity: Number(item.quantity),
+    totalPrice: Number(item.totalPrice),
+    inventoryId: item.inventoryId,
+    livestockId: item.livestockId,
+    eggAllocationMode: item.eggAllocationMode,
+    eggBatchId: item.eggBatchId,
+    inventory: item.inventory
+      ? {
+          category: item.inventory.category,
+          eggCategoryId: item.inventory.eggCategoryId,
+          itemName: item.inventory.itemName,
+        }
+      : null,
+  }))
+}
 
 function toMoney(value: number) {
   return Math.round(value * 100) / 100
@@ -40,6 +68,8 @@ async function getAuthoritativeSaleItem(tx: any, activeFarmId: string, item: {
   unitPrice: number
   inventoryId?: string
   livestockId?: string
+  eggAllocationMode?: string
+  eggBatchId?: string
 }) {
   if (item.inventoryId) {
     const inventory = await tx.inventory.findFirst({
@@ -54,13 +84,21 @@ async function getAuthoritativeSaleItem(tx: any, activeFarmId: string, item: {
     const categorySalePrice = inventory.eggCategory?.sellingPrice != null ? Number(inventory.eggCategory.sellingPrice) : null
     const fallbackCost = inventory.costPerUnit != null ? Number(inventory.costPerUnit) : 0
 
+    let availableQuantity = Number(inventory.stockLevel)
+    if (isEggInventoryCategory(inventory.category)) {
+      availableQuantity = await getFifoEggAvailability(tx, activeFarmId, {
+        batchId: item.eggAllocationMode === 'batch' ? item.eggBatchId : null,
+        categoryId: inventory.eggCategoryId || null,
+      })
+    }
+
     return {
       description: item.description?.trim() || inventory.itemName,
       unitPrice: categorySalePrice && categorySalePrice > 0 ? categorySalePrice : fallbackCost,
       basePriceSource: categorySalePrice && categorySalePrice > 0 ? 'egg_category.sellingPrice' : 'inventory.costPerUnit',
       inventoryId: inventory.id as string,
       livestockId: undefined,
-      availableQuantity: Number(inventory.stockLevel)
+      availableQuantity,
     }
   }
 
@@ -106,28 +144,7 @@ export async function deductEggFifo(
   quantity: number,
   batchId?: string | null,
 ) {
-  if (quantity <= 0) {
-    return;
-  }
-  let qtyToDeduct = quantity;
-  const productions = await tx.eggProduction.findMany({
-    where: {
-      farmId,
-      eggsRemaining: { gt: 0 },
-      ...(batchId ? { batchId } : {}),
-    },
-    orderBy: { logDate: 'asc' },
-  });
-  for (const prod of productions) {
-    if (qtyToDeduct <= 0) break;
-    const take = Math.min(Number(prod.eggsRemaining || 0), qtyToDeduct);
-    if (take <= 0) continue;
-    await tx.eggProduction.update({
-      where: { id: prod.id },
-      data: { eggsRemaining: { decrement: take } },
-    });
-    qtyToDeduct -= take;
-  }
+  await deductEggFifoWithAllocations(tx, farmId, quantity, { batchId })
 }
 
 export async function createOrder(data: {
@@ -138,6 +155,7 @@ export async function createOrder(data: {
   paymentMethod?: SalePaymentMethod | string
   paymentReference?: string
   paymentAccountName?: string
+  completeNow?: boolean
   items: {
     description: string; 
     quantity: number; 
@@ -197,7 +215,9 @@ export async function createOrder(data: {
         const authoritative = await getAuthoritativeSaleItem(tx, activeFarmId, {
           ...item,
           quantity,
-          unitPrice: Number(item.unitPrice || 0)
+          unitPrice: Number(item.unitPrice || 0),
+          eggAllocationMode: item.eggAllocationMode,
+          eggBatchId: item.eggBatchId,
         })
 
         if (!canOverridePrice && !authoritative.inventoryId && !authoritative.livestockId) {
@@ -270,12 +290,24 @@ export async function createOrder(data: {
       }
 
       const isCreditSale = paymentMethod === 'CREDIT'
-      if (!isCreditSale && !canOverridePrice && !isBalanced(totalAmount, cashReceived)) {
+      const isWalkIn = !data.customerId
+
+      if (isWalkIn && isCreditSale) {
+        throw new Error('Walk-in customers cannot use credit sales')
+      }
+
+      if (isWalkIn && !moneyBalances(totalAmount, cashReceived)) {
+        throw new Error(`Walk-in sales must be paid in full: GHS ${totalAmount.toFixed(2)}`)
+      }
+
+      if (!isCreditSale && !canOverridePrice && !isWalkIn && !isBalanced(totalAmount, cashReceived)) {
         throw new Error(`Cash received must match the locked sale total of GHS ${totalAmount.toFixed(2)}`)
       }
 
       const isPaid = cashReceived + MONEY_EPSILON >= totalAmount
       const outstandingBalance = toMoney(Math.max(totalAmount - cashReceived, 0))
+      const needsCompletionPrompt = isCreditSale || outstandingBalance > MONEY_EPSILON
+      const shouldCompleteNow = data.completeNow === true || !needsCompletionPrompt
 
       const order = await tx.order.create({
         data: {
@@ -286,6 +318,7 @@ export async function createOrder(data: {
           taxAmount,
           totalAmount,
           discountAmount: discount,
+          cashReceived,
           currency: 'GHS',
           status: isPaid ? 'PAID' : 'PENDING',
           paymentMethod,
@@ -306,10 +339,46 @@ export async function createOrder(data: {
               eggBatchId: i.eggBatchId,
             }))
           }
-        } as any
+        },
+        include: {
+          items: { include: { inventory: true } },
+        },
+      } as any)
+
+      const itemSummary = normalizedItems
+        .map((line) => `${line.quantity} x ${line.description}`)
+        .join(', ')
+
+      await upsertOrderLedger(tx, {
+        orderId: order.id,
+        farmId: activeFarmId,
+        userId,
+        customerId: data.customerId,
+        totalAmount,
+        cashReceived,
+        paymentMethod,
+        paymentReference: data.paymentReference?.trim() || null,
+        transactionDate: selectedOrderDate ?? new Date(),
+        description: itemSummary || 'Farm-gate sale',
       })
 
-      if (isPaid) {
+      if (shouldCompleteNow) {
+        await completeOrderInTransaction(tx, activeFarmId, {
+          id: order.id,
+          farmId: order.farmId,
+          userId: order.userId,
+          customerId: order.customerId,
+          status: order.status,
+          totalAmount: Number(order.totalAmount),
+          cashReceived,
+          paymentMethod,
+          paymentReference: data.paymentReference?.trim() || null,
+          orderDate: order.orderDate,
+          items: mapOrderItemsForCompletion((order as any).items ?? []),
+        })
+      }
+
+      if (isPaid && !shouldCompleteNow) {
         if (selectedOrderDate) {
           await tx.order.update({
             where: { id: order.id },
@@ -409,6 +478,7 @@ export async function createOrder(data: {
 
     revalidatePath('/dashboard/orders')
     revalidatePath('/dashboard/sales')
+    revalidatePath('/dashboard/finance')
     revalidatePath('/dashboard')
     revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, order: result }
@@ -446,6 +516,7 @@ export async function getAllOrders() {
     taxAmount: Number((order as any).taxAmount || 0),
     totalAmount: Number(order.totalAmount),
     discountAmount: Number(order.discountAmount),
+    cashReceived: Number((order as any).cashReceived || 0),
     invoiceNumber: (order as any).invoiceNumber ?? null,
     paidAt: (order as any).paidAt ?? null,
     customer: order.customer ? {
@@ -481,53 +552,27 @@ export async function updateOrderStatus(id: string, status: string) {
     }
 
     const result = await prisma.$transaction(async (tx) => {
-      // 1. Update Order Status
+      if (status === 'COMPLETED' && order.status !== 'COMPLETED') {
+        const completed = await completeOrderInTransaction(tx, activeFarmId, {
+          id: order.id,
+          farmId: order.farmId,
+          userId: order.userId,
+          customerId: order.customerId,
+          status: order.status,
+          totalAmount: Number(order.totalAmount),
+          cashReceived: Number((order as any).cashReceived ?? order.totalAmount),
+          paymentMethod: order.paymentMethod,
+          paymentReference: order.paymentReference,
+          orderDate: order.orderDate,
+          items: mapOrderItemsForCompletion(order.items),
+        })
+        return completed
+      }
+
       const updatedOrder = await tx.order.update({
         where: { id },
         data: { status }
       })
-
-      // 2. Inventory Sync
-      // Case A: Marking as COMPLETED (Decrement)
-      if (status === 'COMPLETED' && order.status !== 'COMPLETED') {
-        for (const item of order.items) {
-          if (item.inventoryId) {
-            const current = await tx.inventory.findFirst({
-              where: { id: item.inventoryId, farmId: activeFarmId },
-              select: { stockLevel: true, itemName: true }
-            })
-
-            if (Number(current?.stockLevel ?? 0) < item.quantity) {
-              throw new Error(`Insufficient stock for ${current?.itemName || item.description}`)
-            }
-
-            await tx.inventory.update({
-              where: { id: item.inventoryId },
-              data: { stockLevel: { decrement: item.quantity } }
-            })
-
-            // FIFO for Eggs: Deduct from oldest production logs first
-            if (item.inventory?.category === 'EGGS') {
-              const orderItem = item as typeof item & {
-                eggAllocationMode?: string | null
-                eggBatchId?: string | null
-              }
-              await deductEggFifo(
-                tx,
-                activeFarmId,
-                item.quantity,
-                orderItem.eggAllocationMode === 'batch' ? orderItem.eggBatchId : null,
-              )
-            }
-          }
-          if (item.livestockId) {
-            await tx.livestock.update({
-              where: { id: item.livestockId },
-              data: { currentCount: { decrement: item.quantity } }
-            })
-          }
-        }
-      }
 
       // Case B: Moving AWAY from COMPLETED (Restore/Increment)
       if (order.status === 'COMPLETED' && status !== 'COMPLETED') {
@@ -574,6 +619,7 @@ export async function updateOrderStatus(id: string, status: string) {
     revalidatePath('/dashboard/orders')
     revalidatePath('/dashboard/sales')
     revalidatePath('/dashboard/inventory')
+    revalidatePath('/dashboard/finance')
     revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, order: result }
   } catch (error) {

@@ -147,6 +147,7 @@ model Farm {
   medications           MedicationSchedule[]
   mortality             HealthMortality[]
   orders                Order[]
+  orderItemBatchAllocations OrderItemBatchAllocation[]
   saleItems             SaleItem[]
   sales                 Sale[]
   subscription          Subscription?
@@ -215,6 +216,7 @@ model Livestock {
   medications          MedicationSchedule[]
   mortalityRecords     HealthMortality[]
   orderItems           OrderItem[]
+  orderItemBatchAllocations OrderItemBatchAllocation[]
   vaccinations         VaccinationSchedule[]
   weightRecords        WeightRecord[]
 
@@ -703,17 +705,18 @@ model Subscription {
 }
 
 model Customer {
-  id          String   @id @default(cuid())
-  farmId      String
-  name        String
-  phone       String?
-  email       String?
-  address     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  balanceOwed Decimal  @default(0) @db.Decimal(15, 2)
-  farm        Farm     @relation(fields: [farmId], references: [id])
-  orders      Order[]
+  id                    String                 @id @default(cuid())
+  farmId                  String
+  name                    String
+  phone                   String?
+  email                   String?
+  address                 String?
+  createdAt               DateTime               @default(now())
+  updatedAt               DateTime               @updatedAt
+  balanceOwed             Decimal                @default(0) @db.Decimal(15, 2)
+  farm                    Farm                   @relation(fields: [farmId], references: [id])
+  orders                  Order[]
+  financialTransactions   FinancialTransaction[]
 
   @@index([farmId])
   @@map("customers")
@@ -733,6 +736,7 @@ model Order {
   paymentMethod      String? @map("payment_method")
   paymentReference   String? @map("payment_reference")
   paymentAccountName String? @map("payment_account_name")
+  cashReceived       Decimal @default(0) @map("cash_received") @db.Decimal(15, 2)
   createdAt      DateTime    @default(now()) @map("created_at")
   orderDate      DateTime    @default(now()) @map("order_date")
   paidAt         DateTime?   @map("paid_at")
@@ -741,6 +745,7 @@ model Order {
   isDeleted      Boolean     @default(false) @map("is_deleted")
   deletedAt      DateTime?   @map("deleted_at")
   items          OrderItem[]
+  financialTransaction FinancialTransaction?
   customer       Customer?   @relation(fields: [customerId], references: [id])
   farm           Farm        @relation(fields: [farmId], references: [id])
   user           User        @relation(fields: [userId], references: [id])
@@ -750,6 +755,7 @@ model Order {
   @@index([userId])
   @@index([farmId, isDeleted])
   @@index([farmId, deletedAt])
+  @@index([farmId, status])
   @@map("orders")
 }
 
@@ -766,14 +772,34 @@ model OrderItem {
   eggBatchId        String? @map("egg_batch_id")
   lineDiscountAmount Decimal @default(0) @map("line_discount_amount") @db.Decimal(15, 2)
   lineDiscountType   String  @default("flat") @map("line_discount_type")
-  inventory   Inventory? @relation(fields: [inventoryId], references: [id])
-  batch       Livestock? @relation(fields: [livestockId], references: [id])
-  order       Order      @relation(fields: [orderId], references: [id])
+  inventory        Inventory?                 @relation(fields: [inventoryId], references: [id])
+  batch            Livestock?                 @relation(fields: [livestockId], references: [id])
+  order            Order                      @relation(fields: [orderId], references: [id])
+  batchAllocations OrderItemBatchAllocation[]
 
   @@index([orderId])
   @@index([inventoryId])
   @@index([livestockId])
   @@map("order_items")
+}
+
+model OrderItemBatchAllocation {
+  id            String    @id @default(cuid())
+  orderItemId   String    @map("order_item_id")
+  batchId       String    @map("batch_id")
+  farmId        String    @map("farm_id")
+  eggsUsed      Int       @map("eggs_used")
+  revenueAmount Decimal   @map("revenue_amount") @db.Decimal(15, 2)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  orderItem     OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  batch         Livestock @relation(fields: [batchId], references: [id])
+  farm          Farm      @relation(fields: [farmId], references: [id])
+
+  @@index([orderItemId])
+  @@index([batchId, farmId])
+  @@index([farmId])
+  @@map("order_item_batch_allocations")
 }
 
 model FeedFormulation {
@@ -957,29 +983,36 @@ model IssuedLicense {
 }
 
 model FinancialTransaction {
-  id              String    @id @default(cuid())
-  farmId          String    @map("farm_id")
-  userId          String    @map("user_id")
-  type            String
-  category        String
-  amount          Decimal   @db.Decimal(15, 2)
-  paymentStatus   String    @map("payment_status")
-  paymentMethod   String    @map("payment_method")
-  referenceNum    String?   @map("reference_num")
-  transactionDate DateTime  @map("transaction_date")
-  description     String?
-  isDeleted       Boolean   @default(false) @map("is_deleted")
-  deletedAt       DateTime? @map("deleted_at")
-  settledAt       DateTime? @map("settled_at")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
-  farm            Farm      @relation(fields: [farmId], references: [id], onDelete: Cascade)
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String    @id @default(cuid())
+  farmId            String    @map("farm_id")
+  userId            String    @map("user_id")
+  orderId           String?   @unique @map("order_id")
+  customerId        String?   @map("customer_id")
+  type              String
+  category          String
+  amount            Decimal   @db.Decimal(15, 2)
+  depositAmount     Decimal   @default(0) @map("deposit_amount") @db.Decimal(15, 2)
+  outstandingCredit Decimal   @default(0) @map("outstanding_credit") @db.Decimal(15, 2)
+  paymentStatus     String    @map("payment_status")
+  paymentMethod     String    @map("payment_method")
+  referenceNum      String?   @map("reference_num")
+  transactionDate   DateTime  @map("transaction_date")
+  description       String?
+  isDeleted         Boolean   @default(false) @map("is_deleted")
+  deletedAt         DateTime? @map("deleted_at")
+  settledAt         DateTime? @map("settled_at")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  farm              Farm      @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  order             Order?    @relation(fields: [orderId], references: [id])
+  customer          Customer? @relation(fields: [customerId], references: [id])
 
   @@index([farmId, type, transactionDate])
   @@index([userId])
   @@index([farmId, deletedAt])
   @@index([farmId, isDeleted])
+  @@index([customerId])
   @@map("financial_transactions")
 }
 

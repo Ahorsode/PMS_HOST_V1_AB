@@ -1,7 +1,7 @@
 import React from 'react';
 import { getAllOrders } from '@/lib/actions/order-actions';
 import { getAllCustomers } from '@/lib/actions/customer-actions';
-import { getAllInventory, getSellableEggInventory, getActiveBatchEggStock } from '@/lib/actions/inventory-actions';
+import { getAllInventory, getSellableEggInventory, getActiveBatchEggStock, getEggFifoAvailabilityMap } from '@/lib/actions/inventory-actions';
 import { getAllBatches } from '@/lib/actions/dashboard-actions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { formatCurrency } from '@/lib/utils';
@@ -105,12 +105,13 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
   const resolvedParams = await searchParams;
   const sellBatchId = resolvedParams.sellBatchId;
 
-  const [ordersRaw, customersRaw, inventoryRaw, eggInventoryRaw, eggBatchStockRaw, livestockRaw, farmSettings] = await Promise.all([
+  const [ordersRaw, customersRaw, inventoryRaw, eggInventoryRaw, eggBatchStockRaw, fifoEggAvailabilityRaw, livestockRaw, farmSettings] = await Promise.all([
     getAllOrders(),
     getAllCustomers(),
     getAllInventory(),
     getSellableEggInventory(),
     getActiveBatchEggStock(),
+    getEggFifoAvailabilityMap(),
     getAllBatches(),
     getFarmSettings(),
   ]);
@@ -235,6 +236,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
           inventory={inventory}
           eggInventory={eggInventory}
           eggBatchStock={eggBatchStock}
+          fifoEggAvailability={fifoEggAvailabilityRaw}
           livestock={livestock}
           eggsPerCrate={eggsPerCrate}
           initialLivestockId={sellBatchId}

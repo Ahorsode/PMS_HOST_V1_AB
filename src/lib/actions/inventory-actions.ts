@@ -522,3 +522,44 @@ export async function getActiveBatchEggStock(): Promise<ActiveBatchEggStock> {
     return { totalEggs, batches }
   })
 }
+
+/** FIFO egg pool totals for farm-gate availability (farm-wide and per category). */
+export async function getEggFifoAvailabilityMap(): Promise<{
+  totalEggs: number
+  byCategoryId: Record<string, number>
+}> {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) {
+    return { totalEggs: 0, byCategoryId: {} }
+  }
+
+  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    const logs = await tx.eggProduction.findMany({
+      where: {
+        farmId: activeFarmId,
+        isDeleted: false,
+        eggsRemaining: { gt: 0 },
+        batch: {
+          status: 'active',
+          type: 'POULTRY_LAYER',
+          isDeleted: false,
+        },
+      },
+      select: {
+        eggsRemaining: true,
+        categoryId: true,
+      },
+    })
+
+    const byCategoryId: Record<string, number> = {}
+    let totalEggs = 0
+    for (const log of logs) {
+      const remaining = Number(log.eggsRemaining || 0)
+      totalEggs += remaining
+      const key = log.categoryId ? String(log.categoryId) : '__uncategorized__'
+      byCategoryId[key] = (byCategoryId[key] || 0) + remaining
+    }
+
+    return { totalEggs, byCategoryId }
+  })
+}

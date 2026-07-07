@@ -46,6 +46,7 @@ interface SalesFormProps {
   inventory: any[];
   eggInventory: any[];
   eggBatchStock?: EggBatchStockOption[];
+  fifoEggAvailability?: { totalEggs: number; byCategoryId: Record<string, number> };
   livestock: any[];
   eggsPerCrate?: number;
   onSuccess: () => void;
@@ -184,16 +185,21 @@ function getEggAvailable(
   item: SaleItemState,
   eggInventory: any[],
   eggBatchStock: EggBatchStockOption[],
+  fifoEggAvailability: { totalEggs: number; byCategoryId: Record<string, number> },
 ) {
   if (item.eggAllocationMode === 'batch') {
     const batch = eggBatchStock.find((row) => row.batchId === item.eggBatchId);
     return Number(batch?.eggsRemaining ?? 0);
   }
   const selected = eggInventory.find((entry: any) => entry.id === item.productId);
-  return Number(selected?.stockLevel ?? 0);
+  const categoryId = selected?.eggCategory?.id ?? selected?.eggCategoryId;
+  if (categoryId && fifoEggAvailability.byCategoryId[String(categoryId)] != null) {
+    return Number(fifoEggAvailability.byCategoryId[String(categoryId)]);
+  }
+  return Number(fifoEggAvailability.totalEggs ?? 0);
 }
 
-export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = [], livestock, eggsPerCrate = 30, onSuccess, initialLivestockId, canOverridePrice = false, canAddCustomer = true }: SalesFormProps) {
+export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = [], fifoEggAvailability = { totalEggs: 0, byCategoryId: {} }, livestock, eggsPerCrate = 30, onSuccess, initialLivestockId, canOverridePrice = false, canAddCustomer = true }: SalesFormProps) {
   const [items, setItems] = useState<SaleItemState[]>(() => [
     getInitialItem(livestock, eggInventory, initialLivestockId),
   ]);
@@ -211,6 +217,7 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
   const [paymentMethod, setPaymentMethod] = useState<SalePaymentMethod>('CASH');
   const [paymentReference, setPaymentReference] = useState('');
   const [paymentAccountName, setPaymentAccountName] = useState('');
+  const [completionDialogOpen, setCompletionDialogOpen] = useState(false);
 
   const isWalkIn = customerId === '';
   const isCreditSale = paymentMethod === 'CREDIT';
@@ -346,7 +353,7 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
       if (item.eggAllocationMode === 'batch' && !item.eggBatchId) {
         errors.push('Select a batch for egg sale');
       }
-      const available = getEggAvailable(item, eggInventory, eggBatchStock);
+      const available = getEggAvailable(item, eggInventory, eggBatchStock, fifoEggAvailability);
       const quantityEggs = saleQuantityInEggs(
         quantity,
         item.eggQuantityUnit ?? 'crate',
@@ -394,17 +401,17 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
   }
 
   const canContinueStep1 = step1Errors.length === 0 && subtotal > 0;
+  const outstandingBalance = toMoney(Math.max(total - (Number.isFinite(cashValue) ? cashValue : 0), 0));
+  const needsCompletionPrompt = isCreditSale || outstandingBalance > 0.01;
+
   const canSubmit = step2Errors.length === 0
     && total > 0
     && Number.isFinite(cashValue)
     && cashValue >= 0
-    && (isWalkIn || isCreditSale || canOverridePrice || cashBalances)
+    && (isWalkIn ? cashBalances : (isCreditSale || canOverridePrice || cashBalances))
     && !isSubmitting;
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!canSubmit) return;
-
+  const submitOrder = async (completeNow?: boolean) => {
     setIsSubmitting(true);
     const response = await createOrder({
       customerId: customerId || undefined,
@@ -414,6 +421,7 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
       paymentMethod,
       paymentReference: paymentReference || undefined,
       paymentAccountName: paymentAccountName || undefined,
+      completeNow,
       items: items.map((item) => ({
         description: item.description,
         quantity: Number(item.quantity) || 0,
@@ -432,14 +440,29 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
       }))
     });
     setIsSubmitting(false);
+    setCompletionDialogOpen(false);
 
     if (response.success) {
-      toast.success('Farm-gate sale logged successfully');
+      toast.success(completeNow === false && needsCompletionPrompt
+        ? 'Sale saved. Complete it later from the sales list.'
+        : 'Farm-gate sale logged successfully');
       setSaleDate(toLocalDateTimeInputValue());
       onSuccess();
     } else {
       toast.error((response as any).error || 'Failed to record sale');
     }
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!canSubmit) return;
+
+    if (needsCompletionPrompt) {
+      setCompletionDialogOpen(true);
+      return;
+    }
+
+    await submitOrder();
   };
 
   return (
@@ -882,8 +905,12 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
               inputMode="decimal"
               min="0"
               step="0.01"
+              readOnly={isWalkIn}
               value={totalCashReceived}
-              onChange={(event) => setTotalCashReceived(event.target.value === '' ? '' : Number(event.target.value))}
+              onChange={(event) => {
+                if (isWalkIn) return;
+                setTotalCashReceived(event.target.value === '' ? '' : Number(event.target.value));
+              }}
               className={`box-border h-14 w-full min-w-0 rounded-md border bg-slate-950/70 pl-12 pr-4 text-xl font-bold text-white outline-none transition-all focus:border-emerald-500/60 sm:text-2xl ${
                 !isCreditSale && !isWalkIn && !canOverridePrice && totalCashReceived !== '' && !cashBalances ? 'border-red-500/60' : 'border-white/10'
               }`}
@@ -903,7 +930,7 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
               {isCreditSale
                 ? 'Credit sale: partial or zero payment allowed for saved customers'
                 : isWalkIn
-                ? 'Walk-in sale: cash defaults to total and can be adjusted'
+                ? 'Walk-in sale: cash is locked to the sale total'
                 : canOverridePrice
                   ? 'Credit sale: override audit enabled'
                   : cashBalances
@@ -963,6 +990,35 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
       </div>
         </>
       )}
+
+      {completionDialogOpen ? (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-md rounded-md border border-white/10 bg-slate-950 p-5 shadow-2xl">
+            <h3 className="text-lg font-bold text-white">Complete this sale now?</h3>
+            <p className="mt-2 text-sm text-white/70">
+              This credit or partial-payment sale can be completed now to deduct stock and finalize fulfillment, or saved to complete later.
+            </p>
+            <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => submitOrder(false)}
+                disabled={isSubmitting}
+                className="inline-flex h-11 items-center justify-center rounded-md border border-white/10 px-4 text-xs font-bold uppercase tracking-widest text-white/80 hover:bg-white/5 disabled:opacity-50"
+              >
+                Skip for now
+              </button>
+              <button
+                type="button"
+                onClick={() => submitOrder(true)}
+                disabled={isSubmitting}
+                className="inline-flex h-11 items-center justify-center rounded-md bg-emerald-500 px-4 text-xs font-bold uppercase tracking-widest text-[#064e3b] disabled:opacity-50"
+              >
+                {isSubmitting ? 'Processing...' : 'Complete sale now'}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {sizePickerIndex !== null ? (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4">
