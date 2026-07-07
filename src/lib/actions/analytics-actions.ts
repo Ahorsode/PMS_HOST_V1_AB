@@ -12,7 +12,9 @@ import {
   calculateMortalityRatePercentage,
 } from '@/lib/analytics/batch-performance'
 import { computeBatchFinance } from '@/lib/analytics/batch-finance'
+import { buildFarmRevenueByBatch } from '@/lib/analytics/batch-revenue'
 import { buildConsumptionContext } from '@/lib/analytics/batch-consumption-finance'
+import { LEDGER_ALLOC_PREFIX } from '@/lib/finance/ledger-allocation'
 
 export async function getBatchAnalytics(batchId: string) {
   const { userId, activeFarmId } = await getAuthContext()
@@ -107,7 +109,7 @@ export async function getBatchPerformanceReports() {
   const canViewFinance = await checkWorkerPermissions('finance', 'view')
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    const [batches, generalExpensesRaw, activeBatchesForAlloc, farmFeedingLogs, farmVaccinations, farmMedications, inventoryItems] =
+    const [batches, generalExpensesRaw, activeBatchesForAlloc, farmFeedingLogs, farmVaccinations, farmMedications, inventoryItems, farmFormulations, farmOrderItems, farmBatchAllocations, manualLedgerRevenue] =
       await Promise.all([
       tx.livestock.findMany({
       where: {
@@ -151,21 +153,6 @@ export async function getBatchPerformanceReports() {
               },
             }
           : false,
-        orderItems: canViewFinance
-          ? {
-              include: {
-                order: {
-                  select: {
-                    farmId: true,
-                    status: true,
-                    isDeleted: true,
-                    orderDate: true,
-                    totalAmount: true,
-                  },
-                },
-              },
-            }
-          : false,
       },
       orderBy: [
         { status: 'asc' },
@@ -187,7 +174,7 @@ export async function getBatchPerformanceReports() {
       canViewFinance
         ? tx.feedingLog.findMany({
             where: { farmId: activeFarmId, isDeleted: false },
-            select: { batchId: true, feedTypeId: true, amountConsumed: true },
+            select: { batchId: true, feedTypeId: true, formulationId: true, amountConsumed: true, logDate: true },
           })
         : Promise.resolve([]),
       canViewFinance
@@ -205,10 +192,56 @@ export async function getBatchPerformanceReports() {
       canViewFinance
         ? tx.inventory.findMany({
             where: { farmId: activeFarmId, isDeleted: false },
-            select: { id: true, itemName: true },
+            select: { id: true, itemName: true, costPerUnit: true },
+          })
+        : Promise.resolve([]),
+      canViewFinance
+        ? tx.feedFormulation.findMany({
+            where: { farmId: activeFarmId },
+            include: { ingredients: true },
+            orderBy: { createdAt: 'asc' },
+          })
+        : Promise.resolve([]),
+      canViewFinance
+        ? tx.orderItem.findMany({
+            where: { order: { farmId: activeFarmId, isDeleted: false } },
+            include: { order: { select: { orderDate: true, status: true } } },
+          })
+        : Promise.resolve([]),
+      canViewFinance
+        ? tx.orderItemBatchAllocation.findMany({
+            where: { farmId: activeFarmId },
+            include: {
+              orderItem: {
+                include: {
+                  order: { select: { orderDate: true, status: true } },
+                },
+              },
+            },
+          })
+        : Promise.resolve([]),
+      canViewFinance
+        ? tx.financialTransaction.findMany({
+            where: {
+              farmId: activeFarmId,
+              type: 'REVENUE',
+              isDeleted: false,
+              orderId: null,
+              description: { contains: LEDGER_ALLOC_PREFIX },
+            },
+            select: { id: true, amount: true, transactionDate: true, description: true },
           })
         : Promise.resolve([]),
     ])
+
+    const revenueByBatch = canViewFinance
+      ? buildFarmRevenueByBatch({
+          orderItems: farmOrderItems,
+          batchAllocations: farmBatchAllocations,
+          manualLedgerTransactions: manualLedgerRevenue,
+          activeBatches: activeBatchesForAlloc,
+        })
+      : new Map()
 
     const consumptionContext = buildConsumptionContext({
       feedingLogs: farmFeedingLogs,
@@ -224,7 +257,20 @@ export async function getBatchPerformanceReports() {
         quantity: m.quantity,
         status: m.status,
       })),
-      inventoryItems,
+      inventoryItems: inventoryItems.map((item: any) => ({
+        id: item.id,
+        itemName: item.itemName,
+        costPerUnit: item.costPerUnit,
+      })),
+      formulations: farmFormulations.map((f: any) => ({
+        id: f.id,
+        name: f.name,
+        createdAt: f.createdAt,
+        ingredients: (f.ingredients || []).map((ing: any) => ({
+          inventoryId: ing.inventoryId,
+          quantity: Number(ing.quantity || 0),
+        })),
+      })),
     })
 
     const reports = batches.map((batch: any) => {
@@ -260,9 +306,7 @@ export async function getBatchPerformanceReports() {
             directExpenses: batch.expenses || [],
             allocations: batch.expenseAllocations || [],
             generalExpenses: generalExpensesRaw,
-            revenueItems: (batch.orderItems || []).filter(
-              (item: any) => item.order?.farmId === activeFarmId && !item.order?.isDeleted
-            ),
+            revenueItems: revenueByBatch.get(batch.id) || [],
             activeBatches: activeBatchesForAlloc,
             consumptionContext,
           })

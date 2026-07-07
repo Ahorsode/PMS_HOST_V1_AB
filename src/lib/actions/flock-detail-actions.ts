@@ -4,9 +4,10 @@ import prisma from '@/lib/db'
 import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
 import { computeBatchFinance } from '@/lib/analytics/batch-finance'
+import { buildBatchRevenueItems } from '@/lib/analytics/batch-revenue'
 import { buildConsumptionContext } from '@/lib/analytics/batch-consumption-finance'
 import { getHealthInventory } from '@/lib/actions/health-actions'
-import { LEDGER_ALLOC_PREFIX, parseLedgerAllocation } from '@/lib/finance/ledger-allocation'
+import { LEDGER_ALLOC_PREFIX } from '@/lib/finance/ledger-allocation'
 
 const FEED_CATEGORIES = ['FEED', 'FEEDS', 'FEED_RAW', 'FEED_FINISHED']
 
@@ -79,22 +80,25 @@ export async function getFlockDeepDive(id: string) {
     let farmVaccinations: any[] = []
     let farmMedications: any[] = []
     let inventoryItems: any[] = []
-    let ledgerRevenueTransactions: any[] = []
-    let eggBatchRevenueItems: any[] = []
+    let farmFormulations: any[] = []
+    let farmOrderItems: any[] = []
+    let farmBatchAllocations: any[] = []
+    let manualLedgerRevenue: any[] = []
 
     if (canViewFinance) {
       ;[
         directExpenses,
         allocations,
-        revenueItems,
-        eggBatchRevenueItems,
+        farmOrderItems,
+        farmBatchAllocations,
         generalExpenses,
         activeBatchesForAlloc,
         farmFeedingLogs,
         farmVaccinations,
         farmMedications,
         inventoryItems,
-        ledgerRevenueTransactions,
+        farmFormulations,
+        manualLedgerRevenue,
       ] = await Promise.all([
         tx.expense.findMany({
           where: { batch_id: id, farmId: activeFarmId, isDeleted: false },
@@ -106,11 +110,11 @@ export async function getFlockDeepDive(id: string) {
           orderBy: { createdAt: 'desc' },
         }),
         tx.orderItem.findMany({
-          where: { livestockId: id, order: { farmId: activeFarmId, isDeleted: false } },
+          where: { order: { farmId: activeFarmId, isDeleted: false } },
           include: { order: { select: { orderDate: true, status: true } } },
         }),
         tx.orderItemBatchAllocation.findMany({
-          where: { batchId: id, farmId: activeFarmId },
+          where: { farmId: activeFarmId },
           include: {
             orderItem: {
               include: {
@@ -130,7 +134,7 @@ export async function getFlockDeepDive(id: string) {
         }),
         tx.feedingLog.findMany({
           where: { farmId: activeFarmId, isDeleted: false },
-          select: { batchId: true, feedTypeId: true, amountConsumed: true },
+          select: { batchId: true, feedTypeId: true, formulationId: true, amountConsumed: true, logDate: true },
         }),
         tx.vaccinationSchedule.findMany({
           where: { farmId: activeFarmId },
@@ -142,43 +146,31 @@ export async function getFlockDeepDive(id: string) {
         }),
         tx.inventory.findMany({
           where: { farmId: activeFarmId, isDeleted: false },
-          select: { id: true, itemName: true },
+          select: { id: true, itemName: true, costPerUnit: true },
+        }),
+        tx.feedFormulation.findMany({
+          where: { farmId: activeFarmId },
+          include: { ingredients: true },
+          orderBy: { createdAt: 'asc' },
         }),
         tx.financialTransaction.findMany({
           where: {
             farmId: activeFarmId,
             type: 'REVENUE',
             isDeleted: false,
+            orderId: null,
             description: { contains: LEDGER_ALLOC_PREFIX },
           },
-          select: { amount: true, transactionDate: true, description: true },
+          select: { id: true, amount: true, transactionDate: true, description: true },
         }),
       ])
 
-      const ledgerRevenueForBatch: any[] = []
-      for (const txRow of ledgerRevenueTransactions) {
-        const parsed = parseLedgerAllocation(txRow.description)
-        if (!parsed) continue
-        for (const row of parsed) {
-          if (row.batchId !== id) continue
-          ledgerRevenueForBatch.push({
-            totalPrice: row.amount,
-            quantity: 1,
-            order: { orderDate: txRow.transactionDate, status: 'COMPLETED' },
-          })
-        }
-      }
-      revenueItems = [
-        ...revenueItems,
-        ...eggBatchRevenueItems
-          .filter((row: any) => String(row.orderItem?.order?.status || '').toUpperCase() !== 'CANCELLED')
-          .map((row: any) => ({
-            totalPrice: row.revenueAmount,
-            quantity: row.eggsUsed,
-            order: row.orderItem.order,
-          })),
-        ...ledgerRevenueForBatch,
-      ]
+      revenueItems = buildBatchRevenueItems(id, {
+        orderItems: farmOrderItems,
+        batchAllocations: farmBatchAllocations,
+        manualLedgerTransactions: manualLedgerRevenue,
+        activeBatches: activeBatchesForAlloc,
+      })
     }
 
     const consumptionContext = buildConsumptionContext({
@@ -195,7 +187,20 @@ export async function getFlockDeepDive(id: string) {
         quantity: m.quantity,
         status: m.status,
       })),
-      inventoryItems,
+      inventoryItems: inventoryItems.map((item: any) => ({
+        id: item.id,
+        itemName: item.itemName,
+        costPerUnit: item.costPerUnit,
+      })),
+      formulations: farmFormulations.map((f: any) => ({
+        id: f.id,
+        name: f.name,
+        createdAt: f.createdAt,
+        ingredients: (f.ingredients || []).map((ing: any) => ({
+          inventoryId: ing.inventoryId,
+          quantity: Number(ing.quantity || 0),
+        })),
+      })),
     })
 
     const allocationBatches = canEditFinance ? activeBatchesForAlloc : []
@@ -357,6 +362,7 @@ export async function getFlockDeepDive(id: string) {
         totalRevenue: batchFinance?.totalRevenue ?? 0,
         netProfit: batchFinance?.netProfit ?? 0,
         expenseBreakdown: batchFinance?.expenseBreakdown ?? [],
+        revenueBreakdown: batchFinance?.revenueBreakdown ?? [],
       },
       series: {
         financeMonthly: batchFinance?.financeMonthly ?? [],

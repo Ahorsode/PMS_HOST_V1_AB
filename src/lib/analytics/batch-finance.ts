@@ -11,6 +11,7 @@
 
 import {
   allocateConsumptionExpense,
+  buildFeedAllocationIndexes,
   filterConsumptionExpenses,
   isConsumptionBasedExpense,
   type ConsumptionContext,
@@ -44,9 +45,14 @@ export type AllocationLike = {
 }
 
 export type RevenueItemLike = {
-  totalPrice: number | string
+  id?: string
+  description?: string | null
   quantity?: number | string
+  unitPrice?: number | string
+  totalPrice: number | string
   order: { orderDate: Date | string; status?: string | null }
+  kind?: 'Direct' | 'Allocated' | 'EggBatch' | 'Ledger' | 'GeneralShare'
+  percentage?: number | null
 }
 
 export type HeadcountBatch = { id: string; currentCount: number }
@@ -102,6 +108,15 @@ export type BatchFinanceResult = {
     description: string
     amount: number
     kind: 'Initial' | 'Direct' | 'Allocated' | 'Consumption' | 'General'
+    percentage: number | null
+  }>
+  revenueBreakdown: Array<{
+    id: string
+    date: Date | string
+    description: string
+    amount: number
+    quantity: number | null
+    kind: 'Direct' | 'Allocated' | 'EggBatch' | 'Ledger' | 'GeneralShare'
     percentage: number | null
   }>
 }
@@ -164,6 +179,12 @@ export function computeBatchFinance(input: BatchFinanceInput): BatchFinanceResul
 
   const farmGeneralPool = input.generalExpenses.filter((e) => !isBatchInitialExpense(e))
   const consumptionExpenses = filterConsumptionExpenses(farmGeneralPool)
+  const {
+    feedFifoAllocationsByExpenseId,
+    formulationFeedCostByBatchId,
+    formulationFeedMonthlyByBatchId,
+  } = buildFeedAllocationIndexes(consumptionExpenses, input.consumptionContext)
+  const formulationFeedCost = roundMoney(formulationFeedCostByBatchId.get(input.batchId) || 0)
   const headcountExpenses = farmGeneralPool.filter((e) => !consumptionExpenses.some((c) => c.id === e.id))
 
   const directOperatingExpenses = input.directExpenses.filter((e) => !isBatchInitialExpense(e))
@@ -173,9 +194,16 @@ export function computeBatchFinance(input: BatchFinanceInput): BatchFinanceResul
 
   const consumptionAllocations = consumptionExpenses.map((e) => ({
     expense: e,
-    ...allocateConsumptionExpense(e, input.batchId, input.consumptionContext, input.activeBatches),
+    ...allocateConsumptionExpense(
+      e,
+      input.batchId,
+      input.consumptionContext,
+      input.activeBatches,
+      feedFifoAllocationsByExpenseId
+    ),
   }))
-  const consumptionAllocatedTotal = consumptionAllocations.reduce((sum, row) => sum + row.amount, 0)
+  const consumptionAllocatedTotal =
+    consumptionAllocations.reduce((sum, row) => sum + row.amount, 0) + formulationFeedCost
 
   const headcountPoolTotal = headcountExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0)
   const generalAllocatedTotal = headcountPoolTotal * headcountShare
@@ -214,6 +242,9 @@ export function computeBatchFinance(input: BatchFinanceInput): BatchFinanceResul
   consumptionAllocations.forEach(({ expense, amount }) =>
     bump(monthKey(new Date(expense.expenseDate)), 'consumption', amount)
   )
+  for (const [month, amount] of formulationFeedMonthlyByBatchId.get(input.batchId)?.entries() || []) {
+    bump(month, 'consumption', amount)
+  }
   headcountExpenses.forEach((e) =>
     bump(monthKey(new Date(e.expenseDate)), 'general', Number(e.amount || 0) * headcountShare)
   )
@@ -285,6 +316,19 @@ export function computeBatchFinance(input: BatchFinanceInput): BatchFinanceResul
         kind: 'Consumption' as const,
         percentage: sharePct,
       })),
+    ...(formulationFeedCost > 0
+      ? [
+          {
+            id: `${input.batchId}-formulated-feed`,
+            date: input.arrivalDate,
+            category: 'FEED',
+            description: 'Formulated feed (by usage)',
+            amount: formulationFeedCost,
+            kind: 'Consumption' as const,
+            percentage: null,
+          },
+        ]
+      : []),
     ...headcountExpenses.map((e) => ({
       id: e.id,
       date: e.expenseDate,
@@ -295,6 +339,19 @@ export function computeBatchFinance(input: BatchFinanceInput): BatchFinanceResul
       percentage: headcountSharePct,
     })),
   ]
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 25)
+
+  const revenueBreakdown = validRevenueItems
+    .map((item, index) => ({
+      id: item.id || `revenue-${index}`,
+      date: item.order.orderDate,
+      description: item.description || 'Sale',
+      amount: roundMoney(Number(item.totalPrice || 0)),
+      quantity: item.quantity != null ? Number(item.quantity) : null,
+      kind: item.kind || 'Direct',
+      percentage: item.percentage ?? null,
+    }))
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 25)
 
@@ -313,5 +370,6 @@ export function computeBatchFinance(input: BatchFinanceInput): BatchFinanceResul
     financeMonthly,
     financeSummary,
     expenseBreakdown,
+    revenueBreakdown,
   }
 }

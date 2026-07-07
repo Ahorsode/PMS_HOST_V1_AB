@@ -665,9 +665,9 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
                   </div>
                 </div>
 
-                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+                <div className="mt-4 space-y-3">
                   {item.productType === 'inventory' ? (
-                    <div className="sm:col-span-2 flex min-w-0 overflow-hidden rounded-md border border-white/10 bg-slate-950/70">
+                    <div className="flex min-w-0 overflow-hidden rounded-md border border-white/10 bg-slate-950/70">
                       <button
                         type="button"
                         onClick={() => {
@@ -690,64 +690,66 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
                             });
                           }
                         }}
-                        className="flex-1 px-3 py-2 text-xs font-bold uppercase tracking-widest text-white/60"
+                        className="flex-1 px-3 py-3 text-xs font-bold uppercase tracking-widest text-white/60"
                       >
                         {(item.eggQuantityUnit ?? 'crate') === 'crate' ? 'Crates' : 'Eggs'} — tap to switch
                       </button>
                     </div>
                   ) : null}
-                  <div className="space-y-1 min-w-0">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-white/50">
-                      {item.productType === 'inventory'
-                        ? (item.eggQuantityUnit ?? 'crate') === 'crate'
-                          ? 'Crates Sold'
-                          : 'Eggs Sold'
-                        : 'Quantity Sold'}
-                    </label>
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      min="1"
-                      step="1"
-                      value={item.quantity}
-                      onChange={(event) => updateItem(index, { quantity: event.target.value === '' ? '' : Number(event.target.value) })}
-                      className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
-                    />
-                  </div>
-
-                  <div className="space-y-1 min-w-0">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-white/50">
-                      {item.productType === 'inventory'
-                        ? (item.eggQuantityUnit ?? 'crate') === 'crate'
-                          ? 'Price / Crate'
-                          : 'Price / Egg'
-                        : 'Unit Price'}
-                    </label>
-                    <div className="relative min-w-0">
-                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-300/60">GHS</span>
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end">
+                    <div className="space-y-1 min-w-0">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-white/50">
+                        {item.productType === 'inventory'
+                          ? (item.eggQuantityUnit ?? 'crate') === 'crate'
+                            ? 'Crates Sold'
+                            : 'Eggs Sold'
+                          : 'Quantity Sold'}
+                      </label>
                       <input
                         type="number"
-                        min="0"
-                        step="0.01"
-                        value={canOverridePrice ? item.unitPrice : basePrice}
-                        onChange={(event) => updateItem(index, { unitPrice: event.target.value === '' ? '' : Number(event.target.value) })}
-                        disabled={!canOverridePrice}
-                        className="box-border h-11 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 py-0 pl-11 pr-10 text-sm font-bold text-emerald-300 outline-none transition-all focus:border-emerald-500/50 disabled:cursor-not-allowed disabled:bg-slate-950/40 disabled:text-white/60"
+                        inputMode="numeric"
+                        min="1"
+                        step="1"
+                        value={item.quantity}
+                        onChange={(event) => updateItem(index, { quantity: event.target.value === '' ? '' : Number(event.target.value) })}
+                        className="h-14 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 px-4 text-base font-bold text-white outline-none transition-all focus:border-emerald-500/50"
                       />
-                      {!canOverridePrice && <Lock className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />}
                     </div>
-                  </div>
 
-                  <div className="flex items-end sm:justify-end">
-                    <button
-                      type="button"
-                      onClick={() => removeItem(index)}
-                      disabled={items.length === 1}
-                      title="Remove line"
-                      className="h-11 w-11 shrink-0 rounded-md border border-transparent text-white/30 transition-all hover:border-red-500/20 hover:bg-red-500/10 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-30"
-                    >
-                      <Trash2 className="mx-auto h-4 w-4" />
-                    </button>
+                    <div className="space-y-1 min-w-0">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-white/50">
+                        {item.productType === 'inventory'
+                          ? (item.eggQuantityUnit ?? 'crate') === 'crate'
+                            ? 'Price / Crate'
+                            : 'Price / Egg'
+                          : 'Unit Price'}
+                      </label>
+                      <div className="relative min-w-0">
+                        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-300/60">GHS</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={canOverridePrice ? item.unitPrice : basePrice}
+                          onChange={(event) => updateItem(index, { unitPrice: event.target.value === '' ? '' : Number(event.target.value) })}
+                          disabled={!canOverridePrice}
+                          className="box-border h-14 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 py-0 pl-11 pr-10 text-base font-bold text-emerald-300 outline-none transition-all focus:border-emerald-500/50 disabled:cursor-not-allowed disabled:bg-slate-950/40 disabled:text-white/60"
+                        />
+                        {!canOverridePrice && <Lock className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />}
+                      </div>
+                    </div>
+
+                    <div className="flex items-end md:justify-end">
+                      <button
+                        type="button"
+                        onClick={() => removeItem(index)}
+                        disabled={items.length === 1}
+                        title="Remove line"
+                        className="h-14 w-14 shrink-0 rounded-md border border-transparent text-white/30 transition-all hover:border-red-500/20 hover:bg-red-500/10 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-30"
+                      >
+                        <Trash2 className="mx-auto h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
 
