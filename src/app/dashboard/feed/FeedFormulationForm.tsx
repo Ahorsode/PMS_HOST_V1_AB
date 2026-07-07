@@ -45,7 +45,7 @@ export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: Feed
   const [name, setName] = useState('')
   const [type, setType] = useState<FeedType>('STARTER')
   const [targetLivestock, setTargetLivestock] = useState<LivestockType>('POULTRY_BROILER')
-  const [ingredients, setIngredients] = useState<{ inventoryId: string; percentage: number | '' }[]>([])
+  const [ingredients, setIngredients] = useState<{ inventoryId: string; bags: number | '' }[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   if (inventoryItems.length === 0) {
@@ -91,7 +91,7 @@ export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: Feed
       return;
     }
     
-    setIngredients([...ingredients, { inventoryId: availableItems[0].id, percentage: '' }])
+    setIngredients([...ingredients, { inventoryId: availableItems[0].id, bags: '' }])
   }
 
   const removeIngredient = (index: number) => {
@@ -100,7 +100,7 @@ export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: Feed
 
   const updateIngredient = (index: number, field: string, value: any) => {
     const newIngredients = [...ingredients]
-    if (field === 'percentage') {
+    if (field === 'bags') {
       const item = inventoryItems.find(i => i.id === newIngredients[index].inventoryId)
       if (item && value !== '' && Number(value) > Number(item.stockLevel)) {
         toast.error(`Cannot exceed stock level of ${item.stockLevel} bags`)
@@ -111,7 +111,7 @@ export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: Feed
     setIngredients(newIngredients)
   }
 
-  const totalBags = ingredients.reduce((sum, i) => sum + Number(i.percentage || 0), 0)
+  const totalBags = ingredients.reduce((sum, i) => sum + Number(i.bags || 0), 0)
 
   const getAvailableInventoryItems = (currentIndex: number) => {
     // Collect all IDs selected in OTHER rows
@@ -126,12 +126,17 @@ export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: Feed
   const handleSubmit = async () => {
     if (isSubmitting) return;
 
+    if (!name.trim()) {
+      toast.error('Please name this formulation');
+      return;
+    }
+
     if (ingredients.length === 0) {
       toast.error('Please add at least one ingredient');
       return;
     }
     
-    if (ingredients.some(i => i.percentage === '' || Number(i.percentage) <= 0)) {
+    if (ingredients.some(i => i.bags === '' || Number(i.bags) <= 0)) {
       toast.error('All ingredients must have a valid number of bags');
       return;
     }
@@ -149,8 +154,8 @@ export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: Feed
         type,
         targetLivestock,
         ingredients: ingredients.map(i => ({
-          ...i,
-          percentage: Number(i.percentage)
+          inventoryId: i.inventoryId,
+          quantity: Number(i.bags),
         }))
       })
 
@@ -251,8 +256,8 @@ export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: Feed
                     type="number"
                     min="0"
                     max={inventoryItems.find(i => i.id === ing.inventoryId)?.stockLevel || 0}
-                    value={ing.percentage}
-                    onChange={(e) => updateIngredient(idx, 'percentage', e.target.value === '' ? '' : Number(e.target.value))}
+                    value={ing.bags}
+                    onChange={(e) => updateIngredient(idx, 'bags', e.target.value === '' ? '' : Number(e.target.value))}
                     placeholder="0"
                     className="bg-white text-[#064e3b] font-black h-14 text-xl border-2 border-emerald-500/30 shadow-inner"
                   />

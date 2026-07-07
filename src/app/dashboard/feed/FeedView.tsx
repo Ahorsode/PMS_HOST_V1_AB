@@ -104,8 +104,11 @@ export default function FeedDashboard({ canEdit = true, openLogOnLoad = false }:
         <FeedFormulationForm 
           inventoryItems={inventory.filter(i => {
             const name = (i.itemName || '').toLowerCase();
-            const cat = (i.category || '').toLowerCase();
-            return !name.includes('egg') && !cat.includes('egg') && !i.eggCategoryId;
+            const cat = (i.category || '').toUpperCase();
+            return cat === 'FEED'
+              && !name.includes('egg')
+              && !cat.includes('EGG')
+              && !i.eggCategoryId;
           })} 
           onSuccess={() => {
             setShowForm(false)
@@ -226,20 +229,27 @@ export default function FeedDashboard({ canEdit = true, openLogOnLoad = false }:
                           <h4 className="font-bold text-sm uppercase tracking-widest text-emerald-400">{f.name}</h4>
                         </div>
                         <div className="space-y-2">
-                           {f.ingredients.map((ing: any) => (
+                           {f.ingredients.map((ing: any) => {
+                             const quantity = Number(ing.quantity || 0)
+                             const total = f.ingredients.reduce(
+                               (sum: number, item: any) => sum + Number(item.quantity || 0),
+                               0,
+                             ) || 1
+                             const share = Math.min(100, (quantity / total) * 100)
+                             return (
                              <div key={ing.id} className="space-y-1">
                                <div className="flex justify-between text-sm font-bold text-white/70">
                                  <span>{ing.inventory.itemName}</span>
-                                 <span className="text-emerald-400">{ing.percentage}%</span>
+                                 <span className="text-emerald-400">{quantity} bags</span>
                                </div>
                                <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
                                  <div 
                                   className="h-full bg-emerald-500 rounded-full" 
-                                  style={{ width: `${ing.percentage}%` }}
+                                  style={{ width: `${share}%` }}
                                  />
                                </div>
                              </div>
-                           ))}
+                           )})}
                         </div>
                      </div>
                    ))}

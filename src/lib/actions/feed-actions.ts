@@ -11,7 +11,7 @@ export async function createFeedFormulation(data: {
   name: string
   type: FeedType
   targetLivestock?: LivestockType
-  ingredients: { inventoryId: string; percentage: number }[]
+  ingredients: { inventoryId: string; quantity: number }[]
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
@@ -26,33 +26,62 @@ export async function createFeedFormulation(data: {
     return rateLimitActionError(limitResult)
   }
 
+  const trimmedName = data.name.trim()
+  if (!trimmedName) {
+    return { success: false, error: 'Formulation name is required' }
+  }
+
+  if (!data.ingredients.length) {
+    return { success: false, error: 'Add at least one ingredient' }
+  }
+
+  if (data.ingredients.some((ingredient) => ingredient.quantity <= 0)) {
+    return { success: false, error: 'Each ingredient must use at least one bag' }
+  }
+
   try {
-    const totalBags = data.ingredients.reduce((sum, i) => sum + Number(i.percentage), 0)
+    const totalBags = data.ingredients.reduce(
+      (sum, ingredient) => sum + Number(ingredient.quantity),
+      0,
+    )
 
     const formulation = await prisma.$transaction(async (tx) => {
+      for (const ingredient of data.ingredients) {
+        const item = await tx.inventory.findFirst({
+          where: { id: ingredient.inventoryId, farmId: activeFarmId },
+          select: { id: true, stockLevel: true, itemName: true },
+        })
+        if (!item) {
+          throw new Error('Ingredient inventory item not found')
+        }
+        if (Number(item.stockLevel) < ingredient.quantity) {
+          throw new Error(
+            `Insufficient stock for ${item.itemName} (${Number(item.stockLevel)} available)`,
+          )
+        }
+      }
+
       const created = await tx.feedFormulation.create({
         data: {
           farmId: activeFarmId,
-          name: data.name,
+          name: trimmedName,
           type: data.type,
           targetLivestock: data.targetLivestock,
           stockLevel: totalBags,
           ingredients: {
-            create: data.ingredients.map(i => ({
-              inventoryId: i.inventoryId,
-              percentage: i.percentage,
-              quantity: i.percentage,
-              unit: 'bag'
-            }))
-          }
-        }
+            create: data.ingredients.map((ingredient) => ({
+              inventoryId: ingredient.inventoryId,
+              quantity: ingredient.quantity,
+              unit: 'bag',
+            })),
+          },
+        },
       })
 
-      // Decrease inventory stock
-      for (const ing of data.ingredients) {
+      for (const ingredient of data.ingredients) {
         await tx.inventory.update({
-          where: { id: ing.inventoryId },
-          data: { stockLevel: { decrement: ing.percentage } }
+          where: { id: ingredient.inventoryId },
+          data: { stockLevel: { decrement: ingredient.quantity } },
         })
       }
 
@@ -64,7 +93,10 @@ export async function createFeedFormulation(data: {
     return { success: true, formulation }
   } catch (error: any) {
     console.error('Error creating feed formulation:', error)
-    return { success: false, error: 'Failed to create formulation' }
+    return {
+      success: false,
+      error: error?.message || 'Failed to create formulation',
+    }
   }
 }
 
@@ -87,7 +119,6 @@ export async function getAllFeedFormulations() {
       ingredients: f.ingredients.map((ing: any) => ({
         ...ing,
         quantity: Number(ing.quantity),
-        percentage: Number(ing.percentage),
         inventory: ing.inventory ? {
           ...ing.inventory,
           stockLevel: Number(ing.inventory.stockLevel),
