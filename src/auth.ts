@@ -6,7 +6,13 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { authConfig } from './auth.config';
 import prisma from '@/lib/db';
 import bcrypt from 'bcryptjs';
-import { normalizePhoneNumber, recordUserSession } from '@/lib/auth-utils';
+import {
+  acceptPendingInvitationForUser,
+  findUserByLoginIdentifier,
+  normalizePhoneNumber,
+  recordUserSession,
+  WORKER_PLACEHOLDER_PASSWORD,
+} from '@/lib/auth-utils';
 import { getCachedSessionVersion, setCachedSessionVersion } from '@/lib/performance/session-version-cache';
 
 const SECURITY_PERMISSION_UPDATE_MESSAGE = 'Your security permissions have been updated. Please sign in again to activate your new features.';
@@ -156,23 +162,36 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           identifier = normalizePhoneNumber(identifier) || identifier;
         }
 
-        // 1. Look up existing user
-        const user = await prisma.user.findFirst({
-          where: {
-            OR: [
-              { email: identifier },
-              { phoneNumber: identifier }
-            ]
-          }
-        });
+        const user = await findUserByLoginIdentifier(identifier);
 
         if (user && user.password) {
-          const isValid = await bcrypt.compare(password, user.password);
+          let isValid = await bcrypt.compare(password, user.password);
+
+          // Legacy invited workers may still have a random temp hash from before
+          // placeholder-password rollout. Accept the shared first-login password
+          // and normalize the stored hash going forward.
+          if (
+            !isValid &&
+            user.mustChangePassword &&
+            password === WORKER_PLACEHOLDER_PASSWORD
+          ) {
+            const hashedPlaceholder = await bcrypt.hash(WORKER_PLACEHOLDER_PASSWORD, 10);
+            await prisma.user.update({
+              where: { id: user.id },
+              data: {
+                password: hashedPlaceholder,
+                mustChangePassword: true,
+              },
+            });
+            isValid = true;
+          }
+
           if (!isValid) return null;
 
-          // Fetch active farm
+          const acceptedFarmId = await acceptPendingInvitationForUser(user.id);
+
           const membership = await prisma.farmMember.findFirst({
-            where: { userId: user.id }
+            where: { userId: user.id },
           });
           
           return {
@@ -182,7 +201,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             role: user.role,
             mustChangePassword: user.mustChangePassword,
             sessionVersion: user.sessionVersion,
-            activeFarmId: membership?.farmId
+            activeFarmId: membership?.farmId ?? acceptedFarmId ?? undefined,
           }; 
         }
 

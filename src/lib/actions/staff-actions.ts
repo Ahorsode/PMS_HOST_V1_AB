@@ -2,11 +2,15 @@
 
 import prisma from '@/lib/db'
 import { revalidatePath } from 'next/cache'
-import { getAuthContext, normalizePhoneNumber, SECURITY_PERMISSION_UPDATE_MESSAGE } from '@/lib/auth-utils'
+import {
+  getAuthContext,
+  normalizePhoneNumber,
+  SECURITY_PERMISSION_UPDATE_MESSAGE,
+  WORKER_PLACEHOLDER_PASSWORD,
+} from '@/lib/auth-utils'
 import { canAddWorker } from '@/lib/subscription-utils'
 import { Role } from '@prisma/client'
 import bcrypt from 'bcryptjs'
-import { randomBytes } from 'crypto'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 import { setCachedSessionVersion } from '@/lib/performance/session-version-cache'
 import {
@@ -41,10 +45,21 @@ async function findOrCreateInvitedUser(
     where: { OR: identifiers },
   })
 
-  if (existingUser) return existingUser
+  if (existingUser) {
+    if (existingUser.mustChangePassword) {
+      const hashedPlaceholder = await bcrypt.hash(WORKER_PLACEHOLDER_PASSWORD, 10)
+      return await tx.user.update({
+        where: { id: existingUser.id },
+        data: {
+          password: hashedPlaceholder,
+          mustChangePassword: true,
+        },
+      })
+    }
+    return existingUser
+  }
 
-  const tempPassword = randomBytes(16).toString('hex')
-  const hashedDefault = await bcrypt.hash(tempPassword, 10)
+  const hashedDefault = await bcrypt.hash(WORKER_PLACEHOLDER_PASSWORD, 10)
 
   return await tx.user.create({
     data: {

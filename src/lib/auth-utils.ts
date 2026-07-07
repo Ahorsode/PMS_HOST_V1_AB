@@ -1,25 +1,86 @@
 import { auth } from '@/auth'
 import prisma from '@/lib/db'
+import { buildPhoneLookupCandidates } from '@/lib/phone-auth'
+
+export {
+  buildPhoneLookupCandidates,
+  normalizePhoneNumber,
+  WORKER_PLACEHOLDER_PASSWORD,
+} from '@/lib/phone-auth'
 
 export const SECURITY_PERMISSION_UPDATE_MESSAGE = 'Your security permissions have been updated. Please sign in again to activate your new features.'
 
-export function normalizePhoneNumber(phone: string | null | undefined): string | null {
-  if (!phone) return null;
-  // Remove all non-numeric characters except +
-  let cleaned = phone.replace(/[^\d+]/g, '');
-  
-  // If it starts with 0 and doesn't have a country code, assume +233 (Ghana) as default for this app
-  // or just leave it as is if it's already got a +.
-  if (cleaned.startsWith('0') && !cleaned.startsWith('+')) {
-    cleaned = '+233' + cleaned.substring(1);
-  } else if (!cleaned.startsWith('+') && cleaned.length >= 9) {
-    // If it's 9+ digits and no +, prepend +
-    cleaned = '+' + cleaned;
+export async function findUserByLoginIdentifier(identifier: string) {
+  if (identifier.includes('@')) {
+    return prisma.user.findFirst({
+      where: { email: identifier.toLowerCase() },
+    })
   }
-  
-  return cleaned;
+
+  const phoneCandidates = buildPhoneLookupCandidates(identifier)
+  if (phoneCandidates.length === 0) return null
+
+  return prisma.user.findFirst({
+    where: {
+      OR: phoneCandidates.map((phoneNumber) => ({ phoneNumber })),
+    },
+  })
 }
 
+/**
+ * Links a freshly authenticated worker to their farm when a web invite is still pending.
+ */
+export async function acceptPendingInvitationForUser(userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { email: true, phoneNumber: true },
+  })
+  if (!user) return null
+
+  const orConditions: Array<{ email: string } | { phoneNumber: string }> = []
+  if (user.email) orConditions.push({ email: user.email })
+  if (user.phoneNumber) orConditions.push({ phoneNumber: user.phoneNumber })
+  if (orConditions.length === 0) return null
+
+  const invitation = await prisma.invitation.findFirst({
+    where: {
+      OR: orConditions,
+      status: 'PENDING',
+    },
+  })
+  if (!invitation) return null
+
+  const existingMembership = await prisma.farmMember.findUnique({
+    where: {
+      farmId_userId: {
+        farmId: invitation.farmId,
+        userId,
+      },
+    },
+  })
+
+  if (!existingMembership) {
+    await prisma.farmMember.create({
+      data: {
+        farmId: invitation.farmId,
+        userId,
+        role: invitation.role,
+      },
+    })
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { role: invitation.role },
+  })
+
+  await prisma.invitation.update({
+    where: { id: invitation.id },
+    data: { status: 'ACCEPTED' },
+  })
+
+  return invitation.farmId
+}
 
 export async function getAuthContext() {
   const session = await auth()
