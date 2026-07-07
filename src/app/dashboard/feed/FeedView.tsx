@@ -14,10 +14,11 @@ import {
 } from 'lucide-react'
 import { FeedFormulationForm } from './FeedFormulationForm'
 import { FeedForm } from './FeedForm'
+import { FeedingHistoryPanel } from './FeedingHistoryPanel'
 import { getAllFeedFormulations, getConsumptionEfficiency } from '@/lib/actions/feed-actions'
 import { getAllInventory } from '@/lib/actions/inventory-actions'
-import { getAllBatches } from '@/lib/actions/dashboard-actions'
-import { getReorderThreshold, isLowStock } from '@/lib/inventory/feed-categories'
+import { getAllBatches, getAllFeedingLogs } from '@/lib/actions/dashboard-actions'
+import { getReorderThreshold, isFeedCategory, isLowStock } from '@/lib/inventory/feed-categories'
 
 export default function FeedDashboard({ canEdit = true, openLogOnLoad = false }: { canEdit?: boolean; openLogOnLoad?: boolean }) {
   const [formulations, setFormulations] = useState<any[]>([])
@@ -26,7 +27,8 @@ export default function FeedDashboard({ canEdit = true, openLogOnLoad = false }:
   const [batches, setBatches] = useState<any[]>([])
   const [showForm, setShowForm] = useState(false)
   const [showLogForm, setShowLogForm] = useState(false)
-  const [selectedFormulation, setSelectedFormulation] = useState<number | undefined>(undefined)
+  const [selectedFormulation, setSelectedFormulation] = useState<string | undefined>(undefined)
+  const [feedingLogs, setFeedingLogs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const openedInitialLog = useRef(false)
 
@@ -44,18 +46,22 @@ export default function FeedDashboard({ canEdit = true, openLogOnLoad = false }:
 
   const loadData = async () => {
     setLoading(true)
-    const [fRes, eRes, iRes, bRes] = await Promise.all([
+    const [fRes, eRes, iRes, bRes, logsRes] = await Promise.all([
       getAllFeedFormulations(),
       getConsumptionEfficiency(),
       getAllInventory(),
-      getAllBatches()
+      getAllBatches(),
+      getAllFeedingLogs(),
     ])
     setFormulations(fRes)
     setEfficiency(eRes)
     setInventory(iRes)
-    setBatches(bRes)
+    setBatches(bRes.filter((batch: any) => batch.status === 'active'))
+    setFeedingLogs(logsRes)
     setLoading(false)
   }
+
+  const feedInventory = inventory.filter((item) => isFeedCategory(item.category))
 
   return (
     <div className="p-5 space-y-7 animate-in fade-in duration-700">
@@ -90,7 +96,7 @@ export default function FeedDashboard({ canEdit = true, openLogOnLoad = false }:
             <h2 className="text-xl font-bold text-white mb-4">Log Feeding</h2>
             <FeedForm
               batches={batches}
-              inventory={inventory.filter(i => i.category === 'FEED' || !i.category)}
+              inventory={feedInventory}
               formulations={formulations}
               selectedFormulationId={selectedFormulation}
               mode="create"
@@ -257,6 +263,16 @@ export default function FeedDashboard({ canEdit = true, openLogOnLoad = false }:
              </Card>
           </div>
         </div>
+      )}
+
+      {!showForm && (
+        <FeedingHistoryPanel
+          logs={feedingLogs}
+          batches={batches}
+          inventory={feedInventory}
+          formulations={formulations}
+          canEdit={canEdit}
+        />
       )}
     </div>
   )

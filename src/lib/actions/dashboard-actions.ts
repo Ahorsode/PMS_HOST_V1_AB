@@ -1245,15 +1245,22 @@ export async function getAllFeedingLogs() {
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const logs = await tx.feedingLog.findMany({
-      where: { farmId: activeFarmId },
+      where: { farmId: activeFarmId, isDeleted: false },
       include: {
         batch: true,
         inventory: true,
+        formulation: true,
+        user: {
+          select: {
+            firstname: true,
+            surname: true,
+          },
+        },
       },
       orderBy: {
         logDate: 'desc',
       },
-      take: 50,
+      take: 100,
     })
     return logs.map((log: any) => ({
       ...log,
@@ -1270,7 +1277,11 @@ export async function getAllFeedingLogs() {
         stockLevel: Number(log.inventory.stockLevel),
         reorderLevel: log.inventory.reorderLevel ? Number(log.inventory.reorderLevel) : null,
         costPerUnit: log.inventory.costPerUnit ? Number(log.inventory.costPerUnit) : null,
-      } : null
+      } : null,
+      formulation: log.formulation ? {
+        ...log.formulation,
+        stockLevel: Number(log.formulation.stockLevel),
+      } : null,
     }))
   }).catch((error: any) => {
     console.error('Error fetching feeding logs:', error)

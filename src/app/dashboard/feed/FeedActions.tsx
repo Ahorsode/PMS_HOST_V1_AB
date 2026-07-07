@@ -10,7 +10,7 @@ import { DeleteConfirmationModal } from '@/components/modals/DeleteConfirmationM
 import { FeedForm } from './FeedForm';
 import { InventoryForm } from './InventoryForm';
 
-export const FeedActionsHeader = ({ batches, inventory }: { batches: any[], inventory: any[] }) => {
+export const FeedActionsHeader = ({ batches, inventory, formulations = [] }: { batches: any[], inventory: any[], formulations?: any[] }) => {
   const [openFeed, setOpenFeed] = useState(false);
   const [openItem, setOpenItem] = useState(false);
 
@@ -33,7 +33,7 @@ export const FeedActionsHeader = ({ batches, inventory }: { batches: any[], inve
       </Button>
 
       <Dialog isOpen={openFeed} onOpenChange={setOpenFeed} title="Log Feeding">
-        <FeedForm batches={batches} inventory={inventory} mode="create" onClose={() => setOpenFeed(false)} />
+        <FeedForm batches={batches} inventory={inventory} formulations={formulations} mode="create" onClose={() => setOpenFeed(false)} />
       </Dialog>
 
       <Dialog isOpen={openItem} onOpenChange={setOpenItem} title="Add Inventory Item">
@@ -43,7 +43,7 @@ export const FeedActionsHeader = ({ batches, inventory }: { batches: any[], inve
   );
 };
 
-export const FeedLogActions = ({ log, batches, inventory }: { log: any, batches: any[], inventory: any[] }) => {
+export const FeedLogActions = ({ log, batches, inventory, formulations = [] }: { log: any, batches: any[], inventory: any[], formulations?: any[] }) => {
   const [mode, setMode] = useState<'edit' | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -78,7 +78,7 @@ export const FeedLogActions = ({ log, batches, inventory }: { log: any, batches:
       </button>
 
       <Dialog isOpen={mode !== null} onOpenChange={(open) => !open && setMode(null)} title="Edit Feeding Log">
-        {mode && <FeedForm log={log} batches={batches} inventory={inventory} mode={mode} onClose={() => setMode(null)} />}
+        {mode && <FeedForm log={log} batches={batches} inventory={inventory} formulations={formulations} mode={mode} onClose={() => setMode(null)} />}
       </Dialog>
       
       <DeleteConfirmationModal

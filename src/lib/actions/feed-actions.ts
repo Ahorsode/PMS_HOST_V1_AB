@@ -228,9 +228,15 @@ export async function getConsumptionEfficiency() {
   })
 }
 
-export async function createFeedingLog(data: any) {
+export async function createFeedingLog(data: {
+  batchId: string
+  feedTypeId?: string | null
+  formulationId?: string | null
+  amountConsumed: number
+  logDate: string
+}) {
   const { userId, activeFarmId } = await getAuthContext()
-  if (!activeFarmId) throw new Error('No active farm selected')
+  if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
   const limitResult = await checkRateLimit({
     policy: 'feed.write',
@@ -242,29 +248,76 @@ export async function createFeedingLog(data: any) {
     return rateLimitActionError(limitResult)
   }
 
+  const amountConsumed = Number(data.amountConsumed)
+  if (!data.batchId) {
+    return { success: false, error: 'Batch is required' }
+  }
+  if (!data.feedTypeId && !data.formulationId) {
+    return { success: false, error: 'Select a feed source before saving' }
+  }
+  if (!Number.isFinite(amountConsumed) || amountConsumed <= 0) {
+    return { success: false, error: 'Amount consumed must be greater than zero' }
+  }
+
   try {
-    const log = await prisma.$transaction(async (tx) => {
+    const log = await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+      const batch = await tx.livestock.findFirst({
+        where: { id: data.batchId, farmId: activeFarmId, isDeleted: false },
+        select: { id: true },
+      })
+      if (!batch) {
+        throw new Error('Selected batch was not found')
+      }
+
+      if (data.feedTypeId) {
+        const feedItem = await tx.inventory.findFirst({
+          where: { id: data.feedTypeId, farmId: activeFarmId, isDeleted: false },
+          select: { id: true, stockLevel: true, itemName: true },
+        })
+        if (!feedItem) {
+          throw new Error('Selected feed inventory item was not found')
+        }
+        if (Number(feedItem.stockLevel) < amountConsumed) {
+          throw new Error(
+            `Insufficient stock for ${feedItem.itemName} (${Number(feedItem.stockLevel)} bags available)`,
+          )
+        }
+      } else if (data.formulationId) {
+        const formulation = await tx.feedFormulation.findFirst({
+          where: { id: data.formulationId, farmId: activeFarmId },
+          select: { id: true, stockLevel: true, name: true },
+        })
+        if (!formulation) {
+          throw new Error('Selected feed formulation was not found')
+        }
+        if (Number(formulation.stockLevel) < amountConsumed) {
+          throw new Error(
+            `Insufficient stock for ${formulation.name} (${Number(formulation.stockLevel)} bags available)`,
+          )
+        }
+      }
+
       const created = await tx.feedingLog.create({
         data: {
           batchId: data.batchId,
-          feedTypeId: data.feedTypeId,
-          formulationId: data.formulationId,
-          amountConsumed: data.amountConsumed,
+          feedTypeId: data.feedTypeId || null,
+          formulationId: data.formulationId || null,
+          amountConsumed,
           logDate: new Date(data.logDate),
           farmId: activeFarmId,
-          userId: userId || 'user_placeholder'
-        }
+          userId: userId || null,
+        },
       })
 
       if (data.feedTypeId) {
         await tx.inventory.update({
           where: { id: data.feedTypeId },
-          data: { stockLevel: { decrement: data.amountConsumed } }
+          data: { stockLevel: { decrement: amountConsumed } },
         })
       } else if (data.formulationId) {
         await tx.feedFormulation.update({
           where: { id: data.formulationId },
-          data: { stockLevel: { decrement: data.amountConsumed } }
+          data: { stockLevel: { decrement: amountConsumed } },
         })
       }
 
@@ -274,9 +327,12 @@ export async function createFeedingLog(data: any) {
     revalidatePath('/dashboard/feed')
     revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, log }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error creating feeding log:', error)
-    return { success: false, error: 'Failed to create feeding log' }
+    return {
+      success: false,
+      error: error?.message || 'Failed to create feeding log',
+    }
   }
 }
 
