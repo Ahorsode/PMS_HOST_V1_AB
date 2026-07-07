@@ -59,11 +59,13 @@ export function EggProductionHistoryPanel({
   eggSalesHistory,
   layerBatches,
   canEdit,
+  className = '',
 }: {
   productionHistory: EggLog[];
   eggSalesHistory: EggSaleRow[];
   layerBatches: any[];
   canEdit: boolean;
+  className?: string;
 }) {
   const [stockFilter, setStockFilter] = useState<StockFilter>('active');
   const [tab, setTab] = useState<PanelTab>('production');
@@ -100,8 +102,8 @@ export function EggProductionHistoryPanel({
   }, [productionHistory]);
 
   return (
-    <div className="w-full bg-white rounded-md shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
-      <div className="bg-gray-50/50 px-5 py-4 border-b border-gray-100 space-y-3">
+    <div className={`w-full flex flex-col min-h-[50vh] bg-white rounded-md shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden ${className}`.trim()}>
+      <div className="bg-gray-50/50 px-5 py-4 border-b border-gray-100 space-y-3 shrink-0">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="font-bold text-gray-800">Egg Inventory & History</h3>
@@ -178,8 +180,8 @@ export function EggProductionHistoryPanel({
       </div>
 
       {tab === 'production' ? (
-        <div className="overflow-x-auto w-full">
-          <table className="w-full min-w-[1100px] divide-y divide-gray-100">
+        <div className="flex-1 min-h-0 overflow-auto w-full">
+          <table className="w-full min-w-[960px] divide-y divide-gray-100">
             <thead>
               <tr>
                 <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Date</th>
@@ -277,8 +279,8 @@ export function EggProductionHistoryPanel({
           </table>
         </div>
       ) : (
-        <div className="overflow-x-auto w-full">
-          <table className="w-full min-w-[900px] divide-y divide-gray-100">
+        <div className="flex-1 min-h-0 overflow-auto w-full">
+          <table className="w-full min-w-[960px] divide-y divide-gray-100">
             <thead>
               <tr>
                 <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Date</th>

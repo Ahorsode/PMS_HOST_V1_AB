@@ -38,8 +38,8 @@ export default async function EggsPage({ searchParams }: { searchParams: Promise
     .reduce((acc: number, log: any) => acc + log.eggsCollected, 0);
 
   return (
-    <div className="w-full max-w-none space-y-5 px-3 py-7">
-      <div className="flex justify-between items-center bg-white p-5 rounded-md shadow-sm border border-gray-100">
+    <div className="w-full max-w-none flex flex-col gap-5 px-3 py-7 min-h-[calc(100dvh-4rem)]">
+      <div className="flex justify-between items-center bg-white p-5 rounded-md shadow-sm border border-gray-100 shrink-0">
         <div>
           <h2 className="text-3xl font-extrabold text-gray-900 tracking-normal">Egg Production</h2>
           <p className="text-gray-500 mt-1">Track daily egg yields across your layer flocks.</p>
@@ -47,8 +47,8 @@ export default async function EggsPage({ searchParams }: { searchParams: Promise
         <EggActionsHeader batches={layerBatches} canEdit={canEdit} initialOpen={resolvedParams.quick === 'log'} />
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-5">
-        <div className="xl:col-span-3 space-y-5">
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-5 items-start shrink-0">
+        <div className="xl:col-span-3">
           <Card className="rounded-md border-none shadow-xl shadow-gray-200/50">
             <CardHeader className="bg-gray-50/50 rounded-t-2xl border-b border-gray-100">
               <CardTitle className="text-gray-800">Active Layer Flocks</CardTitle>
@@ -83,16 +83,9 @@ export default async function EggsPage({ searchParams }: { searchParams: Promise
               )}
             </CardContent>
           </Card>
-
-          <EggProductionHistoryPanel
-            productionHistory={productionHistory}
-            eggSalesHistory={eggSalesHistory}
-            layerBatches={layerBatches}
-            canEdit={canEdit}
-          />
         </div>
 
-        <div className="space-y-5">
+        <div>
           <Card className="rounded-md border-none shadow-xl shadow-gray-200/50 overflow-hidden">
             <CardHeader className="bg-amber-600 text-white p-5">
               <CardTitle className="text-white text-lg">Production Stats</CardTitle>
@@ -120,6 +113,14 @@ export default async function EggsPage({ searchParams }: { searchParams: Promise
           </Card>
         </div>
       </div>
+
+      <EggProductionHistoryPanel
+        className="flex-1 min-h-0"
+        productionHistory={productionHistory}
+        eggSalesHistory={eggSalesHistory}
+        layerBatches={layerBatches}
+        canEdit={canEdit}
+      />
     </div>
   );
 }

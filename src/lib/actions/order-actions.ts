@@ -12,6 +12,11 @@ import {
   saleUnitPricePerEgg,
   type EggSaleQuantityUnit,
 } from '@/lib/sale-quantity-utils'
+import {
+  normalizeSalePaymentMethod,
+  validateSalePaymentFields,
+  type SalePaymentMethod,
+} from '@/lib/sale-payment-utils'
 
 const PRICE_OVERRIDE_ROLES = new Set(['OWNER', 'MANAGER'])
 const MONEY_EPSILON = 0.01
@@ -130,7 +135,10 @@ export async function createOrder(data: {
   discountAmount?: number
   totalCashReceived?: number
   orderDate?: string
-  items: { 
+  paymentMethod?: SalePaymentMethod | string
+  paymentReference?: string
+  paymentAccountName?: string
+  items: {
     description: string; 
     quantity: number; 
     unitPrice: number;
@@ -153,6 +161,17 @@ export async function createOrder(data: {
 
   if (!data.items?.length) {
     return { success: false, error: 'At least one sale item is required' }
+  }
+
+  const paymentMethod = normalizeSalePaymentMethod(data.paymentMethod)
+  const paymentErrors = validateSalePaymentFields({
+    paymentMethod,
+    paymentReference: data.paymentReference,
+    paymentAccountName: data.paymentAccountName,
+    customerId: data.customerId,
+  })
+  if (paymentErrors.length > 0) {
+    return { success: false, error: paymentErrors[0] }
   }
 
   const limitResult = await checkRateLimit({ policy: 'orders.write', scope: 'createOrder', farmId: activeFarmId, userId })
@@ -250,7 +269,8 @@ export async function createOrder(data: {
         throw new Error('Total cash received cannot be negative')
       }
 
-      if (!canOverridePrice && !isBalanced(totalAmount, cashReceived)) {
+      const isCreditSale = paymentMethod === 'CREDIT'
+      if (!isCreditSale && !canOverridePrice && !isBalanced(totalAmount, cashReceived)) {
         throw new Error(`Cash received must match the locked sale total of GHS ${totalAmount.toFixed(2)}`)
       }
 
@@ -268,6 +288,9 @@ export async function createOrder(data: {
           discountAmount: discount,
           currency: 'GHS',
           status: isPaid ? 'PAID' : 'PENDING',
+          paymentMethod,
+          paymentReference: data.paymentReference?.trim() || null,
+          paymentAccountName: data.paymentAccountName?.trim() || null,
           ...(selectedOrderDate ? { orderDate: selectedOrderDate } : {}),
           items: {
             create: normalizedItems.map(i => ({
@@ -314,7 +337,12 @@ export async function createOrder(data: {
           recordId: order.id,
           attributeName: 'create',
           oldValue: null,
-          newValue: JSON.stringify({ totalAmount, cashReceived, status: isPaid ? 'PAID' : 'PENDING' }),
+          newValue: JSON.stringify({
+            totalAmount,
+            cashReceived,
+            status: isPaid ? 'PAID' : 'PENDING',
+            paymentMethod,
+          }),
           reason: 'Farm-gate sales entry',
           userId,
           farmId: activeFarmId,

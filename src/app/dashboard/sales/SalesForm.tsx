@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { createOrder } from '@/lib/actions/order-actions';
 import { toast } from 'sonner';
-import { AlertTriangle, Banknote, Calendar, Lock, Plus, ShieldCheck, ShoppingCart, Trash2 } from 'lucide-react';
+import { AlertTriangle, Banknote, Calendar, ChevronLeft, ChevronRight, Lock, Plus, ShieldCheck, ShoppingCart, Trash2 } from 'lucide-react';
 import {
   defaultEggInventoryRow,
   eggSizeLabelFromRow,
@@ -20,6 +20,11 @@ import {
   saleUnitPriceForDisplay,
   type EggSaleQuantityUnit,
 } from '@/lib/sale-quantity-utils';
+import {
+  SALE_PAYMENT_METHOD_OPTIONS,
+  validateSalePaymentFields,
+  type SalePaymentMethod,
+} from '@/lib/sale-payment-utils';
 
 type ProductType = 'inventory' | 'livestock' | 'custom';
 
@@ -202,8 +207,13 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [customerId, setCustomerId] = useState('');
   const [saleDate, setSaleDate] = useState(() => toLocalDateTimeInputValue());
+  const [step, setStep] = useState<1 | 2>(1);
+  const [paymentMethod, setPaymentMethod] = useState<SalePaymentMethod>('CASH');
+  const [paymentReference, setPaymentReference] = useState('');
+  const [paymentAccountName, setPaymentAccountName] = useState('');
 
   const isWalkIn = customerId === '';
+  const isCreditSale = paymentMethod === 'CREDIT';
 
   const getItemBasePrice = (item: SaleItemState) => {
     if (item.productType === 'inventory') {
@@ -318,11 +328,11 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
   const cashBalances = Number.isFinite(cashValue) && Math.abs(toMoney(cashValue) - total) <= 0.01;
 
   useEffect(() => {
-    if (!isWalkIn) return;
+    if (!isWalkIn && !isCreditSale) return;
     setTotalCashReceived(total);
-  }, [isWalkIn, total]);
+  }, [isWalkIn, isCreditSale, total]);
 
-  const validationErrors = items.flatMap((item) => {
+  const step1Errors = items.flatMap((item) => {
     const errors: string[] = [];
     const quantity = Number(item.quantity || 0);
     const basePrice = getItemBasePrice(item);
@@ -364,23 +374,31 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
     return errors;
   });
 
-  if (!isWalkIn && !canOverridePrice && total > 0 && totalCashReceived !== '' && !cashBalances) {
-    validationErrors.push('Cash received must equal the locked sale total');
-  }
-
-  if (canOverridePrice && calculatedDiscount > subtotal) {
-    validationErrors.push('Discount cannot exceed the line subtotal');
-  }
-
   if (!saleDate || Number.isNaN(new Date(saleDate).getTime())) {
-    validationErrors.push('Choose a valid sale date and time');
+    step1Errors.push('Choose a valid sale date and time');
   }
 
-  const canSubmit = validationErrors.length === 0
+  const paymentErrors = validateSalePaymentFields({
+    paymentMethod,
+    paymentReference,
+    paymentAccountName,
+    customerId: customerId || undefined,
+  });
+
+  const step2Errors = [...paymentErrors];
+  if (canOverridePrice && calculatedDiscount > subtotal) {
+    step2Errors.push('Discount cannot exceed the line subtotal');
+  }
+  if (!isCreditSale && !isWalkIn && !canOverridePrice && total > 0 && totalCashReceived !== '' && !cashBalances) {
+    step2Errors.push('Cash received must equal the locked sale total');
+  }
+
+  const canContinueStep1 = step1Errors.length === 0 && subtotal > 0;
+  const canSubmit = step2Errors.length === 0
     && total > 0
     && Number.isFinite(cashValue)
     && cashValue >= 0
-    && (isWalkIn || canOverridePrice || cashBalances)
+    && (isWalkIn || isCreditSale || canOverridePrice || cashBalances)
     && !isSubmitting;
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -393,6 +411,9 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
       discountAmount: calculatedDiscount,
       totalCashReceived: cashValue,
       orderDate: saleDate,
+      paymentMethod,
+      paymentReference: paymentReference || undefined,
+      paymentAccountName: paymentAccountName || undefined,
       items: items.map((item) => ({
         description: item.description,
         quantity: Number(item.quantity) || 0,
@@ -423,6 +444,28 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5 overflow-hidden">
+      <div className="flex flex-wrap gap-2">
+        {[
+          { key: 1 as const, label: 'Customer & Products' },
+          { key: 2 as const, label: 'Payment & Discounts' },
+        ].map((wizardStep) => (
+          <div
+            key={wizardStep.key}
+            className={`rounded-lg border px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${
+              step === wizardStep.key
+                ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-300'
+                : step > wizardStep.key
+                  ? 'border-white/15 bg-white/[0.04] text-white/60'
+                  : 'border-white/10 bg-white/[0.02] text-white/35'
+            }`}
+          >
+            {wizardStep.key}. {wizardStep.label}
+          </div>
+        ))}
+      </div>
+
+      {step === 1 ? (
+        <>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="space-y-2 min-w-0">
           <label className="px-1 text-xs font-bold uppercase tracking-widest text-white/90">Customer</label>
@@ -718,34 +761,30 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
         </div>
       </div>
 
-      {sizePickerIndex !== null ? (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md rounded-md border border-white/10 bg-slate-950 p-4 shadow-2xl">
-            <h3 className="text-lg font-bold text-white">Select egg size</h3>
-            <div className="mt-3 space-y-2">
-              {eggInventory.map((entry: any) => (
-                <button
-                  key={entry.id}
-                  type="button"
-                  onClick={() => selectEggSize(sizePickerIndex, entry)}
-                  className="flex w-full items-center justify-between rounded-md border border-white/10 bg-white/5 px-4 py-3 text-left text-sm font-bold text-white transition-colors hover:border-emerald-500/50 hover:bg-emerald-500/10"
-                >
-                  <span>{eggSizeLabelFromRow(entry)}</span>
-                  <span className="text-xs text-white/60">{Number(entry.stockLevel).toLocaleString()} in stock</span>
-                </button>
-              ))}
-            </div>
-            <button
-              type="button"
-              onClick={() => setSizePickerIndex(null)}
-              className="mt-4 w-full rounded-md border border-white/10 px-4 py-2 text-sm font-bold text-white/70 hover:bg-white/5"
-            >
-              Cancel
-            </button>
-          </div>
+      {step1Errors.length > 0 && (
+        <div className="rounded-md border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm font-bold text-amber-200">
+          {step1Errors[0]}
         </div>
-      ) : null}
+      )}
 
+      <div className="flex flex-col gap-3 rounded-md border border-white/10 bg-white/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-widest text-white/50">Line Subtotal</p>
+          <p className="text-lg font-bold text-white">GHS {subtotal.toFixed(2)}</p>
+        </div>
+        <button
+          type="button"
+          disabled={!canContinueStep1}
+          onClick={() => setStep(2)}
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-emerald-500 px-5 text-[11px] font-bold uppercase tracking-widest text-[#064e3b] transition-all hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Continue
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </div>
+        </>
+      ) : (
+        <>
       {canOverridePrice && (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_160px]">
           <div className="space-y-2 min-w-0">
@@ -782,6 +821,57 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
         </div>
       )}
 
+      <div className="space-y-2 min-w-0">
+        <label className="px-1 text-xs font-bold uppercase tracking-widest text-white/90">Payment Method</label>
+        <select
+          value={paymentMethod}
+          onChange={(event) => setPaymentMethod(event.target.value as SalePaymentMethod)}
+          className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-white/10 px-3 text-sm font-bold text-white outline-none transition-all focus:border-emerald-500/50"
+        >
+          {SALE_PAYMENT_METHOD_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value} className="bg-slate-900">
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {paymentMethod === 'MOBILE_MONEY' ? (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="space-y-2 min-w-0">
+            <label className="px-1 text-xs font-bold uppercase tracking-widest text-white/90">MoMo Phone Number</label>
+            <input
+              type="tel"
+              value={paymentReference}
+              onChange={(event) => setPaymentReference(event.target.value)}
+              className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-white/10 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+              placeholder="e.g. 0241234567"
+            />
+          </div>
+          <div className="space-y-2 min-w-0">
+            <label className="px-1 text-xs font-bold uppercase tracking-widest text-white/90">Account Holder Name</label>
+            <input
+              type="text"
+              value={paymentAccountName}
+              onChange={(event) => setPaymentAccountName(event.target.value)}
+              className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-white/10 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+              placeholder="Name on MoMo account"
+            />
+          </div>
+        </div>
+      ) : paymentMethod === 'BANK_TRANSFER' ? (
+        <div className="space-y-2 min-w-0">
+          <label className="px-1 text-xs font-bold uppercase tracking-widest text-white/90">Bank Reference (optional)</label>
+          <input
+            type="text"
+            value={paymentReference}
+            onChange={(event) => setPaymentReference(event.target.value)}
+            className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-white/10 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+            placeholder="Transfer reference"
+          />
+        </div>
+      ) : null}
+
       <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_240px]">
         <div className="space-y-2 min-w-0">
           <label className="px-1 text-xs font-bold uppercase tracking-widest text-white/90">Total Cash Received (GHS)</label>
@@ -795,22 +885,24 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
               value={totalCashReceived}
               onChange={(event) => setTotalCashReceived(event.target.value === '' ? '' : Number(event.target.value))}
               className={`box-border h-14 w-full min-w-0 rounded-md border bg-slate-950/70 pl-12 pr-4 text-xl font-bold text-white outline-none transition-all focus:border-emerald-500/60 sm:text-2xl ${
-                !isWalkIn && !canOverridePrice && totalCashReceived !== '' && !cashBalances ? 'border-red-500/60' : 'border-white/10'
+                !isCreditSale && !isWalkIn && !canOverridePrice && totalCashReceived !== '' && !cashBalances ? 'border-red-500/60' : 'border-white/10'
               }`}
             />
           </div>
         </div>
 
-        <div className={`min-w-0 rounded-md border p-4 ${!isWalkIn && !canOverridePrice && totalCashReceived !== '' && !cashBalances ? 'border-red-500/30 bg-red-500/10' : 'border-emerald-500/20 bg-emerald-500/10'}`}>
+        <div className={`min-w-0 rounded-md border p-4 ${!isCreditSale && !isWalkIn && !canOverridePrice && totalCashReceived !== '' && !cashBalances ? 'border-red-500/30 bg-red-500/10' : 'border-emerald-500/20 bg-emerald-500/10'}`}>
           <p className="text-[10px] font-black uppercase tracking-widest text-white/50">Balance Check</p>
           <div className="mt-2 flex items-start gap-2">
-            {!isWalkIn && !canOverridePrice && totalCashReceived !== '' && !cashBalances ? (
+            {!isCreditSale && !isWalkIn && !canOverridePrice && totalCashReceived !== '' && !cashBalances ? (
               <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-300" />
             ) : (
               <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300" />
             )}
-            <span className={`text-sm font-bold leading-snug ${!isWalkIn && !canOverridePrice && totalCashReceived !== '' && !cashBalances ? 'text-red-200' : 'text-emerald-200'}`}>
-              {isWalkIn
+            <span className={`text-sm font-bold leading-snug ${!isCreditSale && !isWalkIn && !canOverridePrice && totalCashReceived !== '' && !cashBalances ? 'text-red-200' : 'text-emerald-200'}`}>
+              {isCreditSale
+                ? 'Credit sale: partial or zero payment allowed for saved customers'
+                : isWalkIn
                 ? 'Walk-in sale: cash defaults to total and can be adjusted'
                 : canOverridePrice
                   ? 'Credit sale: override audit enabled'
@@ -822,26 +914,83 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
         </div>
       </div>
 
-      {validationErrors.length > 0 && (
+      <div className="rounded-md border border-white/10 bg-white/5 p-4">
+        <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-white/50">Subtotal</p>
+            <p className="font-bold text-white">GHS {subtotal.toFixed(2)}</p>
+          </div>
+          {calculatedDiscount > 0 ? (
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/50">Discount</p>
+              <p className="font-bold text-amber-300">- GHS {calculatedDiscount.toFixed(2)}</p>
+            </div>
+          ) : null}
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-white/50">Total</p>
+            <p className="font-bold text-emerald-300">GHS {total.toFixed(2)}</p>
+          </div>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-white/50">Outstanding</p>
+            <p className="font-bold text-white">GHS {Math.max(total - (Number.isFinite(cashValue) ? cashValue : 0), 0).toFixed(2)}</p>
+          </div>
+        </div>
+      </div>
+
+      {step2Errors.length > 0 && (
         <div className="rounded-md border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm font-bold text-amber-200">
-          {validationErrors[0]}
+          {step2Errors[0]}
         </div>
       )}
 
-      <div className="flex flex-col gap-3 rounded-md border border-white/10 bg-white/5 p-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-white/50">Subtotal</p>
-          <p className="text-sm font-bold text-white/80">GHS {subtotal.toFixed(2)}</p>
-        </div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <button
+          type="button"
+          onClick={() => setStep(1)}
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-md border border-white/10 px-5 text-[11px] font-bold uppercase tracking-widest text-white/80 hover:bg-white/5"
+        >
+          <ChevronLeft className="h-4 w-4" />
+          Back
+        </button>
         <button
           type="submit"
           disabled={!canSubmit}
           className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-emerald-500 px-5 text-[11px] font-bold uppercase tracking-widest text-[#064e3b] transition-all hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
         >
           <ShoppingCart className="h-4 w-4" />
-          {isSubmitting ? 'Processing...' : 'Log Sale'}
+          {isSubmitting ? 'Processing...' : 'Record Sale'}
         </button>
       </div>
+        </>
+      )}
+
+      {sizePickerIndex !== null ? (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-md rounded-md border border-white/10 bg-slate-950 p-4 shadow-2xl">
+            <h3 className="text-lg font-bold text-white">Select egg size</h3>
+            <div className="mt-3 space-y-2">
+              {eggInventory.map((entry: any) => (
+                <button
+                  key={entry.id}
+                  type="button"
+                  onClick={() => selectEggSize(sizePickerIndex, entry)}
+                  className="flex w-full items-center justify-between rounded-md border border-white/10 bg-white/5 px-4 py-3 text-left text-sm font-bold text-white transition-colors hover:border-emerald-500/50 hover:bg-emerald-500/10"
+                >
+                  <span>{eggSizeLabelFromRow(entry)}</span>
+                  <span className="text-xs text-white/60">{Number(entry.stockLevel).toLocaleString()} in stock</span>
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setSizePickerIndex(null)}
+              className="mt-4 w-full rounded-md border border-white/10 px-4 py-2 text-sm font-bold text-white/70 hover:bg-white/5"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : null}
     </form>
   );
 }
