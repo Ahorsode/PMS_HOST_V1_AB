@@ -12,10 +12,11 @@ import { buildWhatsAppInvoiceUrl, downloadSalesInvoicePdf } from '@/lib/invoices
 import { useRouter } from 'next/navigation';
 import { toLocalDateTimeInputValue } from '@/lib/financial-dates';
 
-export function SalesActionsHeader({ customers, inventory, eggInventory, livestock, initialLivestockId, canEdit = true, canOverridePrice = false }: { 
+export function SalesActionsHeader({ customers, inventory, eggInventory, eggBatchStock = [], livestock, initialLivestockId, canEdit = true, canOverridePrice = false }: { 
   customers: any[], 
   inventory: any[],
   eggInventory: any[],
+  eggBatchStock?: Array<{ batchId: string; batchName: string; eggsRemaining: number }>,
   livestock: any[],
   initialLivestockId?: string,
   canEdit?: boolean,
@@ -46,6 +47,7 @@ export function SalesActionsHeader({ customers, inventory, eggInventory, livesto
             customers={customers} 
             inventory={inventory}
             eggInventory={eggInventory}
+            eggBatchStock={eggBatchStock}
             livestock={livestock}
             initialLivestockId={initialLivestockId}
             canOverridePrice={canOverridePrice}

@@ -84,6 +84,36 @@ async function getAuthoritativeSaleItem(tx: any, activeFarmId: string, item: {
   }
 }
 
+export async function deductEggFifo(
+  tx: any,
+  farmId: string,
+  quantity: number,
+  batchId?: string | null,
+) {
+  if (quantity <= 0) {
+    return;
+  }
+  let qtyToDeduct = quantity;
+  const productions = await tx.eggProduction.findMany({
+    where: {
+      farmId,
+      eggsRemaining: { gt: 0 },
+      ...(batchId ? { batchId } : {}),
+    },
+    orderBy: { logDate: 'asc' },
+  });
+  for (const prod of productions) {
+    if (qtyToDeduct <= 0) break;
+    const take = Math.min(Number(prod.eggsRemaining || 0), qtyToDeduct);
+    if (take <= 0) continue;
+    await tx.eggProduction.update({
+      where: { id: prod.id },
+      data: { eggsRemaining: { decrement: take } },
+    });
+    qtyToDeduct -= take;
+  }
+}
+
 export async function createOrder(data: {
   customerId?: string
   discountAmount?: number
@@ -95,6 +125,8 @@ export async function createOrder(data: {
     unitPrice: number;
     inventoryId?: string;
     livestockId?: string;
+    eggAllocationMode?: string;
+    eggBatchId?: string;
   }[]
 }) {
   const { userId, role, activeFarmId, permissions } = await getAuthContext()
@@ -153,7 +185,9 @@ export async function createOrder(data: {
           basePriceSource: authoritative.basePriceSource,
           totalPrice: toMoney(quantity * unitPrice),
           inventoryId: authoritative.inventoryId,
-          livestockId: authoritative.livestockId
+          livestockId: authoritative.livestockId,
+          eggAllocationMode: item.eggAllocationMode || null,
+          eggBatchId: item.eggAllocationMode === 'batch' ? (item.eggBatchId || null) : null,
         })
       }
 
@@ -197,7 +231,9 @@ export async function createOrder(data: {
               unitPrice: i.unitPrice,
               totalPrice: i.totalPrice,
               inventoryId: i.inventoryId,
-              livestockId: i.livestockId
+              livestockId: i.livestockId,
+              eggAllocationMode: i.eggAllocationMode,
+              eggBatchId: i.eggBatchId,
             }))
           }
         } as any
@@ -397,20 +433,12 @@ export async function updateOrderStatus(id: string, status: string) {
 
             // FIFO for Eggs: Deduct from oldest production logs first
             if (item.inventory?.category === 'EGGS') {
-              let qtyToDeduct = item.quantity
-              const productions = await tx.eggProduction.findMany({
-                where: { farmId: activeFarmId, eggsRemaining: { gt: 0 } },
-                orderBy: { logDate: 'asc' }
-              })
-              for (const prod of productions) {
-                if (qtyToDeduct <= 0) break
-                const take = Math.min(prod.eggsRemaining, qtyToDeduct)
-                await tx.eggProduction.update({
-                  where: { id: prod.id },
-                  data: { eggsRemaining: { decrement: take } }
-                })
-                qtyToDeduct -= take
-              }
+              await deductEggFifo(
+                tx,
+                activeFarmId,
+                item.quantity,
+                item.eggAllocationMode === 'batch' ? item.eggBatchId : null,
+              )
             }
           }
           if (item.livestockId) {

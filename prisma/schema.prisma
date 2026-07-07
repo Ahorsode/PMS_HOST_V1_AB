@@ -759,6 +759,8 @@ model OrderItem {
   totalPrice  Decimal    @db.Decimal(15, 2)
   inventoryId String?
   livestockId String?
+  eggAllocationMode String? @map("egg_allocation_mode")
+  eggBatchId        String? @map("egg_batch_id")
   inventory   Inventory? @relation(fields: [inventoryId], references: [id])
   batch       Livestock? @relation(fields: [livestockId], references: [id])
   order       Order      @relation(fields: [orderId], references: [id])

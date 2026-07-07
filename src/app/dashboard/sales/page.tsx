@@ -1,7 +1,7 @@
 import React from 'react';
 import { getAllOrders } from '@/lib/actions/order-actions';
 import { getAllCustomers } from '@/lib/actions/customer-actions';
-import { getAllInventory, getSellableEggInventory } from '@/lib/actions/inventory-actions';
+import { getAllInventory, getSellableEggInventory, getActiveBatchEggStock } from '@/lib/actions/inventory-actions';
 import { getAllBatches } from '@/lib/actions/dashboard-actions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { formatCurrency } from '@/lib/utils';
@@ -104,11 +104,12 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
   const resolvedParams = await searchParams;
   const sellBatchId = resolvedParams.sellBatchId;
 
-  const [ordersRaw, customersRaw, inventoryRaw, eggInventoryRaw, livestockRaw] = await Promise.all([
+  const [ordersRaw, customersRaw, inventoryRaw, eggInventoryRaw, eggBatchStockRaw, livestockRaw] = await Promise.all([
     getAllOrders(),
     getAllCustomers(),
     getAllInventory(),
     getSellableEggInventory(),
+    getActiveBatchEggStock(),
     getAllBatches()
   ]);
 
@@ -147,6 +148,11 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
       sellingPrice: toNumber(item.eggCategory.sellingPrice),
       unitSize: toNumber(item.eggCategory.unitSize),
     } : null,
+  }));
+  const eggBatchStock = (eggBatchStockRaw?.batches ?? []).map((batch: any) => ({
+    batchId: batch.batchId,
+    batchName: batch.batchName,
+    eggsRemaining: toNumber(batch.eggsRemaining),
   }));
   const livestock = (livestockRaw as any[]).map((batch: any) => ({
     id: batch.id,
@@ -225,6 +231,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
           customers={customers} 
           inventory={inventory}
           eggInventory={eggInventory}
+          eggBatchStock={eggBatchStock}
           livestock={livestock}
           initialLivestockId={sellBatchId}
           canEdit={canCreateSale}

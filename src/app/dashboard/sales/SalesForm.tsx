@@ -4,7 +4,13 @@ import React, { useEffect, useState } from 'react';
 import { createOrder } from '@/lib/actions/order-actions';
 import { toast } from 'sonner';
 import { AlertTriangle, Banknote, Calendar, Lock, Plus, ShieldCheck, ShoppingCart, Trash2 } from 'lucide-react';
-import { toLocalDateTimeInputValue } from '@/lib/financial-dates';
+import {
+  defaultEggInventoryRow,
+  eggSizeLabelFromRow,
+  requiresEggSizeSelection,
+  type EggAllocationMode,
+  type EggBatchStockOption,
+} from '@/lib/egg-sale-allocation-utils';
 import { QuickAddCustomerButton, type SaleCustomer } from './QuickAddCustomerButton';
 
 type ProductType = 'inventory' | 'livestock' | 'custom';
@@ -15,12 +21,15 @@ interface SaleItemState {
   description: string;
   quantity: number | '';
   unitPrice: number | '';
+  eggAllocationMode?: EggAllocationMode;
+  eggBatchId?: string;
 }
 
 interface SalesFormProps {
   customers: any[];
   inventory: any[];
   eggInventory: any[];
+  eggBatchStock?: EggBatchStockOption[];
   livestock: any[];
   onSuccess: () => void;
   initialLivestockId?: string;
@@ -60,13 +69,14 @@ function getInitialItem(
   }
 
   if (eggInventory.length > 0) {
-    const entry = eggInventory[0];
+    const entry = defaultEggInventoryRow(eggInventory);
     return {
       productType: 'inventory',
-      productId: entry.id,
-      description: entry.itemName || 'Eggs',
+      productId: entry?.id ?? '',
+      description: entry?.itemName || 'Eggs',
       quantity: 1,
-      unitPrice: getInventorySalePrice(entry)
+      unitPrice: getInventorySalePrice(entry),
+      eggAllocationMode: 'fifo',
     };
   }
 
@@ -112,7 +122,7 @@ function buildAutoSelectedProduct(
   productType: ProductType,
   eggInventory: any[],
   livestock: any[],
-): Pick<SaleItemState, 'productId' | 'description' | 'unitPrice'> {
+): Pick<SaleItemState, 'productId' | 'description' | 'unitPrice' | 'eggAllocationMode' | 'eggBatchId'> {
   if (productType === 'custom') {
     return {
       productId: '',
@@ -121,7 +131,18 @@ function buildAutoSelectedProduct(
     };
   }
 
-  const catalog = productType === 'inventory' ? eggInventory : livestock;
+  if (productType === 'inventory') {
+    const entry = defaultEggInventoryRow(eggInventory);
+    return {
+      productId: requiresEggSizeSelection(eggInventory) ? '' : (entry?.id ?? ''),
+      description: entry?.itemName || 'Eggs',
+      unitPrice: entry ? getInventorySalePrice(entry) : 0,
+      eggAllocationMode: 'fifo',
+      eggBatchId: undefined,
+    };
+  }
+
+  const catalog = livestock;
   if (catalog.length === 0) {
     return { productId: '', description: '', unitPrice: 0 };
   }
@@ -132,14 +153,6 @@ function buildAutoSelectedProduct(
   }
 
   const entry = catalog[0];
-  if (productType === 'inventory') {
-    return {
-      productId: entry.id,
-      description: entry.itemName || 'Eggs',
-      unitPrice: getInventorySalePrice(entry),
-    };
-  }
-
   return {
     productId: entry.id,
     description: entry.batchName || 'Livestock Sale',
@@ -147,10 +160,24 @@ function buildAutoSelectedProduct(
   };
 }
 
-export function SalesForm({ customers, inventory, eggInventory, livestock, onSuccess, initialLivestockId, canOverridePrice = false, canAddCustomer = true }: SalesFormProps) {
+function getEggAvailable(
+  item: SaleItemState,
+  eggInventory: any[],
+  eggBatchStock: EggBatchStockOption[],
+) {
+  if (item.eggAllocationMode === 'batch') {
+    const batch = eggBatchStock.find((row) => row.batchId === item.eggBatchId);
+    return Number(batch?.eggsRemaining ?? 0);
+  }
+  const selected = eggInventory.find((entry: any) => entry.id === item.productId);
+  return Number(selected?.stockLevel ?? 0);
+}
+
+export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = [], livestock, onSuccess, initialLivestockId, canOverridePrice = false, canAddCustomer = true }: SalesFormProps) {
   const [items, setItems] = useState<SaleItemState[]>(() => [
     getInitialItem(livestock, eggInventory, initialLivestockId),
   ]);
+  const [sizePickerIndex, setSizePickerIndex] = useState<number | null>(null);
   const [customerOptions, setCustomerOptions] = useState<SaleCustomer[]>(
     () => customers.map((c) => ({ id: c.id, name: c.name, phone: c.phone }))
   );
@@ -195,7 +222,7 @@ export function SalesForm({ customers, inventory, eggInventory, livestock, onSuc
     if (!item) return;
 
     if (item.productType === 'inventory') {
-      const selected = eggInventory.find((entry: any) => entry.id === item.productId);
+      const selected = eggInventory.find((entry: any) => entry.id === productId);
       updateItem(index, {
         productId,
         description: selected?.itemName || '',
@@ -212,6 +239,15 @@ export function SalesForm({ customers, inventory, eggInventory, livestock, onSuc
         unitPrice: getBatchBasePrice(selected)
       });
     }
+  };
+
+  const selectEggSize = (index: number, entry: any) => {
+    updateItem(index, {
+      productId: entry.id,
+      description: entry.itemName || 'Eggs',
+      unitPrice: getInventorySalePrice(entry),
+    });
+    setSizePickerIndex(null);
   };
 
   const addItem = () => {
@@ -255,9 +291,18 @@ export function SalesForm({ customers, inventory, eggInventory, livestock, onSuc
 
     if (item.productType === 'inventory') {
       if (eggInventory.length === 0) errors.push('No egg products available');
-      const selected = eggInventory.find((entry: any) => entry.id === item.productId);
-      if (!selected) errors.push('Inventory product is required');
-      if (selected && quantity > Number(selected.stockLevel)) errors.push(`${selected.itemName} only has ${selected.stockLevel} available`);
+      if (!item.productId) errors.push('Select an egg size');
+      if (item.eggAllocationMode === 'batch' && !item.eggBatchId) {
+        errors.push('Select a batch for egg sale');
+      }
+      const available = getEggAvailable(item, eggInventory, eggBatchStock);
+      if (quantity > available) {
+        errors.push(
+          item.eggAllocationMode === 'batch'
+            ? `Selected batch only has ${available} eggs available`
+            : `${item.description || 'Eggs'} only has ${available} available`,
+        );
+      }
     }
 
     if (item.productType === 'livestock') {
@@ -307,7 +352,11 @@ export function SalesForm({ customers, inventory, eggInventory, livestock, onSuc
         quantity: Number(item.quantity) || 0,
         unitPrice: getEffectiveUnitPrice(item),
         inventoryId: item.productType === 'inventory' ? item.productId : undefined,
-        livestockId: item.productType === 'livestock' ? item.productId : undefined
+        livestockId: item.productType === 'livestock' ? item.productId : undefined,
+        eggAllocationMode: item.productType === 'inventory' ? item.eggAllocationMode : undefined,
+        eggBatchId: item.productType === 'inventory' && item.eggAllocationMode === 'batch'
+          ? item.eggBatchId
+          : undefined,
       }))
     });
     setIsSubmitting(false);
@@ -420,6 +469,59 @@ export function SalesForm({ customers, inventory, eggInventory, livestock, onSuc
                       <div className="flex h-11 min-w-0 items-center rounded-md border border-amber-500/30 bg-amber-500/10 px-3 text-sm font-bold text-amber-200">
                         No eggs in stock — log egg production first
                       </div>
+                    ) : item.productType === 'inventory' ? (
+                      <div className="space-y-2">
+                        <div className="flex min-w-0 overflow-hidden rounded-md border border-white/10 bg-slate-950/70">
+                          <button
+                            type="button"
+                            onClick={() => updateItem(index, { eggAllocationMode: 'fifo', eggBatchId: undefined })}
+                            className={`flex-1 px-3 py-2 text-xs font-bold uppercase tracking-widest ${item.eggAllocationMode !== 'batch' ? 'bg-emerald-500 text-[#064e3b]' : 'text-white/60'}`}
+                          >
+                            FIFO
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => updateItem(index, { eggAllocationMode: 'batch' })}
+                            className={`flex-1 px-3 py-2 text-xs font-bold uppercase tracking-widest ${item.eggAllocationMode === 'batch' ? 'bg-emerald-500 text-[#064e3b]' : 'text-white/60'}`}
+                          >
+                            By Batch
+                          </button>
+                        </div>
+                        {item.eggAllocationMode === 'batch' ? (
+                          eggBatchStock.length === 0 ? (
+                            <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm font-bold text-amber-200">
+                              No active layer batches with eggs in stock
+                            </div>
+                          ) : (
+                            <select
+                              value={item.eggBatchId ?? ''}
+                              onChange={(event) => updateItem(index, { eggBatchId: event.target.value })}
+                              className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+                            >
+                              <option value="" className="bg-slate-900">Select batch</option>
+                              {eggBatchStock.map((batch) => (
+                                <option key={batch.batchId} value={batch.batchId} className="bg-slate-900">
+                                  {batch.batchName} ({batch.eggsRemaining.toLocaleString()} eggs)
+                                </option>
+                              ))}
+                            </select>
+                          )
+                        ) : null}
+                        {requiresEggSizeSelection(eggInventory) ? (
+                          <button
+                            type="button"
+                            onClick={() => setSizePickerIndex(index)}
+                            className="flex h-11 w-full items-center justify-between rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white transition-colors hover:border-emerald-500/50"
+                          >
+                            <span>{item.productId ? `Size: ${eggSizeLabelFromRow(eggInventory.find((entry: any) => entry.id === item.productId))}` : 'Select egg size'}</span>
+                            <span className="text-[10px] uppercase tracking-widest text-emerald-300">Choose</span>
+                          </button>
+                        ) : (
+                          <div className="flex h-11 min-w-0 items-center rounded-md border border-white/10 bg-slate-950/40 px-3 text-sm font-bold text-white">
+                            {item.description || 'Eggs'}
+                          </div>
+                        )}
+                      </div>
                     ) : shouldHideProductPicker(item, eggInventory, livestock) ? (
                       <div className="flex h-11 min-w-0 items-center rounded-md border border-white/10 bg-slate-950/40 px-3 text-sm font-bold text-white">
                         {item.description ||
@@ -499,6 +601,34 @@ export function SalesForm({ customers, inventory, eggInventory, livestock, onSuc
           })}
         </div>
       </div>
+
+      {sizePickerIndex !== null ? (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4">
+          <div className="w-full max-w-md rounded-md border border-white/10 bg-slate-950 p-4 shadow-2xl">
+            <h3 className="text-lg font-bold text-white">Select egg size</h3>
+            <div className="mt-3 space-y-2">
+              {eggInventory.map((entry: any) => (
+                <button
+                  key={entry.id}
+                  type="button"
+                  onClick={() => selectEggSize(sizePickerIndex, entry)}
+                  className="flex w-full items-center justify-between rounded-md border border-white/10 bg-white/5 px-4 py-3 text-left text-sm font-bold text-white transition-colors hover:border-emerald-500/50 hover:bg-emerald-500/10"
+                >
+                  <span>{eggSizeLabelFromRow(entry)}</span>
+                  <span className="text-xs text-white/60">{Number(entry.stockLevel).toLocaleString()} in stock</span>
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setSizePickerIndex(null)}
+              className="mt-4 w-full rounded-md border border-white/10 px-4 py-2 text-sm font-bold text-white/70 hover:bg-white/5"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       {canOverridePrice && (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_160px]">
