@@ -21,7 +21,7 @@ function activeLayerBatchFilter(batchId?: string | null) {
   }
   return {
     batch: {
-      status: 'active',
+      status: { equals: 'active', mode: 'insensitive' },
       type: 'POULTRY_LAYER',
       isDeleted: false,
     },

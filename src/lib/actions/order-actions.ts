@@ -18,6 +18,7 @@ import {
   isEggInventoryCategory,
   moneyBalances,
 } from '@/lib/egg-fifo-utils'
+import { isUnsortedEggInventory, resolveEggFifoCategoryFilter } from '@/lib/egg-sale-allocation-utils'
 import { completeOrderInTransaction } from '@/lib/complete-order'
 import { upsertOrderLedger } from '@/lib/order-ledger-sync'
 import {
@@ -88,7 +89,7 @@ async function getAuthoritativeSaleItem(tx: any, activeFarmId: string, item: {
     if (isEggInventoryCategory(inventory.category)) {
       availableQuantity = await getFifoEggAvailability(tx, activeFarmId, {
         batchId: item.eggAllocationMode === 'batch' ? item.eggBatchId : null,
-        categoryId: inventory.eggCategoryId || null,
+        categoryId: resolveEggFifoCategoryFilter(inventory, item.eggAllocationMode ?? 'fifo'),
       })
     }
 

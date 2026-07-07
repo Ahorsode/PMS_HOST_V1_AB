@@ -4,6 +4,7 @@ import {
   isEggInventoryCategory,
   type BatchEggAllocation,
 } from '@/lib/egg-fifo-utils'
+import { isUnsortedEggInventory } from '@/lib/egg-sale-allocation-utils'
 import { upsertOrderLedger } from '@/lib/order-ledger-sync'
 
 type OrderItemWithInventory = {
@@ -75,7 +76,9 @@ export async function completeOrderInTransaction(
       if (isEggInventoryCategory(current.category)) {
         const batchId =
           item.eggAllocationMode === 'batch' ? item.eggBatchId || null : null
-        const categoryId = current.eggCategoryId || null
+        const categoryId = isUnsortedEggInventory(current)
+          ? null
+          : current.eggCategoryId || null
 
         let eggAllocations: BatchEggAllocation[] = await deductEggFifoWithAllocations(
           tx,

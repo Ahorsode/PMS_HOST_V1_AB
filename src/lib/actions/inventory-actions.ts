@@ -482,7 +482,7 @@ export async function getActiveBatchEggStock(): Promise<ActiveBatchEggStock> {
         isDeleted: false,
         eggsRemaining: { gt: 0 },
         batch: {
-          status: 'active',
+          status: { equals: 'active', mode: 'insensitive' },
           type: 'POULTRY_LAYER',
           isDeleted: false,
         },
@@ -540,7 +540,7 @@ export async function getEggFifoAvailabilityMap(): Promise<{
         isDeleted: false,
         eggsRemaining: { gt: 0 },
         batch: {
-          status: 'active',
+          status: { equals: 'active', mode: 'insensitive' },
           type: 'POULTRY_LAYER',
           isDeleted: false,
         },

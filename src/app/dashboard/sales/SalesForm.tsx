@@ -7,6 +7,7 @@ import { AlertTriangle, Banknote, Calendar, ChevronLeft, ChevronRight, Lock, Plu
 import {
   defaultEggInventoryRow,
   eggSizeLabelFromRow,
+  isUnsortedEggInventory,
   requiresEggSizeSelection,
   type EggAllocationMode,
   type EggBatchStockOption,
@@ -192,6 +193,9 @@ function getEggAvailable(
     return Number(batch?.eggsRemaining ?? 0);
   }
   const selected = eggInventory.find((entry: any) => entry.id === item.productId);
+  if (isUnsortedEggInventory(selected)) {
+    return Number(fifoEggAvailability.totalEggs ?? 0);
+  }
   const categoryId = selected?.eggCategory?.id ?? selected?.eggCategoryId;
   if (categoryId && fifoEggAvailability.byCategoryId[String(categoryId)] != null) {
     return Number(fifoEggAvailability.byCategoryId[String(categoryId)]);

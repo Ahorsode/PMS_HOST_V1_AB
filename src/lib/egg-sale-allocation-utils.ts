@@ -34,9 +34,29 @@ export function defaultEggInventoryRow(eggInventory: any[]) {
     return eggInventory[0];
   }
   return (
-    eggInventory.find((row) => {
-      const name = String(row?.itemName ?? row?.item_name ?? '').toLowerCase();
-      return name.includes('unsorted') || name === 'eggs';
-    }) ?? eggInventory[0]
+    eggInventory.find((row) => isUnsortedEggInventory(row)) ?? eggInventory[0]
   );
+}
+
+export function isUnsortedEggInventory(row: any) {
+  if (!row) {
+    return false;
+  }
+  const name = String(row?.itemName ?? row?.item_name ?? '').toLowerCase();
+  const categoryName = String(row?.eggCategory?.name ?? '').toLowerCase();
+  return name.includes('unsorted') || categoryName.includes('unsorted') || name === 'eggs';
+}
+
+export function resolveEggFifoCategoryFilter(
+  row: any,
+  eggAllocationMode: EggAllocationMode | string,
+) {
+  if (eggAllocationMode === 'batch') {
+    return null;
+  }
+  if (isUnsortedEggInventory(row)) {
+    return null;
+  }
+  const categoryId = row?.eggCategoryId ?? row?.eggCategory?.id;
+  return categoryId ? String(categoryId) : null;
 }
