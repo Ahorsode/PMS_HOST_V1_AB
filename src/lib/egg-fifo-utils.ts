@@ -131,7 +131,8 @@ export function allocateLineRevenueByBatch(
 }
 
 export function isEggInventoryCategory(category: string | null | undefined) {
-  return String(category || '').toUpperCase() === 'EGGS'
+  const normalized = String(category || '').toUpperCase()
+  return normalized === 'EGG' || normalized === 'EGGS' || normalized === 'EGG_STOCK' || normalized === 'EGG_INVENTORY'
 }
 
 export function moneyBalances(expected: number, actual: number) {

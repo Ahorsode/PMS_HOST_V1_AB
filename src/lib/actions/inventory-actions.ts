@@ -22,6 +22,8 @@ const HEALTH_INVENTORY_CATEGORIES = [
   'VACCINES',
 ]
 
+const EGG_INVENTORY_CATEGORIES = ['EGG', 'EGGS', 'EGG_STOCK', 'EGG_INVENTORY']
+
 function normalizeHealthInventoryInput<T extends { category?: string; usageType?: string; stockLevel?: number }>(
   data: T
 ): T {
@@ -449,7 +451,10 @@ export async function getSellableEggInventory() {
       where: {
         farmId: activeFarmId,
         isDeleted: false,
-        category: 'EGGS',
+        OR: [
+          { category: { in: EGG_INVENTORY_CATEGORIES } },
+          { eggCategoryId: { not: null } },
+        ],
         stockLevel: { gt: 0 },
       },
       include: INVENTORY_INCLUDE,
