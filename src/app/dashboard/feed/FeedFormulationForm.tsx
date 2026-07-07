@@ -150,13 +150,14 @@ export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: Feed
     setIsSubmitting(true);
     try {
       const res = await createFeedFormulation({
-        name,
+        name: name.trim(),
         type,
         targetLivestock,
-        ingredients: ingredients.map(i => ({
-          inventoryId: i.inventoryId,
-          quantity: Number(i.bags),
-        }))
+        ingredients: ingredients.map((ingredient) => ({
+          inventoryId: ingredient.inventoryId,
+          quantity: Number(ingredient.bags),
+          bags: Number(ingredient.bags),
+        })),
       })
 
       if (res.success) {

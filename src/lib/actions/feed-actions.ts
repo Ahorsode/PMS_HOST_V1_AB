@@ -7,11 +7,38 @@ import { FeedType, LivestockType } from '@prisma/client'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 import { farmCacheTags, revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 
+type FeedFormulationIngredientInput = {
+  inventoryId: string
+  quantity?: number
+  percentage?: number
+  bags?: number
+}
+
+type NormalizedFeedIngredient = {
+  inventoryId: string
+  quantity: number
+}
+
+function normalizeFeedIngredients(
+  ingredients: FeedFormulationIngredientInput[],
+): NormalizedFeedIngredient[] {
+  return ingredients.map((ingredient) => {
+    const quantity = Number(
+      ingredient.quantity ?? ingredient.percentage ?? ingredient.bags,
+    )
+
+    return {
+      inventoryId: ingredient.inventoryId,
+      quantity,
+    }
+  })
+}
+
 export async function createFeedFormulation(data: {
   name: string
   type: FeedType
   targetLivestock?: LivestockType
-  ingredients: { inventoryId: string; quantity: number }[]
+  ingredients: FeedFormulationIngredientInput[]
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
@@ -35,18 +62,32 @@ export async function createFeedFormulation(data: {
     return { success: false, error: 'Add at least one ingredient' }
   }
 
-  if (data.ingredients.some((ingredient) => ingredient.quantity <= 0)) {
+  const ingredients = normalizeFeedIngredients(data.ingredients)
+
+  if (ingredients.some((ingredient) => !ingredient.inventoryId)) {
+    return { success: false, error: 'Each ingredient must have an inventory source' }
+  }
+
+  if (
+    ingredients.some(
+      (ingredient) => !Number.isFinite(ingredient.quantity) || ingredient.quantity <= 0,
+    )
+  ) {
     return { success: false, error: 'Each ingredient must use at least one bag' }
   }
 
   try {
-    const totalBags = data.ingredients.reduce(
-      (sum, ingredient) => sum + Number(ingredient.quantity),
+    const totalBags = ingredients.reduce(
+      (sum, ingredient) => sum + ingredient.quantity,
       0,
     )
 
+    if (!Number.isFinite(totalBags) || totalBags <= 0) {
+      return { success: false, error: 'Final batch size must be greater than zero' }
+    }
+
     const formulation = await prisma.$transaction(async (tx) => {
-      for (const ingredient of data.ingredients) {
+      for (const ingredient of ingredients) {
         const item = await tx.inventory.findFirst({
           where: { id: ingredient.inventoryId, farmId: activeFarmId },
           select: { id: true, stockLevel: true, itemName: true },
@@ -63,14 +104,14 @@ export async function createFeedFormulation(data: {
 
       const created = await tx.feedFormulation.create({
         data: {
-          farmId: activeFarmId,
+          farm: { connect: { id: activeFarmId } },
           name: trimmedName,
           type: data.type,
           targetLivestock: data.targetLivestock,
           stockLevel: totalBags,
           ingredients: {
-            create: data.ingredients.map((ingredient) => ({
-              inventoryId: ingredient.inventoryId,
+            create: ingredients.map((ingredient) => ({
+              inventory: { connect: { id: ingredient.inventoryId } },
               quantity: ingredient.quantity,
               unit: 'bag',
             })),
@@ -78,7 +119,7 @@ export async function createFeedFormulation(data: {
         },
       })
 
-      for (const ingredient of data.ingredients) {
+      for (const ingredient of ingredients) {
         await tx.inventory.update({
           where: { id: ingredient.inventoryId },
           data: { stockLevel: { decrement: ingredient.quantity } },
