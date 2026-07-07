@@ -231,19 +231,20 @@ function ActivityTimeline({ logs }: { logs: any }) {
   )
 }
 
-function RevenueBreakdown({ items }: { items: any[] }) {
-  const total = items.reduce((sum, item) => sum + Number(item.amount || 0), 0)
+function RevenueBreakdown({ items }: { items?: any[] }) {
+  const rows = Array.isArray(items) ? items : []
+  const total = rows.reduce((sum, item) => sum + Number(item.amount || 0), 0)
   return (
     <div className="glass-morphism overflow-hidden rounded-lg shadow-2xl">
       <div className="flex items-center gap-2 border-b border-white/10 bg-white/[0.04] px-5 py-4">
         <Wallet className="h-4 w-4 text-sky-400" />
         <h3 className="text-sm font-bold uppercase italic tracking-normal text-white">Revenue Breakdown</h3>
       </div>
-      {items.length === 0 ? (
+      {rows.length === 0 ? (
         <div className="py-8 text-center text-xs italic text-white/40">No revenue recorded for this batch.</div>
       ) : (
         <div className="max-h-80 divide-y divide-white/5 overflow-y-auto custom-scrollbar">
-          {items.map((item) => (
+          {rows.map((item) => (
             <div key={item.id} className="flex items-center justify-between gap-3 px-5 py-3">
               <div className="min-w-0">
                 <p className="truncate text-xs font-bold text-white">{item.description}</p>
@@ -281,7 +282,7 @@ function RevenueBreakdown({ items }: { items: any[] }) {
       )}
       <div className="flex items-center justify-between border-t border-white/10 bg-white/[0.03] px-5 py-3">
         <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">
-          {items.length} entr{items.length === 1 ? 'y' : 'ies'}
+          {rows.length} entr{rows.length === 1 ? 'y' : 'ies'}
         </span>
         <span className="text-sm font-bold text-sky-300">{formatCurrency(total, 'GHS')}</span>
       </div>
@@ -289,18 +290,19 @@ function RevenueBreakdown({ items }: { items: any[] }) {
   )
 }
 
-function ExpenseBreakdown({ items }: { items: any[] }) {
+function ExpenseBreakdown({ items }: { items?: any[] }) {
+  const rows = Array.isArray(items) ? items : []
   return (
     <div className="glass-morphism overflow-hidden rounded-lg shadow-2xl">
       <div className="flex items-center gap-2 border-b border-white/10 bg-white/[0.04] px-5 py-4">
         <Banknote className="h-4 w-4 text-orange-400" />
         <h3 className="text-sm font-bold uppercase italic tracking-normal text-white">Expense Breakdown</h3>
       </div>
-      {items.length === 0 ? (
+      {rows.length === 0 ? (
         <div className="py-8 text-center text-xs italic text-white/40">No expenses recorded for this batch.</div>
       ) : (
         <div className="max-h-80 divide-y divide-white/5 overflow-y-auto custom-scrollbar">
-          {items.map((item) => (
+          {rows.map((item) => (
             <div key={item.id} className="flex items-center justify-between gap-3 px-5 py-3">
               <div className="min-w-0">
                 <p className="truncate text-xs font-bold text-white">{item.description}</p>
