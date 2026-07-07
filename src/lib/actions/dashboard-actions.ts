@@ -1257,9 +1257,10 @@ export async function getAllFeedingLogs() {
           },
         },
       },
-      orderBy: {
-        logDate: 'desc',
-      },
+      orderBy: [
+        { logDate: 'desc' },
+        { id: 'desc' },
+      ],
       take: 100,
     })
     return logs.map((log: any) => ({
@@ -1461,7 +1462,10 @@ export async function getInventoryDetails(id: string) {
       include: {
         feedingLogs: {
           include: { batch: true },
-          orderBy: { logDate: 'desc' }
+          orderBy: [
+            { logDate: 'desc' },
+            { id: 'desc' },
+          ],
         }
       }
     })

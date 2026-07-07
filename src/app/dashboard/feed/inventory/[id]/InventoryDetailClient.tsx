@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { 
@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { formatDate } from '@/lib/utils';
+import { compareNewestFirst } from '@/lib/utils/chronological-sort';
 import { getReorderThreshold, isLowStock } from '@/lib/inventory/feed-categories';
 
 interface InventoryDetailClientProps {
@@ -24,8 +25,13 @@ interface InventoryDetailClientProps {
 }
 
 export const InventoryDetailClient = ({ item }: InventoryDetailClientProps) => {
-  // Calculations
-  const logs = item.feedingLogs || [];
+  const logs = useMemo(
+    () =>
+      [...(item.feedingLogs || [])].sort((a: any, b: any) =>
+        compareNewestFirst({ date: a.logDate, id: a.id }, { date: b.logDate, id: b.id }),
+      ),
+    [item.feedingLogs],
+  );
   const last7DaysLogs = logs.filter((log: any) => {
     const diff = new Date().getTime() - new Date(log.logDate).getTime();
     return diff < 7 * 24 * 60 * 60 * 1000;

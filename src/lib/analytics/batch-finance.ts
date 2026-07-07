@@ -16,6 +16,7 @@ import {
   isConsumptionBasedExpense,
   type ConsumptionContext,
 } from './batch-consumption-finance'
+import { compareNewestFirst } from '@/lib/utils/chronological-sort'
 
 export type BatchInvestmentFields = {
   initialCostActual?: number | null
@@ -339,7 +340,7 @@ export function computeBatchFinance(input: BatchFinanceInput): BatchFinanceResul
       percentage: headcountSharePct,
     })),
   ]
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .sort((a, b) => compareNewestFirst({ date: a.date, id: a.id }, { date: b.date, id: b.id }))
     .slice(0, 25)
 
   const revenueBreakdown = validRevenueItems
@@ -352,7 +353,7 @@ export function computeBatchFinance(input: BatchFinanceInput): BatchFinanceResul
       kind: item.kind || 'Direct',
       percentage: item.percentage ?? null,
     }))
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .sort((a, b) => compareNewestFirst({ date: a.date, id: a.id }, { date: b.date, id: b.id }))
     .slice(0, 25)
 
   return {

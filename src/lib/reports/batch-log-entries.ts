@@ -1,4 +1,5 @@
 import { formatCurrency } from '@/lib/utils'
+import { compareNewestFirst } from '@/lib/utils/chronological-sort'
 
 export type LogEntryType = 'FEED' | 'MORTALITY' | 'EGGS' | 'WEIGHT' | 'HEALTH' | 'SALES' | 'EXPENSE'
 
@@ -121,5 +122,5 @@ export function buildBatchLogEntries(
     }
   }
 
-  return entries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  return entries.sort((a, b) => compareNewestFirst({ date: a.date, id: a.id }, { date: b.date, id: b.id }))
 }

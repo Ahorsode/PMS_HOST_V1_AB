@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useMemo } from 'react'
 import {
   Activity,
   Banknote,
@@ -14,6 +14,7 @@ import {
   Wallet,
 } from 'lucide-react'
 import { cn, formatCurrency } from '@/lib/utils'
+import { compareNewestFirst } from '@/lib/utils/chronological-sort'
 import { WorkerStamp } from '@/components/ui/WorkerStamp'
 import {
   ChartCard,
@@ -291,7 +292,12 @@ function RevenueBreakdown({ items }: { items?: any[] }) {
 }
 
 function ExpenseBreakdown({ items }: { items?: any[] }) {
-  const rows = Array.isArray(items) ? items : []
+  const rows = useMemo(() => {
+    const list = Array.isArray(items) ? [...items] : []
+    return list.sort((a, b) =>
+      compareNewestFirst({ date: a.date, id: a.id }, { date: b.date, id: b.id }),
+    )
+  }, [items])
   return (
     <div className="glass-morphism overflow-hidden rounded-lg shadow-2xl">
       <div className="flex items-center gap-2 border-b border-white/10 bg-white/[0.04] px-5 py-4">

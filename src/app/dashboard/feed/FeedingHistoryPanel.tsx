@@ -1,11 +1,12 @@
 'use client'
 
-import React from 'react'
+import React, { useMemo } from 'react'
 import { History, Utensils } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { formatDate } from '@/lib/utils'
 import { getBreedDisplayName } from '@/lib/livestock-breed-options'
 import { FeedLogActions } from './FeedActions'
+import { compareNewestFirst } from '@/lib/utils/chronological-sort'
 
 type FeedingLog = {
   id: string
@@ -36,11 +37,18 @@ export function FeedingHistoryPanel({
   formulations: any[]
   canEdit: boolean
 }) {
-  const todayTotal = logs
+  const sortedLogs = useMemo(
+    () => [...logs].sort((a, b) =>
+      compareNewestFirst({ date: a.logDate, id: a.id }, { date: b.logDate, id: b.id }),
+    ),
+    [logs],
+  )
+
+  const todayTotal = sortedLogs
     .filter((log) => new Date(log.logDate).toDateString() === new Date().toDateString())
     .reduce((sum, log) => sum + Number(log.amountConsumed || 0), 0)
 
-  const weekTotal = logs
+  const weekTotal = sortedLogs
     .filter((log) => {
       const weekAgo = new Date()
       weekAgo.setDate(weekAgo.getDate() - 7)
@@ -69,7 +77,7 @@ export function FeedingHistoryPanel({
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        {logs.length === 0 ? (
+        {sortedLogs.length === 0 ? (
           <div className="py-16 text-center">
             <Utensils className="w-10 h-10 text-white/20 mx-auto mb-3" />
             <p className="text-white/50 font-medium">No feeding logs recorded yet.</p>
@@ -92,7 +100,7 @@ export function FeedingHistoryPanel({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/10">
-                  {logs.map((log, index) => {
+                  {sortedLogs.map((log, index) => {
                     const batchLabel = log.batch?.batchName || `Unit ${index + 1}`
                     const loggedBy = [log.user?.firstname, log.user?.surname].filter(Boolean).join(' ') || '—'
                     return (
@@ -129,7 +137,7 @@ export function FeedingHistoryPanel({
             </div>
 
             <div className="md:hidden divide-y divide-white/10">
-              {logs.map((log, index) => {
+              {sortedLogs.map((log, index) => {
                 const batchLabel = log.batch?.batchName || `Unit ${index + 1}`
                 const loggedBy = [log.user?.firstname, log.user?.surname].filter(Boolean).join(' ') || '—'
                 return (

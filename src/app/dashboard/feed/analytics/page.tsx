@@ -66,7 +66,14 @@ export default async function FeedAnalyticsPage() {
                <h3 className="text-white font-bold italic uppercase tracking-widest text-sm">Consumption Insights (Recent)</h3>
             </div>
             <div className="flex-1 overflow-y-auto max-h-[400px] divide-y divide-white/10">
-                  {inventory.flatMap((i: any) => i.feedingLogs).slice(0, 10).map((log: any, idx: number) => (
+                  {inventory
+                    .flatMap((i: any) => i.feedingLogs)
+                    .sort((a: any, b: any) =>
+                      new Date(b.logDate).getTime() - new Date(a.logDate).getTime() ||
+                      String(b.id ?? '').localeCompare(String(a.id ?? '')),
+                    )
+                    .slice(0, 10)
+                    .map((log: any, idx: number) => (
                     <div key={idx} className="hover:bg-white/[0.02] px-7 py-3 flex items-center justify-between">
                        <div>
                           <p className="text-white font-bold text-xs">{getBreedDisplayName(log.batch?.breedType)}</p>
