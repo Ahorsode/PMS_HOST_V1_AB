@@ -13,6 +13,13 @@ import {
 } from '@/lib/egg-sale-allocation-utils';
 import { toLocalDateTimeInputValue } from '@/lib/financial-dates';
 import { QuickAddCustomerButton, type SaleCustomer } from './QuickAddCustomerButton';
+import {
+  computeLineDiscount,
+  formatEggStockCrateLabel,
+  saleQuantityInEggs,
+  saleUnitPriceForDisplay,
+  type EggSaleQuantityUnit,
+} from '@/lib/sale-quantity-utils';
 
 type ProductType = 'inventory' | 'livestock' | 'custom';
 
@@ -24,6 +31,9 @@ interface SaleItemState {
   unitPrice: number | '';
   eggAllocationMode?: EggAllocationMode;
   eggBatchId?: string;
+  eggQuantityUnit?: EggSaleQuantityUnit;
+  lineDiscountAmount?: number | '';
+  lineDiscountType?: 'flat' | 'percent';
 }
 
 interface SalesFormProps {
@@ -32,6 +42,7 @@ interface SalesFormProps {
   eggInventory: any[];
   eggBatchStock?: EggBatchStockOption[];
   livestock: any[];
+  eggsPerCrate?: number;
   onSuccess: () => void;
   initialLivestockId?: string;
   canOverridePrice?: boolean;
@@ -78,6 +89,9 @@ function getInitialItem(
       quantity: 1,
       unitPrice: getInventorySalePrice(entry),
       eggAllocationMode: 'fifo',
+      eggQuantityUnit: 'crate',
+      lineDiscountAmount: 0,
+      lineDiscountType: 'flat',
     };
   }
 
@@ -174,7 +188,7 @@ function getEggAvailable(
   return Number(selected?.stockLevel ?? 0);
 }
 
-export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = [], livestock, onSuccess, initialLivestockId, canOverridePrice = false, canAddCustomer = true }: SalesFormProps) {
+export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = [], livestock, eggsPerCrate = 30, onSuccess, initialLivestockId, canOverridePrice = false, canAddCustomer = true }: SalesFormProps) {
   const [items, setItems] = useState<SaleItemState[]>(() => [
     getInitialItem(livestock, eggInventory, initialLivestockId),
   ]);
@@ -203,9 +217,27 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
 
   const getEffectiveUnitPrice = (item: SaleItemState) => {
     const basePrice = getItemBasePrice(item);
-    if (!canOverridePrice) return basePrice;
+    if (!canOverridePrice) {
+      if (item.productType === 'inventory') {
+        return saleUnitPriceForDisplay(basePrice, item.eggQuantityUnit ?? 'crate', eggsPerCrate);
+      }
+      return basePrice;
+    }
     return Number(item.unitPrice || basePrice || 0);
   };
+
+  const getLineSubtotal = (item: SaleItemState) =>
+    Number(item.quantity || 0) * getEffectiveUnitPrice(item);
+
+  const getLineDiscount = (item: SaleItemState) =>
+    computeLineDiscount(
+      getLineSubtotal(item),
+      Number(item.lineDiscountAmount || 0),
+      item.lineDiscountType === 'percent' ? 'percent' : 'flat',
+    );
+
+  const getLineTotal = (item: SaleItemState) =>
+    toMoney(Math.max(getLineSubtotal(item) - getLineDiscount(item), 0));
 
   const updateItem = (index: number, patch: Partial<SaleItemState>) => {
     setItems((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, ...patch } : item));
@@ -227,7 +259,11 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
       updateItem(index, {
         productId,
         description: selected?.itemName || '',
-        unitPrice: getInventorySalePrice(selected)
+        unitPrice: saleUnitPriceForDisplay(
+          getInventorySalePrice(selected),
+          items[index]?.eggQuantityUnit ?? 'crate',
+          eggsPerCrate,
+        ),
       });
       return;
     }
@@ -246,7 +282,11 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
     updateItem(index, {
       productId: entry.id,
       description: entry.itemName || 'Eggs',
-      unitPrice: getInventorySalePrice(entry),
+      unitPrice: saleUnitPriceForDisplay(
+        getInventorySalePrice(entry),
+        items[index]?.eggQuantityUnit ?? 'crate',
+        eggsPerCrate,
+      ),
     });
     setSizePickerIndex(null);
   };
@@ -269,7 +309,7 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
     setItems((current) => current.filter((_, itemIndex) => itemIndex !== index));
   };
 
-  const subtotal = toMoney(items.reduce((sum, item) => sum + (Number(item.quantity || 0) * getEffectiveUnitPrice(item)), 0));
+  const subtotal = toMoney(items.reduce((sum, item) => sum + getLineTotal(item), 0));
   const calculatedDiscount = canOverridePrice
     ? toMoney(discountType === 'percent' ? (subtotal * (Number(discountValue || 0) / 100)) : Number(discountValue || 0))
     : 0;
@@ -297,11 +337,16 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
         errors.push('Select a batch for egg sale');
       }
       const available = getEggAvailable(item, eggInventory, eggBatchStock);
-      if (quantity > available) {
+      const quantityEggs = saleQuantityInEggs(
+        quantity,
+        item.eggQuantityUnit ?? 'crate',
+        eggsPerCrate,
+      );
+      if (quantityEggs > available) {
         errors.push(
           item.eggAllocationMode === 'batch'
-            ? `Selected batch only has ${available} eggs available`
-            : `${item.description || 'Eggs'} only has ${available} available`,
+            ? `Selected batch only has ${formatEggStockCrateLabel(available, eggsPerCrate)} available`
+            : `${item.description || 'Eggs'} only has ${formatEggStockCrateLabel(available, eggsPerCrate)} available`,
         );
       }
     }
@@ -358,6 +403,11 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
         eggBatchId: item.productType === 'inventory' && item.eggAllocationMode === 'batch'
           ? item.eggBatchId
           : undefined,
+        eggQuantityUnit: item.productType === 'inventory'
+          ? (item.eggQuantityUnit ?? 'crate')
+          : undefined,
+        lineDiscountAmount: Number(item.lineDiscountAmount || 0),
+        lineDiscountType: item.lineDiscountType === 'percent' ? 'percent' : 'flat',
       }))
     });
     setIsSubmitting(false);
@@ -440,7 +490,8 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
           {items.map((item, index) => {
             const basePrice = getItemBasePrice(item);
             const effectivePrice = getEffectiveUnitPrice(item);
-            const lineTotal = toMoney(Number(item.quantity || 0) * effectivePrice);
+            const lineSubtotal = getLineSubtotal(item);
+            const lineTotal = getLineTotal(item);
 
             return (
               <div key={index} className="overflow-hidden rounded-md border border-white/10 bg-white/5 p-4">
@@ -525,8 +576,7 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
                       </div>
                     ) : shouldHideProductPicker(item, eggInventory, livestock) ? (
                       <div className="flex h-11 min-w-0 items-center rounded-md border border-white/10 bg-slate-950/40 px-3 text-sm font-bold text-white">
-                        {item.description ||
-                          (item.productType === 'inventory' ? 'Eggs' : 'Livestock batch')}
+                        {item.description || 'Livestock batch'}
                       </div>
                     ) : (
                       <select
@@ -535,11 +585,9 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
                         className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
                       >
                         <option value="" className="bg-slate-900">Select product</option>
-                        {(item.productType === 'inventory' ? eggInventory : livestock).map((entry: any) => (
+                        {livestock.map((entry: any) => (
                           <option key={entry.id} value={entry.id} className="bg-slate-900">
-                            {item.productType === 'inventory'
-                              ? `${entry.itemName} (${Number(entry.stockLevel).toLocaleString()} ${entry.unit || 'units'})`
-                              : `${entry.batchName} (${entry.currentCount} birds)`}
+                            {`${entry.batchName} (${entry.currentCount} birds)`}
                           </option>
                         ))}
                       </select>
@@ -548,8 +596,44 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
                 </div>
 
                 <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+                  {item.productType === 'inventory' ? (
+                    <div className="sm:col-span-2 flex min-w-0 overflow-hidden rounded-md border border-white/10 bg-slate-950/70">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const current = item.eggQuantityUnit ?? 'crate';
+                          if (current === 'crate') {
+                            const qty = Number(item.quantity || 0);
+                            const price = Number(item.unitPrice || effectivePrice || 0);
+                            updateItem(index, {
+                              eggQuantityUnit: 'egg',
+                              quantity: qty > 0 ? qty * eggsPerCrate : item.quantity,
+                              unitPrice: eggsPerCrate > 0 ? toMoney(price / eggsPerCrate) : item.unitPrice,
+                            });
+                          } else {
+                            const qty = Number(item.quantity || 0);
+                            const price = Number(item.unitPrice || effectivePrice || 0);
+                            updateItem(index, {
+                              eggQuantityUnit: 'crate',
+                              quantity: qty > 0 && eggsPerCrate > 0 ? Math.ceil(qty / eggsPerCrate) : item.quantity,
+                              unitPrice: toMoney(price * eggsPerCrate),
+                            });
+                          }
+                        }}
+                        className="flex-1 px-3 py-2 text-xs font-bold uppercase tracking-widest text-white/60"
+                      >
+                        {(item.eggQuantityUnit ?? 'crate') === 'crate' ? 'Crates' : 'Eggs'} — tap to switch
+                      </button>
+                    </div>
+                  ) : null}
                   <div className="space-y-1 min-w-0">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-white/50">Quantity Sold</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-white/50">
+                      {item.productType === 'inventory'
+                        ? (item.eggQuantityUnit ?? 'crate') === 'crate'
+                          ? 'Crates Sold'
+                          : 'Eggs Sold'
+                        : 'Quantity Sold'}
+                    </label>
                     <input
                       type="number"
                       inputMode="numeric"
@@ -562,7 +646,13 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
                   </div>
 
                   <div className="space-y-1 min-w-0">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-white/50">Unit Price</label>
+                    <label className="text-[10px] font-black uppercase tracking-widest text-white/50">
+                      {item.productType === 'inventory'
+                        ? (item.eggQuantityUnit ?? 'crate') === 'crate'
+                          ? 'Price / Crate'
+                          : 'Price / Egg'
+                        : 'Unit Price'}
+                    </label>
                     <div className="relative min-w-0">
                       <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-300/60">GHS</span>
                       <input
@@ -591,9 +681,34 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
                   </div>
                 </div>
 
+                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_120px]">
+                  <div className="space-y-1 min-w-0">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-white/50">Line Discount</label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={item.lineDiscountAmount ?? 0}
+                      onChange={(event) => updateItem(index, { lineDiscountAmount: event.target.value === '' ? '' : Number(event.target.value) })}
+                      className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+                    />
+                  </div>
+                  <div className="space-y-1 min-w-0">
+                    <label className="text-[10px] font-black uppercase tracking-widest text-white/50">Type</label>
+                    <select
+                      value={item.lineDiscountType ?? 'flat'}
+                      onChange={(event) => updateItem(index, { lineDiscountType: event.target.value as 'flat' | 'percent' })}
+                      className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+                    >
+                      <option value="flat" className="bg-slate-900">GHS</option>
+                      <option value="percent" className="bg-slate-900">%</option>
+                    </select>
+                  </div>
+                </div>
+
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-3">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">
-                    Base: GHS {basePrice.toFixed(2)}
+                    Base: GHS {basePrice.toFixed(2)} | Subtotal: GHS {lineSubtotal.toFixed(2)}
                   </span>
                   <span className="text-sm font-bold text-emerald-300">Line Total: GHS {lineTotal.toFixed(2)}</span>
                 </div>

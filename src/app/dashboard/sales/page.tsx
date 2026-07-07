@@ -12,6 +12,7 @@ import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
 import { WorkerStamp } from '@/components/ui/WorkerStamp';
 import Link from 'next/link';
 import { getAuthContext } from '@/lib/auth-utils';
+import { getFarmSettings } from '@/lib/actions/preference-actions';
 
 interface OrderItem {
   id: string;
@@ -104,14 +105,16 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
   const resolvedParams = await searchParams;
   const sellBatchId = resolvedParams.sellBatchId;
 
-  const [ordersRaw, customersRaw, inventoryRaw, eggInventoryRaw, eggBatchStockRaw, livestockRaw] = await Promise.all([
+  const [ordersRaw, customersRaw, inventoryRaw, eggInventoryRaw, eggBatchStockRaw, livestockRaw, farmSettings] = await Promise.all([
     getAllOrders(),
     getAllCustomers(),
     getAllInventory(),
     getSellableEggInventory(),
     getActiveBatchEggStock(),
-    getAllBatches()
+    getAllBatches(),
+    getFarmSettings(),
   ]);
+  const eggsPerCrate = farmSettings?.eggsPerCrate ?? 30;
 
   const orders: SalesOrder[] = (ordersRaw as unknown as Order[]).map(normalizeOrder);
   const customers = (customersRaw as unknown as Customer[]).map((customer: Customer) => ({
@@ -233,6 +236,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
           eggInventory={eggInventory}
           eggBatchStock={eggBatchStock}
           livestock={livestock}
+          eggsPerCrate={eggsPerCrate}
           initialLivestockId={sellBatchId}
           canEdit={canCreateSale}
           canOverridePrice={canOverridePrice}

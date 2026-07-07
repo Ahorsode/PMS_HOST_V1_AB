@@ -761,6 +761,8 @@ model OrderItem {
   livestockId String?
   eggAllocationMode String? @map("egg_allocation_mode")
   eggBatchId        String? @map("egg_batch_id")
+  lineDiscountAmount Decimal @default(0) @map("line_discount_amount") @db.Decimal(15, 2)
+  lineDiscountType   String  @default("flat") @map("line_discount_type")
   inventory   Inventory? @relation(fields: [inventoryId], references: [id])
   batch       Livestock? @relation(fields: [livestockId], references: [id])
   order       Order      @relation(fields: [orderId], references: [id])

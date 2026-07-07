@@ -6,6 +6,12 @@ import { getAuthContext, hasPermission } from '@/lib/auth-utils'
 import { revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 import { parseFinancialLogDate } from '@/lib/financial-dates'
+import {
+  computeLineDiscount,
+  saleQuantityInEggs,
+  saleUnitPricePerEgg,
+  type EggSaleQuantityUnit,
+} from '@/lib/sale-quantity-utils'
 
 const PRICE_OVERRIDE_ROLES = new Set(['OWNER', 'MANAGER'])
 const MONEY_EPSILON = 0.01
@@ -16,6 +22,11 @@ function toMoney(value: number) {
 
 function isBalanced(expected: number, actual: number) {
   return Math.abs(toMoney(expected) - toMoney(actual)) <= MONEY_EPSILON
+}
+
+async function getEggsPerCrate(tx: any, farmId: string) {
+  const settings = await tx.farmSettings.findUnique({ where: { farmId } })
+  return settings?.eggsPerCrate ?? 30
 }
 
 async function getAuthoritativeSaleItem(tx: any, activeFarmId: string, item: {
@@ -127,6 +138,9 @@ export async function createOrder(data: {
     livestockId?: string;
     eggAllocationMode?: string;
     eggBatchId?: string;
+    eggQuantityUnit?: EggSaleQuantityUnit;
+    lineDiscountAmount?: number;
+    lineDiscountType?: 'flat' | 'percent';
   }[]
 }) {
   const { userId, role, activeFarmId, permissions } = await getAuthContext()
@@ -149,9 +163,14 @@ export async function createOrder(data: {
       const canOverridePrice = PRICE_OVERRIDE_ROLES.has(role)
       const normalizedItems = []
       const selectedOrderDate = parseFinancialLogDate(data.orderDate)
+      const eggsPerCrate = await getEggsPerCrate(tx, activeFarmId)
 
       for (const item of data.items) {
-        const quantity = Number(item.quantity)
+        const eggUnit: EggSaleQuantityUnit = item.eggQuantityUnit ?? 'crate'
+        const displayQuantity = Number(item.quantity)
+        const quantity = item.inventoryId
+          ? saleQuantityInEggs(displayQuantity, eggUnit, eggsPerCrate)
+          : displayQuantity
         if (!Number.isInteger(quantity) || quantity <= 0) {
           throw new Error('Quantity sold must be a positive whole number')
         }
@@ -175,15 +194,41 @@ export async function createOrder(data: {
         }
 
         const requestedUnitPrice = Number(item.unitPrice || 0)
-        const unitPrice = canOverridePrice && requestedUnitPrice > 0 ? requestedUnitPrice : authoritative.unitPrice
+        let unitPrice: number
+        if (authoritative.inventoryId) {
+          const authoritativePerEgg = toMoney(authoritative.unitPrice / eggsPerCrate)
+          const requestedPerEgg = saleUnitPricePerEgg(
+            requestedUnitPrice,
+            eggUnit,
+            eggsPerCrate,
+          )
+          unitPrice = canOverridePrice && requestedPerEgg > 0
+            ? requestedPerEgg
+            : authoritativePerEgg
+        } else {
+          unitPrice = canOverridePrice && requestedUnitPrice > 0
+            ? requestedUnitPrice
+            : authoritative.unitPrice
+        }
+
+        const lineSubtotal = toMoney(quantity * unitPrice)
+        const lineDiscount = computeLineDiscount(
+          lineSubtotal,
+          Number(item.lineDiscountAmount || 0),
+          item.lineDiscountType === 'percent' ? 'percent' : 'flat',
+        )
 
         normalizedItems.push({
           description: authoritative.description || 'Sale Item',
           quantity,
           unitPrice: toMoney(unitPrice),
-          baseUnitPrice: toMoney(authoritative.unitPrice),
+          baseUnitPrice: toMoney(authoritative.inventoryId
+            ? authoritative.unitPrice / eggsPerCrate
+            : authoritative.unitPrice),
           basePriceSource: authoritative.basePriceSource,
-          totalPrice: toMoney(quantity * unitPrice),
+          totalPrice: toMoney(lineSubtotal - lineDiscount),
+          lineDiscountAmount: lineDiscount,
+          lineDiscountType: item.lineDiscountType === 'percent' ? 'percent' : 'flat',
           inventoryId: authoritative.inventoryId,
           livestockId: authoritative.livestockId,
           eggAllocationMode: item.eggAllocationMode || null,
@@ -230,6 +275,8 @@ export async function createOrder(data: {
               quantity: i.quantity,
               unitPrice: i.unitPrice,
               totalPrice: i.totalPrice,
+              lineDiscountAmount: i.lineDiscountAmount,
+              lineDiscountType: i.lineDiscountType,
               inventoryId: i.inventoryId,
               livestockId: i.livestockId,
               eggAllocationMode: i.eggAllocationMode,
@@ -433,11 +480,15 @@ export async function updateOrderStatus(id: string, status: string) {
 
             // FIFO for Eggs: Deduct from oldest production logs first
             if (item.inventory?.category === 'EGGS') {
+              const orderItem = item as typeof item & {
+                eggAllocationMode?: string | null
+                eggBatchId?: string | null
+              }
               await deductEggFifo(
                 tx,
                 activeFarmId,
                 item.quantity,
-                item.eggAllocationMode === 'batch' ? item.eggBatchId : null,
+                orderItem.eggAllocationMode === 'batch' ? orderItem.eggBatchId : null,
               )
             }
           }
