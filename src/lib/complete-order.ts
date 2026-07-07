@@ -1,6 +1,7 @@
 import {
   allocateLineRevenueByBatch,
   deductEggFifoWithAllocations,
+  getFifoEggAvailability,
   isEggInventoryCategory,
   type BatchEggAllocation,
 } from '@/lib/egg-fifo-utils'
@@ -64,14 +65,6 @@ export async function completeOrderInTransaction(
       }
 
       const quantity = Number(item.quantity)
-      if (Number(current.stockLevel ?? 0) < quantity) {
-        throw new Error(`Insufficient stock for ${current.itemName || item.description}`)
-      }
-
-      await tx.inventory.update({
-        where: { id: item.inventoryId },
-        data: { stockLevel: { decrement: quantity } },
-      })
 
       if (isEggInventoryCategory(current.category)) {
         const batchId =
@@ -79,6 +72,21 @@ export async function completeOrderInTransaction(
         const categoryId = isUnsortedEggInventory(current)
           ? null
           : current.eggCategoryId || null
+        const fifoAvailable = await getFifoEggAvailability(tx, farmId, {
+          batchId,
+          categoryId,
+        })
+        if (fifoAvailable < quantity) {
+          throw new Error(
+            `Insufficient egg stock for ${current.itemName || item.description}. Available: ${fifoAvailable}`,
+          )
+        }
+
+        const nextStockLevel = Math.max(0, Number(current.stockLevel ?? 0) - quantity)
+        await tx.inventory.update({
+          where: { id: item.inventoryId },
+          data: { stockLevel: nextStockLevel },
+        })
 
         let eggAllocations: BatchEggAllocation[] = await deductEggFifoWithAllocations(
           tx,
@@ -111,7 +119,17 @@ export async function completeOrderInTransaction(
             roundMoney((batchRevenueTotals.get(allocation.batchId) || 0) + allocation.revenueAmount),
           )
         }
+        continue
       }
+
+      if (Number(current.stockLevel ?? 0) < quantity) {
+        throw new Error(`Insufficient stock for ${current.itemName || item.description}`)
+      }
+
+      await tx.inventory.update({
+        where: { id: item.inventoryId },
+        data: { stockLevel: { decrement: quantity } },
+      })
     }
 
     if (item.livestockId) {
