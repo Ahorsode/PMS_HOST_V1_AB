@@ -238,13 +238,16 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
 
   const getEffectiveUnitPrice = (item: SaleItemState) => {
     const basePrice = getItemBasePrice(item);
-    if (!canOverridePrice) {
+    if (canOverridePrice) {
+      return Number(item.unitPrice || basePrice || 0);
+    }
+    if (basePrice > 0) {
       if (item.productType === 'inventory') {
         return saleUnitPriceForDisplay(basePrice, item.eggQuantityUnit ?? 'crate', eggsPerCrate);
       }
       return basePrice;
     }
-    return Number(item.unitPrice || basePrice || 0);
+    return Number(item.unitPrice || 0);
   };
 
   const getLineSubtotal = (item: SaleItemState) =>
@@ -379,8 +382,9 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
     }
 
     if (!canOverridePrice && item.productType === 'custom') errors.push('Custom items require manager access');
-    if (!canOverridePrice && basePrice <= 0) errors.push(`${item.description || 'Selected product'} needs a configured base price`);
-    if (canOverridePrice && getEffectiveUnitPrice(item) <= 0) errors.push('Unit price must be greater than zero');
+    if ((!canOverridePrice && basePrice <= 0) || canOverridePrice) {
+      if (getEffectiveUnitPrice(item) <= 0) errors.push('Unit price must be greater than zero');
+    }
 
     return errors;
   });
@@ -562,6 +566,7 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
             const effectivePrice = getEffectiveUnitPrice(item);
             const lineSubtotal = getLineSubtotal(item);
             const lineTotal = getLineTotal(item);
+            const isPriceLocked = !canOverridePrice && basePrice > 0;
 
             return (
               <div key={index} className="overflow-hidden rounded-md border border-white/10 bg-white/5 p-4">
@@ -730,13 +735,19 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
                           type="number"
                           min="0"
                           step="0.01"
-                          value={canOverridePrice ? item.unitPrice : basePrice}
+                          value={isPriceLocked ? basePrice : item.unitPrice}
                           onChange={(event) => updateItem(index, { unitPrice: event.target.value === '' ? '' : Number(event.target.value) })}
-                          disabled={!canOverridePrice}
+                          disabled={isPriceLocked}
                           className="box-border h-14 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 py-0 pl-11 pr-10 text-base font-bold text-emerald-300 outline-none transition-all focus:border-emerald-500/50 disabled:cursor-not-allowed disabled:bg-slate-950/40 disabled:text-white/60"
                         />
-                        {!canOverridePrice && <Lock className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />}
+                        {isPriceLocked && <Lock className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />}
                       </div>
+                      {!canOverridePrice && basePrice <= 0 && (
+                        <p className="text-xs text-amber-400 mt-1 flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3" />
+                          No price configured — enter a selling price to continue.
+                        </p>
+                      )}
                     </div>
 
                     <div className="flex items-end md:justify-end">

@@ -15,50 +15,59 @@ import {
 import { FeedFormulationForm } from './FeedFormulationForm'
 import { FeedForm } from './FeedForm'
 import { FeedingHistoryPanel } from './FeedingHistoryPanel'
-import { getAllFeedFormulations, getConsumptionEfficiency } from '@/lib/actions/feed-actions'
+import type { FeedPageData } from '@/lib/actions/feed-page-actions'
+import { getFeedPageData } from '@/lib/actions/feed-page-actions'
 import { getAllInventory } from '@/lib/actions/inventory-actions'
-import { getAllBatches, getAllFeedingLogs } from '@/lib/actions/dashboard-actions'
+import { getAllFeedingLogs } from '@/lib/actions/dashboard-actions'
 import { getReorderThreshold, isFeedCategory, isLowStock } from '@/lib/inventory/feed-categories'
 
-export default function FeedDashboard({ canEdit = true, openLogOnLoad = false }: { canEdit?: boolean; openLogOnLoad?: boolean }) {
-  const [formulations, setFormulations] = useState<any[]>([])
-  const [efficiency, setEfficiency] = useState<any[]>([])
-  const [inventory, setInventory] = useState<any[]>([])
-  const [batches, setBatches] = useState<any[]>([])
+export default function FeedDashboard({
+  canEdit = true,
+  openLogOnLoad = false,
+  initialData,
+}: {
+  canEdit?: boolean
+  openLogOnLoad?: boolean
+  initialData: FeedPageData
+}) {
+  const [formulations, setFormulations] = useState<any[]>(initialData.formulations)
+  const [efficiency, setEfficiency] = useState<any[]>(initialData.efficiency)
+  const [inventory, setInventory] = useState<any[]>(initialData.inventory)
+  const [batches, setBatches] = useState<any[]>(
+    initialData.batches.filter((batch: any) => batch.status === 'active')
+  )
   const [showForm, setShowForm] = useState(false)
   const [showLogForm, setShowLogForm] = useState(false)
   const [selectedFormulation, setSelectedFormulation] = useState<string | undefined>(undefined)
-  const [feedingLogs, setFeedingLogs] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
+  const [feedingLogs, setFeedingLogs] = useState<any[]>(initialData.feedingLogs)
+  const [refreshing, setRefreshing] = useState(false)
   const openedInitialLog = useRef(false)
 
   useEffect(() => {
-    loadData()
-  }, [])
-
-  useEffect(() => {
-    if (!openLogOnLoad || !canEdit || loading || openedInitialLog.current) return
-
+    if (!openLogOnLoad || !canEdit || openedInitialLog.current) return
     openedInitialLog.current = true
     setSelectedFormulation(undefined)
     setShowLogForm(true)
-  }, [canEdit, loading, openLogOnLoad])
+  }, [canEdit, openLogOnLoad])
 
-  const loadData = async () => {
-    setLoading(true)
-    const [fRes, eRes, iRes, bRes, logsRes] = await Promise.all([
-      getAllFeedFormulations(),
-      getConsumptionEfficiency(),
-      getAllInventory(),
-      getAllBatches(),
-      getAllFeedingLogs(),
-    ])
-    setFormulations(fRes)
-    setEfficiency(eRes)
-    setInventory(iRes)
-    setBatches(bRes.filter((batch: any) => batch.status === 'active'))
-    setFeedingLogs(logsRes)
-    setLoading(false)
+  const refreshAfterLog = async () => {
+    setRefreshing(true)
+    try {
+      const [logsRes, inventoryRes] = await Promise.all([
+        getAllFeedingLogs(),
+        getAllInventory(),
+      ])
+      setFeedingLogs(logsRes)
+      setInventory(inventoryRes)
+    } finally {
+      setRefreshing(false)
+    }
+  }
+
+  const refreshAfterFormulation = async () => {
+    const data = await getFeedPageData()
+    setFormulations(data.formulations)
+    setInventory(data.inventory)
   }
 
   const feedInventory = inventory.filter((item) => isFeedCategory(item.category))
@@ -100,7 +109,7 @@ export default function FeedDashboard({ canEdit = true, openLogOnLoad = false }:
               formulations={formulations}
               selectedFormulationId={selectedFormulation}
               mode="create"
-              onClose={() => { setShowLogForm(false); setSelectedFormulation(undefined); loadData(); }}
+              onClose={() => { setShowLogForm(false); setSelectedFormulation(undefined); refreshAfterLog(); }}
             />
           </div>
         </div>
@@ -118,7 +127,7 @@ export default function FeedDashboard({ canEdit = true, openLogOnLoad = false }:
           })} 
           onSuccess={() => {
             setShowForm(false)
-            loadData()
+            refreshAfterFormulation()
           }} 
           onClose={() => setShowForm(false)}
         />
@@ -272,6 +281,7 @@ export default function FeedDashboard({ canEdit = true, openLogOnLoad = false }:
           inventory={feedInventory}
           formulations={formulations}
           canEdit={canEdit}
+          isRefreshing={refreshing}
         />
       )}
     </div>

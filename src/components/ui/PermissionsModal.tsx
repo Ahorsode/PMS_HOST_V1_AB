@@ -88,7 +88,7 @@ export function PermissionsModal({
     });
   };
 
-  const PermissionRow = ({ title, viewKey, editKey, icon: Icon }: { title: string, viewKey: keyof typeof permissions, editKey: keyof typeof permissions, icon: any }) => (
+  const PermissionRow = ({ title, viewKey, editKey, icon: Icon, description }: { title: string, viewKey: keyof typeof permissions, editKey: keyof typeof permissions, icon: any, description?: string }) => (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 bg-white/10 border border-white/10 rounded-md mb-2 gap-3 sm:gap-0">
       <div className="flex items-center gap-2">
         <div className="p-2 bg-white/10 rounded-md">
@@ -96,7 +96,7 @@ export function PermissionsModal({
         </div>
         <div>
           <h4 className="text-white font-bold">{title}</h4>
-          <p className="text-white/70 text-xs uppercase tracking-widest font-bold">Module Access</p>
+          <p className="text-white/70 text-xs uppercase tracking-widest font-bold">{description ?? 'Module Access'}</p>
         </div>
       </div>
       <div className="flex items-center gap-5 sm:gap-4 w-full sm:w-auto justify-around sm:justify-end border-t border-white/5 pt-2 sm:pt-0 sm:border-0 mt-1 sm:mt-0">
@@ -181,7 +181,7 @@ export function PermissionsModal({
                         <PermissionRow title="Houses" viewKey="canViewHouses" editKey="canEditHouses" icon={ThermometerSun} />
                         <PermissionRow title="Eggs" viewKey="canViewEggs" editKey="canEditEggs" icon={Egg} />
                         <PermissionRow title="Feeding" viewKey="canViewFeeding" editKey="canEditFeeding" icon={Wheat} />
-                        <PermissionRow title="Mortality" viewKey="canViewMortality" editKey="canEditMortality" icon={XCircle} />
+                        <PermissionRow title="Mortality" viewKey="canViewMortality" editKey="canEditMortality" icon={XCircle} description="Logging, quarantine recovery & transfer" />
                         <PermissionRow title="Health (Vaccines & Meds)" viewKey="canViewHealth" editKey="canEditHealth" icon={HeartPulse} />
                       </div>
                     </div>

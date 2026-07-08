@@ -8,6 +8,7 @@ export const farmCacheTags = {
   sales: (farmId: string) => `farm:${farmId}:sales`,
   customers: (farmId: string) => `farm:${farmId}:customers`,
   suppliers: (farmId: string) => `farm:${farmId}:suppliers`,
+  feed: (farmId: string) => `farm:${farmId}:feed`,
 };
 
 export function revalidateFarmPerformanceCaches(farmId: string) {

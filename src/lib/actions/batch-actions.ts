@@ -277,7 +277,7 @@ export async function returnFromIsolation(id: string, count: number) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
-  const hasEditAccess = await checkWorkerPermissions('batches', 'edit')
+  const hasEditAccess = await checkWorkerPermissions('mortality', 'edit')
   if (!hasEditAccess) return { success: false, error: 'Unauthorized' }
 
   const limitResult = await checkRateLimit({ policy: 'production.write', scope: 'returnFromIsolation', farmId: activeFarmId, userId })
@@ -320,7 +320,7 @@ export async function logMortalityInIsolation(data: {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
-  const hasEditAccess = await checkWorkerPermissions('batches', 'edit')
+  const hasEditAccess = await checkWorkerPermissions('mortality', 'edit')
   if (!hasEditAccess) return { success: false, error: 'Unauthorized' }
 
   const limitResult = await checkRateLimit({ policy: 'production.write', scope: 'logMortalityInIsolation', farmId: activeFarmId, userId })

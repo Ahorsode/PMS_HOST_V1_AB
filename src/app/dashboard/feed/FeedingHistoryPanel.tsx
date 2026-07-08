@@ -30,12 +30,14 @@ export function FeedingHistoryPanel({
   inventory,
   formulations,
   canEdit,
+  isRefreshing = false,
 }: {
   logs: FeedingLog[]
   batches: any[]
   inventory: any[]
   formulations: any[]
   canEdit: boolean
+  isRefreshing?: boolean
 }) {
   const sortedLogs = useMemo(
     () => [...logs].sort((a, b) =>
@@ -77,6 +79,9 @@ export function FeedingHistoryPanel({
         </div>
       </CardHeader>
       <CardContent className="p-0">
+        {isRefreshing && (
+          <div className="h-0.5 bg-emerald-500/50 animate-pulse rounded-full mb-2" />
+        )}
         {sortedLogs.length === 0 ? (
           <div className="py-16 text-center">
             <Utensils className="w-10 h-10 text-white/20 mx-auto mb-3" />
