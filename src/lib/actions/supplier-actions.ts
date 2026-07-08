@@ -1,9 +1,10 @@
 'use server'
 
 import prisma from '@/lib/db'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
+import { farmCacheTags } from '@/lib/performance/cache-tags'
 
 export async function getSuppliers() {
   const { userId, activeFarmId } = await getAuthContext()
@@ -12,12 +13,23 @@ export async function getSuppliers() {
   const hasViewAccess = await checkWorkerPermissions('finance', 'view')
   if (!hasViewAccess) return []
 
-  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    return await tx.supplier.findMany({
-      where: { farmId: activeFarmId },
-      orderBy: { name: 'asc' }
-    })
-  }).catch((error: any) => {
+  const cachedLoader = unstable_cache(
+    async () => {
+      return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+        return await tx.supplier.findMany({
+          where: { farmId: activeFarmId },
+          orderBy: { name: 'asc' }
+        })
+      })
+    },
+    [`suppliers-list:${activeFarmId}`],
+    {
+      revalidate: 60,
+      tags: [farmCacheTags.suppliers(activeFarmId)],
+    }
+  )
+
+  return cachedLoader().catch((error: any) => {
     console.error('Error fetching suppliers:', error)
     return []
   })
@@ -30,34 +42,45 @@ export async function getSupplierStats() {
   const hasViewAccess = await checkWorkerPermissions('customers', 'view')
   if (!hasViewAccess) return []
 
-  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    const suppliers = await tx.supplier.findMany({
-      where: { farmId: activeFarmId },
-      include: {
-        inventory: true
-      },
-      orderBy: { name: 'asc' }
-    })
+  const cachedLoader = unstable_cache(
+    async () => {
+      return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+        const suppliers = await tx.supplier.findMany({
+          where: { farmId: activeFarmId },
+          include: {
+            inventory: true
+          },
+          orderBy: { name: 'asc' }
+        })
 
-    return suppliers.map((supplier: any) => {
-      const orderCount = supplier.inventory.length;
-      const totalSpent = supplier.inventory.reduce((sum: number, item: any) => {
-        return sum + (Number(item.stockLevel) * Number(item.costPerUnit || 0))
-      }, 0);
+        return suppliers.map((supplier: any) => {
+          const orderCount = supplier.inventory.length;
+          const totalSpent = supplier.inventory.reduce((sum: number, item: any) => {
+            return sum + (Number(item.stockLevel) * Number(item.costPerUnit || 0))
+          }, 0);
 
-      return {
-        id: supplier.id,
-        name: supplier.name,
-        phone: supplier.phone,
-        email: supplier.email,
-        address: supplier.address,
-        createdAt: supplier.createdAt,
-        balanceOwed: Number(supplier.balanceOwed),
-        orderCount,
-        totalSpent
-      }
-    })
-  }).catch((error: any) => {
+          return {
+            id: supplier.id,
+            name: supplier.name,
+            phone: supplier.phone,
+            email: supplier.email,
+            address: supplier.address,
+            createdAt: supplier.createdAt,
+            balanceOwed: Number(supplier.balanceOwed),
+            orderCount,
+            totalSpent
+          }
+        })
+      })
+    },
+    [`suppliers-stats:${activeFarmId}`],
+    {
+      revalidate: 60,
+      tags: [farmCacheTags.suppliers(activeFarmId)],
+    }
+  )
+
+  return cachedLoader().catch((error: any) => {
     console.error('Error fetching supplier stats:', error)
     return []
   })
@@ -87,6 +110,7 @@ export async function createSupplier(data: {
       }
     })
     revalidatePath('/dashboard/commercial')
+    revalidateTag(farmCacheTags.suppliers(activeFarmId), "max")
     return { success: true, supplier }
   }).catch((error: any) => {
     console.error('Error creating supplier:', error)
@@ -108,6 +132,7 @@ export async function updateSupplierBalance(id: string, amount: number) {
       }
     })
     revalidatePath('/dashboard/commercial')
+    revalidateTag(farmCacheTags.suppliers(activeFarmId), "max")
     return { success: true }
   })
 }

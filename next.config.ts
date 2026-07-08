@@ -5,7 +5,7 @@ const nextConfig: NextConfig = {
   poweredByHeader: false, // Don't leak "X-Powered-By: Next.js"
   experimental: {
     staleTimes: {
-      dynamic: 0,
+      dynamic: 30,
       static: 180,
     },
   },

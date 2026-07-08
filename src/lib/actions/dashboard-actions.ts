@@ -256,24 +256,25 @@ export async function getDashboardStats() {
 
     const todayStr = formatDate(new Date())
 
-    const upcomingVaccinations = await tx.vaccinationSchedule.findMany({
-      where: {
-        farmId: activeFarmId,
-        status: 'PENDING',
-        scheduledDate: {
-          lte: new Date(new Date().getTime() + 3 * 24 * 60 * 60 * 1000) // Next 3 days
-        }
-      },
-      include: { batch: true }
-    })
-
-    const pendingMedications = await tx.medicationSchedule.findMany({
-      where: {
-        farmId: activeFarmId,
-        status: 'PENDING'
-      },
-      include: { batch: true }
-    })
+    const [upcomingVaccinations, pendingMedications] = await Promise.all([
+      tx.vaccinationSchedule.findMany({
+        where: {
+          farmId: activeFarmId,
+          status: 'PENDING',
+          scheduledDate: {
+            lte: new Date(new Date().getTime() + 3 * 24 * 60 * 60 * 1000) // Next 3 days
+          }
+        },
+        include: { batch: true }
+      }),
+      tx.medicationSchedule.findMany({
+        where: {
+          farmId: activeFarmId,
+          status: 'PENDING'
+        },
+        include: { batch: true }
+      }),
+    ])
 
     const [farmSettings, growthStandards] = await Promise.all([
       tx.farmSettings.findUnique({ where: { farmId: activeFarmId } }),

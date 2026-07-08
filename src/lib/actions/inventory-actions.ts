@@ -1,10 +1,10 @@
 'use server'
 
 import prisma from '@/lib/db'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
-import { revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
+import { farmCacheTags, revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 import {
   fetchBatchIdsForHealthItem,
@@ -99,6 +99,7 @@ export async function createInventoryItem(data: {
     
     revalidatePath('/dashboard/inventory')
     revalidatePath('/dashboard')
+    revalidateTag(farmCacheTags.inventory(activeFarmId), "max")
     revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, item: { ...item, stockLevel: Number(item.stockLevel) } }
   }).catch((error: any) => {
@@ -170,6 +171,7 @@ export async function updateInventoryItem(id: string, data: {
 
     revalidatePath('/dashboard/inventory')
     revalidatePath('/dashboard')
+    revalidateTag(farmCacheTags.inventory(activeFarmId), "max")
     revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, item: { ...item, stockLevel: Number(item.stockLevel) } }
   }).catch((error: any) => {
@@ -209,6 +211,7 @@ export async function deleteInventoryItem(id: string, reason: string) {
       data: { isDeleted: true, deletedAt: new Date() }
     })
     revalidatePath('/dashboard/inventory')
+    revalidateTag(farmCacheTags.inventory(activeFarmId), "max")
     revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true }
   }).catch((error: any) => {
@@ -234,6 +237,7 @@ export async function restoreInventory(id: string) {
     })
     revalidatePath('/dashboard/inventory')
     revalidatePath('/dashboard/settings/trash')
+    revalidateTag(farmCacheTags.inventory(activeFarmId), "max")
     revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true }
   }).catch((error: any) => {
@@ -283,21 +287,32 @@ export async function getAllInventory(options?: { filter?: InventoryListFilter }
 
   const filter = options?.filter ?? 'active'
 
-  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    const stockFilter =
-      filter === 'active'
-        ? { stockLevel: { gt: 0 } }
-        : filter === 'used_up'
-          ? { stockLevel: { lte: 0 } }
-          : {}
+  const cachedLoader = unstable_cache(
+    async () => {
+      return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+        const stockFilter =
+          filter === 'active'
+            ? { stockLevel: { gt: 0 } }
+            : filter === 'used_up'
+              ? { stockLevel: { lte: 0 } }
+              : {}
 
-    const items = await tx.inventory.findMany({
-      where: { farmId: activeFarmId, isDeleted: false, ...stockFilter },
-      include: INVENTORY_INCLUDE,
-      orderBy: { itemName: 'asc' },
-    })
-    return items.map(mapInventoryRow)
-  })
+        const items = await tx.inventory.findMany({
+          where: { farmId: activeFarmId, isDeleted: false, ...stockFilter },
+          include: INVENTORY_INCLUDE,
+          orderBy: { itemName: 'asc' },
+        })
+        return items.map(mapInventoryRow)
+      })
+    },
+    [`inventory-list:${activeFarmId}:${filter}`],
+    {
+      revalidate: 30,
+      tags: [farmCacheTags.inventory(activeFarmId)],
+    }
+  )
+
+  return cachedLoader()
 }
 
 export async function getUsedUpInventoryCount() {

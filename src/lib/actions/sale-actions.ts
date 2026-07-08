@@ -1,10 +1,10 @@
 'use server'
 
 import prisma from '@/lib/db'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
-import { revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
+import { farmCacheTags, revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 
 export async function createSale(data: {
@@ -52,6 +52,8 @@ export async function createSale(data: {
 
     revalidatePath('/dashboard/sales')
     revalidatePath('/dashboard/inventory')
+    revalidateTag(farmCacheTags.sales(activeFarmId), "max")
+    revalidateTag(farmCacheTags.inventory(activeFarmId), "max")
     revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, sale: { ...sale, totalAmount: Number(sale.totalAmount) } }
   }).catch((error: any) => {
@@ -91,6 +93,7 @@ export async function deleteSale(id: string, reason: string) {
       data: { isDeleted: true, deletedAt: new Date() }
     })
     revalidatePath('/dashboard/sales')
+    revalidateTag(farmCacheTags.sales(activeFarmId), "max")
     revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true }
   }).catch((error: any) => {
@@ -116,6 +119,7 @@ export async function restoreSale(id: string) {
     })
     revalidatePath('/dashboard/sales')
     revalidatePath('/dashboard/settings/trash')
+    revalidateTag(farmCacheTags.sales(activeFarmId), "max")
     revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true }
   }).catch((error: any) => {

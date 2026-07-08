@@ -1,8 +1,15 @@
 import React from 'react';
+import dynamic from 'next/dynamic';
 import { getBatchPerformanceReports } from '@/lib/actions/analytics-actions';
-import { BatchComparison } from '@/components/analytics/BatchComparison';
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
 import { redirect } from 'next/navigation';
+
+const BatchComparison = dynamic(
+  () => import('@/components/analytics/BatchComparison').then((mod) => mod.BatchComparison),
+  {
+    loading: () => <div className="h-64 animate-pulse rounded-lg bg-white/5" />,
+  }
+);
 
 export const metadata = {
   title: 'Comparative Analytics | Poultry PMS',

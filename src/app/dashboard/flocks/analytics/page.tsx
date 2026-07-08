@@ -1,7 +1,17 @@
 import React from 'react'
+import dynamic from 'next/dynamic'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
-import { BatchPerformanceReportsPanel } from '@/components/analytics/BatchPerformanceReportsPanel'
 import { getBatchPerformanceReports } from '@/lib/actions/analytics-actions'
+
+const BatchPerformanceReportsPanel = dynamic(
+  () =>
+    import('@/components/analytics/BatchPerformanceReportsPanel').then(
+      (mod) => mod.BatchPerformanceReportsPanel
+    ),
+  {
+    loading: () => <div className="h-64 animate-pulse rounded-lg bg-white/5" />,
+  }
+)
 
 export const revalidate = 60
 

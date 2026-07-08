@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useMemo } from 'react'
+import dynamic from 'next/dynamic'
 import {
   Activity,
   Banknote,
@@ -16,16 +17,38 @@ import {
 import { cn, formatCurrency } from '@/lib/utils'
 import { compareNewestFirst } from '@/lib/utils/chronological-sort'
 import { WorkerStamp } from '@/components/ui/WorkerStamp'
-import {
-  ChartCard,
-  EggTrendPanel,
-  FinanceTrendPanel,
-  MetricCard,
-  MortalityTrendPanel,
-  SalesTrendPanel,
-} from './FlockCharts'
 import { FlockHealthSchedule } from './FlockHealthSchedule'
 import { FlockQuickLog } from './FlockQuickLog'
+
+const ChartCard = dynamic(() => import('./FlockCharts').then((mod) => mod.ChartCard), {
+  ssr: false,
+  loading: () => <div className="h-64 animate-pulse rounded-lg bg-white/5" />,
+})
+const EggTrendPanel = dynamic(() => import('./FlockCharts').then((mod) => mod.EggTrendPanel), {
+  ssr: false,
+  loading: () => <div className="h-64 animate-pulse rounded-lg bg-white/5" />,
+})
+const FinanceTrendPanel = dynamic(
+  () => import('./FlockCharts').then((mod) => mod.FinanceTrendPanel),
+  {
+    ssr: false,
+    loading: () => <div className="h-64 animate-pulse rounded-lg bg-white/5" />,
+  }
+)
+const MetricCard = dynamic(() => import('./FlockCharts').then((mod) => mod.MetricCard), {
+  ssr: false,
+})
+const MortalityTrendPanel = dynamic(
+  () => import('./FlockCharts').then((mod) => mod.MortalityTrendPanel),
+  {
+    ssr: false,
+    loading: () => <div className="h-64 animate-pulse rounded-lg bg-white/5" />,
+  }
+)
+const SalesTrendPanel = dynamic(() => import('./FlockCharts').then((mod) => mod.SalesTrendPanel), {
+  ssr: false,
+  loading: () => <div className="h-64 animate-pulse rounded-lg bg-white/5" />,
+})
 
 interface FlockDetailClientProps {
   data: any

@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { auth } from '@/auth'
 import prisma from '@/lib/db'
 import { buildPhoneLookupCandidates } from '@/lib/phone-auth'
@@ -82,7 +83,7 @@ export async function acceptPendingInvitationForUser(userId: string) {
   return invitation.farmId
 }
 
-export async function getAuthContext() {
+export const getAuthContext = cache(async () => {
   const session = await auth()
   if (!session?.user?.id) {
     throw new Error('Unauthorized')
@@ -139,7 +140,7 @@ export async function getAuthContext() {
   const role = membership?.role || (isFarmOwner ? 'OWNER' : (data.role === 'OWNER' ? 'WORKER' : data.role || sessionUser.role || 'WORKER'))
 
   return { userId, activeFarmId, role, permissions, isFarmOwner }
-}
+})
 
 export function hasPermission(role: string, permissions: any, action: string): boolean {
   if (role === 'OWNER' || role === 'MANAGER') return true;
