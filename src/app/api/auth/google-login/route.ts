@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { OAuth2Client } from "google-auth-library";
 import prisma from "@/lib/db";
 import { encode } from "next-auth/jwt";
-import { recordUserSession } from "@/lib/auth-utils";
+import { acceptPendingInvitationForUser, recordUserSession } from "@/lib/auth-utils";
 import { checkRateLimit, getRateLimitIp, rateLimitHeaders } from "@/lib/performance/rate-limit";
 
 const client = new OAuth2Client(process.env.AUTH_GOOGLE_ID);
@@ -46,7 +46,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid token payload" }, { status: 401 });
     }
 
-    const { email, name, picture, sub: googleId } = payload;
+    const { email: rawEmail, name, picture, sub: googleId } = payload;
+    const email = rawEmail.toLowerCase().trim();
 
     const existingUser = await prisma.user.findFirst({
       where: {
@@ -69,11 +70,14 @@ export async function POST(req: Request) {
       );
     }
 
+    await acceptPendingInvitationForUser(existingUser.id);
+
     const user = await prisma.user.update({
       where: { id: existingUser.id },
       data: {
         name,
         image: picture,
+        mustChangePassword: false,
       },
     });
 

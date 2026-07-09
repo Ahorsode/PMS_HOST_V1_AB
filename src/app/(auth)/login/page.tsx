@@ -20,6 +20,13 @@ export default function LoginPage() {
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
+    const authError = searchParams.get('error');
+    if (authError === 'OAuthAccountNotLinked') {
+      setError('This Google account could not be linked. Sign in with the email your administrator invited you with.');
+    } else if (authError) {
+      setError('Google sign-in failed. Please try again or contact your farm administrator.');
+    }
+
     if (searchParams.get('security') !== 'updated') return;
 
     const storedMessage = window.sessionStorage.getItem('hatchlog_security_notice');

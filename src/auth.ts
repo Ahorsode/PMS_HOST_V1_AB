@@ -50,22 +50,43 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         });
       }
     },
-    async signIn({ user }) {
+    async signIn({ user, account }) {
       if (user.id) {
         await recordUserSession(user.id, 'Web');
+
+        if (account?.provider === 'google') {
+          await acceptPendingInvitationForUser(user.id);
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { mustChangePassword: false },
+          });
+        }
       }
     }
   },
   callbacks: {
     ...authConfig.callbacks,
     async jwt({ token, user, trigger, session }) {
-      // On login, set from user object
-      if (user) {
+      // On login, hydrate token from the database so OAuth sessions get farm access.
+      if (user?.id) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: user.id },
+          select: {
+            role: true,
+            mustChangePassword: true,
+            sessionVersion: true,
+          },
+        });
+        const membership = await prisma.farmMember.findFirst({
+          where: { userId: user.id },
+          select: { farmId: true },
+        });
+
         token.id = user.id;
-        token.role = user.role;
-        token.activeFarmId = user.activeFarmId;
-        token.mustChangePassword = user.mustChangePassword;
-        token.sessionVersion = user.sessionVersion ?? 1;
+        token.role = dbUser?.role ?? user.role;
+        token.mustChangePassword = dbUser?.mustChangePassword ?? false;
+        token.sessionVersion = dbUser?.sessionVersion ?? 1;
+        token.activeFarmId = membership?.farmId ?? undefined;
         token.securityInvalidated = false;
         token.securityNotice = null;
       }
@@ -142,7 +163,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     ...(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET ? [
       Google({
         clientId: process.env.AUTH_GOOGLE_ID,
-        clientSecret: process.env.AUTH_GOOGLE_SECRET
+        clientSecret: process.env.AUTH_GOOGLE_SECRET,
+        // Invited workers are pre-created by email before they link Google.
+        allowDangerousEmailAccountLinking: true,
       })
     ] : []),
     Credentials({
