@@ -32,19 +32,16 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
   const [activeTab, setActiveTab] = useState(activeTabFromUrl);
 
   useEffect(() => {
-    if (activeTabFromUrl && activeTabFromUrl !== activeTab) {
-      if (activeTabFromUrl === 'desktop-licenses') {
-        if (SHOW_USER_DESKTOP_LICENSES) {
-          router.push('/dashboard/settings/desktop-licenses');
-        } else {
-          setActiveTab('farm');
-          router.replace('/dashboard/settings');
-        }
+    if (activeTabFromUrl === 'desktop-licenses') {
+      if (SHOW_USER_DESKTOP_LICENSES) {
+        router.push('/dashboard/settings/desktop-licenses');
       } else {
-        setActiveTab(activeTabFromUrl);
+        router.replace('/dashboard/settings?tab=farm');
       }
+      return;
     }
-  }, [activeTabFromUrl, activeTab, router]);
+    setActiveTab(activeTabFromUrl);
+  }, [activeTabFromUrl, router]);
 
   const [isUpdatingFarm, setIsUpdatingFarm] = useState(false);
   const [isAddingHouse, setIsAddingHouse] = useState(false);
@@ -192,23 +189,28 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
     { id: 'desktop-licenses', label: 'Connected Devices', icon: Monitor },
   ].filter((tab) => SHOW_USER_DESKTOP_LICENSES || tab.id !== 'desktop-licenses');
 
+  const navigateToTab = (tab: (typeof tabs)[number]) => {
+    if (tab.id === 'desktop-licenses') {
+      if (SHOW_USER_DESKTOP_LICENSES) {
+        router.push('/dashboard/settings/desktop-licenses');
+      }
+      return;
+    }
+    if ('href' in tab && tab.href) {
+      router.push(tab.href);
+      return;
+    }
+    setActiveTab(tab.id);
+    router.push(`/dashboard/settings?tab=${tab.id}`, { scroll: false });
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
       <div className="md:col-span-1 space-y-2">
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => {
-              if (tab.id === 'desktop-licenses') {
-                if (SHOW_USER_DESKTOP_LICENSES) {
-                  router.push('/dashboard/settings/desktop-licenses');
-                }
-              } else if ('href' in tab && tab.href) {
-                router.push(tab.href);
-              } else {
-                setActiveTab(tab.id);
-              }
-            }}
+            onClick={() => navigateToTab(tab)}
             className={`w-full text-left px-3 py-2 rounded-md flex items-center transition-all duration-300 ${
               activeTab === tab.id
                 ? 'bg-emerald-500/20 text-emerald-400 shadow-[inset_0_0_20px_rgba(16,185,129,0.1)] border border-emerald-500/30'

@@ -199,6 +199,13 @@ export async function createOrder(data: {
   try {
     const result = await prisma.$transaction(async (tx) => {
       const canOverridePrice = PRICE_OVERRIDE_ROLES.has(role)
+      const salesSettings = await tx.salesSettings.findUnique({ where: { farmId: activeFarmId } })
+      const allowWorkerDiscounts = salesSettings?.allowWorkerDiscounts ?? true
+      const workerDiscountType =
+        salesSettings?.defaultDiscountType === 'flat' || salesSettings?.defaultDiscountType === 'percent'
+          ? salesSettings.defaultDiscountType
+          : 'item'
+      const canApplyLineDiscounts = canOverridePrice || (role === 'WORKER' && allowWorkerDiscounts)
       const normalizedItems = []
       const selectedOrderDate = parseFinancialLogDate(data.orderDate)
       const eggsPerCrate = await getEggsPerCrate(tx, activeFarmId)
@@ -267,16 +274,26 @@ export async function createOrder(data: {
         }
 
         const lineSubtotal = toMoney(quantity * unitPrice)
-        const lineDiscountType = item.lineDiscountType === 'percent'
-          ? 'percent'
-          : item.lineDiscountType === 'item'
-            ? 'item'
-            : 'flat'
+        let lineDiscountType: 'flat' | 'percent' | 'item' =
+          item.lineDiscountType === 'percent'
+            ? 'percent'
+            : item.lineDiscountType === 'item'
+              ? 'item'
+              : 'flat'
+        let lineDiscountInput = Number(item.lineDiscountAmount || 0)
+
+        if (!canApplyLineDiscounts) {
+          lineDiscountType = 'flat'
+          lineDiscountInput = 0
+        } else if (!canOverridePrice) {
+          lineDiscountType = workerDiscountType
+        }
+
         const lineDiscount = lineDiscountType === 'item'
-          ? Math.min(lineSubtotal, Math.max(0, Number(item.lineDiscountAmount || 0)))
+          ? Math.min(lineSubtotal, Math.max(0, lineDiscountInput))
           : computeLineDiscount(
             lineSubtotal,
-            Number(item.lineDiscountAmount || 0),
+            lineDiscountInput,
             lineDiscountType === 'percent' ? 'percent' : 'flat',
           )
 

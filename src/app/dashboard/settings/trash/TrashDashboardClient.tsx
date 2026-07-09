@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { 
   Trash2, RotateCcw, PawPrint, Egg, Wheat, XCircle, 
   Wallet, ShoppingBag, ClipboardList, Package, Search,
-  AlertTriangle, CheckCircle2, Loader2
+  AlertTriangle, CheckCircle2, Loader2, ArrowLeft
 } from 'lucide-react'
 import { restoreBatch } from '@/lib/actions/batch-actions'
 import { restoreEggProduction } from '@/lib/actions/egg-actions'
@@ -15,6 +15,7 @@ import { restoreSale } from '@/lib/actions/sale-actions'
 import { restoreOrder } from '@/lib/actions/order-actions'
 import { restoreInventory } from '@/lib/actions/inventory-actions'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { MutationBoundary } from '@/components/ui/MutationFeedback'
 import { getBreedDisplayName } from '@/lib/livestock-breed-options'
 
@@ -281,6 +282,13 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
 
   return (
     <div className="min-h-screen p-6 md:p-8 space-y-6">
+      <Link
+        href="/dashboard/settings?tab=farm"
+        className="inline-flex items-center gap-2 text-sm font-bold text-white/60 hover:text-emerald-400 transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Back to Settings
+      </Link>
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>

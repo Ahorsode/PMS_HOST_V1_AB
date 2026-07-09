@@ -109,7 +109,7 @@ export async function getSalesSettings() {
   return prisma.salesSettings.upsert({
     where: { farmId: activeFarmId },
     update: {},
-    create: { farmId: activeFarmId },
+    create: { farmId: activeFarmId, allowWorkerDiscounts: true },
   });
 }
 

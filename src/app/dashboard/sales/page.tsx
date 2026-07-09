@@ -119,7 +119,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
   ]);
   const eggsPerCrate = farmSettings?.eggsPerCrate ?? 30;
   const allowBatchOverride = salesSettings?.allowBatchOverride ?? false;
-  const allowWorkerDiscounts = salesSettings?.allowWorkerDiscounts ?? false;
+  const allowWorkerDiscounts = salesSettings?.allowWorkerDiscounts ?? true;
   const defaultDiscountType = salesSettings?.defaultDiscountType === 'flat' || salesSettings?.defaultDiscountType === 'percent'
     ? salesSettings.defaultDiscountType
     : 'item';

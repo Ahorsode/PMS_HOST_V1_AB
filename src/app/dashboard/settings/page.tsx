@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense } from 'react';
 import prisma from '@/lib/db';
 import { auth } from '@/auth';
 import { SettingsContent } from './SettingsContent';
@@ -50,7 +50,9 @@ export default async function SettingsPage() {
         </div>
       </div>
 
-      <SettingsContent farm={farm} inventory={serializedInventory} />
+      <Suspense fallback={<div className="text-white/70 text-sm animate-pulse py-8">Loading settings…</div>}>
+        <SettingsContent farm={farm} inventory={serializedInventory} />
+      </Suspense>
     </div>
   );
 }
