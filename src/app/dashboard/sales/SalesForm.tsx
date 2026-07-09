@@ -278,9 +278,6 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
       return Number(item.unitPrice || basePrice || 0);
     }
     if (basePrice > 0) {
-      if (item.productType === 'inventory') {
-        return saleUnitPriceForDisplay(basePrice, item.eggQuantityUnit ?? 'crate', eggsPerCrate);
-      }
       return basePrice;
     }
     return Number(item.unitPrice || 0);
