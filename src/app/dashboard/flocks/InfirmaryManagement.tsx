@@ -40,8 +40,8 @@ export function InfirmaryManagement({ batches }: { batches: Batch[] }) {
         res = await logMortalityInIsolation({ 
           batchId, 
           count: inputCount,
-          category: 'Isolation',
-          subCategory: 'Resolved in Quarantine'
+          category: 'Unknown',
+          subCategory: 'Unknown cause yet'
         })
       }
 

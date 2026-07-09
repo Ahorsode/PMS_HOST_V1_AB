@@ -276,8 +276,8 @@ function MortalityForm({ batchId, onDone }: { batchId: string; onDone: () => voi
   const { isPending, error, run } = useSubmit(onDone)
   const [type, setType] = useState<'DEAD' | 'SICK'>('DEAD')
   const [count, setCount] = useState('')
-  const [category, setCategory] = useState(MORTALITY_CATEGORIES[0].value)
-  const [subCategory, setSubCategory] = useState('')
+  const [category, setCategory] = useState('Unknown')
+  const [subCategory, setSubCategory] = useState('Unknown cause yet')
   const [reason, setReason] = useState('')
   const [logDate, setLogDate] = useState(today())
 

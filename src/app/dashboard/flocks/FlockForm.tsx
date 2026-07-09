@@ -56,11 +56,11 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
     arrivalDate: batch?.arrivalDate ? new Date(batch.arrivalDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
     status: batch?.status || 'active',
     mortalityCount: '',
-    category: '',
-    subCategory: '',
+    category: mode === 'mortality' ? 'Unknown' : '',
+    subCategory: mode === 'mortality' ? 'Unknown cause yet' : '',
     reason: '',
     healthType: defaultHealthType || ('DEAD' as 'SICK' | 'DEAD'),
-    isolationRoomId: '',
+    isolationRoomId: mode === 'mortality' ? (isolationRooms[0]?.id?.toString() || '') : '',
     newRoomName: '',
     newRoomCapacity: '',
   });
@@ -78,6 +78,13 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
       setFormData((current) => ({ ...current, breedType: '' }));
     }
   }, [breedOptions, formData.breedType]);
+
+  React.useEffect(() => {
+    if (mode !== 'mortality' || formData.healthType !== 'SICK' || formData.isolationRoomId) return;
+    const firstRoomId = isolationRooms[0]?.id?.toString();
+    if (!firstRoomId) return;
+    setFormData((current) => ({ ...current, isolationRoomId: firstRoomId }));
+  }, [mode, formData.healthType, formData.isolationRoomId, isolationRooms]);
 
   const handleSubmit = async (e: any) => {
     if (e && e.preventDefault) e.preventDefault();
