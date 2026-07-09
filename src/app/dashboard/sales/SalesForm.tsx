@@ -263,12 +263,12 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
     if (item.productType === 'inventory') {
       const catalogPrice = getItemCatalogPrice(item);
       if (!canOverridePrice && catalogPrice > 0) {
-        return saleUnitPriceForDisplay(catalogPrice, item.eggQuantityUnit ?? 'crate', eggsPerCrate);
+        return saleUnitPriceForDisplay(catalogPrice, 'crate', eggsPerCrate);
       }
       if (canOverridePrice && catalogPrice > 0) {
         return Number(
           item.unitPrice
-            || saleUnitPriceForDisplay(catalogPrice, item.eggQuantityUnit ?? 'crate', eggsPerCrate)
+            || saleUnitPriceForDisplay(catalogPrice, 'crate', eggsPerCrate)
             || 0,
         );
       }
@@ -318,7 +318,7 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
         description: selected?.itemName || '',
         unitPrice: resolveEggDisplayUnitPrice(
           selected,
-          items[index]?.eggQuantityUnit ?? 'crate',
+          'crate',
           eggsPerCrate,
         ) || 0,
       });
@@ -341,7 +341,7 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
       description: entry.itemName || 'Eggs',
       unitPrice: resolveEggDisplayUnitPrice(
         entry,
-        items[index]?.eggQuantityUnit ?? 'crate',
+        'crate',
         eggsPerCrate,
       ) || 0,
     });
@@ -396,7 +396,7 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
       const available = getEggAvailable(item, eggInventory, eggBatchStock, fifoEggAvailability);
       const quantityEggs = saleQuantityInEggs(
         quantity,
-        item.eggQuantityUnit ?? 'crate',
+        'crate',
         eggsPerCrate,
       );
       if (quantityEggs > available) {
@@ -480,9 +480,7 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
         eggBatchId: item.productType === 'inventory' && item.eggAllocationMode === 'batch'
           ? item.eggBatchId
           : undefined,
-        eggQuantityUnit: item.productType === 'inventory'
-          ? (item.eggQuantityUnit ?? 'crate')
-          : undefined,
+        eggQuantityUnit: item.productType === 'inventory' ? 'crate' : undefined,
         lineDiscountAmount: Number(item.lineDiscountAmount || 0),
         lineDiscountType: item.lineDiscountType === 'percent' ? 'percent' : 'flat',
       }))
@@ -715,44 +713,10 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
                 </div>
 
                 <div className="mt-4 space-y-3">
-                  {item.productType === 'inventory' ? (
-                    <div className="flex min-w-0 overflow-hidden rounded-md border border-white/10 bg-slate-950/70">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const current = item.eggQuantityUnit ?? 'crate';
-                          if (current === 'crate') {
-                            const qty = Number(item.quantity || 0);
-                            const price = Number(item.unitPrice || effectivePrice || 0);
-                            updateItem(index, {
-                              eggQuantityUnit: 'egg',
-                              quantity: qty > 0 ? qty * eggsPerCrate : item.quantity,
-                              unitPrice: eggsPerCrate > 0 ? toMoney(price / eggsPerCrate) : item.unitPrice,
-                            });
-                          } else {
-                            const qty = Number(item.quantity || 0);
-                            const price = Number(item.unitPrice || effectivePrice || 0);
-                            updateItem(index, {
-                              eggQuantityUnit: 'crate',
-                              quantity: qty > 0 && eggsPerCrate > 0 ? Math.ceil(qty / eggsPerCrate) : item.quantity,
-                              unitPrice: toMoney(price * eggsPerCrate),
-                            });
-                          }
-                        }}
-                        className="flex-1 px-3 py-3 text-xs font-bold uppercase tracking-widest text-white/60"
-                      >
-                        {(item.eggQuantityUnit ?? 'crate') === 'crate' ? 'Crates' : 'Eggs'} — tap to switch
-                      </button>
-                    </div>
-                  ) : null}
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end">
                     <div className="space-y-1 min-w-0">
                       <label className="text-[10px] font-black uppercase tracking-widest text-white/50">
-                        {item.productType === 'inventory'
-                          ? (item.eggQuantityUnit ?? 'crate') === 'crate'
-                            ? 'Crates Sold'
-                            : 'Eggs Sold'
-                          : 'Quantity Sold'}
+                        {item.productType === 'inventory' ? 'Crates Sold' : 'Quantity Sold'}
                       </label>
                       <input
                         type="number"
@@ -767,11 +731,7 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
 
                     <div className="space-y-1 min-w-0">
                       <label className="text-[10px] font-black uppercase tracking-widest text-white/50">
-                        {item.productType === 'inventory'
-                          ? (item.eggQuantityUnit ?? 'crate') === 'crate'
-                            ? 'Price / Crate'
-                            : 'Price / Egg'
-                          : 'Unit Price'}
+                        {item.productType === 'inventory' ? 'Price / Crate' : 'Unit Price'}
                       </label>
                       <div className="relative min-w-0">
                         <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-300/60">GHS</span>
