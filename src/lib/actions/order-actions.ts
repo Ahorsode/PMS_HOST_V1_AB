@@ -229,7 +229,7 @@ export async function createOrder(data: {
           throw new Error(`Not enough stock for ${authoritative.description}. Available: ${authoritative.availableQuantity}`)
         }
 
-        if (!canOverridePrice && authoritative.unitPrice <= 0) {
+        if (!canOverridePrice && authoritative.livestockId && authoritative.unitPrice <= 0) {
           throw new Error(`${authoritative.description} needs an owner or manager to configure its base sale price first`)
         }
 
@@ -242,10 +242,25 @@ export async function createOrder(data: {
             eggUnit,
             eggsPerCrate,
           )
-          unitPrice = canOverridePrice && requestedPerEgg > 0
-            ? requestedPerEgg
-            : authoritativePerEgg
+          const hasCatalogSellingPrice = authoritative.basePriceSource === 'egg_category.sellingPrice'
+
+          if (canOverridePrice) {
+            if (requestedPerEgg <= 0) {
+              throw new Error(`Enter a sale price for ${authoritative.description}`)
+            }
+            unitPrice = requestedPerEgg
+          } else if (hasCatalogSellingPrice) {
+            unitPrice = authoritativePerEgg
+          } else {
+            if (requestedPerEgg <= 0) {
+              throw new Error(`Enter a sale price for ${authoritative.description}`)
+            }
+            unitPrice = requestedPerEgg
+          }
         } else {
+          if (canOverridePrice && requestedUnitPrice <= 0) {
+            throw new Error(`Enter a sale price for ${authoritative.description}`)
+          }
           unitPrice = canOverridePrice && requestedUnitPrice > 0
             ? requestedUnitPrice
             : authoritative.unitPrice

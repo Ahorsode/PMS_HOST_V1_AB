@@ -11,13 +11,14 @@ describe("password policy", () => {
     expect(passwordPolicyError(" Password ")).toMatch(/too common/i);
   });
 
-  it("requires at least 12 characters", () => {
-    expect(passwordPolicyError("short-pass")).toBe(
+  it("requires at least 4 characters", () => {
+    expect(passwordPolicyError("abc")).toBe(
       `Password must be at least ${MIN_PASSWORD_LENGTH} characters long`,
     );
   });
 
   it("accepts a non-banned password within policy bounds", () => {
+    expect(passwordPolicyError("short-pass")).toBeNull();
     expect(passwordPolicyError("correct-horse-42")).toBeNull();
   });
 

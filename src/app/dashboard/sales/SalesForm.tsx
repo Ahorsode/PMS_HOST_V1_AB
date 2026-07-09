@@ -60,8 +60,18 @@ function toMoney(value: number) {
   return Math.round(value * 100) / 100;
 }
 
-function getInventorySalePrice(item: any) {
-  return Number(item?.sellingPrice ?? item?.eggCategory?.sellingPrice ?? item?.costPerUnit ?? 0);
+function getEggCatalogSalePrice(item: any) {
+  return Number(item?.sellingPrice ?? item?.eggCategory?.sellingPrice ?? 0);
+}
+
+function resolveEggDisplayUnitPrice(
+  item: any,
+  eggQuantityUnit: EggSaleQuantityUnit,
+  eggsPerCrate: number,
+) {
+  const catalogPrice = getEggCatalogSalePrice(item);
+  if (catalogPrice <= 0) return '';
+  return saleUnitPriceForDisplay(catalogPrice, eggQuantityUnit, eggsPerCrate);
 }
 
 function getBatchBasePrice(batch: any) {
@@ -74,6 +84,7 @@ function getInitialItem(
   livestock: any[],
   eggInventory: any[],
   initialLivestockId?: string,
+  eggsPerCrate = 30,
 ): SaleItemState {
   const batch = initialLivestockId ? livestock.find((item) => item.id === initialLivestockId) : null;
 
@@ -94,7 +105,7 @@ function getInitialItem(
       productId: entry?.id ?? '',
       description: entry?.itemName || 'Eggs',
       quantity: 1,
-      unitPrice: getInventorySalePrice(entry),
+      unitPrice: resolveEggDisplayUnitPrice(entry, 'crate', eggsPerCrate) || 0,
       eggAllocationMode: 'fifo',
       eggQuantityUnit: 'crate',
       lineDiscountAmount: 0,
@@ -144,6 +155,7 @@ function buildAutoSelectedProduct(
   productType: ProductType,
   eggInventory: any[],
   livestock: any[],
+  eggsPerCrate = 30,
 ): Pick<SaleItemState, 'productId' | 'description' | 'unitPrice' | 'eggAllocationMode' | 'eggBatchId'> {
   if (productType === 'custom') {
     return {
@@ -158,7 +170,9 @@ function buildAutoSelectedProduct(
     return {
       productId: requiresEggSizeSelection(eggInventory) ? '' : (entry?.id ?? ''),
       description: entry?.itemName || 'Eggs',
-      unitPrice: entry ? getInventorySalePrice(entry) : 0,
+      unitPrice: entry
+        ? (resolveEggDisplayUnitPrice(entry, 'crate', eggsPerCrate) || 0)
+        : 0,
       eggAllocationMode: 'fifo',
       eggBatchId: undefined,
     };
@@ -205,7 +219,7 @@ function getEggAvailable(
 
 export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = [], fifoEggAvailability = { totalEggs: 0, byCategoryId: {} }, livestock, eggsPerCrate = 30, onSuccess, initialLivestockId, canOverridePrice = false, canAddCustomer = true }: SalesFormProps) {
   const [items, setItems] = useState<SaleItemState[]>(() => [
-    getInitialItem(livestock, eggInventory, initialLivestockId),
+    getInitialItem(livestock, eggInventory, initialLivestockId, eggsPerCrate),
   ]);
   const [sizePickerIndex, setSizePickerIndex] = useState<number | null>(null);
   const [customerOptions, setCustomerOptions] = useState<SaleCustomer[]>(
@@ -226,9 +240,17 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
   const isWalkIn = customerId === '';
   const isCreditSale = paymentMethod === 'CREDIT';
 
+  const getInventoryRow = (item: SaleItemState) =>
+    eggInventory.find((entry: any) => entry.id === item.productId);
+
+  const getItemCatalogPrice = (item: SaleItemState) => {
+    if (item.productType !== 'inventory') return 0;
+    return getEggCatalogSalePrice(getInventoryRow(item));
+  };
+
   const getItemBasePrice = (item: SaleItemState) => {
     if (item.productType === 'inventory') {
-      return getInventorySalePrice(eggInventory.find((entry: any) => entry.id === item.productId));
+      return getItemCatalogPrice(item);
     }
     if (item.productType === 'livestock') {
       return getBatchBasePrice(livestock.find((entry: any) => entry.id === item.productId));
@@ -238,6 +260,20 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
 
   const getEffectiveUnitPrice = (item: SaleItemState) => {
     const basePrice = getItemBasePrice(item);
+    if (item.productType === 'inventory') {
+      const catalogPrice = getItemCatalogPrice(item);
+      if (!canOverridePrice && catalogPrice > 0) {
+        return saleUnitPriceForDisplay(catalogPrice, item.eggQuantityUnit ?? 'crate', eggsPerCrate);
+      }
+      if (canOverridePrice && catalogPrice > 0) {
+        return Number(
+          item.unitPrice
+            || saleUnitPriceForDisplay(catalogPrice, item.eggQuantityUnit ?? 'crate', eggsPerCrate)
+            || 0,
+        );
+      }
+      return Number(item.unitPrice || 0);
+    }
     if (canOverridePrice) {
       return Number(item.unitPrice || basePrice || 0);
     }
@@ -270,7 +306,7 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
   const updateProductType = (index: number, productType: ProductType) => {
     updateItem(index, {
       productType,
-      ...buildAutoSelectedProduct(productType, eggInventory, livestock),
+      ...buildAutoSelectedProduct(productType, eggInventory, livestock, eggsPerCrate),
     });
   };
 
@@ -283,11 +319,11 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
       updateItem(index, {
         productId,
         description: selected?.itemName || '',
-        unitPrice: saleUnitPriceForDisplay(
-          getInventorySalePrice(selected),
+        unitPrice: resolveEggDisplayUnitPrice(
+          selected,
           items[index]?.eggQuantityUnit ?? 'crate',
           eggsPerCrate,
-        ),
+        ) || 0,
       });
       return;
     }
@@ -306,11 +342,11 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
     updateItem(index, {
       productId: entry.id,
       description: entry.itemName || 'Eggs',
-      unitPrice: saleUnitPriceForDisplay(
-        getInventorySalePrice(entry),
+      unitPrice: resolveEggDisplayUnitPrice(
+        entry,
         items[index]?.eggQuantityUnit ?? 'crate',
         eggsPerCrate,
-      ),
+      ) || 0,
     });
     setSizePickerIndex(null);
   };
@@ -318,11 +354,11 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
   const addItem = () => {
     setItems((current) => [
       ...current,
-      buildAutoSelectedProduct('inventory', eggInventory, livestock).productId
+      buildAutoSelectedProduct('inventory', eggInventory, livestock, eggsPerCrate).productId
         ? {
             productType: 'inventory',
             quantity: 1,
-            ...buildAutoSelectedProduct('inventory', eggInventory, livestock),
+            ...buildAutoSelectedProduct('inventory', eggInventory, livestock, eggsPerCrate),
           }
         : getInitialItem(livestock, eggInventory, initialLivestockId),
     ]);
@@ -382,8 +418,15 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
     }
 
     if (!canOverridePrice && item.productType === 'custom') errors.push('Custom items require manager access');
-    if ((!canOverridePrice && basePrice <= 0) || canOverridePrice) {
-      if (getEffectiveUnitPrice(item) <= 0) errors.push('Unit price must be greater than zero');
+
+    if (getEffectiveUnitPrice(item) <= 0) {
+      if (item.productType === 'inventory' && getItemCatalogPrice(item) <= 0) {
+        errors.push('Enter a sale price for this egg item');
+      } else if (item.productType === 'livestock' && basePrice <= 0) {
+        errors.push(`${item.description || 'Livestock'} needs a configured base sale price before you can sell it`);
+      } else {
+        errors.push('Unit price must be greater than zero');
+      }
     }
 
     return errors;
@@ -563,10 +606,14 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
         <div className="space-y-3">
           {items.map((item, index) => {
             const basePrice = getItemBasePrice(item);
+            const catalogPrice = getItemCatalogPrice(item);
             const effectivePrice = getEffectiveUnitPrice(item);
             const lineSubtotal = getLineSubtotal(item);
             const lineTotal = getLineTotal(item);
-            const isPriceLocked = !canOverridePrice && basePrice > 0;
+            const isPriceLocked = !canOverridePrice && (
+              (item.productType === 'inventory' && catalogPrice > 0)
+              || (item.productType === 'livestock' && basePrice > 0)
+            );
 
             return (
               <div key={index} className="overflow-hidden rounded-md border border-white/10 bg-white/5 p-4">
@@ -735,17 +782,17 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
                           type="number"
                           min="0"
                           step="0.01"
-                          value={isPriceLocked ? basePrice : item.unitPrice}
+                          value={isPriceLocked ? effectivePrice : item.unitPrice}
                           onChange={(event) => updateItem(index, { unitPrice: event.target.value === '' ? '' : Number(event.target.value) })}
                           disabled={isPriceLocked}
                           className="box-border h-14 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 py-0 pl-11 pr-10 text-base font-bold text-emerald-300 outline-none transition-all focus:border-emerald-500/50 disabled:cursor-not-allowed disabled:bg-slate-950/40 disabled:text-white/60"
                         />
                         {isPriceLocked && <Lock className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />}
                       </div>
-                      {!canOverridePrice && basePrice <= 0 && (
+                      {item.productType === 'inventory' && catalogPrice <= 0 && (
                         <p className="text-xs text-amber-400 mt-1 flex items-center gap-1">
                           <AlertTriangle className="w-3 h-3" />
-                          No price configured — enter a selling price to continue.
+                          No catalog price — enter the sale price.
                         </p>
                       )}
                     </div>

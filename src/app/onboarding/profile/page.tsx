@@ -22,17 +22,9 @@ export default function ProfileOnboardingPage() {
     const formData = new FormData(e.currentTarget);
     const firstname = formData.get('firstname') as string;
     const surname = formData.get('surname') as string;
-    const newPassword = formData.get('newPassword') as string;
-    const confirmPassword = formData.get('confirmPassword') as string;
-
-    if (newPassword && newPassword !== confirmPassword) {
-      setError("Passwords do not match");
-      setIsLoading(false);
-      return;
-    }
 
     try {
-      const result = await updateProfile({ firstname, surname, newPassword: newPassword || undefined });
+      const result = await updateProfile({ firstname, surname });
       if (result.success) {
         router.push('/dashboard');
       } else {
@@ -82,24 +74,6 @@ export default function ProfileOnboardingPage() {
                   placeholder="e.g. Doe"
                   disabled={isLoading}
                 />
-                
-                <div className="pt-2 border-t border-white/5 space-y-5">
-                  <p className="text-xs text-white/70 italic mb-2">Since this is your first login, you can set a secure password (Optional but recommended).</p>
-                  <Input 
-                    label="New Password"
-                    name="newPassword"
-                    type="password"
-                    placeholder="Enter short or long password"
-                    disabled={isLoading}
-                  />
-                  <Input 
-                    label="Confirm Password"
-                    name="confirmPassword"
-                    type="password"
-                    placeholder="Confirm your password"
-                    disabled={isLoading}
-                  />
-                </div>
               </div>
 
               <div className="pt-3">

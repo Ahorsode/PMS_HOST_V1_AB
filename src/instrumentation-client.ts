@@ -16,7 +16,7 @@ Sentry.init({
       colorScheme: "system",
       isNameRequired: true,
       isEmailRequired: true,
-      autoInject: true,
+      autoInject: false,
       showBranding: false,
       buttonLabel: "Report a Bug",
       submitButtonLabel: "Send Feedback",

@@ -180,7 +180,7 @@ export default function SignUpPage() {
                         name="password"
                         value={formData.password}
                         onChange={handleChange}
-                        placeholder="Create Password (12+ characters)"
+                        placeholder={`Create Password (${MIN_PASSWORD_LENGTH}+ characters)`}
                         required
                         disabled={isLoading}
                         className="w-full h-12 pl-9 pr-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
