@@ -12,7 +12,7 @@ import { buildWhatsAppInvoiceUrl, downloadSalesInvoicePdf } from '@/lib/invoices
 import { useRouter } from 'next/navigation';
 import { toLocalDateTimeInputValue } from '@/lib/financial-dates';
 
-export function SalesActionsHeader({ customers, inventory, eggInventory, eggBatchStock = [], fifoEggAvailability = { totalEggs: 0, byCategoryId: {} }, livestock, eggsPerCrate = 30, initialLivestockId, canEdit = true, canOverridePrice = false }: { 
+export function SalesActionsHeader({ customers, inventory, eggInventory, eggBatchStock = [], fifoEggAvailability = { totalEggs: 0, byCategoryId: {} }, livestock, eggsPerCrate = 30, initialLivestockId, initialOpen = false, canEdit = true, canOverridePrice = false }: { 
   customers: any[], 
   inventory: any[],
   eggInventory: any[],
@@ -21,10 +21,11 @@ export function SalesActionsHeader({ customers, inventory, eggInventory, eggBatc
   livestock: any[],
   eggsPerCrate?: number,
   initialLivestockId?: string,
+  initialOpen?: boolean,
   canEdit?: boolean,
   canOverridePrice?: boolean
 }) {
-  const [isOpen, setIsOpen] = useState(!!initialLivestockId);
+  const [isOpen, setIsOpen] = useState(!!initialLivestockId || initialOpen);
   const router = useRouter();
 
   return (
@@ -150,7 +151,7 @@ export function SalesRowActions({ order, canEdit = true, canRecordPayment = fals
         onClick={handleDownloadInvoice}
         disabled={isDownloadingInvoice}
         title="Download Invoice"
-        className="p-2.5 rounded-md hover:bg-blue-500/10 text-blue-500/40 hover:text-blue-400 transition-all border border-transparent hover:border-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md p-2.5 hover:bg-blue-500/10 text-blue-500/40 hover:text-blue-400 transition-all border border-transparent hover:border-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isDownloadingInvoice ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
       </button>
@@ -158,7 +159,7 @@ export function SalesRowActions({ order, canEdit = true, canRecordPayment = fals
         onClick={handleShareWhatsApp}
         disabled={!!updatingAction || isDownloadingInvoice}
         title="Download and Share to WhatsApp Web"
-        className="p-2.5 rounded-md hover:bg-emerald-500/10 text-emerald-500/40 hover:text-emerald-400 transition-all border border-transparent hover:border-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md p-2.5 hover:bg-emerald-500/10 text-emerald-500/40 hover:text-emerald-400 transition-all border border-transparent hover:border-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {updatingAction === 'whatsapp' ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageCircle className="w-4 h-4" />}
       </button>
@@ -173,7 +174,7 @@ export function SalesRowActions({ order, canEdit = true, canRecordPayment = fals
                 setIsPaymentOpen(true);
               }}
               title="Record Payment"
-              className="p-2.5 rounded-md hover:bg-emerald-500/10 text-emerald-500/40 hover:text-emerald-400 transition-all border border-transparent hover:border-emerald-500/20"
+              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md p-2.5 hover:bg-emerald-500/10 text-emerald-500/40 hover:text-emerald-400 transition-all border border-transparent hover:border-emerald-500/20"
             >
               <CreditCard className="w-4 h-4" />
             </button>
@@ -184,7 +185,7 @@ export function SalesRowActions({ order, canEdit = true, canRecordPayment = fals
               onClick={() => handleStatusUpdate('COMPLETED')}
               disabled={!!updatingAction}
               title="Mark as Completed"
-              className="p-2.5 rounded-md hover:bg-emerald-500/10 text-emerald-500/40 hover:text-emerald-400 transition-all border border-transparent hover:border-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md p-2.5 hover:bg-emerald-500/10 text-emerald-500/40 hover:text-emerald-400 transition-all border border-transparent hover:border-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {updatingAction === 'completed' ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
             </button>
@@ -195,7 +196,7 @@ export function SalesRowActions({ order, canEdit = true, canRecordPayment = fals
               onClick={() => handleStatusUpdate('CANCELLED')}
               disabled={!!updatingAction}
               title="Cancel Order"
-              className="p-2.5 rounded-md hover:bg-red-500/10 text-red-500/40 hover:text-red-400 transition-all border border-transparent hover:border-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md p-2.5 hover:bg-red-500/10 text-red-500/40 hover:text-red-400 transition-all border border-transparent hover:border-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {updatingAction === 'cancelled' ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
             </button>

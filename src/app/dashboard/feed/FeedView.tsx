@@ -95,8 +95,8 @@ export default function FeedDashboard({
       </header>
 
       {showLogForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-3">
-          <div className="glass-pill rounded-lg p-5 w-full max-w-md border border-white/10 bg-[#0f172a]">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-3 pb-safe">
+          <div className="glass-pill rounded-lg p-5 w-full max-w-md max-h-[90dvh] overflow-y-auto custom-scrollbar pb-safe border border-white/10 bg-[#0f172a]">
             <h2 className="text-xl font-bold text-white mb-4">Log Feeding</h2>
             <FeedForm
               batches={batches}

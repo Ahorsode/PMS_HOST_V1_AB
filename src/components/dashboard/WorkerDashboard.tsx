@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Bird, Wheat, Skull, Activity, Plus, Package, Syringe, Clock } from 'lucide-react';
+import { Wheat, Skull, Activity, Package, Syringe, Clock, Banknote, ShoppingBag, Home, HeartPulse } from 'lucide-react';
 import { HealthBadge } from '@/components/ui/HealthBadge';
 import { motion } from 'framer-motion';
 import { getBreedDisplayName } from '@/lib/livestock-breed-options';
@@ -50,6 +50,38 @@ export function WorkerDashboard({ stats, houses, permissions }: WorkerDashboardP
       iconClassName: 'bg-purple-500/20',
       icon: <Syringe className="w-6 h-6 text-purple-400" />,
     },
+    {
+      label: 'Sell Eggs / Sale',
+      href: '/dashboard/sales?quick=sell',
+      canShow: !!permissions?.canEditSales,
+      className: 'bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/20',
+      iconClassName: 'bg-amber-500/20',
+      icon: <Banknote className="w-6 h-6 text-amber-400" />,
+    },
+    {
+      label: 'Inventory',
+      href: '/dashboard/inventory?quick=add',
+      canShow: !!permissions?.canEditInventory,
+      className: 'bg-teal-500/10 border-teal-500/20 hover:bg-teal-500/20',
+      iconClassName: 'bg-teal-500/20',
+      icon: <ShoppingBag className="w-6 h-6 text-teal-400" />,
+    },
+    {
+      label: 'Houses',
+      href: '/dashboard/houses?quick=add',
+      canShow: !!permissions?.canEditHouses,
+      className: 'bg-orange-500/10 border-orange-500/20 hover:bg-orange-500/20',
+      iconClassName: 'bg-orange-500/20',
+      icon: <Home className="w-6 h-6 text-orange-400" />,
+    },
+    {
+      label: 'Health',
+      href: '/dashboard/health',
+      canShow: !!permissions?.canEditHealth,
+      className: 'bg-cyan-500/10 border-cyan-500/20 hover:bg-cyan-500/20',
+      iconClassName: 'bg-cyan-500/20',
+      icon: <HeartPulse className="w-6 h-6 text-cyan-400" />,
+    },
   ].filter((action) => action.canShow);
 
   return (
@@ -62,7 +94,7 @@ export function WorkerDashboard({ stats, houses, permissions }: WorkerDashboardP
       </header>
 
       {quickActions.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
           {quickActions.map((action) => (
             <Link
               key={action.label}

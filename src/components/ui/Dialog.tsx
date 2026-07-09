@@ -58,7 +58,7 @@ export const Dialog = ({
     <AnimatePresence>
       {isOpen && (
         <div 
-          className="fixed inset-0 z-[100] flex items-center justify-center p-3"
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-3 pb-safe"
           role="presentation"
         >
           {/* Backdrop */}
@@ -80,7 +80,7 @@ export const Dialog = ({
             aria-labelledby={title ? dialogId : undefined}
             aria-describedby={description ? descriptionId : undefined}
             className={cn(
-              "relative w-full max-w-xl bg-[#0f1115] border border-white/10 rounded-lg shadow-2xl overflow-hidden backdrop-blur-3xl",
+              "relative w-full max-w-xl max-h-[90dvh] flex flex-col bg-[#0f1115] border border-white/10 rounded-lg shadow-2xl overflow-hidden backdrop-blur-3xl",
               className
             )}
           >
@@ -101,7 +101,7 @@ export const Dialog = ({
                 </div>
                 <button
                   onClick={() => onOpenChange(false)}
-                  className="p-2 hover:bg-white/5 rounded-md text-white/70 hover:text-white transition-all group"
+                  className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md p-2 text-white/70 transition-all hover:bg-white/5 hover:text-white group"
                   aria-label="Close dialog"
                 >
                   <X className="w-5 h-5 group-hover:rotate-90 transition-transform" />
@@ -113,14 +113,14 @@ export const Dialog = ({
             {!title && !description && (
               <button
                 onClick={() => onOpenChange(false)}
-                className="absolute top-6 right-8 p-2 hover:bg-white/5 rounded-md text-white/70 hover:text-white transition-all z-10 group"
+                className="absolute top-6 right-8 flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md p-2 text-white/70 transition-all hover:bg-white/5 hover:text-white z-10 group"
                 aria-label="Close dialog"
               >
                 <X className="w-5 h-5 group-hover:rotate-90 transition-transform" />
               </button>
             )}
 
-            <div className="px-7 py-5 max-h-[80vh] overflow-y-auto custom-scrollbar">
+            <div className="flex-1 min-h-0 overflow-y-auto px-7 py-5 custom-scrollbar pb-safe">
               {children}
             </div>
           </motion.div>

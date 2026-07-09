@@ -90,7 +90,7 @@ function normalizeOrder(order: Order) {
 
 type SalesOrder = ReturnType<typeof normalizeOrder>;
 
-export default async function SalesPage({ searchParams }: { searchParams: Promise<{ sellBatchId?: string }> }) {
+export default async function SalesPage({ searchParams }: { searchParams: Promise<{ sellBatchId?: string; quick?: string }> }) {
   const hasAccess = await checkWorkerPermissions('sales', 'view');
   const canEdit = await checkWorkerPermissions('sales', 'edit');
   const { role } = await getAuthContext();
@@ -104,6 +104,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
 
   const resolvedParams = await searchParams;
   const sellBatchId = resolvedParams.sellBatchId;
+  const openSellOnLoad = resolvedParams.quick === 'sell';
 
   const [ordersRaw, customersRaw, inventoryRaw, eggInventoryRaw, eggBatchStockRaw, fifoEggAvailabilityRaw, livestockRaw, farmSettings] = await Promise.all([
     getAllOrders(),
@@ -240,6 +241,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
           livestock={livestock}
           eggsPerCrate={eggsPerCrate}
           initialLivestockId={sellBatchId}
+          initialOpen={openSellOnLoad || !!sellBatchId}
           canEdit={canCreateSale}
           canOverridePrice={canOverridePrice}
         />

@@ -1,11 +1,21 @@
 "use client";
 
 import React from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
 import { Sidebar } from './Sidebar';
 import { BottomNav } from './BottomNav';
 import { cn } from '@/lib/utils';
 import { PageTransition } from './PageTransition';
+
+function getMobileIndeptTitle(pathname: string): string {
+  if (pathname.includes('/analytics')) return 'Analytics';
+  const segments = pathname.split('/').filter(Boolean);
+  if (segments[1] === 'flocks') return 'Flock Details';
+  if (segments[1] === 'sales') return 'Sale Details';
+  if (segments[1] === 'feed') return 'Feed Details';
+  return 'Details';
+}
 
 export const SidebarWrapper = ({ 
   children, 
@@ -17,6 +27,7 @@ export const SidebarWrapper = ({
   permissions?: any;
 }) => {
   const pathname = usePathname();
+  const router = useRouter();
   
   // Logic to determine if we are on an "in-depth" or analytics page
   const segments = pathname.split('/').filter(Boolean);
@@ -51,7 +62,25 @@ export const SidebarWrapper = ({
         "flex-1 flex flex-col relative z-20 h-[100dvh] overflow-hidden transition-all duration-700 ease-in-out",
         isIndeptPage ? "pl-0" : "md:pl-32"
       )}>
-        <div className="flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar pt-5 pb-36 md:pb-12 px-3 md:px-8">
+        <div className={cn(
+          "flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar pt-5 px-3 md:px-8",
+          isIndeptPage ? "pb-6 md:pb-12" : "pb-36 md:pb-12"
+        )}>
+          {isIndeptPage ? (
+            <header className="sticky top-0 z-30 -mx-3 mb-3 flex items-center gap-2 border-b border-white/10 bg-[#0a1510]/90 px-3 py-2 backdrop-blur-xl md:hidden">
+              <button
+                type="button"
+                onClick={() => router.back()}
+                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+                aria-label="Go back"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+              <span className="truncate text-sm font-bold uppercase tracking-widest text-white">
+                {getMobileIndeptTitle(pathname)}
+              </span>
+            </header>
+          ) : null}
           <PageTransition>
             {children}
           </PageTransition>

@@ -1013,8 +1013,8 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
       )}
 
       {completionDialogOpen ? (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md rounded-md border border-white/10 bg-slate-950 p-5 shadow-2xl">
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 p-4 pb-safe">
+          <div className="w-full max-w-md max-h-[90dvh] overflow-y-auto custom-scrollbar pb-safe rounded-md border border-white/10 bg-slate-950 p-5 shadow-2xl">
             <h3 className="text-lg font-bold text-white">Complete this sale now?</h3>
             <p className="mt-2 text-sm text-white/70">
               This credit or partial-payment sale can be completed now to deduct stock and finalize fulfillment, or saved to complete later.
@@ -1042,8 +1042,8 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
       ) : null}
 
       {sizePickerIndex !== null ? (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4">
-          <div className="w-full max-w-md rounded-md border border-white/10 bg-slate-950 p-4 shadow-2xl">
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 p-4 pb-safe">
+          <div className="w-full max-w-md max-h-[90dvh] overflow-y-auto custom-scrollbar pb-safe rounded-md border border-white/10 bg-slate-950 p-4 shadow-2xl">
             <h3 className="text-lg font-bold text-white">Select egg size</h3>
             <div className="mt-3 space-y-2">
               {eggInventory.map((entry: any) => (

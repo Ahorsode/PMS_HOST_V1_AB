@@ -46,11 +46,11 @@ export function DeleteConfirmationModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 pb-safe bg-black/60 backdrop-blur-sm">
       <div 
-        className="bg-black border border-white/10 rounded-xl max-w-md w-full shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="bg-black border border-white/10 rounded-xl max-w-md w-full max-h-[90dvh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
       >
-        <div className="p-6">
+        <div className="flex-1 min-h-0 overflow-y-auto p-6 custom-scrollbar">
           <div className="flex items-start gap-4 mb-4">
             <div className="p-3 bg-red-500/10 rounded-full shrink-0">
               <AlertCircle className="w-6 h-6 text-red-500" />
@@ -88,7 +88,7 @@ export function DeleteConfirmationModal({
           </div>
         </div>
 
-        <div className="p-4 border-t border-white/10 bg-white/5 flex justify-end gap-3">
+        <div className="p-4 border-t border-white/10 bg-white/5 flex justify-end gap-3 pb-safe shrink-0">
           <button
             onClick={handleClose}
             disabled={isLoading}

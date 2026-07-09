@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useTransition, useCallback } from 'react';
+import React, { useState, useEffect, useTransition, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -79,7 +79,7 @@ const HEALTH_CATEGORIES = ['MEDICINE', 'VACCINE'];
 
 
 /* ───────────────────── main component ───────────────────── */
-export default function InventoryView({ canEdit = true }: { canEdit?: boolean }) {
+export default function InventoryView({ canEdit = true, openAddOnLoad = false }: { canEdit?: boolean; openAddOnLoad?: boolean }) {
   const router = useRouter();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [eggStock, setEggStock] = useState<{ totalEggs: number; batches: Array<{ batchId: string; batchName: string; eggsRemaining: number }> }>({ totalEggs: 0, batches: [] });
@@ -131,6 +131,13 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
     setForm({ itemName: '', stockLevel: '', unit: 'bags', category: 'FEED', costPerUnit: '', supplierId: '', paymentPlan: 'full', amountPaid: '', usageType: 'QUANTITY' });
     setShowForm(true);
   };
+
+  const openedInitialAdd = useRef(false);
+  useEffect(() => {
+    if (!openAddOnLoad || !canEdit || openedInitialAdd.current) return;
+    openedInitialAdd.current = true;
+    openAdd();
+  }, [openAddOnLoad, canEdit]);
 
   const openEdit = (item: InventoryItem) => {
     if (!canEdit) return;
@@ -457,11 +464,11 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
         {showForm && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-3"
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-3 pb-safe"
           >
             <motion.div
               initial={{ scale: 0.92, y: 24 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.92, y: 24 }}
-              className="glass-pill rounded-lg p-5 w-full max-w-md space-y-4 border border-white/10"
+              className="glass-pill rounded-lg p-5 w-full max-w-md max-h-[90dvh] overflow-y-auto custom-scrollbar pb-safe space-y-4 border border-white/10"
             >
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold text-white">{editing ? 'Edit Item' : 'Add Inventory Item'}</h2>
@@ -550,7 +557,7 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
                       placeholder="0"
                       className="w-full bg-white/10 border border-white/10 rounded-md px-3 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500/50"
                     />
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       {BAG_OPTIONS.map(opt => (
                         <button
                           key={opt.value}
@@ -718,7 +725,7 @@ export default function InventoryView({ canEdit = true }: { canEdit?: boolean })
         {toast && (
           <motion.div
             initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
-            className={`fixed bottom-6 right-6 z-[99] flex items-center gap-2 px-4 py-2 rounded-md font-semibold text-sm shadow-xl
+            className={`fixed bottom-24 right-4 md:bottom-6 md:right-6 z-[99] flex items-center gap-2 px-4 py-2 rounded-md font-semibold text-sm shadow-xl
               ${toast.ok ? 'bg-emerald-500 text-black' : 'bg-red-500/90 text-white'}`}
           >
             {toast.ok ? <CheckCircle2 className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}

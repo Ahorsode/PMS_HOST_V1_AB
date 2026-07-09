@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Plus, Home, Edit2, Trash2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -11,12 +11,19 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { MutationBoundary } from '@/components/ui/MutationFeedback';
 
-export default function HousesPage({ houses, canEdit = true }: { houses: any[], canEdit?: boolean }) {
+export default function HousesPage({ houses, canEdit = true, openAddOnLoad = false }: { houses: any[], canEdit?: boolean, openAddOnLoad?: boolean }) {
   const [isAdding, setIsAdding] = useState(false);
   const [editingHouse, setEditingHouse] = useState<any>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [deletingHouseId, setDeletingHouseId] = useState<string | null>(null);
   const router = useRouter();
+
+  const openedInitialAdd = useRef(false);
+  useEffect(() => {
+    if (!openAddOnLoad || !canEdit || openedInitialAdd.current) return;
+    openedInitialAdd.current = true;
+    setIsAdding(true);
+  }, [openAddOnLoad, canEdit]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
