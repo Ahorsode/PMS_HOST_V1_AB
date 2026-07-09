@@ -7,13 +7,13 @@ import { farmCacheTags } from '@/lib/performance/cache-tags'
 
 export type FeedStaticData = {
   formulations: any[]
-  efficiency: any[]
   batches: any[]
 }
 
 export type FeedDynamicData = {
   inventory: any[]
   feedingLogs: any[]
+  efficiency: any[]
 }
 
 export type FeedPageData = FeedStaticData & FeedDynamicData
@@ -98,22 +98,12 @@ async function loadFeedStaticData(userId: string, activeFarmId: string): Promise
   const cachedLoader = unstable_cache(
     async () => {
       return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-        const [rawFormulations, efficiencyBatches, rawBatches] = await Promise.all([
+        const [rawFormulations, rawBatches] = await Promise.all([
           tx.feedFormulation.findMany({
             where: { farmId: activeFarmId },
             include: {
               ingredients: {
                 include: { inventory: true },
-              },
-            },
-          }),
-          tx.livestock.findMany({
-            where: { farmId: activeFarmId, status: 'active' },
-            include: {
-              feedingLogs: true,
-              weightRecords: {
-                orderBy: { logDate: 'desc' },
-                take: 2,
               },
             },
           }),
@@ -155,6 +145,58 @@ async function loadFeedStaticData(userId: string, activeFarmId: string): Promise
           })),
         }))
 
+        const batches = rawBatches.map(mapBatchRow)
+
+        return { formulations, batches }
+      })
+    },
+    [`feed-static:${activeFarmId}`],
+    { revalidate: 300, tags: [farmCacheTags.feedStatic(activeFarmId)] },
+  )
+  return cachedLoader()
+}
+
+async function loadFeedDynamicData(userId: string, activeFarmId: string): Promise<FeedDynamicData> {
+  const cachedLoader = unstable_cache(
+    async () => {
+      return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+        const [rawInventory, rawFeedingLogs, efficiencyBatches] = await Promise.all([
+          tx.inventory.findMany({
+            where: { farmId: activeFarmId, isDeleted: false, stockLevel: { gt: 0 } },
+            include: INVENTORY_INCLUDE,
+            orderBy: { itemName: 'asc' },
+          }),
+          tx.feedingLog.findMany({
+            where: { farmId: activeFarmId, isDeleted: false },
+            include: {
+              batch: true,
+              inventory: true,
+              formulation: true,
+              user: {
+                select: {
+                  firstname: true,
+                  surname: true,
+                },
+              },
+            },
+            orderBy: [{ logDate: 'desc' }, { id: 'desc' }],
+            take: 100,
+          }),
+          tx.livestock.findMany({
+            where: { farmId: activeFarmId, status: 'active' },
+            include: {
+              feedingLogs: true,
+              weightRecords: {
+                orderBy: { logDate: 'desc' },
+                take: 2,
+              },
+            },
+          }),
+        ])
+
+        const inventory = rawInventory.map(mapInventoryRow)
+        const feedingLogs = rawFeedingLogs.map(mapFeedingLogRow)
+
         const efficiency = efficiencyBatches.map((l: any) => {
           const totalFeed = l.feedingLogs.reduce(
             (sum: number, f: any) => sum + Number(f.amountConsumed),
@@ -177,49 +219,7 @@ async function loadFeedStaticData(userId: string, activeFarmId: string): Promise
           }
         })
 
-        const batches = rawBatches.map(mapBatchRow)
-
-        return { formulations, efficiency, batches }
-      })
-    },
-    [`feed-static:${activeFarmId}`],
-    { revalidate: 300, tags: [farmCacheTags.feedStatic(activeFarmId)] },
-  )
-  return cachedLoader()
-}
-
-async function loadFeedDynamicData(userId: string, activeFarmId: string): Promise<FeedDynamicData> {
-  const cachedLoader = unstable_cache(
-    async () => {
-      return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-        const [rawInventory, rawFeedingLogs] = await Promise.all([
-          tx.inventory.findMany({
-            where: { farmId: activeFarmId, isDeleted: false, stockLevel: { gt: 0 } },
-            include: INVENTORY_INCLUDE,
-            orderBy: { itemName: 'asc' },
-          }),
-          tx.feedingLog.findMany({
-            where: { farmId: activeFarmId, isDeleted: false },
-            include: {
-              batch: true,
-              inventory: true,
-              formulation: true,
-              user: {
-                select: {
-                  firstname: true,
-                  surname: true,
-                },
-              },
-            },
-            orderBy: [{ logDate: 'desc' }, { id: 'desc' }],
-            take: 100,
-          }),
-        ])
-
-        const inventory = rawInventory.map(mapInventoryRow)
-        const feedingLogs = rawFeedingLogs.map(mapFeedingLogRow)
-
-        return { inventory, feedingLogs }
+        return { inventory, feedingLogs, efficiency }
       })
     },
     [`feed-dynamic:${activeFarmId}`],
@@ -244,6 +244,6 @@ export async function getFeedPageData(): Promise<FeedPageData> {
 
 export async function refreshFeedDynamicData(): Promise<FeedDynamicData> {
   const { userId, activeFarmId } = await getAuthContext()
-  if (!activeFarmId) return { inventory: [], feedingLogs: [] }
+  if (!activeFarmId) return { inventory: [], feedingLogs: [], efficiency: [] }
   return loadFeedDynamicData(userId, activeFarmId)
 }

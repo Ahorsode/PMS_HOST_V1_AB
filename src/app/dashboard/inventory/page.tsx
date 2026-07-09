@@ -1,6 +1,7 @@
 import React from 'react';
 import InventoryView from './InventoryView';
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
+import { getInventoryPageData } from '@/lib/actions/inventory-page-actions';
 import { redirect } from 'next/navigation';
 
 export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ quick?: string }> }) {
@@ -12,6 +13,7 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   }
 
   const resolvedParams = await searchParams;
+  const initialData = await getInventoryPageData('active');
 
-  return <InventoryView canEdit={canEdit} openAddOnLoad={resolvedParams.quick === 'add'} />;
+  return <InventoryView canEdit={canEdit} initialData={initialData} openAddOnLoad={resolvedParams.quick === 'add'} />;
 }

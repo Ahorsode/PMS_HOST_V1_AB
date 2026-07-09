@@ -51,12 +51,33 @@ export default function FeedDashboard({
   const refreshAfterLog = async () => {
     setRefreshing(true)
     try {
-      const { feedingLogs: newLogs, inventory: newInventory } = await refreshFeedDynamicData()
+      const { feedingLogs: newLogs, inventory: newInventory, efficiency: newEfficiency } = await refreshFeedDynamicData()
       setFeedingLogs(newLogs)
       setInventory(newInventory)
+      setEfficiency(newEfficiency)
     } finally {
       setRefreshing(false)
     }
+  }
+
+  const handleOptimisticFeedLog = (batchId: string, amount: number) => {
+    setEfficiency((prev) =>
+      prev.map((eff) =>
+        eff.id === batchId
+          ? { ...eff, totalFeed: (Number(eff.totalFeed) || 0) + amount }
+          : eff
+      )
+    )
+  }
+
+  const handleOptimisticFeedRollback = (batchId: string, amount: number) => {
+    setEfficiency((prev) =>
+      prev.map((eff) =>
+        eff.id === batchId
+          ? { ...eff, totalFeed: Math.max(0, (Number(eff.totalFeed) || 0) - amount) }
+          : eff
+      )
+    )
   }
 
   const refreshAfterFormulation = async () => {
@@ -104,7 +125,10 @@ export default function FeedDashboard({
               formulations={formulations}
               selectedFormulationId={selectedFormulation}
               mode="create"
-              onClose={() => { setShowLogForm(false); setSelectedFormulation(undefined); refreshAfterLog(); }}
+              onClose={() => { setShowLogForm(false); setSelectedFormulation(undefined); }}
+              onSaved={refreshAfterLog}
+              onOptimisticLog={handleOptimisticFeedLog}
+              onOptimisticRollback={handleOptimisticFeedRollback}
             />
           </div>
         </div>

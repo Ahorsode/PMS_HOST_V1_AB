@@ -16,10 +16,17 @@ interface FeedFormProps {
   log?: any;
   mode: 'create' | 'edit' | 'delete';
   onClose: () => void;
+  onSaved?: () => void;
+  onOptimisticLog?: (batchId: string, amount: number) => void;
+  onOptimisticRollback?: (batchId: string, amount: number) => void;
   selectedFormulationId?: string;
 }
 
-export const FeedForm = ({ batches, inventory, formulations = [], log, mode, onClose, selectedFormulationId }: FeedFormProps) => {
+export const FeedForm = ({
+  batches, inventory, formulations = [], log, mode,
+  onClose, onSaved, onOptimisticLog, onOptimisticRollback,
+  selectedFormulationId,
+}: FeedFormProps) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,6 +71,7 @@ export const FeedForm = ({ batches, inventory, formulations = [], log, mode, onC
     setIsLoading(true);
     try {
       if (mode === 'create') {
+        onOptimisticLog?.(formData.batchId, amount);
         const res = await createFeedingLog({
           batchId: formData.batchId,
           feedTypeId,
@@ -72,6 +80,7 @@ export const FeedForm = ({ batches, inventory, formulations = [], log, mode, onC
           logDate: formData.logDate,
         });
         if (!res?.success) {
+          onOptimisticRollback?.(formData.batchId, amount);
           setError(res?.error || 'Failed to create feeding log');
           return;
         }
@@ -87,9 +96,13 @@ export const FeedForm = ({ batches, inventory, formulations = [], log, mode, onC
         }
       }
       onClose();
+      onSaved?.();
       router.refresh();
     } catch (submitError) {
       console.error(submitError);
+      if (mode === 'create') {
+        onOptimisticRollback?.(formData.batchId, amount);
+      }
       setError('An unexpected error occurred while saving the feed log.');
     } finally {
       setIsLoading(false);

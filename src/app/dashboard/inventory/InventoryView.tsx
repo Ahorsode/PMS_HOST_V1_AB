@@ -9,14 +9,11 @@ import {
 } from 'lucide-react';
 import { WorkerStamp } from '@/components/ui/WorkerStamp';
 import {
-  getAllInventory,
-  getUsedUpInventoryCount,
-  getActiveBatchEggStock,
   createInventoryItem,
   updateInventoryItem,
   deleteInventoryItem
 } from '@/lib/actions/inventory-actions';
-import { getSuppliers, createSupplier } from '@/lib/actions/supplier-actions';
+import { getInventoryPageData, type InventoryPageData } from '@/lib/actions/inventory-page-actions';
 import { Dialog } from '@/components/ui/Dialog';
 import { PartnerForm } from '@/components/partners/PartnerForm';
 import { DeleteConfirmationModal } from '@/components/modals/DeleteConfirmationModal';
@@ -79,18 +76,28 @@ const HEALTH_CATEGORIES = ['MEDICINE', 'VACCINE'];
 
 
 /* ───────────────────── main component ───────────────────── */
-export default function InventoryView({ canEdit = true, openAddOnLoad = false }: { canEdit?: boolean; openAddOnLoad?: boolean }) {
+export default function InventoryView({
+  canEdit = true,
+  openAddOnLoad = false,
+  initialData,
+}: {
+  canEdit?: boolean
+  openAddOnLoad?: boolean
+  initialData: InventoryPageData
+}) {
   const router = useRouter();
-  const [items, setItems] = useState<InventoryItem[]>([]);
-  const [eggStock, setEggStock] = useState<{ totalEggs: number; batches: Array<{ batchId: string; batchName: string; eggsRemaining: number }> }>({ totalEggs: 0, batches: [] });
-  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<InventoryItem[]>(initialData.items);
+  const [eggStock, setEggStock] = useState<{ totalEggs: number; batches: Array<{ batchId: string; batchName: string; eggsRemaining: number }> }>(
+    initialData.activeEggStock ?? { totalEggs: 0, batches: [] }
+  );
+  const [loading, setLoading] = useState(false);
   const [showUsedUp, setShowUsedUp] = useState(false);
-  const [usedUpCount, setUsedUpCount] = useState(0);
+  const [usedUpCount, setUsedUpCount] = useState(initialData.usedUpCount);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<InventoryItem | null>(null);
   const [isPending, startTransition] = useTransition();
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
-  const [suppliers, setSuppliers] = useState<any[]>([]);
+  const [suppliers, setSuppliers] = useState<any[]>(initialData.suppliers);
   const [showSupplierModal, setShowSupplierModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<InventoryItem | null>(null);
@@ -99,24 +106,24 @@ export default function InventoryView({ canEdit = true, openAddOnLoad = false }:
   });
 
 
-  const fetchItems = useCallback(async (mode: 'active' | 'used_up') => {
+  const fetchItems = useCallback(async (filterMode: 'active' | 'used_up') => {
     setLoading(true);
-    const [data, count, activeEggStock] = await Promise.all([
-      getAllInventory({ filter: mode }),
-      getUsedUpInventoryCount(),
-      mode === 'active' ? getActiveBatchEggStock() : Promise.resolve({ totalEggs: 0, batches: [] }),
-    ]);
-    setItems((data as InventoryItem[]).map(i => ({ ...i, stockLevel: Number(i.stockLevel) })));
-    setEggStock(activeEggStock);
-    setUsedUpCount(count);
-    if (mode === 'active') {
-      const sups = await getSuppliers();
-      setSuppliers(sups);
-    }
+    const data = await getInventoryPageData(filterMode);
+    setItems((data.items as InventoryItem[]).map(i => ({ ...i, stockLevel: Number(i.stockLevel) })));
+    setUsedUpCount(data.usedUpCount);
+    setEggStock(data.activeEggStock ?? { totalEggs: 0, batches: [] });
+    setSuppliers(data.suppliers);
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchItems(showUsedUp ? 'used_up' : 'active'); }, [showUsedUp, fetchItems]);
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    fetchItems(showUsedUp ? 'used_up' : 'active');
+  }, [showUsedUp, fetchItems]);
 
   const refreshList = () => fetchItems(showUsedUp ? 'used_up' : 'active');
 
