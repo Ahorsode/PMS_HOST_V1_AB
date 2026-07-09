@@ -23,6 +23,21 @@
   100% { background-position: -200% 0; }
 }
 
+@keyframes glow-pulse {
+  0%, 100% {
+    opacity: 0.4;
+    box-shadow: 0 0 0 rgba(16, 185, 129, 0);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+  }
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 1.4s ease-in-out infinite;
+}
+
 body {
   background: linear-gradient(-45deg, #064e3b, #065f46, #047857, #10b981);
   background-size: 400% 400%;

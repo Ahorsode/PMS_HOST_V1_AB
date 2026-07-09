@@ -9,6 +9,8 @@ export const farmCacheTags = {
   customers: (farmId: string) => `farm:${farmId}:customers`,
   suppliers: (farmId: string) => `farm:${farmId}:suppliers`,
   feed: (farmId: string) => `farm:${farmId}:feed`,
+  feedStatic: (farmId: string) => `farm:${farmId}:feed:static`,
+  feedDynamic: (farmId: string) => `farm:${farmId}:feed:dynamic`,
 };
 
 export function revalidateFarmPerformanceCaches(farmId: string) {

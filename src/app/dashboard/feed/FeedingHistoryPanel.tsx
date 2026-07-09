@@ -24,6 +24,40 @@ function feedLabel(log: FeedingLog): string {
   return 'Feed'
 }
 
+function FeedLogSkeletonRow() {
+  return (
+    <tr className="border-b border-white/5 bg-emerald-500/5">
+      <td className="px-5 py-3" colSpan={6}>
+        <div className="flex items-center gap-3">
+          <div className="h-2 w-2 rounded-full bg-emerald-400 animate-glow-pulse" />
+          <div className="h-3 flex-1 max-w-[120px] rounded bg-emerald-500/20 animate-glow-pulse" />
+          <div className="h-3 flex-1 max-w-[100px] rounded bg-emerald-500/15 animate-glow-pulse" style={{ animationDelay: '150ms' }} />
+          <div className="h-3 flex-1 max-w-[140px] rounded bg-emerald-500/15 animate-glow-pulse" style={{ animationDelay: '300ms' }} />
+          <div className="h-3 flex-1 max-w-[80px] rounded bg-emerald-500/15 animate-glow-pulse" style={{ animationDelay: '450ms' }} />
+        </div>
+      </td>
+    </tr>
+  )
+}
+
+function FeedLogSkeletonCard() {
+  return (
+    <div className="p-4 space-y-2 border-b border-white/5 bg-emerald-500/5">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 flex-1">
+          <div className="h-2 w-2 rounded-full bg-emerald-400 animate-glow-pulse shrink-0" />
+          <div className="h-3 flex-1 max-w-[100px] rounded bg-emerald-500/20 animate-glow-pulse" />
+        </div>
+        <div className="h-5 w-16 rounded bg-emerald-500/15 animate-glow-pulse" style={{ animationDelay: '150ms' }} />
+      </div>
+      <div className="flex items-center justify-between gap-3">
+        <div className="h-3 flex-1 max-w-[120px] rounded bg-emerald-500/15 animate-glow-pulse" style={{ animationDelay: '300ms' }} />
+        <div className="h-3 flex-1 max-w-[80px] rounded bg-emerald-500/15 animate-glow-pulse" style={{ animationDelay: '450ms' }} />
+      </div>
+    </div>
+  )
+}
+
 export function FeedingHistoryPanel({
   logs,
   batches,
@@ -79,9 +113,6 @@ export function FeedingHistoryPanel({
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        {isRefreshing && (
-          <div className="h-0.5 bg-emerald-500/50 animate-pulse rounded-full mb-2" />
-        )}
         {sortedLogs.length === 0 ? (
           <div className="py-16 text-center">
             <Utensils className="w-10 h-10 text-white/20 mx-auto mb-3" />
@@ -105,6 +136,7 @@ export function FeedingHistoryPanel({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/10">
+                  {isRefreshing && <FeedLogSkeletonRow />}
                   {sortedLogs.map((log, index) => {
                     const batchLabel = log.batch?.batchName || `Unit ${index + 1}`
                     const loggedBy = [log.user?.firstname, log.user?.surname].filter(Boolean).join(' ') || '—'
@@ -142,6 +174,7 @@ export function FeedingHistoryPanel({
             </div>
 
             <div className="md:hidden divide-y divide-white/10">
+              {isRefreshing && <FeedLogSkeletonCard />}
               {sortedLogs.map((log, index) => {
                 const batchLabel = log.batch?.batchName || `Unit ${index + 1}`
                 const loggedBy = [log.user?.firstname, log.user?.surname].filter(Boolean).join(' ') || '—'

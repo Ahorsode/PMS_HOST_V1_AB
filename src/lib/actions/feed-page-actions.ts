@@ -5,13 +5,18 @@ import prisma from '@/lib/db'
 import { getAuthContext } from '@/lib/auth-utils'
 import { farmCacheTags } from '@/lib/performance/cache-tags'
 
-export type FeedPageData = {
+export type FeedStaticData = {
   formulations: any[]
   efficiency: any[]
-  inventory: any[]
   batches: any[]
+}
+
+export type FeedDynamicData = {
+  inventory: any[]
   feedingLogs: any[]
 }
+
+export type FeedPageData = FeedStaticData & FeedDynamicData
 
 const INVENTORY_INCLUDE = {
   eggCategory: true,
@@ -89,73 +94,46 @@ function mapFeedingLogRow(log: any) {
   }
 }
 
-export async function getFeedPageData(): Promise<FeedPageData> {
-  const { userId, activeFarmId } = await getAuthContext()
-  if (!activeFarmId) {
-    return { formulations: [], efficiency: [], inventory: [], batches: [], feedingLogs: [] }
-  }
-
+async function loadFeedStaticData(userId: string, activeFarmId: string): Promise<FeedStaticData> {
   const cachedLoader = unstable_cache(
     async () => {
       return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-        const [rawFormulations, efficiencyBatches, rawInventory, rawBatches, rawFeedingLogs] =
-          await Promise.all([
-            tx.feedFormulation.findMany({
-              where: { farmId: activeFarmId },
-              include: {
-                ingredients: {
-                  include: { inventory: true },
+        const [rawFormulations, efficiencyBatches, rawBatches] = await Promise.all([
+          tx.feedFormulation.findMany({
+            where: { farmId: activeFarmId },
+            include: {
+              ingredients: {
+                include: { inventory: true },
+              },
+            },
+          }),
+          tx.livestock.findMany({
+            where: { farmId: activeFarmId, status: 'active' },
+            include: {
+              feedingLogs: true,
+              weightRecords: {
+                orderBy: { logDate: 'desc' },
+                take: 2,
+              },
+            },
+          }),
+          tx.livestock.findMany({
+            where: { farmId: activeFarmId, isDeleted: false },
+            include: {
+              house: true,
+              user: {
+                select: {
+                  firstname: true,
+                  surname: true,
+                  role: true,
                 },
               },
-            }),
-            tx.livestock.findMany({
-              where: { farmId: activeFarmId, status: 'active' },
-              include: {
-                feedingLogs: true,
-                weightRecords: {
-                  orderBy: { logDate: 'desc' },
-                  take: 2,
-                },
-              },
-            }),
-            tx.inventory.findMany({
-              where: { farmId: activeFarmId, isDeleted: false, stockLevel: { gt: 0 } },
-              include: INVENTORY_INCLUDE,
-              orderBy: { itemName: 'asc' },
-            }),
-            tx.livestock.findMany({
-              where: { farmId: activeFarmId, isDeleted: false },
-              include: {
-                house: true,
-                user: {
-                  select: {
-                    firstname: true,
-                    surname: true,
-                    role: true,
-                  },
-                },
-              },
-              orderBy: {
-                arrivalDate: 'desc',
-              },
-            }),
-            tx.feedingLog.findMany({
-              where: { farmId: activeFarmId, isDeleted: false },
-              include: {
-                batch: true,
-                inventory: true,
-                formulation: true,
-                user: {
-                  select: {
-                    firstname: true,
-                    surname: true,
-                  },
-                },
-              },
-              orderBy: [{ logDate: 'desc' }, { id: 'desc' }],
-              take: 100,
-            }),
-          ])
+            },
+            orderBy: {
+              arrivalDate: 'desc',
+            },
+          }),
+        ])
 
         const formulations = rawFormulations.map((f: any) => ({
           ...f,
@@ -199,19 +177,73 @@ export async function getFeedPageData(): Promise<FeedPageData> {
           }
         })
 
-        const inventory = rawInventory.map(mapInventoryRow)
         const batches = rawBatches.map(mapBatchRow)
-        const feedingLogs = rawFeedingLogs.map(mapFeedingLogRow)
 
-        return { formulations, efficiency, inventory, batches, feedingLogs }
+        return { formulations, efficiency, batches }
       })
     },
-    [`feed-page-data:${activeFarmId}`],
-    {
-      revalidate: 30,
-      tags: [farmCacheTags.feed(activeFarmId)],
-    },
+    [`feed-static:${activeFarmId}`],
+    { revalidate: 300, tags: [farmCacheTags.feedStatic(activeFarmId)] },
   )
-
   return cachedLoader()
+}
+
+async function loadFeedDynamicData(userId: string, activeFarmId: string): Promise<FeedDynamicData> {
+  const cachedLoader = unstable_cache(
+    async () => {
+      return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+        const [rawInventory, rawFeedingLogs] = await Promise.all([
+          tx.inventory.findMany({
+            where: { farmId: activeFarmId, isDeleted: false, stockLevel: { gt: 0 } },
+            include: INVENTORY_INCLUDE,
+            orderBy: { itemName: 'asc' },
+          }),
+          tx.feedingLog.findMany({
+            where: { farmId: activeFarmId, isDeleted: false },
+            include: {
+              batch: true,
+              inventory: true,
+              formulation: true,
+              user: {
+                select: {
+                  firstname: true,
+                  surname: true,
+                },
+              },
+            },
+            orderBy: [{ logDate: 'desc' }, { id: 'desc' }],
+            take: 100,
+          }),
+        ])
+
+        const inventory = rawInventory.map(mapInventoryRow)
+        const feedingLogs = rawFeedingLogs.map(mapFeedingLogRow)
+
+        return { inventory, feedingLogs }
+      })
+    },
+    [`feed-dynamic:${activeFarmId}`],
+    { revalidate: 20, tags: [farmCacheTags.feedDynamic(activeFarmId)] },
+  )
+  return cachedLoader()
+}
+
+export async function getFeedPageData(): Promise<FeedPageData> {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) {
+    return { formulations: [], efficiency: [], batches: [], inventory: [], feedingLogs: [] }
+  }
+
+  const [staticData, dynamicData] = await Promise.all([
+    loadFeedStaticData(userId, activeFarmId),
+    loadFeedDynamicData(userId, activeFarmId),
+  ])
+
+  return { ...staticData, ...dynamicData }
+}
+
+export async function refreshFeedDynamicData(): Promise<FeedDynamicData> {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return { inventory: [], feedingLogs: [] }
+  return loadFeedDynamicData(userId, activeFarmId)
 }

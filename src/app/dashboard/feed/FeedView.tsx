@@ -16,9 +16,7 @@ import { FeedFormulationForm } from './FeedFormulationForm'
 import { FeedForm } from './FeedForm'
 import { FeedingHistoryPanel } from './FeedingHistoryPanel'
 import type { FeedPageData } from '@/lib/actions/feed-page-actions'
-import { getFeedPageData } from '@/lib/actions/feed-page-actions'
-import { getAllInventory } from '@/lib/actions/inventory-actions'
-import { getAllFeedingLogs } from '@/lib/actions/dashboard-actions'
+import { getFeedPageData, refreshFeedDynamicData } from '@/lib/actions/feed-page-actions'
 import { getReorderThreshold, isFeedCategory, isLowStock } from '@/lib/inventory/feed-categories'
 
 export default function FeedDashboard({
@@ -53,12 +51,9 @@ export default function FeedDashboard({
   const refreshAfterLog = async () => {
     setRefreshing(true)
     try {
-      const [logsRes, inventoryRes] = await Promise.all([
-        getAllFeedingLogs(),
-        getAllInventory(),
-      ])
-      setFeedingLogs(logsRes)
-      setInventory(inventoryRes)
+      const { feedingLogs: newLogs, inventory: newInventory } = await refreshFeedDynamicData()
+      setFeedingLogs(newLogs)
+      setInventory(newInventory)
     } finally {
       setRefreshing(false)
     }
@@ -217,7 +212,7 @@ export default function FeedDashboard({
                       <h3 className="font-bold text-white text-lg border-none">Inventory Check</h3>
                     </div>
                     <div className="space-y-2">
-                       {inventory.slice(0, 4).map(item => (
+                       {feedInventory.slice(0, 4).map(item => (
                          <div key={item.id} className="flex justify-between items-center bg-white/5 p-2 rounded-md border border-white/10">
                            <span className="text-lg font-bold text-emerald-100">{item.itemName}</span>
                            <span className={`text-sm font-bold px-3 py-1.5 rounded-md border ${isLowStock(item) ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'}`}>
