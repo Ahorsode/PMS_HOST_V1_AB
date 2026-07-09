@@ -20,6 +20,7 @@ import {
   saleQuantityInEggs,
   saleUnitPriceForDisplay,
   type EggSaleQuantityUnit,
+  type LineDiscountType,
 } from '@/lib/sale-quantity-utils';
 import {
   SALE_PAYMENT_METHOD_OPTIONS,
@@ -39,7 +40,7 @@ interface SaleItemState {
   eggBatchId?: string;
   eggQuantityUnit?: EggSaleQuantityUnit;
   lineDiscountAmount?: number | '';
-  lineDiscountType?: 'flat' | 'percent';
+  lineDiscountType?: LineDiscountType;
 }
 
 interface SalesFormProps {
@@ -54,6 +55,9 @@ interface SalesFormProps {
   initialLivestockId?: string;
   canOverridePrice?: boolean;
   canAddCustomer?: boolean;
+  allowBatchOverride?: boolean;
+  allowWorkerDiscounts?: boolean;
+  defaultDiscountType?: LineDiscountType;
 }
 
 function toMoney(value: number) {
@@ -217,7 +221,22 @@ function getEggAvailable(
   return Number(fifoEggAvailability.totalEggs ?? 0);
 }
 
-export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = [], fifoEggAvailability = { totalEggs: 0, byCategoryId: {} }, livestock, eggsPerCrate = 30, onSuccess, initialLivestockId, canOverridePrice = false, canAddCustomer = true }: SalesFormProps) {
+export function SalesForm({
+  customers,
+  inventory,
+  eggInventory,
+  eggBatchStock = [],
+  fifoEggAvailability = { totalEggs: 0, byCategoryId: {} },
+  livestock,
+  eggsPerCrate = 30,
+  onSuccess,
+  initialLivestockId,
+  canOverridePrice = false,
+  canAddCustomer = true,
+  allowBatchOverride = false,
+  allowWorkerDiscounts = false,
+  defaultDiscountType = 'item',
+}: SalesFormProps) {
   const [items, setItems] = useState<SaleItemState[]>(() => [
     getInitialItem(livestock, eggInventory, initialLivestockId, eggsPerCrate),
   ]);
@@ -239,6 +258,15 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
 
   const isWalkIn = customerId === '';
   const isCreditSale = paymentMethod === 'CREDIT';
+  const showBatchToggle = allowBatchOverride || canOverridePrice;
+  const showDiscountSection = canOverridePrice || allowWorkerDiscounts;
+
+  const resolveLineDiscountType = (item: SaleItemState): LineDiscountType => {
+    if (canOverridePrice) {
+      return item.lineDiscountType ?? 'flat';
+    }
+    return defaultDiscountType;
+  };
 
   const getInventoryRow = (item: SaleItemState) =>
     eggInventory.find((entry: any) => entry.id === item.productId);
@@ -286,12 +314,23 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
   const getLineSubtotal = (item: SaleItemState) =>
     Number(item.quantity || 0) * getEffectiveUnitPrice(item);
 
-  const getLineDiscount = (item: SaleItemState) =>
-    computeLineDiscount(
+  const getLineDiscount = (item: SaleItemState) => {
+    const discountType = resolveLineDiscountType(item);
+    const discountInput = Number(item.lineDiscountAmount || 0);
+    if (discountType === 'item') {
+      return computeLineDiscount(
+        getLineSubtotal(item),
+        discountInput,
+        'item',
+        getEffectiveUnitPrice(item),
+      );
+    }
+    return computeLineDiscount(
       getLineSubtotal(item),
-      Number(item.lineDiscountAmount || 0),
-      item.lineDiscountType === 'percent' ? 'percent' : 'flat',
+      discountInput,
+      discountType === 'percent' ? 'percent' : 'flat',
     );
+  };
 
   const getLineTotal = (item: SaleItemState) =>
     toMoney(Math.max(getLineSubtotal(item) - getLineDiscount(item), 0));
@@ -390,7 +429,7 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
     if (item.productType === 'inventory') {
       if (eggInventory.length === 0) errors.push('No egg products available');
       if (!item.productId) errors.push('Select an egg size');
-      if (item.eggAllocationMode === 'batch' && !item.eggBatchId) {
+      if (showBatchToggle && item.eggAllocationMode === 'batch' && !item.eggBatchId) {
         errors.push('Select a batch for egg sale');
       }
       const available = getEggAvailable(item, eggInventory, eggBatchStock, fifoEggAvailability);
@@ -423,6 +462,18 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
         errors.push(`${item.description || 'Livestock'} needs a configured base sale price before you can sell it`);
       } else {
         errors.push('Unit price must be greater than zero');
+      }
+    }
+
+    if (showDiscountSection) {
+      const lineSubtotal = getLineSubtotal(item);
+      const discountType = resolveLineDiscountType(item);
+      const discountInput = Number(item.lineDiscountAmount || 0);
+      if (discountType === 'item' && discountInput > quantity) {
+        errors.push('Giveaway quantity cannot exceed quantity sold');
+      }
+      if (discountType !== 'item' && getLineDiscount(item) > lineSubtotal) {
+        errors.push('Line discount cannot exceed line subtotal');
       }
     }
 
@@ -470,20 +521,31 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
       paymentReference: paymentReference || undefined,
       paymentAccountName: paymentAccountName || undefined,
       completeNow,
-      items: items.map((item) => ({
-        description: item.description,
-        quantity: Number(item.quantity) || 0,
-        unitPrice: getEffectiveUnitPrice(item),
-        inventoryId: item.productType === 'inventory' ? item.productId : undefined,
-        livestockId: item.productType === 'livestock' ? item.productId : undefined,
-        eggAllocationMode: item.productType === 'inventory' ? item.eggAllocationMode : undefined,
-        eggBatchId: item.productType === 'inventory' && item.eggAllocationMode === 'batch'
-          ? item.eggBatchId
-          : undefined,
-        eggQuantityUnit: item.productType === 'inventory' ? 'crate' : undefined,
-        lineDiscountAmount: Number(item.lineDiscountAmount || 0),
-        lineDiscountType: item.lineDiscountType === 'percent' ? 'percent' : 'flat',
-      }))
+      items: items.map((item) => {
+        const discountType = resolveLineDiscountType(item);
+        const discountInput = Number(item.lineDiscountAmount || 0);
+        const unitPrice = getEffectiveUnitPrice(item);
+        const lineDiscountAmount = discountType === 'item'
+          ? toMoney(discountInput * unitPrice)
+          : discountInput;
+
+        return {
+          description: item.description,
+          quantity: Number(item.quantity) || 0,
+          unitPrice,
+          inventoryId: item.productType === 'inventory' ? item.productId : undefined,
+          livestockId: item.productType === 'livestock' ? item.productId : undefined,
+          eggAllocationMode: item.productType === 'inventory'
+            ? (showBatchToggle ? item.eggAllocationMode : 'fifo')
+            : undefined,
+          eggBatchId: item.productType === 'inventory' && item.eggAllocationMode === 'batch'
+            ? item.eggBatchId
+            : undefined,
+          eggQuantityUnit: item.productType === 'inventory' ? 'crate' : undefined,
+          lineDiscountAmount: showDiscountSection ? lineDiscountAmount : 0,
+          lineDiscountType: showDiscountSection ? discountType : 'flat',
+        };
+      })
     });
     setIsSubmitting(false);
     setCompletionDialogOpen(false);
@@ -640,23 +702,25 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
                       </div>
                     ) : item.productType === 'inventory' ? (
                       <div className="space-y-2">
-                        <div className="flex min-w-0 overflow-hidden rounded-md border border-white/10 bg-slate-950/70">
-                          <button
-                            type="button"
-                            onClick={() => updateItem(index, { eggAllocationMode: 'fifo', eggBatchId: undefined })}
-                            className={`flex-1 px-3 py-2 text-xs font-bold uppercase tracking-widest ${item.eggAllocationMode !== 'batch' ? 'bg-emerald-500 text-[#064e3b]' : 'text-white/60'}`}
-                          >
-                            FIFO
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => updateItem(index, { eggAllocationMode: 'batch' })}
-                            className={`flex-1 px-3 py-2 text-xs font-bold uppercase tracking-widest ${item.eggAllocationMode === 'batch' ? 'bg-emerald-500 text-[#064e3b]' : 'text-white/60'}`}
-                          >
-                            By Batch
-                          </button>
-                        </div>
-                        {item.eggAllocationMode === 'batch' ? (
+                        {showBatchToggle ? (
+                          <div className="flex min-w-0 overflow-hidden rounded-md border border-white/10 bg-slate-950/70">
+                            <button
+                              type="button"
+                              onClick={() => updateItem(index, { eggAllocationMode: 'fifo', eggBatchId: undefined })}
+                              className={`flex-1 px-3 py-2 text-xs font-bold uppercase tracking-widest ${item.eggAllocationMode !== 'batch' ? 'bg-emerald-500 text-[#064e3b]' : 'text-white/60'}`}
+                            >
+                              FIFO
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => updateItem(index, { eggAllocationMode: 'batch' })}
+                              className={`flex-1 px-3 py-2 text-xs font-bold uppercase tracking-widest ${item.eggAllocationMode === 'batch' ? 'bg-emerald-500 text-[#064e3b]' : 'text-white/60'}`}
+                            >
+                              By Batch
+                            </button>
+                          </div>
+                        ) : null}
+                        {showBatchToggle && item.eggAllocationMode === 'batch' ? (
                           eggBatchStock.length === 0 ? (
                             <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm font-bold text-amber-200">
                               No active layer batches with eggs in stock
@@ -768,30 +832,77 @@ export function SalesForm({ customers, inventory, eggInventory, eggBatchStock = 
                   </div>
                 </div>
 
-                <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_120px]">
-                  <div className="space-y-1 min-w-0">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-white/50">Line Discount</label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={item.lineDiscountAmount ?? 0}
-                      onChange={(event) => updateItem(index, { lineDiscountAmount: event.target.value === '' ? '' : Number(event.target.value) })}
-                      className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
-                    />
+                {showDiscountSection ? (
+                  <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_120px]">
+                    {canOverridePrice ? (
+                      <>
+                        <div className="space-y-1 min-w-0">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-white/50">
+                            {(item.lineDiscountType ?? 'flat') === 'item' ? 'Give away crates free' : 'Line Discount'}
+                          </label>
+                          <input
+                            type="number"
+                            min="0"
+                            step={(item.lineDiscountType ?? 'flat') === 'item' ? '1' : '0.01'}
+                            value={item.lineDiscountAmount ?? 0}
+                            onChange={(event) => updateItem(index, { lineDiscountAmount: event.target.value === '' ? '' : Number(event.target.value) })}
+                            className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+                          />
+                        </div>
+                        <div className="space-y-1 min-w-0">
+                          <label className="text-[10px] font-black uppercase tracking-widest text-white/50">Type</label>
+                          <select
+                            value={item.lineDiscountType ?? 'flat'}
+                            onChange={(event) => updateItem(index, { lineDiscountType: event.target.value as LineDiscountType })}
+                            className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+                          >
+                            <option value="flat" className="bg-slate-900">GHS</option>
+                            <option value="percent" className="bg-slate-900">%</option>
+                            <option value="item" className="bg-slate-900">Giveaway</option>
+                          </select>
+                        </div>
+                      </>
+                    ) : defaultDiscountType === 'item' ? (
+                      <div className="space-y-1 min-w-0 sm:col-span-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-white/50">
+                          Give away crates free
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={item.lineDiscountAmount ?? 0}
+                          onChange={(event) => updateItem(index, { lineDiscountAmount: event.target.value === '' ? '' : Number(event.target.value) })}
+                          className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+                        />
+                      </div>
+                    ) : defaultDiscountType === 'percent' ? (
+                      <div className="space-y-1 min-w-0 sm:col-span-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-white/50">Line Discount (%)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={item.lineDiscountAmount ?? 0}
+                          onChange={(event) => updateItem(index, { lineDiscountAmount: event.target.value === '' ? '' : Number(event.target.value) })}
+                          className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+                        />
+                      </div>
+                    ) : (
+                      <div className="space-y-1 min-w-0 sm:col-span-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-white/50">Line Discount (GHS)</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={item.lineDiscountAmount ?? 0}
+                          onChange={(event) => updateItem(index, { lineDiscountAmount: event.target.value === '' ? '' : Number(event.target.value) })}
+                          className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+                        />
+                      </div>
+                    )}
                   </div>
-                  <div className="space-y-1 min-w-0">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-white/50">Type</label>
-                    <select
-                      value={item.lineDiscountType ?? 'flat'}
-                      onChange={(event) => updateItem(index, { lineDiscountType: event.target.value as 'flat' | 'percent' })}
-                      className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
-                    >
-                      <option value="flat" className="bg-slate-900">GHS</option>
-                      <option value="percent" className="bg-slate-900">%</option>
-                    </select>
-                  </div>
-                </div>
+                ) : null}
 
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-3">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">

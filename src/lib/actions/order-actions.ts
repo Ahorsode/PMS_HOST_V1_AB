@@ -167,7 +167,7 @@ export async function createOrder(data: {
     eggBatchId?: string;
     eggQuantityUnit?: EggSaleQuantityUnit;
     lineDiscountAmount?: number;
-    lineDiscountType?: 'flat' | 'percent';
+    lineDiscountType?: 'flat' | 'percent' | 'item';
   }[]
 }) {
   const { userId, role, activeFarmId, permissions } = await getAuthContext()
@@ -267,11 +267,18 @@ export async function createOrder(data: {
         }
 
         const lineSubtotal = toMoney(quantity * unitPrice)
-        const lineDiscount = computeLineDiscount(
-          lineSubtotal,
-          Number(item.lineDiscountAmount || 0),
-          item.lineDiscountType === 'percent' ? 'percent' : 'flat',
-        )
+        const lineDiscountType = item.lineDiscountType === 'percent'
+          ? 'percent'
+          : item.lineDiscountType === 'item'
+            ? 'item'
+            : 'flat'
+        const lineDiscount = lineDiscountType === 'item'
+          ? Math.min(lineSubtotal, Math.max(0, Number(item.lineDiscountAmount || 0)))
+          : computeLineDiscount(
+            lineSubtotal,
+            Number(item.lineDiscountAmount || 0),
+            lineDiscountType === 'percent' ? 'percent' : 'flat',
+          )
 
         normalizedItems.push({
           description: authoritative.description || 'Sale Item',
@@ -283,7 +290,7 @@ export async function createOrder(data: {
           basePriceSource: authoritative.basePriceSource,
           totalPrice: toMoney(lineSubtotal - lineDiscount),
           lineDiscountAmount: lineDiscount,
-          lineDiscountType: item.lineDiscountType === 'percent' ? 'percent' : 'flat',
+          lineDiscountType,
           inventoryId: authoritative.inventoryId,
           livestockId: authoritative.livestockId,
           eggAllocationMode: item.eggAllocationMode || null,

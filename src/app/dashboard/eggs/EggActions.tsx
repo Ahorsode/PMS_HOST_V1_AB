@@ -9,7 +9,24 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { DeleteConfirmationModal } from '@/components/modals/DeleteConfirmationModal';
 
-export const EggActionsHeader = ({ batches, canEdit = true, initialOpen = false }: { batches: any[], canEdit?: boolean, initialOpen?: boolean }) => {
+type EggLoggingSettings = {
+  defaultEggUnit?: 'crate' | 'individual';
+  allowEggUnitChange?: boolean;
+  defaultEggSortMode?: 'sorted' | 'unsorted';
+  allowEggSortModeChange?: boolean;
+  eggsPerCrate?: number;
+};
+
+export const EggActionsHeader = ({
+  batches,
+  canEdit = true,
+  initialOpen = false,
+  ...eggSettings
+}: {
+  batches: any[];
+  canEdit?: boolean;
+  initialOpen?: boolean;
+} & EggLoggingSettings) => {
   const [isOpen, setIsOpen] = useState(initialOpen && canEdit);
 
   return (
@@ -30,13 +47,22 @@ export const EggActionsHeader = ({ batches, canEdit = true, initialOpen = false 
         )}
       </div>
       <Dialog isOpen={isOpen} onOpenChange={setIsOpen} title="Log Egg Production">
-        <EggForm batches={batches} mode="create" onClose={() => setIsOpen(false)} />
+        <EggForm batches={batches} mode="create" onClose={() => setIsOpen(false)} {...eggSettings} />
       </Dialog>
     </>
   );
 };
 
-export const EggLogActions = ({ log, batches, canEdit = true }: { log: any, batches: any[], canEdit?: boolean }) => {
+export const EggLogActions = ({
+  log,
+  batches,
+  canEdit = true,
+  ...eggSettings
+}: {
+  log: any;
+  batches: any[];
+  canEdit?: boolean;
+} & EggLoggingSettings) => {
   const [mode, setMode] = useState<'edit' | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -98,7 +124,8 @@ export const EggLogActions = ({ log, batches, canEdit = true }: { log: any, batc
             log={log} 
             batches={batches} 
             mode={mode} 
-            onClose={() => setMode(null)} 
+            onClose={() => setMode(null)}
+            {...eggSettings}
           />
         )}
       </Dialog>
@@ -114,7 +141,16 @@ export const EggLogActions = ({ log, batches, canEdit = true }: { log: any, batc
   );
 };
 
-export const LogProductionButton = ({ batchId, batches, canEdit = true }: { batchId: string, batches: any[], canEdit?: boolean }) => {
+export const LogProductionButton = ({
+  batchId,
+  batches,
+  canEdit = true,
+  ...eggSettings
+}: {
+  batchId: string;
+  batches: any[];
+  canEdit?: boolean;
+} & EggLoggingSettings) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
@@ -132,7 +168,8 @@ export const LogProductionButton = ({ batchId, batches, canEdit = true }: { batc
           batches={batches} 
           mode="create" 
           defaultBatchId={batchId} 
-          onClose={() => setIsOpen(false)} 
+          onClose={() => setIsOpen(false)}
+          {...eggSettings}
         />
       </Dialog>
     </>

@@ -5,6 +5,7 @@ import { EggActionsHeader, LogProductionButton } from './EggActions';
 import { EggProductionHistoryPanel } from './EggProductionHistoryPanel';
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
 import { redirect } from 'next/navigation';
+import { getFarmSettings } from '@/lib/actions/preference-actions';
 
 export default async function EggsPage({ searchParams }: { searchParams: Promise<{ quick?: string }> }) {
   const hasAccess = await checkWorkerPermissions('eggs', 'view');
@@ -16,11 +17,21 @@ export default async function EggsPage({ searchParams }: { searchParams: Promise
 
   const resolvedParams = await searchParams;
 
-  const [batches, productionHistory, eggSalesHistory] = await Promise.all([
+  const [batches, productionHistory, eggSalesHistory, farmSettings] = await Promise.all([
     getAllBatches(),
     getAllEggProduction(),
     getEggSalesHistory(),
+    getFarmSettings(),
   ]);
+
+  const eggsPerCrate = farmSettings?.eggsPerCrate ?? 30;
+  const eggLoggingSettings = {
+    defaultEggUnit: (farmSettings?.defaultEggUnit === 'individual' ? 'individual' : 'crate') as 'crate' | 'individual',
+    allowEggUnitChange: farmSettings?.allowEggUnitChange ?? false,
+    defaultEggSortMode: (farmSettings?.defaultEggSortMode === 'sorted' ? 'sorted' : 'unsorted') as 'sorted' | 'unsorted',
+    allowEggSortModeChange: farmSettings?.allowEggSortModeChange ?? false,
+    eggsPerCrate,
+  };
   
   const layerBatches = batches.filter((b: any) => b.type === 'POULTRY_LAYER' && b.status === 'active');
 
@@ -44,7 +55,7 @@ export default async function EggsPage({ searchParams }: { searchParams: Promise
           <h2 className="text-3xl font-extrabold text-gray-900 tracking-normal">Egg Production</h2>
           <p className="text-gray-500 mt-1">Track daily egg yields across your layer flocks.</p>
         </div>
-        <EggActionsHeader batches={layerBatches} canEdit={canEdit} initialOpen={resolvedParams.quick === 'log'} />
+        <EggActionsHeader batches={layerBatches} canEdit={canEdit} initialOpen={resolvedParams.quick === 'log'} {...eggLoggingSettings} />
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-5 items-start shrink-0">
@@ -75,7 +86,7 @@ export default async function EggsPage({ searchParams }: { searchParams: Promise
                           </p>
                         </div>
                       </div>
-                      <LogProductionButton batchId={batch.id} batches={layerBatches} canEdit={canEdit} />
+                      <LogProductionButton batchId={batch.id} batches={layerBatches} canEdit={canEdit} {...eggLoggingSettings} />
                     </div>
                     );
                   })}
@@ -120,6 +131,7 @@ export default async function EggsPage({ searchParams }: { searchParams: Promise
         eggSalesHistory={eggSalesHistory}
         layerBatches={layerBatches}
         canEdit={canEdit}
+        eggLoggingSettings={eggLoggingSettings}
       />
     </div>
   );

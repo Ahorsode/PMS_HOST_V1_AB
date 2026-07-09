@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Home, Settings as SettingsIcon, Bell, Shield, Plus, Loader2, Save, CheckCircle2, Monitor, Trash2 } from 'lucide-react';
 import { updateFarmInfo, createHouse } from '@/lib/actions/dashboard-actions';
-import { updateFarmSettings, getFarmSettings } from '@/lib/actions/preference-actions';
+import { updateFarmSettings, getFarmSettings, getSalesSettings, updateSalesSettings } from '@/lib/actions/preference-actions';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -56,6 +56,13 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
   const [feedReminderTime, setFeedReminderTime] = useState('18:00');
   const [currency, setCurrency] = useState('GHS');
   const [growthTarget, setGrowthTarget] = useState<number | undefined>();
+  const [defaultEggUnit, setDefaultEggUnit] = useState<'crate' | 'individual'>('crate');
+  const [allowEggUnitChange, setAllowEggUnitChange] = useState(false);
+  const [defaultEggSortMode, setDefaultEggSortMode] = useState<'sorted' | 'unsorted'>('unsorted');
+  const [allowEggSortModeChange, setAllowEggSortModeChange] = useState(false);
+  const [allowBatchOverride, setAllowBatchOverride] = useState(false);
+  const [allowWorkerDiscounts, setAllowWorkerDiscounts] = useState(false);
+  const [defaultDiscountType, setDefaultDiscountType] = useState<'flat' | 'percent' | 'item'>('item');
   const [reorderLevels, setReorderLevels] = useState<Record<string, number>>({});
   const [isLoadingPrefs, setIsLoadingPrefs] = useState(false);
   const [growthStandards, setGrowthStandards] = useState<any[]>([]);
@@ -84,6 +91,20 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
         setFeedReminderTime(settings.feedRecordReminderTime || '18:00');
         setCurrency(settings.currency || 'GHS');
         setGrowthTarget(settings.growthTargetStandard ?? undefined);
+        setDefaultEggUnit(settings.defaultEggUnit === 'individual' ? 'individual' : 'crate');
+        setAllowEggUnitChange(settings.allowEggUnitChange ?? false);
+        setDefaultEggSortMode(settings.defaultEggSortMode === 'sorted' ? 'sorted' : 'unsorted');
+        setAllowEggSortModeChange(settings.allowEggSortModeChange ?? false);
+      }
+
+      const salesSettings = await getSalesSettings();
+      if (salesSettings) {
+        setAllowBatchOverride(salesSettings.allowBatchOverride ?? false);
+        setAllowWorkerDiscounts(salesSettings.allowWorkerDiscounts ?? false);
+        const discountType = salesSettings.defaultDiscountType;
+        setDefaultDiscountType(
+          discountType === 'flat' || discountType === 'percent' ? discountType : 'item',
+        );
       }
       
       const { getGrowthStandards } = await import('@/lib/actions/preference-actions');
@@ -128,9 +149,18 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
         eggRecordReminderTime: eggReminderTime,
         feedRecordReminderTime: feedReminderTime,
         currency,
-        growthTargetStandard: growthTarget
+        growthTargetStandard: growthTarget,
+        defaultEggUnit,
+        allowEggUnitChange,
+        defaultEggSortMode,
+        allowEggSortModeChange,
       });
-      setMessage({ type: 'success', text: 'Reminder times saved!' });
+      await updateSalesSettings({
+        allowBatchOverride,
+        allowWorkerDiscounts,
+        defaultDiscountType,
+      });
+      setMessage({ type: 'success', text: 'Farm preferences saved!' });
     } catch (err) {
       setMessage({ type: 'error', text: 'Failed to save reminder times.' });
     } finally {
@@ -319,6 +349,104 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
                         <option key={s.id} value={s.id}>{s.name} ({s.livestockType})</option>
                       ))}
                     </select>
+                  </div>
+
+                  <div className="p-4 rounded-md bg-green-500/10 border border-green-500/20 space-y-3">
+                    <p className="text-sm font-bold text-green-400 uppercase tracking-widest">🥚 Egg Logging Defaults</p>
+                    <p className="text-xs text-white/70">Default unit and sorting mode for worker egg production entries.</p>
+                    <div className="space-y-2">
+                      <p className="text-xs font-bold text-white/60 uppercase tracking-widest">Default Unit</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {(['crate', 'individual'] as const).map((unit) => (
+                          <button
+                            key={unit}
+                            type="button"
+                            onClick={() => setDefaultEggUnit(unit)}
+                            className={`py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${
+                              defaultEggUnit === unit
+                                ? 'bg-green-500 text-black'
+                                : 'bg-white/10 text-white/70 hover:bg-white/10'
+                            }`}
+                          >
+                            {unit === 'crate' ? 'Crate' : 'Individual'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={allowEggUnitChange}
+                        onChange={(e) => setAllowEggUnitChange(e.target.checked)}
+                        className="rounded border-white/20 bg-black/60 text-green-500 focus:ring-green-500/30"
+                      />
+                      <span className="text-xs font-bold text-white/80">Let workers change the unit per entry</span>
+                    </label>
+                    <div className="space-y-2">
+                      <p className="text-xs font-bold text-white/60 uppercase tracking-widest">Default Sort Mode</p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {(['unsorted', 'sorted'] as const).map((mode) => (
+                          <button
+                            key={mode}
+                            type="button"
+                            onClick={() => setDefaultEggSortMode(mode)}
+                            className={`py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${
+                              defaultEggSortMode === mode
+                                ? 'bg-emerald-500 text-white'
+                                : 'bg-white/10 text-white/70 hover:bg-white/10'
+                            }`}
+                          >
+                            {mode === 'sorted' ? 'Sorted' : 'Unsorted'}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={allowEggSortModeChange}
+                        onChange={(e) => setAllowEggSortModeChange(e.target.checked)}
+                        className="rounded border-white/20 bg-black/60 text-green-500 focus:ring-green-500/30"
+                      />
+                      <span className="text-xs font-bold text-white/80">Let workers change sort mode per entry</span>
+                    </label>
+                  </div>
+
+                  <div className="p-4 rounded-md bg-cyan-500/10 border border-cyan-500/20 space-y-3">
+                    <p className="text-sm font-bold text-cyan-400 uppercase tracking-widest">🛒 Sales Settings</p>
+                    <p className="text-xs text-white/70">Control what workers can override during farm-gate sales.</p>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={allowBatchOverride}
+                        onChange={(e) => setAllowBatchOverride(e.target.checked)}
+                        className="rounded border-white/20 bg-black/60 text-cyan-500 focus:ring-cyan-500/30"
+                      />
+                      <span className="text-xs font-bold text-white/80">Allow selecting a specific batch instead of FIFO</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={allowWorkerDiscounts}
+                        onChange={(e) => setAllowWorkerDiscounts(e.target.checked)}
+                        className="rounded border-white/20 bg-black/60 text-cyan-500 focus:ring-cyan-500/30"
+                      />
+                      <span className="text-xs font-bold text-white/80">Allow workers to apply discounts</span>
+                    </label>
+                    {allowWorkerDiscounts ? (
+                      <div className="space-y-2">
+                        <p className="text-xs font-bold text-white/60 uppercase tracking-widest">Worker Discount Type</p>
+                        <select
+                          value={defaultDiscountType}
+                          onChange={(e) => setDefaultDiscountType(e.target.value as 'flat' | 'percent' | 'item')}
+                          className="bg-black/60 border border-white/10 text-white rounded-md px-3 py-2 text-sm font-bold focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30 w-full"
+                        >
+                          <option value="item">Give away items</option>
+                          <option value="flat">Flat amount</option>
+                          <option value="percent">Percent</option>
+                        </select>
+                      </div>
+                    ) : null}
                   </div>
 
                   <Button onClick={handleSaveReminders} isLoading={isSavingPrefs} className="w-full">

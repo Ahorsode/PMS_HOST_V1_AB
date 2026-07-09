@@ -136,6 +136,7 @@ model Farm {
   expenseAllocations    ExpenseAllocation[]
   members               FarmMember[]
   settings              FarmSettings?
+  salesSettings         SalesSettings?
   user                  User                   @relation(fields: [userId], references: [id])
   feedFormulations      FeedFormulation[]
   financialTransactions FinancialTransaction[]
@@ -550,10 +551,28 @@ model FarmSettings {
   currency               String   @default("GHS")
   growthTargetStandard   Int?     @map("growth_target_standard")
   eggsPerCrate           Int      @default(30)
+  defaultEggUnit         String   @default("crate") @map("default_egg_unit")
+  allowEggUnitChange     Boolean  @default(false) @map("allow_egg_unit_change")
+  defaultEggSortMode     String   @default("unsorted") @map("default_egg_sort_mode")
+  allowEggSortModeChange Boolean  @default(false) @map("allow_egg_sort_mode_change")
   farm                   Farm     @relation(fields: [farmId], references: [id], onDelete: Cascade)
 
   @@index([farmId])
   @@map("farm_settings")
+}
+
+model SalesSettings {
+  id                   String   @id @default(cuid())
+  farmId               String   @unique @map("farm_id")
+  allowBatchOverride   Boolean  @default(false) @map("allow_batch_override")
+  allowWorkerDiscounts Boolean  @default(false) @map("allow_worker_discounts")
+  defaultDiscountType  String   @default("item") @map("default_discount_type")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+  farm                 Farm     @relation(fields: [farmId], references: [id], onDelete: Cascade)
+
+  @@index([farmId])
+  @@map("sales_settings")
 }
 
 model AuditLog {

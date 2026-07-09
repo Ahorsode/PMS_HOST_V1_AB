@@ -29,12 +29,18 @@ export function saleUnitPricePerEgg(
   return eggsPerCrate > 0 ? displayUnitPrice / eggsPerCrate : displayUnitPrice
 }
 
+export type LineDiscountType = 'flat' | 'percent' | 'item'
+
 export function computeLineDiscount(
   lineSubtotal: number,
   discountAmount: number,
-  discountType: 'flat' | 'percent' = 'flat',
+  discountType: LineDiscountType = 'flat',
+  unitPrice = 0,
 ) {
   if (lineSubtotal <= 0) return 0
+  if (discountType === 'item') {
+    return Math.min(lineSubtotal, Math.max(0, discountAmount * unitPrice))
+  }
   if (discountType === 'percent') {
     return Math.min(lineSubtotal, Math.max(0, (lineSubtotal * discountAmount) / 100))
   }

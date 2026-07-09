@@ -12,7 +12,7 @@ import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
 import { WorkerStamp } from '@/components/ui/WorkerStamp';
 import Link from 'next/link';
 import { getAuthContext } from '@/lib/auth-utils';
-import { getFarmSettings } from '@/lib/actions/preference-actions';
+import { getFarmSettings, getSalesSettings } from '@/lib/actions/preference-actions';
 
 interface OrderItem {
   id: string;
@@ -106,7 +106,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
   const sellBatchId = resolvedParams.sellBatchId;
   const openSellOnLoad = resolvedParams.quick === 'sell';
 
-  const [ordersRaw, customersRaw, inventoryRaw, eggInventoryRaw, eggBatchStockRaw, fifoEggAvailabilityRaw, livestockRaw, farmSettings] = await Promise.all([
+  const [ordersRaw, customersRaw, inventoryRaw, eggInventoryRaw, eggBatchStockRaw, fifoEggAvailabilityRaw, livestockRaw, farmSettings, salesSettings] = await Promise.all([
     getAllOrders(),
     getAllCustomers(),
     getAllInventory(),
@@ -115,8 +115,14 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
     getEggFifoAvailabilityMap(),
     getAllBatches(),
     getFarmSettings(),
+    getSalesSettings(),
   ]);
   const eggsPerCrate = farmSettings?.eggsPerCrate ?? 30;
+  const allowBatchOverride = salesSettings?.allowBatchOverride ?? false;
+  const allowWorkerDiscounts = salesSettings?.allowWorkerDiscounts ?? false;
+  const defaultDiscountType = salesSettings?.defaultDiscountType === 'flat' || salesSettings?.defaultDiscountType === 'percent'
+    ? salesSettings.defaultDiscountType
+    : 'item';
 
   const orders: SalesOrder[] = (ordersRaw as unknown as Order[]).map(normalizeOrder);
   const customers = (customersRaw as unknown as Customer[]).map((customer: Customer) => ({
@@ -244,6 +250,9 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
           initialOpen={openSellOnLoad || !!sellBatchId}
           canEdit={canCreateSale}
           canOverridePrice={canOverridePrice}
+          allowBatchOverride={allowBatchOverride}
+          allowWorkerDiscounts={allowWorkerDiscounts}
+          defaultDiscountType={defaultDiscountType}
         />
       </div>
 

@@ -9,6 +9,10 @@ export async function updateFarmSettings(data: {
   feedRecordReminderTime?: string;
   currency?: string;
   growthTargetStandard?: number;
+  defaultEggUnit?: string;
+  allowEggUnitChange?: boolean;
+  defaultEggSortMode?: string;
+  allowEggSortModeChange?: boolean;
 }) {
   const { activeFarmId } = await getAuthContext();
   if (!activeFarmId) throw new Error("No active farm found");
@@ -96,6 +100,39 @@ export async function getFarmSettings() {
   return prisma.farmSettings.findUnique({
     where: { farmId: activeFarmId },
   });
+}
+
+export async function getSalesSettings() {
+  const { activeFarmId } = await getAuthContext();
+  if (!activeFarmId) return null;
+
+  return prisma.salesSettings.upsert({
+    where: { farmId: activeFarmId },
+    update: {},
+    create: { farmId: activeFarmId },
+  });
+}
+
+export async function updateSalesSettings(data: {
+  allowBatchOverride?: boolean;
+  allowWorkerDiscounts?: boolean;
+  defaultDiscountType?: string;
+}) {
+  const { activeFarmId } = await getAuthContext();
+  if (!activeFarmId) throw new Error("No active farm found");
+
+  const settings = await prisma.salesSettings.upsert({
+    where: { farmId: activeFarmId },
+    update: data,
+    create: {
+      farmId: activeFarmId,
+      ...data,
+    },
+  });
+
+  revalidatePath("/dashboard/settings");
+  revalidatePath("/dashboard/sales");
+  return settings;
 }
 export async function getGrowthStandards(type?: any) {
   return await prisma.growthStandards.findMany({

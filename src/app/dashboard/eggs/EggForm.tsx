@@ -13,21 +13,48 @@ interface EggFormProps {
   mode: 'create' | 'edit' | 'delete';
   onClose: () => void;
   defaultBatchId?: string;
+  defaultEggUnit?: 'crate' | 'individual';
+  allowEggUnitChange?: boolean;
+  defaultEggSortMode?: 'sorted' | 'unsorted';
+  allowEggSortModeChange?: boolean;
+  eggsPerCrate?: number;
 }
 
-export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggFormProps) => {
+function unitToLoggingMode(unit: 'crate' | 'individual'): 'individual' | 'crates' {
+  return unit === 'crate' ? 'crates' : 'individual';
+}
+
+export const EggForm = ({
+  batches,
+  log,
+  mode,
+  onClose,
+  defaultBatchId,
+  defaultEggUnit = 'crate',
+  allowEggUnitChange = false,
+  defaultEggSortMode = 'unsorted',
+  allowEggSortModeChange = false,
+  eggsPerCrate = 30,
+}: EggFormProps) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [loggingMode, setLoggingMode] = useState<'individual' | 'crates'>('individual');
-  const [crates, setCrates] = useState(log?.eggsCollected ? Math.floor(log.eggsCollected / 30) : 0);
-  const [remainder, setRemainder] = useState(log?.eggsCollected ? log.eggsCollected % 30 : 0);
+  const initialLoggingMode = log
+    ? (log.cratesCollected != null ? 'crates' : 'individual')
+    : unitToLoggingMode(defaultEggUnit);
+  const [loggingMode, setLoggingMode] = useState<'individual' | 'crates'>(initialLoggingMode);
+  const [crates, setCrates] = useState(
+    log?.eggsCollected ? Math.floor(log.eggsCollected / eggsPerCrate) : 0,
+  );
+  const [remainder, setRemainder] = useState(
+    log?.eggsCollected ? log.eggsCollected % eggsPerCrate : 0,
+  );
 
   const [formData, setFormData] = useState({
     batchId: log?.batchId || defaultBatchId || (batches[0]?.id || ''),
     eggsCollected: log?.eggsCollected || 0,
     unusableCount: log?.unusableCount || 0,
     qualityGrade: log?.qualityGrade || 'MEDIUM',
-    isSorted: log?.isSorted || false,
+    isSorted: log?.isSorted ?? (defaultEggSortMode === 'sorted'),
     smallCount: log?.smallCount || 0,
     mediumCount: log?.mediumCount || 0,
     largeCount: log?.largeCount || 0,
@@ -37,11 +64,12 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
   const handleCrateChange = (c: number, r: number) => {
     setCrates(c);
     setRemainder(r);
-    setFormData(prev => ({ ...prev, eggsCollected: (c * 30) + r }));
+    setFormData(prev => ({ ...prev, eggsCollected: (c * eggsPerCrate) + r }));
   };
 
   const sortedTotal = formData.smallCount + formData.mediumCount + formData.largeCount;
   const isOverTotal = formData.isSorted && sortedTotal > formData.eggsCollected;
+  const remainderMax = Math.max(eggsPerCrate - 1, 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,41 +122,45 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
       )}
       
       <div className="space-y-4">
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold text-white/70 uppercase tracking-wider">Logging Mode</label>
-          <div className="grid grid-cols-2 gap-2">
-            {['individual', 'crates'].map(modeOpt => (
-              <button
-                key={modeOpt}
-                type="button"
-                onClick={() => setLoggingMode(modeOpt as any)}
-                className={`py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${loggingMode === modeOpt ? 'bg-amber-500 text-black' : 'bg-white/10 text-white/70 hover:bg-white/10'}`}
-              >
-                {modeOpt === 'individual' ? 'Individual Eggs' : 'Crates (30/ea)'}
-              </button>
-            ))}
+        {allowEggUnitChange ? (
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-white/70 uppercase tracking-wider">Logging Mode</label>
+            <div className="grid grid-cols-2 gap-2">
+              {['individual', 'crates'].map(modeOpt => (
+                <button
+                  key={modeOpt}
+                  type="button"
+                  onClick={() => setLoggingMode(modeOpt as 'individual' | 'crates')}
+                  className={`py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${loggingMode === modeOpt ? 'bg-amber-500 text-black' : 'bg-white/10 text-white/70 hover:bg-white/10'}`}
+                >
+                  {modeOpt === 'individual' ? 'Individual Eggs' : `Crates (${eggsPerCrate}/ea)`}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        ) : null}
 
-        <div className="space-y-1.5">
-          <label className="text-xs font-bold text-white/70 uppercase tracking-wider">Sorting Status</label>
-          <div className="grid grid-cols-2 gap-2">
-            {[false, true].map(isSorted => (
-              <button
-                key={isSorted ? 'sorted' : 'unsorted'}
-                type="button"
-                onClick={() => setFormData({ 
-                  ...formData, 
-                  isSorted,
-                  ...(isSorted ? {} : { smallCount: 0, mediumCount: 0, largeCount: 0 })
-                })}
-                className={`py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${formData.isSorted === isSorted ? 'bg-emerald-500 text-white' : 'bg-white/10 text-white/70 hover:bg-white/10'}`}
-              >
-                {isSorted ? 'Sorted' : 'Unsorted'}
-              </button>
-            ))}
+        {allowEggSortModeChange ? (
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-white/70 uppercase tracking-wider">Sorting Status</label>
+            <div className="grid grid-cols-2 gap-2">
+              {[false, true].map(isSorted => (
+                <button
+                  key={isSorted ? 'sorted' : 'unsorted'}
+                  type="button"
+                  onClick={() => setFormData({ 
+                    ...formData, 
+                    isSorted,
+                    ...(isSorted ? {} : { smallCount: 0, mediumCount: 0, largeCount: 0 })
+                  })}
+                  className={`py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${formData.isSorted === isSorted ? 'bg-emerald-500 text-white' : 'bg-white/10 text-white/70 hover:bg-white/10'}`}
+                >
+                  {isSorted ? 'Sorted' : 'Unsorted'}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        ) : null}
       </div>
 
       <div className="space-y-4">
@@ -173,7 +205,7 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
                 label="Remainder Eggs"
                 type="number"
                 min="0"
-                max="29"
+                max={remainderMax}
                 value={remainder}
                 onChange={(e) => {
                   let valStr = e.target.value;
@@ -182,9 +214,9 @@ export const EggForm = ({ batches, log, mode, onClose, defaultBatchId }: EggForm
                     e.target.value = valStr;
                   }
                   let val = valStr === '' ? 0 : Number(valStr);
-                  if (val > 29) {
-                    val = 29;
-                    e.target.value = '29';
+                  if (val > remainderMax) {
+                    val = remainderMax;
+                    e.target.value = String(remainderMax);
                   }
                   handleCrateChange(crates, val);
                 }}

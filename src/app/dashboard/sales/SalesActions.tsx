@@ -12,7 +12,7 @@ import { buildWhatsAppInvoiceUrl, downloadSalesInvoicePdf } from '@/lib/invoices
 import { useRouter } from 'next/navigation';
 import { toLocalDateTimeInputValue } from '@/lib/financial-dates';
 
-export function SalesActionsHeader({ customers, inventory, eggInventory, eggBatchStock = [], fifoEggAvailability = { totalEggs: 0, byCategoryId: {} }, livestock, eggsPerCrate = 30, initialLivestockId, initialOpen = false, canEdit = true, canOverridePrice = false }: { 
+export function SalesActionsHeader({ customers, inventory, eggInventory, eggBatchStock = [], fifoEggAvailability = { totalEggs: 0, byCategoryId: {} }, livestock, eggsPerCrate = 30, initialLivestockId, initialOpen = false, canEdit = true, canOverridePrice = false, allowBatchOverride = false, allowWorkerDiscounts = false, defaultDiscountType = 'item' }: { 
   customers: any[], 
   inventory: any[],
   eggInventory: any[],
@@ -23,7 +23,10 @@ export function SalesActionsHeader({ customers, inventory, eggInventory, eggBatc
   initialLivestockId?: string,
   initialOpen?: boolean,
   canEdit?: boolean,
-  canOverridePrice?: boolean
+  canOverridePrice?: boolean,
+  allowBatchOverride?: boolean,
+  allowWorkerDiscounts?: boolean,
+  defaultDiscountType?: 'flat' | 'percent' | 'item',
 }) {
   const [isOpen, setIsOpen] = useState(!!initialLivestockId || initialOpen);
   const router = useRouter();
@@ -56,6 +59,9 @@ export function SalesActionsHeader({ customers, inventory, eggInventory, eggBatc
             eggsPerCrate={eggsPerCrate}
             initialLivestockId={initialLivestockId}
             canOverridePrice={canOverridePrice}
+            allowBatchOverride={allowBatchOverride}
+            allowWorkerDiscounts={allowWorkerDiscounts}
+            defaultDiscountType={defaultDiscountType}
             canAddCustomer={canEdit}
             onSuccess={() => {
               setIsOpen(false);

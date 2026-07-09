@@ -60,12 +60,20 @@ export function EggProductionHistoryPanel({
   layerBatches,
   canEdit,
   className = '',
+  eggLoggingSettings,
 }: {
   productionHistory: EggLog[];
   eggSalesHistory: EggSaleRow[];
   layerBatches: any[];
   canEdit: boolean;
   className?: string;
+  eggLoggingSettings?: {
+    defaultEggUnit?: 'crate' | 'individual';
+    allowEggUnitChange?: boolean;
+    defaultEggSortMode?: 'sorted' | 'unsorted';
+    allowEggSortModeChange?: boolean;
+    eggsPerCrate?: number;
+  };
 }) {
   const [stockFilter, setStockFilter] = useState<StockFilter>('active');
   const [tab, setTab] = useState<PanelTab>('production');
@@ -235,7 +243,7 @@ export function EggProductionHistoryPanel({
                         </td>
                         <td className="px-5 py-3 whitespace-nowrap text-sm text-red-600">{log.unusableCount || 0}</td>
                         <td className="px-5 py-3 whitespace-nowrap text-right">
-                          <EggLogActions log={log} batches={layerBatches} canEdit={canEdit} />
+                          <EggLogActions log={log} batches={layerBatches} canEdit={canEdit} {...eggLoggingSettings} />
                         </td>
                       </tr>
                     )];
@@ -270,7 +278,7 @@ export function EggProductionHistoryPanel({
                         {idx === 0 ? `${Math.floor(log.eggsCollected / 30)} ${Math.floor(log.eggsCollected / 30) === 1 ? 'crate' : 'crates'} / ${log.eggsCollected % 30}` : ''}
                       </td>
                       <td className="px-5 py-3 whitespace-nowrap text-sm text-red-600">{idx === 0 ? (log.unusableCount || 0) : ''}</td>
-                      <td className="px-5 py-3 whitespace-nowrap text-right">{idx === 0 && <EggLogActions log={log} batches={layerBatches} canEdit={canEdit} />}</td>
+                      <td className="px-5 py-3 whitespace-nowrap text-right">{idx === 0 && <EggLogActions log={log} batches={layerBatches} canEdit={canEdit} {...eggLoggingSettings} />}</td>
                     </tr>
                   ));
                 })
