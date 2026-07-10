@@ -4,6 +4,7 @@ import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions'
 import { generateComprehensiveFarmReport } from '@/lib/actions/reports'
 import { getAllBatches } from '@/lib/actions/dashboard-actions'
+import { getFarmSettings } from '@/lib/actions/preference-actions'
 import { ReportsClient } from './ReportsClient'
 
 export default async function ReportsPage() {
@@ -21,12 +22,10 @@ export default async function ReportsPage() {
   const start = new Date()
   start.setDate(end.getDate() - 30)
 
-  const startStr = start.toISOString().split('T')[0]
-  const endStr = end.toISOString().split('T')[0]
-
-  const [report, rawBatches] = await Promise.all([
+  const [report, rawBatches, farmSettings] = await Promise.all([
     generateComprehensiveFarmReport(activeFarmId, start, end),
     getAllBatches(),
+    getFarmSettings(),
   ])
 
   if (!report) {
@@ -44,6 +43,7 @@ export default async function ReportsPage() {
     status: batch.status,
     house: batch.house ? { name: batch.house.name } : null,
   }))
+  const eggsPerCrate = farmSettings?.eggsPerCrate ?? 30
 
   async function fetchReport(s: string, e: string) {
     'use server'
@@ -54,7 +54,7 @@ export default async function ReportsPage() {
 
   return (
     <div className="relative mx-auto max-w-7xl animate-in fade-in px-0 md:px-3 pt-2 pb-7 md:py-7 duration-700">
-      <ReportsClient initialReport={report} batches={batches} onDateChange={fetchReport} />
+      <ReportsClient initialReport={report} batches={batches} eggsPerCrate={eggsPerCrate} onDateChange={fetchReport} />
     </div>
   )
 }

@@ -21,9 +21,10 @@ import { SkeletonLine } from '@/components/ui/MutationFeedback';
 
 
 /* ───────────────────── helpers ───────────────────── */
-function eggDisplay(stockLevel: number) {
-  const crates = Math.floor(stockLevel / 30);
-  const remainder = stockLevel % 30;
+function eggDisplay(stockLevel: number, eggsPerCrate = 30) {
+  const epc = eggsPerCrate > 0 ? eggsPerCrate : 30;
+  const crates = Math.floor(stockLevel / epc);
+  const remainder = stockLevel % epc;
   return { crates, remainder };
 }
 
@@ -80,10 +81,12 @@ export default function InventoryView({
   canEdit = true,
   openAddOnLoad = false,
   initialData,
+  eggsPerCrate = 30,
 }: {
   canEdit?: boolean
   openAddOnLoad?: boolean
   initialData: InventoryPageData
+  eggsPerCrate?: number
 }) {
   const router = useRouter();
   const [items, setItems] = useState<InventoryItem[]>(initialData.items);
@@ -312,12 +315,12 @@ export default function InventoryView({
               <div>
                 <p className="text-white/80 text-sm uppercase tracking-widest font-black mb-1">Egg Inventory (Active Batches)</p>
                 <p className="text-5xl font-black text-white leading-tight">
-                  {eggDisplay(eggStock.totalEggs).crates}
+                  {eggDisplay(eggStock.totalEggs, eggsPerCrate).crates}
                   <span className="text-2xl font-bold text-white/80 ml-1">crates</span>
                 </p>
-                {eggDisplay(eggStock.totalEggs).remainder > 0 && (
+                {eggDisplay(eggStock.totalEggs, eggsPerCrate).remainder > 0 && (
                   <p className="text-amber-400 text-base font-bold mt-1">
-                    + {eggDisplay(eggStock.totalEggs).remainder} remainder
+                    + {eggDisplay(eggStock.totalEggs, eggsPerCrate).remainder} eggs remaining
                   </p>
                 )}
               </div>
@@ -334,16 +337,22 @@ export default function InventoryView({
                 <thead>
                   <tr className="border-b border-white/10">
                     <th className="text-left px-4 py-2 text-white/70 font-black uppercase tracking-wider text-xs">Batch</th>
-                    <th className="text-right px-4 py-2 text-white/70 font-black uppercase tracking-wider text-xs">Eggs Remaining</th>
+                    <th className="text-right px-4 py-2 text-white/70 font-black uppercase tracking-wider text-xs">Stock</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {eggStock.batches.map((batch) => (
+                  {eggStock.batches.map((batch) => {
+                    const display = eggDisplay(batch.eggsRemaining, eggsPerCrate);
+                    return (
                     <tr key={batch.batchId} className="border-b border-white/5 last:border-0">
                       <td className="px-4 py-2 font-bold text-white">{batch.batchName}</td>
-                      <td className="px-4 py-2 text-right font-bold text-amber-300">{batch.eggsRemaining.toLocaleString()}</td>
+                      <td className="px-4 py-2 text-right font-bold text-amber-300">
+                        {display.crates} {display.crates === 1 ? 'crate' : 'crates'}
+                        {display.remainder > 0 ? ` / ${display.remainder} eggs` : ''}
+                      </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

@@ -105,14 +105,22 @@ export default async function EggsPage({ searchParams }: { searchParams: Promise
               <div className="space-y-2 md:space-y-5">
                 <div className="bg-gray-50 p-3 rounded-md border border-gray-100">
                   <div className="text-sm text-gray-500 font-medium mb-1">Today&apos;s Yield</div>
-                  <div className="text-3xl font-extrabold text-gray-900">{todayTotal.toLocaleString()}</div>
-                  <div className="text-xs text-green-600 font-bold mt-1">Normal levels</div>
+                  <div className="text-3xl font-extrabold text-gray-900">
+                    {Math.floor(todayTotal / eggsPerCrate)} {Math.floor(todayTotal / eggsPerCrate) === 1 ? 'crate' : 'crates'}
+                  </div>
+                  {todayTotal % eggsPerCrate > 0 && (
+                    <div className="text-sm font-semibold text-gray-600 mt-0.5">+ {todayTotal % eggsPerCrate} eggs</div>
+                  )}
+                  <div className="text-xs text-green-600 font-bold mt-1">{todayTotal.toLocaleString()} eggs · Normal levels</div>
                 </div>
                 
                 <div className="space-y-3">
                   <div className="flex justify-between items-center pb-2 border-b border-gray-100">
                     <span className="text-gray-500 text-sm font-medium">This Week</span>
-                    <span className="font-bold text-gray-900">{weekTotal.toLocaleString()}</span>
+                    <span className="font-bold text-gray-900 text-right">
+                      {Math.floor(weekTotal / eggsPerCrate)} {Math.floor(weekTotal / eggsPerCrate) === 1 ? 'crate' : 'crates'}
+                      {weekTotal % eggsPerCrate > 0 ? ` / ${weekTotal % eggsPerCrate} eggs` : ''}
+                    </span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-500 text-sm font-medium">Efficiency</span>

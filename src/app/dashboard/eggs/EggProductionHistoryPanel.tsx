@@ -24,6 +24,8 @@ type EggSaleRow = {
   unitPrice: number | string;
   totalPrice: number | string;
   description: string;
+  lineDiscountAmount?: number | string | null;
+  lineDiscountType?: string | null;
   order: {
     orderDate: string | Date;
     customer?: { name?: string | null } | null;
@@ -54,6 +56,26 @@ function soldPercent(log: EggLog) {
   return Math.round((soldEggs(log) / usable) * 100);
 }
 
+function formatCratesAndEggs(eggs: number, eggsPerCrate: number) {
+  const epc = eggsPerCrate > 0 ? eggsPerCrate : 30;
+  const total = Math.max(0, Math.floor(Number(eggs) || 0));
+  const crates = Math.floor(total / epc);
+  const remainder = total % epc;
+  const crateLabel = crates === 1 ? 'crate' : 'crates';
+  if (remainder === 0) return `${crates} ${crateLabel}`;
+  return `${crates} ${crateLabel} / ${remainder} eggs`;
+}
+
+function giveawayCratesFromSale(row: EggSaleRow, eggsPerCrate: number) {
+  if (row.lineDiscountType !== 'item') return 0;
+  const unitPrice = Number(row.unitPrice);
+  const discount = Number(row.lineDiscountAmount || 0);
+  if (unitPrice <= 0 || discount <= 0) return 0;
+  const eggsGiven = discount / unitPrice;
+  const epc = eggsPerCrate > 0 ? eggsPerCrate : 30;
+  return Math.max(0, Math.round(eggsGiven / epc));
+}
+
 export function EggProductionHistoryPanel({
   productionHistory,
   eggSalesHistory,
@@ -77,6 +99,7 @@ export function EggProductionHistoryPanel({
 }) {
   const [stockFilter, setStockFilter] = useState<StockFilter>('active');
   const [tab, setTab] = useState<PanelTab>('production');
+  const eggsPerCrate = eggLoggingSettings?.eggsPerCrate ?? 30;
 
   const filteredLogs = useMemo(() => {
     return productionHistory.filter((log) => {
@@ -148,18 +171,18 @@ export function EggProductionHistoryPanel({
         <div className="grid grid-cols-3 gap-1.5 sm:gap-3">
           <div className="rounded-lg border border-emerald-100 bg-emerald-50/60 px-1.5 py-2 sm:px-4 sm:py-3">
             <div className="text-[8px] sm:text-[10px] font-bold uppercase tracking-wider sm:tracking-widest text-emerald-700 truncate">Active Stock</div>
-            <div className="text-xs sm:text-2xl font-black text-emerald-800 truncate">{summary.totalRemaining.toLocaleString()} eggs</div>
-            <div className="text-[9px] sm:text-xs font-bold text-emerald-700 mt-1 truncate">{summary.activePct}% of usable</div>
+            <div className="text-xs sm:text-2xl font-black text-emerald-800 truncate">{formatCratesAndEggs(summary.totalRemaining, eggsPerCrate)}</div>
+            <div className="text-[9px] sm:text-xs font-bold text-emerald-700 mt-1 truncate">{summary.totalRemaining.toLocaleString()} eggs · {summary.activePct}% of usable</div>
           </div>
           <div className="rounded-lg border border-amber-100 bg-amber-50/60 px-1.5 py-2 sm:px-4 sm:py-3">
             <div className="text-[8px] sm:text-[10px] font-bold uppercase tracking-wider sm:tracking-widest text-amber-700 truncate">Sold (FIFO)</div>
-            <div className="text-xs sm:text-2xl font-black text-amber-800 truncate">{summary.totalSold.toLocaleString()} eggs</div>
-            <div className="text-[9px] sm:text-xs font-bold text-amber-700 mt-1 truncate">{summary.soldPct}% of usable</div>
+            <div className="text-xs sm:text-2xl font-black text-amber-800 truncate">{formatCratesAndEggs(summary.totalSold, eggsPerCrate)}</div>
+            <div className="text-[9px] sm:text-xs font-bold text-amber-700 mt-1 truncate">{summary.totalSold.toLocaleString()} eggs · {summary.soldPct}% of usable</div>
           </div>
           <div className="rounded-lg border border-gray-200 bg-gray-50 px-1.5 py-2 sm:px-4 sm:py-3">
             <div className="text-[8px] sm:text-[10px] font-bold uppercase tracking-wider sm:tracking-widest text-gray-500 truncate">Usable Logged</div>
-            <div className="text-xs sm:text-2xl font-black text-gray-900 truncate">{summary.totalUsable.toLocaleString()} eggs</div>
-            <div className="text-[9px] sm:text-xs font-bold text-gray-500 mt-1 truncate">Usable logs</div>
+            <div className="text-xs sm:text-2xl font-black text-gray-900 truncate">{formatCratesAndEggs(summary.totalUsable, eggsPerCrate)}</div>
+            <div className="text-[9px] sm:text-xs font-bold text-gray-500 mt-1 truncate">{summary.totalUsable.toLocaleString()} eggs · usable logs</div>
           </div>
         </div>
 
@@ -233,13 +256,13 @@ export function EggProductionHistoryPanel({
                         <td className="px-5 py-3 whitespace-nowrap">
                           <span className={`px-2 py-1 text-[10px] font-bold rounded-lg uppercase ${stockClass}`}>{stockLabel}</span>
                         </td>
-                        <td className="px-5 py-3 whitespace-nowrap text-sm font-bold text-emerald-700">{remaining.toLocaleString()}</td>
-                        <td className="px-5 py-3 whitespace-nowrap text-sm font-bold text-amber-700">{soldEggs(log).toLocaleString()}</td>
+                        <td className="px-5 py-3 whitespace-nowrap text-sm font-bold text-emerald-700">{formatCratesAndEggs(remaining, eggsPerCrate)}</td>
+                        <td className="px-5 py-3 whitespace-nowrap text-sm font-bold text-amber-700">{formatCratesAndEggs(soldEggs(log), eggsPerCrate)}</td>
                         <td className="px-5 py-3 whitespace-nowrap text-sm font-bold text-emerald-700">{activePercent(log)}%</td>
                         <td className="px-5 py-3 whitespace-nowrap text-sm font-bold text-amber-700">{soldPercent(log)}%</td>
                         <td colSpan={3} className="px-5 py-3 whitespace-nowrap text-center text-sm font-bold text-gray-400 bg-gray-50/10 italic">Bulk Collection</td>
                         <td className="px-5 py-3 whitespace-nowrap text-sm text-green-700 font-bold">
-                          {Math.floor(log.eggsCollected / 30)} {Math.floor(log.eggsCollected / 30) === 1 ? 'crate' : 'crates'} / {log.eggsCollected % 30}
+                          {formatCratesAndEggs(log.eggsCollected, eggsPerCrate)}
                         </td>
                         <td className="px-5 py-3 whitespace-nowrap text-sm text-red-600">{log.unusableCount || 0}</td>
                         <td className="px-5 py-3 whitespace-nowrap text-right">
@@ -267,15 +290,15 @@ export function EggProductionHistoryPanel({
                           <span className={`px-2 py-1 text-[10px] font-bold rounded-lg uppercase ${stockClass}`}>{stockLabel}</span>
                         ) : null}
                       </td>
-                      <td className="px-5 py-3 whitespace-nowrap text-sm font-bold text-emerald-700">{idx === 0 ? remaining.toLocaleString() : ''}</td>
-                      <td className="px-5 py-3 whitespace-nowrap text-sm font-bold text-amber-700">{idx === 0 ? soldEggs(log).toLocaleString() : ''}</td>
+                      <td className="px-5 py-3 whitespace-nowrap text-sm font-bold text-emerald-700">{idx === 0 ? formatCratesAndEggs(remaining, eggsPerCrate) : ''}</td>
+                      <td className="px-5 py-3 whitespace-nowrap text-sm font-bold text-amber-700">{idx === 0 ? formatCratesAndEggs(soldEggs(log), eggsPerCrate) : ''}</td>
                       <td className="px-5 py-3 whitespace-nowrap text-sm font-bold text-emerald-700">{idx === 0 ? `${activePercent(log)}%` : ''}</td>
                       <td className="px-5 py-3 whitespace-nowrap text-sm font-bold text-amber-700">{idx === 0 ? `${soldPercent(log)}%` : ''}</td>
                       <td className="px-5 py-3 whitespace-nowrap text-center text-sm font-bold text-gray-500 bg-gray-50/10">{size.label === 'Small' ? size.count : '-'}</td>
                       <td className="px-5 py-3 whitespace-nowrap text-center text-sm font-bold text-gray-500 bg-gray-50/10">{size.label === 'Medium' ? size.count : '-'}</td>
                       <td className="px-5 py-3 whitespace-nowrap text-center text-sm font-bold text-gray-500 bg-gray-50/10">{size.label === 'Large' ? size.count : '-'}</td>
                       <td className="px-5 py-3 whitespace-nowrap text-sm text-emerald-700 font-bold">
-                        {idx === 0 ? `${Math.floor(log.eggsCollected / 30)} ${Math.floor(log.eggsCollected / 30) === 1 ? 'crate' : 'crates'} / ${log.eggsCollected % 30}` : ''}
+                        {idx === 0 ? formatCratesAndEggs(log.eggsCollected, eggsPerCrate) : ''}
                       </td>
                       <td className="px-5 py-3 whitespace-nowrap text-sm text-red-600">{idx === 0 ? (log.unusableCount || 0) : ''}</td>
                       <td className="px-5 py-3 whitespace-nowrap text-right">{idx === 0 && <EggLogActions log={log} batches={layerBatches} canEdit={canEdit} {...eggLoggingSettings} />}</td>
@@ -295,6 +318,7 @@ export function EggProductionHistoryPanel({
                 <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Customer</th>
                 <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Product</th>
                 <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Qty</th>
+                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Giveaway</th>
                 <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Unit Price</th>
                 <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Total</th>
               </tr>
@@ -302,21 +326,29 @@ export function EggProductionHistoryPanel({
             <tbody className="divide-y divide-gray-50">
               {eggSalesHistory.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-10 text-center text-sm font-semibold text-gray-400">
+                  <td colSpan={7} className="px-5 py-10 text-center text-sm font-semibold text-gray-400">
                     No completed egg sales yet.
                   </td>
                 </tr>
               ) : (
-                eggSalesHistory.map((row) => (
-                  <tr key={row.id} className="hover:bg-gray-50/50">
-                    <td className="px-5 py-3 text-sm font-medium text-gray-600">{formatDate(row.order.orderDate)}</td>
-                    <td className="px-5 py-3 text-sm font-bold text-gray-900">{row.order.customer?.name || 'Walk-in Customer'}</td>
-                    <td className="px-5 py-3 text-sm text-gray-700">{row.inventory?.itemName || row.description}</td>
-                    <td className="px-5 py-3 text-sm font-bold text-gray-900">{Number(row.quantity).toLocaleString()} {row.inventory?.unit || 'units'}</td>
-                    <td className="px-5 py-3 text-sm font-bold text-gray-700">GHS {Number(row.unitPrice).toFixed(2)}</td>
-                    <td className="px-5 py-3 text-sm font-black text-emerald-700">GHS {Number(row.totalPrice).toFixed(2)}</td>
-                  </tr>
-                ))
+                eggSalesHistory.map((row) => {
+                  const giveawayCrates = giveawayCratesFromSale(row, eggsPerCrate);
+                  return (
+                    <tr key={row.id} className="hover:bg-gray-50/50">
+                      <td className="px-5 py-3 text-sm font-medium text-gray-600">{formatDate(row.order.orderDate)}</td>
+                      <td className="px-5 py-3 text-sm font-bold text-gray-900">{row.order.customer?.name || 'Walk-in Customer'}</td>
+                      <td className="px-5 py-3 text-sm text-gray-700">{row.inventory?.itemName || row.description}</td>
+                      <td className="px-5 py-3 text-sm font-bold text-gray-900">{formatCratesAndEggs(Number(row.quantity), eggsPerCrate)}</td>
+                      <td className="px-5 py-3 text-sm font-bold text-amber-700">
+                        {giveawayCrates > 0
+                          ? `${giveawayCrates} ${giveawayCrates === 1 ? 'crate' : 'crates'}`
+                          : '—'}
+                      </td>
+                      <td className="px-5 py-3 text-sm font-bold text-gray-700">GHS {Number(row.unitPrice).toFixed(2)}</td>
+                      <td className="px-5 py-3 text-sm font-black text-emerald-700">GHS {Number(row.totalPrice).toFixed(2)}</td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

@@ -1,15 +1,29 @@
 import React from 'react';
 import { getGlobalEggStats } from '@/lib/actions/dashboard-actions';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Egg, TrendingUp, Calendar, Target, Activity } from 'lucide-react';
+import { Egg, Calendar, Activity } from 'lucide-react';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { formatDate } from '@/lib/utils';
 import { getBreedDisplayName } from '@/lib/livestock-breed-options';
+import { getFarmSettings } from '@/lib/actions/preference-actions';
+
+function formatCratesAndEggs(eggs: number, eggsPerCrate: number) {
+  const epc = eggsPerCrate > 0 ? eggsPerCrate : 30;
+  const total = Math.max(0, Math.floor(Number(eggs) || 0));
+  const crates = Math.floor(total / epc);
+  const remainder = total % epc;
+  const crateLabel = crates === 1 ? 'crate' : 'crates';
+  if (remainder === 0) return `${crates} ${crateLabel}`;
+  return `${crates} ${crateLabel} / ${remainder} eggs`;
+}
 
 export default async function EggsAnalyticsPage() {
-  const logs = await getGlobalEggStats();
+  const [logs, farmSettings] = await Promise.all([
+    getGlobalEggStats(),
+    getFarmSettings(),
+  ]);
+  const eggsPerCrate = farmSettings?.eggsPerCrate ?? 30;
   const totalEggs = logs.reduce((acc: number, log: any) => acc + log.quantity, 0);
-  const avgYield = logs.length > 0 ? (totalEggs / logs.length).toFixed(1) : '0';
+  const avgYield = logs.length > 0 ? (totalEggs / logs.length) : 0;
 
   return (
     <div className="max-w-7xl mx-auto px-0 md:px-3 pt-2 pb-7 md:py-7 space-y-7">
@@ -27,8 +41,8 @@ export default async function EggsAnalyticsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        <MetricBox title="Total Eggs Collected" value={totalEggs.toLocaleString()} icon={Egg} color="text-yellow-400" bgColor="bg-yellow-500/10" />
-        <MetricBox title="Avg. Daily Yield" value={avgYield} icon={Activity} color="text-emerald-400" bgColor="bg-emerald-500/10" />
+        <MetricBox title="Total Collected" value={formatCratesAndEggs(totalEggs, eggsPerCrate)} icon={Egg} color="text-yellow-400" bgColor="bg-yellow-500/10" />
+        <MetricBox title="Avg. Daily Yield" value={formatCratesAndEggs(avgYield, eggsPerCrate)} icon={Activity} color="text-emerald-400" bgColor="bg-emerald-500/10" />
         <MetricBox title="Collection Events" value={logs.length.toString()} icon={Calendar} color="text-blue-400" bgColor="bg-blue-500/10" />
       </div>
 
@@ -60,8 +74,7 @@ export default async function EggsAnalyticsPage() {
                          <span className="text-red-400/80 font-bold text-sm tracking-normal">{log.cracked || 0}</span>
                       </td>
                       <td className="px-7 py-5 text-right">
-                         <span className="text-emerald-400 font-bold text-2xl tracking-normal">{log.quantity}</span>
-                         <span className="text-xs text-white/60 ml-2 italic">units</span>
+                         <span className="text-emerald-400 font-bold text-lg tracking-normal">{formatCratesAndEggs(log.quantity, eggsPerCrate)}</span>
                       </td>
                     </tr>
                   ))}
@@ -79,7 +92,7 @@ const MetricBox = ({ title, value, icon: Icon, color, bgColor }: any) => (
         <Icon className="w-5 h-5" />
      </div>
      <div>
-        <h3 className="text-white font-bold text-3xl tracking-normal">{value}</h3>
+        <h3 className="text-white font-bold text-2xl tracking-normal">{value}</h3>
         <p className="text-white/60 font-bold uppercase tracking-widest text-[9px] mt-1 italic">{title}</p>
      </div>
   </div>

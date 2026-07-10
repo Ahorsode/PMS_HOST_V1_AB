@@ -58,7 +58,7 @@ export const Dialog = ({
     <AnimatePresence>
       {isOpen && (
         <div 
-          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-3 pb-safe"
+          className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-3 pb-[5.5rem] md:p-3"
           role="presentation"
         >
           {/* Backdrop */}
@@ -80,7 +80,7 @@ export const Dialog = ({
             aria-labelledby={title ? dialogId : undefined}
             aria-describedby={description ? descriptionId : undefined}
             className={cn(
-              "relative w-full max-w-xl max-h-[90dvh] flex flex-col bg-[#0f1115] border border-white/10 rounded-lg shadow-2xl overflow-hidden backdrop-blur-3xl",
+              "relative w-full max-w-xl max-h-[calc(90dvh-5.5rem)] md:max-h-[90dvh] flex flex-col bg-[#0f1115] border border-white/10 rounded-lg shadow-2xl overflow-hidden backdrop-blur-3xl",
               className
             )}
           >

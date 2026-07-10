@@ -67,10 +67,11 @@ export function QuickAddCustomerButton({
         type="button"
         disabled={disabled}
         onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-emerald-400 transition-colors hover:text-emerald-300 disabled:cursor-not-allowed disabled:opacity-40"
+        className="inline-flex shrink-0 items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-emerald-400 transition-colors hover:text-emerald-300 disabled:cursor-not-allowed disabled:opacity-40"
       >
-        <Plus className="h-3 w-3" />
-        Add new customer
+        <Plus className="hidden h-3 w-3 sm:inline" />
+        <span className="sm:hidden">+ New</span>
+        <span className="hidden sm:inline">Add new customer</span>
       </button>
 
       <Dialog

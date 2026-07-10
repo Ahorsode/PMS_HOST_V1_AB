@@ -6,16 +6,21 @@ import { FlockLogsHistory } from './FlockLogsHistory';
 import { FlockReportGenerator } from './FlockReportGenerator';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { getBreedDisplayName } from '@/lib/livestock-breed-options';
+import { getFarmSettings } from '@/lib/actions/preference-actions';
 
 export default async function FlockDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const data = await getFlockDeepDive(id);
+  const [data, farmSettings] = await Promise.all([
+    getFlockDeepDive(id),
+    getFarmSettings(),
+  ]);
 
   if (!data) {
     notFound();
   }
 
   const { batch } = data;
+  const eggsPerCrate = farmSettings?.eggsPerCrate ?? 30;
 
   return (
     <div className="max-w-7xl mx-auto px-0 md:px-3 pt-2 pb-7 md:py-7 relative">
@@ -41,7 +46,7 @@ export default async function FlockDetailPage({ params }: { params: Promise<{ id
         </div>
       </div>
 
-      <FlockDetailClient data={data} />
+      <FlockDetailClient data={data} eggsPerCrate={eggsPerCrate} />
     </div>
   );
 }

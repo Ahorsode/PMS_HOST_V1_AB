@@ -128,9 +128,10 @@ const MiniBarChart = ({ data, color }: { data: number[], color: string }) => {
   );
 };
 
-export function DashboardContent({ stats, houses, summary, role, subscriptionTier, permissions, currency = 'GHS' }: DashboardContentProps & { currency?: string }) {
+export function DashboardContent({ stats, houses, summary, role, subscriptionTier, permissions, currency = 'GHS', eggsPerCrate = 30 }: DashboardContentProps & { currency?: string; eggsPerCrate?: number }) {
   const { getAgeInDays, formatAge, getUnitBySpecies } = useLivestockStats();
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const epc = eggsPerCrate > 0 ? eggsPerCrate : 30;
 
   const getGrowthProgress = (hatchDate: string, breed: string) => {
     const daysDiff = getAgeInDays(hatchDate);
@@ -279,11 +280,23 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
                 <CardContent className="relative z-10">
                    <div className="flex justify-between items-end border-b border-white/5 pb-3 mb-2 gap-2">
                       <div className="min-w-0">
-                        <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-normal break-all">{(stats?.todayEggs || 0).toLocaleString()}</p>
-                        <p className="text-[10px] text-white/70 font-bold uppercase tracking-widest mt-1 italic break-words">Collected (Crates)</p>
+                        <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-normal break-all">
+                          {Math.floor((stats?.todayEggs || 0) / epc)}
+                          <span className="text-base font-bold text-white/60 ml-1">crates</span>
+                        </p>
+                        {(stats?.todayEggs || 0) % epc > 0 && (
+                          <p className="text-xs text-blue-300 font-semibold mt-0.5">+ {(stats?.todayEggs || 0) % epc} eggs</p>
+                        )}
+                        <p className="text-[10px] text-white/70 font-bold uppercase tracking-widest mt-1 italic break-words">Collected today</p>
                       </div>
                       <div className="text-right min-w-0">
-                        <p className="text-xl sm:text-2xl md:text-2xl font-bold text-white tracking-normal break-all">{(stats?.totalEggs || 0).toLocaleString()}</p>
+                        <p className="text-xl sm:text-2xl md:text-2xl font-bold text-white tracking-normal break-all">
+                          {Math.floor((stats?.totalEggs || 0) / epc)}
+                          <span className="text-sm font-bold text-white/60 ml-1">crates</span>
+                        </p>
+                        {(stats?.totalEggs || 0) % epc > 0 && (
+                          <p className="text-xs text-blue-300 font-semibold mt-0.5">+ {(stats?.totalEggs || 0) % epc} eggs</p>
+                        )}
                         <p className="text-[10px] text-white/70 font-bold uppercase tracking-widest mt-1 italic break-words">Total Stock</p>
                       </div>
                    </div>
@@ -346,8 +359,8 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
                  <CardContent className="pt-2">
                    {(() => {
                      const raw = stats.totalEggs || 0;
-                     const crates = Math.floor(raw / 30);
-                     const rem = raw % 30;
+                     const crates = Math.floor(raw / epc);
+                     const rem = raw % epc;
                      return (
                        <>
                           <div className="flex items-baseline gap-2 min-w-0">
@@ -355,7 +368,7 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
                             <span className="text-lg md:text-xl font-bold text-amber-400/70 shrink-0">crates</span>
                           </div>
                          {rem > 0 && (
-                           <p className="text-amber-400 text-sm font-semibold mt-1">+ {rem} remainder</p>
+                           <p className="text-amber-400 text-sm font-semibold mt-1">+ {rem} eggs remaining</p>
                          )}
                          <p className="text-xs text-white/70 uppercase tracking-widest font-bold mt-2">{raw.toLocaleString()} eggs in stock</p>
                        </>

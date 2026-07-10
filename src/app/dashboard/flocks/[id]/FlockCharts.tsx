@@ -321,8 +321,14 @@ export function FinanceTrendPanel({
   )
 }
 
-export function EggTrendPanel({ data }: { data: EggPoint[] }) {
+export function EggTrendPanel({ data, eggsPerCrate = 30 }: { data: EggPoint[]; eggsPerCrate?: number }) {
   const total = data.reduce((s, d) => s + d.eggs, 0)
+  const epc = eggsPerCrate > 0 ? eggsPerCrate : 30
+  const crates = Math.floor(total / epc)
+  const rem = total % epc
+  const totalLabel = rem > 0
+    ? `${crates} ${crates === 1 ? 'crate' : 'crates'} / ${rem} eggs`
+    : `${crates} ${crates === 1 ? 'crate' : 'crates'}`
   return (
     <ChartCard
       title="Egg Production Trend"
@@ -330,7 +336,7 @@ export function EggTrendPanel({ data }: { data: EggPoint[] }) {
       iconClass="text-amber-300"
       right={
         <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">
-          {fullNumber.format(total)} eggs
+          {totalLabel}
         </span>
       }
     >

@@ -510,6 +510,13 @@ export function SalesForm({
     && (isWalkIn ? cashBalances : (isCreditSale || canOverridePrice || cashBalances))
     && !isSubmitting;
 
+  const hasAnyLockedLine = items.some((item) => {
+    const catalogPrice = getItemCatalogPrice(item);
+    const basePrice = getItemBasePrice(item);
+    return (item.productType === 'inventory' && catalogPrice > 0)
+      || (item.productType === 'livestock' && basePrice > 0);
+  });
+
   const submitOrder = async (completeNow?: boolean) => {
     setIsSubmitting(true);
     const response = await createOrder({
@@ -575,7 +582,7 @@ export function SalesForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5 overflow-hidden">
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-nowrap gap-2 overflow-x-auto">
         {[
           { key: 1 as const, label: 'Customer & Products' },
           { key: 2 as const, label: 'Payment & Discounts' },
@@ -600,31 +607,33 @@ export function SalesForm({
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="space-y-2 min-w-0">
           <label className="px-1 text-xs font-bold uppercase tracking-widest text-white/90">Customer</label>
-          <select
-            value={customerId}
-            onChange={(event) => setCustomerId(event.target.value)}
-            className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-white/10 px-3 text-sm font-bold text-white outline-none transition-all focus:border-emerald-500/50"
-          >
-            <option value="" className="bg-slate-900">Walk-in Customer</option>
-            {customerOptions.map((customer) => (
-              <option key={customer.id} value={customer.id} className="bg-slate-900">{customer.name}</option>
-            ))}
-          </select>
-          {canAddCustomer ? (
-            <QuickAddCustomerButton
-              onCreated={(customer) => {
-                setCustomerOptions((current) => {
-                  if (current.some((row) => row.id === customer.id)) return current
-                  return [...current, customer].sort((a, b) => a.name.localeCompare(b.name))
-                })
-                setCustomerId(customer.id)
-              }}
-            />
-          ) : null}
+          <div className="flex items-center gap-2 sm:block sm:space-y-2">
+            <select
+              value={customerId}
+              onChange={(event) => setCustomerId(event.target.value)}
+              className="h-11 min-w-0 flex-1 rounded-md border border-white/10 bg-white/10 px-3 text-sm font-bold text-white outline-none transition-all focus:border-emerald-500/50 sm:w-full"
+            >
+              <option value="" className="bg-slate-900">Walk-in Customer</option>
+              {customerOptions.map((customer) => (
+                <option key={customer.id} value={customer.id} className="bg-slate-900">{customer.name}</option>
+              ))}
+            </select>
+            {canAddCustomer ? (
+              <QuickAddCustomerButton
+                onCreated={(customer) => {
+                  setCustomerOptions((current) => {
+                    if (current.some((row) => row.id === customer.id)) return current
+                    return [...current, customer].sort((a, b) => a.name.localeCompare(b.name))
+                  })
+                  setCustomerId(customer.id)
+                }}
+              />
+            ) : null}
+          </div>
         </div>
 
-        <div className="space-y-2 min-w-0">
-          <label className="flex items-center gap-1 px-1 text-xs font-bold uppercase tracking-widest text-white/90">
+        <div className="flex items-center gap-2 min-w-0 sm:block sm:space-y-2">
+          <label className="flex shrink-0 items-center gap-1 px-1 text-xs font-bold uppercase tracking-widest text-white/90">
             <Calendar className="h-3.5 w-3.5 shrink-0 text-emerald-300" />
             Sale Date & Time
           </label>
@@ -633,11 +642,12 @@ export function SalesForm({
             required
             value={saleDate}
             onChange={(event) => setSaleDate(event.target.value)}
-            className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-white/10 px-3 text-sm font-bold text-white outline-none transition-all focus:border-emerald-500/50"
+            className="h-11 min-w-0 flex-1 rounded-md border border-white/10 bg-white/10 px-3 text-sm font-bold text-white outline-none transition-all focus:border-emerald-500/50 sm:w-full"
           />
         </div>
       </div>
 
+      {(canOverridePrice || hasAnyLockedLine) ? (
       <div className="rounded-md border border-emerald-500/20 bg-emerald-500/10 p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-emerald-300">
@@ -647,6 +657,7 @@ export function SalesForm({
           <p className="text-2xl font-bold text-white">GHS {total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
         </div>
       </div>
+      ) : null}
 
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-3 px-1">
@@ -734,7 +745,7 @@ export function SalesForm({
                               <option value="" className="bg-slate-900">Select batch</option>
                               {eggBatchStock.map((batch) => (
                                 <option key={batch.batchId} value={batch.batchId} className="bg-slate-900">
-                                  {batch.batchName} ({batch.eggsRemaining.toLocaleString()} eggs)
+                                  {batch.batchName} ({Math.floor(batch.eggsRemaining / eggsPerCrate)} crates, {batch.eggsRemaining % eggsPerCrate} eggs remaining)
                                 </option>
                               ))}
                             </select>
@@ -752,6 +763,11 @@ export function SalesForm({
                         ) : (
                           <div className="flex h-11 min-w-0 items-center rounded-md border border-white/10 bg-slate-950/40 px-3 text-sm font-bold text-white">
                             {item.description || 'Eggs'}
+                            {' '}
+                            ({formatEggStockCrateLabel(
+                              getEggAvailable(item, eggInventory, eggBatchStock, fifoEggAvailability),
+                              eggsPerCrate,
+                            )})
                           </div>
                         )}
                       </div>
@@ -818,7 +834,7 @@ export function SalesForm({
                       )}
                     </div>
 
-                    <div className="flex items-end md:justify-end">
+                    <div className="hidden items-end md:flex md:justify-end">
                       <button
                         type="button"
                         onClick={() => removeItem(index)}
@@ -908,7 +924,18 @@ export function SalesForm({
                   <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">
                     Base: GHS {basePrice.toFixed(2)} | Subtotal: GHS {lineSubtotal.toFixed(2)}
                   </span>
-                  <span className="text-sm font-bold text-emerald-300">Line Total: GHS {lineTotal.toFixed(2)}</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => removeItem(index)}
+                      disabled={items.length === 1}
+                      title="Remove line"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-transparent text-white/30 transition-all hover:border-red-500/20 hover:bg-red-500/10 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-30 md:hidden"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                    <span className="text-sm font-bold text-emerald-300">Line Total: GHS {lineTotal.toFixed(2)}</span>
+                  </div>
                 </div>
               </div>
             );
@@ -1165,7 +1192,9 @@ export function SalesForm({
                   className="flex w-full items-center justify-between rounded-md border border-white/10 bg-white/5 px-4 py-3 text-left text-sm font-bold text-white transition-colors hover:border-emerald-500/50 hover:bg-emerald-500/10"
                 >
                   <span>{eggSizeLabelFromRow(entry)}</span>
-                  <span className="text-xs text-white/60">{Number(entry.stockLevel).toLocaleString()} in stock</span>
+                  <span className="text-xs text-white/60">
+                    {formatEggStockCrateLabel(Number(entry.stockLevel), eggsPerCrate)} in stock
+                  </span>
                 </button>
               ))}
             </div>

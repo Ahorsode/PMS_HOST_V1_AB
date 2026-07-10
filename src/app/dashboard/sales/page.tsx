@@ -20,6 +20,8 @@ interface OrderItem {
   quantity: number;
   unitPrice: number;
   totalPrice: number;
+  inventoryId?: string | null;
+  livestockId?: string | null;
 }
 
 interface Order {
@@ -84,8 +86,20 @@ function normalizeOrder(order: Order) {
       quantity: item.quantity,
       unitPrice: toNumber(item.unitPrice),
       totalPrice: toNumber(item.totalPrice),
+      inventoryId: item.inventoryId ?? null,
+      livestockId: item.livestockId ?? null,
     })),
   };
+}
+
+function orderTypeLabels(order: { items: Array<{ inventoryId?: string | null; livestockId?: string | null }> }) {
+  const hasEggs = order.items.some((item) => !!item.inventoryId);
+  const hasBirds = order.items.some((item) => !!item.livestockId);
+  const labels: string[] = [];
+  if (hasEggs) labels.push('Eggs');
+  if (hasBirds) labels.push('Birds');
+  if (labels.length === 0) labels.push('Custom');
+  return labels;
 }
 
 type SalesOrder = ReturnType<typeof normalizeOrder>;
@@ -292,6 +306,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
               <thead>
                 <tr className="bg-white/10">
                   <th className="px-7 py-4 text-xs font-bold uppercase tracking-widest text-white/70">Order</th>
+                  <th className="px-7 py-4 text-xs font-bold uppercase tracking-widest text-white/70">Type</th>
                   <th className="px-7 py-4 text-xs font-bold uppercase tracking-widest text-white/70">Customer</th>
                   <th className="px-7 py-4 text-xs font-bold uppercase tracking-widest text-white/70">Amount</th>
                   <th className="px-7 py-4 text-xs font-bold uppercase tracking-widest text-white/70">Status</th>
@@ -303,6 +318,24 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                   <tr key={order.id} className="hover:bg-white/5 transition-colors group">
                     <td className="px-7 py-5">
                       <span className="text-white font-bold text-sm tracking-normal uppercase tabular-nums">Order {index + 1}</span>
+                    </td>
+                    <td className="px-7 py-5">
+                      <div className="flex flex-wrap gap-1">
+                        {orderTypeLabels(order).map((label) => (
+                          <span
+                            key={label}
+                            className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest border ${
+                              label === 'Eggs'
+                                ? 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                                : label === 'Birds'
+                                  ? 'bg-sky-500/10 text-sky-300 border-sky-500/20'
+                                  : 'bg-white/10 text-white/60 border-white/10'
+                            }`}
+                          >
+                            {label}
+                          </span>
+                        ))}
+                      </div>
                     </td>
                     <td className="px-7 py-5">
                       <div className="flex flex-col">
@@ -332,7 +365,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                 ))}
                 {orders.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="py-16 text-center text-white/70 font-bold italic tracking-normal">
+                    <td colSpan={6} className="py-16 text-center text-white/70 font-bold italic tracking-normal">
                       No sales records found.
                     </td>
                   </tr>
@@ -355,6 +388,22 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                       }`}>
                      {order.status}
                    </span>
+                 </div>
+                 <div className="flex flex-wrap gap-1">
+                   {orderTypeLabels(order).map((label) => (
+                     <span
+                       key={label}
+                       className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-widest border ${
+                         label === 'Eggs'
+                           ? 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                           : label === 'Birds'
+                             ? 'bg-sky-500/10 text-sky-300 border-sky-500/20'
+                             : 'bg-white/10 text-white/60 border-white/10'
+                       }`}
+                     >
+                       {label}
+                     </span>
+                   ))}
                  </div>
                  <div className="flex flex-col">
                     <span className="text-white/90 font-bold text-xs">{order.customer?.name || 'Walk-in Customer'}</span>

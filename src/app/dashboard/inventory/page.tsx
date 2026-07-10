@@ -2,6 +2,7 @@ import React from 'react';
 import InventoryView from './InventoryView';
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
 import { getInventoryPageData } from '@/lib/actions/inventory-page-actions';
+import { getFarmSettings } from '@/lib/actions/preference-actions';
 import { redirect } from 'next/navigation';
 
 export default async function InventoryPage({ searchParams }: { searchParams: Promise<{ quick?: string }> }) {
@@ -13,7 +14,11 @@ export default async function InventoryPage({ searchParams }: { searchParams: Pr
   }
 
   const resolvedParams = await searchParams;
-  const initialData = await getInventoryPageData('active');
+  const [initialData, farmSettings] = await Promise.all([
+    getInventoryPageData('active'),
+    getFarmSettings(),
+  ]);
+  const eggsPerCrate = farmSettings?.eggsPerCrate ?? 30;
 
-  return <InventoryView canEdit={canEdit} initialData={initialData} openAddOnLoad={resolvedParams.quick === 'add'} />;
+  return <InventoryView canEdit={canEdit} initialData={initialData} eggsPerCrate={eggsPerCrate} openAddOnLoad={resolvedParams.quick === 'add'} />;
 }

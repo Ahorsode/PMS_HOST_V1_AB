@@ -58,6 +58,7 @@ export default async function DashboardPage() {
 
     const role = userId === farm?.userId ? 'OWNER' : membership?.role || 'WORKER';
     const currency = farmSettings?.currency || 'GHS';
+    const eggsPerCrate = farmSettings?.eggsPerCrate ?? 30;
     
     // Serialize Decimal objects to numbers for Client Components
     const houses = (housesRaw as any[]).map((house: { id: number; name: string; currentTemperature: any; currentHumidity: any }) => ({
@@ -76,6 +77,7 @@ export default async function DashboardPage() {
           subscriptionTier={farm?.subscriptionTier}
           permissions={permissions}
           currency={currency}
+          eggsPerCrate={eggsPerCrate}
         />
       </PullToRefresh>
     );

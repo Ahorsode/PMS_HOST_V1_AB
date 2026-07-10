@@ -30,16 +30,26 @@ type BatchRow = {
 export function ReportsClient({
   initialReport,
   batches,
+  eggsPerCrate = 30,
   onDateChange,
 }: {
   initialReport: ComprehensiveReport
   batches: BatchRow[]
+  eggsPerCrate?: number
   onDateChange: (start: string, end: string) => Promise<ComprehensiveReport | null>
 }) {
   const [report, setReport] = useState<ComprehensiveReport>(initialReport)
   const [loading, setLoading] = useState(false)
   const [startDate, setStartDate] = useState(new Date(initialReport.startDate).toISOString().split('T')[0])
   const [endDate, setEndDate] = useState(new Date(initialReport.endDate).toISOString().split('T')[0])
+  const epc = eggsPerCrate > 0 ? eggsPerCrate : 30
+  const eggsCollected = report.kpis.totalEggsCollected
+  const eggsCollectedLabel = (() => {
+    const crates = Math.floor(eggsCollected / epc)
+    const rem = eggsCollected % epc
+    const crateLabel = crates === 1 ? 'crate' : 'crates'
+    return rem > 0 ? `${crates} ${crateLabel} / ${rem} eggs` : `${crates} ${crateLabel}`
+  })()
 
   const applyPreset = async (days: number) => {
     const end = new Date()
@@ -208,7 +218,7 @@ export function ReportsClient({
         <MetricCard title="Revenue" value={formatCurrency(report.kpis.totalRevenue, 'GHS')} sub="Period total" icon={TrendingUp} tone="sky" />
         <MetricCard title="Expenses" value={formatCurrency(report.kpis.totalExpense, 'GHS')} sub="Period total" icon={TrendingDown} tone="orange" />
         <MetricCard title="Feed conversion" value={report.kpis.averageFcr.toFixed(2)} sub="Average FCR" icon={Wheat} tone="amber" />
-        <MetricCard title="Eggs collected" value={report.kpis.totalEggsCollected.toLocaleString()} sub="Production" icon={Egg} tone="blue" />
+        <MetricCard title="Eggs collected" value={eggsCollectedLabel} sub={`${eggsCollected.toLocaleString()} eggs`} icon={Egg} tone="blue" />
         <MetricCard
           title="Mortality rate"
           value={`${report.kpis.mortalityRate.toFixed(2)}%`}

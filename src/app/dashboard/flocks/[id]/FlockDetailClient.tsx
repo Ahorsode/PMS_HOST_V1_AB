@@ -52,9 +52,10 @@ const SalesTrendPanel = dynamic(() => import('./FlockCharts').then((mod) => mod.
 
 interface FlockDetailClientProps {
   data: any
+  eggsPerCrate?: number
 }
 
-export const FlockDetailClient = ({ data }: FlockDetailClientProps) => {
+export const FlockDetailClient = ({ data, eggsPerCrate = 30 }: FlockDetailClientProps) => {
   const { batch, logs, metrics, finance, series, forms } = data
   const showEggs = metrics.isLayer || metrics.totalEggs > 0
   const showSales = finance.canViewFinance && (series.salesDaily.length > 0 || finance.totalRevenue > 0)
@@ -146,11 +147,11 @@ export const FlockDetailClient = ({ data }: FlockDetailClientProps) => {
             monthly={series.financeMonthly}
             locked={!finance.canViewFinance}
           />
-          {showEggs ? <EggTrendPanel data={series.eggDaily} /> : null}
+          {showEggs ? <EggTrendPanel data={series.eggDaily} eggsPerCrate={eggsPerCrate} /> : null}
           <MortalityTrendPanel data={series.mortalityDaily} />
           {showSales ? <SalesTrendPanel data={series.salesDaily} /> : null}
 
-          <ActivityTimeline logs={logs} />
+          <ActivityTimeline logs={logs} eggsPerCrate={eggsPerCrate} />
         </div>
 
         {/* Sidebar column */}
@@ -201,7 +202,8 @@ export const FlockDetailClient = ({ data }: FlockDetailClientProps) => {
   )
 }
 
-function ActivityTimeline({ logs }: { logs: any }) {
+function ActivityTimeline({ logs, eggsPerCrate = 30 }: { logs: any; eggsPerCrate?: number }) {
+  const epc = eggsPerCrate > 0 ? eggsPerCrate : 30
   const items = [
     ...logs.feedingLogs.map((l: any) => ({ ...l, _type: 'FEED' })),
     ...logs.mortalityRecords.map((m: any) => ({ ...m, _type: 'MORTALITY' })),
@@ -210,6 +212,15 @@ function ActivityTimeline({ logs }: { logs: any }) {
   ]
     .sort((a, b) => new Date(b.logDate).getTime() - new Date(a.logDate).getTime())
     .slice(0, 15)
+
+  const formatEggLine = (eggs: number) => {
+    const crates = Math.floor(eggs / epc)
+    const rem = eggs % epc
+    const crateLabel = crates === 1 ? 'crate' : 'crates'
+    return rem > 0
+      ? `Collected ${crates} ${crateLabel} / ${rem} eggs`
+      : `Collected ${crates} ${crateLabel}`
+  }
 
   return (
     <ChartCard title="Activity Timeline" icon={Clock} iconClass="text-blue-400">
@@ -241,7 +252,7 @@ function ActivityTimeline({ logs }: { logs: any }) {
                   <span className="text-sm font-bold text-white">
                     {item._type === 'FEED' ? `Logged ${item.amountConsumed} bags consumption` : null}
                     {item._type === 'MORTALITY' ? `Recorded ${item.count} ${item.type === 'SICK' ? 'sick' : 'deaths'}` : null}
-                    {item._type === 'EGGS' ? `Collected ${item.eggsCollected} eggs` : null}
+                    {item._type === 'EGGS' ? formatEggLine(Number(item.eggsCollected || 0)) : null}
                     {item._type === 'WEIGHT' ? `Average weight: ${item.averageWeight}kg` : null}
                   </span>
                 </div>
