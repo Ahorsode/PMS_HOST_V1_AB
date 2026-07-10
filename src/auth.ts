@@ -191,18 +191,35 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         identifier: { label: "Email or Phone", type: "text" },
         password: { label: "Password", type: "password" }
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         if (!credentials?.identifier || !credentials?.password) return null;
         
+        // ── Retrieve IP address for rate-limiting ─────────────────────────
+        let ip = 'unknown';
+        try {
+          if (req && req.headers) {
+            if (typeof (req.headers as any).get === 'function') {
+              ip = (req.headers as any).get('x-real-ip') || (req.headers as any).get('x-forwarded-for')?.split(',').at(-1)?.trim() || 'unknown';
+            } else if (typeof req.headers === 'object') {
+              const headersMap = req.headers as any;
+              ip = headersMap['x-real-ip'] || headersMap['x-forwarded-for']?.split(',').at(-1)?.trim() || 'unknown';
+            }
+          } else {
+            const { headers } = await import('next/headers');
+            const reqHeaders = await headers();
+            ip = reqHeaders.get('x-real-ip') || reqHeaders.get('x-forwarded-for')?.split(',').at(-1)?.trim() || 'unknown';
+          }
+        } catch (e) {
+          console.error('[auth] failed to retrieve client IP:', e);
+        }
+
         // ── Rate-limit check (brute-force protection) ─────────────────────
-        const ip = (credentials as any).__ip as string | undefined;
         const rl = await checkRateLimit({
           policy: 'auth.signin',
-          ip: ip ?? 'unknown',
+          ip: ip,
         });
         if (!rl.ok) {
           console.warn('[auth] credentials signin rate-limited', { ip });
-          // Return null so NextAuth shows an error — the redirect will hit /auth-error
           return null;
         }
         // ─────────────────────────────────────────────────────────────────

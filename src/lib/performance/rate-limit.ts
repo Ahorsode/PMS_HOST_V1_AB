@@ -179,6 +179,11 @@ export async function checkRateLimit(input: RateLimitInput): Promise<RateLimitRe
 
   if (!limiter) {
     if (process.env.NODE_ENV === "production") {
+      const hasConfig = !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
+      if (!hasConfig) {
+        console.warn("[rate-limit] Upstash Redis environment variables are missing in production. Bypassing rate limit check to prevent application lockout.");
+        return allowResult(input, policy, key);
+      }
       return productionFallbackResult(input, key, policy);
     }
 
