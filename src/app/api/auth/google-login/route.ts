@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { OAuth2Client } from "google-auth-library";
 import prisma from "@/lib/db";
 import { encode } from "next-auth/jwt";
-import { acceptPendingInvitationForUser, recordUserSession } from "@/lib/auth-utils";
+import { completeGoogleSignIn, recordUserSession } from "@/lib/auth-utils";
 import { checkRateLimit, getRateLimitIp, rateLimitHeaders } from "@/lib/performance/rate-limit";
 
 const client = new OAuth2Client(process.env.AUTH_GOOGLE_ID);
@@ -70,7 +70,7 @@ export async function POST(req: Request) {
       );
     }
 
-    await acceptPendingInvitationForUser(existingUser.id);
+    await completeGoogleSignIn(existingUser.id);
 
     const user = await prisma.user.update({
       where: { id: existingUser.id },

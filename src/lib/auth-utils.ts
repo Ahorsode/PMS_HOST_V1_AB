@@ -39,7 +39,7 @@ export async function acceptPendingInvitationForUser(userId: string) {
   if (!user) return null
 
   const orConditions: Array<{ email: string } | { phoneNumber: string }> = []
-  if (user.email) orConditions.push({ email: user.email })
+  if (user.email) orConditions.push({ email: user.email.toLowerCase().trim() })
   if (user.phoneNumber) orConditions.push({ phoneNumber: user.phoneNumber })
   if (orConditions.length === 0) return null
 
@@ -81,6 +81,19 @@ export async function acceptPendingInvitationForUser(userId: string) {
   })
 
   return invitation.farmId
+}
+
+/**
+ * Links Google OAuth to invited workers and clears the placeholder-password flag.
+ * Safe to call multiple times during the same login.
+ */
+export async function completeGoogleSignIn(userId: string) {
+  const acceptedFarmId = await acceptPendingInvitationForUser(userId)
+  await prisma.user.update({
+    where: { id: userId },
+    data: { mustChangePassword: false },
+  })
+  return acceptedFarmId
 }
 
 export const getAuthContext = cache(async () => {

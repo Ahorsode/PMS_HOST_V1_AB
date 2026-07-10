@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   encode: vi.fn(),
   recordUserSession: vi.fn(),
   acceptPendingInvitationForUser: vi.fn(),
+  completeGoogleSignIn: vi.fn(),
 }));
 
 vi.mock("google-auth-library", () => ({
@@ -40,6 +41,7 @@ vi.mock("next-auth/jwt", () => ({
 vi.mock("@/lib/auth-utils", () => ({
   recordUserSession: mocks.recordUserSession,
   acceptPendingInvitationForUser: mocks.acceptPendingInvitationForUser,
+  completeGoogleSignIn: mocks.completeGoogleSignIn,
 }));
 
 vi.mock("@/lib/performance/rate-limit", async () => {
@@ -119,7 +121,7 @@ describe("google-login route", () => {
       sessionVersion: 3,
     });
     mocks.encode.mockResolvedValue("signed-session-token");
-    mocks.acceptPendingInvitationForUser.mockResolvedValue("farm-1");
+    mocks.completeGoogleSignIn.mockResolvedValue("farm-1");
     const { POST } = await import("./route");
 
     const response = await POST(request());
@@ -144,6 +146,6 @@ describe("google-login route", () => {
       },
     });
     expect(mocks.recordUserSession).toHaveBeenCalledWith("user-1", "Mobile");
-    expect(mocks.acceptPendingInvitationForUser).toHaveBeenCalledWith("user-1");
+    expect(mocks.completeGoogleSignIn).toHaveBeenCalledWith("user-1");
   });
 });

@@ -84,7 +84,7 @@ describe('Google sign-in for email-invited workers', () => {
     const { acceptPendingInvitationForUser } = await import('@/lib/auth-utils')
 
     mocks.userFindUnique.mockResolvedValue({
-      email: 'worker@example.com',
+      email: 'Worker@Example.com',
       phoneNumber: null,
     })
     mocks.invitationFindFirst.mockResolvedValue({
@@ -104,7 +104,31 @@ describe('Google sign-in for email-invited workers', () => {
 
     await acceptPendingInvitationForUser('user-1')
 
+    expect(mocks.invitationFindFirst).toHaveBeenCalledWith({
+      where: {
+        OR: [{ email: 'worker@example.com' }],
+        status: 'PENDING',
+      },
+    })
     expect(mocks.farmMemberCreate).not.toHaveBeenCalled()
     expect(mocks.invitationUpdate).toHaveBeenCalled()
+  })
+
+  it('clears mustChangePassword when completing Google sign-in', async () => {
+    const { completeGoogleSignIn } = await import('@/lib/auth-utils')
+
+    mocks.userFindUnique.mockResolvedValue({
+      email: 'worker@example.com',
+      phoneNumber: null,
+    })
+    mocks.invitationFindFirst.mockResolvedValue(null)
+    mocks.userUpdate.mockResolvedValue({})
+
+    await completeGoogleSignIn('user-1')
+
+    expect(mocks.userUpdate).toHaveBeenCalledWith({
+      where: { id: 'user-1' },
+      data: { mustChangePassword: false },
+    })
   })
 })

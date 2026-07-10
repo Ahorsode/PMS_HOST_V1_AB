@@ -8,6 +8,7 @@ import prisma from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import {
   acceptPendingInvitationForUser,
+  completeGoogleSignIn,
   findUserByLoginIdentifier,
   normalizePhoneNumber,
   recordUserSession,
@@ -43,12 +44,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   session: { strategy: "jwt" },
   events: {
     async createUser({ user }) {
+      if (!user.id) return
+
       if (user.name) {
         const { firstname, surname, middleName } = splitName(user.name);
         await prisma.user.update({
           where: { id: user.id },
           data: { firstname, surname, middleName }
         });
+      }
+
+      // Brand-new Google accounts may still need a pending email invite linked.
+      if (user.email) {
+        try {
+          await acceptPendingInvitationForUser(user.id);
+        } catch (err) {
+          console.error('[auth] createUser invitation accept failed', {
+            userId: user.id,
+            err,
+          });
+        }
       }
     },
     async signIn({ user, account }) {
@@ -62,6 +77,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             err,
           });
         }
+
+        if (account?.provider === 'google') {
+          try {
+            await completeGoogleSignIn(user.id);
+          } catch (err) {
+            console.error('[auth] Google post-login setup failed', {
+              userId: user.id,
+              err,
+            });
+          }
+        }
+
         console.log('[auth] signIn success', {
           userId: user.id,
           provider: account?.provider ?? 'credentials',
@@ -71,19 +98,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   callbacks: {
     ...authConfig.callbacks,
-    async signIn({ user, account }) {
-      if (account?.provider === 'google' && user.id) {
-        await acceptPendingInvitationForUser(user.id);
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { mustChangePassword: false },
-        });
-      }
+    // Never block OAuth here — DB work runs after auth in jwt/events handlers.
+    async signIn() {
       return true;
     },
     async jwt({ token, user, account, trigger, session }) {
       // On login, hydrate token from the database so OAuth sessions get farm access.
       if (user?.id) {
+        let acceptedFarmId: string | null | undefined
+        if (account?.provider === 'google') {
+          try {
+            acceptedFarmId = await completeGoogleSignIn(user.id);
+          } catch (err) {
+            console.error('[auth] Google JWT setup failed', {
+              userId: user.id,
+              err,
+            });
+          }
+        }
+
         const dbUser = await prisma.user.findUnique({
           where: { id: user.id },
           select: {
@@ -103,7 +136,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           ? false
           : (dbUser?.mustChangePassword ?? false);
         token.sessionVersion = dbUser?.sessionVersion ?? 1;
-        token.activeFarmId = membership?.farmId ?? undefined;
+        token.activeFarmId = membership?.farmId ?? acceptedFarmId ?? undefined;
         token.securityInvalidated = false;
         token.securityNotice = null;
       }
@@ -183,6 +216,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         clientSecret: process.env.AUTH_GOOGLE_SECRET,
         // Invited workers are pre-created by email before they link Google.
         allowDangerousEmailAccountLinking: true,
+        profile(profile) {
+          return {
+            id: profile.sub,
+            name: profile.name,
+            email: profile.email?.toLowerCase().trim() ?? profile.email,
+            image: profile.picture,
+          };
+        },
       })
     ] : []),
     Credentials({
