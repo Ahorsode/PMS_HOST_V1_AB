@@ -24,7 +24,7 @@ export default async function CompareAnalyticsPage() {
   const data = JSON.parse(JSON.stringify(reports));
 
   return (
-    <div className="mx-auto max-w-7xl px-3 py-7">
+    <div className="mx-auto max-w-7xl px-0 md:px-3 pt-2 pb-7 md:py-7">
       <BatchComparison batches={data.batches} canViewFinance={data.canViewFinance} />
     </div>
   );

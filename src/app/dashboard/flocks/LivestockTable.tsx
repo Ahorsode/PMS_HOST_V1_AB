@@ -1,7 +1,5 @@
-'use client';
-
-import React, { useMemo, useState } from 'react';
-import { Bird, Activity, Info, Zap, Waves, LayoutGrid, Archive, Layers } from 'lucide-react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
+import { Bird, Activity, Info, Zap, Waves, LayoutGrid, Archive, Layers, ChevronLeft, ChevronRight } from 'lucide-react';
 import { FlockRowActions } from './FlockActions';
 import { formatLivestockType } from '@/lib/utils/growth-utils';
 import { WorkerStamp } from '@/components/ui/WorkerStamp';
@@ -38,6 +36,17 @@ export function LivestockTable({ initialBatches, houses, isolationRooms, canEdit
   const [speciesFilter, setSpeciesFilter] = useState<SpeciesFilter>('ALL')
   const [lifecycleFilter, setLifecycleFilter] = useState<LifecycleFilter>('ACTIVE')
 
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
+
+  const checkScroll = () => {
+    const el = scrollRef.current
+    if (!el) return
+    setCanScrollLeft(el.scrollLeft > 5)
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 5)
+  }
+
   const counts = useMemo(() => {
     const active = initialBatches.filter(isActiveBatch).length
     const inactive = initialBatches.filter(isInactiveBatch).length
@@ -56,6 +65,12 @@ export function LivestockTable({ initialBatches, houses, isolationRooms, canEdit
     if (speciesFilter === 'SHEEP') return batch.type === 'SHEEP_GOAT'
     return batch.type === 'OTHER'
   })
+
+  useEffect(() => {
+    checkScroll()
+    window.addEventListener('resize', checkScroll)
+    return () => window.removeEventListener('resize', checkScroll)
+  }, [filteredBatches])
 
   const TabButton = ({
     active,
@@ -99,7 +114,7 @@ export function LivestockTable({ initialBatches, houses, isolationRooms, canEdit
           <TabButton
             active={lifecycleFilter === 'INACTIVE'}
             onClick={() => setLifecycleFilter('INACTIVE')}
-            label="Inactive / Closed"
+            label="Inactive"
             icon={Archive}
             count={counts.inactive}
           />
@@ -122,8 +137,22 @@ export function LivestockTable({ initialBatches, houses, isolationRooms, canEdit
         </div>
       </div>
 
-      <div className="bg-white rounded-none border-x-0 shadow-none md:rounded-md md:shadow-xl md:shadow-gray-200/50 md:border md:border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto custom-scrollbar">
+      <div className="relative bg-white rounded-none border-x-0 shadow-none md:rounded-md md:shadow-xl md:shadow-gray-200/50 md:border md:border-gray-100 overflow-hidden">
+        {canScrollLeft && (
+          <div className="md:hidden absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-white via-white/70 to-transparent pointer-events-none flex items-center justify-start pl-1 z-10">
+            <ChevronLeft className="w-4 h-4 text-emerald-600 animate-pulse" />
+          </div>
+        )}
+        {canScrollRight && (
+          <div className="md:hidden absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white via-white/70 to-transparent pointer-events-none flex items-center justify-end pr-1 z-10">
+            <ChevronRight className="w-4 h-4 text-emerald-600 animate-pulse" />
+          </div>
+        )}
+        <div 
+          ref={scrollRef}
+          onScroll={checkScroll}
+          className="overflow-x-auto custom-scrollbar"
+        >
           <table className="min-w-full divide-y divide-gray-100">
             <thead>
               <tr className="bg-gray-50/50">

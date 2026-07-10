@@ -63,7 +63,7 @@ export const SidebarWrapper = ({
         isIndeptPage ? "pl-0" : "md:pl-32"
       )}>
         <div className={cn(
-          "flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar pt-5 px-3 md:px-8",
+          "flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar pt-2 md:pt-5 px-0 md:px-8",
           isIndeptPage ? "pb-6 md:pb-12" : "pb-36 md:pb-12"
         )}>
           {isIndeptPage ? (

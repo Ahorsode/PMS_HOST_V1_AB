@@ -33,7 +33,7 @@ export default async function FlocksPage() {
   const isolationRooms = JSON.parse(JSON.stringify(rawIsolationRooms));
 
   return (
-    <div className="max-w-7xl mx-auto space-y-7 px-0 sm:px-3 py-7">
+    <div className="max-w-7xl mx-auto space-y-7 px-0 md:px-3 pt-2 pb-7 md:py-7">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-7 rounded-lg shadow-sm border border-gray-100 gap-4">
         <div>
           <h1 className="text-2xl md:text-4xl font-bold text-gray-900 tracking-normal">Livestock <span className="text-emerald-600 italic tracking-normal">Management</span></h1>

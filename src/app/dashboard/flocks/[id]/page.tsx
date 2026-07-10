@@ -18,7 +18,7 @@ export default async function FlockDetailPage({ params }: { params: Promise<{ id
   const { batch } = data;
 
   return (
-    <div className="max-w-7xl mx-auto px-3 py-7 relative">
+    <div className="max-w-7xl mx-auto px-0 md:px-3 pt-2 pb-7 md:py-7 relative">
       <Breadcrumbs
         items={[
           { label: 'Livestock', href: '/dashboard/flocks' },

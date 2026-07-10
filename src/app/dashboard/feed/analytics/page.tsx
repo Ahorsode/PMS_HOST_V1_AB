@@ -12,7 +12,7 @@ export default async function FeedAnalyticsPage() {
   const lowStock = feedInventory.filter((item: any) => isLowStock(item));
 
   return (
-    <div className="max-w-7xl mx-auto px-3 py-7 space-y-7">
+    <div className="max-w-7xl mx-auto px-0 md:px-3 pt-2 pb-7 md:py-7 space-y-7">
       <Breadcrumbs items={[{ label: 'Feed & Inventory', href: '/dashboard/feed' }, { label: 'Inventory Intelligence' }]} />
       
       <div className="flex justify-between items-center bg-white/10 backdrop-blur-md p-7 rounded-lg border border-white/10 relative overflow-hidden">

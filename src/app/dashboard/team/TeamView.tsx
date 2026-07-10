@@ -230,7 +230,7 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-7 px-3 py-7 relative">
+    <div className="max-w-7xl mx-auto space-y-7 px-0 md:px-3 pt-2 pb-7 md:py-7 relative">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white/10 backdrop-blur-md p-7 rounded-lg border border-white/10 relative overflow-hidden gap-4">
         <div className="absolute top-0 right-0 p-7 opacity-5">
            <Users className="w-32 h-32 text-emerald-400" />

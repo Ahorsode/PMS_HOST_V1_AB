@@ -13,7 +13,7 @@ export default async function InventoryDetailPage({ params }: { params: Promise<
   if (!data) notFound()
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-4 md:p-8">
+    <div className="mx-auto max-w-5xl space-y-6 px-0 pt-2 pb-7 md:p-8">
       <div>
         <h1 className="text-3xl font-black tracking-tight text-white">
           {data.item.itemName}

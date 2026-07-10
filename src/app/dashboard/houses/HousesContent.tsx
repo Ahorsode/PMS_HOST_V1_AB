@@ -90,7 +90,7 @@ export default function HousesPage({ houses, canEdit = true, openAddOnLoad = fal
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-5 px-3 py-7">
+    <div className="max-w-7xl mx-auto space-y-5 px-0 md:px-3 pt-2 pb-7 md:py-7">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-5 rounded-md shadow-sm border border-gray-100 gap-4">
         <div>
           <h2 className="text-3xl font-extrabold text-gray-900 tracking-normal">House Management</h2>

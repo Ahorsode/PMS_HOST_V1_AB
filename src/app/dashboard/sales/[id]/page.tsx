@@ -13,7 +13,7 @@ export default async function SaleDetailPage({ params }: { params: Promise<{ id:
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-3 py-7 relative">
+    <div className="max-w-7xl mx-auto px-0 md:px-3 pt-2 pb-7 md:py-7 relative">
       <Breadcrumbs 
         items={[
           { label: 'Sales & Finance', href: '/dashboard/sales' },

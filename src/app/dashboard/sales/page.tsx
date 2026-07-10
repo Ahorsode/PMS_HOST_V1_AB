@@ -232,7 +232,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
   ];
 
   return (
-    <div className="max-w-[1600px] mx-auto space-y-7 px-3 md:px-6 py-5 md:py-10 relative">
+    <div className="max-w-[1600px] mx-auto space-y-7 px-0 md:px-6 pt-2 pb-5 md:py-10 relative">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
         <div>
           <h1 className="text-4xl font-bold text-white tracking-normal">Commercial <span className="text-emerald-400 italic">Hub</span></h1>

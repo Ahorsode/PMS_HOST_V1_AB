@@ -281,7 +281,7 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
   }
 
   return (
-    <div className="min-h-screen p-6 md:p-8 space-y-6">
+    <div className="min-h-screen px-0 pt-2 pb-7 md:p-8 space-y-6">
       <Link
         href="/dashboard/settings?tab=farm"
         className="inline-flex items-center gap-2 text-sm font-bold text-white/60 hover:text-emerald-400 transition-colors"

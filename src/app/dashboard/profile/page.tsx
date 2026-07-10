@@ -23,7 +23,7 @@ export default async function ProfilePage() {
   const farm = membership?.farm;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-7 px-3 py-11">
+    <div className="max-w-4xl mx-auto space-y-7 px-0 md:px-3 pt-2 pb-11 md:py-11">
       {/* Hero card */}
       <div className="relative group">
          <div className="absolute -inset-1 bg-gradient-to-r from-emerald-600 to-amber-500 rounded-lg blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>

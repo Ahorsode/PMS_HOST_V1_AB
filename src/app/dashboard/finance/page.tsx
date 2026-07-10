@@ -52,7 +52,7 @@ export default async function FinancePage() {
   const transactions = await getFinancialTransactions();
 
   return (
-    <div className="p-5 space-y-5 max-w-7xl mx-auto animate-in fade-in duration-700">
+    <div className="px-0 pt-2 pb-5 md:p-5 space-y-5 max-w-7xl mx-auto animate-in fade-in duration-700">
       {canEdit && missingCostBatches.length > 0 && (
         <MissingCostPrompt batches={missingCostBatches} />
       )}

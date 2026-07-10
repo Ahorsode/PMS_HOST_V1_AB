@@ -25,7 +25,7 @@ export default async function QuarantinePage() {
   const activeBatches = serializedBatches.filter((b: any) => b.status === 'active');
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 px-3 py-7">
+    <div className="max-w-7xl mx-auto space-y-6 px-0 md:px-3 pt-2 pb-7 md:py-7">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-[#0B1120] p-6 rounded-xl shadow-lg border border-gray-800 gap-4">
         <div>
           <h2 className="text-3xl font-extrabold text-white tracking-normal uppercase italic flex items-center gap-3">

@@ -202,7 +202,7 @@ export default function LicenseUpgradeClient({
   const enterprisePricing = getTermPricing(selectedMonths, 950);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8 px-3 py-10">
+    <div className="mx-auto max-w-6xl space-y-8 px-0 md:px-3 pt-2 pb-7 md:py-10">
       <section className="rounded-lg border border-white/10 bg-[#0f1115]/80 p-6 shadow-2xl shadow-black/25 backdrop-blur-2xl">
         <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-300/80">Your Current Plan</p>
         <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">

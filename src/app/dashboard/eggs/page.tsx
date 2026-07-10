@@ -49,11 +49,11 @@ export default async function EggsPage({ searchParams }: { searchParams: Promise
     .reduce((acc: number, log: any) => acc + log.eggsCollected, 0);
 
   return (
-    <div className="w-full max-w-none flex flex-col gap-5 px-3 py-7 min-h-[calc(100dvh-4rem)]">
-      <div className="flex justify-between items-center bg-white p-5 rounded-md shadow-sm border border-gray-100 shrink-0">
+    <div className="w-full max-w-none flex flex-col gap-5 px-0 md:px-3 pt-2 pb-7 md:py-7 min-h-[calc(100dvh-4rem)]">
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center bg-white p-3 md:p-5 rounded-md shadow-sm border border-gray-100 shrink-0">
         <div>
           <h2 className="text-3xl font-extrabold text-gray-900 tracking-normal">Egg Production</h2>
-          <p className="text-gray-500 mt-1">Track daily egg yields across your layer flocks.</p>
+          <p className="text-gray-500 mt-1 text-sm md:text-base">Track daily egg yields across your layer flocks.</p>
         </div>
         <EggActionsHeader batches={layerBatches} canEdit={canEdit} initialOpen={resolvedParams.quick === 'log'} {...eggLoggingSettings} />
       </div>
@@ -61,10 +61,10 @@ export default async function EggsPage({ searchParams }: { searchParams: Promise
       <div className="grid grid-cols-1 xl:grid-cols-4 gap-5 items-start shrink-0">
         <div className="xl:col-span-3">
           <Card className="rounded-md border-none shadow-xl shadow-gray-200/50">
-            <CardHeader className="bg-gray-50/50 rounded-t-2xl border-b border-gray-100">
-              <CardTitle className="text-gray-800">Active Layer Flocks</CardTitle>
+            <CardHeader className="bg-gray-50/50 rounded-t-2xl border-b border-gray-100 p-3 md:p-5">
+              <CardTitle className="text-gray-800 text-lg md:text-xl">Active Layer Flocks</CardTitle>
             </CardHeader>
-            <CardContent className="p-5">
+            <CardContent className="p-3 md:p-5">
               {layerBatches.length === 0 ? (
                 <div className="py-11 text-center bg-gray-50/50 rounded-md border-2 border-dashed border-gray-200">
                   <p className="text-gray-400 font-medium">No active layer batches found.</p>
@@ -98,11 +98,11 @@ export default async function EggsPage({ searchParams }: { searchParams: Promise
 
         <div>
           <Card className="rounded-md border-none shadow-xl shadow-gray-200/50 overflow-hidden">
-            <CardHeader className="bg-amber-600 text-white p-5">
-              <CardTitle className="text-white text-lg">Production Stats</CardTitle>
+            <CardHeader className="bg-amber-600 text-white p-3 md:p-5">
+              <CardTitle className="text-white text-base md:text-lg">Production Stats</CardTitle>
             </CardHeader>
-            <CardContent className="p-5">
-              <div className="space-y-5">
+            <CardContent className="p-3 md:p-5">
+              <div className="space-y-2 md:space-y-5">
                 <div className="bg-gray-50 p-3 rounded-md border border-gray-100">
                   <div className="text-sm text-gray-500 font-medium mb-1">Today&apos;s Yield</div>
                   <div className="text-3xl font-extrabold text-gray-900">{todayTotal.toLocaleString()}</div>

@@ -117,11 +117,11 @@ export function EggProductionHistoryPanel({
             <h3 className="font-bold text-gray-800">Egg Inventory & History</h3>
             <p className="text-xs text-gray-500 mt-1">FIFO: oldest production logs sell first.</p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-nowrap gap-2 overflow-x-auto custom-scrollbar w-full sm:w-auto pb-1 sm:pb-0">
             <button
               type="button"
               onClick={() => setTab('production')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide shrink-0 ${
                 tab === 'production' ? 'bg-emerald-600 text-white' : 'bg-white border border-gray-200 text-gray-600'
               }`}
             >
@@ -130,7 +130,7 @@ export function EggProductionHistoryPanel({
             <button
               type="button"
               onClick={() => setTab('sales')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide shrink-0 ${
                 tab === 'sales' ? 'bg-emerald-600 text-white' : 'bg-white border border-gray-200 text-gray-600'
               }`}
             >
@@ -138,28 +138,28 @@ export function EggProductionHistoryPanel({
             </button>
             <Link
               href="/dashboard/sales"
-              className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide bg-white border border-gray-200 text-gray-600 hover:border-emerald-300"
+              className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide bg-white border border-gray-200 text-gray-600 hover:border-emerald-300 shrink-0"
             >
               Open Sales Hub
             </Link>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div className="rounded-lg border border-emerald-100 bg-emerald-50/60 px-4 py-3">
-            <div className="text-[10px] font-bold uppercase tracking-widest text-emerald-700">Active Stock</div>
-            <div className="text-2xl font-black text-emerald-800">{summary.totalRemaining.toLocaleString()} eggs</div>
-            <div className="text-xs font-bold text-emerald-700 mt-1">{summary.activePct}% of usable production</div>
+        <div className="grid grid-cols-3 gap-1.5 sm:gap-3">
+          <div className="rounded-lg border border-emerald-100 bg-emerald-50/60 px-1.5 py-2 sm:px-4 sm:py-3">
+            <div className="text-[8px] sm:text-[10px] font-bold uppercase tracking-wider sm:tracking-widest text-emerald-700 truncate">Active Stock</div>
+            <div className="text-xs sm:text-2xl font-black text-emerald-800 truncate">{summary.totalRemaining.toLocaleString()} eggs</div>
+            <div className="text-[9px] sm:text-xs font-bold text-emerald-700 mt-1 truncate">{summary.activePct}% of usable</div>
           </div>
-          <div className="rounded-lg border border-amber-100 bg-amber-50/60 px-4 py-3">
-            <div className="text-[10px] font-bold uppercase tracking-widest text-amber-700">Sold (FIFO)</div>
-            <div className="text-2xl font-black text-amber-800">{summary.totalSold.toLocaleString()} eggs</div>
-            <div className="text-xs font-bold text-amber-700 mt-1">{summary.soldPct}% of usable production</div>
+          <div className="rounded-lg border border-amber-100 bg-amber-50/60 px-1.5 py-2 sm:px-4 sm:py-3">
+            <div className="text-[8px] sm:text-[10px] font-bold uppercase tracking-wider sm:tracking-widest text-amber-700 truncate">Sold (FIFO)</div>
+            <div className="text-xs sm:text-2xl font-black text-amber-800 truncate">{summary.totalSold.toLocaleString()} eggs</div>
+            <div className="text-[9px] sm:text-xs font-bold text-amber-700 mt-1 truncate">{summary.soldPct}% of usable</div>
           </div>
-          <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
-            <div className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Usable Logged</div>
-            <div className="text-2xl font-black text-gray-900">{summary.totalUsable.toLocaleString()} eggs</div>
-            <div className="text-xs font-bold text-gray-500 mt-1">Collected minus unusable</div>
+          <div className="rounded-lg border border-gray-200 bg-gray-50 px-1.5 py-2 sm:px-4 sm:py-3">
+            <div className="text-[8px] sm:text-[10px] font-bold uppercase tracking-wider sm:tracking-widest text-gray-500 truncate">Usable Logged</div>
+            <div className="text-xs sm:text-2xl font-black text-gray-900 truncate">{summary.totalUsable.toLocaleString()} eggs</div>
+            <div className="text-[9px] sm:text-xs font-bold text-gray-500 mt-1 truncate">Usable logs</div>
           </div>
         </div>
 

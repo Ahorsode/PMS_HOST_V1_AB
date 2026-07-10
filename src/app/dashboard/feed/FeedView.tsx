@@ -89,7 +89,7 @@ export default function FeedDashboard({
   const feedInventory = inventory.filter((item) => isFeedCategory(item.category))
 
   return (
-    <div className="p-5 space-y-7 animate-in fade-in duration-700">
+    <div className="px-0 pt-2 pb-7 md:p-5 space-y-7 animate-in fade-in duration-700">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
         <div>
           <h1 className="text-4xl font-bold text-white tracking-normal">Feed Management</h1>

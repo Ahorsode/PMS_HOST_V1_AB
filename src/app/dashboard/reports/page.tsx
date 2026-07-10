@@ -53,7 +53,7 @@ export default async function ReportsPage() {
   }
 
   return (
-    <div className="relative mx-auto max-w-7xl animate-in fade-in px-3 py-7 duration-700">
+    <div className="relative mx-auto max-w-7xl animate-in fade-in px-0 md:px-3 pt-2 pb-7 md:py-7 duration-700">
       <ReportsClient initialReport={report} batches={batches} onDateChange={fetchReport} />
     </div>
   )
