@@ -222,6 +222,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             name: profile.name,
             email: profile.email?.toLowerCase().trim() ?? profile.email,
             image: profile.picture,
+            role: 'OWNER',
           };
         },
       })
