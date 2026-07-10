@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { Bird, Activity, Info, Zap, Waves, LayoutGrid, Archive, Layers, ChevronLeft, ChevronRight } from 'lucide-react';
 import { FlockRowActions } from './FlockActions';
