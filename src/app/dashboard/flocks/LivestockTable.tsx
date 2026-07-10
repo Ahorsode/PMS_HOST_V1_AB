@@ -73,7 +73,7 @@ export function LivestockTable({ initialBatches, houses, isolationRooms, canEdit
     <button
       onClick={onClick}
       className={cn(
-        'flex items-center gap-2 px-5 py-2 rounded-md font-bold transition-all',
+        'flex items-center gap-2 px-5 py-2 rounded-md font-bold transition-all shrink-0',
         active
           ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/30'
           : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
@@ -86,9 +86,9 @@ export function LivestockTable({ initialBatches, houses, isolationRooms, canEdit
   )
 
   return (
-    <div className="space-y-4 md:space-y-5">
+    <div className="space-y-4 md:space-y-5 pb-16 md:pb-0">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-wrap gap-2 bg-white p-2 rounded-md border border-gray-100 shadow-sm w-fit">
+        <div className="flex flex-nowrap md:flex-wrap gap-2 bg-white px-3 py-2 md:p-2 rounded-md border border-gray-100 shadow-sm w-full md:w-fit overflow-x-auto custom-scrollbar">
           <TabButton
             active={lifecycleFilter === 'ACTIVE'}
             onClick={() => setLifecycleFilter('ACTIVE')}
@@ -112,7 +112,7 @@ export function LivestockTable({ initialBatches, houses, isolationRooms, canEdit
           />
         </div>
 
-        <div className="flex flex-wrap gap-2 bg-white p-2 rounded-md border border-gray-100 shadow-sm w-fit">
+        <div className="flex flex-nowrap md:flex-wrap gap-2 bg-white px-3 py-2 md:p-2 rounded-md border border-gray-100 shadow-sm w-full md:w-fit overflow-x-auto custom-scrollbar">
           <TabButton active={speciesFilter === 'ALL'} onClick={() => setSpeciesFilter('ALL')} label="All Species" icon={Info} />
           <TabButton active={speciesFilter === 'POULTRY'} onClick={() => setSpeciesFilter('POULTRY')} label="Poultry" icon={Bird} />
           <TabButton active={speciesFilter === 'CATTLE'} onClick={() => setSpeciesFilter('CATTLE')} label="Cattle" icon={Activity} />
@@ -122,7 +122,7 @@ export function LivestockTable({ initialBatches, houses, isolationRooms, canEdit
         </div>
       </div>
 
-      <div className="bg-white rounded-md shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-none border-x-0 shadow-none md:rounded-md md:shadow-xl md:shadow-gray-200/50 md:border md:border-gray-100 overflow-hidden">
         <div className="overflow-x-auto custom-scrollbar">
           <table className="min-w-full divide-y divide-gray-100">
             <thead>

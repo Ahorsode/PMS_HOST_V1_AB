@@ -94,17 +94,17 @@ export function WorkerDashboard({ stats, houses, permissions }: WorkerDashboardP
       </header>
 
       {quickActions.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
           {quickActions.map((action) => (
             <Link
               key={action.label}
               href={action.href}
-              className={`flex flex-col items-center justify-center gap-2 h-40 border rounded-lg transition-all duration-300 group ${action.className}`}
+              className={`flex flex-col items-center justify-center gap-1.5 md:gap-2 h-28 md:h-40 p-2 md:p-0 border rounded-lg transition-all duration-300 group ${action.className}`}
             >
-              <div className={`w-12 h-12 rounded-md flex items-center justify-center group-hover:scale-110 transition-transform ${action.iconClassName}`}>
+              <div className={`w-10 h-10 md:w-12 md:h-12 rounded-md flex items-center justify-center group-hover:scale-110 transition-transform ${action.iconClassName}`}>
                 {action.icon}
               </div>
-              <span className="text-white font-bold text-xs uppercase tracking-widest">{action.label}</span>
+              <span className="text-white font-bold text-[10px] md:text-xs uppercase tracking-normal md:tracking-widest text-center px-1">{action.label}</span>
             </Link>
           ))}
         </div>
