@@ -14,6 +14,7 @@ import {
   WORKER_PLACEHOLDER_PASSWORD,
 } from '@/lib/auth-utils';
 import { getCachedSessionVersion, setCachedSessionVersion } from '@/lib/performance/session-version-cache';
+import { checkRateLimit } from '@/lib/performance/rate-limit';
 
 const SECURITY_PERMISSION_UPDATE_MESSAGE = 'Your security permissions have been updated. Please sign in again to activate your new features.';
 
@@ -52,7 +53,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     async signIn({ user, account }) {
       if (user.id) {
-        await recordUserSession(user.id, 'Web');
+        try {
+          await recordUserSession(user.id, 'Web');
+        } catch (err) {
+          console.error('[auth] recordUserSession failed', {
+            userId: user.id,
+            provider: account?.provider,
+            err,
+          });
+        }
+        console.log('[auth] signIn success', {
+          userId: user.id,
+          provider: account?.provider ?? 'credentials',
+        });
       }
     }
   },
@@ -181,6 +194,19 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.identifier || !credentials?.password) return null;
         
+        // ── Rate-limit check (brute-force protection) ─────────────────────
+        const ip = (credentials as any).__ip as string | undefined;
+        const rl = await checkRateLimit({
+          policy: 'auth.signin',
+          ip: ip ?? 'unknown',
+        });
+        if (!rl.ok) {
+          console.warn('[auth] credentials signin rate-limited', { ip });
+          // Return null so NextAuth shows an error — the redirect will hit /auth-error
+          return null;
+        }
+        // ─────────────────────────────────────────────────────────────────
+
         let identifier = credentials.identifier as string;
         const password = credentials.password as string;
 
@@ -213,7 +239,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             isValid = true;
           }
 
-          if (!isValid) return null;
+          if (!isValid) {
+            console.warn('[auth] credentials signin failed: wrong password', {
+              identifier: identifier.includes('@') ? identifier : '[phone]',
+            });
+            return null;
+          }
 
           const acceptedFarmId = await acceptPendingInvitationForUser(user.id);
 
@@ -232,6 +263,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           }; 
         }
 
+        console.warn('[auth] credentials signin failed: user not found or no password', {
+          identifier: identifier.includes('@') ? identifier : '[phone]',
+        });
         return null;
       }
     }),
