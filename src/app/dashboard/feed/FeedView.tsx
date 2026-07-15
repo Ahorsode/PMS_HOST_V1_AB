@@ -15,6 +15,7 @@ import {
 import { FeedFormulationForm } from './FeedFormulationForm'
 import { FeedForm } from './FeedForm'
 import { FeedingHistoryPanel } from './FeedingHistoryPanel'
+import { Dialog } from '@/components/ui/Dialog'
 import type { FeedPageData } from '@/lib/actions/feed-page-actions'
 import { getFeedPageData, refreshFeedDynamicData } from '@/lib/actions/feed-page-actions'
 import { getReorderThreshold, isFeedCategory, isLowStock } from '@/lib/inventory/feed-categories'
@@ -115,24 +116,28 @@ export default function FeedDashboard({
         )}
       </header>
 
-      {showLogForm && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-3 pb-safe">
-          <div className="glass-pill rounded-lg p-5 w-full max-w-md max-h-[90dvh] overflow-y-auto custom-scrollbar pb-safe border border-white/10 bg-[#0f172a]">
-            <h2 className="text-xl font-bold text-white mb-4">Log Feeding</h2>
-            <FeedForm
-              batches={batches}
-              inventory={feedInventory}
-              formulations={formulations}
-              selectedFormulationId={selectedFormulation}
-              mode="create"
-              onClose={() => { setShowLogForm(false); setSelectedFormulation(undefined); }}
-              onSaved={refreshAfterLog}
-              onOptimisticLog={handleOptimisticFeedLog}
-              onOptimisticRollback={handleOptimisticFeedRollback}
-            />
-          </div>
-        </div>
-      )}
+      <Dialog
+        isOpen={showLogForm}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowLogForm(false)
+            setSelectedFormulation(undefined)
+          }
+        }}
+        title="Log Feeding"
+      >
+        <FeedForm
+          batches={batches}
+          inventory={feedInventory}
+          formulations={formulations}
+          selectedFormulationId={selectedFormulation}
+          mode="create"
+          onClose={() => { setShowLogForm(false); setSelectedFormulation(undefined); }}
+          onSaved={refreshAfterLog}
+          onOptimisticLog={handleOptimisticFeedLog}
+          onOptimisticRollback={handleOptimisticFeedRollback}
+        />
+      </Dialog>
 
       {showForm ? (
         <FeedFormulationForm 
