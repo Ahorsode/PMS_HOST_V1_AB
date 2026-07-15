@@ -140,11 +140,16 @@ export default async function DashboardLayout({
       })
     : dbUser.role;
 
+  const rawFarmName = (farm?.name || 'My').trim();
+  const mobileFarmTitle = /\bfarms?\s*$/i.test(rawFarmName)
+    ? rawFarmName
+    : `${rawFarmName} Farm`;
+
   return (
     <SidebarWrapper role={navigationRole} permissions={userPermissions}>
-      <div className="md:hidden sticky top-[-1.5rem] z-40 -mx-4 mb-2 px-3 py-2 bg-[#0a0a0a]/80 backdrop-blur-xl border-b border-white/10 flex items-center justify-between">
-        <h1 className="text-sm font-bold text-emerald-400 tracking-widest uppercase truncate">
-          {farm?.name || "My Farm"}
+      <div className="md:hidden sticky top-[-1.5rem] z-40 -mx-4 mb-2 px-3 py-2 bg-[#0a0a0a]/80 backdrop-blur-xl border-b border-white/10 flex items-center justify-center">
+        <h1 className="text-sm font-bold text-emerald-400 tracking-widest uppercase truncate text-center max-w-full">
+          {mobileFarmTitle}
         </h1>
       </div>
       {children}
