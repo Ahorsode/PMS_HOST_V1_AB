@@ -15,9 +15,11 @@ import {
 import { toLocalDateTimeInputValue } from '@/lib/financial-dates';
 import { QuickAddCustomerButton, type SaleCustomer } from './QuickAddCustomerButton';
 import {
+  computeItemGiveawayDiscount,
   computeLineDiscount,
   formatEggStockCrateLabel,
   saleQuantityInEggs,
+  saleQuantityWithGiveaway,
   saleUnitPriceForDisplay,
   type EggSaleQuantityUnit,
   type LineDiscountType,
@@ -314,17 +316,16 @@ export function SalesForm({
   const getLineSubtotal = (item: SaleItemState) =>
     Number(item.quantity || 0) * getEffectiveUnitPrice(item);
 
+  const getGiveawayQuantity = (item: SaleItemState) => {
+    if (resolveLineDiscountType(item) !== 'item') return 0;
+    return Math.max(0, Number(item.lineDiscountAmount || 0));
+  };
+
   const getLineDiscount = (item: SaleItemState) => {
     const discountType = resolveLineDiscountType(item);
     const discountInput = Number(item.lineDiscountAmount || 0);
-    if (discountType === 'item') {
-      return computeLineDiscount(
-        getLineSubtotal(item),
-        discountInput,
-        'item',
-        getEffectiveUnitPrice(item),
-      );
-    }
+    // Item giveaway is additive free stock — it does not reduce the billed line total.
+    if (discountType === 'item') return 0;
     return computeLineDiscount(
       getLineSubtotal(item),
       discountInput,
@@ -426,6 +427,12 @@ export function SalesForm({
     if (!item.description.trim()) errors.push('Select a product');
     if (!Number.isInteger(quantity) || quantity <= 0) errors.push('Quantity must be a whole number');
 
+    const giveawayQty = showDiscountSection ? getGiveawayQuantity(item) : 0;
+    if (giveawayQty > 0 && !Number.isInteger(giveawayQty)) {
+      errors.push('Giveaway quantity must be a whole number');
+    }
+    const stockQuantity = saleQuantityWithGiveaway(quantity, giveawayQty);
+
     if (item.productType === 'inventory') {
       if (eggInventory.length === 0) errors.push('No egg products available');
       if (!item.productId) errors.push('Select an egg size');
@@ -434,7 +441,7 @@ export function SalesForm({
       }
       const available = getEggAvailable(item, eggInventory, eggBatchStock, fifoEggAvailability);
       const quantityEggs = saleQuantityInEggs(
-        quantity,
+        stockQuantity,
         'crate',
         eggsPerCrate,
       );
@@ -450,7 +457,9 @@ export function SalesForm({
     if (item.productType === 'livestock') {
       const selected = livestock.find((entry: any) => entry.id === item.productId);
       if (!selected) errors.push('Livestock batch is required');
-      if (selected && quantity > Number(selected.currentCount)) errors.push(`${selected.batchName} only has ${selected.currentCount} birds available`);
+      if (selected && stockQuantity > Number(selected.currentCount)) {
+        errors.push(`${selected.batchName} only has ${selected.currentCount} birds available`);
+      }
     }
 
     if (!canOverridePrice && item.productType === 'custom') errors.push('Custom items require manager access');
@@ -468,10 +477,6 @@ export function SalesForm({
     if (showDiscountSection) {
       const lineSubtotal = getLineSubtotal(item);
       const discountType = resolveLineDiscountType(item);
-      const discountInput = Number(item.lineDiscountAmount || 0);
-      if (discountType === 'item' && discountInput > quantity) {
-        errors.push('Giveaway quantity cannot exceed quantity sold');
-      }
       if (discountType !== 'item' && getLineDiscount(item) > lineSubtotal) {
         errors.push('Line discount cannot exceed line subtotal');
       }
@@ -532,13 +537,19 @@ export function SalesForm({
         const discountType = resolveLineDiscountType(item);
         const discountInput = Number(item.lineDiscountAmount || 0);
         const unitPrice = getEffectiveUnitPrice(item);
+        const paidQuantity = Number(item.quantity) || 0;
+        const giveawayQty = showDiscountSection && discountType === 'item'
+          ? Math.max(0, discountInput)
+          : 0;
+        // Stock leaves for paid + free crates; customer is billed for paid only.
+        const quantity = saleQuantityWithGiveaway(paidQuantity, giveawayQty);
         const lineDiscountAmount = discountType === 'item'
-          ? toMoney(discountInput * unitPrice)
+          ? toMoney(computeItemGiveawayDiscount(giveawayQty, unitPrice))
           : discountInput;
 
         return {
           description: item.description,
-          quantity: Number(item.quantity) || 0,
+          quantity,
           unitPrice,
           inventoryId: item.productType === 'inventory' ? item.productId : undefined,
           livestockId: item.productType === 'livestock' ? item.productId : undefined,
@@ -678,6 +689,7 @@ export function SalesForm({
             const effectivePrice = getEffectiveUnitPrice(item);
             const lineSubtotal = getLineSubtotal(item);
             const lineTotal = getLineTotal(item);
+            const giveawayQty = showDiscountSection ? getGiveawayQuantity(item) : 0;
             const isPriceLocked = !canOverridePrice && (
               (item.productType === 'inventory' && catalogPrice > 0)
               || (item.productType === 'livestock' && basePrice > 0)
@@ -854,7 +866,7 @@ export function SalesForm({
                       <>
                         <div className="space-y-1 min-w-0">
                           <label className="text-[10px] font-black uppercase tracking-widest text-white/50">
-                            {(item.lineDiscountType ?? 'flat') === 'item' ? 'Give away crates free' : 'Line Discount'}
+                            {(item.lineDiscountType ?? 'flat') === 'item' ? 'Extra free crates (on top)' : 'Line Discount'}
                           </label>
                           <input
                             type="number"
@@ -881,7 +893,7 @@ export function SalesForm({
                     ) : defaultDiscountType === 'item' ? (
                       <div className="space-y-1 min-w-0 sm:col-span-2">
                         <label className="text-[10px] font-black uppercase tracking-widest text-white/50">
-                          Give away crates free
+                          Extra free crates (on top)
                         </label>
                         <input
                           type="number"
@@ -923,6 +935,9 @@ export function SalesForm({
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-3">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">
                     Base: GHS {basePrice.toFixed(2)} | Subtotal: GHS {lineSubtotal.toFixed(2)}
+                    {giveawayQty > 0
+                      ? ` | +${giveawayQty} free ${giveawayQty === 1 ? 'crate' : 'crates'}`
+                      : ''}
                   </span>
                   <div className="flex items-center gap-2">
                     <button

@@ -66,14 +66,24 @@ function formatCratesAndEggs(eggs: number, eggsPerCrate: number) {
   return `${crates} ${crateLabel} / ${remainder} eggs`;
 }
 
-function giveawayCratesFromSale(row: EggSaleRow, eggsPerCrate: number) {
+function giveawayUnitsFromSale(row: EggSaleRow) {
   if (row.lineDiscountType !== 'item') return 0;
   const unitPrice = Number(row.unitPrice);
   const discount = Number(row.lineDiscountAmount || 0);
   if (unitPrice <= 0 || discount <= 0) return 0;
-  const eggsGiven = discount / unitPrice;
+  return Math.max(0, Math.round(discount / unitPrice));
+}
+
+function giveawayCratesFromSale(row: EggSaleRow, eggsPerCrate: number) {
+  const eggsGiven = giveawayUnitsFromSale(row);
   const epc = eggsPerCrate > 0 ? eggsPerCrate : 30;
   return Math.max(0, Math.round(eggsGiven / epc));
+}
+
+function paidEggsFromSale(row: EggSaleRow) {
+  const totalEggs = Math.max(0, Math.floor(Number(row.quantity) || 0));
+  const giveawayEggs = giveawayUnitsFromSale(row);
+  return Math.max(0, totalEggs - giveawayEggs);
 }
 
 export function EggProductionHistoryPanel({
@@ -333,12 +343,13 @@ export function EggProductionHistoryPanel({
               ) : (
                 eggSalesHistory.map((row) => {
                   const giveawayCrates = giveawayCratesFromSale(row, eggsPerCrate);
+                  const paidEggs = paidEggsFromSale(row);
                   return (
                     <tr key={row.id} className="hover:bg-gray-50/50">
                       <td className="px-5 py-3 text-sm font-medium text-gray-600">{formatDate(row.order.orderDate)}</td>
                       <td className="px-5 py-3 text-sm font-bold text-gray-900">{row.order.customer?.name || 'Walk-in Customer'}</td>
                       <td className="px-5 py-3 text-sm text-gray-700">{row.inventory?.itemName || row.description}</td>
-                      <td className="px-5 py-3 text-sm font-bold text-gray-900">{formatCratesAndEggs(Number(row.quantity), eggsPerCrate)}</td>
+                      <td className="px-5 py-3 text-sm font-bold text-gray-900">{formatCratesAndEggs(paidEggs, eggsPerCrate)}</td>
                       <td className="px-5 py-3 text-sm font-bold text-amber-700">
                         {giveawayCrates > 0
                           ? `${giveawayCrates} ${giveawayCrates === 1 ? 'crate' : 'crates'}`

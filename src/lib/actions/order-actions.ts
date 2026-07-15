@@ -289,6 +289,8 @@ export async function createOrder(data: {
           lineDiscountType = workerDiscountType
         }
 
+        // Item giveaway: quantity already includes free units (paid + giveaway).
+        // lineDiscountInput is the money value of free units so billed total stays paid-only.
         const lineDiscount = lineDiscountType === 'item'
           ? Math.min(lineSubtotal, Math.max(0, lineDiscountInput))
           : computeLineDiscount(
@@ -296,6 +298,12 @@ export async function createOrder(data: {
             lineDiscountInput,
             lineDiscountType === 'percent' ? 'percent' : 'flat',
           )
+
+        if (lineDiscountType === 'item' && lineDiscount > 0 && lineDiscount >= lineSubtotal) {
+          throw new Error(
+            `Giveaway for ${authoritative.description} cannot cover the entire sale — keep at least one paid unit`,
+          )
+        }
 
         normalizedItems.push({
           description: authoritative.description || 'Sale Item',

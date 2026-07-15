@@ -31,16 +31,29 @@ export function saleUnitPricePerEgg(
 
 export type LineDiscountType = 'flat' | 'percent' | 'item'
 
+/** Money value of free units given on top of paid quantity (not capped by line subtotal of paid qty alone). */
+export function computeItemGiveawayDiscount(giveawayQty: number, unitPrice: number) {
+  if (giveawayQty <= 0 || unitPrice <= 0) return 0
+  return Math.max(0, giveawayQty * unitPrice)
+}
+
+/** Stock quantity leaving inventory = paid units + free giveaway units. */
+export function saleQuantityWithGiveaway(paidQuantity: number, giveawayQuantity: number) {
+  const paid = Math.max(0, paidQuantity)
+  const free = Math.max(0, giveawayQuantity)
+  return paid + free
+}
+
 export function computeLineDiscount(
   lineSubtotal: number,
   discountAmount: number,
   discountType: LineDiscountType = 'flat',
   unitPrice = 0,
 ) {
-  if (lineSubtotal <= 0) return 0
   if (discountType === 'item') {
-    return Math.min(lineSubtotal, Math.max(0, discountAmount * unitPrice))
+    return computeItemGiveawayDiscount(discountAmount, unitPrice)
   }
+  if (lineSubtotal <= 0) return 0
   if (discountType === 'percent') {
     return Math.min(lineSubtotal, Math.max(0, (lineSubtotal * discountAmount) / 100))
   }
