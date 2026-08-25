@@ -11,6 +11,11 @@ export const metadata: Metadata = {
   title: "Agri-ERP | Enterprise Farm Management System",
   description: "Next-generation multi-species livestock management platform. Track performance, inventory, and health for Poultry, Cattle, and Pigs with precision.",
   keywords: ["Agri-ERP", "Farm Management", "Poultry PMS", "Livestock Tracking", "Agriculture Software"],
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export const viewport: Viewport = {
