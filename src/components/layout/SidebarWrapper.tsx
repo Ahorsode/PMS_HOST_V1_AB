@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { Sidebar } from './Sidebar';
 import { BottomNav } from './BottomNav';
@@ -20,11 +21,13 @@ function getMobileIndeptTitle(pathname: string): string {
 export const SidebarWrapper = ({ 
   children, 
   role,
-  permissions
+  permissions,
+  farmName,
 }: { 
   children: React.ReactNode;
   role: string | undefined;
   permissions?: any;
+  farmName?: string;
 }) => {
   const pathname = usePathname();
   const router = useRouter();
@@ -62,9 +65,27 @@ export const SidebarWrapper = ({
         "flex-1 flex flex-col relative z-20 h-[100dvh] overflow-hidden transition-all duration-700 ease-in-out",
         isIndeptPage ? "pl-0" : "md:pl-32"
       )}>
+        {!isIndeptPage && (
+          <header className="sticky top-0 z-30 flex shrink-0 items-center gap-3 border-b border-white/10 bg-[#07140f]/90 px-4 py-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] backdrop-blur-xl md:hidden">
+            <img src="/logo.png" alt="" className="h-9 w-9 rounded-xl object-cover" />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-bold uppercase tracking-[0.14em] text-emerald-300">
+                {farmName || 'Farm'}
+              </p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/40">Operations</p>
+            </div>
+            <Link
+              href="/dashboard/profile"
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-400/15 text-sm font-bold uppercase text-emerald-300"
+              aria-label="Open profile"
+            >
+              {(role?.charAt(0) || '?').toUpperCase()}
+            </Link>
+          </header>
+        )}
         <div className={cn(
-          "flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar pt-2 md:pt-5 px-0 md:px-8",
-          isIndeptPage ? "pb-6 md:pb-12" : "pb-36 md:pb-12"
+          "flex-1 overflow-x-hidden overflow-y-auto custom-scrollbar pt-3 md:pt-5 px-3 md:px-8",
+          isIndeptPage ? "pb-6 md:pb-12" : "pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-12"
         )}>
           {isIndeptPage ? (
             <header className="sticky top-0 z-30 -mx-3 mb-3 flex items-center gap-2 border-b border-white/10 bg-[#0a1510]/90 px-3 py-2 backdrop-blur-xl md:hidden">

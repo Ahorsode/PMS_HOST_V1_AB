@@ -4,56 +4,17 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
-import { motion } from 'framer-motion';
-import { 
-  LayoutDashboard, Bird, PawPrint, Egg, ThermometerSun, 
-  Wheat, Settings, Users, XCircle, Banknote, Activity,
-  LogOut, Wallet, Crown, ShieldCheck, BarChart3, Truck, Trash2, FileText, HeartPulse
-} from 'lucide-react';
+import { LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { canShowNavigationItem, formatRoleLabel } from '@/lib/navigation-permissions';
+import { APP_NAV_CATEGORIES, isNavItemActive } from '@/lib/app-navigation';
 
 export const Sidebar = ({ role, permissions }: { role?: string, permissions?: any }) => {
   const pathname = usePathname();
   const roleInitial = role?.charAt(0) ?? '?';
   const roleLabel = formatRoleLabel(role);
 
-  const categories = [
-    {
-      name: 'Operations',
-      items: [
-        { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', roles: ['OWNER', 'MANAGER', 'WORKER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
-        { name: 'Livestock', icon: PawPrint, href: '/dashboard/flocks', roles: ['OWNER', 'MANAGER', 'WORKER'] },
-        { name: 'Analytics', icon: BarChart3, href: '/dashboard/analytics/compare', roles: ['OWNER', 'MANAGER'] },
-        { name: 'Houses', icon: ThermometerSun, href: '/dashboard/houses', roles: ['OWNER', 'MANAGER'] },
-        { name: 'Eggs', icon: Egg, href: '/dashboard/eggs', roles: ['OWNER', 'MANAGER', 'WORKER'] },
-        { name: 'Feeding', icon: Wheat, href: '/dashboard/feed', roles: ['OWNER', 'MANAGER', 'WORKER'] },
-        { name: 'Mortality', icon: XCircle, href: '/dashboard/mortality', roles: ['OWNER', 'MANAGER', 'WORKER'] },
-        { name: 'Quarantine', icon: Activity, href: '/dashboard/quarantine', roles: ['OWNER', 'MANAGER', 'WORKER'] },
-        { name: 'Health', icon: HeartPulse, href: '/dashboard/health', roles: ['OWNER', 'MANAGER', 'WORKER'] },
-      ]
-    },
-    {
-      name: 'Commercial Hub',
-      items: [
-        { name: 'Sales', icon: Banknote, href: '/dashboard/sales', roles: ['OWNER', 'MANAGER', 'WORKER', 'CASHIER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
-        { name: 'Customers', icon: Users, href: '/dashboard/sales/customers', roles: ['OWNER', 'MANAGER', 'CASHIER', 'ACCOUNTANT'] },
-        { name: 'Suppliers', icon: Truck, href: '/dashboard/suppliers', roles: ['OWNER', 'MANAGER', 'ACCOUNTANT'] },
-        { name: 'Finance Control', icon: Wallet, href: '/dashboard/finance', roles: ['OWNER', 'MANAGER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
-        { name: 'Reports', icon: FileText, href: '/dashboard/reports', roles: ['OWNER', 'MANAGER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
-        { name: 'Inventory', icon: LayoutDashboard, href: '/dashboard/inventory', roles: ['OWNER', 'MANAGER', 'ACCOUNTANT'] },
-      ]
-    },
-    {
-      name: 'Governance',
-      items: [
-        { name: 'Audit Logs', icon: ShieldCheck, href: '/dashboard/admin/logs', roles: ['OWNER', 'MANAGER'] },
-        { name: 'Team Management', icon: Users, href: '/dashboard/team', roles: ['OWNER', 'MANAGER'] },
-        { name: 'License Upgrade', icon: Crown, href: '/dashboard/license-upgrade', roles: ['OWNER', 'MANAGER'] },
-        { name: 'Settings', icon: Settings, href: '/dashboard/settings', roles: ['OWNER', 'MANAGER'] },
-      ]
-    }
-  ];
+  const categories = APP_NAV_CATEGORIES;
 
   return (
     <aside className="hidden md:block fixed left-6 top-6 bottom-6 w-20 hover:w-64 group transition-all duration-500 ease-out z-50">
@@ -91,15 +52,7 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
                   {category.name}
                 </p>
                 {visibleItems.map((item) => {
-                  const isActive = pathname === item.href || (
-                    item.href !== '/dashboard' && 
-                    pathname.startsWith(item.href + '/') && 
-                    !visibleItems.some(other => 
-                      other.href !== item.href && 
-                      other.href.startsWith(item.href + '/') && 
-                      pathname.startsWith(other.href)
-                    )
-                  );
+                  const isActive = isNavItemActive(pathname, item.href, visibleItems);
                   return (
                     <Link
                       key={item.name}

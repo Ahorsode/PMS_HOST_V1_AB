@@ -86,10 +86,10 @@ export default function SignUpPage() {
   };
 
   return (
-    <main className="relative min-h-screen bg-[#0a0a0a] flex items-center justify-center overflow-hidden py-9">
+    <main className="relative flex min-h-[100dvh] items-center justify-center overflow-x-hidden overflow-y-auto bg-[#0a0a0a] px-4 py-8">
       <Background3D />
       
-      <div className="relative z-10 w-full max-w-md px-5">
+      <div className="relative z-10 w-full max-w-md">
         <AnimatePresence mode="wait">
           {!success ? (
             <motion.div
@@ -102,7 +102,7 @@ export default function SignUpPage() {
             >
               <div className="absolute inset-0 bg-emerald-500/20 blur-[100px] rounded-full pointer-events-none" />
 
-              <div className="relative bg-white/10 backdrop-blur-2xl border border-white/10 rounded-lg p-9 shadow-2xl overflow-hidden group">
+              <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/10 p-5 shadow-2xl backdrop-blur-2xl sm:rounded-lg sm:p-9">
                 <div className="flex flex-col items-center text-center space-y-5">
                   <motion.div 
                     initial={{ scale: 0 }}
@@ -113,7 +113,7 @@ export default function SignUpPage() {
                   </motion.div>
                   
                   <div className="space-y-2">
-                    <h1 className="text-4xl font-bold text-white tracking-normal">Join Us</h1>
+                    <h1 className="text-3xl font-bold tracking-normal text-white sm:text-4xl">Join Us</h1>
                     <p className="text-white/70 font-medium">Create your poultry farm account</p>
                   </div>
 

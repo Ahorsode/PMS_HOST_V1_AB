@@ -188,13 +188,13 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
     <div className="max-w-[1600px] mx-auto space-y-7 relative pb-11">
       
       {/* Floating Decorative Icons */}
-      <FloatingIcon icon={Bird} className="absolute -top-10 -left-10 w-32 h-32 pointer-events-none" />
-      <FloatingIcon icon={Package} className="absolute top-1/2 -right-20 w-48 h-48 pointer-events-none opacity-5" />
+      <FloatingIcon icon={Bird} className="pointer-events-none absolute -top-10 -left-10 hidden h-32 w-32 md:block" />
+      <FloatingIcon icon={Package} className="pointer-events-none absolute top-1/2 -right-20 hidden h-48 w-48 opacity-5 md:block" />
 
       {/* Bento Grid Header */}
-      <header className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-2 px-2 gap-4">
+      <header className="mb-2 flex flex-col items-start justify-between gap-3 px-1 sm:flex-row sm:items-end sm:gap-4 sm:px-2">
          <div>
-            <h1 className="text-4xl font-bold text-white tracking-normal">Farm <span className="text-emerald-400 italic">Overview</span></h1>
+            <h1 className="text-3xl font-bold tracking-normal text-white sm:text-4xl">Farm <span className="italic text-emerald-400">Overview</span></h1>
             <p className="text-white/70 font-bold uppercase tracking-widest text-xs mt-2 flex items-center gap-2 mb-2">
                <Activity className="w-3 h-3" /> Live Operations Tracking • {stats.activeBatches.length} Units Active
             </p>
