@@ -2,16 +2,18 @@
 import { MetadataRoute } from 'next'
 import { createClient } from '@supabase/supabase-js'
 
-// Initialize your Supabase client
+// Initialize Supabase client
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://yourwebsite.com'
+  // Clean base URL to prevent accidental bracket/formatting issues
+  const rawBaseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://poultryledger.com'
+  const baseUrl = rawBaseUrl.replace(/[\[\]]/g, '').replace(/\/$/, '')
 
-  // 1. Define your static routes
+  // 1. Static site routes
   const staticRoutes: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
@@ -33,7 +35,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ]
 
-  // 2. Fetch dynamic pages from Supabase (e.g., blog posts, products)
+  // 2. Fetch dynamic routes from Supabase (if you have dynamic tables like blog posts/products)
   const { data: posts } = await supabase
     .from('posts')
     .select('slug, updated_at')
