@@ -22,7 +22,7 @@ export function FinancialOverview({ data, currency = 'GHS' }: FinancialOverviewP
   return (
     <Card className="md:col-span-2 lg:col-span-2 bg-gradient-to-br from-indigo-500/15 to-transparent border-indigo-500/20 relative overflow-hidden group">
       <CardHeader className="flex flex-row items-center justify-between pb-2 relative z-10">
-        <CardTitle className="text-indigo-400">Monthly P&L (Agri-ERP)</CardTitle>
+        <CardTitle className="text-indigo-400">Monthly P&L (Poultry Ledger)</CardTitle>
         <Banknote className="w-5 h-5 text-indigo-400/50" />
       </CardHeader>
       <CardContent className="relative z-10 space-y-3">

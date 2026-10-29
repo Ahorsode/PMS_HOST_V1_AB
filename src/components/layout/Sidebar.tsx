@@ -24,7 +24,7 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
         <div className="px-5 mb-9 flex items-center flex-shrink-0">
           <img 
             src="/logo.png" 
-            alt="Agri-ERP Logo" 
+            alt="Poultry Ledger logo" 
             className="w-12 h-12 rounded-md object-cover shadow-lg shadow-emerald-500/20 shrink-0 mx-auto group-hover:mx-0"
           />
           <span className="ml-3 font-bold text-xl tracking-normal text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">

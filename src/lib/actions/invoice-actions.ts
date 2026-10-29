@@ -45,7 +45,7 @@ export async function generateInvoicePDF(orderId: string) {
         // Header
         const farmName = order.farm?.name?.toUpperCase() ?? 'AGRI-FARM'
         doc.fillColor('#444444').fontSize(20).text(farmName, 50, 50)
-        doc.fontSize(10).text('Agri-ERP Commercial Suite', 50, 75)
+        doc.fontSize(10).text('Poultry Ledger Commercial Suite', 50, 75)
         doc.text(`Date: ${order.orderDate ? new Date(order.orderDate).toLocaleDateString() : new Date().toLocaleDateString()}`, 50, 90)
         doc.text(`Order ID: #${order.id}`, 50, 105)
         doc.moveDown()

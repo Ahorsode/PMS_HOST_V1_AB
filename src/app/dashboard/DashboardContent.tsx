@@ -166,7 +166,7 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
         <div className="w-24 h-24 bg-emerald-500/20 rounded-lg flex items-center justify-center mx-auto mb-7 border border-emerald-500/30 group-hover:scale-110 transition-transform duration-500 group-hover:rotate-6">
           <Activity className="w-12 h-12 text-emerald-400" />
         </div>
-        <h2 className="text-5xl font-bold text-white tracking-normal mb-3">Welcome to your <span className="text-emerald-400 italic">Agri-ERP</span></h2>
+        <h2 className="text-5xl font-bold text-white tracking-normal mb-3">Welcome to your <span className="text-emerald-400 italic">Poultry Ledger</span></h2>
         <p className="text-xl text-white/80 font-medium mb-11 leading-relaxed">
           Your digital agriculture command center is ready. Add your first <span className="text-white font-bold italic">Unit</span> (Cattle, Poultry, or Pigs) to begin tracking precision performance.
         </p>
