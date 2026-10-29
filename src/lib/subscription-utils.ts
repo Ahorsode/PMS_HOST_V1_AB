@@ -50,9 +50,27 @@ export async function getFarmTier(farmId: string): Promise<SubscriptionTier> {
 
   const farm = await prisma.farm.findUnique({
     where: { id: farmId },
-    select: { subscriptionTier: true }
+    select: { subscriptionTier: true, masterLicenseStatus: true, trialExpiresAt: true }
   });
-  return farm?.subscriptionTier || SubscriptionTier.BASIC;
+  return farm ? effectiveFarmTier(farm) : SubscriptionTier.BASIC;
+}
+
+/**
+ * Paid access granted with an end date lapses back to BASIC once that date
+ * passes, and revoked farms lose paid features (BIZ-01). Farms whose tier was
+ * set without an end date keep it, so legacy grants are not downgraded.
+ */
+export function effectiveFarmTier(
+  farm: { subscriptionTier: SubscriptionTier; masterLicenseStatus: string | null; trialExpiresAt: Date | null },
+  now = new Date(),
+): SubscriptionTier {
+  if (farm.masterLicenseStatus === 'REVOKED') return SubscriptionTier.BASIC;
+
+  const isTimedPaidGrant =
+    farm.masterLicenseStatus === `PAID_${farm.subscriptionTier}` && farm.trialExpiresAt !== null;
+  if (isTimedPaidGrant && farm.trialExpiresAt! <= now) return SubscriptionTier.BASIC;
+
+  return farm.subscriptionTier || SubscriptionTier.BASIC;
 }
 
 export async function checkFeature(farmId: string, feature: Feature): Promise<boolean> {
