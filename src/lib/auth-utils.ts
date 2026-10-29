@@ -6,7 +6,6 @@ import { buildPhoneLookupCandidates } from '@/lib/phone-auth'
 export {
   buildPhoneLookupCandidates,
   normalizePhoneNumber,
-  WORKER_PLACEHOLDER_PASSWORD,
 } from '@/lib/phone-auth'
 
 export const SECURITY_PERMISSION_UPDATE_MESSAGE = 'Your security permissions have been updated. Please sign in again to activate your new features.'

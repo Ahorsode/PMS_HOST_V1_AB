@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Users, Mail, Shield, UserPlus, Loader2, CheckCircle2, XCircle, Trash2, ShieldCheck, UserCheck, Settings, AlertCircle, Phone, ChevronDown, RotateCcw } from 'lucide-react';
-import { inviteWorker, getFarmMembers, deleteMember, deleteInvitation, updateWorkerPermissions, resetWorkerPermissions, updateFarmMemberRole, getUserForInvite } from '@/lib/actions/staff-actions';
+import { Users, Mail, Shield, UserPlus, Loader2, CheckCircle2, XCircle, Trash2, ShieldCheck, UserCheck, Settings, AlertCircle, Phone, ChevronDown, RotateCcw, KeyRound } from 'lucide-react';
+import { inviteWorker, getFarmMembers, deleteMember, deleteInvitation, updateWorkerPermissions, resetWorkerPermissions, updateFarmMemberRole, getUserForInvite, regenerateInviteCode } from '@/lib/actions/staff-actions';
+import { InviteCodePanel, type IssuedInviteCode } from '@/components/team/InviteCodePanel';
 import { getDefaultPermissionsForRole } from '@/lib/staff-permission-defaults';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
@@ -26,6 +27,8 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
   const [updatingRoleUserId, setUpdatingRoleUserId] = useState<string | null>(null);
   const [currentUserRole, setCurrentUserRole] = useState<string>('WORKER');
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [issuedCode, setIssuedCode] = useState<IssuedInviteCode | null>(null);
+  const [issuingCodeFor, setIssuingCodeFor] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string, type: 'member' | 'invite' } | null>(null);
   const [permissionTarget, setPermissionTarget] = useState<any>(null);
   const [limitCheck, setLimitCheck] = useState<{ canAdd: boolean, limit: number, current: number } | null>(null);
@@ -83,7 +86,8 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
         permissions: Object.keys(pendingPermissions).length > 0 ? pendingPermissions : undefined,
       }) as any;
       if (result?.success) {
-        setMessage({ type: 'success', text: `Invitation sent to ${emailOrPhone}!` });
+        setMessage({ type: 'success', text: result.inviteCode ? `${emailOrPhone} added. Share their login code below.` : `${emailOrPhone} added. They can sign in with their existing password.` });
+        if (result.inviteCode) setIssuedCode({ code: result.inviteCode, recipient: emailOrPhone });
         form.reset();
         setInviteRole('WORKER');
         setPendingPermissions({});
@@ -98,6 +102,28 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
       setMessage({ type: 'error', text: err.message || String(err) || 'An unexpected error occurred.' });
     } finally {
       setIsInviting(false);
+    }
+  };
+
+  const handleNewCode = async (
+    target: { invitationId?: string; memberUserId?: string },
+    recipient: string,
+  ) => {
+    const key = target.invitationId || target.memberUserId || '';
+    if (issuingCodeFor) return;
+    setIssuingCodeFor(key);
+    try {
+      const result = await regenerateInviteCode(target) as any;
+      if (result?.success && result.inviteCode) {
+        setIssuedCode({ code: result.inviteCode, recipient });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        toast.error(result?.error || 'Could not issue a new code');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Could not issue a new code');
+    } finally {
+      setIssuingCodeFor(null);
     }
   };
 
@@ -231,6 +257,7 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
 
   return (
     <div className="max-w-7xl mx-auto space-y-7 px-0 md:px-3 pt-2 pb-7 md:py-7 relative">
+      {issuedCode && <InviteCodePanel issued={issuedCode} onDismiss={() => setIssuedCode(null)} />}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white/10 backdrop-blur-md p-7 rounded-lg border border-white/10 relative overflow-hidden gap-4">
         <div className="absolute top-0 right-0 p-7 opacity-5">
            <Users className="w-32 h-32 text-emerald-400" />
@@ -289,6 +316,21 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
+                        {canEdit && member.user.mustChangePassword && (currentUserRole === 'OWNER' || currentUserRole === 'MANAGER') && (
+                          <button
+                            type="button"
+                            onClick={() => handleNewCode(
+                              { memberUserId: member.userId },
+                              member.user.phoneNumber || member.user.email || 'this team member',
+                            )}
+                            disabled={issuingCodeFor !== null}
+                            title="They haven't set a password yet. Issue a new one-time login code."
+                            className="inline-flex items-center gap-1.5 rounded-md border border-amber-400/30 bg-amber-500/10 px-2.5 py-1.5 text-xs font-bold uppercase tracking-widest text-amber-200 transition hover:bg-amber-500/20 disabled:opacity-50"
+                          >
+                            {issuingCodeFor === member.userId ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <KeyRound className="h-3.5 w-3.5" />}
+                            New code
+                          </button>
+                        )}
                         {currentUserRole === 'OWNER' && member.role !== 'OWNER' ? (
                           <div className="relative">
                             <select
@@ -389,6 +431,18 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
                       <div className="flex items-center gap-3">
                         {getRoleBadge(invite.role)}
                         <span className="text-xs bg-amber-500/10 text-amber-400 px-2 py-1 rounded-full font-bold uppercase tracking-widest border border-amber-500/20">Pending</span>
+                        {canEdit && (currentUserRole === 'OWNER' || currentUserRole === 'MANAGER') && (
+                          <button
+                            type="button"
+                            onClick={() => handleNewCode({ invitationId: invite.id }, invite.email || invite.phoneNumber)}
+                            disabled={issuingCodeFor !== null}
+                            title="Issue a new one-time login code"
+                            className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs font-bold uppercase tracking-widest text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
+                          >
+                            {issuingCodeFor === invite.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <KeyRound className="h-3.5 w-3.5" />}
+                            New code
+                          </button>
+                        )}
                         {canEdit && currentUserRole === 'OWNER' && (
                           <>
                           <button

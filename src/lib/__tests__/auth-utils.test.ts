@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import {
   buildPhoneLookupCandidates,
   normalizePhoneNumber,
-  WORKER_PLACEHOLDER_PASSWORD,
 } from '@/lib/phone-auth'
 
 describe('auth-utils phone helpers', () => {
@@ -15,9 +14,5 @@ describe('auth-utils phone helpers', () => {
     expect(candidates).toContain('0540000000')
     expect(candidates).toContain('+233540000000')
     expect(candidates).toContain('233540000000')
-  })
-
-  it('uses the shared worker placeholder password', () => {
-    expect(WORKER_PLACEHOLDER_PASSWORD).toBe('123456')
   })
 })

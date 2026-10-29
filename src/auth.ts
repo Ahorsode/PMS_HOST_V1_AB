@@ -5,15 +5,14 @@ import Google from 'next-auth/providers/google';
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { authConfig } from './auth.config';
 import prisma from '@/lib/db';
-import bcrypt from 'bcryptjs';
 import {
   acceptPendingInvitationForUser,
   completeGoogleSignIn,
   findUserByLoginIdentifier,
   normalizePhoneNumber,
   recordUserSession,
-  WORKER_PLACEHOLDER_PASSWORD,
 } from '@/lib/auth-utils';
+import { checkLoginSecret } from '@/lib/login-credentials';
 import { getCachedSessionVersion, setCachedSessionVersion } from '@/lib/performance/session-version-cache';
 import { checkRateLimit } from '@/lib/performance/rate-limit';
 
@@ -303,32 +302,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const user = await findUserByLoginIdentifier(identifier);
 
         if (user && user.password) {
-          let isValid = await bcrypt.compare(password, user.password);
+          const check = await checkLoginSecret(user, password);
 
-          // Legacy invited workers may still have a random temp hash from before
-          // placeholder-password rollout. Accept the shared first-login password
-          // and normalize the stored hash going forward.
-          if (
-            !isValid &&
-            user.mustChangePassword &&
-            password === WORKER_PLACEHOLDER_PASSWORD
-          ) {
-            const hashedPlaceholder = await bcrypt.hash(WORKER_PLACEHOLDER_PASSWORD, 10);
-            await prisma.user.update({
-              where: { id: user.id },
-              data: {
-                password: hashedPlaceholder,
-                mustChangePassword: true,
-              },
-            });
-            isValid = true;
-          }
-
-          if (!isValid) {
-            console.warn('[auth] credentials signin failed: wrong password', {
+          if (!check.ok) {
+            console.warn('[auth] credentials signin failed', {
+              reason: check.reason,
               identifier: identifier.includes('@') ? identifier : '[phone]',
             });
             return null;
+          }
+
+          // Invite codes work once: the user must now choose their own password.
+          if (check.usedInviteCode) {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { inviteCodeExpiresAt: new Date() },
+            });
           }
 
           const acceptedFarmId = await acceptPendingInvitationForUser(user.id);

@@ -132,11 +132,16 @@ export default function LoginPage() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••"
+                        aria-label="Password or one-time code"
+                        aria-describedby="login-code-hint"
                         disabled={isLoading}
                         required
                         className="w-full h-14 pl-11 pr-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all font-medium text-lg disabled:opacity-50 shadow-inner"
                       />
                     </div>
+                    <p id="login-code-hint" className="-mt-2 text-left text-xs text-white/50">
+                      New team member? Enter the one-time code your farm owner gave you as your password.
+                    </p>
 
                     <AnimatePresence>
                       {securityMessage && (

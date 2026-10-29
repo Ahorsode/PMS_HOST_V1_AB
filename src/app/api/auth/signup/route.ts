@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import bcrypt from 'bcryptjs';
-import { randomBytes } from 'crypto';
 import { normalizePhoneNumber } from '@/lib/phone-auth';
 import { checkRateLimit, getRateLimitIp, rateLimitHeaders } from '@/lib/performance/rate-limit';
 import { MAX_PASSWORD_LENGTH, passwordPolicyError } from '@/lib/password-policy';
@@ -86,23 +85,19 @@ export async function POST(req: Request) {
       }
     });
 
-    // Handle password
-    // If invited, we use a secure random token as default if no password provided
-    const rawPassword = password || (invitation ? randomBytes(16).toString('hex') : null);
-    
-    if (!rawPassword) {
+    // Everyone who signs up chooses their own password, so there is nothing to
+    // change on first login (invite codes are only for owner-created accounts).
+    if (!password) {
       return NextResponse.json({ message: 'Password is required' }, { status: 400 });
     }
 
-    const passwordError = passwordPolicyError(rawPassword);
+    const passwordError = passwordPolicyError(password);
     if (passwordError) {
       return NextResponse.json({ message: passwordError }, { status: 400 });
     }
 
-    const hashedPassword = await bcrypt.hash(rawPassword, 10);
-    
-    // Invited users must set a password they know after the random temporary credential.
-    const mustChangePassword = !!invitation;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const mustChangePassword = false;
 
     // Create the user and associated resources in a transaction
     const user = await prisma.$transaction(async (tx) => {
