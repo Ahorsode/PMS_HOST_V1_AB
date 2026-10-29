@@ -20,6 +20,7 @@ import { Dialog, DialogTitle, DialogDescription } from '@/components/ui/Dialog';
 import { restoreDeletedRecord } from '@/lib/actions/audit-actions';
 import { toast } from 'sonner';
 import { WorkerStamp } from '@/components/ui/WorkerStamp';
+import { MobileCardList } from '@/components/ui/MobileCardList';
 import { getBreedDisplayName } from '@/lib/livestock-breed-options';
 
 import { restoreBatch } from '@/lib/actions/batch-actions';
@@ -173,7 +174,25 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
+              <MobileCardList
+                items={initialEditLogs}
+                getKey={(log) => log.id}
+                title={(log) => new Date(log.createdAt).toLocaleString()}
+                subtitle={(_log, index) => <span className="font-mono text-emerald-400 font-bold">Change {index + 1}</span>}
+                badge={(log) => (
+                  <span className="bg-white/10 text-white/70 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest border border-white/5">
+                    {log.tableName}
+                  </span>
+                )}
+                fields={(log) => [
+                  { label: 'Worker', full: true, value: <WorkerStamp user={log.user} /> },
+                  { label: 'Attribute', full: true, value: <span className="text-emerald-400/80">{log.attributeName}</span> },
+                  { label: 'Old Value', value: <span className="text-red-400/60 line-through">{log.oldValue || 'none'}</span> },
+                  { label: 'New Value', value: <span className="text-emerald-400 font-bold">{log.newValue}</span> },
+                ]}
+                empty="No modification logs found."
+              />
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left">
                   <thead>
                     <tr className="bg-white/5">
@@ -243,7 +262,45 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
+              <MobileCardList
+                items={uniqueDeleteLogs}
+                getKey={(log: any) => log.id}
+                title={(log: any) => new Date(log.deletedAt).toLocaleString()}
+                badge={(log: any) => (
+                  <span className="bg-red-500/10 text-red-400 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest border border-red-500/20">
+                    {log.tableName}
+                  </span>
+                )}
+                fields={(log: any) => [
+                  { label: 'By Whom', full: true, value: <WorkerStamp user={log.user} /> },
+                  ...(log.reason ? [{ label: 'Reason', full: true, value: <span className="text-white/60">"{log.reason}"</span> }] : []),
+                  {
+                    label: 'Data Summary',
+                    full: true,
+                    value: <span className="text-[10px] text-white/40 font-mono break-all">{log.deletedDataCsv.split('\n')[1]?.slice(0, 50)}...</span>,
+                  },
+                ]}
+                actions={(log: any) => (
+                  <>
+                    <button
+                      onClick={() => setSelectedLog(log)}
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-emerald-400 border border-white/10 transition-all text-[10px] font-bold uppercase tracking-widest"
+                    >
+                      <Eye className="w-3.5 h-3.5" /> Details
+                    </button>
+                    <button
+                      onClick={() => handleRestore(log.id)}
+                      disabled={isRestoring(`audit:${log.id}`)}
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/10 transition-all text-[10px] font-bold uppercase tracking-widest disabled:opacity-50"
+                    >
+                      {isRestoring(`audit:${log.id}`) ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
+                      {isRestoring(`audit:${log.id}`) ? 'Restoring...' : 'Restore'}
+                    </button>
+                  </>
+                )}
+                empty="No deletion logs found."
+              />
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left">
                   <thead>
                     <tr className="bg-white/5">
@@ -485,7 +542,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                   return (
                     <tr key={i} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
                       <td className="py-2 px-3 font-bold text-white/50 tracking-widest">{cleanHeader}</td>
-                      <td className="py-2 px-3 font-mono">{value === 'NULL' || value === '' ? <span className="text-white/30 italic">none</span> : value}</td>
+                      <td className="py-2 px-3 font-mono break-all">{value === 'NULL' || value === '' ? <span className="text-white/30 italic">none</span> : value}</td>
                     </tr>
                   );
                 })}

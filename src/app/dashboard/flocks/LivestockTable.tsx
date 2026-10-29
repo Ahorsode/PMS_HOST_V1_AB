@@ -7,6 +7,7 @@ import { formatLivestockType } from '@/lib/utils/growth-utils';
 import { WorkerStamp } from '@/components/ui/WorkerStamp';
 import { getBreedDisplayName } from '@/lib/livestock-breed-options';
 import { cn } from '@/lib/utils';
+import { MobileCardList } from '@/components/ui/MobileCardList';
 
 interface LivestockTableProps {
   initialBatches: any[];
@@ -150,10 +151,73 @@ export function LivestockTable({ initialBatches, houses, isolationRooms, canEdit
             <ChevronRight className="w-4 h-4 text-emerald-600 animate-pulse" />
           </div>
         )}
+        <MobileCardList
+          tone="light"
+          className="bg-gray-50/50"
+          items={filteredBatches}
+          getKey={(batch: any) => batch.id}
+          title={(batch: any, index: number) => (
+            <span className="text-emerald-700 uppercase">{batch.batchName || `Unit ${index + 1}`}</span>
+          )}
+          subtitle={(_batch: any, index: number) => `Display No. ${index + 1}`}
+          badge={(batch: any) => (
+            <span className={cn(
+              'px-2 py-1 inline-flex text-xs leading-5 font-bold rounded-full border shadow-sm',
+              isActiveBatch(batch)
+                ? 'bg-green-50 text-green-700 border-green-100'
+                : 'bg-slate-100 text-slate-600 border-slate-200'
+            )}>
+              {statusLabel(batch.status).toUpperCase()}
+            </span>
+          )}
+          fields={(batch: any) => {
+            const dead = batch.initialCount - (batch.currentCount + (batch.isolationCount || 0));
+            return [
+              {
+                label: 'Type & Species',
+                value: (
+                  <>
+                    <span className="font-bold text-gray-900">{formatLivestockType(batch.type)}</span>
+                    <span className="block text-xs text-gray-500">{getBreedDisplayName(batch.breedType)}</span>
+                  </>
+                ),
+              },
+              {
+                label: 'Quantity',
+                value: (
+                  <>
+                    <span className="font-bold text-gray-900">{batch.currentCount?.toLocaleString() || '0'}</span>{' '}
+                    <span className="text-gray-400 font-medium text-[10px] uppercase">{isActiveBatch(batch) ? 'Active' : 'Final'}</span>
+                    {(batch.isolationCount > 0 || dead > 0) && (
+                      <span className="flex flex-wrap items-center gap-1 mt-1">
+                        {batch.isolationCount > 0 && (
+                          <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">{batch.isolationCount} ISO</span>
+                        )}
+                        {dead > 0 && (
+                          <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">{dead} DEAD</span>
+                        )}
+                      </span>
+                    )}
+                  </>
+                ),
+              },
+              {
+                label: 'Arrival Date',
+                value: new Date(batch.arrivalDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }),
+              },
+            ];
+          }}
+          actions={(batch: any) => (
+            <>
+              <WorkerStamp user={batch.user} />
+              <FlockRowActions batch={batch} houses={houses} isolationRooms={isolationRooms} canEdit={canEdit} />
+            </>
+          )}
+        />
         <div 
           ref={scrollRef}
           onScroll={checkScroll}
-          className="overflow-x-auto custom-scrollbar"
+          className="hidden md:block overflow-x-auto custom-scrollbar"
         >
           <table className="min-w-full divide-y divide-gray-100">
             <thead>

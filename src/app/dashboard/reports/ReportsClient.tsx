@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/Button'
 import { ReportGeneratorLauncher } from '@/components/reports/ReportGeneratorLauncher'
 import { ComprehensiveReport } from '@/lib/actions/reports'
 import { cn, formatCurrency } from '@/lib/utils'
+import { MobileCardList } from '@/components/ui/MobileCardList'
 
 type BatchRow = {
   id: string
@@ -266,7 +267,36 @@ export function ReportsClient({
               No audit activity in this period.
             </p>
           ) : (
-            <table className="w-full min-w-[720px] text-left">
+            <>
+            <MobileCardList
+              className="p-2"
+              items={report.auditTimeline}
+              getKey={(log) => log.id}
+              title={(log) => (
+                <span className="font-mono text-xs text-white/70">
+                  {new Date(log.createdAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}
+                </span>
+              )}
+              badge={(log) => (
+                <span className="rounded border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-300">
+                  {log.actionType?.replace(/_/g, ' ') || 'System'}
+                </span>
+              )}
+              fields={(log) => [
+                { label: 'Description', full: true, value: <span className="text-xs text-white/65">{log.description}</span> },
+                {
+                  label: 'User',
+                  full: true,
+                  value: (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase text-white/50">
+                      <User className="h-3.5 w-3.5" />
+                      {log.userName}
+                    </span>
+                  ),
+                },
+              ]}
+            />
+            <table className="hidden md:table w-full min-w-[720px] text-left">
               <thead>
                 <tr className="border-b border-white/10 text-[10px] font-bold uppercase tracking-wider text-white/45">
                   <th className="px-4 py-3">When</th>
@@ -297,6 +327,7 @@ export function ReportsClient({
                 ))}
               </tbody>
             </table>
+            </>
           )}
         </div>
       </Panel>

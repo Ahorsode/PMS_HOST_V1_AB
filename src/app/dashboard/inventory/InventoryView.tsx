@@ -18,6 +18,7 @@ import { Dialog } from '@/components/ui/Dialog';
 import { PartnerForm } from '@/components/partners/PartnerForm';
 import { DeleteConfirmationModal } from '@/components/modals/DeleteConfirmationModal';
 import { SkeletonLine } from '@/components/ui/MutationFeedback';
+import { MobileCardList } from '@/components/ui/MobileCardList';
 
 
 /* ───────────────────── helpers ───────────────────── */
@@ -399,7 +400,56 @@ export default function InventoryView({
           return (
             <div key={cat} className="space-y-2">
               <p className="text-sm font-black uppercase tracking-[0.2em] text-emerald-400 ml-1">{meta.label}</p>
-              <div className={`rounded-lg border bg-gradient-to-br ${meta.color} overflow-hidden`}>
+              <MobileCardList
+                className={`rounded-lg border bg-gradient-to-br ${meta.color}`}
+                items={catItems}
+                getKey={(item) => item.id}
+                onItemClick={(item) => router.push(`/dashboard/inventory/${item.id}`)}
+                cardClassName={(item) => (mutatingItemId === item.id ? 'bg-emerald-500/10 animate-pulse' : undefined)}
+                title={(item) => (
+                  <span className="flex items-center gap-2">
+                    {item.itemName}
+                    <History className="h-3.5 w-3.5 text-white/25" aria-hidden />
+                  </span>
+                )}
+                badge={(item) => (
+                  <span className={`font-black text-lg ${showUsedUp ? 'text-red-400' : item.stockLevel <= 5 ? 'text-red-400 animate-pulse' : 'text-emerald-400'}`}>
+                    {showUsedUp ? (
+                      <span className="text-sm font-bold uppercase tracking-wider">Used up</span>
+                    ) : item.unit === 'bags' ? (
+                      <span>{item.stockLevel} <span className="text-white/60 font-bold text-sm uppercase">bags</span></span>
+                    ) : (
+                      item.stockLevel.toLocaleString()
+                    )}
+                    {!showUsedUp && item.stockLevel <= 5 && <TrendingDown className="inline w-4 h-4 ml-2" />}
+                  </span>
+                )}
+                fields={(item) => [
+                  {
+                    label: 'Cost/Unit',
+                    value: item.costPerUnit != null
+                      ? <span className="text-amber-400 font-black">GHS {Number(item.costPerUnit).toFixed(2)}</span>
+                      : <span className="text-white/20">—</span>,
+                  },
+                  { label: 'Unit', value: item.unit },
+                ]}
+                actions={(item) => (
+                  <>
+                    <WorkerStamp user={item.user} />
+                    {canEdit && !showUsedUp && (
+                      <>
+                        <button onClick={() => openEdit(item)} aria-label="Edit item" className="p-2 rounded-md hover:bg-white/10 text-white/70 hover:text-white transition-colors">
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => confirmDelete(item)} aria-label="Delete item" className="p-2 rounded-md hover:bg-red-500/20 text-white/70 hover:text-red-400 transition-colors">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </>
+                    )}
+                  </>
+                )}
+              />
+              <div className={`hidden md:block rounded-lg border bg-gradient-to-br ${meta.color} overflow-hidden`}>
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-white/10">

@@ -22,6 +22,7 @@ import {
   adminRevokeFarmAccess,
   type AdminFarmDetail,
 } from '@/lib/actions/admin-farm-actions'
+import { MobileCardList } from '@/components/ui/MobileCardList'
 
 type DialogMode =
   | { type: 'upgrade'; tier: 'STANDARD' | 'PREMIUM' }
@@ -333,7 +334,22 @@ export default function FarmDetailDashboard({ farm }: { farm: AdminFarmDetail })
               No devices have registered for this farm yet.
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+            <MobileCardList
+              tone="zinc"
+              items={farm.devices}
+              getKey={(device) => device.id}
+              title={(device) => device.deviceName ?? 'Unnamed device'}
+              subtitle={(device) => device.userEmail ? `${device.userName ?? '-'} · ${device.userEmail}` : device.userName ?? '-'}
+              badge={(device) => <StatusBadge status={device.status} expiresAt={device.licenseExpiresAt} />}
+              fields={(device) => [
+                { label: 'Hardware ID', full: true, value: <span className="font-mono text-xs break-all">{device.hardwareId ?? '-'}</span> },
+                { label: 'Type', value: <span className="text-xs font-semibold uppercase">{device.deviceType ?? '-'}</span> },
+                { label: 'Expiry', value: formatDate(device.licenseExpiresAt) },
+                { label: 'Last Seen', full: true, value: formatDateTime(device.lastSync) },
+              ]}
+            />
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full min-w-[1080px] text-sm">
                 <thead>
                   <tr className="border-b border-zinc-800 bg-zinc-950/60 text-left text-xs uppercase text-zinc-500">
@@ -370,6 +386,7 @@ export default function FarmDetailDashboard({ farm }: { farm: AdminFarmDetail })
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </section>
 
@@ -384,7 +401,20 @@ export default function FarmDetailDashboard({ farm }: { farm: AdminFarmDetail })
               No payment records found.
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+            <MobileCardList
+              tone="zinc"
+              items={farm.paymentHistory}
+              getKey={(payment) => payment.id}
+              title={(payment) => formatMoney(payment.amount, payment.currency)}
+              subtitle={(payment) => formatDate(payment.paidAt)}
+              fields={(payment) => [
+                { label: 'Currency', value: <span className="font-mono text-xs">{payment.currency ?? '-'}</span> },
+                { label: 'Duration', value: payment.durationDays == null ? '-' : `${payment.durationDays} days` },
+                { label: 'Notes', full: true, value: payment.notes ?? '-' },
+              ]}
+            />
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full min-w-[820px] text-sm">
                 <thead>
                   <tr className="border-b border-zinc-800 bg-zinc-950/60 text-left text-xs uppercase text-zinc-500">
@@ -412,6 +442,7 @@ export default function FarmDetailDashboard({ farm }: { farm: AdminFarmDetail })
                 </tbody>
               </table>
             </div>
+            </>
           )}
         </section>
       </div>
