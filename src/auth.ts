@@ -97,8 +97,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   callbacks: {
     ...authConfig.callbacks,
-    // Never block OAuth here — DB work runs after auth in jwt/events handlers.
-    async signIn() {
+    // DB work runs after auth in jwt/events handlers. The only gate here: Google
+    // accounts are linked by email, so the email must be verified (SEC-12).
+    async signIn({ account, profile }) {
+      if (account?.provider === 'google' && profile?.email_verified !== true) {
+        return false;
+      }
       return true;
     },
     async jwt({ token, user, account, trigger, session }) {
