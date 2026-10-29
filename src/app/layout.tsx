@@ -8,9 +8,9 @@ import "./globals.css";
 validateEnv();
 
 export const metadata: Metadata = {
-  title: "Agri-ERP | Enterprise Farm Management System",
+  title: "Poultry Ledger | Enterprise Farm Management System",
   description: "Next-generation multi-species livestock management platform. Track performance, inventory, and health for Poultry, Cattle, and Pigs with precision.",
-  keywords: ["Agri-ERP", "Farm Management", "Poultry PMS", "Livestock Tracking", "Agriculture Software"],
+  keywords: ["Poultry Ledger", "Farm Management", "Poultry PMS", "Livestock Tracking", "Agriculture Software"],
   icons: {
     icon: "/logo.png",
     shortcut: "/logo.png",

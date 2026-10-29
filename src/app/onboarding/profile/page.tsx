@@ -41,7 +41,7 @@ export default function ProfileOnboardingPage() {
     <div className="min-h-screen flex items-center justify-center p-3">
       <div className="max-w-md w-full space-y-11 relative z-10">
         <div className="text-center space-y-3">
-          <h1 className="text-5xl font-bold text-white tracking-normal italic">Welcome to <span className="text-emerald-400">Agri-ERP</span></h1>
+          <h1 className="text-5xl font-bold text-white tracking-normal italic">Welcome to <span className="text-emerald-400">Poultry Ledger</span></h1>
           <p className="text-sm text-white/70 font-bold uppercase tracking-widest italic">
             Please complete your profile details to continue.
           </p>
