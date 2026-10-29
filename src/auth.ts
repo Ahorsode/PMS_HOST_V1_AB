@@ -284,6 +284,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           identifier = normalizePhoneNumber(identifier) || identifier;
         }
 
+        // Per-account limit as well as per-IP (SEC-11), so guessing one
+        // account's password from many IPs is also slowed down.
+        const accountLimit = await checkRateLimit({
+          policy: 'auth.signin',
+          scope: 'account',
+          userId: identifier.trim().toLowerCase(),
+        });
+        if (!accountLimit.ok) {
+          console.warn('[auth] credentials signin rate-limited for account');
+          return null;
+        }
+
         const user = await findUserByLoginIdentifier(identifier);
 
         if (user && user.password) {

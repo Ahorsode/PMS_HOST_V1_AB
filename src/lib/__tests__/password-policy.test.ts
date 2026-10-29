@@ -11,8 +11,9 @@ describe("password policy", () => {
     expect(passwordPolicyError(" Password ")).toMatch(/too common/i);
   });
 
-  it("requires at least 4 characters", () => {
-    expect(passwordPolicyError("abc")).toBe(
+  it("requires at least 8 characters", () => {
+    expect(MIN_PASSWORD_LENGTH).toBe(8);
+    expect(passwordPolicyError("abc4567")).toBe(
       `Password must be at least ${MIN_PASSWORD_LENGTH} characters long`,
     );
   });
