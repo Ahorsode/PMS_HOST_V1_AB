@@ -319,7 +319,7 @@ export default function UserMapDashboard({
             </h3>
             <ol className="space-y-4 text-sm font-medium text-[#c5ba9a]/80 list-decimal list-inside pl-1">
               <li>
-                Ask the customer to open the HatchLog desktop app and click the <strong className="text-white">Activate Cloud Sync / Pay</strong> button in the dashboard.
+                Ask the customer to open the Poultry Ledger desktop app and click the <strong className="text-white">Activate Cloud Sync / Pay</strong> button in the dashboard.
               </li>
               <li>
                 Request them to click <strong className="text-white">Copy ID</strong> next to their computer Hardware Fingerprint string and share it with you (via chat or email).
@@ -331,7 +331,7 @@ export default function UserMapDashboard({
                 Paste the copied <strong className="text-white">Hardware Fingerprint ID</strong> in the target field.
               </li>
               <li>
-                Click the confirmation button to link the desktop hardware to the web user and dynamically build a secure HatchLog token.
+                Click the confirmation button to link the desktop hardware to the web user and dynamically build a secure Poultry Ledger token.
               </li>
               <li>
                 Copy the generated token and send it back to the customer. They can paste it in their application settings or license activation prompt to enable cloud synchronization.

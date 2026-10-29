@@ -7,7 +7,7 @@ import UserMapDashboard from './UserMapDashboard'
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Hardware User Association | HatchLog',
+  title: 'Hardware User Association | Poultry Ledger',
   description: 'Admin tool to bind offline desktop installation hardware IDs directly to active Web Accounts.',
 }
 

@@ -7,7 +7,7 @@ import FarmDetailDashboard from './FarmDetailDashboard'
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Farm Detail | HatchLog Admin',
+  title: 'Farm Detail | Poultry Ledger Admin',
   description: 'Inspect farm subscription status, connected devices, and payment history.',
 }
 

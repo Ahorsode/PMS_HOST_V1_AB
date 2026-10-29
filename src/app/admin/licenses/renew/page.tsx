@@ -6,8 +6,8 @@ import RenewLicensePanel from './RenewLicensePanel'
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Renew Licenses | HatchLog Admin',
-  description: 'Internal HatchLog desktop subscription renewal panel.',
+  title: 'Renew Licenses | Poultry Ledger Admin',
+  description: 'Internal Poultry Ledger desktop subscription renewal panel.',
 }
 
 const spaceGrotesk = Space_Grotesk({

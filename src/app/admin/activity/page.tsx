@@ -6,7 +6,7 @@ import ActivityDashboard from './ActivityDashboard'
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Activity Log | HatchLog Admin',
+  title: 'Activity Log | Poultry Ledger Admin',
   description: 'Audit trail of admin subscription, trial, and access changes.',
 }
 

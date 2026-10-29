@@ -10,7 +10,10 @@ import {
   Egg,
   FileText,
   HeartPulse,
+  Mail,
+  MessageCircle,
   Package,
+  Phone,
   ShieldCheck,
   Smartphone,
   TrendingDown,
@@ -91,6 +94,12 @@ const roles = [
     title: 'Accountant',
     body: 'Finance hub, statements and reports, without touching flock records.',
   },
+];
+
+const contacts = [
+  { icon: Mail, label: 'Email', value: 'info@poultryledger.com', href: 'mailto:info@poultryledger.com' },
+  { icon: MessageCircle, label: 'WhatsApp', value: 'WhatsApp 0554101675', href: 'https://wa.me/233554101675' },
+  { icon: Phone, label: 'Call', value: 'Call 0554101675', href: 'tel:+233554101675' },
 ];
 
 const plans = [
@@ -465,7 +474,7 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer className="relative border-t border-white/10 py-10">
+      <footer id="contact" className="relative border-t border-white/10 py-10">
         <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 sm:px-6 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-2.5">
             <img src="/logo.png" alt="" className="h-8 w-8 rounded-lg object-cover" />
@@ -475,9 +484,31 @@ export default function LandingPage() {
             <a href="#features" className="hover:text-white">Features</a>
             <a href="#how-it-works" className="hover:text-white">How it works</a>
             <a href="#pricing" className="hover:text-white">Pricing</a>
+            <a href="#contact" className="hover:text-white">Contact</a>
             <Link href="/login" className="hover:text-white">Log in</Link>
             <Link href="/signup" className="hover:text-white">Sign up</Link>
           </nav>
+        </div>
+        <div className="mx-auto mt-8 flex max-w-6xl flex-col gap-6 border-t border-white/10 px-4 pt-8 sm:px-6 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="text-sm font-bold uppercase tracking-wider text-white/80">Contact us</h2>
+            <ul className="mt-3 flex flex-col gap-3 text-sm text-white/60 sm:flex-row sm:flex-wrap sm:gap-x-8">
+              {contacts.map(({ icon: Icon, label, value, href }) => (
+                <li key={label}>
+                  <a
+                    href={href}
+                    target={href.startsWith('http') ? '_blank' : undefined}
+                    rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                    className="inline-flex items-center gap-2 hover:text-white"
+                  >
+                    <Icon className="h-4 w-4 text-emerald-400" />
+                    <span className="sr-only">{label}: </span>
+                    {value}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
           <p className="text-sm text-white/50">{`© ${year} ${BRAND_NAME}. All rights reserved.`}</p>
         </div>
       </footer>

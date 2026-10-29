@@ -5,8 +5,8 @@ import { getAdminSession, sanitizeAdminCallbackUrl } from '@/lib/admin-session'
 import AdminLoginForm from './AdminLoginForm'
 
 export const metadata: Metadata = {
-  title: 'Admin Login | HatchLog',
-  description: 'Internal HatchLog admin login.',
+  title: 'Admin Login | Poultry Ledger',
+  description: 'Internal Poultry Ledger admin login.',
 }
 
 const spaceGrotesk = Space_Grotesk({
@@ -46,7 +46,7 @@ export default async function AdminLoginPage({
           <div className="hidden min-h-[560px] flex-col justify-between border-r border-[#f7f1df]/10 p-8 lg:flex">
             <div>
               <div className="inline-flex rounded-full border border-[#d8c78f]/25 bg-[#d8c78f]/10 px-3 py-1 text-[0.65rem] font-black uppercase tracking-[0.24em] text-[#fff0b8]">
-                HatchLog internal
+                Poultry Ledger internal
               </div>
               <h1 className="mt-6 max-w-sm text-5xl font-black tracking-[-0.05em] text-[#fff9e8]">
                 Payment ops gatehouse.

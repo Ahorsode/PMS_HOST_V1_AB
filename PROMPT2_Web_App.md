@@ -566,7 +566,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="min-h-screen bg-zinc-950">
       <nav className="sticky top-0 z-50 border-b border-zinc-800 bg-zinc-950/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center gap-6 px-8 py-4">
-          <span className="font-bold text-white">HatchLog Admin</span>
+          <span className="font-bold text-white">Poultry Ledger Admin</span>
           <div className="flex items-center gap-4 text-sm">
             <a href="/admin/farms"    className="text-zinc-400 hover:text-white transition-colors">Farms</a>
             <a href="/admin/licenses/issue"  className="text-zinc-400 hover:text-white transition-colors">Issue License</a>

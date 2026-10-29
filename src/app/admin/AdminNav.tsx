@@ -58,7 +58,7 @@ export default function AdminNav({ adminName }: { adminName?: string }) {
             <ShieldCheck className="h-5 w-5" />
           </span>
           <span className="hidden flex-col leading-tight sm:flex">
-            <span className="text-sm font-bold tracking-tight text-white">HatchLog</span>
+            <span className="text-sm font-bold tracking-tight text-white">Poultry Ledger</span>
             <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-400/80">
               Admin Console
             </span>
