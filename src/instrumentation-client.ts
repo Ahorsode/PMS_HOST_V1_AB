@@ -11,7 +11,8 @@ Sentry.init({
 
   // Add optional integrations for additional features
   integrations: [
-    Sentry.replayIntegration(),
+    // Mask on-screen text and media so replays never capture farm records.
+    Sentry.replayIntegration({ maskAllText: true, blockAllMedia: true }),
     Sentry.feedbackIntegration({
       colorScheme: "system",
       isNameRequired: true,
@@ -39,7 +40,8 @@ Sentry.init({
 
   // Enable sending user PII (Personally Identifiable Information)
   // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#sendDefaultPii
-  sendDefaultPii: true,
+  // Off: farm financial data and user IPs should not leave for Sentry (OPS-04).
+  sendDefaultPii: false,
 });
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
