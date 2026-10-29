@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { requirePaymentAdminAction } from '@/lib/admin-auth'
 import prisma from '@/lib/db'
+import { applyPaidUpgrade } from '@/lib/billing/apply-paid-upgrade'
 
 export async function adminUpgradeFarmTier(
   farmId: string,
@@ -25,53 +26,14 @@ export async function adminUpgradeFarmTier(
 
   try {
     await prisma.$transaction(async (tx) => {
-      const before = await tx.farm.findUnique({
-        where: { id: farmId },
-        select: {
-          userId: true,
-          subscriptionTier: true,
-          masterLicenseStatus: true,
-          trialExpiresAt: true,
-        },
-      })
-
-      if (!before) throw new Error('Farm not found')
-
-      await tx.farm.update({
-        where: { id: farmId },
-        data: {
-          subscriptionTier: tier,
-          masterLicenseStatus: `PAID_${tier}`,
-          trialExpiresAt: periodEnd,
-          trialExhaustedAt: null,
-        },
-      })
-
-      await tx.deviceRegistration.updateMany({
-        where: { farmId },
-        data: {
-          status: 'ACTIVE',
-          licenseExpiresAt: periodEnd,
-          lastPaymentAt: new Date(),
-          isActive: true,
-        },
-      })
-
-      await tx.subscriptionEvent.create({
-        data: {
-          farmId,
-          userId: before.userId,
-          eventType: 'TIER_UPGRADED',
-          metadata: {
-            adminId: admin.id,
-            adminUsername: admin.username,
-            tier,
-            durationDays,
-            newExpiresAt: periodEnd.toISOString(),
-            previousTier: before.subscriptionTier,
-            previousStatus: before.masterLicenseStatus,
-            previousExpiresAt: before.trialExpiresAt?.toISOString() ?? null,
-          },
+      await applyPaidUpgrade(tx, {
+        farmId,
+        tier,
+        periodEnd,
+        eventMetadata: {
+          adminId: admin.id,
+          adminUsername: admin.username,
+          durationDays,
         },
       })
     })
