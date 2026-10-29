@@ -421,9 +421,31 @@ export async function deleteMember(memberId: string) {
     const farm = await tx.farm.findUnique({ where: { id: activeFarmId } })
     if (farm?.userId !== userId) throw new Error('Unauthorized: Only the creator can delete members')
 
-    await tx.farmMember.delete({
+    const removed = await tx.farmMember.delete({
       where: { id: memberId, farmId: activeFarmId }
     })
+
+    // Revoke the removed member's access straight away (SEC-04): drop their
+    // permissions on this farm and invalidate any session they still hold.
+    await tx.userPermission.deleteMany({
+      where: { userId: removed.userId, farmId: activeFarmId }
+    })
+    const revokedUser = await tx.user.update({
+      where: { id: removed.userId },
+      data: {
+        sessionVersion: { increment: 1 },
+        securityNotice: SECURITY_PERMISSION_UPDATE_MESSAGE,
+        securityRevokedAt: new Date()
+      },
+      select: { sessionVersion: true }
+    })
+    await tx.session.deleteMany({
+      where: { userId: removed.userId }
+    })
+
+    return { removedUserId: removed.userId as string, sessionVersion: revokedUser.sessionVersion as number }
+  }).then(async ({ removedUserId, sessionVersion }: { removedUserId: string; sessionVersion: number }) => {
+    await setCachedSessionVersion(removedUserId, sessionVersion)
     revalidatePath('/dashboard/team')
     return { success: true }
   }).catch((error: any) => {
