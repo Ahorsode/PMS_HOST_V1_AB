@@ -1,7 +1,17 @@
 'use server'
 
-import { getAdminSession } from '@/lib/admin-session'
+import { requirePaymentAdminAction } from '@/lib/admin-auth'
 import prisma from '@/lib/db'
+
+/** Like requirePaymentAdminAction, but resolves to false instead of throwing; also rejects deactivated admins (SEC-15). */
+async function isActiveAdmin() {
+  try {
+    await requirePaymentAdminAction()
+    return true
+  } catch {
+    return false
+  }
+}
 
 export type AdminFarmDevice = {
   id: string
@@ -22,8 +32,7 @@ export type AdminDeviceLookup = {
 }
 
 export async function getDevicesForFarm(farmId: string) {
-  const adminSession = await getAdminSession()
-  if (!adminSession || !farmId) return { success: false, devices: [] as AdminFarmDevice[] }
+  if (!(await isActiveAdmin()) || !farmId) return { success: false, devices: [] as AdminFarmDevice[] }
 
   const devices = await prisma.deviceRegistration.findMany({
     where: { farmId },
@@ -50,8 +59,7 @@ export async function getDevicesForFarm(farmId: string) {
 }
 
 export async function getDeviceByHardwareId(hardwareId: string): Promise<AdminDeviceLookup | null> {
-  const adminSession = await getAdminSession()
-  if (!adminSession || !hardwareId.trim()) return null
+  if (!(await isActiveAdmin()) || !hardwareId.trim()) return null
 
   const device = await prisma.deviceRegistration.findFirst({
     where: { hardwareId: hardwareId.trim() },
