@@ -46,6 +46,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid token payload" }, { status: 401 });
     }
 
+    // Accounts are matched by email, so only trust addresses Google has
+    // verified (SEC-12).
+    if (payload.email_verified !== true) {
+      return NextResponse.json({ error: "Google email address is not verified" }, { status: 401 });
+    }
+
     const { email: rawEmail, name, picture, sub: googleId } = payload;
     const email = rawEmail.toLowerCase().trim();
 

@@ -6,6 +6,7 @@ import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
 import { farmCacheTags, revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
+import { supplierBelongsToFarm } from '@/lib/suppliers/supplier-ownership'
 import {
   fetchBatchIdsForHealthItem,
   upsertHealthStockCostExpense,
@@ -54,6 +55,10 @@ export async function createInventoryItem(data: {
   if (!limitResult.ok) return rateLimitActionError(limitResult)
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    if (!(await supplierBelongsToFarm(tx, activeFarmId, data.supplierId))) {
+      return { success: false, error: 'Selected supplier was not found' }
+    }
+
     const payload = normalizeHealthInventoryInput(data)
     const item = await tx.inventory.create({
       data: {

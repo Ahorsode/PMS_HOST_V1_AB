@@ -10,7 +10,9 @@ export async function GET(req: Request) {
   const authHeader = req.headers.get('authorization')
   const cronSecret = process.env.CRON_SECRET
 
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  // Fail closed (SEC-10): without CRON_SECRET this endpoint would let anyone
+  // list every farm and trigger a full scan of the database.
+  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -54,9 +56,11 @@ export async function GET(req: Request) {
     }
   }
 
+  // Only aggregate counts leave the server; farm names and alert details stay internal.
   return NextResponse.json({
     evaluatedAt: now.toISOString(),
+    farmsEvaluated: farms.length,
     farmsWithAlerts: results.length,
-    results,
+    alertsRaised: results.reduce((sum, result) => sum + result.alerts.length, 0),
   })
 }

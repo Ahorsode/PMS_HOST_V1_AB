@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import bcrypt from 'bcryptjs';
-import { randomBytes } from 'crypto';
-import { normalizePhoneNumber } from '@/lib/auth-utils';
+import { normalizePhoneNumber } from '@/lib/phone-auth';
 import { checkRateLimit, getRateLimitIp, rateLimitHeaders } from '@/lib/performance/rate-limit';
 import { MAX_PASSWORD_LENGTH, passwordPolicyError } from '@/lib/password-policy';
 import { z } from 'zod';
@@ -65,10 +64,14 @@ export async function POST(req: Request) {
       }
     });
 
-    // If user exists and already has a password, it's a real duplicate.
-    // If user exists and doesn't have a password (or is invited), we can update them.
-    if (existingUser && existingUser.password && !existingUser.mustChangePassword) {
-      return NextResponse.json({ message: 'User already exists and is fully registered' }, { status: 400 });
+    // Signup must never modify an existing account: matching only on phone or
+    // email would let anyone set the password of a Google-only user or an
+    // invited worker (SEC-01). Existing users sign in instead.
+    if (existingUser) {
+      return NextResponse.json(
+        { message: 'An account with these details already exists. Please sign in instead.' },
+        { status: 409 },
+      );
     }
 
     // Check for invitations
@@ -82,52 +85,33 @@ export async function POST(req: Request) {
       }
     });
 
-    // Handle password
-    // If invited, we use a secure random token as default if no password provided
-    const rawPassword = password || (invitation ? randomBytes(16).toString('hex') : null);
-    
-    if (!rawPassword) {
+    // Everyone who signs up chooses their own password, so there is nothing to
+    // change on first login (invite codes are only for owner-created accounts).
+    if (!password) {
       return NextResponse.json({ message: 'Password is required' }, { status: 400 });
     }
 
-    const passwordError = passwordPolicyError(rawPassword);
+    const passwordError = passwordPolicyError(password);
     if (passwordError) {
       return NextResponse.json({ message: passwordError }, { status: 400 });
     }
 
-    const hashedPassword = await bcrypt.hash(rawPassword, 10);
-    
-    // Invited users must set a password they know after the random temporary credential.
-    const mustChangePassword = !!invitation;
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const mustChangePassword = false;
 
-    // Create or Update the user and associated resources in a transaction
+    // Create the user and associated resources in a transaction
     const user = await prisma.$transaction(async (tx) => {
-      let txUser;
-      if (existingUser) {
-        txUser = await tx.user.update({
-          where: { id: existingUser.id },
-          data: {
-            firstname: firstname || '',
-            surname: surname || '',
-            email: cleanEmail || existingUser.email,
-            password: hashedPassword,
-            mustChangePassword,
-            role: invitation?.role || existingUser.role || 'OWNER',
-          }
-        });
-      } else {
-        txUser = await tx.user.create({
-          data: {
-            firstname: firstname || '',
-            surname: surname || '',
-            email: cleanEmail,
-            phoneNumber: normalizedPhone || phoneNumber,
-            password: hashedPassword,
-            mustChangePassword,
-            role: invitation?.role || 'OWNER',
-          }
-        });
-      }
+      const txUser = await tx.user.create({
+        data: {
+          firstname: firstname || '',
+          surname: surname || '',
+          email: cleanEmail,
+          phoneNumber: normalizedPhone || phoneNumber,
+          password: hashedPassword,
+          mustChangePassword,
+          role: invitation?.role || 'OWNER',
+        }
+      });
 
       // If there's an invitation, link to farm and update invitation
       if (invitation) {
@@ -143,7 +127,7 @@ export async function POST(req: Request) {
           where: { id: invitation.id },
           data: { status: 'ACCEPTED' }
         });
-      } else if (!existingUser || !existingUser.password) {
+      } else {
         // Create default farm for new standalone owners
         const newFarm = await tx.farm.create({
           data: {

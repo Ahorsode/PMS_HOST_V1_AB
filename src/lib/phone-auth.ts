@@ -1,6 +1,3 @@
-/** Shared first-login password for workers invited via web, desktop, or mobile. */
-export const WORKER_PLACEHOLDER_PASSWORD = '123456'
-
 export function normalizePhoneNumber(phone: string | null | undefined): string | null {
   if (!phone) return null
   let cleaned = phone.replace(/[^\d+]/g, '')

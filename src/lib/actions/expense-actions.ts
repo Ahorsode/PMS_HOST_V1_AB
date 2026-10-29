@@ -9,6 +9,7 @@ import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-lim
 import { getSupabaseServerClient } from '@/lib/supabase-server'
 import { randomUUID } from 'crypto'
 import { parseFinancialLogDate } from '@/lib/financial-dates'
+import { supplierBelongsToFarm } from '@/lib/suppliers/supplier-ownership'
 
 type AllocationMode = 'PERCENTAGE' | 'AMOUNT'
 
@@ -314,9 +315,12 @@ export async function createExpense(data: {
     return { success: false, error: prepared.error }
   }
 
-  const batchValidation = await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => (
-    validateBatchesForAllocation(tx, activeFarmId, data.allocations || [])
-  ))
+  const batchValidation = await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    if (!(await supplierBelongsToFarm(tx, activeFarmId, data.supplierId))) {
+      return { ok: false, error: 'Selected supplier was not found' }
+    }
+    return validateBatchesForAllocation(tx, activeFarmId, data.allocations || [])
+  })
 
   if (!batchValidation.ok) {
     return { success: false, error: batchValidation.error }

@@ -53,9 +53,10 @@ export const authConfig = {
         token.securityInvalidated = false;
         token.securityNotice = null;
       }
-      if (trigger === "update" && session) {
-        token.mustChangePassword = session.mustChangePassword;
-        if (session.name) token.name = session.name;
+      // mustChangePassword is only refreshed from the database (see auth.ts),
+      // never copied from a client-supplied session update.
+      if (trigger === "update" && session?.name) {
+        token.name = session.name;
       }
       return token;
     },

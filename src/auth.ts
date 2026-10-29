@@ -5,22 +5,20 @@ import Google from 'next-auth/providers/google';
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { authConfig } from './auth.config';
 import prisma from '@/lib/db';
-import bcrypt from 'bcryptjs';
 import {
   acceptPendingInvitationForUser,
   completeGoogleSignIn,
   findUserByLoginIdentifier,
   normalizePhoneNumber,
   recordUserSession,
-  WORKER_PLACEHOLDER_PASSWORD,
 } from '@/lib/auth-utils';
+import { checkLoginSecret } from '@/lib/login-credentials';
 import { getCachedSessionVersion, setCachedSessionVersion } from '@/lib/performance/session-version-cache';
 import { checkRateLimit } from '@/lib/performance/rate-limit';
 
 const SECURITY_PERMISSION_UPDATE_MESSAGE = 'Your security permissions have been updated. Please sign in again to activate your new features.';
 
 type SessionUpdatePayload = {
-  mustChangePassword?: boolean;
   name?: string;
 };
 
@@ -98,8 +96,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   callbacks: {
     ...authConfig.callbacks,
-    // Never block OAuth here — DB work runs after auth in jwt/events handlers.
-    async signIn() {
+    // DB work runs after auth in jwt/events handlers. The only gate here: Google
+    // accounts are linked by email, so the email must be verified (SEC-12).
+    async signIn({ account, profile }) {
+      if (account?.provider === 'google' && profile?.email_verified !== true) {
+        return false;
+      }
       return true;
     },
     async jwt({ token, user, account, trigger, session }) {
@@ -143,8 +145,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       if (trigger === "update" && session) {
         const update = session as SessionUpdatePayload;
-        token.mustChangePassword = update.mustChangePassword;
         if (update.name) token.name = update.name;
+        // Never trust the client for security flags (SEC-09): a browser can call
+        // update({ mustChangePassword: false }) to skip the forced change.
+        if (token.id) {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { mustChangePassword: true },
+          });
+          token.mustChangePassword = dbUser?.mustChangePassword ?? true;
+        }
       }
 
       if (token.id) {
@@ -277,35 +287,37 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           identifier = normalizePhoneNumber(identifier) || identifier;
         }
 
+        // Per-account limit as well as per-IP (SEC-11), so guessing one
+        // account's password from many IPs is also slowed down.
+        const accountLimit = await checkRateLimit({
+          policy: 'auth.signin',
+          scope: 'account',
+          userId: identifier.trim().toLowerCase(),
+        });
+        if (!accountLimit.ok) {
+          console.warn('[auth] credentials signin rate-limited for account');
+          return null;
+        }
+
         const user = await findUserByLoginIdentifier(identifier);
 
         if (user && user.password) {
-          let isValid = await bcrypt.compare(password, user.password);
+          const check = await checkLoginSecret(user, password);
 
-          // Legacy invited workers may still have a random temp hash from before
-          // placeholder-password rollout. Accept the shared first-login password
-          // and normalize the stored hash going forward.
-          if (
-            !isValid &&
-            user.mustChangePassword &&
-            password === WORKER_PLACEHOLDER_PASSWORD
-          ) {
-            const hashedPlaceholder = await bcrypt.hash(WORKER_PLACEHOLDER_PASSWORD, 10);
-            await prisma.user.update({
-              where: { id: user.id },
-              data: {
-                password: hashedPlaceholder,
-                mustChangePassword: true,
-              },
-            });
-            isValid = true;
-          }
-
-          if (!isValid) {
-            console.warn('[auth] credentials signin failed: wrong password', {
+          if (!check.ok) {
+            console.warn('[auth] credentials signin failed', {
+              reason: check.reason,
               identifier: identifier.includes('@') ? identifier : '[phone]',
             });
             return null;
+          }
+
+          // Invite codes work once: the user must now choose their own password.
+          if (check.usedInviteCode) {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { inviteCodeExpiresAt: new Date() },
+            });
           }
 
           const acceptedFarmId = await acceptPendingInvitationForUser(user.id);

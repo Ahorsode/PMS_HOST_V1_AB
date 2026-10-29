@@ -26,6 +26,7 @@ model User {
   sessionVersion        Int                    @default(1) @map("session_version")
   securityNotice        String?                @map("security_notice")
   securityRevokedAt     DateTime?              @map("security_revoked_at")
+  inviteCodeExpiresAt   DateTime?              @map("invite_code_expires_at")
   accounts              Account[]
   auditLogs             AuditLog[]
   batches               Livestock[]

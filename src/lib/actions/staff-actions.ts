@@ -6,8 +6,8 @@ import {
   getAuthContext,
   normalizePhoneNumber,
   SECURITY_PERMISSION_UPDATE_MESSAGE,
-  WORKER_PLACEHOLDER_PASSWORD,
 } from '@/lib/auth-utils'
+import { generateInviteCode, inviteCodeExpiry, normalizeInviteCode } from '@/lib/invite-code'
 import { canAddWorker } from '@/lib/subscription-utils'
 import { Role } from '@prisma/client'
 import bcrypt from 'bcryptjs'
@@ -45,32 +45,36 @@ async function findOrCreateInvitedUser(
     where: { OR: identifiers },
   })
 
-  if (existingUser) {
-    if (existingUser.mustChangePassword) {
-      const hashedPlaceholder = await bcrypt.hash(WORKER_PLACEHOLDER_PASSWORD, 10)
-      return await tx.user.update({
-        where: { id: existingUser.id },
-        data: {
-          password: hashedPlaceholder,
-          mustChangePassword: true,
-        },
-      })
-    }
-    return existingUser
+  // Users who already chose their own password sign in with it; no code.
+  if (existingUser && !existingUser.mustChangePassword) {
+    return { user: existingUser, inviteCode: null as string | null }
   }
 
-  const hashedDefault = await bcrypt.hash(WORKER_PLACEHOLDER_PASSWORD, 10)
+  const inviteCode = generateInviteCode()
+  const credentials = await inviteCodeCredentials(inviteCode)
 
-  return await tx.user.create({
-    data: {
-      email,
-      phoneNumber: phone,
-      role,
-      password: hashedDefault,
-      mustChangePassword: true,
-      // Firstname/Surname will be updated during change-password.
-    },
-  })
+  const user = existingUser
+    ? await tx.user.update({ where: { id: existingUser.id }, data: credentials })
+    : await tx.user.create({
+        data: {
+          email,
+          phoneNumber: phone,
+          role,
+          ...credentials,
+          // Firstname/Surname will be updated during change-password.
+        },
+      })
+
+  return { user, inviteCode: inviteCode as string | null }
+}
+
+/** A fresh one-time code replaces whatever first-login credential the user had (SEC-02). */
+async function inviteCodeCredentials(inviteCode: string) {
+  return {
+    password: await bcrypt.hash(normalizeInviteCode(inviteCode), 10),
+    mustChangePassword: true,
+    inviteCodeExpiresAt: inviteCodeExpiry(),
+  }
 }
 
 async function upsertInvitedUserPermissions(
@@ -170,7 +174,7 @@ export async function inviteWorker(data: {
           where: { id: existingInvite.id },
           data: { role: data.role }
         })
-        const invitedUser = await findOrCreateInvitedUser(tx, { email, phone, role: data.role })
+        const { user: invitedUser, inviteCode } = await findOrCreateInvitedUser(tx, { email, phone, role: data.role })
         await upsertInvitedUserPermissions(tx, {
           userId: invitedUser.id,
           farmId: activeFarmId,
@@ -178,7 +182,7 @@ export async function inviteWorker(data: {
           permissions: data.permissions,
         })
         revalidatePath('/dashboard/team')
-        return { success: true, invitation }
+        return { success: true, invitation, inviteCode }
       }
 
       const invitation = await tx.invitation.create({
@@ -192,7 +196,7 @@ export async function inviteWorker(data: {
       })
 
       // Auto-create User record and controlled permissions for pending access.
-      const invitedUser = await findOrCreateInvitedUser(tx, { email, phone, role: data.role })
+      const { user: invitedUser, inviteCode } = await findOrCreateInvitedUser(tx, { email, phone, role: data.role })
       await upsertInvitedUserPermissions(tx, {
         userId: invitedUser.id,
         farmId: activeFarmId,
@@ -201,10 +205,71 @@ export async function inviteWorker(data: {
       })
 
       revalidatePath('/dashboard/team')
-      return { success: true, invitation }
+      // The plain code is returned once, to the inviter only; just its hash is stored.
+      return { success: true, invitation, inviteCode }
     })
   } catch (error: any) {
     console.error('Fatal error inviting worker:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+/**
+ * Issues a new one-time first-login code for someone who has not set their
+ * own password yet: a pending invitation, or a member who signed in with a
+ * code but never finished choosing a password. Owners and managers only.
+ */
+export async function regenerateInviteCode(target: { invitationId?: string; memberUserId?: string }) {
+  try {
+    const { userId, activeFarmId } = await getAuthContext()
+    if (!activeFarmId) throw new Error('No active farm selected')
+
+    const rateLimit = await checkRateLimit({ policy: 'team.invite', scope: 'regenerateInviteCode', farmId: activeFarmId, userId })
+    if (!rateLimit.ok) return rateLimitActionError(rateLimit)
+
+    return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+      const farm = await tx.farm.findUnique({ where: { id: activeFarmId }, select: { userId: true } })
+      const membership = await tx.farmMember.findUnique({
+        where: { farmId_userId: { farmId: activeFarmId, userId } },
+        select: { role: true },
+      })
+      if (farm?.userId !== userId && membership?.role !== 'MANAGER') {
+        throw new Error('Only Owners or Managers can issue invite codes')
+      }
+
+      let targetUser: { id: string; mustChangePassword: boolean } | null = null
+      if (target.invitationId) {
+        const invitation = await tx.invitation.findFirst({
+          where: { id: target.invitationId, farmId: activeFarmId, status: 'PENDING' },
+        })
+        if (!invitation) throw new Error('Invitation not found')
+        const identifiers = [
+          ...(invitation.email ? [{ email: invitation.email }] : []),
+          ...(invitation.phoneNumber ? [{ phoneNumber: invitation.phoneNumber }] : []),
+        ]
+        targetUser = identifiers.length
+          ? await tx.user.findFirst({ where: { OR: identifiers }, select: { id: true, mustChangePassword: true } })
+          : null
+      } else if (target.memberUserId) {
+        const member = await tx.farmMember.findUnique({
+          where: { farmId_userId: { farmId: activeFarmId, userId: target.memberUserId } },
+          select: { user: { select: { id: true, mustChangePassword: true } } },
+        })
+        targetUser = member?.user ?? null
+      }
+
+      if (!targetUser) throw new Error('Team member not found')
+      if (!targetUser.mustChangePassword) {
+        throw new Error('This person has already set their own password')
+      }
+
+      const inviteCode = generateInviteCode()
+      await tx.user.update({ where: { id: targetUser.id }, data: await inviteCodeCredentials(inviteCode) })
+
+      return { success: true, inviteCode }
+    })
+  } catch (error: any) {
+    console.error('Error issuing invite code:', error)
     return { success: false, error: error.message }
   }
 }
@@ -286,10 +351,23 @@ export async function getFarmMembers() {
     })
     const isAbsoluteOwner = farm?.userId === userId
 
+    // Select only display fields: `user: true` sent password hashes and
+    // security fields to the browser (SEC-17).
     const members = await tx.farmMember.findMany({
       where: { farmId: activeFarmId },
       include: {
-        user: true
+        user: {
+          select: {
+            id: true,
+            firstname: true,
+            surname: true,
+            email: true,
+            phoneNumber: true,
+            image: true,
+            role: true,
+            mustChangePassword: true,
+          }
+        }
       }
     })
 
@@ -421,9 +499,31 @@ export async function deleteMember(memberId: string) {
     const farm = await tx.farm.findUnique({ where: { id: activeFarmId } })
     if (farm?.userId !== userId) throw new Error('Unauthorized: Only the creator can delete members')
 
-    await tx.farmMember.delete({
+    const removed = await tx.farmMember.delete({
       where: { id: memberId, farmId: activeFarmId }
     })
+
+    // Revoke the removed member's access straight away (SEC-04): drop their
+    // permissions on this farm and invalidate any session they still hold.
+    await tx.userPermission.deleteMany({
+      where: { userId: removed.userId, farmId: activeFarmId }
+    })
+    const revokedUser = await tx.user.update({
+      where: { id: removed.userId },
+      data: {
+        sessionVersion: { increment: 1 },
+        securityNotice: SECURITY_PERMISSION_UPDATE_MESSAGE,
+        securityRevokedAt: new Date()
+      },
+      select: { sessionVersion: true }
+    })
+    await tx.session.deleteMany({
+      where: { userId: removed.userId }
+    })
+
+    return { removedUserId: removed.userId as string, sessionVersion: revokedUser.sessionVersion as number }
+  }).then(async ({ removedUserId, sessionVersion }: { removedUserId: string; sessionVersion: number }) => {
+    await setCachedSessionVersion(removedUserId, sessionVersion)
     revalidatePath('/dashboard/team')
     return { success: true }
   }).catch((error: any) => {

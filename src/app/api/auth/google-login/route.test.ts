@@ -73,6 +73,7 @@ describe("google-login route", () => {
     mocks.verifyIdToken.mockResolvedValue({
       getPayload: () => ({
         email: "user@example.com",
+        email_verified: true,
         name: "Example User",
         picture: "https://example.com/avatar.png",
         sub: "google-subject",
@@ -91,6 +92,19 @@ describe("google-login route", () => {
       body: JSON.stringify({ idToken: "google-id-token", deviceType: "Mobile" }),
     });
   }
+
+  it("rejects Google tokens whose email is not verified", async () => {
+    mocks.verifyIdToken.mockResolvedValue({
+      getPayload: () => ({ email: "user@example.com", email_verified: false, sub: "google-subject" }),
+    });
+    const { POST } = await import("./route");
+
+    const response = await POST(request());
+
+    expect(response.status).toBe(401);
+    expect(mocks.userFindFirst).not.toHaveBeenCalled();
+    expect(mocks.encode).not.toHaveBeenCalled();
+  });
 
   it("rejects valid Google tokens that do not map to an existing account", async () => {
     mocks.userFindFirst.mockResolvedValue(null);

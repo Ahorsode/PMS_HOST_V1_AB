@@ -6,7 +6,6 @@ import { buildPhoneLookupCandidates } from '@/lib/phone-auth'
 export {
   buildPhoneLookupCandidates,
   normalizePhoneNumber,
-  WORKER_PLACEHOLDER_PASSWORD,
 } from '@/lib/phone-auth'
 
 export const SECURITY_PERMISSION_UPDATE_MESSAGE = 'Your security permissions have been updated. Please sign in again to activate your new features.'
@@ -138,8 +137,14 @@ export const getAuthContext = cache(async () => {
     throw new Error(`SESSION_REVOKED: ${data.securityNotice || SECURITY_PERMISSION_UPDATE_MESSAGE}`)
   }
 
+  // The session's farm is only honoured while the user still owns it or is a
+  // member of it (SEC-04): a removed worker's token keeps the old farm id.
+  const canAccessFarm = (farmId: string) =>
+    data.farms.some((farm) => farm.id === farmId) ||
+    data.memberships.some((item) => item.farmId === farmId)
+
   const activeFarmId =
-    activeFarmIdFromSession ||
+    (activeFarmIdFromSession && canAccessFarm(activeFarmIdFromSession) ? activeFarmIdFromSession : undefined) ||
     data.farms[0]?.id ||
     data.memberships[0]?.farmId
 
