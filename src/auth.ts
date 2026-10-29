@@ -20,7 +20,6 @@ import { checkRateLimit } from '@/lib/performance/rate-limit';
 const SECURITY_PERMISSION_UPDATE_MESSAGE = 'Your security permissions have been updated. Please sign in again to activate your new features.';
 
 type SessionUpdatePayload = {
-  mustChangePassword?: boolean;
   name?: string;
 };
 
@@ -143,8 +142,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       if (trigger === "update" && session) {
         const update = session as SessionUpdatePayload;
-        token.mustChangePassword = update.mustChangePassword;
         if (update.name) token.name = update.name;
+        // Never trust the client for security flags (SEC-09): a browser can call
+        // update({ mustChangePassword: false }) to skip the forced change.
+        if (token.id) {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { mustChangePassword: true },
+          });
+          token.mustChangePassword = dbUser?.mustChangePassword ?? true;
+        }
       }
 
       if (token.id) {
