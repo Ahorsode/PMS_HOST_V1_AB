@@ -468,7 +468,7 @@ export default function PaymentAdminDashboard({
           <MetricRibbon
             label="Registered Farms"
             value={metrics.totalRegisteredFarms.toLocaleString()}
-            helper="All farms in HatchLog"
+            helper="All farms in Poultry Ledger"
             icon={ServerCog}
             tone="bg-[#e4b45c]/30"
           />

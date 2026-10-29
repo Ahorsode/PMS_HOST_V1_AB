@@ -1,4 +1,4 @@
-# HatchLog Desktop Manual Activation (Flutter)
+# Poultry Ledger Desktop Manual Activation (Flutter)
 
 Use this in the Flutter desktop app where the local SQLite `farm_id` and Windows `systemGUID` are available.
 

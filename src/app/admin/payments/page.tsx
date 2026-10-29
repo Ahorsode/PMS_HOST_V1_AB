@@ -7,8 +7,8 @@ import PaymentAdminDashboard from './PaymentAdminDashboard'
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Payment Admin | HatchLog',
-  description: 'Internal HatchLog manual payment and offline license activation dashboard.',
+  title: 'Payment Admin | Poultry Ledger',
+  description: 'Internal Poultry Ledger manual payment and offline license activation dashboard.',
 }
 
 const spaceGrotesk = Space_Grotesk({
