@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Check, Clock3, Crown, Monitor, Shield, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
-import { requestSubscriptionUpgrade } from "@/lib/actions/subscription-actions";
+import { requestSubscriptionUpgrade, startPaystackCheckout } from "@/lib/actions/subscription-actions";
 import { type DesktopLicenseRow } from "@/lib/actions/licenses";
 import { type SubscriptionTier } from "@prisma/client";
 import { cn } from "@/lib/utils";
@@ -181,6 +181,35 @@ export default function LicenseUpgradeClient({
     return () => window.clearInterval(interval);
   }, []);
 
+  // Result of a Paystack checkout, set by /api/payments/paystack/callback.
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const payment = params.get("payment");
+    if (!payment) return;
+
+    if (payment === "success") {
+      toast.success("Payment received. Your plan is now active.");
+    } else if (payment === "pending") {
+      toast.info("We're confirming your payment. Your plan will update shortly.");
+    } else {
+      toast.error("Payment was not completed. You have not been charged for a new plan.");
+    }
+    router.replace("/dashboard/license-upgrade");
+  }, [router]);
+
+  function handlePaystackCheckout(tier: PaidTier) {
+    startTransition(async () => {
+      const result = await startPaystackCheckout(tier, selectedMonths);
+
+      if (!result.success || !("authorizationUrl" in result) || !result.authorizationUrl) {
+        toast.error(result.error || "Could not start the payment");
+        return;
+      }
+
+      window.location.assign(result.authorizationUrl);
+    });
+  }
+
   function handleUpgrade(tier: PaidTier) {
     startTransition(async () => {
       const result = await requestSubscriptionUpgrade(tier, selectedMonths);
@@ -352,20 +381,33 @@ export default function LicenseUpgradeClient({
                       Current Plan
                     </div>
                   ) : (
-                    <Button
-                      onClick={() => handleUpgrade(plan.tier)}
-                      isLoading={isUpgrading}
-                      loadingText="Updating..."
-                      disabled={isUpgrading}
-                      className={cn(
-                        "h-14 w-full rounded-lg font-bold uppercase tracking-widest",
-                        plan.tier === "STANDARD"
-                          ? "bg-emerald-500 text-[#064e3b] shadow-emerald-500/20 hover:bg-emerald-400"
-                          : "bg-amber-500 text-[#451a03] shadow-amber-500/20 hover:bg-amber-400",
-                      )}
-                    >
-                      Request Upgrade — {plan.name}
-                    </Button>
+                    <div className="space-y-3">
+                      <Button
+                        onClick={() => handlePaystackCheckout(plan.tier)}
+                        isLoading={isUpgrading}
+                        loadingText="Opening Paystack..."
+                        disabled={isUpgrading}
+                        className={cn(
+                          "h-14 w-full rounded-lg font-bold uppercase tracking-widest",
+                          plan.tier === "STANDARD"
+                            ? "bg-emerald-500 text-[#064e3b] shadow-emerald-500/20 hover:bg-emerald-400"
+                            : "bg-amber-500 text-[#451a03] shadow-amber-500/20 hover:bg-amber-400",
+                        )}
+                      >
+                        Pay {formatCurrency(pricing.total)} with Paystack
+                      </Button>
+                      <p className="text-center text-xs text-white/50">
+                        Mobile Money (MTN, Telecel, AirtelTigo), card or bank transfer.{" "}
+                        <button
+                          type="button"
+                          onClick={() => handleUpgrade(plan.tier)}
+                          disabled={isUpgrading}
+                          className="font-semibold text-white/70 underline underline-offset-2 hover:text-white disabled:opacity-50"
+                        >
+                          Pay manually instead
+                        </button>
+                      </p>
+                    </div>
                   )}
                 </CardContent>
               </Card>
