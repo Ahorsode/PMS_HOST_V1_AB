@@ -13,7 +13,6 @@ import {
   type EggSaleQuantityUnit,
 } from '@/lib/sale-quantity-utils'
 import {
-  deductEggFifoWithAllocations,
   getFifoEggAvailability,
   isEggInventoryCategory,
   moneyBalances,
@@ -139,14 +138,6 @@ async function getAuthoritativeSaleItem(tx: any, activeFarmId: string, item: {
   }
 }
 
-export async function deductEggFifo(
-  tx: any,
-  farmId: string,
-  quantity: number,
-  batchId?: string | null,
-) {
-  await deductEggFifoWithAllocations(tx, farmId, quantity, { batchId })
-}
 
 export async function createOrder(data: {
   customerId?: string
