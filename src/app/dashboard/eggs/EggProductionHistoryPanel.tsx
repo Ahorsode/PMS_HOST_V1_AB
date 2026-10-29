@@ -4,6 +4,7 @@ import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { formatDate } from '@/lib/utils';
 import { EggLogActions } from './EggActions';
+import { MobileCardList } from '@/components/ui/MobileCardList';
 
 type EggLog = {
   id: string;
@@ -221,7 +222,40 @@ export function EggProductionHistoryPanel({
       </div>
 
       {tab === 'production' ? (
-        <div className="flex-1 min-h-0 overflow-auto w-full">
+        <>
+        <MobileCardList
+          tone="light"
+          items={filteredLogs}
+          getKey={(log) => log.id}
+          title={(log, logIndex) => log.batch?.batchName || `Livestock ${logIndex + 1}`}
+          subtitle={(log) => formatDate(log.logDate)}
+          badge={(log) => {
+            const remaining = Number(log.eggsRemaining || 0);
+            return (
+              <span className={`px-2 py-1 text-[10px] font-bold rounded-lg uppercase ${remaining > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'}`}>
+                {remaining > 0 ? 'Active' : 'Sold out'}
+              </span>
+            );
+          }}
+          fields={(log) => [
+            { label: 'Remaining', value: <span className="font-bold text-emerald-700">{formatCratesAndEggs(Number(log.eggsRemaining || 0), eggsPerCrate)}</span> },
+            { label: 'Sold', value: <span className="font-bold text-amber-700">{formatCratesAndEggs(soldEggs(log), eggsPerCrate)}</span> },
+            { label: 'Active %', value: <span className="font-bold text-emerald-700">{activePercent(log)}%</span> },
+            { label: 'Sold %', value: <span className="font-bold text-amber-700">{soldPercent(log)}%</span> },
+            { label: 'Total', value: <span className="font-bold text-emerald-700">{formatCratesAndEggs(log.eggsCollected, eggsPerCrate)}</span> },
+            { label: 'Unusable', value: <span className="text-red-600">{log.unusableCount || 0}</span> },
+            log.isSorted
+              ? {
+                  label: 'Sizes (S / M / L)',
+                  full: true,
+                  value: <span className="font-bold text-gray-600">{log.smallCount || 0} / {log.mediumCount || 0} / {log.largeCount || 0}</span>,
+                }
+              : { label: 'Sort', full: true, value: <span className="italic font-bold text-gray-400">Bulk Collection (unsorted)</span> },
+          ]}
+          actions={(log) => <EggLogActions log={log} batches={layerBatches} canEdit={canEdit} {...eggLoggingSettings} />}
+          empty="No production logs match this filter."
+        />
+        <div className="hidden md:block flex-1 min-h-0 overflow-auto w-full">
           <table className="w-full min-w-[960px] divide-y divide-gray-100">
             <thead>
               <tr>
@@ -319,8 +353,35 @@ export function EggProductionHistoryPanel({
             </tbody>
           </table>
         </div>
+        </>
       ) : (
-        <div className="flex-1 min-h-0 overflow-auto w-full">
+        <>
+        <MobileCardList
+          tone="light"
+          items={eggSalesHistory}
+          getKey={(row) => row.id}
+          title={(row) => row.order.customer?.name || 'Walk-in Customer'}
+          subtitle={(row) => formatDate(row.order.orderDate)}
+          badge={(row) => <span className="text-sm font-black text-emerald-700">GHS {Number(row.totalPrice).toFixed(2)}</span>}
+          fields={(row) => {
+            const giveawayCrates = giveawayCratesFromSale(row, eggsPerCrate);
+            return [
+              { label: 'Product', full: true, value: row.inventory?.itemName || row.description },
+              { label: 'Qty', value: <span className="font-bold">{formatCratesAndEggs(paidEggsFromSale(row), eggsPerCrate)}</span> },
+              {
+                label: 'Giveaway',
+                value: (
+                  <span className="font-bold text-amber-700">
+                    {giveawayCrates > 0 ? `${giveawayCrates} ${giveawayCrates === 1 ? 'crate' : 'crates'}` : '—'}
+                  </span>
+                ),
+              },
+              { label: 'Unit Price', value: <span className="font-bold">GHS {Number(row.unitPrice).toFixed(2)}</span> },
+            ];
+          }}
+          empty="No completed egg sales yet."
+        />
+        <div className="hidden md:block flex-1 min-h-0 overflow-auto w-full">
           <table className="w-full min-w-[960px] divide-y divide-gray-100">
             <thead>
               <tr>
@@ -364,6 +425,7 @@ export function EggProductionHistoryPanel({
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
   );

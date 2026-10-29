@@ -28,6 +28,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { createFinancialTransaction, settleTransaction, deleteFinancialTransaction } from '@/lib/actions/financial-transaction-actions'
 import { toLocalDateTimeInputValue } from '@/lib/financial-dates'
 import { SkeletonLine } from '@/components/ui/MutationFeedback'
+import { MobileCardList } from '@/components/ui/MobileCardList'
 import {
   SpecifyAllocationDialog,
   type SavedAllocation,
@@ -431,7 +432,52 @@ export function FinanceHubClient({
                 All ledger balances settled. Zero outstanding accounts payable/receivable.
               </div>
             ) : (
-              <table className="w-full text-left border-collapse">
+              <>
+              <MobileCardList
+                items={transactions.filter(t => t.paymentStatus !== 'PAID')}
+                getKey={(tx) => tx.id}
+                onItemClick={canEdit ? (tx) => {
+                  setSelectedTx(tx)
+                  setIsSettleOpen(true)
+                } : undefined}
+                cardClassName={(tx) => (!!mutationMode && selectedTx?.id === tx.id ? 'bg-emerald-500/10 animate-pulse' : undefined)}
+                title={(tx) => tx.category}
+                subtitle={(tx) => `Due ${new Date(tx.transactionDate).toLocaleDateString(undefined, { dateStyle: 'medium' })}`}
+                badge={(tx) => (
+                  <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-bold text-[9px] border uppercase ${
+                    tx.paymentStatus === 'UNPAID'
+                      ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                      : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                  }`}>
+                    <AlertTriangle className="w-3 h-3" />
+                    {tx.paymentStatus.replace('_', ' ')}
+                  </span>
+                )}
+                fields={(tx) => [
+                  {
+                    label: 'Amount',
+                    value: <span className={`font-black ${tx.type === 'REVENUE' ? 'text-blue-400' : 'text-amber-400'}`}>{`GH₵ ${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</span>,
+                  },
+                  {
+                    label: 'Type',
+                    value: <span className={`text-xs font-black ${tx.type === 'REVENUE' ? 'text-blue-400' : 'text-amber-400'}`}>{tx.type === 'REVENUE' ? 'Receivable (Inflow)' : 'Payable (Outflow)'}</span>,
+                  },
+                  { label: 'Reference', full: true, value: <span className="font-mono text-xs text-slate-400">{tx.referenceNum || '—'}</span> },
+                ]}
+                actions={canEdit ? (tx) => (
+                  <button
+                    onClick={() => {
+                      setSelectedTx(tx)
+                      setIsSettleOpen(true)
+                    }}
+                    className="inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-400 px-3 py-2 rounded text-[10px] font-black border border-emerald-500/20"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                    Settle
+                  </button>
+                ) : undefined}
+              />
+              <table className="hidden md:table w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-white/5 text-slate-400 text-[10px] font-bold uppercase tracking-wider border-b border-white/5">
                     <th className="py-3 px-6">Due Date</th>
@@ -511,6 +557,7 @@ export function FinanceHubClient({
                     })}
                 </tbody>
               </table>
+              </>
             )}
           </div>
         </CardContent>
@@ -534,7 +581,76 @@ export function FinanceHubClient({
                 No financial ledger records found matching current criteria.
               </div>
             ) : (
-              <table className="w-full text-left border-collapse">
+              <>
+              <MobileCardList
+                items={filteredTransactions}
+                getKey={(tx) => tx.id}
+                cardClassName={(tx) => (!!mutationMode && selectedTx?.id === tx.id ? 'bg-emerald-500/10 animate-pulse' : undefined)}
+                title={(tx) => tx.category}
+                subtitle={(tx) => new Date(tx.transactionDate).toLocaleDateString(undefined, { dateStyle: 'medium' })}
+                badge={(tx) => (
+                  <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-bold text-[9px] border uppercase ${
+                    tx.paymentStatus === 'PAID'
+                      ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                      : tx.paymentStatus === 'UNPAID'
+                      ? 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                      : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                  }`}>
+                    {tx.paymentStatus === 'PAID' && <CheckCircle2 className="w-3 h-3" />}
+                    {tx.paymentStatus === 'UNPAID' && <AlertTriangle className="w-3 h-3" />}
+                    {tx.paymentStatus === 'PARTIALLY_PAID' && <Clock className="w-3 h-3" />}
+                    {tx.paymentStatus.replace('_', ' ')}
+                  </span>
+                )}
+                fields={(tx) => [
+                  {
+                    label: 'Amount',
+                    value: <span className={`font-black ${tx.type === 'REVENUE' ? 'text-emerald-400' : 'text-rose-400'}`}>{`${tx.type === 'REVENUE' ? '+' : '-'}GH₵ ${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</span>,
+                  },
+                  {
+                    label: 'Type',
+                    value: <span className={`text-xs font-black ${tx.type === 'REVENUE' ? 'text-emerald-400' : 'text-rose-400'}`}>{tx.type}</span>,
+                  },
+                  { label: 'Method', value: <span className="text-xs font-bold text-slate-300">{tx.paymentMethod}</span> },
+                  { label: 'Reference', value: <span className="font-mono text-xs text-slate-400">{tx.referenceNum || '—'}</span> },
+                ]}
+                actions={canEdit ? (tx) => (
+                  tx.source === 'EXPENSE' ? (
+                    <span
+                      className="inline-flex items-center gap-1 bg-slate-700/40 text-slate-400 px-2.5 py-1 rounded text-[9px] font-bold uppercase tracking-wider border border-slate-600/40"
+                      title="Auto-logged operational expense — manage it from Inventory, Health, or the source module"
+                    >
+                      Auto-Logged
+                    </span>
+                  ) : (
+                    <>
+                      {tx.paymentStatus !== 'PAID' && (
+                        <button
+                          onClick={() => {
+                            setSelectedTx(tx)
+                            setIsSettleOpen(true)
+                          }}
+                          className="bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 hover:text-white px-3 py-2 rounded text-[10px] font-bold transition-all border border-emerald-500/30 flex items-center gap-1"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                          Settle
+                        </button>
+                      )}
+                      <button
+                        onClick={() => {
+                          setSelectedTx(tx)
+                          setIsDeleteOpen(true)
+                        }}
+                        className="bg-rose-500/20 text-rose-400 hover:bg-rose-500 hover:text-white p-2 rounded transition-all border border-rose-500/30"
+                        aria-label="Delete transaction"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </>
+                  )
+                ) : undefined}
+              />
+              <table className="hidden md:table w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-white/5 text-slate-400 text-[10px] font-bold uppercase tracking-wider border-b border-white/5">
                     <th className="py-3 px-6">Date</th>
@@ -635,6 +751,7 @@ export function FinanceHubClient({
                   })}
                 </tbody>
               </table>
+              </>
             )}
           </div>
         </CardContent>

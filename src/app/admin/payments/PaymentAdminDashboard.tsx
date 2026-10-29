@@ -33,6 +33,7 @@ import {
 import { getDevicesForFarm, type AdminFarmDevice } from '@/lib/actions/admin-device-actions'
 import { adminUpgradeFarmTier } from '@/lib/actions/admin-subscription-actions'
 import { cn, formatCurrency } from '@/lib/utils'
+import { MobileCardList } from '@/components/ui/MobileCardList'
 
 const durationPacks = [
   { value: 30, label: '+30 Days Starter Extension', amount: '120' },
@@ -579,7 +580,64 @@ export default function PaymentAdminDashboard({
             </label>
           </div>
 
-          <div className="overflow-x-auto">
+          <MobileCardList
+            items={filteredRows}
+            getKey={(row) => row.id}
+            onItemClick={(row) => setDeviceOverviewRow(row)}
+            cardClassName={(row) => cn('border-[#f7f1df]/10 bg-[#f7f1df]/5', deviceOverviewRow?.farmId === row.farmId && 'bg-[#f7f1df]/10')}
+            title={(row) => row.farmName}
+            subtitle={(row) => (
+              <>
+                {row.ownerName}
+                <span className="block font-[var(--font-payment-admin-mono)] font-bold text-[#d8c78f]">
+                  {row.ownerPhoneNumber || row.ownerEmail || 'No contact saved'}
+                </span>
+              </>
+            )}
+            badge={(row) => <StatusBadge status={row.licenseStatus} />}
+            fields={(row) => [
+              {
+                label: 'Hardware ID',
+                full: true,
+                value: (
+                  <>
+                    <span className="block break-all font-[var(--font-payment-admin-mono)] text-xs font-bold">
+                      {row.hardwareId || 'Awaiting desktop install fingerprint'}
+                    </span>
+                    <span className="mt-1 block text-xs text-[#c5ba9a]/65">
+                      {row.deviceName || 'Unlabeled terminal'} {row.deviceType ? `(${row.deviceType})` : ''}
+                    </span>
+                  </>
+                ),
+              },
+              { label: 'Valid Until', value: formatDate(row.accessValidUntil) },
+              { label: 'Registered', value: formatDate(row.registeredAt) },
+              { label: 'Last Sync', full: true, value: <span className="font-[var(--font-payment-admin-mono)] text-xs">{formatDateTime(row.lastSync)}</span> },
+              ...(row.lastPayment
+                ? [{ label: 'Last Receipt', full: true, value: formatCurrency(row.lastPayment.amount, row.lastPayment.currency) }]
+                : []),
+            ]}
+            actions={(row) => (
+              <Button
+                type="button"
+                variant={row.hardwareId ? 'primary' : 'secondary'}
+                disabled={!row.hardwareId}
+                onClick={() => openPaymentModal(row)}
+                className={cn(
+                  'w-full',
+                  row.hardwareId
+                    ? 'bg-gradient-to-r from-[#d9a441] to-[#2f9f83] text-[#11140d] shadow-[#d9a441]/20'
+                    : 'border-[#f7f1df]/10 bg-[#f7f1df]/10 text-[#c5ba9a]',
+                )}
+              >
+                <Banknote className="h-4 w-4" />
+                {row.hardwareId ? 'Record Payment' : 'No hardware'}
+              </Button>
+            )}
+            empty="No matching farms found. Try a farm name, owner phone number, hardware fingerprint, or device label."
+          />
+
+          <div className="hidden overflow-x-auto md:block">
             <table className="w-full min-w-[1120px] border-collapse text-left">
               <thead>
                 <tr className="border-b border-[#f7f1df]/10 text-[0.68rem] font-black uppercase tracking-[0.18em] text-[#d8c78f]/70">

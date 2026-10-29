@@ -17,6 +17,7 @@ import {
 import { motion } from 'framer-motion';
 import { formatDate, formatCurrency } from '@/lib/utils';
 import Link from 'next/link';
+import { MobileCardList } from '@/components/ui/MobileCardList';
 
 interface SaleDetailClientProps {
   sale: any;
@@ -60,7 +61,17 @@ export const SaleDetailClient = ({ sale }: SaleDetailClientProps) => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                 <table className="w-full text-left">
+                 <MobileCardList
+                    items={sale.items ?? []}
+                    getKey={(_item: any, idx: number) => idx}
+                    title={(item: any) => item.description}
+                    badge={(item: any) => <span className="text-white font-bold text-sm">{formatCurrency(item.totalPrice)}</span>}
+                    fields={(item: any) => [
+                      { label: 'Qty', value: <span className="text-emerald-400 font-bold">{item.quantity}</span> },
+                      { label: 'Unit Price', value: formatCurrency(item.unitPrice) },
+                    ]}
+                 />
+                 <table className="hidden md:table w-full text-left">
                     <thead>
                        <tr className="bg-white/10 border-b border-white/10">
                           <th className="px-7 py-3 text-xs font-bold uppercase tracking-widest text-white/70 italic">Description</th>

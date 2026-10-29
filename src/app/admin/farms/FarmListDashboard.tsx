@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Search, Server } from 'lucide-react'
 import type { AdminFarmRow } from '@/lib/actions/admin-farm-actions'
+import { MobileCardList } from '@/components/ui/MobileCardList'
 
 function formatDate(value: string | null) {
   if (!value) return '-'
@@ -92,7 +93,42 @@ export default function FarmListDashboard({ farms }: { farms: AdminFarmRow[] }) 
           </label>
         </div>
 
-        <div className="overflow-x-auto rounded-lg border border-zinc-800">
+        <MobileCardList
+          tone="zinc"
+          className="p-0"
+          items={filtered}
+          getKey={(farm) => farm.id}
+          title={(farm) => farm.name}
+          subtitle={(farm) => farm.location}
+          badge={(farm) => <StatusBadge status={farm.masterLicenseStatus} expiresAt={farm.trialExpiresAt} />}
+          fields={(farm) => [
+            {
+              label: 'Owner',
+              full: true,
+              value: (
+                <>
+                  {farm.ownerName ?? '-'}
+                  {farm.ownerEmail ? <span className="block text-xs text-zinc-500">{farm.ownerEmail}</span> : null}
+                </>
+              ),
+            },
+            { label: 'Tier', value: <span className="font-mono text-xs font-semibold uppercase">{farm.subscriptionTier}</span> },
+            { label: 'Devices', value: <span className="font-mono">{farm.deviceCount}</span> },
+            { label: 'Trial Expires', value: formatDate(farm.trialExpiresAt) },
+            { label: 'Created', value: formatDate(farm.createdAt) },
+          ]}
+          actions={(farm) => (
+            <Link
+              href={`/admin/farms/${farm.id}`}
+              className="inline-flex h-9 items-center rounded-md border border-zinc-700 px-3 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500 hover:text-emerald-300"
+            >
+              View
+            </Link>
+          )}
+          empty="No farms match your search."
+        />
+
+        <div className="hidden overflow-x-auto rounded-lg border border-zinc-800 md:block">
           <table className="w-full min-w-[980px] text-sm">
             <thead>
               <tr className="border-b border-zinc-800 bg-zinc-900/80 text-left text-xs uppercase text-zinc-400">

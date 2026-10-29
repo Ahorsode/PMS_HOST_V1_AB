@@ -5,6 +5,7 @@ import { Banknote, TrendingUp, ShoppingBag, Users, Calendar, ChevronRight } from
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { formatDate, formatCurrency } from '@/lib/utils';
 import Link from 'next/link';
+import { MobileCardList } from '@/components/ui/MobileCardList';
 
 export default async function SalesAnalyticsPage() {
   const sales = await getGlobalSalesStats();
@@ -17,7 +18,7 @@ export default async function SalesAnalyticsPage() {
       
       <div className="flex justify-between items-center bg-white/10 backdrop-blur-md p-7 rounded-lg border border-white/10 relative overflow-hidden">
         <div className="relative z-10 font-bold">
-          <h2 className="text-4xl font-bold text-white tracking-normal italic uppercase">
+          <h2 className="text-2xl md:text-4xl font-bold text-white tracking-normal italic uppercase break-words">
             Financial <span className="text-emerald-400">Intelligence</span>
           </h2>
           <p className="text-white/70 font-bold uppercase tracking-widest text-xs mt-2 italic flex items-center gap-2">
@@ -36,7 +37,25 @@ export default async function SalesAnalyticsPage() {
          <div className="px-7 py-5 border-b border-white/10 flex items-center justify-between">
             <h3 className="text-white font-bold italic uppercase tracking-widest text-sm">Recent Financial Flows</h3>
          </div>
-         <div className="overflow-x-auto">
+         <MobileCardList
+            items={sales}
+            getKey={(sale: any) => sale.id}
+            title={(sale: any) => sale.customerName || 'Walk-in Customer'}
+            subtitle={(sale: any, index: number) => `${formatDate(sale.saleDate)} · Order ${index + 1}`}
+            badge={(sale: any) => <span className="text-emerald-400 font-bold text-sm">{formatCurrency(sale.totalAmount)}</span>}
+            fields={(sale: any) => [
+              { label: 'Items', value: sale.items?.length || 0 },
+            ]}
+            actions={(sale: any) => (
+              <Link
+                href={`/dashboard/sales/${sale.id}`}
+                className="inline-flex items-center gap-1 px-3 py-2 bg-white/10 border border-white/10 text-white/70 rounded-md text-xs font-bold uppercase tracking-widest"
+              >
+                View <ChevronRight className="w-4 h-4" />
+              </Link>
+            )}
+         />
+         <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left">
                <thead>
                   <tr className="bg-white/10 border-b border-white/10">

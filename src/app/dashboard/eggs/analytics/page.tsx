@@ -5,6 +5,7 @@ import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { formatDate } from '@/lib/utils';
 import { getBreedDisplayName } from '@/lib/livestock-breed-options';
 import { getFarmSettings } from '@/lib/actions/preference-actions';
+import { MobileCardList } from '@/components/ui/MobileCardList';
 
 function formatCratesAndEggs(eggs: number, eggsPerCrate: number) {
   const epc = eggsPerCrate > 0 ? eggsPerCrate : 30;
@@ -31,7 +32,7 @@ export default async function EggsAnalyticsPage() {
       
       <div className="flex justify-between items-center bg-white/10 backdrop-blur-md p-7 rounded-lg border border-white/10 relative overflow-hidden">
         <div className="relative z-10 font-bold">
-          <h2 className="text-4xl font-bold text-white tracking-normal italic uppercase">
+          <h2 className="text-2xl md:text-4xl font-bold text-white tracking-normal italic uppercase break-words">
             Production <span className="text-emerald-400">Intelligence</span>
           </h2>
           <p className="text-white/70 font-bold uppercase tracking-widest text-xs mt-2 italic flex items-center gap-2">
@@ -50,7 +51,17 @@ export default async function EggsAnalyticsPage() {
          <div className="px-7 py-5 border-b border-white/10 flex items-center justify-between">
             <h3 className="text-white font-bold italic uppercase tracking-widest text-sm">Historical Yield Record</h3>
          </div>
-         <div className="overflow-x-auto">
+         <MobileCardList
+            items={logs.slice(0, 15)}
+            getKey={(log: any) => log.id}
+            title={(log: any) => formatDate(log.logDate)}
+            badge={(log: any) => <span className="text-emerald-400 font-bold text-sm">{formatCratesAndEggs(log.quantity, eggsPerCrate)}</span>}
+            fields={(log: any, index: number) => [
+              { label: 'Batch', value: <>{getBreedDisplayName(log.batch?.breedType)}<span className="block text-white/60 text-[10px] font-bold uppercase tracking-widest">{log.batch?.batchName || `Collection ${index + 1}`}</span></> },
+              { label: 'Cracked', value: <span className="text-red-400/80 font-bold">{log.cracked || 0}</span> },
+            ]}
+         />
+         <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left">
                <thead>
                   <tr className="bg-white/10 border-b border-white/10">

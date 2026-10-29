@@ -411,7 +411,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                  </div>
                  <div className="flex justify-between items-center pt-2 border-t border-white/5">
                     <span className="text-emerald-400 font-bold text-sm">{formatCurrency(Number(order.totalAmount))}</span>
-                    <div className="flex justify-end"><SalesRowActions order={order} canEdit={canEdit} canRecordPayment={canRecordPayment} /></div>
+                    <div className="flex items-center justify-end gap-2"><WorkerStamp user={order.user} /><SalesRowActions order={order} canEdit={canEdit} canRecordPayment={canRecordPayment} /></div>
                  </div>
               </div>
             ))}
