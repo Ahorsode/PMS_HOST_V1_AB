@@ -37,8 +37,9 @@ describe("rate limiter", () => {
     expect(getRateLimitIp({ headers })).toBe("198.51.100.2");
   });
 
-  it("fails closed in production when Redis is unavailable", async () => {
+  it("allows requests in production when Upstash is not configured", async () => {
     vi.stubEnv("NODE_ENV", "production");
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
     const { checkRateLimit } = await import("../rate-limit");
 
     const result = await checkRateLimit({
@@ -47,8 +48,9 @@ describe("rate limiter", () => {
       ip: "203.0.113.20",
     });
 
-    expect(result.ok).toBe(false);
-    expect(result.remaining).toBe(0);
-    expect(result.retryAfterSec).toBeGreaterThan(0);
+    expect(result.ok).toBe(true);
+    expect(result.remaining).toBe(result.limit);
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
   });
 });
