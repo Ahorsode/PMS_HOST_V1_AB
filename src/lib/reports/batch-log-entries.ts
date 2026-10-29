@@ -10,12 +10,63 @@ export type BatchLogEntry = {
   title: string
   detail: string
   amount?: number
-  user?: any
+  user?: BatchLogUser | null
+}
+
+export type BatchLogUser = {
+  firstname: string | null
+  surname: string | null
+  role: string
+}
+
+type LoggedRecord = {
+  id: string
+  logDate: string
+  user?: BatchLogUser | null
+}
+
+type HealthScheduleRecord = {
+  id: string
+  scheduledDate: string
+  status?: string | null
+  quantity?: number | string | null
+  unit?: string | null
+  notes?: string | null
+}
+
+export type BatchLogSources = {
+  feedingLogs?: Array<LoggedRecord & {
+    amountConsumed: number | string
+    inventory?: { itemName?: string | null; unit?: string | null } | null
+  }>
+  mortalityRecords?: Array<LoggedRecord & { type: string; count: number | string }>
+  eggProduction?: Array<LoggedRecord & { eggsCollected: number | string }>
+  weightRecords?: Array<LoggedRecord & { averageWeight: number | string }>
+  vaccinations?: Array<HealthScheduleRecord & { vaccineName: string }>
+  medications?: Array<HealthScheduleRecord & { medicationName: string }>
+  salesRecords?: Array<{
+    id: string
+    logDate: string
+    description?: string | null
+    quantity: number | string
+    unitPrice: number | string
+    totalPrice: number
+  }>
+}
+
+export type BatchExpenseBreakdownRow = {
+  id: string
+  date: string
+  description?: string | null
+  category?: string | null
+  kind?: string | null
+  percentage?: number | null
+  amount: number
 }
 
 export function buildBatchLogEntries(
-  logs: any,
-  expenseBreakdown: any[],
+  logs: BatchLogSources,
+  expenseBreakdown: BatchExpenseBreakdownRow[],
   canViewFinance: boolean
 ): BatchLogEntry[] {
   const entries: BatchLogEntry[] = []

@@ -1,3 +1,4 @@
+import type { DbTransactionClient } from '@/lib/db'
 import { encodeLedgerAllocation } from '@/lib/finance/ledger-allocation'
 
 const MONEY_EPSILON = 0.01
@@ -36,7 +37,7 @@ type UpsertOrderLedgerInput = {
   batchRevenueAllocations?: Array<{ batchId: string; amount: number }>
 }
 
-export async function upsertOrderLedger(tx: any, input: UpsertOrderLedgerInput) {
+export async function upsertOrderLedger(tx: DbTransactionClient, input: UpsertOrderLedgerInput) {
   const totalAmount = roundMoney(input.totalAmount)
   const depositAmount = roundMoney(input.cashReceived)
   const outstandingCredit = roundMoney(Math.max(totalAmount - depositAmount, 0))

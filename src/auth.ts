@@ -240,10 +240,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         let ip = 'unknown';
         try {
           if (req && req.headers) {
-            if (typeof (req.headers as any).get === 'function') {
-              ip = (req.headers as any).get('x-real-ip') || (req.headers as any).get('x-forwarded-for')?.split(',').at(-1)?.trim() || 'unknown';
-            } else if (typeof req.headers === 'object') {
-              const headersMap = req.headers as any;
+            // Headers instance in the App Router; plain object in legacy/Node request shapes.
+            const headerSource: unknown = req.headers;
+            if (typeof (headerSource as { get?: unknown }).get === 'function') {
+              const headersApi = headerSource as Pick<Headers, 'get'>;
+              ip = headersApi.get('x-real-ip') || headersApi.get('x-forwarded-for')?.split(',').at(-1)?.trim() || 'unknown';
+            } else if (typeof headerSource === 'object') {
+              const headersMap = headerSource as Record<string, string | undefined>;
               ip = headersMap['x-real-ip'] || headersMap['x-forwarded-for']?.split(',').at(-1)?.trim() || 'unknown';
             }
           } else {

@@ -63,6 +63,9 @@ declare global {
 
 const prisma = globalThis.prisma ?? prismaClientSingleton()
 
+/** Interactive-transaction client of the extended app client (`prisma.$transaction(async (tx) => ...)`). */
+export type DbTransactionClient = Parameters<Extract<Parameters<typeof prisma.$transaction>[0], (...args: never[]) => unknown>>[0]
+
 export default prisma
 
 if (process.env.NODE_ENV !== 'production') globalThis.prisma = prisma

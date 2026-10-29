@@ -1,3 +1,6 @@
+import type { Prisma } from '@prisma/client'
+import type { DbTransactionClient } from '@/lib/db'
+
 const MONEY_EPSILON = 0.01
 
 export type BatchEggAllocation = {
@@ -15,7 +18,7 @@ function roundMoney(value: number) {
   return Math.round(value * 100) / 100
 }
 
-function activeLayerBatchFilter(batchId?: string | null) {
+function activeLayerBatchFilter(batchId?: string | null): Prisma.EggProductionWhereInput {
   if (batchId) {
     return { batchId }
   }
@@ -29,7 +32,7 @@ function activeLayerBatchFilter(batchId?: string | null) {
 }
 
 export async function getFifoEggAvailability(
-  tx: any,
+  tx: DbTransactionClient,
   farmId: string,
   options?: { batchId?: string | null; categoryId?: string | null },
 ) {
@@ -50,7 +53,7 @@ export async function getFifoEggAvailability(
 }
 
 export async function deductEggFifoWithAllocations(
-  tx: any,
+  tx: DbTransactionClient,
   farmId: string,
   quantity: number,
   options?: { batchId?: string | null; categoryId?: string | null },
