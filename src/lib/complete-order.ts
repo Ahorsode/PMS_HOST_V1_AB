@@ -1,3 +1,4 @@
+import type { DbTransactionClient } from '@/lib/db'
 import {
   allocateLineRevenueByBatch,
   deductEggFifoWithAllocations,
@@ -43,7 +44,7 @@ function roundMoney(value: number) {
 }
 
 export async function completeOrderInTransaction(
-  tx: any,
+  tx: DbTransactionClient,
   farmId: string,
   order: OrderForCompletion,
 ) {

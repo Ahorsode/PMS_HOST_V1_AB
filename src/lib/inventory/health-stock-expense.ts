@@ -5,6 +5,9 @@
  * on-hand stock may be 0. Bill stock + completed usage so costs still hit the ledger.
  */
 
+import type { Prisma } from '@prisma/client'
+import type { DbTransactionClient } from '@/lib/db'
+
 const HEALTH_STOCK_COST_PREFIX = 'Health stock cost:'
 
 export function healthStockCostDescription(itemName: string, qty: number, unit: string) {
@@ -16,7 +19,7 @@ export function isHealthStockCostDescription(description: string | null | undefi
 }
 
 type ScheduleRow = {
-  quantity?: number | string | null
+  quantity?: Prisma.Decimal | number | string | null
   status?: string | null
 }
 
@@ -32,7 +35,7 @@ export function sumHealthScheduleUsageQty(rows: ScheduleRow[]) {
 }
 
 export async function fetchHealthScheduleUsageQty(
-  tx: any,
+  tx: DbTransactionClient,
   farmId: string,
   itemName: string
 ): Promise<number> {
@@ -58,7 +61,7 @@ export async function fetchHealthScheduleUsageQty(
 
 /** Units to bill when pricing health stock: remaining stock + scheduled/applied doses. */
 export async function getHealthStockBillableQuantity(
-  tx: any,
+  tx: DbTransactionClient,
   farmId: string,
   item: { itemName: string; stockLevel: number | string }
 ) {
@@ -67,7 +70,7 @@ export async function getHealthStockBillableQuantity(
   return Math.max(stock + scheduled, stock, scheduled)
 }
 
-export async function fetchBatchIdsForHealthItem(tx: any, farmId: string, itemName: string) {
+export async function fetchBatchIdsForHealthItem(tx: DbTransactionClient, farmId: string, itemName: string) {
   const [vax, med] = await Promise.all([
     tx.vaccinationSchedule.findMany({
       where: {
@@ -90,7 +93,7 @@ export async function fetchBatchIdsForHealthItem(tx: any, farmId: string, itemNa
 }
 
 export async function upsertHealthStockCostExpense(
-  tx: any,
+  tx: DbTransactionClient,
   params: {
     farmId: string
     userId: string

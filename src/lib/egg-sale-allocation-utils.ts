@@ -8,7 +8,16 @@ export type EggBatchStockOption = {
   eggsRemaining: number;
 };
 
-export function requiresEggSizeSelection(eggInventory: any[]) {
+/** Egg inventory row shape accepted from Prisma rows, client payloads, or snake_case API rows. */
+export type EggInventoryRowLike = {
+  id?: string;
+  itemName?: string | null;
+  item_name?: string | null;
+  eggCategoryId?: string | null;
+  eggCategory?: { id?: string | null; name?: string | null } | null;
+};
+
+export function requiresEggSizeSelection(eggInventory: Array<EggInventoryRowLike | null | undefined>) {
   if (eggInventory.length <= 1) {
     return false;
   }
@@ -20,13 +29,13 @@ export function requiresEggSizeSelection(eggInventory: any[]) {
   return categories.size > 1 || eggInventory.length > 1;
 }
 
-export function eggSizeLabelFromRow(row: any) {
+export function eggSizeLabelFromRow(row: EggInventoryRowLike | null | undefined) {
   const name = String(row?.itemName ?? row?.item_name ?? 'Eggs');
   const match = name.match(/\(([^)]+)\)/);
   return match?.[1] ?? name;
 }
 
-export function defaultEggInventoryRow(eggInventory: any[]) {
+export function defaultEggInventoryRow<T extends EggInventoryRowLike | null | undefined>(eggInventory: T[]): T | null {
   if (eggInventory.length === 0) {
     return null;
   }
@@ -38,7 +47,7 @@ export function defaultEggInventoryRow(eggInventory: any[]) {
   );
 }
 
-export function isUnsortedEggInventory(row: any) {
+export function isUnsortedEggInventory(row: EggInventoryRowLike | null | undefined) {
   if (!row) {
     return false;
   }
@@ -48,7 +57,7 @@ export function isUnsortedEggInventory(row: any) {
 }
 
 export function resolveEggFifoCategoryFilter(
-  row: any,
+  row: EggInventoryRowLike | null | undefined,
   eggAllocationMode: EggAllocationMode | string,
 ) {
   if (eggAllocationMode === 'batch') {
