@@ -26,4 +26,12 @@ describe('effectiveFarmTier', () => {
   it('ignores trial dates on farms that are not on a timed paid grant', () => {
     expect(effectiveFarmTier({ subscriptionTier: 'BASIC', masterLicenseStatus: 'CLOUD_TRIAL', trialExpiresAt: new Date('2026-10-01T00:00:00Z') }, now)).toBe('BASIC')
   })
+
+  it('grants the trial tier while a free trial is running', () => {
+    expect(effectiveFarmTier({ subscriptionTier: 'BASIC', masterLicenseStatus: 'CLOUD_TRIAL', trialExpiresAt: new Date('2026-11-15T00:00:00Z') }, now)).toBe('PREMIUM')
+  })
+
+  it('does not let a trial outlive a revocation', () => {
+    expect(effectiveFarmTier({ subscriptionTier: 'BASIC', masterLicenseStatus: 'REVOKED', trialExpiresAt: new Date('2026-11-15T00:00:00Z') }, now)).toBe('BASIC')
+  })
 })

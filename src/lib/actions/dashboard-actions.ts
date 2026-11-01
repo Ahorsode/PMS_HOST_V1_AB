@@ -10,6 +10,7 @@ import { signOut } from '@/auth'
 import { farmCacheTags, revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 import { passwordPolicyError } from '@/lib/password-policy'
+import { freeTrialFields } from '@/lib/billing/trial'
 import {
   buildRevenueVelocitySeries,
   buildStrategicPriorities,
@@ -926,6 +927,29 @@ export async function onboardFarmer(data: { name: string, location: string, capa
             userId: userId
           }
         })
+      }
+
+      // One free trial per owner: farms from signup already have it, older
+      // accounts get it here, and extra farms do not start another one.
+      if (!farm.trialStartedAt && farm.subscriptionTier === 'BASIC') {
+        const hadTrial = await tx.farm.findFirst({
+          where: { userId, trialStartedAt: { not: null } },
+          select: { id: true }
+        })
+        if (!hadTrial) {
+          farm = await tx.farm.update({
+            where: { id: farm.id },
+            data: freeTrialFields()
+          })
+          await tx.subscriptionEvent.create({
+            data: {
+              farmId: farm.id,
+              userId,
+              eventType: 'TRIAL_STARTED',
+              metadata: { source: 'onboarding', expiresAt: farm.trialExpiresAt.toISOString() }
+            }
+          })
+        }
       }
 
       // Assign/ensure the user is OWNER of this farm in farmMember

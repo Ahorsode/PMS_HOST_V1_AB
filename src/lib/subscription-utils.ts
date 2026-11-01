@@ -1,5 +1,6 @@
 import prisma from './db';
 import { SubscriptionTier } from '@prisma/client';
+import { FREE_TRIAL_TIER, isTrialActive } from './billing/trial';
 
 export type Feature = 
   | 'PDF_INVOICES'
@@ -59,12 +60,14 @@ export async function getFarmTier(farmId: string): Promise<SubscriptionTier> {
  * Paid access granted with an end date lapses back to BASIC once that date
  * passes, and revoked farms lose paid features (BIZ-01). Farms whose tier was
  * set without an end date keep it, so legacy grants are not downgraded.
+ * Farms on an unexpired free trial get the trial tier.
  */
 export function effectiveFarmTier(
   farm: { subscriptionTier: SubscriptionTier; masterLicenseStatus: string | null; trialExpiresAt: Date | null },
   now = new Date(),
 ): SubscriptionTier {
   if (farm.masterLicenseStatus === 'REVOKED') return SubscriptionTier.BASIC;
+  if (isTrialActive(farm, now)) return FREE_TRIAL_TIER;
 
   const isTimedPaidGrant =
     farm.masterLicenseStatus === `PAID_${farm.subscriptionTier}` && farm.trialExpiresAt !== null;

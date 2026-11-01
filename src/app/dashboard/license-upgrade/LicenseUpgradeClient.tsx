@@ -165,16 +165,23 @@ function getTermPricing(months: number, monthlyPrice: number) {
 
 export default function LicenseUpgradeClient({
   currentTier,
+  trialExpiresAt,
   devices,
 }: {
   currentTier: SubscriptionTier;
+  /** Set while the farm is on its free trial. */
+  trialExpiresAt: string | null;
   devices: DesktopLicenseRow[];
 }) {
   const router = useRouter();
   const [selectedMonths, setSelectedMonths] = useState(1);
   const [now, setNow] = useState(() => new Date());
   const [isUpgrading, startTransition] = useTransition();
-  const currentExpiry = useMemo(() => getMostRecentExpiry(devices), [devices]);
+  const isOnTrial = trialExpiresAt !== null;
+  const currentExpiry = useMemo(
+    () => (trialExpiresAt ? new Date(trialExpiresAt) : getMostRecentExpiry(devices)),
+    [trialExpiresAt, devices],
+  );
 
   React.useEffect(() => {
     const interval = window.setInterval(() => setNow(new Date()), 1000);
@@ -238,6 +245,7 @@ export default function LicenseUpgradeClient({
           <div>
             <span className="inline-flex rounded-full border border-emerald-300/25 bg-emerald-400/10 px-4 py-2 text-sm font-black tracking-[0.18em] text-emerald-100">
               {getPlanLabel(currentTier)}
+              {isOnTrial ? " · FREE TRIAL" : null}
             </span>
             {currentTier === "BASIC" ? (
               <p className="mt-4 max-w-2xl text-sm leading-6 text-white/70">
@@ -247,11 +255,19 @@ export default function LicenseUpgradeClient({
               <div className={cn("mt-4 inline-flex items-center gap-3 rounded-lg border px-4 py-3 font-bold", getTimerTone(currentExpiry, now))}>
                 <Clock3 className="h-5 w-5" />
                 <div>
-                  <p className="text-xs uppercase tracking-[0.18em] opacity-75">Your subscription renews in</p>
+                  <p className="text-xs uppercase tracking-[0.18em] opacity-75">
+                    {isOnTrial ? "Your free trial ends in" : "Your subscription renews in"}
+                  </p>
                   <p className="mt-1 text-lg">{formatRemaining(currentExpiry, now)}</p>
                 </div>
               </div>
             )}
+            {isOnTrial ? (
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-white/70">
+                You have every feature free until {formatDate(trialExpiresAt)}. Choose a plan before then to keep
+                them, or your farm moves to the free Basic plan.
+              </p>
+            ) : null}
           </div>
         </div>
 
@@ -324,7 +340,7 @@ export default function LicenseUpgradeClient({
         {plans.map((plan) => {
           const pricing = getTermPricing(selectedMonths, plan.price);
           const Icon = plan.icon;
-          const isCurrent = currentTier === plan.tier;
+          const isCurrent = !isOnTrial && currentTier === plan.tier;
 
           return (
             <div key={plan.tier} className="relative h-full">
