@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   txUserUpdate: vi.fn(),
   txFarmCreate: vi.fn(),
   txFarmMemberCreate: vi.fn(),
+  txSubscriptionEventCreate: vi.fn(),
   checkRateLimit: vi.fn(),
 }));
 
@@ -46,11 +47,12 @@ describe("signup route", () => {
         user: { create: mocks.txUserCreate, update: mocks.txUserUpdate },
         farm: { create: mocks.txFarmCreate },
         farmMember: { create: mocks.txFarmMemberCreate },
+        subscriptionEvent: { create: mocks.txSubscriptionEventCreate },
         invitation: { update: vi.fn() },
       }),
     );
     mocks.txUserCreate.mockResolvedValue({ id: "new-user", firstname: "Ama", surname: "", email: null, phoneNumber: "+233554101675", mustChangePassword: false });
-    mocks.txFarmCreate.mockResolvedValue({ id: "farm-1" });
+    mocks.txFarmCreate.mockImplementation(async ({ data }: { data: Record<string, unknown> }) => ({ id: "farm-1", ...data }));
   });
 
   it.each([
@@ -84,5 +86,22 @@ describe("signup route", () => {
     expect(response.status).toBe(201);
     expect(mocks.txUserCreate).toHaveBeenCalledOnce();
     expect(mocks.txFarmCreate).toHaveBeenCalledOnce();
+  });
+
+  it("starts the new owner's free trial", async () => {
+    mocks.userFindFirst.mockResolvedValue(null);
+
+    await signup({
+      firstname: "Ama",
+      phoneNumber: "0554101675",
+      password: "a-strong-password",
+    });
+
+    const farmData = mocks.txFarmCreate.mock.calls[0][0].data;
+    expect(farmData.masterLicenseStatus).toBe("CLOUD_TRIAL");
+    expect(farmData.trialExpiresAt).toBeInstanceOf(Date);
+    expect(mocks.txSubscriptionEventCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({ farmId: "farm-1", eventType: "TRIAL_STARTED" }),
+    });
   });
 });
