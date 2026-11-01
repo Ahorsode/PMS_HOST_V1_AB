@@ -36,11 +36,13 @@ jobs:
       - name: Run tests
         run: npm run test:ci
 
+      # The build never connects to the database, so placeholders in the
+      # production URL format are used when the repo secrets are not set.
       - name: Build
         run: npm run build
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          DIRECT_URL: ${{ secrets.DIRECT_URL }}
-          AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
-          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgresql://ci:ci@ci.pooler.supabase.com:6543/postgres?pgbouncer=true' }}
+          DIRECT_URL: ${{ secrets.DIRECT_URL || 'postgresql://ci:ci@ci.example.com:5432/postgres' }}
+          AUTH_SECRET: ${{ secrets.AUTH_SECRET || 'ci-build-placeholder-secret' }}
+          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL || 'http://localhost:3000' }}
           SKIP_ENV_VALIDATION: true
