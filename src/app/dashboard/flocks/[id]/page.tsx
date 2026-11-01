@@ -7,9 +7,23 @@ import { FlockReportGenerator } from './FlockReportGenerator';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { getBreedDisplayName } from '@/lib/livestock-breed-options';
 import { getFarmSettings } from '@/lib/actions/preference-actions';
+import { getAuthContext } from '@/lib/auth-utils';
+import { checkFeature } from '@/lib/subscription-utils';
+import { PlanFeatureLocked } from '@/components/billing/PlanFeatureLocked';
 
 export default async function FlockDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const { activeFarmId } = await getAuthContext();
+  if (!activeFarmId || !(await checkFeature(activeFarmId, 'BATCH_DETAILS'))) {
+    return (
+      <PlanFeatureLocked
+        title="Batch"
+        accent="Management"
+        description="Detailed batch management shows each batch's charts, health schedule and full history. You can still log eggs, feed and deaths for every batch."
+      />
+    );
+  }
+
   const [data, farmSettings] = await Promise.all([
     getFlockDeepDive(id),
     getFarmSettings(),

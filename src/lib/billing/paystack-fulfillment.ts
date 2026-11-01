@@ -1,6 +1,7 @@
 import prisma from '@/lib/db'
 import { applyPaidUpgrade, computePaidPeriodEnd } from '@/lib/billing/apply-paid-upgrade'
-import { DAYS_PER_BILLING_MONTH, isPaidTier, type PaidTier } from '@/lib/billing/pricing'
+import { DAYS_PER_BILLING_MONTH, isPaidTier, isPlanType, type PaidTier } from '@/lib/billing/pricing'
+import type { PlanType } from '@prisma/client'
 import { verifyPaystackTransaction, type PaystackTransaction } from '@/lib/billing/paystack'
 
 export const PAYSTACK_INITIATED_EVENT = 'PAYSTACK_PAYMENT_INITIATED'
@@ -8,6 +9,7 @@ export const PAYSTACK_COMPLETED_EVENT = 'PAYSTACK_PAYMENT_COMPLETED'
 
 export type PaystackCheckoutRecord = {
   reference: string
+  planType: PlanType
   tier: PaidTier
   months: number
   amountPesewas: number
@@ -32,6 +34,8 @@ function readCheckoutRecord(metadata: unknown): PaystackCheckoutRecord | null {
   }
   return {
     reference: record.reference,
+    // Checkouts started before Solo/Team plans existed were Team plans.
+    planType: isPlanType(record.planType) ? record.planType : 'TEAM',
     tier: record.tier,
     months: record.months,
     amountPesewas: record.amountPesewas,
@@ -87,13 +91,15 @@ export async function fulfillPaystackPayment(reference: string): Promise<Fulfill
 
     const farm = await tx.farm.findUnique({
       where: { id: initiated.farmId },
-      select: { masterLicenseStatus: true, trialExpiresAt: true },
+      select: { masterLicenseStatus: true, trialExpiresAt: true, planType: true },
     })
     if (!farm) throw new Error('Farm not found')
 
     const durationDays = expected.months * DAYS_PER_BILLING_MONTH
     const periodEnd = computePaidPeriodEnd({
       tier: expected.tier,
+      planType: expected.planType,
+      currentPlanType: farm.planType,
       durationDays,
       currentStatus: farm.masterLicenseStatus,
       currentExpiresAt: farm.trialExpiresAt,
@@ -101,6 +107,7 @@ export async function fulfillPaystackPayment(reference: string): Promise<Fulfill
 
     await applyPaidUpgrade(tx, {
       farmId: initiated.farmId,
+      planType: expected.planType,
       tier: expected.tier,
       periodEnd,
       eventMetadata: { source: 'paystack', reference, durationDays, months: expected.months },
@@ -114,6 +121,7 @@ export async function fulfillPaystackPayment(reference: string): Promise<Fulfill
         metadata: {
           reference,
           tier: expected.tier,
+          planType: expected.planType,
           months: expected.months,
           amountPesewas: transaction.amount,
           currency: transaction.currency,

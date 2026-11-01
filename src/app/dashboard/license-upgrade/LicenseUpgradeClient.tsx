@@ -1,76 +1,53 @@
 "use client";
 
-import React, { useMemo, useState, useTransition } from "react";
+import React, { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Check, Clock3, Crown, Monitor, Shield, Sparkles } from "lucide-react";
+import { Check, Clock3, Crown, Monitor, Shield, User, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { requestSubscriptionUpgrade, startPaystackCheckout } from "@/lib/actions/subscription-actions";
 import { type DesktopLicenseRow } from "@/lib/actions/licenses";
-import { type SubscriptionTier } from "@prisma/client";
+import { PLAN_MONTHLY_PRICE, PLAN_NAMES, TERM_DISCOUNTS, type PaidTier } from "@/lib/billing/pricing";
 import { cn } from "@/lib/utils";
 
-type PaidTier = Extract<SubscriptionTier, "STANDARD" | "PREMIUM">;
+type PlanTypeValue = "SOLO" | "TEAM";
 
-type Plan = {
-  name: string;
-  tier: PaidTier;
-  price: number;
-  description: string;
-  features: string[];
-  color: string;
-  shadow: string;
-  icon: React.ElementType;
-  popular?: boolean;
+export type PlanAccessView = {
+  state: "TRIAL" | "PAID" | "GRACE" | "LOCKED";
+  tier: "BASIC" | PaidTier;
+  isTrial: boolean;
+  endsAt: string | null;
+  graceEndsAt: string | null;
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-const plans: Plan[] = [
-  {
-    name: "Standard Pro",
-    tier: "STANDARD",
-    price: 350,
-    description: "For commercial farms that need automation, team controls, and stronger reporting.",
-    features: [
-      "Up to 10 livestock units",
-      "Advanced health analytics",
-      "Full financial controls",
-      "Inventory management",
-      "Team management for 3 workers",
-      "Email and WhatsApp notifications",
-    ],
-    color: "from-emerald-500 to-teal-400",
-    shadow: "shadow-emerald-500/20",
-    icon: Shield,
-  },
-  {
-    name: "Enterprise Suite",
-    tier: "PREMIUM",
-    price: 950,
-    description: "For large operations with multiple farms, unlimited teams, and priority support.",
-    features: [
-      "Unlimited livestock units",
-      "Predictive analytics",
-      "Custom financial reporting",
-      "Multi-farm consolidation",
-      "Unlimited team members",
-      "Priority concierge support",
-    ],
-    color: "from-amber-400 to-orange-500",
-    shadow: "shadow-amber-500/20",
-    icon: Crown,
-    popular: true,
-  },
+const SOME_FEATURES = [
+  "Egg, feed and mortality logging for every batch",
+  "Houses and livestock batches",
+  "Sales, orders and PDF invoices",
+  "Inventory and feed formulation",
+  "Reports and analytics",
 ];
 
-const monthOptions = [
-  { months: 1, discount: 0 },
-  { months: 3, discount: 0.05 },
-  { months: 6, discount: 0.1 },
-  { months: 12, discount: 0.15 },
+const ALL_FEATURES_EXTRA = [
+  "Customers (CRM)",
+  "Suppliers",
+  "Finance hub and executive dashboard",
+  "Detailed batch management",
+  "Health schedules and quarantine",
 ];
+
+const STAFF_LINE: Record<PlanTypeValue, Record<PaidTier, string>> = {
+  SOLO: { STANDARD: "Owner only, no staff", PREMIUM: "Owner only, no staff" },
+  TEAM: { STANDARD: "Up to 4 staff", PREMIUM: "Unlimited staff" },
+};
+
+const monthOptions = Object.entries(TERM_DISCOUNTS).map(([months, discount]) => ({
+  months: Number(months),
+  discount,
+}));
 
 function formatCurrency(value: number) {
   return `GHS ${new Intl.NumberFormat("en-GH", {
@@ -89,15 +66,6 @@ function formatDate(value: string | null) {
     day: "numeric",
     year: "numeric",
   }).format(date);
-}
-
-function getMostRecentExpiry(devices: DesktopLicenseRow[]) {
-  const expiries = devices
-    .map((device) => (device.licenseExpiresAt ? new Date(device.licenseExpiresAt).getTime() : NaN))
-    .filter((time) => !Number.isNaN(time));
-
-  if (expiries.length === 0) return null;
-  return new Date(Math.max(...expiries));
 }
 
 function getDeviceAccessLabel(device: DesktopLicenseRow) {
@@ -132,10 +100,10 @@ function getTimerTone(expiry: Date | null, now: Date) {
 }
 
 function formatRemaining(expiry: Date | null, now: Date) {
-  if (!expiry) return "No renewal date available";
+  if (!expiry) return "No end date";
 
   const remainingMs = expiry.getTime() - now.getTime();
-  if (remainingMs <= 0) return "Expired";
+  if (remainingMs <= 0) return "Ended";
 
   const days = Math.floor(remainingMs / DAY_MS);
   const hours = Math.floor((remainingMs % DAY_MS) / (60 * 60 * 1000));
@@ -145,14 +113,8 @@ function formatRemaining(expiry: Date | null, now: Date) {
   return `${days} days · ${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")} remaining`;
 }
 
-function getPlanLabel(tier: SubscriptionTier) {
-  if (tier === "STANDARD") return "STANDARD PRO";
-  if (tier === "PREMIUM") return "ENTERPRISE SUITE";
-  return "BASIC FREE";
-}
-
 function getTermPricing(months: number, monthlyPrice: number) {
-  const discount = monthOptions.find((option) => option.months === months)?.discount ?? 0;
+  const discount = TERM_DISCOUNTS[months] ?? 0;
   const subtotal = months * monthlyPrice;
   const total = subtotal * (1 - discount);
 
@@ -163,25 +125,63 @@ function getTermPricing(months: number, monthlyPrice: number) {
   };
 }
 
+function describeCurrentPlan(access: PlanAccessView, planType: PlanTypeValue) {
+  if (access.state === "LOCKED") {
+    return {
+      label: "NO ACTIVE PLAN",
+      note: access.isTrial
+        ? "Your free trial has ended. Choose a plan to unlock your farm."
+        : "Your plan has ended. Choose a plan to unlock your farm.",
+      timerLabel: null,
+      timerEnd: null,
+    };
+  }
+
+  const name = access.isTrial
+    ? "FREE TRIAL · ALL FEATURES"
+    : access.tier === "BASIC"
+      ? "NO ACTIVE PLAN"
+      : PLAN_NAMES[planType][access.tier].toUpperCase();
+
+  if (access.state === "GRACE") {
+    return {
+      label: name,
+      note: `Your ${access.isTrial ? "free trial" : "plan"} has ended. Choose a plan before ${formatDate(access.graceEndsAt)} to keep access.`,
+      timerLabel: "Your farm locks in",
+      timerEnd: access.graceEndsAt,
+    };
+  }
+
+  return {
+    label: name,
+    note: access.isTrial
+      ? `Every feature is free until ${formatDate(access.endsAt)}. Choose a plan before then to keep working.`
+      : null,
+    timerLabel: access.isTrial ? "Your free trial ends in" : "Your plan renews in",
+    timerEnd: access.endsAt,
+  };
+}
+
 export default function LicenseUpgradeClient({
-  currentTier,
-  trialExpiresAt,
+  planType,
+  initialType,
+  access,
   devices,
 }: {
-  currentTier: SubscriptionTier;
-  /** Set while the farm is on its free trial. */
-  trialExpiresAt: string | null;
+  /** The farm's current plan type. */
+  planType: PlanTypeValue;
+  /** Plan type to show first (from Settings, or the farm's own). */
+  initialType: PlanTypeValue;
+  access: PlanAccessView;
   devices: DesktopLicenseRow[];
 }) {
   const router = useRouter();
+  const [selectedType, setSelectedType] = useState<PlanTypeValue>(initialType);
   const [selectedMonths, setSelectedMonths] = useState(1);
   const [now, setNow] = useState(() => new Date());
   const [isUpgrading, startTransition] = useTransition();
-  const isOnTrial = trialExpiresAt !== null;
-  const currentExpiry = useMemo(
-    () => (trialExpiresAt ? new Date(trialExpiresAt) : getMostRecentExpiry(devices)),
-    [trialExpiresAt, devices],
-  );
+  const current = describeCurrentPlan(access, planType);
+  const timerEnd = current.timerEnd ? new Date(current.timerEnd) : null;
 
   React.useEffect(() => {
     const interval = window.setInterval(() => setNow(new Date()), 1000);
@@ -206,7 +206,7 @@ export default function LicenseUpgradeClient({
 
   function handlePaystackCheckout(tier: PaidTier) {
     startTransition(async () => {
-      const result = await startPaystackCheckout(tier, selectedMonths);
+      const result = await startPaystackCheckout(selectedType, tier, selectedMonths);
 
       if (!result.success || !("authorizationUrl" in result) || !result.authorizationUrl) {
         toast.error(result.error || "Could not start the payment");
@@ -219,7 +219,7 @@ export default function LicenseUpgradeClient({
 
   function handleUpgrade(tier: PaidTier) {
     startTransition(async () => {
-      const result = await requestSubscriptionUpgrade(tier, selectedMonths);
+      const result = await requestSubscriptionUpgrade(selectedType, tier, selectedMonths);
 
       if (!result.success) {
         toast.error(result.error || "Failed to submit upgrade request");
@@ -234,8 +234,10 @@ export default function LicenseUpgradeClient({
     });
   }
 
-  const standardPricing = getTermPricing(selectedMonths, 350);
-  const enterprisePricing = getTermPricing(selectedMonths, 950);
+  const tiers: { tier: PaidTier; icon: React.ElementType; color: string; shadow: string; popular?: boolean }[] = [
+    { tier: "STANDARD", icon: Shield, color: "from-emerald-500 to-teal-400", shadow: "shadow-emerald-500/20" },
+    { tier: "PREMIUM", icon: Crown, color: "from-amber-400 to-orange-500", shadow: "shadow-amber-500/20", popular: true },
+  ];
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 px-0 md:px-3 pt-2 pb-7 md:py-10">
@@ -244,29 +246,19 @@ export default function LicenseUpgradeClient({
         <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <span className="inline-flex rounded-full border border-emerald-300/25 bg-emerald-400/10 px-4 py-2 text-sm font-black tracking-[0.18em] text-emerald-100">
-              {getPlanLabel(currentTier)}
-              {isOnTrial ? " · FREE TRIAL" : null}
+              {current.label}
             </span>
-            {currentTier === "BASIC" ? (
-              <p className="mt-4 max-w-2xl text-sm leading-6 text-white/70">
-                You are on the free plan. Upgrade to unlock advanced features.
-              </p>
-            ) : (
-              <div className={cn("mt-4 inline-flex items-center gap-3 rounded-lg border px-4 py-3 font-bold", getTimerTone(currentExpiry, now))}>
+            {current.timerLabel ? (
+              <div className={cn("mt-4 flex w-fit items-center gap-3 rounded-lg border px-4 py-3 font-bold", getTimerTone(timerEnd, now))}>
                 <Clock3 className="h-5 w-5" />
                 <div>
-                  <p className="text-xs uppercase tracking-[0.18em] opacity-75">
-                    {isOnTrial ? "Your free trial ends in" : "Your subscription renews in"}
-                  </p>
-                  <p className="mt-1 text-lg">{formatRemaining(currentExpiry, now)}</p>
+                  <p className="text-xs uppercase tracking-[0.18em] opacity-75">{current.timerLabel}</p>
+                  <p className="mt-1 text-lg">{formatRemaining(timerEnd, now)}</p>
                 </div>
               </div>
-            )}
-            {isOnTrial ? (
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-white/70">
-                You have every feature free until {formatDate(trialExpiresAt)}. Choose a plan before then to keep
-                them, or your farm moves to the free Basic plan.
-              </p>
+            ) : null}
+            {current.note ? (
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-white/70">{current.note}</p>
             ) : null}
           </div>
         </div>
@@ -275,7 +267,7 @@ export default function LicenseUpgradeClient({
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-white/40">Connected Desktop Devices</p>
           {devices.length === 0 ? (
             <p className="mt-3 rounded-lg border border-white/10 bg-white/5 p-4 text-sm text-white/70">
-              No desktop connected yet. Download the desktop app to start your 30-day trial.
+              No desktop connected yet.
             </p>
           ) : (
             <div className="mt-3 grid gap-3">
@@ -295,7 +287,34 @@ export default function LicenseUpgradeClient({
         </div>
       </section>
 
-      <section className="rounded-lg border border-white/10 bg-[#0f1115]/70 p-5 backdrop-blur-2xl">
+      <section className="space-y-4 rounded-lg border border-white/10 bg-[#0f1115]/70 p-5 backdrop-blur-2xl">
+        <div className="grid grid-cols-2 gap-2 rounded-lg border border-white/10 bg-black/25 p-1 sm:w-fit">
+          {(["SOLO", "TEAM"] as const).map((type) => {
+            const Icon = type === "SOLO" ? User : Users;
+            const selected = selectedType === type;
+            return (
+              <button
+                key={type}
+                type="button"
+                onClick={() => setSelectedType(type)}
+                aria-pressed={selected}
+                className={cn(
+                  "flex items-center justify-center gap-2 rounded-md px-5 py-2.5 text-sm font-bold transition",
+                  selected ? "bg-emerald-400/20 text-emerald-100" : "text-white/60 hover:text-white",
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                {type === "SOLO" ? "Solo" : "Team"}
+              </button>
+            );
+          })}
+        </div>
+        {selectedType !== planType ? (
+          <p className="text-sm text-amber-200/90">
+            You are on {planType === "SOLO" ? "Solo" : "Team"}. Buying a {selectedType === "SOLO" ? "Solo" : "Team"} plan switches your farm to {selectedType === "SOLO" ? "Solo (owner only)" : "Team"}.
+          </p>
+        ) : null}
+
         <div className="flex flex-wrap gap-3">
           {monthOptions.map((option) => {
             const selected = selectedMonths === option.months;
@@ -312,41 +331,29 @@ export default function LicenseUpgradeClient({
                 )}
               >
                 {option.months} {option.months === 1 ? "Month" : "Months"}
+                {option.discount > 0 ? ` · ${Math.round(option.discount * 100)}% off` : ""}
               </button>
             );
           })}
         </div>
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          <p className="rounded-lg border border-white/10 bg-black/25 p-3 text-sm font-semibold text-white/80">
-            {selectedMonths} {selectedMonths === 1 ? "Month" : "Months"} Standard - {formatCurrency(standardPricing.total)}
-            {standardPricing.discount > 0 ? (
-              <span className="ml-2 text-emerald-300">
-                ({Math.round(standardPricing.discount * 100)}% off · save {formatCurrency(standardPricing.savings)})
-              </span>
-            ) : null}
-          </p>
-          <p className="rounded-lg border border-white/10 bg-black/25 p-3 text-sm font-semibold text-white/80">
-            {selectedMonths} {selectedMonths === 1 ? "Month" : "Months"} Enterprise - {formatCurrency(enterprisePricing.total)}
-            {enterprisePricing.discount > 0 ? (
-              <span className="ml-2 text-emerald-300">
-                ({Math.round(enterprisePricing.discount * 100)}% off · save {formatCurrency(enterprisePricing.savings)})
-              </span>
-            ) : null}
-          </p>
-        </div>
       </section>
 
       <section className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        {plans.map((plan) => {
-          const pricing = getTermPricing(selectedMonths, plan.price);
+        {tiers.map((plan) => {
+          const monthly = PLAN_MONTHLY_PRICE[selectedType][plan.tier];
+          const pricing = getTermPricing(selectedMonths, monthly);
           const Icon = plan.icon;
-          const isCurrent = !isOnTrial && currentTier === plan.tier;
+          const isCurrent =
+            !access.isTrial &&
+            (access.state === "PAID" || access.state === "GRACE") &&
+            planType === selectedType &&
+            access.tier === plan.tier;
 
           return (
             <div key={plan.tier} className="relative h-full">
               {plan.popular ? (
                 <div className="absolute -top-4 left-1/2 z-10 -translate-x-1/2 rounded-full bg-amber-500 px-5 py-1.5 text-xs font-bold uppercase tracking-widest text-black shadow-lg shadow-amber-500/40">
-                  Most Popular
+                  All Features
                 </div>
               ) : null}
 
@@ -359,18 +366,27 @@ export default function LicenseUpgradeClient({
                       </div>
                     </div>
                     <div>
-                      <h3 className="text-2xl font-bold text-white">{plan.name}</h3>
-                      <p className="mt-2 text-sm font-medium leading-6 text-white/70">{plan.description}</p>
+                      <h3 className="text-2xl font-bold text-white">
+                        {PLAN_NAMES[selectedType][plan.tier]}
+                        {isCurrent ? (
+                          <span className="ml-3 align-middle rounded-full border border-emerald-300/25 bg-emerald-400/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-100">
+                            Current
+                          </span>
+                        ) : null}
+                      </h3>
+                      <p className="mt-2 text-sm font-medium leading-6 text-white/70">
+                        {STAFF_LINE[selectedType][plan.tier]}
+                      </p>
                     </div>
                   </div>
 
                   <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-bold text-white">GHS {plan.price}</span>
+                    <span className="text-4xl font-bold text-white">GHS {monthly}</span>
                     <span className="text-sm font-bold uppercase tracking-widest text-white/60">/ month</span>
                   </div>
 
                   <ul className="flex-1 space-y-2">
-                    {plan.features.map((feature) => (
+                    {SOME_FEATURES.map((feature) => (
                       <li key={feature} className="flex items-center gap-2 text-sm font-medium text-white/75">
                         <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/10">
                           <Check className="h-3 w-3 text-emerald-300" />
@@ -378,6 +394,20 @@ export default function LicenseUpgradeClient({
                         {feature}
                       </li>
                     ))}
+                    {ALL_FEATURES_EXTRA.map((feature) => {
+                      const included = plan.tier === "PREMIUM";
+                      return (
+                        <li
+                          key={feature}
+                          className={cn("flex items-center gap-2 text-sm font-medium", included ? "text-white/75" : "text-white/35 line-through")}
+                        >
+                          <span className={cn("flex h-5 w-5 shrink-0 items-center justify-center rounded-full", included ? "bg-emerald-500/10" : "bg-white/5")}>
+                            {included ? <Check className="h-3 w-3 text-emerald-300" /> : <X className="h-3 w-3 text-white/40" />}
+                          </span>
+                          {feature}
+                        </li>
+                      );
+                    })}
                   </ul>
 
                   <div className="rounded-lg border border-white/10 bg-white/5 p-4">
@@ -392,39 +422,33 @@ export default function LicenseUpgradeClient({
                     ) : null}
                   </div>
 
-                  {isCurrent ? (
-                    <div className="inline-flex h-14 items-center justify-center rounded-lg border border-emerald-300/25 bg-emerald-400/10 text-sm font-black uppercase tracking-widest text-emerald-100">
-                      Current Plan
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      <Button
-                        onClick={() => handlePaystackCheckout(plan.tier)}
-                        isLoading={isUpgrading}
-                        loadingText="Opening Paystack..."
+                  <div className="space-y-3">
+                    <Button
+                      onClick={() => handlePaystackCheckout(plan.tier)}
+                      isLoading={isUpgrading}
+                      loadingText="Opening Paystack..."
+                      disabled={isUpgrading}
+                      className={cn(
+                        "h-14 w-full rounded-lg font-bold uppercase tracking-widest",
+                        plan.tier === "STANDARD"
+                          ? "bg-emerald-500 text-[#064e3b] shadow-emerald-500/20 hover:bg-emerald-400"
+                          : "bg-amber-500 text-[#451a03] shadow-amber-500/20 hover:bg-amber-400",
+                      )}
+                    >
+                      {isCurrent ? "Renew" : "Pay"} {formatCurrency(pricing.total)} with Paystack
+                    </Button>
+                    <p className="text-center text-xs text-white/50">
+                      Mobile Money (MTN, Telecel, AirtelTigo), card or bank transfer.{" "}
+                      <button
+                        type="button"
+                        onClick={() => handleUpgrade(plan.tier)}
                         disabled={isUpgrading}
-                        className={cn(
-                          "h-14 w-full rounded-lg font-bold uppercase tracking-widest",
-                          plan.tier === "STANDARD"
-                            ? "bg-emerald-500 text-[#064e3b] shadow-emerald-500/20 hover:bg-emerald-400"
-                            : "bg-amber-500 text-[#451a03] shadow-amber-500/20 hover:bg-amber-400",
-                        )}
+                        className="font-semibold text-white/70 underline underline-offset-2 hover:text-white disabled:opacity-50"
                       >
-                        Pay {formatCurrency(pricing.total)} with Paystack
-                      </Button>
-                      <p className="text-center text-xs text-white/50">
-                        Mobile Money (MTN, Telecel, AirtelTigo), card or bank transfer.{" "}
-                        <button
-                          type="button"
-                          onClick={() => handleUpgrade(plan.tier)}
-                          disabled={isUpgrading}
-                          className="font-semibold text-white/70 underline underline-offset-2 hover:text-white disabled:opacity-50"
-                        >
-                          Pay manually instead
-                        </button>
-                      </p>
-                    </div>
-                  )}
+                        Pay manually instead
+                      </button>
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
             </div>

@@ -2,6 +2,7 @@ import { cache } from 'react'
 import { auth } from '@/auth'
 import prisma from '@/lib/db'
 import { buildPhoneLookupCandidates } from '@/lib/phone-auth'
+import { isStaffMemberLocked } from '@/lib/subscription-utils'
 
 export {
   buildPhoneLookupCandidates,
@@ -143,10 +144,17 @@ export const getAuthContext = cache(async () => {
     data.farms.some((farm) => farm.id === farmId) ||
     data.memberships.some((item) => item.farmId === farmId)
 
-  const activeFarmId =
+  const candidateFarmId =
     (activeFarmIdFromSession && canAccessFarm(activeFarmIdFromSession) ? activeFarmIdFromSession : undefined) ||
     data.farms[0]?.id ||
     data.memberships[0]?.farmId
+
+  // Staff whose seat is paused or over the plan's staff limit lose farm access.
+  const isOwnFarm = !!candidateFarmId && data.farms.some((farm) => farm.id === candidateFarmId)
+  const activeFarmId =
+    candidateFarmId && !isOwnFarm && (await isStaffMemberLocked(candidateFarmId, userId))
+      ? undefined
+      : candidateFarmId
 
   const membership = activeFarmId
     ? data.memberships.find((item) => item.farmId === activeFarmId)

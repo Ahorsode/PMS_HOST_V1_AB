@@ -6,6 +6,9 @@ import { InfirmaryManagement } from '../flocks/InfirmaryManagement';
 import { IsolationRoomForm } from '../mortality/IsolationRoomForm';
 import { QuickMortalityLogger } from '../mortality/QuickMortalityLogger';
 import { Home, Activity } from 'lucide-react';
+import { getAuthContext } from '@/lib/auth-utils';
+import { checkFeature } from '@/lib/subscription-utils';
+import { PlanFeatureLocked } from '@/components/billing/PlanFeatureLocked';
 
 export default async function QuarantinePage() {
   const hasAccess = await checkWorkerPermissions('mortality', 'view');
@@ -13,6 +16,17 @@ export default async function QuarantinePage() {
 
   if (!hasAccess) {
     redirect('/dashboard/unauthorized');
+  }
+
+  const { activeFarmId } = await getAuthContext();
+  if (!activeFarmId || !(await checkFeature(activeFarmId, 'HEALTH'))) {
+    return (
+      <PlanFeatureLocked
+        title="Quarantine"
+        accent="& Isolation"
+        description="Quarantine management tracks isolated birds and recovery rooms. Deaths can still be logged on the Mortality page."
+      />
+    );
   }
 
   const [batches, isolationRooms] = await Promise.all([

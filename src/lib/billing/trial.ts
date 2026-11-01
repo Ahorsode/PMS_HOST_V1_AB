@@ -1,6 +1,6 @@
 import type { SubscriptionTier } from '@prisma/client'
 
-/** Every new owner gets this many days of the trial tier before dropping to BASIC. */
+/** Every new farm gets this many days of the trial tier; there is no free plan after it. */
 export const FREE_TRIAL_DAYS = 30
 export const FREE_TRIAL_TIER: SubscriptionTier = 'PREMIUM'
 export const TRIAL_STATUS = 'CLOUD_TRIAL'
@@ -15,11 +15,4 @@ export function freeTrialFields(now = new Date()) {
     trialExpiresAt: new Date(now.getTime() + FREE_TRIAL_DAYS * DAY_MS),
     trialExhaustedAt: null,
   }
-}
-
-export function isTrialActive(
-  farm: { masterLicenseStatus: string | null; trialExpiresAt: Date | null },
-  now = new Date(),
-) {
-  return farm.masterLicenseStatus === TRIAL_STATUS && !!farm.trialExpiresAt && farm.trialExpiresAt > now
 }

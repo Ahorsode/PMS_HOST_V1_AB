@@ -1,16 +1,17 @@
-import type { Prisma } from '@prisma/client'
+import type { PlanType, Prisma } from '@prisma/client'
 import type { DbTransactionClient } from '@/lib/db'
 import type { PaidTier } from '@/lib/billing/pricing'
 
 /**
- * Moves a farm onto a paid tier until `periodEnd` and re-activates its desktop
- * devices. Shared by admin manual upgrades and Paystack payments so both grant
- * access the same way.
+ * Moves a farm onto a paid plan (plan type + tier) until `periodEnd` and
+ * re-activates its desktop devices. Shared by admin manual upgrades and
+ * Paystack payments so both grant access the same way.
  */
 export async function applyPaidUpgrade(
   tx: DbTransactionClient,
   input: {
     farmId: string
+    planType: PlanType
     tier: PaidTier
     periodEnd: Date
     eventMetadata: Prisma.InputJsonObject
@@ -21,6 +22,7 @@ export async function applyPaidUpgrade(
     select: {
       userId: true,
       subscriptionTier: true,
+      planType: true,
       masterLicenseStatus: true,
       trialExpiresAt: true,
     },
@@ -32,6 +34,7 @@ export async function applyPaidUpgrade(
     where: { id: input.farmId },
     data: {
       subscriptionTier: input.tier,
+      planType: input.planType,
       masterLicenseStatus: `PAID_${input.tier}`,
       trialExpiresAt: input.periodEnd,
       trialExhaustedAt: null,
@@ -56,8 +59,10 @@ export async function applyPaidUpgrade(
       metadata: {
         ...input.eventMetadata,
         tier: input.tier,
+        planType: input.planType,
         newExpiresAt: input.periodEnd.toISOString(),
         previousTier: before.subscriptionTier,
+        previousPlanType: before.planType,
         previousStatus: before.masterLicenseStatus,
         previousExpiresAt: before.trialExpiresAt?.toISOString() ?? null,
       },
@@ -68,11 +73,13 @@ export async function applyPaidUpgrade(
 }
 
 /**
- * A renewal of the same paid tier extends from the current expiry when it is
- * still in the future; anything else starts from now.
+ * A renewal of the same paid plan (tier and plan type) extends from the
+ * current expiry when it is still in the future; anything else starts from now.
  */
 export function computePaidPeriodEnd(input: {
   tier: PaidTier
+  planType?: PlanType
+  currentPlanType?: PlanType
   durationDays: number
   currentStatus: string | null
   currentExpiresAt: Date | null
@@ -81,6 +88,7 @@ export function computePaidPeriodEnd(input: {
   const now = input.now ?? new Date()
   const isSameTierRenewal =
     input.currentStatus === `PAID_${input.tier}` &&
+    (input.planType === undefined || input.planType === input.currentPlanType) &&
     !!input.currentExpiresAt &&
     input.currentExpiresAt > now
   const start = isSameTierRenewal ? new Date(input.currentExpiresAt!) : new Date(now)

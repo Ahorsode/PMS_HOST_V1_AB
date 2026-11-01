@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => ({
   auth: vi.fn(),
   userFindUnique: vi.fn(),
+  isStaffMemberLocked: vi.fn(),
 }))
 
 vi.mock('react', async (importOriginal) => ({
@@ -11,6 +12,7 @@ vi.mock('react', async (importOriginal) => ({
 }))
 vi.mock('@/auth', () => ({ auth: mocks.auth }))
 vi.mock('@/lib/db', () => ({ default: { user: { findUnique: mocks.userFindUnique } } }))
+vi.mock('@/lib/subscription-utils', () => ({ isStaffMemberLocked: mocks.isStaffMemberLocked }))
 
 import { getAuthContext } from '@/lib/auth-utils'
 
@@ -31,7 +33,10 @@ function userRow(overrides: Record<string, unknown> = {}) {
 }
 
 describe('getAuthContext farm access', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.isStaffMemberLocked.mockResolvedValue(false)
+  })
 
   it('does not grant a removed member access to their old farm', async () => {
     mocks.auth.mockResolvedValue(sessionFor('victim-farm'))
@@ -65,5 +70,29 @@ describe('getAuthContext farm access', () => {
 
     expect(context.activeFarmId).toBe('farm-a')
     expect(context.role).toBe('MANAGER')
+  })
+
+  it('removes farm access from staff locked out by the plan', async () => {
+    mocks.auth.mockResolvedValue(sessionFor('farm-a'))
+    mocks.userFindUnique.mockResolvedValue(
+      userRow({ memberships: [{ farmId: 'farm-a', role: 'WORKER' }] }),
+    )
+    mocks.isStaffMemberLocked.mockResolvedValue(true)
+
+    const context = await getAuthContext()
+
+    expect(context.activeFarmId).toBeUndefined()
+    expect(mocks.isStaffMemberLocked).toHaveBeenCalledWith('farm-a', 'user-1')
+  })
+
+  it('never locks owners out of their own farm', async () => {
+    mocks.auth.mockResolvedValue(sessionFor('farm-b'))
+    mocks.userFindUnique.mockResolvedValue(userRow({ farms: [{ id: 'farm-b' }] }))
+    mocks.isStaffMemberLocked.mockResolvedValue(true)
+
+    const context = await getAuthContext()
+
+    expect(context.activeFarmId).toBe('farm-b')
+    expect(mocks.isStaffMemberLocked).not.toHaveBeenCalled()
   })
 })

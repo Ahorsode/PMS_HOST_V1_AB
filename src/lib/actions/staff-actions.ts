@@ -8,7 +8,7 @@ import {
   SECURITY_PERMISSION_UPDATE_MESSAGE,
 } from '@/lib/auth-utils'
 import { generateInviteCode, inviteCodeExpiry, normalizeInviteCode } from '@/lib/invite-code'
-import { canAddWorker } from '@/lib/subscription-utils'
+import { canAddWorker, getFarmStaffAccess } from '@/lib/subscription-utils'
 import { Role } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
@@ -127,7 +127,12 @@ export async function inviteWorker(data: {
 
     const limitCheck = await canAddWorker(activeFarmId)
     if (!limitCheck.canAdd) {
-      return { success: false, error: `Subscription limit reached. You can only have ${limitCheck.limit} workers.` }
+      return {
+        success: false,
+        error: limitCheck.limit === 0
+          ? 'Your plan does not include staff. Switch to a Team plan to invite people.'
+          : `Your plan allows ${limitCheck.limit} staff. Upgrade to Business Plus for unlimited staff.`,
+      }
     }
     
     return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
@@ -375,9 +380,12 @@ export async function getFarmMembers() {
       where: { farmId: activeFarmId }
     })
 
+    const staffAccess = await getFarmStaffAccess(activeFarmId)
+
     // Map permissions and contextual roles back to members
     const membersWithContext = members.map((member: any) => ({
       ...member,
+      accessStatus: staffAccess.locked.get(member.userId) ?? 'ACTIVE',
       // Overwrite the User.role with the FarmMember.role for accurate UI reporting
       user: {
         ...member.user,
@@ -400,9 +408,57 @@ export async function getFarmMembers() {
       invitations, 
       isAbsoluteOwner,
       currentUserRole: isAbsoluteOwner ? 'OWNER' : (members.find((m: any) => m.userId === userId)?.role || 'WORKER'),
-      limitCheck
+      limitCheck,
+      staffPlan: {
+        planType: staffAccess.access.planType,
+        staffLimit: staffAccess.access.staffLimit,
+        overLimitCount: staffAccess.overLimitCount,
+      }
     }
   })
+}
+
+/**
+ * Pauses or restores a staff member's access. Owners use this to choose who
+ * keeps a seat when the plan allows fewer staff than the farm has; without a
+ * choice the most recently added staff are locked out.
+ */
+export async function setMemberAccessPaused(targetUserId: string, paused: boolean) {
+  const { userId, activeFarmId, isFarmOwner } = await getAuthContext()
+  if (!activeFarmId) return { success: false, error: 'No active farm selected' }
+  if (!isFarmOwner) return { success: false, error: 'Only the farm owner can change who has access' }
+  if (targetUserId === userId) return { success: false, error: 'You cannot pause your own access' }
+
+  try {
+    const member = await prisma.farmMember.findUnique({
+      where: { farmId_userId: { farmId: activeFarmId, userId: targetUserId } },
+      select: { id: true, accessPausedAt: true },
+    })
+    if (!member) return { success: false, error: 'Staff member not found' }
+
+    if (!paused && member.accessPausedAt) {
+      const { access, activeCount } = await getFarmStaffAccess(activeFarmId)
+      if (access.staffLimit !== null && activeCount >= access.staffLimit) {
+        return {
+          success: false,
+          error: access.staffLimit === 0
+            ? 'Your plan does not include staff. Switch to a Team plan to restore access.'
+            : `All ${access.staffLimit} staff seats are in use. Pause someone else first.`,
+        }
+      }
+    }
+
+    await prisma.farmMember.update({
+      where: { id: member.id },
+      data: { accessPausedAt: paused ? new Date() : null },
+    })
+
+    revalidatePath('/dashboard/team')
+    return { success: true }
+  } catch (error) {
+    console.error('Error changing member access:', error)
+    return { success: false, error: 'Could not change access' }
+  }
 }
 
 /**

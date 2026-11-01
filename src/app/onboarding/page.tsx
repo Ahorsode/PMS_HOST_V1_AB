@@ -4,18 +4,41 @@ import React, { useState } from 'react';
 import { onboardFarmer } from '@/lib/actions/dashboard-actions';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Layout, MapPin, BarChart3, ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowRight, User, Users } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { cn } from '@/lib/utils';
+
+const planTypes = [
+  {
+    value: 'SOLO' as const,
+    label: 'Solo',
+    icon: User,
+    description: 'Just me. I run the farm records on my own.',
+    price: 'From GHS 200 / month',
+  },
+  {
+    value: 'TEAM' as const,
+    label: 'Team',
+    icon: Users,
+    description: 'Me and my staff, such as farm hands, cashiers or an accountant.',
+    price: 'From GHS 350 / month',
+  },
+];
 
 export default function OnboardingPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [planType, setPlanType] = useState<'SOLO' | 'TEAM' | null>(null);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isLoading) return;
+    if (!planType) {
+      setError('Choose whether you will use Poultry Ledger alone or with a team.');
+      return;
+    }
     setIsLoading(true);
     setError(null);
 
@@ -25,7 +48,7 @@ export default function OnboardingPage() {
     const capacity = parseInt(formData.get('capacity') as string);
 
     try {
-      const result = await onboardFarmer({ name, location, capacity });
+      const result = await onboardFarmer({ name, location, capacity, planType });
       if (result.success) {
         router.push('/dashboard');
       } else {
@@ -85,6 +108,41 @@ export default function OnboardingPage() {
                   disabled={isLoading}
                 />
               </div>
+
+              <fieldset className="space-y-3">
+                <legend className="mb-3 text-sm font-bold text-white">Who will use Poultry Ledger?</legend>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {planTypes.map((option) => {
+                    const Icon = option.icon;
+                    const selected = planType === option.value;
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => setPlanType(option.value)}
+                        disabled={isLoading}
+                        aria-pressed={selected}
+                        className={cn(
+                          'flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-all',
+                          selected
+                            ? 'border-emerald-400 bg-emerald-500/15 ring-2 ring-emerald-400/40'
+                            : 'border-white/10 bg-white/5 hover:border-white/30',
+                        )}
+                      >
+                        <span className="flex items-center gap-2 text-base font-bold text-white">
+                          <Icon className="h-5 w-5 text-emerald-300" />
+                          {option.label}
+                        </span>
+                        <span className="text-xs leading-5 text-white/70">{option.description}</span>
+                        <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-300/90">{option.price}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-xs leading-5 text-white/60">
+                  Every feature is free for your first 30 days. You can switch between Solo and Team later in Settings.
+                </p>
+              </fieldset>
 
               <div className="pt-3">
                 <Button

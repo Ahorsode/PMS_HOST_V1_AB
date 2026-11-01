@@ -4,11 +4,15 @@ import { revalidatePath } from 'next/cache'
 import { requirePaymentAdminAction } from '@/lib/admin-auth'
 import prisma from '@/lib/db'
 import { applyPaidUpgrade } from '@/lib/billing/apply-paid-upgrade'
+import { isPlanType } from '@/lib/billing/pricing'
+import type { PlanType } from '@prisma/client'
 
 export async function adminUpgradeFarmTier(
   farmId: string,
   tier: 'STANDARD' | 'PREMIUM',
   durationDays: number,
+  /** Defaults to the farm's current plan type. */
+  planType?: PlanType,
 ) {
   let admin: { id: string; username: string }
   try {
@@ -26,8 +30,12 @@ export async function adminUpgradeFarmTier(
 
   try {
     await prisma.$transaction(async (tx) => {
+      const farm = await tx.farm.findUnique({ where: { id: farmId }, select: { planType: true } })
+      if (!farm) throw new Error('Farm not found')
+
       await applyPaidUpgrade(tx, {
         farmId,
+        planType: isPlanType(planType) ? planType : farm.planType,
         tier,
         periodEnd,
         eventMetadata: {

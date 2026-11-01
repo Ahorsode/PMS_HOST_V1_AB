@@ -11,6 +11,7 @@ import { farmCacheTags, revalidateFarmPerformanceCaches } from '@/lib/performanc
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 import { passwordPolicyError } from '@/lib/password-policy'
 import { freeTrialFields } from '@/lib/billing/trial'
+import type { PlanType } from '@prisma/client'
 import {
   buildRevenueVelocitySeries,
   buildStrategicPriorities,
@@ -893,8 +894,9 @@ export async function createHouse(data: { houseNumber: string, capacity: number 
   })
 }
 
-export async function onboardFarmer(data: { name: string, location: string, capacity: number }) {
+export async function onboardFarmer(data: { name: string, location: string, capacity: number, planType?: PlanType }) {
   const { userId } = await getAuthContext()
+  const planType: PlanType = data.planType === 'SOLO' ? 'SOLO' : 'TEAM'
   try {
     const result = await prisma.$transaction(async (tx: any) => {
       // Find if there is an existing placeholder/default farm created during signup
@@ -914,7 +916,8 @@ export async function onboardFarmer(data: { name: string, location: string, capa
           data: {
             name: data.name,
             location: data.location,
-            capacity: data.capacity
+            capacity: data.capacity,
+            planType
           }
         })
       } else {
@@ -924,6 +927,7 @@ export async function onboardFarmer(data: { name: string, location: string, capa
             name: data.name,
             location: data.location,
             capacity: data.capacity,
+            planType,
             userId: userId
           }
         })

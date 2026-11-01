@@ -11,7 +11,7 @@ export async function generateInvoicePDF(orderId: string) {
 
   const hasPDF = await checkFeature(activeFarmId, 'PDF_INVOICES')
   if (!hasPDF) {
-    return { success: false, error: 'PDF Invoices require a Standard or Premium subscription' }
+    return { success: false, error: 'PDF invoices need an active plan' }
   }
 
   try {
