@@ -5,35 +5,39 @@ import { usePathname } from 'next/navigation'
 import { useRouter } from 'next/navigation'
 import { useTransition, type ElementType } from 'react'
 import {
-  Server,
-  KeyRound,
-  RefreshCw,
-  CreditCard,
   Activity,
-  Cpu,
-  LogOut,
-  ShieldCheck,
+  CreditCard,
+  Gauge,
+  LayoutDashboard,
   Loader2,
-  Tags,
+  LogOut,
+  Megaphone,
+  Monitor,
+  Server,
   Settings,
+  ShieldCheck,
+  Tags,
   Ticket,
   UserCog,
+  UsersRound,
 } from 'lucide-react'
 import { logoutAdmin } from '@/lib/actions/admin-login-actions'
 import { cn } from '@/lib/utils'
 import { adminCan, ADMIN_ROLE_DETAILS, isAdminRole, type AdminPermission } from '@/lib/admin-permissions'
 
 const NAV_ITEMS: { href: string; label: string; icon: ElementType; permission: AdminPermission }[] = [
+  { href: '/admin', label: 'Overview', icon: LayoutDashboard, permission: 'farms.view' },
   { href: '/admin/farms', label: 'Farms', icon: Server, permission: 'farms.view' },
-  { href: '/admin/licenses/issue', label: 'Issue License', icon: KeyRound, permission: 'payments.manage' },
-  { href: '/admin/licenses/renew', label: 'Renew License', icon: RefreshCw, permission: 'payments.manage' },
+  { href: '/admin/users', label: 'Users', icon: UsersRound, permission: 'farms.view' },
   { href: '/admin/payments', label: 'Payments', icon: CreditCard, permission: 'payments.manage' },
+  { href: '/admin/licenses', label: 'Desktop licenses', icon: Monitor, permission: 'payments.manage' },
   { href: '/admin/plans', label: 'Plans & Pricing', icon: Tags, permission: 'pricing.manage' },
   { href: '/admin/promos', label: 'Promo Codes', icon: Ticket, permission: 'pricing.manage' },
+  { href: '/admin/messages', label: 'Messages', icon: Megaphone, permission: 'farms.view' },
   { href: '/admin/settings', label: 'Settings', icon: Settings, permission: 'settings.manage' },
+  { href: '/admin/system', label: 'System', icon: Gauge, permission: 'settings.manage' },
   { href: '/admin/admins', label: 'Admins', icon: UserCog, permission: 'admins.manage' },
   { href: '/admin/activity', label: 'Activity', icon: Activity, permission: 'farms.view' },
-  { href: '/admin/users/map', label: 'User Map', icon: Cpu, permission: 'payments.manage' },
 ]
 
 export default function AdminNav({ adminName, adminRole }: { adminName?: string; adminRole?: string }) {
@@ -62,7 +66,7 @@ export default function AdminNav({ adminName, adminRole }: { adminName?: string;
     <nav className="sticky top-0 z-50 border-b border-zinc-800/80 bg-zinc-950/85 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-8">
         {/* Brand */}
-        <Link href="/admin/farms" className="flex shrink-0 items-center gap-2.5">
+        <Link href="/admin" className="flex shrink-0 items-center gap-2.5">
           <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-emerald-400/25 bg-emerald-500/10 text-emerald-300 shadow-[0_0_18px_-6px_rgba(16,185,129,0.6)]">
             <ShieldCheck className="h-5 w-5" />
           </span>
@@ -78,8 +82,9 @@ export default function AdminNav({ adminName, adminRole }: { adminName?: string;
         <div className="flex flex-1 items-center gap-1 overflow-x-auto custom-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {NAV_ITEMS.filter((item) => adminCan(adminRole, item.permission)).map((item) => {
             const Icon = item.icon
+            // Overview is /admin itself; every other item also covers its sub-pages.
             const isActive =
-              pathname === item.href || pathname.startsWith(`${item.href}/`)
+              item.href === '/admin' ? pathname === '/admin' : pathname === item.href || pathname.startsWith(`${item.href}/`)
 
             return (
               <Link
@@ -108,12 +113,12 @@ export default function AdminNav({ adminName, adminRole }: { adminName?: string;
         {/* Admin identity + logout */}
         <div className="flex shrink-0 items-center gap-3 border-l border-zinc-800/80 pl-4">
           {adminName ? (
-            <div className="hidden flex-col items-end leading-tight md:flex">
+            <Link href="/admin/account" title="Your account: password, two-step sign-in, sessions" className="hidden flex-col items-end leading-tight hover:opacity-80 md:flex">
               <span className="text-xs font-bold text-white">{adminName}</span>
               <span className="text-[10px] uppercase tracking-wider text-zinc-500">
                 {isAdminRole(adminRole) ? ADMIN_ROLE_DETAILS[adminRole].label : 'Signed in'}
               </span>
-            </div>
+            </Link>
           ) : null}
           <button
             type="button"

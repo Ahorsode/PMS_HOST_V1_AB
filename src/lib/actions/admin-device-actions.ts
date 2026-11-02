@@ -6,7 +6,7 @@ import { logAdminAction } from '@/lib/admin-audit'
 import prisma from '@/lib/db'
 
 /** Status given to a device an admin has switched off; reactivating restores ACTIVE or EXPIRED. */
-export const DEACTIVATED_DEVICE_STATUS = 'DEACTIVATED'
+const DEACTIVATED_DEVICE_STATUS = 'DEACTIVATED'
 
 /** Like requirePaymentAdminAction, but resolves to null instead of throwing; also rejects deactivated admins (SEC-15). */
 async function getLicenseAdmin(): Promise<ActiveAdmin | null> {

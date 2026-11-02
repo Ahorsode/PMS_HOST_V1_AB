@@ -13,6 +13,8 @@ export type AdminAccountRow = {
   username: string
   role: string
   isActive: boolean
+  twoStepEnabled: boolean
+  activeSessions: number
   lastLoginAt: string | null
   createdAt: string
 }
@@ -38,16 +40,67 @@ async function requireAdminManager(): Promise<ActiveAdmin | null> {
 
 const UNAUTHORIZED = { success: false as const, error: 'Only a super admin can manage admin accounts.' }
 
+async function endAllSessions(adminUserId: string) {
+  return prisma.adminSession.updateMany({ where: { adminUserId, revokedAt: null }, data: { revokedAt: new Date() } })
+}
+
+/** For a lost phone: clears another admin's two-step sign-in so they set it up again. */
+export async function adminResetAdminTwoStep(id: string): Promise<AdminUserActionResult> {
+  const actor = await requireAdminManager()
+  if (!actor) return UNAUTHORIZED
+  if (id === actor.id) return { success: false, error: 'Change your own two-step sign-in from your Account page' }
+
+  const target = await prisma.adminUser.findUnique({ where: { id }, select: { username: true } })
+  if (!target) return { success: false, error: 'Admin not found' }
+
+  await prisma.adminUser.update({ where: { id }, data: { totpSecret: null, totpEnabledAt: null } })
+  await endAllSessions(id)
+  await logAdminAction(actor, {
+    action: 'admin.two_step_reset',
+    targetType: 'admin',
+    targetId: id,
+    summary: `Reset two-step sign-in for admin "${target.username}" and signed them out`,
+  })
+  revalidatePath('/admin/admins')
+  return { success: true }
+}
+
+/** Ends every session of another admin (e.g. a lost laptop). */
+export async function adminSignOutAdmin(id: string): Promise<AdminUserActionResult> {
+  const actor = await requireAdminManager()
+  if (!actor) return UNAUTHORIZED
+  if (id === actor.id) return { success: false, error: 'Use your Account page to end your own sessions' }
+
+  const target = await prisma.adminUser.findUnique({ where: { id }, select: { username: true } })
+  if (!target) return { success: false, error: 'Admin not found' }
+
+  const result = await endAllSessions(id)
+  await logAdminAction(actor, {
+    action: 'admin.sign_out',
+    targetType: 'admin',
+    targetId: id,
+    summary: `Signed admin "${target.username}" out of ${result.count} session${result.count === 1 ? '' : 's'}`,
+  })
+  revalidatePath('/admin/admins')
+  return { success: true }
+}
+
 export async function adminListAdmins(): Promise<AdminAccountRow[]> {
   await requirePaymentAdminAction('admins.manage')
 
+  const now = new Date()
   const admins = await prisma.adminUser.findMany({
-    select: { id: true, username: true, role: true, isActive: true, lastLoginAt: true, createdAt: true },
+    select: {
+      id: true, username: true, role: true, isActive: true, lastLoginAt: true, createdAt: true, totpEnabledAt: true,
+      _count: { select: { sessions: { where: { revokedAt: null, expiresAt: { gt: now } } } } },
+    },
     orderBy: [{ isActive: 'desc' }, { username: 'asc' }],
   })
 
-  return admins.map((admin) => ({
+  return admins.map(({ totpEnabledAt, _count, ...admin }) => ({
     ...admin,
+    twoStepEnabled: !!totpEnabledAt,
+    activeSessions: _count.sessions,
     lastLoginAt: admin.lastLoginAt?.toISOString() ?? null,
     createdAt: admin.createdAt.toISOString(),
   }))
@@ -115,6 +168,7 @@ export async function adminUpdateAdmin(
   }
 
   await prisma.adminUser.update({ where: { id }, data: { role: parsedRole.data, isActive } })
+  if (!isActive) await endAllSessions(id)
 
   const changes = [
     role !== target.role ? `role ${target.role} → ${role}` : null,
@@ -145,6 +199,7 @@ export async function adminResetAdminPassword(id: string, password: string): Pro
   if (!target) return { success: false, error: 'Admin not found' }
 
   await prisma.adminUser.update({ where: { id }, data: { passwordHash: await bcrypt.hash(parsed.data, 12) } })
+  await endAllSessions(id)
   await logAdminAction(actor, {
     action: 'admin.password_reset',
     targetType: 'admin',
