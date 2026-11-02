@@ -222,7 +222,13 @@ export async function getPaymentAdminDashboardData(): Promise<PaymentAdminDashbo
 }
 
 export async function confirmManualLicensePayment(input: unknown): Promise<ConfirmManualLicensePaymentResult> {
-  const admin = await requirePaymentAdminAction()
+  let admin: { id: string; username: string }
+  try {
+    admin = await requirePaymentAdminAction()
+  } catch {
+    return { success: false, error: 'Your admin session has expired. Sign in again.' }
+  }
+
   const parsed = confirmPaymentSchema.safeParse(input)
 
   if (!parsed.success) {
@@ -297,7 +303,10 @@ export async function confirmManualLicensePayment(input: unknown): Promise<Confi
         },
       })
 
-      if (registration.farm.masterLicenseStatus !== 'PAID_AND_ACTIVE') {
+      // Keep PAID_STANDARD / PAID_PREMIUM intact: effectiveFarmTier only lapses a
+      // timed web tier when the status names that tier, so overwriting it here
+      // would make the farm's paid web access permanent.
+      if (!registration.farm.masterLicenseStatus?.startsWith('PAID_')) {
         await tx.farm.update({
           where: { id: registration.farmId },
           data: { masterLicenseStatus: 'PAID_AND_ACTIVE' },
@@ -312,6 +321,7 @@ export async function confirmManualLicensePayment(input: unknown): Promise<Confi
     })
 
     revalidatePath('/admin/payments')
+    revalidatePath('/admin/farms')
 
     return {
       success: true,

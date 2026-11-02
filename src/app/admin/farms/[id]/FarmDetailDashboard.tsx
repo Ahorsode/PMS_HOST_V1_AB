@@ -191,8 +191,10 @@ export default function FarmDetailDashboard({ farm }: { farm: AdminFarmDetail })
     if (!dialogMode) return
     setDialogError(null)
 
-    startTransition(() => {
-      void (async () => {
+    // Awaiting inside the async transition keeps isPending true until the
+    // action finishes, so Confirm cannot be pressed twice.
+    startTransition(async () => {
+      try {
         const result =
           dialogMode.type === 'upgrade'
             ? await adminUpgradeFarmTier(farm.id, dialogMode.tier, durationDays)
@@ -216,7 +218,10 @@ export default function FarmDetailDashboard({ farm }: { farm: AdminFarmDetail })
         setDialogMode(null)
         setConfirmName('')
         router.refresh()
-      })()
+      } catch (error) {
+        console.error('[FarmDetailDashboard] action failed', error)
+        setDialogError('Request failed. Check your connection and try again.')
+      }
     })
   }
 

@@ -38,12 +38,31 @@ export async function applyPaidUpgrade(
     },
   })
 
+  const now = new Date()
+
+  // Devices already paid past periodEnd (e.g. a manual desktop payment) keep
+  // their later expiry so the activation token they were given stays valid.
   await tx.deviceRegistration.updateMany({
-    where: { farmId: input.farmId },
+    where: {
+      farmId: input.farmId,
+      OR: [{ licenseExpiresAt: null }, { licenseExpiresAt: { lt: input.periodEnd } }],
+    },
     data: {
       status: 'ACTIVE',
       licenseExpiresAt: input.periodEnd,
-      lastPaymentAt: new Date(),
+      lastPaymentAt: now,
+      isActive: true,
+    },
+  })
+
+  await tx.deviceRegistration.updateMany({
+    where: {
+      farmId: input.farmId,
+      licenseExpiresAt: { gte: input.periodEnd },
+    },
+    data: {
+      status: 'ACTIVE',
+      lastPaymentAt: now,
       isActive: true,
     },
   })

@@ -46,7 +46,12 @@ export async function bindDesktopToWebAccount(
   userId: string,
   hardwareId: string
 ): Promise<BindResult> {
-  const admin = await requirePaymentAdminAction()
+  let admin: { id: string; username: string }
+  try {
+    admin = await requirePaymentAdminAction()
+  } catch {
+    return { success: false, error: 'Your admin session has expired. Sign in again.' }
+  }
 
   if (!userId) {
     return { success: false, error: 'Web account user ID is required' }
@@ -87,7 +92,22 @@ export async function bindDesktopToWebAccount(
       })
 
       // 3. Upsert DeviceRegistration
-      // Find if we have a registration with this hardwareId/deviceId or farmId
+      // hardwareId is unique across all farms, so a device registered to
+      // another farm cannot be bound here without hitting the constraint.
+      const registeredElsewhere = await tx.deviceRegistration.findFirst({
+        where: {
+          hardwareId: normalizedHardwareId,
+          farmId: { not: farm.id },
+        },
+        select: { farm: { select: { name: true } } },
+      })
+
+      if (registeredElsewhere) {
+        throw new Error(
+          `This hardware ID is already registered to ${registeredElsewhere.farm.name}. Use Payments or Renew License for that farm instead.`,
+        )
+      }
+
       const existingReg = await tx.deviceRegistration.findFirst({
         where: {
           farmId: farm.id,
@@ -98,7 +118,10 @@ export async function bindDesktopToWebAccount(
         },
       })
 
+      let deviceRegistrationId: string
+
       if (existingReg) {
+        deviceRegistrationId = existingReg.id
         await tx.deviceRegistration.update({
           where: { id: existingReg.id },
           data: {
@@ -112,7 +135,8 @@ export async function bindDesktopToWebAccount(
           },
         })
       } else {
-        await tx.deviceRegistration.create({
+        const created = await tx.deviceRegistration.create({
+          select: { id: true },
           data: {
             farmId: farm.id,
             userId,
@@ -128,21 +152,37 @@ export async function bindDesktopToWebAccount(
             licenseKey: `PMS-BIND-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
           },
         })
+        deviceRegistrationId = created.id
       }
 
-      // 4. Update farm status
-      if (farm.masterLicenseStatus !== 'PAID_AND_ACTIVE') {
+      // 4. Update farm status, keeping PAID_STANDARD / PAID_PREMIUM intact so a
+      // timed web tier still lapses on schedule.
+      if (!farm.masterLicenseStatus?.startsWith('PAID_')) {
         await tx.farm.update({
           where: { id: farm.id },
           data: { masterLicenseStatus: 'PAID_AND_ACTIVE' },
         })
       }
 
-      // 5. Create a payment audit record for bookkeeping
+      // 5. Create a payment audit record for bookkeeping. The token is derived
+      // from the hardware ID and expiry date, so re-binding the same device on
+      // the same day yields the same token; the existing record covers it.
+      const alreadyRecorded = await tx.manualLicensePayment.findUnique({
+        where: { activationToken: token },
+        select: { id: true },
+      })
+
+      if (alreadyRecorded) {
+        return {
+          token,
+          expiresAt: targetExpiryDate.toISOString(),
+        }
+      }
+
       await tx.manualLicensePayment.create({
         data: {
           farmId: farm.id,
-          deviceRegistrationId: existingReg?.id || (await tx.deviceRegistration.findFirst({ where: { farmId: farm.id, hardwareId: normalizedHardwareId } }))!.id,
+          deviceRegistrationId,
           adminUserId: admin.id,
           hardwareId: normalizedHardwareId,
           amount: 0.0, // Manual admin association

@@ -2,7 +2,7 @@ import prisma from '@/lib/db'
 import { getAdminSession, sanitizeAdminCallbackUrl } from '@/lib/admin-session'
 import { redirect } from 'next/navigation'
 
-async function getActiveAdminUser() {
+export async function getActiveAdminUser() {
   const session = await getAdminSession()
   if (!session) return null
 

@@ -36,7 +36,13 @@ export type RenewLicenseResult =
     }
 
 export async function renewLicenseByHardwareId(input: unknown): Promise<RenewLicenseResult> {
-  const admin = await requirePaymentAdminAction()
+  let admin: { id: string; username: string }
+  try {
+    admin = await requirePaymentAdminAction()
+  } catch {
+    return { success: false, error: 'Your admin session has expired. Sign in again.' }
+  }
+
   const parsed = renewSchema.safeParse(input)
 
   if (!parsed.success) {
@@ -50,7 +56,6 @@ export async function renewLicenseByHardwareId(input: unknown): Promise<RenewLic
   const normalizedHardware = normalizeHardwareFingerprint(hardwareId)
   const now = new Date()
   const durationDef = durationConfig[duration]
-  const targetExpiryDate = addMonths(now, durationDef.months)
 
   try {
     const result = await prisma.$transaction(async (tx) => {
@@ -68,6 +73,14 @@ export async function renewLicenseByHardwareId(input: unknown): Promise<RenewLic
       if (!registration) {
         throw new Error('No registration found for this hardware ID')
       }
+
+      // Renewing before expiry extends from the current expiry so the
+      // remaining paid time is not lost.
+      const baseDate =
+        registration.licenseExpiresAt && registration.licenseExpiresAt > now
+          ? registration.licenseExpiresAt
+          : now
+      const targetExpiryDate = addMonths(baseDate, durationDef.months)
 
       const updatedRegistration = await tx.deviceRegistration.update({
         where: { id: registration.id },
@@ -100,7 +113,7 @@ export async function renewLicenseByHardwareId(input: unknown): Promise<RenewLic
 
       return {
         status: updatedRegistration.status,
-        expiresAt: updatedRegistration.licenseExpiresAt,
+        expiresAt: updatedRegistration.licenseExpiresAt ?? targetExpiryDate,
         historyId: history.id,
       }
     })
@@ -111,7 +124,7 @@ export async function renewLicenseByHardwareId(input: unknown): Promise<RenewLic
     return {
       success: true,
       licenseStatus: result.status,
-      licenseExpiresAt: result.expiresAt?.toISOString() ?? targetExpiryDate.toISOString(),
+      licenseExpiresAt: result.expiresAt.toISOString(),
       historyId: result.historyId,
       durationLabel: durationDef.label,
     }

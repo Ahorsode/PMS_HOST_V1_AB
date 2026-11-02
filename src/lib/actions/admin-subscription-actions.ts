@@ -3,13 +3,17 @@
 import { revalidatePath } from 'next/cache'
 import { requirePaymentAdminAction } from '@/lib/admin-auth'
 import prisma from '@/lib/db'
-import { applyPaidUpgrade } from '@/lib/billing/apply-paid-upgrade'
+import { applyPaidUpgrade, computePaidPeriodEnd } from '@/lib/billing/apply-paid-upgrade'
+
+export type AdminUpgradeFarmTierResult =
+  | { success: true; periodEnd: string }
+  | { success: false; error: string }
 
 export async function adminUpgradeFarmTier(
   farmId: string,
   tier: 'STANDARD' | 'PREMIUM',
   durationDays: number,
-) {
+): Promise<AdminUpgradeFarmTierResult> {
   let admin: { id: string; username: string }
   try {
     admin = await requirePaymentAdminAction()
@@ -21,11 +25,22 @@ export async function adminUpgradeFarmTier(
     return { success: false, error: 'Choose a valid access duration' }
   }
 
-  const periodEnd = new Date()
-  periodEnd.setUTCDate(periodEnd.getUTCDate() + durationDays)
-
   try {
-    await prisma.$transaction(async (tx) => {
+    const periodEnd = await prisma.$transaction(async (tx) => {
+      const farm = await tx.farm.findUnique({
+        where: { id: farmId },
+        select: { masterLicenseStatus: true, trialExpiresAt: true },
+      })
+      if (!farm) throw new Error('Farm not found')
+
+      // Same-tier renewals extend from the current paid expiry, matching Paystack.
+      const periodEnd = computePaidPeriodEnd({
+        tier,
+        durationDays,
+        currentStatus: farm.masterLicenseStatus,
+        currentExpiresAt: farm.trialExpiresAt,
+      })
+
       await applyPaidUpgrade(tx, {
         farmId,
         tier,
@@ -36,6 +51,8 @@ export async function adminUpgradeFarmTier(
           durationDays,
         },
       })
+
+      return periodEnd
     })
 
     revalidatePath('/admin/payments')
@@ -43,7 +60,7 @@ export async function adminUpgradeFarmTier(
     revalidatePath('/admin/farms')
     revalidatePath(`/admin/farms/${farmId}`)
 
-    return { success: true }
+    return { success: true, periodEnd: periodEnd.toISOString() }
   } catch (error) {
     console.error('[adminUpgradeFarmTier]', error)
     return {

@@ -96,7 +96,14 @@ export default function UserMapDashboard({
     }
 
     startTransition(async () => {
-      const result = await bindDesktopToWebAccount(selectedUser.id, hardwareId)
+      let result: Awaited<ReturnType<typeof bindDesktopToWebAccount>>
+      try {
+        result = await bindDesktopToWebAccount(selectedUser.id, hardwareId)
+      } catch (error) {
+        console.error('[UserMapDashboard] bind failed', error)
+        setFormError('Request failed. Check your connection and try again.')
+        return
+      }
 
       if (!result.success) {
         setFormError(result.error)

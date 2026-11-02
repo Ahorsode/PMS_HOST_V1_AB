@@ -336,12 +336,19 @@ export default function PaymentAdminDashboard({
     setTierUpgradeError(null)
 
     startTransition(async () => {
-      const result = await confirmManualLicensePayment({
-        deviceRegistrationId: selectedRow.id,
-        durationDays,
-        amount: Number(amount),
-        paymentModeNote,
-      })
+      let result: Awaited<ReturnType<typeof confirmManualLicensePayment>>
+      try {
+        result = await confirmManualLicensePayment({
+          deviceRegistrationId: selectedRow.id,
+          durationDays,
+          amount: Number(amount),
+          paymentModeNote,
+        })
+      } catch (error) {
+        console.error('[PaymentAdminDashboard] confirm payment failed', error)
+        setFormError('Request failed. Check your connection and try again.')
+        return
+      }
 
       if (!result.success) {
         setFormError(result.error)
@@ -395,31 +402,41 @@ export default function PaymentAdminDashboard({
     setTierUpgradeError(null)
 
     startTierTransition(async () => {
-      const result = await adminUpgradeFarmTier(selectedRow.farmId, 'STANDARD', durationDays)
+      try {
+        const result = await adminUpgradeFarmTier(selectedRow.farmId, 'STANDARD', durationDays)
 
-      if (!result.success) {
-        setTierUpgradeError(result.error || 'Could not upgrade this farm tier.')
-        return
+        if (!result.success) {
+          setTierUpgradeError(result.error || 'Could not upgrade this farm tier.')
+          return
+        }
+
+        setTierUpgradeMessage('Farm upgraded to Standard. Connected devices are active.')
+        // Mirrors applyPaidUpgrade: a device already paid past the new period
+        // keeps its later expiry.
+        setRows((currentRows) =>
+          currentRows.map((row) =>
+            row.farmId === selectedRow.farmId
+              ? {
+                  ...row,
+                  licenseStatus: 'PAID',
+                  rawStatus: 'ACTIVE',
+                  accessValidUntil:
+                    row.accessValidUntil && row.accessValidUntil > result.periodEnd
+                      ? row.accessValidUntil
+                      : result.periodEnd,
+                }
+              : row,
+          ),
+        )
+
+        const refreshed = await getDevicesForFarm(selectedRow.farmId)
+        if (refreshed.success) setFarmDevices(refreshed.devices)
+
+        router.refresh()
+      } catch (error) {
+        console.error('[PaymentAdminDashboard] tier upgrade failed', error)
+        setTierUpgradeError('Request failed. Check your connection and try again.')
       }
-
-      setTierUpgradeMessage('Farm upgraded to Standard. Connected devices are active.')
-      setRows((currentRows) =>
-        currentRows.map((row) =>
-          row.farmId === selectedRow.farmId
-            ? {
-                ...row,
-                licenseStatus: 'PAID',
-                rawStatus: 'ACTIVE',
-                accessValidUntil: generatedExpiry ?? addDays(new Date(), durationDays).toISOString(),
-              }
-            : row,
-        ),
-      )
-
-      const refreshed = await getDevicesForFarm(selectedRow.farmId)
-      if (refreshed.success) setFarmDevices(refreshed.devices)
-
-      router.refresh()
     })
   }
 

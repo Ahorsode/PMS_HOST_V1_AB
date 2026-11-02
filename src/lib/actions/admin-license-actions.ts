@@ -87,7 +87,13 @@ export type IssueManualLicenseResult =
   | { success: false; error: string }
 
 export async function issueManualLicenseKey(input: unknown): Promise<IssueManualLicenseResult> {
-  const admin = await requirePaymentAdminAction()
+  let admin: { id: string; username: string }
+  try {
+    admin = await requirePaymentAdminAction()
+  } catch {
+    return { success: false, error: 'Your admin session has expired. Sign in again.' }
+  }
+
   const parsed = issueSchema.safeParse(input)
 
   if (!parsed.success) {

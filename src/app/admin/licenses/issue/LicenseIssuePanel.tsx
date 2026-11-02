@@ -126,9 +126,9 @@ export default function FarmSubscriptionPanel({ adminName, accounts }: Props) {
     }
 
     startDeviceTransition(async () => {
-      const response = await getDevicesForFarm(selectedFarmId)
+      const response = await getDevicesForFarm(selectedFarmId).catch(() => null)
 
-      if (!response.success) {
+      if (!response?.success) {
         setDevices([])
         setDeviceError('Unable to load connected devices for this farm.')
         return
@@ -156,12 +156,19 @@ export default function FarmSubscriptionPanel({ adminName, accounts }: Props) {
     }
 
     startTransition(async () => {
-      const response = await confirmManualLicensePayment({
-        deviceRegistrationId: targetDevice.id,
-        durationDays,
-        amount: selectedDuration.amount,
-        paymentModeNote: paymentReference,
-      })
+      let response: Awaited<ReturnType<typeof confirmManualLicensePayment>>
+      try {
+        response = await confirmManualLicensePayment({
+          deviceRegistrationId: targetDevice.id,
+          durationDays,
+          amount: selectedDuration.amount,
+          paymentModeNote: paymentReference,
+        })
+      } catch (error) {
+        console.error('[LicenseIssuePanel] extend access failed', error)
+        setError('Request failed. Check your connection and try again.')
+        return
+      }
 
       if (!response.success) {
         setError(response.error)
@@ -174,8 +181,8 @@ export default function FarmSubscriptionPanel({ adminName, accounts }: Props) {
         reference: paymentReference,
       })
 
-      const refreshed = await getDevicesForFarm(selectedFarmId)
-      if (refreshed.success) setDevices(refreshed.devices)
+      const refreshed = await getDevicesForFarm(selectedFarmId).catch(() => null)
+      if (refreshed?.success) setDevices(refreshed.devices)
     })
   }
 

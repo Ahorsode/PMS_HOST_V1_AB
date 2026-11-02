@@ -65,7 +65,7 @@ export default function RenewLicensePanel({ adminName }: Props) {
     setLookupState('loading')
 
     const timeout = window.setTimeout(async () => {
-      const response = await getDeviceByHardwareId(value)
+      const response = await getDeviceByHardwareId(value).catch(() => null)
       if (cancelled) return
 
       setDeviceLookup(response)
@@ -83,10 +83,18 @@ export default function RenewLicensePanel({ adminName }: Props) {
     setError(null)
 
     startTransition(async () => {
-      const response = await renewLicenseByHardwareId({
-        hardwareId,
-        duration,
-      })
+      let response: Awaited<ReturnType<typeof renewLicenseByHardwareId>>
+      try {
+        response = await renewLicenseByHardwareId({
+          hardwareId,
+          duration,
+        })
+      } catch (error) {
+        console.error('[RenewLicensePanel] renewal failed', error)
+        setResult(null)
+        setError('Request failed. Check your connection and try again.')
+        return
+      }
 
       if (!response.success) {
         setResult(null)

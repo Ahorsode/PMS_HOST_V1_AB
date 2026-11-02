@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import { JetBrains_Mono, Space_Grotesk } from 'next/font/google'
 import { redirect } from 'next/navigation'
-import { getAdminSession, sanitizeAdminCallbackUrl } from '@/lib/admin-session'
+import { getActiveAdminUser } from '@/lib/admin-auth'
+import { sanitizeAdminCallbackUrl } from '@/lib/admin-session'
 import AdminLoginForm from './AdminLoginForm'
 
 export const metadata: Metadata = {
@@ -28,9 +29,12 @@ export default async function AdminLoginPage({
 }) {
   const params = await searchParams
   const callbackUrl = sanitizeAdminCallbackUrl(params?.callbackUrl)
-  const session = await getAdminSession()
+  // Check the admin is still active, not just that the cookie is signed:
+  // a deactivated admin's cookie would otherwise bounce between this page
+  // and requirePaymentAdminPage forever.
+  const adminUser = await getActiveAdminUser()
 
-  if (session) {
+  if (adminUser) {
     redirect(callbackUrl)
   }
 
