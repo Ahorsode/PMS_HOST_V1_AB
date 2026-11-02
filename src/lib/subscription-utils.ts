@@ -81,11 +81,9 @@ async function getFarmOverride(farmId: string): Promise<FarmOverrideInput | null
 }
 
 export async function getFarmAccess(farmId: string): Promise<FarmAccess> {
-  const [subscription, farm, config, override] = await Promise.all([
-    prisma.subscription.findUnique({
-      where: { farmId },
-      include: { plan: true }
-    }),
+  // Old-style subscription rows were converted onto the farm by migration
+  // 20261103090000 and are no longer read.
+  const [farm, config, override] = await Promise.all([
     prisma.farm.findUnique({ where: { id: farmId }, select: FARM_ACCESS_SELECT }),
     getBillingConfig(),
     getFarmOverride(farmId),
@@ -93,14 +91,6 @@ export async function getFarmAccess(farmId: string): Promise<FarmAccess> {
 
   if (!farm) {
     return { state: 'LOCKED', tier: SubscriptionTier.BASIC, planType: 'TEAM', isTrial: false, endsAt: null, graceEndsAt: null, staffLimit: 0 };
-  }
-
-  // Legacy subscription rows still grant their tier while active.
-  if (subscription && subscription.status === 'ACTIVE' && (!subscription.endDate || subscription.endDate > new Date())) {
-    return applyStaffLimitOverride(
-      resolveFarmAccess({ ...farm, subscriptionTier: subscription.plan.tier, masterLicenseStatus: null }, new Date(), config),
-      override,
-    );
   }
 
   return applyStaffLimitOverride(resolveFarmAccess(farm, new Date(), config), override);

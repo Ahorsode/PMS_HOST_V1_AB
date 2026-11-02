@@ -170,6 +170,54 @@ model FarmOverride {
   @@map("farm_overrides")
 }
 
+/// Support notes admins keep on a farm (calls, promises, context).
+model FarmNote {
+  id            String   @id @default(cuid())
+  farmId        String   @map("farm_id")
+  adminUsername String   @map("admin_username")
+  body          String
+  createdAt     DateTime @default(now()) @map("created_at")
+  farm          Farm     @relation(fields: [farmId], references: [id], onDelete: Cascade)
+
+  @@index([farmId, createdAt])
+  @@map("farm_notes")
+}
+
+/// In-app message from the admins, shown on the dashboard. farmId null = every farm.
+model FarmMessage {
+  id            String    @id @default(cuid())
+  farmId        String?   @map("farm_id")
+  /// OWNERS (owner only) or EVERYONE (owner and staff).
+  audience      String    @default("OWNERS")
+  title         String
+  body          String
+  tone          String    @default("info")
+  showUntil     DateTime? @map("show_until")
+  withdrawnAt   DateTime? @map("withdrawn_at")
+  adminUsername String    @map("admin_username")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  farm          Farm?     @relation(fields: [farmId], references: [id], onDelete: Cascade)
+
+  @@index([farmId, createdAt])
+  @@map("farm_messages")
+}
+
+/// One row per admin sign-in, so admins can see and end their sessions.
+model AdminSession {
+  id          String    @id @default(cuid())
+  adminUserId String    @map("admin_user_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  lastSeenAt  DateTime  @default(now()) @map("last_seen_at")
+  expiresAt   DateTime  @map("expires_at")
+  userAgent   String?   @map("user_agent")
+  ip          String?
+  revokedAt   DateTime? @map("revoked_at")
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@index([adminUserId, createdAt])
+  @@map("admin_sessions")
+}
+
 model AdminUser {
   id                    String                   @id @default(cuid())
   username              String                   @unique
@@ -177,6 +225,10 @@ model AdminUser {
   isActive              Boolean                  @default(true) @map("is_active")
   /// SUPER_ADMIN, BILLING or SUPPORT; see src/lib/admin-permissions.ts.
   role                  String                   @default("SUPER_ADMIN")
+  /// Base32 TOTP secret for two-step sign-in; null until set up.
+  totpSecret            String?                  @map("totp_secret")
+  totpEnabledAt         DateTime?                @map("totp_enabled_at")
+  sessions              AdminSession[]
   createdAt             DateTime                 @default(now()) @map("created_at")
   updatedAt             DateTime                 @updatedAt @map("updated_at")
   lastLoginAt           DateTime?                @map("last_login_at")
@@ -231,6 +283,8 @@ model Farm {
   sales                 Sale[]
   subscription          Subscription?
   override              FarmOverride?
+  notes                 FarmNote[]
+  adminMessages         FarmMessage[]
   suppliers             Supplier[]
   userPermissions       UserPermission[]
   vaccinations          VaccinationSchedule[]

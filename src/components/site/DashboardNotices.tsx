@@ -5,6 +5,7 @@ import { getBillingConfig } from '@/lib/billing/billing-config'
 import { getAppSettings } from '@/lib/settings/app-settings'
 import { activeAnnouncement } from '@/lib/settings/schemas'
 import { pickMessageNotice } from '@/lib/settings/notices'
+import { getDashboardMessages } from '@/lib/settings/farm-messages'
 import { AnnouncementBanner } from './AnnouncementBanner'
 import { DismissibleNotice } from './DismissibleNotice'
 
@@ -13,7 +14,8 @@ const PAYMENT_EVENTS = ['PAYSTACK_PAYMENT_COMPLETED', 'TIER_UPGRADED']
 
 /**
  * Admin-controlled notices above the dashboard: maintenance mode, the
- * announcement banner, and (for the owner) the message templates.
+ * announcement banner, messages sent from the console, and (for the owner)
+ * the message templates.
  */
 export async function DashboardNotices({
   farm,
@@ -45,7 +47,9 @@ export async function DashboardNotices({
     notice = pickMessageNotice({ messages, billing, access, farm, lastPaymentAt: lastPayment?.createdAt ?? null })
   }
 
-  if (!system.maintenance.enabled && !announcement && !notice) return null
+  const adminMessages = farm ? await getDashboardMessages(farm.id, isOwner) : []
+
+  if (!system.maintenance.enabled && !announcement && !notice && adminMessages.length === 0) return null
 
   return (
     <div className="mx-auto mb-4 max-w-[1600px] space-y-3">
@@ -56,6 +60,9 @@ export async function DashboardNotices({
         </div>
       ) : null}
       {announcement ? <AnnouncementBanner announcement={announcement} /> : null}
+      {adminMessages.map((message) => (
+        <DismissibleNotice key={message.id} farmId={farm!.id} tone={message.tone} notice={{ title: message.title, body: message.body, dismissKey: `message:${message.id}` }} />
+      ))}
       {notice ? <DismissibleNotice notice={notice} farmId={farm!.id} /> : null}
     </div>
   )
