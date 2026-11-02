@@ -1,7 +1,9 @@
 import React from 'react';
 import Link from 'next/link';
-import type { PlanType } from '@prisma/client';
 import { getBillingConfig } from '@/lib/billing/billing-config';
+import { getAppSettings } from '@/lib/settings/app-settings';
+import { activeAnnouncement, type SiteSettings } from '@/lib/settings/schemas';
+import { AnnouncementBanner } from '@/components/site/AnnouncementBanner';
 import {
   formatGhs,
   PAID_TIERS,
@@ -9,7 +11,6 @@ import {
   PLAN_TYPES,
   staffLimitLabel,
   type BillingConfig,
-  type PaidTier,
 } from '@/lib/billing/pricing';
 import {
   ArrowRight,
@@ -107,11 +108,16 @@ const roles = [
   },
 ];
 
-const contacts = [
-  { icon: Mail, label: 'Email', value: 'info@poultryledger.com', href: 'mailto:info@poultryledger.com' },
-  { icon: MessageCircle, label: 'WhatsApp', value: 'WhatsApp 0554101675', href: 'https://wa.me/233554101675' },
-  { icon: Phone, label: 'Call', value: 'Call 0554101675', href: 'tel:+233554101675' },
-];
+/** Contact links from the admin Website settings. */
+function buildContacts(contact: SiteSettings['contact']) {
+  return [
+    { icon: Mail, label: 'Email', value: contact.email, href: `mailto:${contact.email}` },
+    ...(contact.whatsappEnabled
+      ? [{ icon: MessageCircle, label: 'WhatsApp', value: `WhatsApp ${contact.phoneDisplay}`, href: `https://wa.me/${contact.phoneInternational}` }]
+      : []),
+    { icon: Phone, label: 'Call', value: `Call ${contact.phoneDisplay}`, href: `tel:+${contact.phoneInternational}` },
+  ];
+}
 
 // Prices come from the admin Plans & Pricing page. Saving there revalidates this
 // page; the hourly refresh also covers a build that could not reach the database.
@@ -126,19 +132,8 @@ const coreFeatures = [
   'Reports and analytics',
 ];
 
-const planCopy: Record<PlanType, Record<PaidTier, { description: string; highlight: boolean }>> = {
-  SOLO: {
-    STANDARD: { description: 'For an owner running the farm alone who needs the daily records.', highlight: false },
-    PREMIUM: { description: 'More features for an owner running the farm alone.', highlight: false },
-  },
-  TEAM: {
-    STANDARD: { description: 'For farms with a small team logging the daily work.', highlight: false },
-    PREMIUM: { description: 'More features for growing farms with a full team.', highlight: true },
-  },
-};
-
 /** Plan cards from the admin-set names, prices, staff limits and features. */
-function buildPlans(billing: BillingConfig) {
+function buildPlans(billing: BillingConfig, landing: SiteSettings['landing']) {
   return PLAN_TYPES.flatMap((planType) =>
     PAID_TIERS.map((tier) => {
       const plan = billing.plans[planType][tier];
@@ -146,7 +141,8 @@ function buildPlans(billing: BillingConfig) {
         name: plan.name,
         price: formatGhs(plan.monthlyPrice),
         cadence: 'per month',
-        ...planCopy[planType][tier],
+        description: landing.planDescriptions[planType][tier],
+        highlight: landing.highlightedPlan?.planType === planType && landing.highlightedPlan.tier === tier,
         features: [
           staffLimitLabel(planType, plan.staffLimit),
           ...coreFeatures,
@@ -242,8 +238,11 @@ function DashboardPreview() {
 }
 
 export default async function LandingPage() {
-  const billing = await getBillingConfig();
-  const plans = buildPlans(billing);
+  const [billing, site] = await Promise.all([getBillingConfig(), getAppSettings('site')]);
+  const { landing } = site;
+  const plans = buildPlans(billing, landing);
+  const contacts = buildContacts(site.contact);
+  const announcement = activeAnnouncement(site, 'landing');
   const maxDiscountPercent = Math.round(Math.max(...Object.values(billing.termDiscounts)) * 100);
 
   const year = new Date().getFullYear();
@@ -260,6 +259,11 @@ export default async function LandingPage() {
       </div>
 
       <LandingNav />
+      {announcement ? (
+        <div className="relative mx-auto max-w-6xl px-4 pt-4 sm:px-6">
+          <AnnouncementBanner announcement={announcement} />
+        </div>
+      ) : null}
 
       <main className="relative">
         {/* Hero */}
@@ -270,19 +274,18 @@ export default async function LandingPage() {
                 <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
               </span>
-              Built for layer and broiler farms
+              {landing.heroBadge}
             </div>
 
             <h1 className="mt-5 text-[2.25rem] font-extrabold leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">
-              Run your poultry farm
+              {landing.heroTitle}
               <span className="block bg-gradient-to-r from-emerald-300 via-emerald-400 to-teal-300 bg-clip-text text-transparent">
-                from one screen.
+                {landing.heroTitleAccent}
               </span>
             </h1>
 
             <p className="mt-5 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
-              {BRAND_NAME} records eggs, feed, mortality, health and sales for every flock, then turns it into the
-              numbers an owner needs: stock on hand, cost per bird, and profit this month.
+              {landing.heroSubtitle}
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
@@ -421,8 +424,7 @@ export default async function LandingPage() {
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-300">Pricing</p>
               <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Try everything free for 30 days.</h2>
               <p className="mt-4 text-base text-white/65 sm:text-lg">
-                Every new farm gets all features free for 30 days. Then pick a Solo plan if you run the farm alone,
-                or a Business plan if your staff log work too.{maxDiscountPercent > 0 ? ` Pay for 3, 6 or 12 months to save up to ${maxDiscountPercent}%.` : ''}
+                {landing.pricingIntro.replaceAll('{trialDays}', String(billing.trial.days))}{maxDiscountPercent > 0 ? ` Pay for 3, 6 or 12 months to save up to ${maxDiscountPercent}%.` : ''}
               </p>
             </div>
 
@@ -472,15 +474,49 @@ export default async function LandingPage() {
         </section>
 
         {/* Final CTA */}
+        {landing.testimonials.length > 0 ? (
+          <section id="testimonials" className="scroll-mt-20 border-t border-white/5 py-16 sm:py-20">
+            <div className="mx-auto max-w-6xl px-4 sm:px-6">
+              <h2 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">What farmers say</h2>
+              <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+                {landing.testimonials.map((item, index) => (
+                  <figure key={index} className="flex flex-col rounded-3xl border border-white/10 bg-[#0a1510]/70 p-6">
+                    <blockquote className="flex-1 text-base leading-relaxed text-white/80">&ldquo;{item.quote}&rdquo;</blockquote>
+                    <figcaption className="mt-5 text-sm">
+                      <span className="font-bold text-white">{item.name}</span>
+                      {item.detail ? <span className="text-white/55"> · {item.detail}</span> : null}
+                    </figcaption>
+                  </figure>
+                ))}
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+        {landing.faq.length > 0 ? (
+          <section id="faq" className="scroll-mt-20 border-t border-white/5 py-16 sm:py-20">
+            <div className="mx-auto max-w-3xl px-4 sm:px-6">
+              <h2 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">Questions</h2>
+              <div className="mt-10 space-y-3">
+                {landing.faq.map((item, index) => (
+                  <details key={index} className="rounded-2xl border border-white/10 bg-[#0a1510]/70 px-5 py-4">
+                    <summary className="cursor-pointer font-semibold text-white">{item.question}</summary>
+                    <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-white/70">{item.answer}</p>
+                  </details>
+                ))}
+              </div>
+            </div>
+          </section>
+        ) : null}
+
         <section className="px-4 pb-20 sm:px-6">
           <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl border border-emerald-400/30 bg-gradient-to-br from-emerald-500/20 via-[#0a1510] to-[#0a1510] px-6 py-14 text-center sm:px-12">
             <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" aria-hidden />
             <Package className="mx-auto h-10 w-10 text-emerald-300" />
-            <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-4xl">Know what the farm is doing today.</h2>
-            <p className="mx-auto mt-4 max-w-xl text-base text-white/70 sm:text-lg">
-              Create the farm, register a flock and log the first collection. It takes less time than counting the
-              crates.
-            </p>
+            <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-4xl">{landing.ctaTitle}</h2>
+            {landing.ctaSubtitle ? (
+              <p className="mx-auto mt-4 max-w-xl text-base text-white/70 sm:text-lg">{landing.ctaSubtitle}</p>
+            ) : null}
             <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
               <Link
                 href="/signup"

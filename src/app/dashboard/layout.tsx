@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { getFarmStaffAccess } from '@/lib/subscription-utils';
 import { PlanAccessGate } from '@/components/billing/PlanAccessGate';
 import { AccessBlocked } from '@/components/billing/AccessBlocked';
+import { DashboardNotices } from '@/components/site/DashboardNotices';
 
 export default async function DashboardLayout({
   children,
@@ -183,6 +184,11 @@ export default async function DashboardLayout({
 
   return (
     <SidebarWrapper role={navigationRole} permissions={userPermissions} farmName={mobileFarmTitle}>
+      <DashboardNotices
+        farm={farm ? { id: farm.id, name: farm.name, createdAt: farm.createdAt } : null}
+        access={staffAccess?.access ?? null}
+        isOwner={isOwner}
+      />
       {isOwner && planStatus ? <PlanAccessGate status={planStatus}>{children}</PlanAccessGate> : children}
     </SidebarWrapper>
   );

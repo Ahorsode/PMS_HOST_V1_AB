@@ -3,6 +3,7 @@ import { auth } from '@/auth'
 import prisma from '@/lib/db'
 import { buildPhoneLookupCandidates } from '@/lib/phone-auth'
 import { isStaffMemberLocked } from '@/lib/subscription-utils'
+import { assertNotInMaintenance } from '@/lib/settings/maintenance'
 
 export {
   buildPhoneLookupCandidates,
@@ -101,7 +102,9 @@ export const getAuthContext = cache(async () => {
   if (!session?.user?.id) {
     throw new Error('Unauthorized')
   }
-  
+
+  await assertNotInMaintenance()
+
   const userId = session.user.id
   const sessionUser = session.user as any
 
