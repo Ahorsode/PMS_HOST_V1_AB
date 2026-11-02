@@ -34,7 +34,7 @@ import { getDevicesForFarm, type AdminFarmDevice } from '@/lib/actions/admin-dev
 import { adminUpgradeFarmTier } from '@/lib/actions/admin-subscription-actions'
 import { cn, formatCurrency } from '@/lib/utils'
 import { MobileCardList } from '@/components/ui/MobileCardList'
-import { DESKTOP_LICENSE_DAYS, type BillingConfig, type DesktopLicenseDays } from '@/lib/billing/pricing'
+import type { BillingConfig, DesktopLicenseDays } from '@/lib/billing/pricing'
 
 const durationPackLabels: Record<DesktopLicenseDays, string> = {
   30: '+30 Days Starter Extension',
@@ -177,14 +177,17 @@ export default function PaymentAdminDashboard({
   data,
   adminName,
   desktopLicensePrices,
+  offeredDesktopPacks,
 }: {
   data: PaymentAdminDashboardData
   adminName: string
   /** Admin-set cash/MoMo price per pack, from Plans & Pricing. */
   desktopLicensePrices: BillingConfig['desktopLicensePrices']
+  /** Packs admins may sell, from Plans & Pricing. */
+  offeredDesktopPacks: BillingConfig['offeredDesktopPacks']
 }) {
   const router = useRouter()
-  const durationPacks = DESKTOP_LICENSE_DAYS.map((value) => ({
+  const durationPacks = offeredDesktopPacks.map((value) => ({
     value,
     label: durationPackLabels[value],
     amount: String(desktopLicensePrices[`${value}`]),
@@ -206,7 +209,7 @@ export default function PaymentAdminDashboard({
   const [devicesError, setDevicesError] = useState<string | null>(null)
   const [selectedRow, setSelectedRow] = useState<PaymentAdminRow | null>(null)
   const [durationDays, setDurationDays] = useState(90)
-  const [amount, setAmount] = useState(() => String(desktopLicensePrices['90']))
+  const [amount, setAmount] = useState(() => String(desktopLicensePrices[`${offeredDesktopPacks.includes(90) ? 90 : offeredDesktopPacks[0]}`]))
   const [paymentModeNote, setPaymentModeNote] = useState('')
   const [generatedToken, setGeneratedToken] = useState<string | null>(null)
   const [generatedExpiry, setGeneratedExpiry] = useState<string | null>(null)

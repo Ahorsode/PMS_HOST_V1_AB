@@ -2,7 +2,10 @@
 
 import { revalidatePath } from 'next/cache'
 import { requirePaymentAdminAction } from '@/lib/admin-auth'
+import { logAdminAction } from '@/lib/admin-audit'
 import prisma from '@/lib/db'
+import { getBillingConfig } from '@/lib/billing/billing-config'
+import { resolveFarmAccess } from '@/lib/billing/access'
 
 export type AdminFarmRow = {
   id: string
@@ -275,7 +278,7 @@ export async function adminExtendTrial(
 ): Promise<AdminFarmActionResult> {
   let admin: { id: string; username: string }
   try {
-    admin = await requirePaymentAdminAction()
+    admin = await requirePaymentAdminAction('farms.manage')
   } catch {
     return { success: false, error: 'Unauthorized' }
   }
@@ -347,6 +350,13 @@ export async function adminExtendTrial(
       })
     })
 
+    await logAdminAction(admin, {
+      action: 'farm.extend_trial',
+      targetType: 'farm',
+      targetId: farmId,
+      summary: `Extended the trial by ${extraDays} days`,
+      details: { extraDays },
+    })
     revalidateFarmAdminPaths(farmId)
     revalidatePath('/dashboard/settings/desktop-licenses')
 
@@ -363,7 +373,7 @@ export async function adminExtendTrial(
 export async function adminRevokeFarmAccess(farmId: string): Promise<AdminFarmActionResult> {
   let admin: { id: string; username: string }
   try {
-    admin = await requirePaymentAdminAction()
+    admin = await requirePaymentAdminAction('farms.manage')
   } catch {
     return { success: false, error: 'Unauthorized' }
   }
@@ -405,6 +415,12 @@ export async function adminRevokeFarmAccess(farmId: string): Promise<AdminFarmAc
       })
     })
 
+    await logAdminAction(admin, {
+      action: 'farm.revoke',
+      targetType: 'farm',
+      targetId: farmId,
+      summary: 'Revoked farm access and expired its devices',
+    })
     revalidateFarmAdminPaths(farmId)
     revalidatePath('/dashboard/settings/desktop-licenses')
 
@@ -415,5 +431,89 @@ export async function adminRevokeFarmAccess(farmId: string): Promise<AdminFarmAc
       success: false,
       error: error instanceof Error ? error.message : 'Failed to revoke farm access',
     }
+  }
+}
+
+export type BulkExtendTrialsResult =
+  | { success: true; extended: number }
+  | { success: false; error: string }
+
+/**
+ * Adds days to every farm still on its free trial (never paid, not revoked),
+ * e.g. after an outage or for a promotion. Farms whose trial already ended are
+ * included only when asked; their new trial runs from today.
+ */
+export async function adminBulkExtendTrials(extraDays: number, includeEnded: boolean): Promise<BulkExtendTrialsResult> {
+  let admin: { id: string; username: string }
+  try {
+    admin = await requirePaymentAdminAction('farms.manage')
+  } catch {
+    return { success: false, error: 'Your admin role cannot extend trials' }
+  }
+
+  if (!Number.isInteger(extraDays) || extraDays < 1 || extraDays > 365) {
+    return { success: false, error: 'Enter a trial extension from 1 to 365 days' }
+  }
+
+  try {
+    const [config, farms] = await Promise.all([
+      getBillingConfig(),
+      prisma.farm.findMany({
+        where: { subscriptionTier: 'BASIC', NOT: { masterLicenseStatus: 'REVOKED' } },
+        select: { id: true, userId: true, subscriptionTier: true, planType: true, masterLicenseStatus: true, trialExpiresAt: true, createdAt: true },
+      }),
+    ])
+
+    const now = new Date()
+    const targets = farms
+      .map((farm) => ({ farm, access: resolveFarmAccess(farm, now, config) }))
+      .filter(({ access }) => access.isTrial && (includeEnded || access.state === 'TRIAL' || access.state === 'GRACE'))
+
+    // One transaction per farm keeps each short; a failure part-way leaves the
+    // farms already done extended and is reported.
+    for (const { farm, access } of targets) {
+      const baseDate = access.endsAt && access.endsAt > now ? access.endsAt : now
+      const trialExpiresAt = addDays(baseDate, extraDays)
+
+      await prisma.$transaction(async (tx) => {
+        await tx.farm.update({
+          where: { id: farm.id },
+          data: { masterLicenseStatus: 'CLOUD_TRIAL', trialStartedAt: farm.trialExpiresAt ? undefined : farm.createdAt, trialExpiresAt, trialExhaustedAt: null },
+        })
+        await tx.deviceRegistration.updateMany({
+          where: { farmId: farm.id },
+          data: { status: 'CLOUD_TRIAL', licenseExpiresAt: trialExpiresAt, isActive: true },
+        })
+        await tx.subscriptionEvent.create({
+          data: {
+            farmId: farm.id,
+            userId: farm.userId,
+            eventType: 'TRIAL_EXTENDED',
+            metadata: {
+              adminId: admin.id,
+              adminUsername: admin.username,
+              extraDays,
+              bulk: true,
+              newExpiresAt: trialExpiresAt.toISOString(),
+              previousExpiresAt: access.endsAt?.toISOString() ?? null,
+            },
+          },
+        })
+      })
+    }
+
+    await logAdminAction(admin, {
+      action: 'farm.bulk_extend_trial',
+      targetType: 'farm',
+      summary: `Extended ${targets.length} trial${targets.length === 1 ? '' : 's'} by ${extraDays} days${includeEnded ? ' (including ended trials)' : ''}`,
+      details: { extraDays, includeEnded, farmIds: targets.map(({ farm }) => farm.id) },
+    })
+
+    revalidatePath('/admin/farms')
+    revalidatePath('/admin/activity')
+    return { success: true, extended: targets.length }
+  } catch (error) {
+    console.error('[adminBulkExtendTrials]', error)
+    return { success: false, error: 'Some trials could not be extended. Check the activity log for the ones that were.' }
   }
 }

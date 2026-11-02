@@ -78,8 +78,8 @@ export default function ActivityDashboard({ events }: { events: AdminActivityRow
             <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-md border border-emerald-400/20 bg-emerald-500/10 text-emerald-200">
               <ScrollText className="h-5 w-5" />
             </div>
-            <h1 className="text-2xl font-bold tracking-normal text-white">Activity Log</h1>
-            <p className="mt-1 text-sm text-zinc-400">{events.length} recent admin actions</p>
+            <h1 className="text-2xl font-bold tracking-normal text-white">Subscription events</h1>
+            <p className="mt-1 text-sm text-zinc-400">{events.length} recent subscription events</p>
           </div>
 
           <label className="relative block w-full max-w-md">

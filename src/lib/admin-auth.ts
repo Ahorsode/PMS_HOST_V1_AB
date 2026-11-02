@@ -1,8 +1,11 @@
 import prisma from '@/lib/db'
 import { getAdminSession, sanitizeAdminCallbackUrl } from '@/lib/admin-session'
+import { adminCan, type AdminPermission } from '@/lib/admin-permissions'
 import { redirect } from 'next/navigation'
 
-async function getActiveAdminUser() {
+export type ActiveAdmin = { id: string; username: string; role: string }
+
+export async function getActiveAdminUser(): Promise<ActiveAdmin | null> {
   const session = await getAdminSession()
   if (!session) return null
 
@@ -15,26 +18,38 @@ async function getActiveAdminUser() {
     select: {
       id: true,
       username: true,
-      isActive: true,
+      role: true,
     },
   })
 }
 
-export async function requirePaymentAdminPage() {
+/**
+ * Page guard. Signed-out admins go to the login page; signed-in admins without
+ * the permission go to the farm list, which every role can see.
+ */
+export async function requirePaymentAdminPage(permission: AdminPermission = 'farms.view') {
   const adminUser = await getActiveAdminUser()
   if (!adminUser) {
     redirect(`/admin/login?callbackUrl=${encodeURIComponent(sanitizeAdminCallbackUrl('/admin/payments'))}`)
   }
 
-  return adminUser
-}
-
-export async function requirePaymentAdminAction() {
-  const adminUser = await getActiveAdminUser()
-  if (!adminUser) {
-    throw new Error('Unauthorized payment admin request')
+  if (!adminCan(adminUser.role, permission)) {
+    redirect('/admin/farms?denied=1')
   }
 
   return adminUser
 }
 
+/** Action guard: throws when signed out, deactivated, or missing the permission. */
+export async function requirePaymentAdminAction(permission: AdminPermission = 'farms.view') {
+  const adminUser = await getActiveAdminUser()
+  if (!adminUser) {
+    throw new Error('Unauthorized payment admin request')
+  }
+
+  if (!adminCan(adminUser.role, permission)) {
+    throw new Error('Your admin role does not allow this action')
+  }
+
+  return adminUser
+}

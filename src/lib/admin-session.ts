@@ -4,10 +4,9 @@ import { createHmac, timingSafeEqual } from 'crypto'
 import { cookies } from 'next/headers'
 
 import { ADMIN_SESSION_COOKIE } from '@/lib/admin-session-constants'
+import { getAppSettings } from '@/lib/settings/app-settings'
 
 export { ADMIN_SESSION_COOKIE }
-
-const SESSION_TTL_SECONDS = 60 * 60 * 12
 
 export type AdminSession = {
   id: string
@@ -76,7 +75,9 @@ export async function getAdminSession() {
 }
 
 export async function createAdminSession(adminUser: { id: string; username: string }) {
-  const expiresAt = Date.now() + SESSION_TTL_SECONDS * 1000
+  // Session length is set on the admin System settings page (12 hours by default).
+  const ttlSeconds = (await getAppSettings('system')).adminSessionHours * 60 * 60
+  const expiresAt = Date.now() + ttlSeconds * 1000
   const cookieStore = await cookies()
 
   cookieStore.set({
@@ -90,7 +91,7 @@ export async function createAdminSession(adminUser: { id: string; username: stri
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
     path: '/admin',
-    maxAge: SESSION_TTL_SECONDS,
+    maxAge: ttlSeconds,
   })
 }
 

@@ -23,9 +23,23 @@ export type StaffPermissions = {
   canEditTeam?: boolean
 }
 
+export type StaffPermissionKey = keyof StaffPermissions
+
+/** Roles that can be given to staff (the owner always has full access). */
+export const STAFF_ROLES = ['MANAGER', 'WORKER', 'ACCOUNTANT', 'FINANCE_OFFICER', 'CASHIER'] as const
+export type ConfigurableStaffRole = (typeof STAFF_ROLES)[number]
+
+/** Admin-set starting permissions per role (from the admin Farm defaults settings). */
+export type RolePermissionDefaults = Partial<Record<ConfigurableStaffRole, Required<StaffPermissions>>>
+
+/**
+ * Starting permissions for a staff role. `roleDefaults` (admin-set) replaces the
+ * built-in defaults for a role when present; explicit `overrides` win over both.
+ */
 export function getDefaultPermissionsForRole(
   role: string,
-  overrides?: StaffPermissions
+  overrides?: StaffPermissions,
+  roleDefaults?: RolePermissionDefaults,
 ): Required<StaffPermissions> {
   const base: Required<StaffPermissions> = {
     canViewFinance: false,
@@ -52,7 +66,7 @@ export function getDefaultPermissionsForRole(
     canEditTeam: false,
   }
 
-  const roleDefaults: Record<string, Partial<Required<StaffPermissions>>> = {
+  const builtInDefaults: Record<string, Partial<Required<StaffPermissions>>> = {
     WORKER: {
       canViewEggs: true,
       canEditEggs: true,
@@ -89,5 +103,6 @@ export function getDefaultPermissionsForRole(
     Object.entries(overrides ?? {}).filter(([, value]) => typeof value === 'boolean')
   ) as Partial<Required<StaffPermissions>>
 
-  return { ...base, ...(roleDefaults[role] ?? {}), ...sanitizedOverrides }
+  const configured = roleDefaults?.[role as ConfigurableStaffRole]
+  return { ...base, ...(configured ?? builtInDefaults[role] ?? {}), ...sanitizedOverrides }
 }

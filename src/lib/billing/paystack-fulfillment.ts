@@ -113,6 +113,12 @@ export async function fulfillPaystackPayment(reference: string): Promise<Fulfill
       eventMetadata: { source: 'paystack', reference, durationDays, months: expected.months },
     })
 
+    // Count a promo code use once the payment it discounted has gone through.
+    const promoCode = (initiated.metadata as Record<string, unknown> | null)?.promoCode
+    if (typeof promoCode === 'string' && promoCode) {
+      await tx.promoCode.updateMany({ where: { code: promoCode }, data: { redemptions: { increment: 1 } } })
+    }
+
     await tx.subscriptionEvent.create({
       data: {
         farmId: initiated.farmId,

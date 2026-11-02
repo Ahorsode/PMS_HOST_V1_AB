@@ -47,6 +47,16 @@ export type BillingConfig = {
   termDiscounts: Record<`${TermMonths}`, number>
   /** Manual desktop license price in GHS by pack length in days. */
   desktopLicensePrices: Record<`${DesktopLicenseDays}`, number>
+  /** Free trial for new farms, and the grace period after any trial or plan ends. */
+  trial: { days: number; tier: PaidTier; graceDays: number }
+  /** Online checkout; also needs the Paystack keys in the environment. */
+  paystackEnabled: boolean
+  /** Shown when a farm chooses to pay by Mobile Money instead of Paystack. */
+  manualPayment: { enabled: boolean; network: string; momoNumber: string; accountName: string; instructions: string }
+  /** Terms farms can buy at checkout (subset of TERM_MONTHS). */
+  offeredTerms: TermMonths[]
+  /** Desktop license packs admins can sell (subset of DESKTOP_LICENSE_DAYS). */
+  offeredDesktopPacks: DesktopLicenseDays[]
 }
 
 const ALL_FEATURES: PlanFeature[] = [...PLAN_FEATURE_KEYS]
@@ -65,6 +75,17 @@ export const DEFAULT_BILLING_CONFIG: BillingConfig = {
   },
   termDiscounts: { '1': 0, '3': 0.05, '6': 0.1, '12': 0.15 },
   desktopLicensePrices: { '30': 120, '90': 300, '180': 560, '365': 1000 },
+  trial: { days: 30, tier: 'PREMIUM', graceDays: 3 },
+  paystackEnabled: true,
+  manualPayment: {
+    enabled: true,
+    network: 'MTN Mobile Money',
+    momoNumber: '',
+    accountName: '',
+    instructions: 'Send the amount by Mobile Money with your farm name as the reference, then contact us so we can activate your plan.',
+  },
+  offeredTerms: [...TERM_MONTHS],
+  offeredDesktopPacks: [...DESKTOP_LICENSE_DAYS],
 }
 
 const money = z
@@ -89,10 +110,45 @@ const planConfigSchema = z.object({
 
 const tierPlansSchema = z.object({ STANDARD: planConfigSchema, PREMIUM: planConfigSchema })
 
+/** Keeps the order of `all` and drops duplicates; at least one must be chosen. */
+function offeredSubset<T extends number>(all: readonly T[], label: string) {
+  return z
+    .array(z.number())
+    .transform((values) => all.filter((value) => values.includes(value)))
+    .refine((values) => values.length > 0, `Offer at least one ${label}`)
+}
+
+// Fields added after the first release default to the old behaviour, so a
+// config saved before they existed still loads.
 export const billingConfigSchema = z.object({
   plans: z.object({ SOLO: tierPlansSchema, TEAM: tierPlansSchema }),
   termDiscounts: z.object({ '1': discount, '3': discount, '6': discount, '12': discount }),
   desktopLicensePrices: z.object({ '30': money, '90': money, '180': money, '365': money }),
+  trial: z
+    .object({
+      days: z.number().int('Use whole days').min(1, 'Trials need at least 1 day').max(365, 'Trials can last at most 365 days'),
+      tier: z.enum(PAID_TIERS),
+      graceDays: z.number().int('Use whole days').min(0, 'Grace cannot be negative').max(30, 'Grace can last at most 30 days'),
+    })
+    .default({ days: 30, tier: 'PREMIUM', graceDays: 3 }),
+  paystackEnabled: z.boolean().default(true),
+  manualPayment: z
+    .object({
+      enabled: z.boolean(),
+      network: z.string().trim().max(60, 'Network name is too long'),
+      momoNumber: z.string().trim().max(30, 'MoMo number is too long'),
+      accountName: z.string().trim().max(80, 'Account name is too long'),
+      instructions: z.string().trim().max(500, 'Instructions must be 500 characters or fewer'),
+    })
+    .default({
+      enabled: true,
+      network: 'MTN Mobile Money',
+      momoNumber: '',
+      accountName: '',
+      instructions: 'Send the amount by Mobile Money with your farm name as the reference, then contact us so we can activate your plan.',
+    }),
+  offeredTerms: offeredSubset(TERM_MONTHS, 'term').default([...TERM_MONTHS]),
+  offeredDesktopPacks: offeredSubset(DESKTOP_LICENSE_DAYS, 'desktop license pack').default([...DESKTOP_LICENSE_DAYS]),
 })
 
 /** Validates a stored or submitted config; null when it does not match the schema. */
@@ -159,12 +215,28 @@ export function normalizeTermMonths(months: number): TermMonths {
   return (TERM_MONTHS as readonly number[]).includes(months) ? (months as TermMonths) : 1
 }
 
-export function calculateUpgradeTotal(config: BillingConfig, planType: PlanType, tier: PaidTier, months: number) {
+/**
+ * Checkout total for a plan and term. `extraDiscountPercents` are applied after
+ * the term discount, one after another (e.g. a farm's custom discount, then a
+ * promo code), and the result is rounded to the pesewa.
+ */
+export function calculateUpgradeTotal(
+  config: BillingConfig,
+  planType: PlanType,
+  tier: PaidTier,
+  months: number,
+  extraDiscountPercents: number[] = [],
+) {
   const monthly = config.plans[planType][tier].monthlyPrice
   const discount = termDiscount(config, months)
   const subtotal = monthly * months
-  const total = subtotal * (1 - discount)
-  return { monthly, discount, total: Math.round(total * 100) / 100 }
+  const afterTerm = subtotal * (1 - discount)
+  const total = extraDiscountPercents.reduce((value, percent) => value * (1 - Math.min(Math.max(percent, 0), 100) / 100), afterTerm)
+  return { monthly, discount, subtotal, total: Math.round(total * 100) / 100 }
+}
+
+export function isOfferedTerm(config: BillingConfig, months: number) {
+  return (config.offeredTerms as number[]).includes(months)
 }
 
 /** Formats a GHS amount without trailing zeros, e.g. "GHS 1,000" or "GHS 997.50". */

@@ -1,9 +1,8 @@
 import type { PlanType, SubscriptionTier } from '@prisma/client'
 import { DEFAULT_BILLING_CONFIG, isPaidTier, type BillingConfig } from './pricing'
-import { FREE_TRIAL_DAYS, FREE_TRIAL_TIER } from './trial'
 
-/** Days a farm keeps its features after its trial or paid period ends, before it is locked. */
-export const GRACE_PERIOD_DAYS = 3
+/** Default days a farm keeps its features after its trial or paid period ends, before it is locked (admin-configurable). */
+export const GRACE_PERIOD_DAYS = DEFAULT_BILLING_CONFIG.trial.graceDays
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -75,12 +74,12 @@ export function resolveFarmAccess(
 
   const endsAt = isPaid
     ? farm.trialExpiresAt!
-    : farm.trialExpiresAt ?? new Date(farm.createdAt.getTime() + FREE_TRIAL_DAYS * DAY_MS)
-  const graceEndsAt = new Date(endsAt.getTime() + GRACE_PERIOD_DAYS * DAY_MS)
+    : farm.trialExpiresAt ?? new Date(farm.createdAt.getTime() + config.trial.days * DAY_MS)
+  const graceEndsAt = new Date(endsAt.getTime() + config.trial.graceDays * DAY_MS)
 
   const state: AccessState =
     now < endsAt ? (isPaid ? 'PAID' : 'TRIAL') : now < graceEndsAt ? 'GRACE' : 'LOCKED'
-  const tier: SubscriptionTier = state === 'LOCKED' ? 'BASIC' : isPaid ? farm.subscriptionTier : FREE_TRIAL_TIER
+  const tier: SubscriptionTier = state === 'LOCKED' ? 'BASIC' : isPaid ? farm.subscriptionTier : config.trial.tier
 
   return {
     state,

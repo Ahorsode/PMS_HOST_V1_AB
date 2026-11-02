@@ -1,5 +1,6 @@
 'use server'
 
+import { logAdminAction } from '@/lib/admin-audit'
 import prisma from '@/lib/db'
 import { normalizeHardwareFingerprint } from '@/lib/license-token'
 import { requirePaymentAdminAction } from '@/lib/admin-auth'
@@ -36,7 +37,7 @@ export type RenewLicenseResult =
     }
 
 export async function renewLicenseByHardwareId(input: unknown): Promise<RenewLicenseResult> {
-  const admin = await requirePaymentAdminAction()
+  const admin = await requirePaymentAdminAction('payments.manage')
   const parsed = renewSchema.safeParse(input)
 
   if (!parsed.success) {
@@ -105,6 +106,13 @@ export async function renewLicenseByHardwareId(input: unknown): Promise<RenewLic
       }
     })
 
+    await logAdminAction(admin, {
+      action: 'license.renew',
+      targetType: 'device',
+      targetId: normalizedHardware,
+      summary: `Renewed hardware ${normalizedHardware} by ${durationDef.label}`,
+      details: { historyId: result.historyId, expiresAt: result.expiresAt?.toISOString() ?? null },
+    })
     revalidatePath('/admin/licenses/renew')
     revalidatePath('/admin/payments')
 

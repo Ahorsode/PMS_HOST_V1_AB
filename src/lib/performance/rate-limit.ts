@@ -1,29 +1,14 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
-type RateLimitPolicy = {
-  limit: number;
-  window: `${number} ${"s" | "m" | "h" | "d"}`;
-  sensitivity: "public" | "authenticated" | "financial" | "admin";
-};
+import {
+  RATE_LIMIT_POLICIES,
+  type RateLimitPolicy,
+  type RateLimitPolicyName,
+} from "./rate-limit-policies";
+import { getAppSettings } from "@/lib/settings/app-settings";
 
-export type RateLimitPolicyName =
-  | "auth.signup"
-  | "auth.signin"
-  | "admin.login"
-  | "farm.onboarding"
-  | "farm.profile"
-  | "team.invite"
-  | "team.permissions"
-  | "finance.write"
-  | "inventory.write"
-  | "production.write"
-  | "feed.write"
-  | "sales.write"
-  | "orders.write"
-  | "license.activate"
-  | "audit.restore"
-  | "billing.checkout";
+export type { RateLimitPolicyName } from "./rate-limit-policies";
 
 type RateLimitInput = {
   policy: RateLimitPolicyName;
@@ -43,27 +28,11 @@ type RateLimitResult = {
   policy: RateLimitPolicyName;
 };
 
-const RATE_LIMIT_POLICIES: Record<RateLimitPolicyName, RateLimitPolicy> = {
-  "auth.signup": { limit: 8, window: "1 m", sensitivity: "public" },
-  "auth.signin": { limit: 10, window: "15 m", sensitivity: "public" },
-  "admin.login": { limit: 5, window: "15 m", sensitivity: "admin" },
-  "farm.onboarding": { limit: 6, window: "1 m", sensitivity: "authenticated" },
-  "farm.profile": { limit: 10, window: "1 m", sensitivity: "authenticated" },
-  "team.invite": { limit: 10, window: "1 m", sensitivity: "authenticated" },
-  "team.permissions": { limit: 20, window: "1 m", sensitivity: "admin" },
-  "finance.write": { limit: 12, window: "1 m", sensitivity: "financial" },
-  "inventory.write": { limit: 20, window: "1 m", sensitivity: "authenticated" },
-  "production.write": { limit: 24, window: "1 m", sensitivity: "authenticated" },
-  "feed.write": { limit: 20, window: "1 m", sensitivity: "authenticated" },
-  "sales.write": { limit: 18, window: "1 m", sensitivity: "financial" },
-  "orders.write": { limit: 18, window: "1 m", sensitivity: "financial" },
-  "license.activate": { limit: 10, window: "1 m", sensitivity: "public" },
-  "audit.restore": { limit: 8, window: "1 m", sensitivity: "admin" },
-  "billing.checkout": { limit: 10, window: "10 m", sensitivity: "financial" },
-};
+
 
 const memoryStore = new Map<string, { timestamps: number[] }>();
-const limiterCache = new Map<RateLimitPolicyName, Ratelimit>();
+/** Keyed by policy name, limit and window, so an admin override gets its own limiter. */
+const limiterCache = new Map<string, Ratelimit>();
 
 function nowMs() {
   return Date.now();
@@ -98,21 +67,21 @@ function getRedis() {
   return new Redis({ url, token });
 }
 
-function getLimiter(policyName: RateLimitPolicyName) {
-  const existing = limiterCache.get(policyName);
+function getLimiter(policyName: RateLimitPolicyName, policy: RateLimitPolicy) {
+  const cacheKey = `${policyName}:${policy.limit}:${policy.window}`;
+  const existing = limiterCache.get(cacheKey);
   if (existing) return existing;
 
   const redis = getRedis();
   if (!redis) return null;
 
-  const policy = RATE_LIMIT_POLICIES[policyName];
   const limiter = new Ratelimit({
     redis,
     limiter: Ratelimit.slidingWindow(policy.limit, policy.window),
     analytics: true,
     prefix: "poultry-pms",
   });
-  limiterCache.set(policyName, limiter);
+  limiterCache.set(cacheKey, limiter);
   return limiter;
 }
 
@@ -169,15 +138,23 @@ function allowResult(input: RateLimitInput, policy: RateLimitPolicy, key: string
   };
 }
 
+/** Built-in policy with any admin override (System settings) applied. */
+async function resolvePolicy(name: RateLimitPolicyName): Promise<RateLimitPolicy> {
+  const builtIn = RATE_LIMIT_POLICIES[name];
+  const override = (await getAppSettings("system")).rateLimits[name];
+  if (!override) return builtIn;
+  return { ...builtIn, limit: override.limit, window: `${override.windowMinutes} m` };
+}
+
 export async function checkRateLimit(input: RateLimitInput): Promise<RateLimitResult> {
-  const policy = RATE_LIMIT_POLICIES[input.policy];
+  const policy = await resolvePolicy(input.policy);
   const key = buildKey(input);
 
   if (isRateLimitDisabled()) {
     return allowResult(input, policy, key);
   }
 
-  const limiter = getLimiter(input.policy);
+  const limiter = getLimiter(input.policy, policy);
 
   if (!limiter) {
     if (process.env.NODE_ENV === "production") {

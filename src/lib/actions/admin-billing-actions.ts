@@ -2,6 +2,7 @@
 
 import { revalidatePath, updateTag } from 'next/cache'
 import { requirePaymentAdminAction } from '@/lib/admin-auth'
+import { logAdminAction } from '@/lib/admin-audit'
 import prisma from '@/lib/db'
 import { BILLING_CONFIG_TAG, BILLING_SETTINGS_ID } from '@/lib/billing/billing-config'
 import {
@@ -27,7 +28,7 @@ export type SaveBillingConfigResult =
 
 /** Reads the saved config directly (uncached) so the editor always shows what is stored. */
 export async function adminGetBillingSettings(): Promise<AdminBillingSettings> {
-  await requirePaymentAdminAction()
+  await requirePaymentAdminAction('pricing.manage')
 
   const row = await prisma.billingSettings
     .findUnique({ where: { id: BILLING_SETTINGS_ID } })
@@ -80,7 +81,7 @@ function describeIssue(issue: { path: PropertyKey[]; message: string }) {
 export async function adminSaveBillingConfig(input: unknown): Promise<SaveBillingConfigResult> {
   let admin: { id: string; username: string }
   try {
-    admin = await requirePaymentAdminAction()
+    admin = await requirePaymentAdminAction('pricing.manage')
   } catch {
     return { success: false, error: 'Your admin session has expired. Sign in again.' }
   }
@@ -96,6 +97,14 @@ export async function adminSaveBillingConfig(input: unknown): Promise<SaveBillin
       where: { id: BILLING_SETTINGS_ID },
       create: { id: BILLING_SETTINGS_ID, config: parsed.data, updatedByAdminId: admin.id },
       update: { config: parsed.data, updatedByAdminId: admin.id },
+    })
+
+    await logAdminAction(admin, {
+      action: 'pricing.update',
+      targetType: 'settings',
+      targetId: 'billing',
+      summary: 'Updated plans and pricing',
+      details: parsed.data,
     })
 
     updateTag(BILLING_CONFIG_TAG)

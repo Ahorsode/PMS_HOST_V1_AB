@@ -11,6 +11,7 @@ import { farmCacheTags, revalidateFarmPerformanceCaches } from '@/lib/performanc
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 import { passwordPolicyError } from '@/lib/password-policy'
 import { freeTrialFields } from '@/lib/billing/trial'
+import { getBillingConfig } from '@/lib/billing/billing-config'
 import type { PlanType } from '@prisma/client'
 import {
   buildRevenueVelocitySeries,
@@ -897,6 +898,7 @@ export async function createHouse(data: { houseNumber: string, capacity: number 
 export async function onboardFarmer(data: { name: string, location: string, capacity: number, planType?: PlanType }) {
   const { userId } = await getAuthContext()
   const planType: PlanType = data.planType === 'SOLO' ? 'SOLO' : 'TEAM'
+  const trialDays = (await getBillingConfig()).trial.days
   try {
     const result = await prisma.$transaction(async (tx: any) => {
       // Find if there is an existing placeholder/default farm created during signup
@@ -943,7 +945,7 @@ export async function onboardFarmer(data: { name: string, location: string, capa
         if (!hadTrial) {
           farm = await tx.farm.update({
             where: { id: farm.id },
-            data: freeTrialFields()
+            data: freeTrialFields(new Date(), trialDays)
           })
           await tx.subscriptionEvent.create({
             data: {

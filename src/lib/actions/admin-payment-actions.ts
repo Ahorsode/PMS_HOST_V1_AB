@@ -1,5 +1,6 @@
 'use server'
 
+import { logAdminAction } from '@/lib/admin-audit'
 import prisma from '@/lib/db'
 import { requirePaymentAdminAction } from '@/lib/admin-auth'
 import {
@@ -7,6 +8,7 @@ import {
   normalizeHardwareFingerprint,
 } from '@/lib/license-token'
 import { revalidatePath } from 'next/cache'
+import { getBillingConfig } from '@/lib/billing/billing-config'
 import { z } from 'zod'
 
 const PAID_STATUSES = ['ACTIVE', 'PAID', 'PAID_AND_ACTIVE']
@@ -108,7 +110,7 @@ function serializeDate(date: Date | null | undefined) {
 }
 
 export async function getPaymentAdminDashboardData(): Promise<PaymentAdminDashboardData> {
-  await requirePaymentAdminAction()
+  await requirePaymentAdminAction('payments.manage')
 
   const now = new Date()
   const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
@@ -222,7 +224,7 @@ export async function getPaymentAdminDashboardData(): Promise<PaymentAdminDashbo
 }
 
 export async function confirmManualLicensePayment(input: unknown): Promise<ConfirmManualLicensePaymentResult> {
-  const admin = await requirePaymentAdminAction()
+  const admin = await requirePaymentAdminAction('payments.manage')
   const parsed = confirmPaymentSchema.safeParse(input)
 
   if (!parsed.success) {
@@ -233,6 +235,9 @@ export async function confirmManualLicensePayment(input: unknown): Promise<Confi
   }
 
   const { deviceRegistrationId, durationDays, amount, paymentModeNote } = parsed.data
+  if (!(await getBillingConfig()).offeredDesktopPacks.includes(durationDays)) {
+    return { success: false, error: 'That license pack is not offered. Choose another duration.' }
+  }
   const now = new Date()
 
   try {
@@ -311,6 +316,13 @@ export async function confirmManualLicensePayment(input: unknown): Promise<Confi
       }
     })
 
+    await logAdminAction(admin, {
+      action: 'payment.confirm',
+      targetType: 'device',
+      targetId: deviceRegistrationId,
+      summary: `Recorded a GHS ${amount} payment for ${durationDays} days of desktop access`,
+      details: { amount, durationDays, paymentId: result.paymentId, expiresAt: result.expiresAt },
+    })
     revalidatePath('/admin/payments')
 
     return {

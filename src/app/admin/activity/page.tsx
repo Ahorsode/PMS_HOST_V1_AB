@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { requirePaymentAdminPage } from '@/lib/admin-auth'
 import { adminListActivity } from '@/lib/actions/admin-farm-actions'
 import ActivityDashboard from './ActivityDashboard'
+import AdminAuditSection from './AdminAuditSection'
+import { adminListAuditLog } from '@/lib/actions/admin-audit-actions'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,7 +14,12 @@ export const metadata: Metadata = {
 
 export default async function AdminActivityPage() {
   await requirePaymentAdminPage()
-  const events = await adminListActivity()
+  const [events, auditEntries] = await Promise.all([adminListActivity(), adminListAuditLog()])
 
-  return <ActivityDashboard events={events} />
+  return (
+    <>
+      <AdminAuditSection entries={auditEntries} />
+      <ActivityDashboard events={events} />
+    </>
+  )
 }

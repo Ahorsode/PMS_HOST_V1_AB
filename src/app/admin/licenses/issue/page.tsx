@@ -25,12 +25,12 @@ const jetBrainsMono = JetBrains_Mono({
 })
 
 export default async function AdminIssueLicensePage() {
-  const admin = await requirePaymentAdminPage()
+  const admin = await requirePaymentAdminPage('payments.manage')
   const [accounts, billing] = await Promise.all([getAdminLicenseAccountOptions(), getBillingConfig()])
 
   return (
     <main className={`${spaceGrotesk.variable} ${jetBrainsMono.variable} min-h-screen bg-[#11140d] text-[#f7f1df] font-[var(--font-payment-admin)]`}>
-      <LicenseIssuePanel adminName={admin.username} accounts={accounts} desktopLicensePrices={billing.desktopLicensePrices} />
+      <LicenseIssuePanel adminName={admin.username} accounts={accounts} desktopLicensePrices={billing.desktopLicensePrices} offeredDesktopPacks={billing.offeredDesktopPacks} />
     </main>
   )
 }

@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from 'react'
 import { toast } from 'sonner'
-import { AlertTriangle, Check, Crown, Laptop, Percent, RotateCcw, Save, ShieldCheck, User, Users } from 'lucide-react'
+import { AlertTriangle, CalendarClock, Check, CreditCard, Crown, Laptop, Percent, RotateCcw, Save, ShieldCheck, Smartphone, User, Users } from 'lucide-react'
 import {
   adminSaveBillingConfig,
   type AdminBillingSettings,
@@ -42,6 +42,11 @@ type FormState = {
   /** Percent, 0 to 90. */
   termDiscounts: Record<`${TermMonths}`, string>
   desktopLicensePrices: Record<`${DesktopLicenseDays}`, string>
+  trial: { days: string; tier: PaidTier; graceDays: string }
+  paystackEnabled: boolean
+  manualPayment: BillingConfig['manualPayment']
+  offeredTerms: TermMonths[]
+  offeredDesktopPacks: DesktopLicenseDays[]
 }
 
 const TIER_LABELS: Record<PaidTier, string> = { STANDARD: 'Standard', PREMIUM: 'Premium' }
@@ -81,6 +86,11 @@ function toForm(config: BillingConfig): FormState {
       '180': String(config.desktopLicensePrices['180']),
       '365': String(config.desktopLicensePrices['365']),
     },
+    trial: { days: String(config.trial.days), tier: config.trial.tier, graceDays: String(config.trial.graceDays) },
+    paystackEnabled: config.paystackEnabled,
+    manualPayment: { ...config.manualPayment },
+    offeredTerms: [...config.offeredTerms],
+    offeredDesktopPacks: [...config.offeredDesktopPacks],
   }
 }
 
@@ -114,7 +124,16 @@ function fromForm(form: FormState) {
       '180': toNumber(form.desktopLicensePrices['180']),
       '365': toNumber(form.desktopLicensePrices['365']),
     },
+    trial: { days: toNumber(form.trial.days), tier: form.trial.tier, graceDays: toNumber(form.trial.graceDays) },
+    paystackEnabled: form.paystackEnabled,
+    manualPayment: form.manualPayment,
+    offeredTerms: form.offeredTerms,
+    offeredDesktopPacks: form.offeredDesktopPacks,
   }
+}
+
+function toggleIn<T>(values: T[], value: T) {
+  return values.includes(value) ? values.filter((item) => item !== value) : [...values, value]
 }
 
 /** Field errors keyed by the dotted schema path, e.g. "plans.TEAM.STANDARD.monthlyPrice". */
@@ -233,6 +252,79 @@ export default function PlanPricingEditor({ initialSettings }: { initialSettings
             The saved settings could not be read, so the built-in defaults are live. Review the values below and save to fix it.
           </div>
         ) : null}
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          <section className="rounded-lg border border-zinc-800 bg-zinc-900/40">
+            <div className="flex items-center gap-3 border-b border-zinc-800 px-5 py-4">
+              <CalendarClock className="h-5 w-5 text-emerald-200" />
+              <div>
+                <h2 className="text-lg font-semibold text-white">Free trial & grace period</h2>
+                <p className="text-xs text-zinc-500">Trial length applies to farms created after saving. Grace applies to every farm right away.</p>
+              </div>
+            </div>
+            <div className="grid gap-3 p-5 sm:grid-cols-3">
+              <label className="block">
+                <span className="text-xs font-semibold text-zinc-300">Trial length (days)</span>
+                <input type="number" min={1} max={365} step={1} value={form.trial.days} disabled={isSaving}
+                  onChange={(event) => setForm((current) => ({ ...current, trial: { ...current.trial, days: event.target.value } }))}
+                  className={cn(inputClass, 'mt-1')} />
+                <FieldError message={errors['trial.days']} />
+              </label>
+              <label className="block">
+                <span className="text-xs font-semibold text-zinc-300">Trial gives</span>
+                <select value={form.trial.tier} disabled={isSaving}
+                  onChange={(event) => setForm((current) => ({ ...current, trial: { ...current.trial, tier: event.target.value as PaidTier } }))}
+                  className={cn(inputClass, 'mt-1')}>
+                  <option value="PREMIUM">Premium-tier features</option>
+                  <option value="STANDARD">Standard-tier features</option>
+                </select>
+              </label>
+              <label className="block">
+                <span className="text-xs font-semibold text-zinc-300">Grace period (days)</span>
+                <input type="number" min={0} max={30} step={1} value={form.trial.graceDays} disabled={isSaving}
+                  onChange={(event) => setForm((current) => ({ ...current, trial: { ...current.trial, graceDays: event.target.value } }))}
+                  className={cn(inputClass, 'mt-1')} />
+                <FieldError message={errors['trial.graceDays']} />
+              </label>
+            </div>
+          </section>
+
+          <section className="rounded-lg border border-zinc-800 bg-zinc-900/40">
+            <div className="flex items-center gap-3 border-b border-zinc-800 px-5 py-4">
+              <CreditCard className="h-5 w-5 text-emerald-200" />
+              <div>
+                <h2 className="text-lg font-semibold text-white">Checkout</h2>
+                <p className="text-xs text-zinc-500">How farms pay and which terms they can buy.</p>
+              </div>
+            </div>
+            <div className="space-y-4 p-5">
+              <label className="flex items-start gap-3">
+                <input type="checkbox" checked={form.paystackEnabled} disabled={isSaving}
+                  onChange={(event) => setForm((current) => ({ ...current, paystackEnabled: event.target.checked }))}
+                  className="mt-0.5 h-4 w-4 accent-emerald-500" />
+                <span>
+                  <span className="block text-sm font-semibold text-zinc-100">Online payment with Paystack</span>
+                  <span className="block text-xs text-zinc-500">Also needs the Paystack keys set on the server. When off, farms pay by Mobile Money.</span>
+                </span>
+              </label>
+              <fieldset>
+                <legend className="text-xs font-semibold text-zinc-300">Terms offered</legend>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {TERM_MONTHS.map((months) => (
+                    <label key={months} className={cn('flex cursor-pointer items-center gap-2 rounded-md border px-3 py-1.5 text-sm',
+                      form.offeredTerms.includes(months) ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-100' : 'border-zinc-800 text-zinc-400')}>
+                      <input type="checkbox" checked={form.offeredTerms.includes(months)} disabled={isSaving}
+                        onChange={() => setForm((current) => ({ ...current, offeredTerms: toggleIn(current.offeredTerms, months) }))}
+                        className="h-4 w-4 accent-emerald-500" />
+                      {months} {months === 1 ? 'month' : 'months'}
+                    </label>
+                  ))}
+                </div>
+                <FieldError message={errors.offeredTerms} />
+              </fieldset>
+            </div>
+          </section>
+        </div>
 
         {PLAN_TYPES.map((planType) => (
           <section key={planType} className="rounded-lg border border-zinc-800 bg-zinc-900/40">
@@ -421,11 +513,59 @@ export default function PlanPricingEditor({ initialSettings }: { initialSettings
                     className={cn(inputClass, 'mt-1')}
                   />
                   <FieldError message={errors[`desktopLicensePrices.${days}`]} />
+                  <label className="mt-1.5 flex items-center gap-1.5 text-xs text-zinc-400">
+                    <input type="checkbox" checked={form.offeredDesktopPacks.includes(days)} disabled={isSaving}
+                      onChange={() => setForm((current) => ({ ...current, offeredDesktopPacks: toggleIn(current.offeredDesktopPacks, days) }))}
+                      className="h-3.5 w-3.5 accent-emerald-500" />
+                    Offered
+                  </label>
                 </label>
               ))}
             </div>
+            <FieldError message={errors.offeredDesktopPacks} />
           </section>
         </div>
+
+        <section className="rounded-lg border border-zinc-800 bg-zinc-900/40">
+          <div className="flex items-center gap-3 border-b border-zinc-800 px-5 py-4">
+            <Smartphone className="h-5 w-5 text-emerald-200" />
+            <div>
+              <h2 className="text-lg font-semibold text-white">Mobile Money payment details</h2>
+              <p className="text-xs text-zinc-500">Shown to farms that choose to pay by Mobile Money instead of Paystack.</p>
+            </div>
+          </div>
+          <div className="space-y-3 p-5">
+            <label className="flex items-center gap-3">
+              <input type="checkbox" checked={form.manualPayment.enabled} disabled={isSaving}
+                onChange={(event) => setForm((current) => ({ ...current, manualPayment: { ...current.manualPayment, enabled: event.target.checked } }))}
+                className="h-4 w-4 accent-emerald-500" />
+              <span className="text-sm font-semibold text-zinc-100">Allow paying by Mobile Money</span>
+            </label>
+            <div className="grid gap-3 sm:grid-cols-3">
+              {([['network', 'Network'], ['momoNumber', 'MoMo number'], ['accountName', 'Account name']] as const).map(([field, label]) => (
+                <label key={field} className="block">
+                  <span className="text-xs font-semibold text-zinc-300">{label}</span>
+                  <input value={form.manualPayment[field]} disabled={isSaving}
+                    onChange={(event) => setForm((current) => ({ ...current, manualPayment: { ...current.manualPayment, [field]: event.target.value } }))}
+                    className={cn(inputClass, 'mt-1')} />
+                  <FieldError message={errors[`manualPayment.${field}`]} />
+                </label>
+              ))}
+            </div>
+            <label className="block">
+              <span className="text-xs font-semibold text-zinc-300">Instructions</span>
+              <textarea rows={3} value={form.manualPayment.instructions} disabled={isSaving} maxLength={500}
+                onChange={(event) => setForm((current) => ({ ...current, manualPayment: { ...current.manualPayment, instructions: event.target.value } }))}
+                className="mt-1 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-white outline-none focus:border-emerald-500" />
+              <FieldError message={errors['manualPayment.instructions']} />
+            </label>
+            {!form.paystackEnabled && !form.manualPayment.enabled ? (
+              <p className="flex items-center gap-1.5 text-xs text-amber-200">
+                <AlertTriangle className="h-3.5 w-3.5" /> With both Paystack and Mobile Money off, farms cannot pay for a plan.
+              </p>
+            ) : null}
+          </div>
+        </section>
       </div>
 
       {/* Save bar */}

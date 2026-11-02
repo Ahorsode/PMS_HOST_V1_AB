@@ -6,8 +6,8 @@ import { revalidatePath } from 'next/cache'
 import {
   calculateUpgradeTotal,
   isPaidTier,
+  isOfferedTerm,
   isPlanType,
-  normalizeTermMonths,
   planName,
   PLAN_TYPE_LABELS,
   toPesewas,
@@ -20,11 +20,46 @@ import {
 import { PAYSTACK_INITIATED_EVENT } from '@/lib/billing/paystack-fulfillment'
 import { getFarmAccess } from '@/lib/subscription-utils'
 import { getBillingConfig } from '@/lib/billing/billing-config'
+import { checkPromoCode, getFarmDiscountPercent, type AppliedPromo } from '@/lib/billing/checkout-discounts'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 
 import { PlanType, SubscriptionTier } from '@prisma/client'
 
-export async function requestSubscriptionUpgrade(planType: PlanType, tier: SubscriptionTier, months = 1) {
+/**
+ * Works out the price a farm pays: plan price, term discount, the farm's custom
+ * discount, then a promo code if one was entered.
+ */
+async function priceCheckout(farmId: string, planType: PlanType, tier: 'STANDARD' | 'PREMIUM', months: number, promoCode?: string) {
+  const config = await getBillingConfig()
+  if (!isOfferedTerm(config, months)) {
+    return { ok: false as const, error: 'That payment term is not offered. Choose another term.' }
+  }
+
+  let promo: AppliedPromo | null = null
+  if (promoCode?.trim()) {
+    const checked = await checkPromoCode(promoCode, planType)
+    if (!checked.ok) return { ok: false as const, error: checked.error }
+    promo = checked.promo
+  }
+
+  const farmDiscountPercent = await getFarmDiscountPercent(farmId)
+  const pricing = calculateUpgradeTotal(config, planType, tier, months, [farmDiscountPercent, promo?.percentOff ?? 0])
+  return { ok: true as const, config, pricing, promo, farmDiscountPercent }
+}
+
+/** Checks a promo code for the upgrade page before checkout; the checkout re-checks it. */
+export async function previewPromoCode(code: string, planType: PlanType) {
+  const { activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return { success: false as const, error: 'No active farm selected' }
+  if (!isPlanType(planType)) return { success: false as const, error: 'Choose Solo or Team' }
+
+  const checked = await checkPromoCode(code, planType)
+  return checked.ok
+    ? { success: true as const, code: checked.promo.code, percentOff: checked.promo.percentOff }
+    : { success: false as const, error: checked.error }
+}
+
+export async function requestSubscriptionUpgrade(planType: PlanType, tier: SubscriptionTier, months = 1, promoCode?: string) {
   const { userId, activeFarmId, role, isFarmOwner } = await getAuthContext()
 
   if (!activeFarmId) {
@@ -39,9 +74,13 @@ export async function requestSubscriptionUpgrade(planType: PlanType, tier: Subsc
     return { success: false, error: 'Select a paid plan to upgrade' }
   }
 
-  const normalizedMonths = normalizeTermMonths(months)
-  const config = await getBillingConfig()
-  const pricing = calculateUpgradeTotal(config, planType, tier, normalizedMonths)
+  const priced = await priceCheckout(activeFarmId, planType, tier, months, promoCode)
+  if (!priced.ok) return { success: false, error: priced.error }
+  const { config, pricing, promo, farmDiscountPercent } = priced
+  if (!config.manualPayment.enabled) {
+    return { success: false, error: 'Mobile Money payment is not available right now. Please pay online.' }
+  }
+  const normalizedMonths = months
 
   try {
     const farm = await prisma.farm.findUnique({
@@ -66,6 +105,9 @@ export async function requestSubscriptionUpgrade(planType: PlanType, tier: Subsc
           monthlyPrice: pricing.monthly,
           discount: pricing.discount,
           totalAmount: pricing.total,
+          farmDiscountPercent,
+          promoCode: promo?.code ?? null,
+          promoPercentOff: promo?.percentOff ?? null,
           currency: 'GHS',
           status: 'PENDING_PAYMENT',
           farmName: farm.name,
@@ -80,8 +122,8 @@ export async function requestSubscriptionUpgrade(planType: PlanType, tier: Subsc
       pending: true,
       totalAmount: pricing.total,
       months: normalizedMonths,
-      message:
-        'Upgrade request submitted. Complete payment via Mobile Money and contact support with your farm name to activate your plan.',
+      message: 'Upgrade request submitted. Pay by Mobile Money using the details shown, and we will activate your plan.',
+      manualPayment: config.manualPayment,
     }
   } catch (error) {
     console.error('Subscription upgrade request error:', error)
@@ -94,7 +136,7 @@ export async function requestSubscriptionUpgrade(planType: PlanType, tier: Subsc
  * plan. Returns the Paystack page to send the customer to; the plan is
  * activated by the webhook or callback once Paystack confirms the payment.
  */
-export async function startPaystackCheckout(planType: PlanType, tier: SubscriptionTier, months = 1) {
+export async function startPaystackCheckout(planType: PlanType, tier: SubscriptionTier, months = 1, promoCode?: string) {
   const { userId, activeFarmId, role, isFarmOwner } = await getAuthContext()
 
   if (!activeFarmId) {
@@ -109,16 +151,17 @@ export async function startPaystackCheckout(planType: PlanType, tier: Subscripti
     return { success: false, error: 'Select a paid plan to upgrade' }
   }
 
-  if (!isPaystackConfigured()) {
-    return { success: false, error: 'Online payment is not available yet. Please pay via Mobile Money.' }
+  if (!isPaystackConfigured() || !(await getBillingConfig()).paystackEnabled) {
+    return { success: false, error: 'Online payment is not available right now. Please pay via Mobile Money.' }
   }
 
   const limitResult = await checkRateLimit({ policy: 'billing.checkout', scope: 'paystack', farmId: activeFarmId, userId })
   if (!limitResult.ok) return rateLimitActionError(limitResult)
 
-  const normalizedMonths = normalizeTermMonths(months)
-  const config = await getBillingConfig()
-  const pricing = calculateUpgradeTotal(config, planType, tier, normalizedMonths)
+  const priced = await priceCheckout(activeFarmId, planType, tier, months, promoCode)
+  if (!priced.ok) return { success: false, error: priced.error }
+  const { pricing, promo, farmDiscountPercent } = priced
+  const normalizedMonths = months
   const amountPesewas = toPesewas(pricing.total)
   const reference = createPaystackReference()
 
@@ -150,6 +193,9 @@ export async function startPaystackCheckout(planType: PlanType, tier: Subscripti
           currency: 'GHS',
           monthlyPrice: pricing.monthly,
           discount: pricing.discount,
+          farmDiscountPercent,
+          promoCode: promo?.code ?? null,
+          promoPercentOff: promo?.percentOff ?? null,
           farmName: farm.name,
         },
       },

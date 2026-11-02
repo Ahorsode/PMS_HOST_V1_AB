@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useRouter } from 'next/navigation'
-import { useTransition } from 'react'
+import { useTransition, type ElementType } from 'react'
 import {
   Server,
   KeyRound,
@@ -15,21 +15,28 @@ import {
   ShieldCheck,
   Loader2,
   Tags,
+  Settings,
+  Ticket,
+  UserCog,
 } from 'lucide-react'
 import { logoutAdmin } from '@/lib/actions/admin-login-actions'
 import { cn } from '@/lib/utils'
+import { adminCan, ADMIN_ROLE_DETAILS, isAdminRole, type AdminPermission } from '@/lib/admin-permissions'
 
-const NAV_ITEMS = [
-  { href: '/admin/farms', label: 'Farms', icon: Server },
-  { href: '/admin/licenses/issue', label: 'Issue License', icon: KeyRound },
-  { href: '/admin/licenses/renew', label: 'Renew License', icon: RefreshCw },
-  { href: '/admin/payments', label: 'Payments', icon: CreditCard },
-  { href: '/admin/plans', label: 'Plans & Pricing', icon: Tags },
-  { href: '/admin/activity', label: 'Activity', icon: Activity },
-  { href: '/admin/users/map', label: 'User Map', icon: Cpu },
+const NAV_ITEMS: { href: string; label: string; icon: ElementType; permission: AdminPermission }[] = [
+  { href: '/admin/farms', label: 'Farms', icon: Server, permission: 'farms.view' },
+  { href: '/admin/licenses/issue', label: 'Issue License', icon: KeyRound, permission: 'payments.manage' },
+  { href: '/admin/licenses/renew', label: 'Renew License', icon: RefreshCw, permission: 'payments.manage' },
+  { href: '/admin/payments', label: 'Payments', icon: CreditCard, permission: 'payments.manage' },
+  { href: '/admin/plans', label: 'Plans & Pricing', icon: Tags, permission: 'pricing.manage' },
+  { href: '/admin/promos', label: 'Promo Codes', icon: Ticket, permission: 'pricing.manage' },
+  { href: '/admin/settings', label: 'Settings', icon: Settings, permission: 'settings.manage' },
+  { href: '/admin/admins', label: 'Admins', icon: UserCog, permission: 'admins.manage' },
+  { href: '/admin/activity', label: 'Activity', icon: Activity, permission: 'farms.view' },
+  { href: '/admin/users/map', label: 'User Map', icon: Cpu, permission: 'payments.manage' },
 ]
 
-export default function AdminNav({ adminName }: { adminName?: string }) {
+export default function AdminNav({ adminName, adminRole }: { adminName?: string; adminRole?: string }) {
   const pathname = usePathname()
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
@@ -69,7 +76,7 @@ export default function AdminNav({ adminName }: { adminName?: string }) {
 
         {/* Nav links */}
         <div className="flex flex-1 items-center gap-1 overflow-x-auto custom-scrollbar [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-          {NAV_ITEMS.map((item) => {
+          {NAV_ITEMS.filter((item) => adminCan(adminRole, item.permission)).map((item) => {
             const Icon = item.icon
             const isActive =
               pathname === item.href || pathname.startsWith(`${item.href}/`)
@@ -104,7 +111,7 @@ export default function AdminNav({ adminName }: { adminName?: string }) {
             <div className="hidden flex-col items-end leading-tight md:flex">
               <span className="text-xs font-bold text-white">{adminName}</span>
               <span className="text-[10px] uppercase tracking-wider text-zinc-500">
-                Signed in
+                {isAdminRole(adminRole) ? ADMIN_ROLE_DETAILS[adminRole].label : 'Signed in'}
               </span>
             </div>
           ) : null}

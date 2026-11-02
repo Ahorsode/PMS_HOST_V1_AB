@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Search, Server } from 'lucide-react'
 import type { AdminFarmRow } from '@/lib/actions/admin-farm-actions'
 import { MobileCardList } from '@/components/ui/MobileCardList'
+import BulkExtendTrials from './BulkExtendTrials'
 
 function formatDate(value: string | null) {
   if (!value) return '-'
@@ -56,7 +57,7 @@ function StatusBadge({ status, expiresAt }: {
   )
 }
 
-export default function FarmListDashboard({ farms }: { farms: AdminFarmRow[] }) {
+export default function FarmListDashboard({ farms, canManage }: { farms: AdminFarmRow[]; canManage: boolean }) {
   const [query, setQuery] = useState('')
 
   const filtered = useMemo(() => {
@@ -81,6 +82,8 @@ export default function FarmListDashboard({ farms }: { farms: AdminFarmRow[] }) 
             <p className="mt-1 text-sm text-zinc-400">{farms.length} farms registered</p>
           </div>
 
+          <div className="flex w-full max-w-2xl flex-col gap-3 lg:items-end">
+          {canManage ? <BulkExtendTrials /> : null}
           <label className="relative block w-full max-w-md">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
             <input
@@ -91,6 +94,7 @@ export default function FarmListDashboard({ farms }: { farms: AdminFarmRow[] }) 
               className="h-11 w-full rounded-md border border-zinc-700 bg-zinc-900 pl-10 pr-4 text-sm text-white outline-none transition-colors placeholder:text-zinc-500 focus:border-emerald-500"
             />
           </label>
+          </div>
         </div>
 
         <MobileCardList
