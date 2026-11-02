@@ -62,15 +62,22 @@ ALTER TABLE "admin_user" ADD COLUMN IF NOT EXISTS "totp_enabled_at" TIMESTAMP(3)
 -- exactly the access it had: the same tier, until the same end date (or with
 -- no end date, a grant that does not lapse). Farms already on a paid plan of
 -- their own are left alone. The old tables are kept, unused.
-UPDATE "farms" f
-SET "subscriptionTier" = p."tier",
-    "master_license_status" = CASE WHEN s."endDate" IS NULL THEN 'PAID_AND_ACTIVE' ELSE 'PAID_' || p."tier"::text END,
-    "trial_expires_at" = COALESCE(s."endDate", f."trial_expires_at"),
-    "trial_exhausted_at" = NULL
-FROM "subscriptions" s
-JOIN "subscription_plans" p ON p."id" = s."planId"
-WHERE s."farmId" = f."id"
-  AND s."status" = 'ACTIVE'
-  AND (s."endDate" IS NULL OR s."endDate" > now())
-  AND p."tier" <> 'BASIC'
-  AND f."subscriptionTier" = 'BASIC';
+-- Skipped when either old table is absent (they were created outside the
+-- migration history on some databases), so the deploy never fails on it.
+DO $$
+BEGIN
+  IF to_regclass('public.subscriptions') IS NOT NULL AND to_regclass('public.subscription_plans') IS NOT NULL THEN
+    UPDATE "farms" f
+    SET "subscriptionTier" = p."tier",
+        "master_license_status" = CASE WHEN s."endDate" IS NULL THEN 'PAID_AND_ACTIVE' ELSE 'PAID_' || p."tier"::text END,
+        "trial_expires_at" = COALESCE(s."endDate", f."trial_expires_at"),
+        "trial_exhausted_at" = NULL
+    FROM "subscriptions" s
+    JOIN "subscription_plans" p ON p."id" = s."planId"
+    WHERE s."farmId" = f."id"
+      AND s."status" = 'ACTIVE'
+      AND (s."endDate" IS NULL OR s."endDate" > now())
+      AND p."tier" <> 'BASIC'
+      AND f."subscriptionTier" = 'BASIC';
+  END IF;
+END $$;
