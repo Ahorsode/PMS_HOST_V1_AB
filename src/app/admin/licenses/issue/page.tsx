@@ -1,36 +1,6 @@
-import type { Metadata } from 'next'
-import { JetBrains_Mono, Space_Grotesk } from 'next/font/google'
-import { requirePaymentAdminPage } from '@/lib/admin-auth'
-import { getAdminLicenseAccountOptions } from '@/lib/actions/admin-license-actions'
-import { getBillingConfig } from '@/lib/billing/billing-config'
-import LicenseIssuePanel from './LicenseIssuePanel'
+import { redirect } from 'next/navigation'
 
-export const dynamic = 'force-dynamic'
-
-export const metadata: Metadata = {
-  title: 'Extend Farm Access | Poultry Ledger Admin',
-  description: 'Internal Poultry Ledger farm subscription management panel.',
-}
-
-const spaceGrotesk = Space_Grotesk({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-payment-admin',
-})
-
-const jetBrainsMono = JetBrains_Mono({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-payment-admin-mono',
-})
-
-export default async function AdminIssueLicensePage() {
-  const admin = await requirePaymentAdminPage('payments.manage')
-  const [accounts, billing] = await Promise.all([getAdminLicenseAccountOptions(), getBillingConfig()])
-
-  return (
-    <main className={`${spaceGrotesk.variable} ${jetBrainsMono.variable} min-h-screen bg-[#11140d] text-[#f7f1df] font-[var(--font-payment-admin)]`}>
-      <LicenseIssuePanel adminName={admin.username} accounts={accounts} desktopLicensePrices={billing.desktopLicensePrices} offeredDesktopPacks={billing.offeredDesktopPacks} />
-    </main>
-  )
+/** Merged into the Desktop licenses page; kept so old links still work. */
+export default function MovedPage() {
+  redirect('/admin/licenses')
 }

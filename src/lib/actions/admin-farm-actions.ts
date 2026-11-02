@@ -90,8 +90,7 @@ function isPaidMasterStatus(status: string | null | undefined) {
 function revalidateFarmAdminPaths(farmId: string) {
   revalidatePath('/admin/farms')
   revalidatePath(`/admin/farms/${farmId}`)
-  revalidatePath('/admin/payments')
-  revalidatePath('/admin/licenses/issue')
+  revalidatePath('/admin/licenses')
 }
 
 export type AdminActivityRow = {

@@ -54,9 +54,8 @@ export async function adminUpgradeFarmTier(
       summary: `Granted ${tier.toLowerCase()} access for ${durationDays} days`,
       details: { tier, durationDays, planType: planType ?? null },
     })
-    revalidatePath('/admin/payments')
-    revalidatePath('/admin/licenses/issue')
-    revalidatePath('/admin/farms')
+    revalidatePath('/admin/licenses')
+      revalidatePath('/admin/farms')
     revalidatePath(`/admin/farms/${farmId}`)
 
     return { success: true }

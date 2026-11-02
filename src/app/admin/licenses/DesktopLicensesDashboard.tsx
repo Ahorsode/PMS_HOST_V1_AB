@@ -30,8 +30,8 @@ import {
   type PaymentAdminDashboardData,
   type PaymentAdminRow,
 } from '@/lib/actions/admin-payment-actions'
-import { getDevicesForFarm, type AdminFarmDevice } from '@/lib/actions/admin-device-actions'
-import { adminUpgradeFarmTier } from '@/lib/actions/admin-subscription-actions'
+import { getDevicesForFarm, type AdminFarmChoice, type AdminFarmDevice } from '@/lib/actions/admin-device-actions'
+import DeviceTools from './DeviceTools'
 import { cn, formatCurrency } from '@/lib/utils'
 import { MobileCardList } from '@/components/ui/MobileCardList'
 import type { BillingConfig, DesktopLicenseDays } from '@/lib/billing/pricing'
@@ -173,14 +173,17 @@ function getDeviceAccessLabel(device: AdminFarmDevice) {
   return normalizedStatus
 }
 
-export default function PaymentAdminDashboard({
+export default function DesktopLicensesDashboard({
   data,
   adminName,
   desktopLicensePrices,
   offeredDesktopPacks,
+  farms,
 }: {
   data: PaymentAdminDashboardData
   adminName: string
+  /** Farms a device can be moved to. */
+  farms: AdminFarmChoice[]
   /** Admin-set cash/MoMo price per pack, from Plans & Pricing. */
   desktopLicensePrices: BillingConfig['desktopLicensePrices']
   /** Packs admins may sell, from Plans & Pricing. */
@@ -196,7 +199,6 @@ export default function PaymentAdminDashboard({
   const [metrics, setMetrics] = useState(
     data?.metrics ?? {
       totalRegisteredFarms: 0,
-      activeFreeTrialsCurrentMonth: 0,
       activePaidLicenses: 0,
       expiredLicenses: 0,
       totalManualRevenueGhs: 0,
@@ -215,17 +217,15 @@ export default function PaymentAdminDashboard({
   const [generatedExpiry, setGeneratedExpiry] = useState<string | null>(null)
   const [copiedSubscriptionField, setCopiedSubscriptionField] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
-  const [tierUpgradeMessage, setTierUpgradeMessage] = useState<string | null>(null)
-  const [tierUpgradeError, setTierUpgradeError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
-  const [isTierPending, startTierTransition] = useTransition()
+  // Bumped after a device change so the overview reloads.
+  const [devicesVersion, setDevicesVersion] = useState(0)
 
   useEffect(() => {
     setRows(Array.isArray(data?.rows) ? data.rows : [])
     setMetrics(
       data?.metrics ?? {
         totalRegisteredFarms: 0,
-        activeFreeTrialsCurrentMonth: 0,
         activePaidLicenses: 0,
         expiredLicenses: 0,
         totalManualRevenueGhs: 0,
@@ -270,7 +270,7 @@ export default function PaymentAdminDashboard({
     return () => {
       cancelled = true
     }
-  }, [deviceOverviewRow])
+  }, [deviceOverviewRow, devicesVersion])
 
   const filteredRows = useMemo(() => {
     const search = query.trim().toLowerCase()
@@ -307,8 +307,6 @@ export default function PaymentAdminDashboard({
     setGeneratedExpiry(null)
     setCopiedSubscriptionField(null)
     setFormError(null)
-    setTierUpgradeMessage(null)
-    setTierUpgradeError(null)
   }
 
   function closeModal() {
@@ -318,8 +316,6 @@ export default function PaymentAdminDashboard({
     setGeneratedExpiry(null)
     setCopiedSubscriptionField(null)
     setFormError(null)
-    setTierUpgradeMessage(null)
-    setTierUpgradeError(null)
   }
 
   function handleDurationChange(value: string) {
@@ -344,8 +340,6 @@ export default function PaymentAdminDashboard({
     setFormError(null)
     setGeneratedToken(null)
     setGeneratedExpiry(null)
-    setTierUpgradeMessage(null)
-    setTierUpgradeError(null)
 
     startTransition(async () => {
       const result = await confirmManualLicensePayment({
@@ -400,41 +394,6 @@ export default function PaymentAdminDashboard({
     })
   }
 
-  function handleUpgradeSelectedFarm() {
-    if (!selectedRow || isTierPending) return
-
-    setTierUpgradeMessage(null)
-    setTierUpgradeError(null)
-
-    startTierTransition(async () => {
-      const result = await adminUpgradeFarmTier(selectedRow.farmId, 'STANDARD', durationDays)
-
-      if (!result.success) {
-        setTierUpgradeError(result.error || 'Could not upgrade this farm tier.')
-        return
-      }
-
-      setTierUpgradeMessage('Farm moved to its basic paid plan (Solo Basic or Business). Connected devices are active.')
-      setRows((currentRows) =>
-        currentRows.map((row) =>
-          row.farmId === selectedRow.farmId
-            ? {
-                ...row,
-                licenseStatus: 'PAID',
-                rawStatus: 'ACTIVE',
-                accessValidUntil: generatedExpiry ?? addDays(new Date(), durationDays).toISOString(),
-              }
-            : row,
-        ),
-      )
-
-      const refreshed = await getDevicesForFarm(selectedRow.farmId)
-      if (refreshed.success) setFarmDevices(refreshed.devices)
-
-      router.refresh()
-    })
-  }
-
   return (
     <div className="relative min-h-screen overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_15%,rgba(218,168,70,0.20),transparent_32%),radial-gradient(circle_at_85%_5%,rgba(61,156,132,0.24),transparent_30%),linear-gradient(135deg,#10120c_0%,#171611_42%,#221b0f_100%)]" />
@@ -445,14 +404,14 @@ export default function PaymentAdminDashboard({
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-[#d8c78f]/25 bg-[#d8c78f]/10 px-3 py-1 text-[0.65rem] font-black uppercase tracking-[0.24em] text-[#fff0b8]">
               <LockKeyhole className="h-3.5 w-3.5" />
-              Internal billing ops
+              Desktop access
             </div>
             <h1 className="mt-4 max-w-4xl text-4xl font-black tracking-[-0.04em] text-[#fff9e8] sm:text-5xl">
-              Payment Management and Subscription Access
+              Desktop Licenses
             </h1>
             <p className="mt-3 max-w-3xl text-sm font-semibold leading-6 text-[#d7ccb0]/100 sm:text-base">
-              Track registrations, inspect hardware fingerprints, confirm physical cash or MoMo receipts,
-              and keep farm subscriptions active across connected devices.
+              Record cash or MoMo payments for a desktop, then switch off, move or look up the history of any
+              registered device. Renewals are payments: the new time is added on top of what is left.
             </p>
           </div>
           <div className="flex flex-col justify-between gap-4 rounded-[1.5rem] border border-[#f7f1df]/10 bg-black/25 p-4 lg:min-w-72">
@@ -477,20 +436,13 @@ export default function PaymentAdminDashboard({
           </div>
         </header>
 
-        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+        <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <MetricRibbon
             label="Registered Farms"
             value={metrics.totalRegisteredFarms.toLocaleString()}
             helper="All farms in Poultry Ledger"
             icon={ServerCog}
             tone="bg-[#e4b45c]/30"
-          />
-          <MetricRibbon
-            label="Free Trials"
-            value={metrics.activeFreeTrialsCurrentMonth.toLocaleString()}
-            helper="Active this month"
-            icon={CalendarClock}
-            tone="bg-amber-300/30"
           />
           <MetricRibbon
             label="Paid Licenses"
@@ -551,7 +503,7 @@ export default function PaymentAdminDashboard({
                   return (
                     <div
                       key={device.id}
-                      className="flex flex-col gap-2 rounded-2xl border border-[#f7f1df]/10 bg-[#f7f1df]/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                      className="flex flex-col gap-2 rounded-2xl border border-[#f7f1df]/10 bg-[#f7f1df]/5 px-4 py-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between"
                     >
                       <div className="flex min-w-0 items-center gap-3">
                         <DeviceIcon className="h-4 w-4 shrink-0 text-[#9bd6c5]" />
@@ -560,8 +512,19 @@ export default function PaymentAdminDashboard({
                         </span>
                       </div>
                       <span className="text-xs font-black uppercase tracking-[0.16em] text-[#d8c78f]/90">
-                        {getDeviceAccessLabel(device)}
+                        {device.isActive ? getDeviceAccessLabel(device) : 'Switched off'}
                       </span>
+                      <div className="sm:basis-full">
+                        <DeviceTools
+                          device={device}
+                          currentFarmId={deviceOverviewRow.farmId}
+                          farms={farms}
+                          onChanged={() => {
+                            setDevicesVersion((version) => version + 1)
+                            router.refresh()
+                          }}
+                        />
+                      </div>
                     </div>
                   )
                 })}
@@ -910,40 +873,17 @@ export default function PaymentAdminDashboard({
                 </div>
               )}
 
-              {tierUpgradeMessage && (
-                <div className="rounded-[1.25rem] border border-emerald-300/25 bg-emerald-300/10 p-4 text-sm font-bold text-emerald-100">
-                  {tierUpgradeMessage}
-                </div>
-              )}
-
-              {tierUpgradeError && (
-                <div className="rounded-[1.25rem] border border-red-300/25 bg-red-300/10 p-4 text-sm font-bold text-red-100">
-                  {tierUpgradeError}
-                </div>
-              )}
-
               <div className="flex flex-col-reverse gap-3 border-t border-[#f7f1df]/10 pt-5 sm:flex-row sm:justify-end">
                 <Button
                   type="button"
                   variant="secondary"
                   onClick={closeModal}
-                  disabled={isPending || isTierPending}
+                  disabled={isPending}
                   className="border-[#f7f1df]/10 bg-[#f7f1df]/10 text-[#fff9e8] hover:bg-[#f7f1df]/15"
                 >
                   {generatedToken ? 'Close' : 'Cancel'}
                 </Button>
-                {generatedToken ? (
-                  <Button
-                    type="button"
-                    onClick={handleUpgradeSelectedFarm}
-                    isLoading={isTierPending}
-                    loadingText="Upgrading..."
-                    disabled={isTierPending}
-                    className="bg-gradient-to-r from-[#d9a441] to-[#2f9f83] text-[#11140d] shadow-[#d9a441]/20"
-                  >
-                    Also Upgrade to Standard <ArrowRight className="h-4 w-4" />
-                  </Button>
-                ) : (
+                {generatedToken ? null : (
                   <Button
                     type="submit"
                     isLoading={isPending}
