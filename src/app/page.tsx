@@ -1,5 +1,16 @@
 import React from 'react';
 import Link from 'next/link';
+import type { PlanType } from '@prisma/client';
+import { getBillingConfig } from '@/lib/billing/billing-config';
+import {
+  formatGhs,
+  PAID_TIERS,
+  PLAN_FEATURE_DETAILS,
+  PLAN_TYPES,
+  staffLimitLabel,
+  type BillingConfig,
+  type PaidTier,
+} from '@/lib/billing/pricing';
 import {
   ArrowRight,
   Banknote,
@@ -102,56 +113,49 @@ const contacts = [
   { icon: Phone, label: 'Call', value: 'Call 0554101675', href: 'tel:+233554101675' },
 ];
 
-const someFeatures = [
+// Prices come from the admin Plans & Pricing page. Saving there revalidates this
+// page; the hourly refresh also covers a build that could not reach the database.
+export const revalidate = 3600;
+
+/** In every paid plan; the admin-configurable features are listed after these. */
+const coreFeatures = [
   'Egg, feed and mortality logging',
   'Houses and livestock batches',
-  'Sales, orders and invoices',
+  'Sales and orders',
   'Inventory and feed formulation',
   'Reports and analytics',
 ];
 
-const allFeatures = [
-  'Everything in the basic plans',
-  'Customers and suppliers',
-  'Finance hub and statements',
-  'Detailed batch management',
-  'Health schedules and quarantine',
-];
+const planCopy: Record<PlanType, Record<PaidTier, { description: string; highlight: boolean }>> = {
+  SOLO: {
+    STANDARD: { description: 'For an owner running the farm alone who needs the daily records.', highlight: false },
+    PREMIUM: { description: 'More features for an owner running the farm alone.', highlight: false },
+  },
+  TEAM: {
+    STANDARD: { description: 'For farms with a small team logging the daily work.', highlight: false },
+    PREMIUM: { description: 'More features for growing farms with a full team.', highlight: true },
+  },
+};
 
-const plans = [
-  {
-    name: 'Solo Basic',
-    price: 'GHS 200',
-    cadence: 'per month',
-    description: 'For an owner running the farm alone who needs the daily records.',
-    features: ['Owner only', ...someFeatures],
-    highlight: false,
-  },
-  {
-    name: 'Solo Plus',
-    price: 'GHS 330',
-    cadence: 'per month',
-    description: 'Every feature for an owner running the farm alone.',
-    features: ['Owner only', ...allFeatures],
-    highlight: false,
-  },
-  {
-    name: 'Business',
-    price: 'GHS 350',
-    cadence: 'per month',
-    description: 'For farms with a small team logging the daily work.',
-    features: ['Up to 4 staff', ...someFeatures],
-    highlight: false,
-  },
-  {
-    name: 'Business Plus',
-    price: 'GHS 470',
-    cadence: 'per month',
-    description: 'Every feature for growing farms with a full team.',
-    features: ['Unlimited staff', ...allFeatures],
-    highlight: true,
-  },
-];
+/** Plan cards from the admin-set names, prices, staff limits and features. */
+function buildPlans(billing: BillingConfig) {
+  return PLAN_TYPES.flatMap((planType) =>
+    PAID_TIERS.map((tier) => {
+      const plan = billing.plans[planType][tier];
+      return {
+        name: plan.name,
+        price: formatGhs(plan.monthlyPrice),
+        cadence: 'per month',
+        ...planCopy[planType][tier],
+        features: [
+          staffLimitLabel(planType, plan.staffLimit),
+          ...coreFeatures,
+          ...plan.features.map((feature) => PLAN_FEATURE_DETAILS[feature].label),
+        ],
+      };
+    }),
+  );
+}
 
 const eggBars = [62, 70, 66, 78, 74, 84, 90];
 const mortalityBars = [30, 22, 26, 18, 14, 12, 10];
@@ -237,7 +241,11 @@ function DashboardPreview() {
   );
 }
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const billing = await getBillingConfig();
+  const plans = buildPlans(billing);
+  const maxDiscountPercent = Math.round(Math.max(...Object.values(billing.termDiscounts)) * 100);
+
   const year = new Date().getFullYear();
 
   return (
@@ -414,7 +422,7 @@ export default function LandingPage() {
               <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Try everything free for 30 days.</h2>
               <p className="mt-4 text-base text-white/65 sm:text-lg">
                 Every new farm gets all features free for 30 days. Then pick a Solo plan if you run the farm alone,
-                or a Business plan if your staff log work too. Pay for 3, 6 or 12 months to save up to 15%.
+                or a Business plan if your staff log work too.{maxDiscountPercent > 0 ? ` Pay for 3, 6 or 12 months to save up to ${maxDiscountPercent}%.` : ''}
               </p>
             </div>
 

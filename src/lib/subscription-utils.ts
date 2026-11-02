@@ -1,6 +1,8 @@
 import prisma from './db';
 import { SubscriptionTier } from '@prisma/client';
 import { resolveFarmAccess, resolveStaffAccess, type FarmAccess, type FarmAccessInput } from './billing/access';
+import { getBillingConfig } from './billing/billing-config';
+import { isPlanFeature, planHasFeature } from './billing/pricing';
 
 export type Feature =
   | 'PDF_INVOICES'
@@ -19,9 +21,10 @@ export type Feature =
   | 'advanced-finance';
 
 /**
- * STANDARD ("some features") has everything except customers, suppliers,
- * finance, detailed batch management and health/quarantine. BASIC is a
- * locked farm with no paid plan.
+ * Tier mapping for features that are not admin-configurable. The features in
+ * PLAN_FEATURE_KEYS (customers, suppliers, finance, batch details, health,
+ * PDF invoices) come from each plan's config on the admin Plans & Pricing page.
+ * BASIC is a locked farm with no paid plan.
  */
 const STANDARD_FEATURES: Feature[] = [
   'PDF_INVOICES',
@@ -48,7 +51,7 @@ const TIER_MAPPING: Record<SubscriptionTier, Feature[]> = {
   ],
 };
 
-export function tierHasFeature(tier: SubscriptionTier, feature: Feature) {
+function tierHasFeature(tier: SubscriptionTier, feature: Feature) {
   return TIER_MAPPING[tier].includes(feature);
 }
 
@@ -62,12 +65,13 @@ const FARM_ACCESS_SELECT = {
 } as const;
 
 export async function getFarmAccess(farmId: string): Promise<FarmAccess> {
-  const [subscription, farm] = await Promise.all([
+  const [subscription, farm, config] = await Promise.all([
     prisma.subscription.findUnique({
       where: { farmId },
       include: { plan: true }
     }),
     prisma.farm.findUnique({ where: { id: farmId }, select: FARM_ACCESS_SELECT }),
+    getBillingConfig(),
   ]);
 
   if (!farm) {
@@ -76,10 +80,10 @@ export async function getFarmAccess(farmId: string): Promise<FarmAccess> {
 
   // Legacy subscription rows still grant their tier while active.
   if (subscription && subscription.status === 'ACTIVE' && (!subscription.endDate || subscription.endDate > new Date())) {
-    return resolveFarmAccess({ ...farm, subscriptionTier: subscription.plan.tier, masterLicenseStatus: null });
+    return resolveFarmAccess({ ...farm, subscriptionTier: subscription.plan.tier, masterLicenseStatus: null }, new Date(), config);
   }
 
-  return resolveFarmAccess(farm);
+  return resolveFarmAccess(farm, new Date(), config);
 }
 
 export async function getFarmTier(farmId: string): Promise<SubscriptionTier> {
@@ -92,8 +96,10 @@ export function effectiveFarmTier(farm: FarmAccessInput, now = new Date()): Subs
 }
 
 export async function checkFeature(farmId: string, feature: Feature): Promise<boolean> {
-  const tier = await getFarmTier(farmId);
-  return tierHasFeature(tier, feature);
+  if (!isPlanFeature(feature)) return tierHasFeature(await getFarmTier(farmId), feature);
+
+  const [access, config] = await Promise.all([getFarmAccess(farmId), getBillingConfig()]);
+  return planHasFeature(config, access.planType, access.tier, feature);
 }
 
 /** Staff access for a farm: who is locked out (paused by the owner or over the plan's limit). */

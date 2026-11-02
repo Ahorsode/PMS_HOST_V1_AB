@@ -22,6 +22,7 @@ export default async function QuarantinePage() {
   if (!activeFarmId || !(await checkFeature(activeFarmId, 'HEALTH'))) {
     return (
       <PlanFeatureLocked
+        feature="HEALTH"
         title="Quarantine"
         accent="& Isolation"
         description="Quarantine management tracks isolated birds and recovery rooms. Deaths can still be logged on the Mortality page."

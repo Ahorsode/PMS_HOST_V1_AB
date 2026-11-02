@@ -17,7 +17,7 @@ import {
 } from 'lucide-react'
 import { Dialog } from '@/components/ui/Dialog'
 import { adminUpgradeFarmTier } from '@/lib/actions/admin-subscription-actions'
-import { planName, PLAN_TYPE_LABELS } from '@/lib/billing/pricing'
+import { planName, PLAN_TYPE_LABELS, type BillingConfig } from '@/lib/billing/pricing'
 import {
   adminExtendTrial,
   adminRevokeFarmAccess,
@@ -161,7 +161,7 @@ function ActionButton({
   )
 }
 
-export default function FarmDetailDashboard({ farm }: { farm: AdminFarmDetail }) {
+export default function FarmDetailDashboard({ farm, billing }: { farm: AdminFarmDetail; billing: BillingConfig }) {
   const router = useRouter()
   const [dialogMode, setDialogMode] = useState<DialogMode>(null)
   const [durationDays, setDurationDays] = useState<(typeof DURATION_OPTIONS)[number]>(30)
@@ -208,7 +208,7 @@ export default function FarmDetailDashboard({ farm }: { farm: AdminFarmDetail })
 
         const message =
           dialogMode.type === 'upgrade'
-            ? `${farm.name} moved to ${planName(farm.planType, dialogMode.tier)}`
+            ? `${farm.name} moved to ${planName(billing, farm.planType, dialogMode.tier)}`
             : dialogMode.type === 'extend-trial'
               ? `${farm.name} trial extended`
               : `${farm.name} access revoked`
@@ -223,7 +223,7 @@ export default function FarmDetailDashboard({ farm }: { farm: AdminFarmDetail })
 
   const dialogTitle =
     dialogMode?.type === 'upgrade'
-      ? `Grant ${planName(farm.planType, dialogMode.tier)}`
+      ? `Grant ${planName(billing, farm.planType, dialogMode.tier)}`
       : dialogMode?.type === 'extend-trial'
         ? 'Extend Trial'
         : dialogMode?.type === 'revoke'
@@ -271,7 +271,7 @@ export default function FarmDetailDashboard({ farm }: { farm: AdminFarmDetail })
               <div className="mt-2 inline-flex rounded-md border border-emerald-500/25 bg-emerald-500/10 px-3 py-2 font-mono text-xl font-bold uppercase text-emerald-200">
                 {farm.subscriptionTier === 'BASIC'
                   ? `${PLAN_TYPE_LABELS[farm.planType]} · no plan`
-                  : planName(farm.planType, farm.subscriptionTier as 'STANDARD' | 'PREMIUM')}
+                  : planName(billing, farm.planType, farm.subscriptionTier as 'STANDARD' | 'PREMIUM')}
               </div>
             </div>
             <div className="flex flex-col items-start gap-2 lg:items-end">
@@ -297,13 +297,13 @@ export default function FarmDetailDashboard({ farm }: { farm: AdminFarmDetail })
         <section className="grid gap-3 md:grid-cols-2">
           <ActionButton
             icon={<ShieldCheck className="h-5 w-5" />}
-            label={`Grant ${planName(farm.planType, 'STANDARD')}`}
+            label={`Grant ${planName(billing, farm.planType, 'STANDARD')}`}
             description="Paid access without customers, suppliers, finance, batch details or health."
             onClick={() => openDialog({ type: 'upgrade', tier: 'STANDARD' })}
           />
           <ActionButton
             icon={<Crown className="h-5 w-5" />}
-            label={`Grant ${planName(farm.planType, 'PREMIUM')}`}
+            label={`Grant ${planName(billing, farm.planType, 'PREMIUM')}`}
             description="Paid access to every feature."
             onClick={() => openDialog({ type: 'upgrade', tier: 'PREMIUM' })}
           />
@@ -461,7 +461,7 @@ export default function FarmDetailDashboard({ farm }: { farm: AdminFarmDetail })
           {dialogMode?.type === 'upgrade' ? (
             <div className="space-y-3">
               <p className="text-sm text-white/70">
-                Grant {planName(farm.planType, dialogMode.tier)} access to {farm.name}.
+                Grant {planName(billing, farm.planType, dialogMode.tier)} access to {farm.name}.
               </p>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {DURATION_OPTIONS.map((days) => (

@@ -96,6 +96,17 @@ model VerificationToken {
   @@map("verification_tokens")
 }
 
+/// Admin-editable plan names, prices, features, staff limits, term discounts and
+/// desktop license prices. A single row ("default"); code defaults apply until saved.
+model BillingSettings {
+  id               String   @id @default("default")
+  config           Json
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  updatedByAdminId String?  @map("updated_by_admin_id")
+
+  @@map("billing_settings")
+}
+
 model AdminUser {
   id                    String                   @id @default(cuid())
   username              String                   @unique

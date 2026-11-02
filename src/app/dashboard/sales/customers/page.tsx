@@ -41,6 +41,7 @@ export default async function CustomersPage() {
   if (!hasCRM) {
     return (
       <PlanFeatureLocked
+        feature="CRM"
         title="CRM"
         accent="Network"
         description="Customer management tracks debtor balances, purchasing trends and your buyer network."

@@ -14,6 +14,7 @@ import {
   LogOut,
   ShieldCheck,
   Loader2,
+  Tags,
 } from 'lucide-react'
 import { logoutAdmin } from '@/lib/actions/admin-login-actions'
 import { cn } from '@/lib/utils'
@@ -23,6 +24,7 @@ const NAV_ITEMS = [
   { href: '/admin/licenses/issue', label: 'Issue License', icon: KeyRound },
   { href: '/admin/licenses/renew', label: 'Renew License', icon: RefreshCw },
   { href: '/admin/payments', label: 'Payments', icon: CreditCard },
+  { href: '/admin/plans', label: 'Plans & Pricing', icon: Tags },
   { href: '/admin/activity', label: 'Activity', icon: Activity },
   { href: '/admin/users/map', label: 'User Map', icon: Cpu },
 ]

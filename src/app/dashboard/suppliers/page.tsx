@@ -41,6 +41,7 @@ export default async function SuppliersPage() {
   if (!hasSuppliers) {
     return (
       <PlanFeatureLocked
+        feature="SUPPLIERS"
         title="Supply"
         accent="Network"
         description="Supplier management tracks vendor balances, supply trends and your vendor network."

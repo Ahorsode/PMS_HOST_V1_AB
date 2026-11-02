@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 vi.mock('@/lib/db', () => ({ default: {} }))
 
 import { resolveFarmAccess, resolveStaffAccess, type FarmAccessInput } from './access'
-import { tierHasFeature } from '@/lib/subscription-utils'
+import { DEFAULT_BILLING_CONFIG, parseBillingConfig, planHasFeature, plansWithFeature, type BillingConfig } from './pricing'
 
 const now = new Date('2026-11-01T12:00:00Z')
 const day = (offset: number) => new Date(now.getTime() + offset * 24 * 60 * 60 * 1000)
@@ -61,13 +61,58 @@ describe('resolveFarmAccess', () => {
 })
 
 describe('plan features', () => {
-  it('leaves customers, suppliers, finance, batch details and health out of the some-features plans', () => {
-    for (const feature of ['CRM', 'SUPPLIERS', 'FINANCE', 'BATCH_DETAILS', 'HEALTH'] as const) {
-      expect(tierHasFeature('STANDARD', feature)).toBe(false)
-      expect(tierHasFeature('PREMIUM', feature)).toBe(true)
+  const config = DEFAULT_BILLING_CONFIG
+
+  it('leaves customers, suppliers, finance, batch details and health out of the some-features plans by default', () => {
+    for (const planType of ['SOLO', 'TEAM'] as const) {
+      for (const feature of ['CRM', 'SUPPLIERS', 'FINANCE', 'BATCH_DETAILS', 'HEALTH'] as const) {
+        expect(planHasFeature(config, planType, 'STANDARD', feature)).toBe(false)
+        expect(planHasFeature(config, planType, 'PREMIUM', feature)).toBe(true)
+      }
+      expect(planHasFeature(config, planType, 'STANDARD', 'PDF_INVOICES')).toBe(true)
+      expect(planHasFeature(config, planType, 'BASIC', 'PDF_INVOICES')).toBe(false)
     }
-    expect(tierHasFeature('STANDARD', 'PDF_INVOICES')).toBe(true)
-    expect(tierHasFeature('BASIC', 'PDF_INVOICES')).toBe(false)
+  })
+
+  it('follows an admin-edited plan config per plan type', () => {
+    const edited: BillingConfig = structuredClone(config)
+    edited.plans.SOLO.STANDARD.features = ['PDF_INVOICES', 'CRM']
+    expect(planHasFeature(edited, 'SOLO', 'STANDARD', 'CRM')).toBe(true)
+    expect(planHasFeature(edited, 'TEAM', 'STANDARD', 'CRM')).toBe(false)
+    expect(plansWithFeature(edited, 'CRM')).toEqual(['Solo Basic', 'Solo Plus', 'Business Plus'])
+  })
+
+  it('takes Team staff limits from the config', () => {
+    const edited: BillingConfig = structuredClone(config)
+    edited.plans.TEAM.STANDARD.staffLimit = 10
+    const paid = { subscriptionTier: 'STANDARD' as const, masterLicenseStatus: 'PAID_STANDARD', trialExpiresAt: day(5) }
+    expect(resolveFarmAccess(farm(paid), now, edited).staffLimit).toBe(10)
+    expect(resolveFarmAccess(farm({ ...paid, planType: 'SOLO' }), now, edited).staffLimit).toBe(0)
+  })
+})
+
+describe('parseBillingConfig', () => {
+  it('accepts the defaults and rejects invalid prices or discounts', () => {
+    expect(parseBillingConfig(DEFAULT_BILLING_CONFIG)).toEqual(DEFAULT_BILLING_CONFIG)
+
+    const freePlan = structuredClone(DEFAULT_BILLING_CONFIG) as BillingConfig
+    freePlan.plans.TEAM.PREMIUM.monthlyPrice = 0
+    expect(parseBillingConfig(freePlan)).toBeNull()
+
+    const bigDiscount = structuredClone(DEFAULT_BILLING_CONFIG) as BillingConfig
+    bigDiscount.termDiscounts['12'] = 0.95
+    expect(parseBillingConfig(bigDiscount)).toBeNull()
+
+    expect(parseBillingConfig({ plans: {} })).toBeNull()
+  })
+
+  it('removes duplicate features and rounds prices to pesewas', () => {
+    const messy = structuredClone(DEFAULT_BILLING_CONFIG) as BillingConfig
+    messy.plans.SOLO.STANDARD.features = ['CRM', 'PDF_INVOICES', 'CRM']
+    messy.plans.SOLO.STANDARD.monthlyPrice = 199.999
+    const parsed = parseBillingConfig(messy)
+    expect(parsed?.plans.SOLO.STANDARD.features).toEqual(['PDF_INVOICES', 'CRM'])
+    expect(parsed?.plans.SOLO.STANDARD.monthlyPrice).toBe(200)
   })
 })
 

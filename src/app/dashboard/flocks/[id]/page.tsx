@@ -17,6 +17,7 @@ export default async function FlockDetailPage({ params }: { params: Promise<{ id
   if (!activeFarmId || !(await checkFeature(activeFarmId, 'BATCH_DETAILS'))) {
     return (
       <PlanFeatureLocked
+        feature="BATCH_DETAILS"
         title="Batch"
         accent="Management"
         description="Detailed batch management shows each batch's charts, health schedule and full history. You can still log eggs, feed and deaths for every batch."

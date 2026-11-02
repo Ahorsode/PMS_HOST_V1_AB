@@ -21,6 +21,7 @@ export default async function HealthPage() {
   if (!activeFarmId || !(await checkFeature(activeFarmId, "HEALTH"))) {
     return (
       <PlanFeatureLocked
+        feature="HEALTH"
         title="Health"
         accent="Schedules"
         description="Vaccination and medication planning keeps every batch's health schedule in one place."

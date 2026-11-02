@@ -1,12 +1,9 @@
 import type { PlanType, SubscriptionTier } from '@prisma/client'
-import { isPaidTier } from './pricing'
+import { DEFAULT_BILLING_CONFIG, isPaidTier, type BillingConfig } from './pricing'
 import { FREE_TRIAL_DAYS, FREE_TRIAL_TIER } from './trial'
 
 /** Days a farm keeps its features after its trial or paid period ends, before it is locked. */
 export const GRACE_PERIOD_DAYS = 3
-
-/** Staff (non-owner members) a Business plan allows; Business Plus is unlimited. */
-export const TEAM_STANDARD_STAFF_LIMIT = 4
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -33,10 +30,15 @@ export type FarmAccess = {
   staffLimit: number | null
 }
 
-export function staffLimitFor(planType: PlanType, tier: SubscriptionTier, state: AccessState): number | null {
-  if (state === 'LOCKED' || planType === 'SOLO') return 0
-  if (tier === 'PREMIUM') return null
-  return TEAM_STANDARD_STAFF_LIMIT
+/** Staff limit comes from the plan's admin-set config; Solo plans are owner-only. */
+export function staffLimitFor(
+  planType: PlanType,
+  tier: SubscriptionTier,
+  state: AccessState,
+  config: BillingConfig = DEFAULT_BILLING_CONFIG,
+): number | null {
+  if (state === 'LOCKED' || planType === 'SOLO' || !isPaidTier(tier)) return 0
+  return config.plans[planType][tier].staffLimit
 }
 
 /**
@@ -46,7 +48,11 @@ export function staffLimitFor(planType: PlanType, tier: SubscriptionTier, state:
  * follows, then the farm is locked until it pays. Paid tiers granted without
  * an end date are kept, so legacy grants are not cut off.
  */
-export function resolveFarmAccess(farm: FarmAccessInput, now = new Date()): FarmAccess {
+export function resolveFarmAccess(
+  farm: FarmAccessInput,
+  now = new Date(),
+  config: BillingConfig = DEFAULT_BILLING_CONFIG,
+): FarmAccess {
   const planType = farm.planType ?? 'TEAM'
 
   if (farm.masterLicenseStatus === 'REVOKED') {
@@ -63,7 +69,7 @@ export function resolveFarmAccess(farm: FarmAccessInput, now = new Date()): Farm
       isTrial: false,
       endsAt: null,
       graceEndsAt: null,
-      staffLimit: staffLimitFor(planType, farm.subscriptionTier, 'PAID'),
+      staffLimit: staffLimitFor(planType, farm.subscriptionTier, 'PAID', config),
     }
   }
 
@@ -83,7 +89,7 @@ export function resolveFarmAccess(farm: FarmAccessInput, now = new Date()): Farm
     isTrial: !isPaid,
     endsAt,
     graceEndsAt,
-    staffLimit: staffLimitFor(planType, tier, state),
+    staffLimit: staffLimitFor(planType, tier, state, config),
   }
 }
 

@@ -11,16 +11,25 @@ import { cn } from '@/lib/utils';
 
 type PlanTypeValue = 'SOLO' | 'TEAM';
 
-const OPTIONS: { value: PlanTypeValue; label: string; icon: React.ElementType; description: string }[] = [
-  { value: 'SOLO', label: 'Solo', icon: User, description: 'Owner only. Solo Basic GHS 200 or Solo Plus GHS 330 a month.' },
-  { value: 'TEAM', label: 'Team', icon: Users, description: 'Owner and staff. Business GHS 350 or Business Plus GHS 470 a month.' },
+const OPTIONS: { value: PlanTypeValue; label: string; icon: React.ElementType; audience: string }[] = [
+  { value: 'SOLO', label: 'Solo', icon: User, audience: 'Owner only.' },
+  { value: 'TEAM', label: 'Team', icon: Users, audience: 'Owner and staff.' },
 ];
 
 /**
  * Lets the owner switch between Solo and Team. On a running paid plan the
  * switch is made by buying a plan of the other type, so it links there.
  */
-export function PlanTypeCard({ planType, onPaidPlan }: { planType: PlanTypeValue; onPaidPlan: boolean }) {
+export function PlanTypeCard({
+  planType,
+  onPaidPlan,
+  priceSummaries,
+}: {
+  planType: PlanTypeValue;
+  onPaidPlan: boolean;
+  /** "Solo Basic GHS 200 or Solo Plus GHS 330 a month" per plan type, from the admin-set prices. */
+  priceSummaries: Record<PlanTypeValue, string>;
+}) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -61,7 +70,7 @@ export function PlanTypeCard({ planType, onPaidPlan }: { planType: PlanTypeValue
                     </span>
                   ) : null}
                 </span>
-                <span className="text-xs leading-5 text-white/70">{option.description}</span>
+                <span className="text-xs leading-5 text-white/70">{option.audience} {priceSummaries[option.value]}.</span>
               </>
             );
             const className = cn(

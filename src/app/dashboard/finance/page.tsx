@@ -28,6 +28,7 @@ export default async function FinancePage() {
   if (!(await checkFeature(activeFarmId, 'FINANCE'))) {
     return (
       <PlanFeatureLocked
+        feature="FINANCE"
         title="Finance"
         accent="Hub"
         description="The finance hub covers expenses, transactions, statements and profit tracking."
