@@ -24,6 +24,7 @@ import {
   type AdminFarmDetail,
 } from '@/lib/actions/admin-farm-actions'
 import { MobileCardList } from '@/components/ui/MobileCardList'
+import FarmCustomDeal from './FarmCustomDeal'
 
 type DialogMode =
   | { type: 'upgrade'; tier: 'STANDARD' | 'PREMIUM' }
@@ -161,7 +162,16 @@ function ActionButton({
   )
 }
 
-export default function FarmDetailDashboard({ farm, billing }: { farm: AdminFarmDetail; billing: BillingConfig }) {
+export default function FarmDetailDashboard({
+  farm,
+  billing,
+  canManage,
+}: {
+  farm: AdminFarmDetail
+  billing: BillingConfig
+  /** Support admins can view the farm but not change it. */
+  canManage: boolean
+}) {
   const router = useRouter()
   const [dialogMode, setDialogMode] = useState<DialogMode>(null)
   const [durationDays, setDurationDays] = useState<(typeof DURATION_OPTIONS)[number]>(30)
@@ -294,6 +304,7 @@ export default function FarmDetailDashboard({ farm, billing }: { farm: AdminFarm
           ) : null}
         </section>
 
+        {canManage ? (
         <section className="grid gap-3 md:grid-cols-2">
           <ActionButton
             icon={<ShieldCheck className="h-5 w-5" />}
@@ -322,6 +333,9 @@ export default function FarmDetailDashboard({ farm, billing }: { farm: AdminFarm
             onClick={() => openDialog({ type: 'revoke' })}
           />
         </section>
+        ) : null}
+
+        <FarmCustomDeal farmId={farm.id} initial={farm.override} canManage={canManage} />
 
         <section className="rounded-lg border border-zinc-800 bg-zinc-900/40">
           <div className="flex items-center gap-3 border-b border-zinc-800 px-5 py-4">

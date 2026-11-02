@@ -1,8 +1,17 @@
 import prisma from './db';
 import { SubscriptionTier } from '@prisma/client';
-import { resolveFarmAccess, resolveStaffAccess, type FarmAccess, type FarmAccessInput } from './billing/access';
+import {
+  applyStaffLimitOverride,
+  farmHasPlanFeature,
+  resolveFarmAccess,
+  resolveStaffAccess,
+  type FarmAccess,
+  type FarmAccessInput,
+  type FarmOverrideInput,
+} from './billing/access';
+import { getAppSettings } from './settings/app-settings';
 import { getBillingConfig } from './billing/billing-config';
-import { isPlanFeature, planHasFeature } from './billing/pricing';
+import { isPlanFeature } from './billing/pricing';
 
 export type Feature =
   | 'PDF_INVOICES'
@@ -64,14 +73,22 @@ const FARM_ACCESS_SELECT = {
   createdAt: true,
 } as const;
 
+/** Admin-set exceptions for a farm; null when none (or the table is not migrated yet). */
+async function getFarmOverride(farmId: string): Promise<FarmOverrideInput | null> {
+  return prisma.farmOverride
+    .findUnique({ where: { farmId }, select: { extraFeatures: true, overrideStaffLimit: true, staffLimit: true } })
+    .catch(() => null);
+}
+
 export async function getFarmAccess(farmId: string): Promise<FarmAccess> {
-  const [subscription, farm, config] = await Promise.all([
+  const [subscription, farm, config, override] = await Promise.all([
     prisma.subscription.findUnique({
       where: { farmId },
       include: { plan: true }
     }),
     prisma.farm.findUnique({ where: { id: farmId }, select: FARM_ACCESS_SELECT }),
     getBillingConfig(),
+    getFarmOverride(farmId),
   ]);
 
   if (!farm) {
@@ -80,10 +97,13 @@ export async function getFarmAccess(farmId: string): Promise<FarmAccess> {
 
   // Legacy subscription rows still grant their tier while active.
   if (subscription && subscription.status === 'ACTIVE' && (!subscription.endDate || subscription.endDate > new Date())) {
-    return resolveFarmAccess({ ...farm, subscriptionTier: subscription.plan.tier, masterLicenseStatus: null }, new Date(), config);
+    return applyStaffLimitOverride(
+      resolveFarmAccess({ ...farm, subscriptionTier: subscription.plan.tier, masterLicenseStatus: null }, new Date(), config),
+      override,
+    );
   }
 
-  return resolveFarmAccess(farm, new Date(), config);
+  return applyStaffLimitOverride(resolveFarmAccess(farm, new Date(), config), override);
 }
 
 export async function getFarmTier(farmId: string): Promise<SubscriptionTier> {
@@ -98,8 +118,13 @@ export function effectiveFarmTier(farm: FarmAccessInput, now = new Date()): Subs
 export async function checkFeature(farmId: string, feature: Feature): Promise<boolean> {
   if (!isPlanFeature(feature)) return tierHasFeature(await getFarmTier(farmId), feature);
 
-  const [access, config] = await Promise.all([getFarmAccess(farmId), getBillingConfig()]);
-  return planHasFeature(config, access.planType, access.tier, feature);
+  const [access, config, system, override] = await Promise.all([
+    getFarmAccess(farmId),
+    getBillingConfig(),
+    getAppSettings('system'),
+    getFarmOverride(farmId),
+  ]);
+  return farmHasPlanFeature({ config, access, feature, disabledFeatures: system.disabledFeatures, override });
 }
 
 /** Staff access for a farm: who is locked out (paused by the owner or over the plan's limit). */

@@ -1,6 +1,7 @@
 "use server";
 
 import prisma from "@/lib/db";
+import { getAppSettings } from "@/lib/settings/app-settings";
 import { revalidatePath } from "next/cache";
 import { getAuthContext } from "@/lib/auth-utils";
 
@@ -106,10 +107,11 @@ export async function getSalesSettings() {
   const { activeFarmId } = await getAuthContext();
   if (!activeFarmId) return null;
 
+  const { salesSettings } = await getAppSettings('farm-defaults');
   return prisma.salesSettings.upsert({
     where: { farmId: activeFarmId },
     update: {},
-    create: { farmId: activeFarmId, allowWorkerDiscounts: true },
+    create: { farmId: activeFarmId, ...salesSettings },
   });
 }
 

@@ -17,6 +17,7 @@ import {
   getDefaultPermissionsForRole,
   type StaffPermissions,
 } from '@/lib/staff-permission-defaults'
+import { getAppSettings } from '@/lib/settings/app-settings'
 
 type StaffRole = 'OWNER' | 'MANAGER' | 'WORKER' | 'ACCOUNTANT' | 'FINANCE_OFFICER' | 'CASHIER'
 
@@ -91,7 +92,9 @@ async function upsertInvitedUserPermissions(
     permissions?: StaffPermissions
   }
 ) {
-  const permissionsToApply = getDefaultPermissionsForRole(role, permissions)
+  // Role defaults come from the admin Farm defaults settings.
+  const { rolePermissions } = await getAppSettings('farm-defaults')
+  const permissionsToApply = getDefaultPermissionsForRole(role, permissions, rolePermissions)
 
   return await tx.userPermission.upsert({
     where: {
@@ -916,7 +919,8 @@ export async function resetWorkerPermissions(targetUserId: string) {
     return { success: false, error: 'Cannot reset permissions for the farm owner' }
   }
 
-  const defaults = getDefaultPermissionsForRole(membership.role)
+  const { rolePermissions } = await getAppSettings('farm-defaults')
+  const defaults = getDefaultPermissionsForRole(membership.role, undefined, rolePermissions)
   return updateWorkerPermissions(targetUserId, defaults)
 }
 

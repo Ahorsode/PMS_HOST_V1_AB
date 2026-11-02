@@ -176,7 +176,8 @@ export type FarmDefaults = z.infer<typeof farmDefaultsSchema>
 
 export const DEFAULT_FARM_DEFAULTS: FarmDefaults = {
   eggCategories: [],
-  salesSettings: { allowBatchOverride: false, allowWorkerDiscounts: false, defaultDiscountType: 'item' },
+  // Matches what a farm got before this was configurable (see getSalesSettings).
+  salesSettings: { allowBatchOverride: false, allowWorkerDiscounts: true, defaultDiscountType: 'item' },
   rolePermissions: Object.fromEntries(
     STAFF_ROLES.map((role) => [role, getDefaultPermissionsForRole(role)]),
   ) as FarmDefaults['rolePermissions'],

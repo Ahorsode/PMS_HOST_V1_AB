@@ -6,6 +6,8 @@ import { logAdminAction } from '@/lib/admin-audit'
 import prisma from '@/lib/db'
 import { getBillingConfig } from '@/lib/billing/billing-config'
 import { resolveFarmAccess } from '@/lib/billing/access'
+import { PLAN_FEATURE_KEYS } from '@/lib/billing/pricing'
+import { z } from 'zod'
 
 export type AdminFarmRow = {
   id: string
@@ -47,6 +49,7 @@ export type AdminFarmPayment = {
 export type AdminFarmDetail = AdminFarmRow & {
   devices: AdminFarmDevice[]
   paymentHistory: AdminFarmPayment[]
+  override: AdminFarmOverride | null
 }
 
 export type AdminFarmActionResult =
@@ -226,6 +229,9 @@ export async function adminGetFarmDetail(farmId: string): Promise<AdminFarmDetai
         },
         take: 20,
       },
+      override: {
+        select: { extraFeatures: true, overrideStaffLimit: true, staffLimit: true, discountPercent: true, notes: true },
+      },
       _count: {
         select: {
           deviceRegistrations: true,
@@ -261,6 +267,7 @@ export async function adminGetFarmDetail(farmId: string): Promise<AdminFarmDetai
       userName: ownerDisplayName(device.user),
       userEmail: device.user?.email ?? null,
     })),
+    override: farm.override ?? null,
     paymentHistory: farm.manualLicensePayments.map((payment) => ({
       id: payment.id,
       amount: Number(payment.amount),
@@ -515,5 +522,75 @@ export async function adminBulkExtendTrials(extraDays: number, includeEnded: boo
   } catch (error) {
     console.error('[adminBulkExtendTrials]', error)
     return { success: false, error: 'Some trials could not be extended. Check the activity log for the ones that were.' }
+  }
+}
+
+export type AdminFarmOverride = {
+  extraFeatures: string[]
+  overrideStaffLimit: boolean
+  staffLimit: number | null
+  discountPercent: number
+  notes: string | null
+}
+
+const farmOverrideSchema = z.object({
+  extraFeatures: z.array(z.enum(PLAN_FEATURE_KEYS)),
+  overrideStaffLimit: z.boolean(),
+  staffLimit: z.number().int('Use a whole number').min(0).max(1000).nullable(),
+  discountPercent: z.number().int('Use a whole percentage').min(0).max(90, 'At most 90% off'),
+  notes: z.string().trim().max(500).nullable(),
+})
+
+/**
+ * Sets a farm's exceptions to its plan: extra features, a custom staff limit,
+ * and a discount on its checkouts. Clearing everything removes the record.
+ */
+export async function adminSaveFarmOverride(farmId: string, input: AdminFarmOverride): Promise<AdminFarmActionResult> {
+  let admin: { id: string; username: string }
+  try {
+    admin = await requirePaymentAdminAction('farms.manage')
+  } catch {
+    return { success: false, error: 'Your admin role cannot change farm deals' }
+  }
+
+  const parsed = farmOverrideSchema.safeParse(input)
+  if (!parsed.success) return { success: false, error: parsed.error.issues[0]?.message ?? 'Check the custom deal details' }
+  const data = parsed.data
+  const isEmpty = data.extraFeatures.length === 0 && !data.overrideStaffLimit && data.discountPercent === 0 && !data.notes
+
+  try {
+    if (isEmpty) {
+      await prisma.farmOverride.deleteMany({ where: { farmId } })
+    } else {
+      const values = {
+        extraFeatures: data.extraFeatures,
+        overrideStaffLimit: data.overrideStaffLimit,
+        staffLimit: data.overrideStaffLimit ? data.staffLimit : null,
+        discountPercent: data.discountPercent,
+        notes: data.notes || null,
+        updatedByAdminId: admin.id,
+      }
+      await prisma.farmOverride.upsert({ where: { farmId }, create: { farmId, ...values }, update: values })
+    }
+
+    await logAdminAction(admin, {
+      action: isEmpty ? 'farm.override_clear' : 'farm.override_update',
+      targetType: 'farm',
+      targetId: farmId,
+      summary: isEmpty
+        ? 'Removed the custom deal'
+        : `Set a custom deal: ${[
+            data.extraFeatures.length ? `extra features ${data.extraFeatures.join(', ')}` : null,
+            data.overrideStaffLimit ? `staff limit ${data.staffLimit ?? 'unlimited'}` : null,
+            data.discountPercent ? `${data.discountPercent}% off checkouts` : null,
+          ].filter(Boolean).join('; ') || 'notes only'}`,
+      details: data,
+    })
+
+    revalidateFarmAdminPaths(farmId)
+    return { success: true }
+  } catch (error) {
+    console.error('[adminSaveFarmOverride]', error)
+    return { success: false, error: 'Could not save the custom deal. Make sure the latest migration has been run.' }
   }
 }
