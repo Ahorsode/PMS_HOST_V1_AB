@@ -243,7 +243,12 @@ export default async function LandingPage() {
   const plans = buildPlans(billing, landing);
   const contacts = buildContacts(site.contact);
   const announcement = activeAnnouncement(site, 'landing');
-  const maxDiscountPercent = Math.round(Math.max(...Object.values(billing.termDiscounts)) * 100);
+  // Only the longer terms that are offered and actually discounted, e.g. "3, 6 or 12".
+  const discountedTerms = billing.offeredTerms.filter((months) => months > 1 && billing.termDiscounts[`${months}`] > 0);
+  const maxDiscountPercent = Math.round(Math.max(0, ...discountedTerms.map((months) => billing.termDiscounts[`${months}`])) * 100);
+  const termList = discountedTerms.length > 1
+    ? `${discountedTerms.slice(0, -1).join(', ')} or ${discountedTerms[discountedTerms.length - 1]}`
+    : String(discountedTerms[0] ?? '');
 
   const year = new Date().getFullYear();
 
@@ -424,7 +429,7 @@ export default async function LandingPage() {
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-300">Pricing</p>
               <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Try everything free for 30 days.</h2>
               <p className="mt-4 text-base text-white/65 sm:text-lg">
-                {landing.pricingIntro.replaceAll('{trialDays}', String(billing.trial.days))}{maxDiscountPercent > 0 ? ` Pay for 3, 6 or 12 months to save up to ${maxDiscountPercent}%.` : ''}
+                {landing.pricingIntro.replaceAll('{trialDays}', String(billing.trial.days))}{maxDiscountPercent > 0 ? ` Pay for ${termList} months to save up to ${maxDiscountPercent}%.` : ''}
               </p>
             </div>
 

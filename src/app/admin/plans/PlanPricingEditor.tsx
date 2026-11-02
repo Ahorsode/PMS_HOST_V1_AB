@@ -53,9 +53,9 @@ const TIER_LABELS: Record<PaidTier, string> = { STANDARD: 'Standard', PREMIUM: '
 
 const DESKTOP_PACK_LABELS: Record<DesktopLicenseDays, string> = {
   30: '30 days',
-  90: '3 months',
-  180: '6 months',
-  365: '12 months',
+  90: '3 mo',
+  180: '6 mo',
+  365: '1 year',
 }
 
 function toForm(config: BillingConfig): FormState {

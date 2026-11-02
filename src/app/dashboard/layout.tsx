@@ -11,6 +11,8 @@ import { getFarmStaffAccess } from '@/lib/subscription-utils';
 import { PlanAccessGate } from '@/components/billing/PlanAccessGate';
 import { AccessBlocked } from '@/components/billing/AccessBlocked';
 import { DashboardNotices } from '@/components/site/DashboardNotices';
+import { MaintenanceProvider } from '@/components/site/MaintenanceContext';
+import { getAppSettings } from '@/lib/settings/app-settings';
 
 export default async function DashboardLayout({
   children,
@@ -177,6 +179,8 @@ export default async function DashboardLayout({
       })
     : dbUser.role;
 
+  const { maintenance } = await getAppSettings('system');
+
   const rawFarmName = (farm?.name || 'My').trim();
   const mobileFarmTitle = /\bfarms?\s*$/i.test(rawFarmName)
     ? rawFarmName
@@ -189,7 +193,9 @@ export default async function DashboardLayout({
         access={staffAccess?.access ?? null}
         isOwner={isOwner}
       />
-      {isOwner && planStatus ? <PlanAccessGate status={planStatus}>{children}</PlanAccessGate> : children}
+      <MaintenanceProvider message={maintenance.enabled ? maintenance.message : null}>
+        {isOwner && planStatus ? <PlanAccessGate status={planStatus}>{children}</PlanAccessGate> : children}
+      </MaintenanceProvider>
     </SidebarWrapper>
   );
 }
