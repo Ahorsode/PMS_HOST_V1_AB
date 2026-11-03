@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   txUserUpdate: vi.fn(),
   txFarmCreate: vi.fn(),
   txFarmMemberCreate: vi.fn(),
+  txLegalAcceptanceUpsert: vi.fn(),
   checkRateLimit: vi.fn(),
 }));
 
@@ -47,6 +48,7 @@ describe("signup route", () => {
         farm: { create: mocks.txFarmCreate },
         farmMember: { create: mocks.txFarmMemberCreate },
         invitation: { update: vi.fn() },
+        legalAcceptance: { upsert: mocks.txLegalAcceptanceUpsert },
       }),
     );
     mocks.txUserCreate.mockResolvedValue({ id: "new-user", firstname: "Ama", surname: "", email: null, phoneNumber: "+233554101675", mustChangePassword: false });
@@ -65,6 +67,7 @@ describe("signup route", () => {
       email: "attacker@example.com",
       phoneNumber: "0554101675",
       password: "a-strong-password",
+      acceptTerms: true,
     });
 
     expect(response.status).toBe(409);
@@ -79,10 +82,29 @@ describe("signup route", () => {
       firstname: "Ama",
       phoneNumber: "0554101675",
       password: "a-strong-password",
+      acceptTerms: true,
     });
 
     expect(response.status).toBe(201);
     expect(mocks.txUserCreate).toHaveBeenCalledOnce();
     expect(mocks.txFarmCreate).toHaveBeenCalledOnce();
+    expect(mocks.txLegalAcceptanceUpsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({ userId: "new-user", method: "SIGNUP_CHECKBOX" }),
+      }),
+    );
+  });
+
+  it("rejects signups that did not accept the terms", async () => {
+    mocks.userFindFirst.mockResolvedValue(null);
+
+    const response = await signup({
+      firstname: "Ama",
+      phoneNumber: "0554101675",
+      password: "a-strong-password",
+    });
+
+    expect(response.status).toBe(400);
+    expect(mocks.transaction).not.toHaveBeenCalled();
   });
 });

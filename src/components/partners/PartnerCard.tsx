@@ -64,14 +64,14 @@ export const PartnerCard = ({ partner, type }: PartnerCardProps) => {
                 </div>
                 <div className="p-3 rounded-md bg-black/20 border border-white/5 text-center">
                   <p className="text-[10px] font-black uppercase text-white/60 mb-1 tracking-widest">Total Owed</p>
-                  <p className={`text-sm font-black ${partner.balanceOwed > 0 ? 'text-red-400' : 'text-white/20'}`}>
+                  <p className={`text-sm font-black ${partner.balanceOwed > 0 ? 'text-red-400' : 'text-white/60'}`}>
                     {formatCurrency(partner.balanceOwed)}
                   </p>
                 </div>
               </div>
 
               <div className="flex gap-2 w-full" onClick={(e) => { e.stopPropagation(); }}>
-                <button 
+                <button aria-label="Call" 
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowCall(true); }}
                   className="flex-1 py-2 rounded-md bg-white/10 hover:bg-white/15 border border-white/10 transition-colors"
                 >
@@ -133,21 +133,21 @@ export const PartnerCard = ({ partner, type }: PartnerCardProps) => {
               <div className="p-4 bg-white/[0.02] border border-white/5 rounded-md flex items-center gap-4">
                  <Mail className="w-5 h-5 text-white/30" />
                  <div className="overflow-hidden">
-                    <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">Email Address</p>
+                    <p className="text-[10px] font-black text-white/60 uppercase tracking-widest">Email Address</p>
                     <p className="text-white font-bold truncate">{partner.email || 'Not Provided'}</p>
                  </div>
               </div>
               <div className="p-4 bg-white/[0.02] border border-white/5 rounded-md flex items-center gap-4">
                  <MapPin className="w-5 h-5 text-white/30" />
                  <div>
-                    <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">Office/Home Address</p>
+                    <p className="text-[10px] font-black text-white/60 uppercase tracking-widest">Office/Home Address</p>
                     <p className="text-white font-bold">{partner.address || 'Not Provided'}</p>
                  </div>
               </div>
               <div className="p-4 bg-white/[0.02] border border-white/5 rounded-md flex items-center gap-4">
                  <Calendar className="w-5 h-5 text-white/30" />
                  <div>
-                    <p className="text-[10px] font-black text-white/30 uppercase tracking-widest">Member Since</p>
+                    <p className="text-[10px] font-black text-white/60 uppercase tracking-widest">Member Since</p>
                     <p className="text-white font-bold">{new Date(partner.createdAt).toLocaleDateString()}</p>
                  </div>
               </div>

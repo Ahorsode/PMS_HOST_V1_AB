@@ -120,7 +120,7 @@ export function FinancialInitializationModal({ isOpen, onClose, batchId, batchNa
             <label className="text-xs font-bold uppercase tracking-widest text-purple-400 flex items-center gap-2">
                Other Direct Expenses
             </label>
-            <button 
+            <button aria-label="Add expense" 
               onClick={addOtherExpense}
               disabled={isSubmitting}
               className="p-1.5 bg-purple-500/10 border border-purple-500/20 rounded-lg text-purple-400 hover:bg-purple-500/20 transition-all"
@@ -146,7 +146,7 @@ export function FinancialInitializationModal({ isOpen, onClose, batchId, batchNa
                     onChange={(e) => updateOtherExpense(idx, 'amount', e.target.value === '' ? '' : Number(e.target.value))}
                     className="w-24 bg-black/60 border border-white/10 rounded-md px-3 py-2 text-xs text-white font-bold"
                   />
-                  <button 
+                  <button aria-label="Remove expense" 
                     onClick={() => removeOtherExpense(idx)}
                     disabled={isSubmitting}
                     className="p-2 text-red-400 hover:bg-red-500/10 rounded-md transition-all disabled:opacity-50 disabled:cursor-not-allowed"

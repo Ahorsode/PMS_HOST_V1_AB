@@ -173,7 +173,7 @@ export function SalesRowActions({ order, canEdit = true, canRecordPayment = fals
       {canEdit && (
         <>
           {canRecordPayment && order.customerId && order.status === 'PENDING' && (
-            <button 
+            <button aria-label="Record Payment" 
               onClick={() => {
                 setPaymentAmount(Number(order.totalAmount));
                 setPaymentDate(toLocalDateTimeInputValue());

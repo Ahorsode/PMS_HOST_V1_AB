@@ -252,7 +252,7 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
                       const value = event.target.value
                       if (value === '' || Number(value) >= 0) setAmount(value)
                     }}
-                    className="bg-black/50 border-white/10 rounded-md text-white placeholder:text-white/20"
+                    className="bg-black/50 border-white/10 rounded-md text-white placeholder:text-white/50"
                   />
                 </div>
               </div>
@@ -275,7 +275,7 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
                   <Input
                     name="reference"
                     placeholder="Ref-001"
-                    className="bg-black/50 border-white/10 rounded-md text-white placeholder:text-white/20"
+                    className="bg-black/50 border-white/10 rounded-md text-white placeholder:text-white/50"
                   />
                 </div>
               </div>
@@ -285,7 +285,7 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
                 <Input
                   name="description"
                   placeholder="Detailed description of the expense..."
-                  className="bg-black/50 border-white/10 rounded-md text-white placeholder:text-white/20"
+                  className="bg-black/50 border-white/10 rounded-md text-white placeholder:text-white/50"
                 />
               </div>
 
@@ -409,7 +409,7 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
                                     if (value === '' || Number(value) >= 0) updateRow(row.key, { value })
                                   }}
                                   placeholder={allocationMode === 'PERCENTAGE' ? '0.00' : '0.00'}
-                                  className="bg-black/40 border-white/10 rounded-md text-white pr-10 placeholder:text-white/20"
+                                  className="bg-black/40 border-white/10 rounded-md text-white pr-10 placeholder:text-white/50"
                                 />
                                 <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-white/40">
                                   {allocationMode === 'PERCENTAGE' ? '%' : '₵'}

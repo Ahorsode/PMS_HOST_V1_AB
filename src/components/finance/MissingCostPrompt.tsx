@@ -164,7 +164,7 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
                     }
                   }}
                 />
-                <Button 
+                <Button aria-label="Add another cost" 
                   type="button" 
                   variant="outline" 
                    onClick={handleAddOther}
@@ -181,7 +181,7 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
                        <span className="text-xs font-bold text-white/80">{exp.label}</span>
                        <div className="flex items-center gap-2">
                           <span className="text-xs font-bold text-emerald-400">GH₵ {exp.amount}</span>
-                          <button onClick={() => removeOther(i)} className="text-red-400/60 hover:text-red-400 transition-colors">
+                          <button aria-label="Remove cost" onClick={() => removeOther(i)} className="text-red-400/60 hover:text-red-400 transition-colors">
                              <Trash2 className="w-3.5 h-3.5" />
                           </button>
                        </div>

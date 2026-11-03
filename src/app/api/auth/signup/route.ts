@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { normalizePhoneNumber } from '@/lib/phone-auth';
 import { checkRateLimit, getRateLimitIp, rateLimitHeaders } from '@/lib/performance/rate-limit';
 import { MAX_PASSWORD_LENGTH, passwordPolicyError } from '@/lib/password-policy';
+import { recordLegalAcceptance } from '@/lib/legal-acceptance';
 import { z } from 'zod';
 
 const signupSchema = z.object({
@@ -18,6 +19,7 @@ const signupSchema = z.object({
     (value) => (typeof value === 'string' && value.length === 0 ? undefined : value),
     z.string().max(MAX_PASSWORD_LENGTH, `Password must be ${MAX_PASSWORD_LENGTH} characters or fewer`).optional(),
   ),
+  acceptTerms: z.literal(true, { error: 'Please accept the Terms of Service and Privacy Policy' }),
 });
 
 export async function POST(req: Request) {
@@ -112,6 +114,8 @@ export async function POST(req: Request) {
           role: invitation?.role || 'OWNER',
         }
       });
+
+      await recordLegalAcceptance(txUser.id, 'SIGNUP_CHECKBOX', tx);
 
       // If there's an invitation, link to farm and update invitation
       if (invitation) {

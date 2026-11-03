@@ -240,7 +240,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                     ))}
                     {initialEditLogs.length === 0 && (
                       <tr>
-                        <td colSpan={4} className="px-6 py-20 text-center text-white/30 italic text-sm">
+                        <td colSpan={4} className="px-6 py-20 text-center text-white/60 italic text-sm">
                           No modification logs found.
                         </td>
                       </tr>
@@ -335,7 +335,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                             <p className="text-[10px] text-white/40 font-mono truncate max-w-[200px]" title={log.deletedDataCsv}>
                               {log.deletedDataCsv.split('\n')[1]?.slice(0, 50)}...
                             </p>
-                            <button 
+                            <button aria-label="View Details" 
                               onClick={() => setSelectedLog(log)}
                               className="text-white/40 hover:text-emerald-400 transition-colors" 
                               title="View Details"
@@ -358,7 +358,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                     ))}
                     {uniqueDeleteLogs.length === 0 && (
                       <tr>
-                        <td colSpan={5} className="px-6 py-20 text-center text-white/30 italic text-sm">
+                        <td colSpan={5} className="px-6 py-20 text-center text-white/60 italic text-sm">
                           No deletion logs found.
                         </td>
                       </tr>
@@ -382,7 +382,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
             </CardHeader>
             <CardContent className="p-4 space-y-4">
               {!trashItems || trashCount === 0 ? (
-                <p className="text-center text-white/30 italic text-sm py-16">All records are active — nothing in the recovery queue.</p>
+                <p className="text-center text-white/60 italic text-sm py-16">All records are active — nothing in the recovery queue.</p>
               ) : (
                 <>
                   {/* Batches */}
@@ -542,7 +542,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                   return (
                     <tr key={i} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
                       <td className="py-2 px-3 font-bold text-white/50 tracking-widest">{cleanHeader}</td>
-                      <td className="py-2 px-3 font-mono break-all">{value === 'NULL' || value === '' ? <span className="text-white/30 italic">none</span> : value}</td>
+                      <td className="py-2 px-3 font-mono break-all">{value === 'NULL' || value === '' ? <span className="text-white/60 italic">none</span> : value}</td>
                     </tr>
                   );
                 })}

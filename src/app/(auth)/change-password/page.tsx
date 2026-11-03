@@ -110,7 +110,7 @@ export default function ChangePasswordPage() {
                           placeholder="First Name"
                           required
                           disabled={isLoading}
-                          className="w-full h-12 px-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm"
+                          className="w-full h-12 px-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm"
                         />
                       </div>
                       <div className="relative group/input">
@@ -121,7 +121,7 @@ export default function ChangePasswordPage() {
                           placeholder="Surname"
                           required
                           disabled={isLoading}
-                          className="w-full h-12 px-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm"
+                          className="w-full h-12 px-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm"
                         />
                       </div>
                     </div>
@@ -136,7 +136,7 @@ export default function ChangePasswordPage() {
                         placeholder="New Password"
                         required
                         disabled={isLoading}
-                        className="w-full h-12 pl-9 pr-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm"
+                        className="w-full h-12 pl-9 pr-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm"
                       />
                     </div>
 
@@ -151,7 +151,7 @@ export default function ChangePasswordPage() {
                         placeholder="Confirm New Password"
                         required
                         disabled={isLoading}
-                        className="w-full h-12 pl-9 pr-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm"
+                        className="w-full h-12 pl-9 pr-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-sm"
                       />
                     </div>
 

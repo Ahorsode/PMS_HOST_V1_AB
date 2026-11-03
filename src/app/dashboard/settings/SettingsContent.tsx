@@ -496,7 +496,7 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
                           />
                           <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-white/70 pointer-events-none">kg</span>
                         </div>
-                        <Button
+                        <Button aria-label="Save reorder level"
                           onClick={() => handleSaveReorderLevel(item.id)}
                           size="sm"
                           variant="outline"

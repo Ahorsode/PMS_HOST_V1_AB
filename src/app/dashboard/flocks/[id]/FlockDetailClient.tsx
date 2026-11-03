@@ -381,7 +381,7 @@ function ExpenseBreakdown({ items }: { items?: any[] }) {
 function MetaItem({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col gap-1">
-      <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-white/20">{label}</span>
+      <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-white/60">{label}</span>
       <span className="text-sm font-bold tracking-normal text-white">{value}</span>
     </div>
   )

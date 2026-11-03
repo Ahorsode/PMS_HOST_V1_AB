@@ -142,7 +142,7 @@ export function PermissionsModal({
                       <p className="text-blue-400 text-xs sm:text-xs font-bold uppercase tracking-widest">{staffName}</p>
                     </div>
                   </div>
-                  <button 
+                  <button aria-label="Close" 
                     onClick={onClose}
                     disabled={isLoading}
                     className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-all"

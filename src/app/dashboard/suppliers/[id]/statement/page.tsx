@@ -101,7 +101,7 @@ export default async function SupplierStatementPage({ params }: { params: Promis
          <div className="lg:col-span-2 space-y-4">
             <h2 className="text-lg font-black text-white uppercase tracking-widest px-2 mb-4">Transaction History</h2>
             {transactions.length === 0 ? (
-               <div className="flex flex-col items-center justify-center py-20 bg-white/5 border border-dashed border-white/10 rounded-lg text-white/30 italic">
+               <div className="flex flex-col items-center justify-center py-20 bg-white/5 border border-dashed border-white/10 rounded-lg text-white/60 italic">
                   No transactions recorded yet.
                </div>
             ) : (
@@ -117,7 +117,7 @@ export default async function SupplierStatementPage({ params }: { params: Promis
                               <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${tx.type === 'Inventory' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-purple-500/20 text-purple-400'}`}>
                                  {tx.type}
                               </span>
-                              <div className="flex items-center gap-1.5 text-white/30 text-[10px] font-bold">
+                              <div className="flex items-center gap-1.5 text-white/60 text-[10px] font-bold">
                                  <Calendar className="w-3 h-3" />
                                  {new Date(tx.date).toLocaleDateString()}
                               </div>
@@ -127,7 +127,7 @@ export default async function SupplierStatementPage({ params }: { params: Promis
                      </div>
                      <div className="sm:text-right border-t sm:border-t-0 border-white/5 pt-3 sm:pt-0">
                         <p className="text-xl font-black text-white">{formatCurrency(tx.amount)}</p>
-                        <p className="text-[10px] font-black uppercase text-white/20 tracking-widest">Amount Paid/Cost</p>
+                        <p className="text-[10px] font-black uppercase text-white/60 tracking-widest">Amount Paid/Cost</p>
                      </div>
                   </div>
                ))

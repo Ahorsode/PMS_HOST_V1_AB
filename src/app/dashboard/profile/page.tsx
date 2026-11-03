@@ -2,12 +2,14 @@ import React from 'react';
 import { getAuthContext } from '@/lib/auth-utils';
 import prisma from '@/lib/db';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { User, Mail, Shield, Building, Calendar } from 'lucide-react';
+import { User, Mail, Shield, Building, Calendar, Download, Trash2, FileText } from 'lucide-react';
 import { EditProfileButton } from '@/components/profile/EditProfileButton';
 import { formatRoleLabel } from '@/lib/navigation-permissions';
+import { LegalLinks } from '@/components/legal/LegalPage';
+import { accountDeletionMailto, DELETION_COMPLETION_DAYS } from '@/lib/legal';
 
 export default async function ProfilePage() {
-  const { userId, activeFarmId, role } = await getAuthContext();
+  const { userId, activeFarmId, role, isFarmOwner } = await getAuthContext();
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -90,6 +92,50 @@ export default async function ProfilePage() {
                   </div>
                </div>
             </div>
+         </CardContent>
+      </Card>
+
+      <Card className="bg-black/20 border-white/5 overflow-hidden">
+         <CardHeader className="border-b border-white/5 bg-white/[0.02]">
+            <CardTitle className="text-sm font-bold uppercase tracking-widest text-emerald-400 flex items-center gap-2">
+               <FileText className="w-4 h-4" /> Your Data
+            </CardTitle>
+         </CardHeader>
+         <CardContent className="pt-7 pb-7 space-y-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+               <div>
+                  <p className="font-bold text-white">Download my data</p>
+                  <p className="text-sm text-white/75">
+                     {isFarmOwner
+                        ? 'A JSON file with your account details and every record of this farm.'
+                        : 'A JSON file with your account details. Farm records belong to the farm owner.'}
+                  </p>
+               </div>
+               <a
+                  href="/api/account/export"
+                  className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-4 text-sm font-bold text-emerald-300 hover:bg-emerald-500/20"
+               >
+                  <Download className="h-4 w-4" /> Download
+               </a>
+            </div>
+
+            <div className="flex flex-col gap-3 border-t border-white/5 pt-5 sm:flex-row sm:items-center sm:justify-between">
+               <div>
+                  <p className="font-bold text-white">Delete my account</p>
+                  <p className="text-sm text-white/75">
+                     Sends us a deletion request from your email app. We delete your personal data within {DELETION_COMPLETION_DAYS} days
+                     {isFarmOwner ? ", together with this farm's records" : ''}. Download your data first if you want a copy.
+                  </p>
+               </div>
+               <a
+                  href={accountDeletionMailto(userId)}
+                  className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-md border border-red-500/30 bg-red-500/10 px-4 text-sm font-bold text-red-300 hover:bg-red-500/20"
+               >
+                  <Trash2 className="h-4 w-4" /> Request deletion
+               </a>
+            </div>
+
+            <LegalLinks className="border-t border-white/5 pt-5 text-sm text-white/70" />
          </CardContent>
       </Card>
     </div>

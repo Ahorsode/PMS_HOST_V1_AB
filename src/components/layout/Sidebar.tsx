@@ -48,7 +48,7 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
 
             return (
               <div key={category.name} className="space-y-2">
-                <p className="px-3 text-xs font-bold uppercase tracking-[0.2em] text-white/20 group-hover:opacity-100 opacity-0 transition-opacity">
+                <p className="px-3 text-xs font-bold uppercase tracking-[0.2em] text-white/60 group-hover:opacity-100 opacity-0 transition-opacity">
                   {category.name}
                 </p>
                 {visibleItems.map((item) => {

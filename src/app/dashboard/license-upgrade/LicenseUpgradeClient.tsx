@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Check, Clock3, Crown, Monitor, Shield, Sparkles } from "lucide-react";
@@ -39,7 +40,7 @@ const plans: Plan[] = [
       "Full financial controls",
       "Inventory management",
       "Team management for 3 workers",
-      "Email and WhatsApp notifications",
+      "Email and WhatsApp alerts (coming soon)",
     ],
     color: "from-emerald-500 to-teal-400",
     shadow: "shadow-emerald-500/20",
@@ -406,6 +407,14 @@ export default function LicenseUpgradeClient({
                         >
                           Pay manually instead
                         </button>
+                      </p>
+                      <p className="text-center text-xs leading-5 text-white/60">
+                        One-time payment of {formatCurrency(pricing.total)} for {selectedMonths}{" "}
+                        {selectedMonths === 1 ? "month" : "months"}. It does not renew automatically. When the term ends
+                        your farm returns to Basic and your records are kept.{" "}
+                        <Link href="/refunds" className="font-semibold text-white/80 underline underline-offset-2 hover:text-white">
+                          Refund Policy
+                        </Link>
                       </p>
                     </div>
                   )}

@@ -23,7 +23,8 @@ export type RateLimitPolicyName =
   | "orders.write"
   | "license.activate"
   | "audit.restore"
-  | "billing.checkout";
+  | "billing.checkout"
+  | "account.export";
 
 type RateLimitInput = {
   policy: RateLimitPolicyName;
@@ -60,6 +61,7 @@ const RATE_LIMIT_POLICIES: Record<RateLimitPolicyName, RateLimitPolicy> = {
   "license.activate": { limit: 10, window: "1 m", sensitivity: "public" },
   "audit.restore": { limit: 8, window: "1 m", sensitivity: "admin" },
   "billing.checkout": { limit: 10, window: "10 m", sensitivity: "financial" },
+  "account.export": { limit: 3, window: "10 m", sensitivity: "authenticated" },
 };
 
 const memoryStore = new Map<string, { timestamps: number[] }>();

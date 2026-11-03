@@ -21,6 +21,15 @@ import {
 } from 'lucide-react';
 import { LandingNav } from '@/components/layout/LandingNav';
 import { BRAND_NAME } from '@/lib/brand';
+import { LegalLinks } from '@/components/legal/LegalPage';
+import {
+  BUSINESS_ADDRESS,
+  BUSINESS_NAME,
+  CONTACT_EMAIL,
+  CONTACT_PHONE_DISPLAY,
+  CONTACT_PHONE_E164,
+  CONTACT_WHATSAPP_URL,
+} from '@/lib/legal';
 
 const features = [
   {
@@ -97,9 +106,9 @@ const roles = [
 ];
 
 const contacts = [
-  { icon: Mail, label: 'Email', value: 'info@poultryledger.com', href: 'mailto:info@poultryledger.com' },
-  { icon: MessageCircle, label: 'WhatsApp', value: 'WhatsApp 0554101675', href: 'https://wa.me/233554101675' },
-  { icon: Phone, label: 'Call', value: 'Call 0554101675', href: 'tel:+233554101675' },
+  { icon: Mail, label: 'Email', value: CONTACT_EMAIL, href: `mailto:${CONTACT_EMAIL}` },
+  { icon: MessageCircle, label: 'WhatsApp', value: `WhatsApp ${CONTACT_PHONE_DISPLAY}`, href: CONTACT_WHATSAPP_URL },
+  { icon: Phone, label: 'Call', value: `Call ${CONTACT_PHONE_DISPLAY}`, href: `tel:${CONTACT_PHONE_E164}` },
 ];
 
 const plans = [
@@ -114,7 +123,7 @@ const plans = [
       'Full financial controls',
       'Inventory management',
       'Team management for 3 workers',
-      'Email and WhatsApp notifications',
+      'Email and WhatsApp alerts (coming soon)',
     ],
     highlight: false,
   },
@@ -149,7 +158,7 @@ function DashboardPreview() {
             <span className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-300">Farm overview</span>
           </div>
           <span className="rounded-full bg-emerald-400/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-300">
-            Live
+            Sample data
           </span>
         </div>
 
@@ -509,7 +518,10 @@ export default function LandingPage() {
               ))}
             </ul>
           </div>
-          <p className="text-sm text-white/50">{`© ${year} ${BRAND_NAME}. All rights reserved.`}</p>
+          <div className="space-y-2 text-sm text-white/60 md:text-right">
+            <LegalLinks className="md:justify-end" />
+            <p>{`© ${year} ${BUSINESS_NAME}${BUSINESS_ADDRESS ? `, ${BUSINESS_ADDRESS}` : ''}. All rights reserved.`}</p>
+          </div>
         </div>
       </footer>
     </div>

@@ -327,7 +327,7 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
                         <span className={cn('truncate text-xs font-black', isSelected ? 'text-white' : 'text-white/50')}>
                           {batch.name}
                         </span>
-                        <span className="truncate text-[10px] font-bold uppercase tracking-wider text-white/30">
+                        <span className="truncate text-[10px] font-bold uppercase tracking-wider text-white/60">
                           {batch.houseName}
                         </span>
                       </div>

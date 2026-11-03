@@ -28,6 +28,7 @@ model User {
   securityRevokedAt     DateTime?              @map("security_revoked_at")
   inviteCodeExpiresAt   DateTime?              @map("invite_code_expires_at")
   accounts              Account[]
+  legalAcceptances      LegalAcceptance[]
   auditLogs             AuditLog[]
   batches               Livestock[]
   feedingLogs           FeedingLog[]
@@ -85,6 +86,21 @@ model Session {
 
   @@index([userId])
   @@map("sessions")
+}
+
+// One row per user per accepted Terms/Privacy version, kept as evidence of
+// what was agreed to, when, and how.
+model LegalAcceptance {
+  id         String   @id @default(cuid())
+  userId     String   @map("user_id")
+  document   String
+  version    String
+  method     String
+  acceptedAt DateTime @default(now()) @map("accepted_at")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, document, version])
+  @@map("legal_acceptances")
 }
 
 model VerificationToken {

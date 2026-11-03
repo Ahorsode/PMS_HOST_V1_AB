@@ -272,7 +272,7 @@ export function FinanceTrendPanel({
                       style={{ backgroundColor: category.fill, opacity: amount > 0 ? 1 : 0.35 }}
                     />
                     {category.name}
-                    <span className="text-white/30">({formatCurrency(amount, 'GHS')})</span>
+                    <span className="text-white/60">({formatCurrency(amount, 'GHS')})</span>
                   </div>
                 )
               })}

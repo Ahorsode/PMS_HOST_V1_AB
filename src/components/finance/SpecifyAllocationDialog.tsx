@@ -257,7 +257,7 @@ export function SpecifyAllocationDialog({ isOpen, onOpenChange, totalAmount, onS
                         placeholder={allocationMode === 'PERCENTAGE' ? '0.00 %' : 'GH₵ 0.00'}
                         className="bg-black/40 border-white/10 text-white"
                       />
-                      <Button
+                      <Button aria-label="Remove row"
                         type="button"
                         variant="ghost"
                         size="icon"

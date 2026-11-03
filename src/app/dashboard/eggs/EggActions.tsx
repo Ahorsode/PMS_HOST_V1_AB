@@ -99,13 +99,13 @@ export const EggLogActions = ({
       </Link>
       {canEdit && (
         <>
-          <button 
+          <button aria-label="Edit egg record" 
             onClick={() => setMode('edit')}
             className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
           >
             <Edit2 className="h-4 w-4" />
           </button>
-          <button 
+          <button aria-label="Delete egg record" 
             onClick={() => setShowDeleteModal(true)}
             className="p-1 text-gray-400 hover:bg-gray-100 rounded transition-colors"
           >

@@ -84,7 +84,7 @@ export default async function CustomerStatementPage({ params }: { params: Promis
          <div className="lg:col-span-2 space-y-4">
             <h2 className="text-lg font-black text-white uppercase tracking-widest px-2 mb-4">Order History</h2>
             {transactions.length === 0 ? (
-               <div className="flex flex-col items-center justify-center py-20 bg-white/5 border border-dashed border-white/10 rounded-lg text-white/30 italic">
+               <div className="flex flex-col items-center justify-center py-20 bg-white/5 border border-dashed border-white/10 rounded-lg text-white/60 italic">
                   No orders recorded yet.
                </div>
             ) : (
@@ -101,7 +101,7 @@ export default async function CustomerStatementPage({ params }: { params: Promis
                                  <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${order.status === 'PAID' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'}`}>
                                     {order.status}
                                  </span>
-                                 <div className="flex items-center gap-1.5 text-white/30 text-[10px] font-bold">
+                                 <div className="flex items-center gap-1.5 text-white/60 text-[10px] font-bold">
                                     <Calendar className="w-3 h-3" />
                                     {new Date(order.orderDate || order.createdAt).toLocaleDateString()}
                                  </div>
@@ -123,7 +123,7 @@ export default async function CustomerStatementPage({ params }: { params: Promis
                         {order.items.map((item, idx) => (
                           <div key={idx} className="flex justify-between items-center text-[11px] font-bold">
                              <span className="text-white/60 uppercase tracking-widest truncate max-w-[70%]">
-                               {item.description} <span className="text-white/20 italic font-normal">x{item.quantity}</span>
+                               {item.description} <span className="text-white/60 italic font-normal">x{item.quantity}</span>
                              </span>
                              <span className="text-white shrink-0">{formatCurrency(item.totalPrice)}</span>
                           </div>
