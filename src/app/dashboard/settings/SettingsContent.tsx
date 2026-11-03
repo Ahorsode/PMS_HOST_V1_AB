@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Home, Settings as SettingsIcon, Bell, Shield, Plus, Loader2, Save, CheckCircle2, Monitor, Trash2 } from 'lucide-react';
+import { Home, Settings as SettingsIcon, Bell, Shield, Plus, Loader2, Save, CheckCircle2, Monitor, Trash2, Egg, ShoppingCart, SlidersHorizontal } from 'lucide-react';
 import { updateFarmInfo, createHouse } from '@/lib/actions/dashboard-actions';
 import { updateFarmSettings, getFarmSettings, getSalesSettings, updateSalesSettings } from '@/lib/actions/preference-actions';
 import { Input } from '@/components/ui/Input';
@@ -11,6 +11,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { MutationBoundary } from '@/components/ui/MutationFeedback';
 
 const SHOW_USER_DESKTOP_LICENSES = process.env.NEXT_PUBLIC_SHOW_USER_DESKTOP_LICENSES !== 'false';
+
+// Tabs whose fields come from farm/sales settings and need them loaded.
+const PREFERENCE_TABS = ['farm', 'notifications', 'egg-logging', 'sales'];
 
 interface InventoryItem {
   id: string;
@@ -45,7 +48,7 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
 
   const [isUpdatingFarm, setIsUpdatingFarm] = useState(false);
   const [isAddingHouse, setIsAddingHouse] = useState(false);
-  const [isSavingPrefs, setIsSavingPrefs] = useState(false);
+  const [savingSection, setSavingSection] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
   
   // Preference states
@@ -62,14 +65,15 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
   const [defaultDiscountType, setDefaultDiscountType] = useState<'flat' | 'percent' | 'item'>('item');
   const [reorderLevels, setReorderLevels] = useState<Record<string, number>>({});
   const [isLoadingPrefs, setIsLoadingPrefs] = useState(false);
+  const [prefsLoaded, setPrefsLoaded] = useState(false);
   const [growthStandards, setGrowthStandards] = useState<any[]>([]);
   const [savingReorderId, setSavingReorderId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (activeTab === 'preferences' || activeTab === 'notifications') {
+    if (!prefsLoaded && PREFERENCE_TABS.includes(activeTab)) {
       loadPreferences();
     }
-  }, [activeTab]);
+  }, [activeTab, prefsLoaded]);
 
   useEffect(() => {
     const initial: Record<string, number> = {};
@@ -107,6 +111,7 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
       const { getGrowthStandards } = await import('@/lib/actions/preference-actions');
       const standards = await getGrowthStandards();
       setGrowthStandards(standards);
+      setPrefsLoaded(true);
     } catch (err) {
       console.error('Failed to load preferences', err);
     } finally {
@@ -138,32 +143,50 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
     }
   };
 
-  const handleSaveReminders = async () => {
-    setIsSavingPrefs(true);
+  const saveSection = async (section: string, label: string, save: () => Promise<unknown>) => {
+    setSavingSection(section);
     setMessage(null);
     try {
-      await updateFarmSettings({
+      await save();
+      setMessage({ type: 'success', text: `${label} saved!` });
+    } catch (err) {
+      setMessage({ type: 'error', text: `Failed to save ${label.toLowerCase()}.` });
+    } finally {
+      setSavingSection(null);
+    }
+  };
+
+  const handleSaveFarmDefaults = () =>
+    saveSection('farm-defaults', 'Farm defaults', () =>
+      updateFarmSettings({ currency, growthTargetStandard: growthTarget }),
+    );
+
+  const handleSaveReminders = () =>
+    saveSection('reminders', 'Reminder times', () =>
+      updateFarmSettings({
         eggRecordReminderTime: eggReminderTime,
         feedRecordReminderTime: feedReminderTime,
-        currency,
-        growthTargetStandard: growthTarget,
+      }),
+    );
+
+  const handleSaveEggLogging = () =>
+    saveSection('egg-logging', 'Egg logging defaults', () =>
+      updateFarmSettings({
         defaultEggUnit,
         allowEggUnitChange,
         defaultEggSortMode,
         allowEggSortModeChange,
-      });
-      await updateSalesSettings({
+      }),
+    );
+
+  const handleSaveSales = () =>
+    saveSection('sales', 'Sales settings', () =>
+      updateSalesSettings({
         allowBatchOverride,
         allowWorkerDiscounts,
         defaultDiscountType,
-      });
-      setMessage({ type: 'success', text: 'Farm preferences saved!' });
-    } catch (err) {
-      setMessage({ type: 'error', text: 'Failed to save reminder times.' });
-    } finally {
-      setIsSavingPrefs(false);
-    }
-  };
+      }),
+    );
 
   const handleSaveReorderLevel = async (itemId: string) => {
     if (savingReorderId === itemId) return;
@@ -183,6 +206,8 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
   const tabs = [
     { id: 'farm', label: 'Farm Info', icon: Home },
     { id: 'notifications', label: 'Reminders', icon: Bell },
+    { id: 'egg-logging', label: 'Egg Logging', icon: Egg },
+    { id: 'sales', label: 'Sales', icon: ShoppingCart },
     { id: 'preferences', label: 'Stock Levels', icon: SettingsIcon },
     { id: 'security', label: 'Security', icon: Shield },
     { id: 'trash', label: 'Data Recovery', icon: Trash2, href: '/dashboard/settings/trash' },
@@ -273,6 +298,56 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
 
             <Card>
               <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <SlidersHorizontal className="w-5 h-5 text-purple-400" />
+                  Farm Defaults
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-5">
+                {isLoadingPrefs ? (
+                  <div className="flex items-center gap-2 text-white/70"><Loader2 className="animate-spin w-4 h-4" /> Loading…</div>
+                ) : (
+                  <div className="space-y-5">
+                    <div className="p-4 rounded-md bg-purple-500/10 border border-purple-500/20 space-y-2">
+                      <p className="text-sm font-bold text-purple-400 uppercase tracking-widest">💰 Farm Currency</p>
+                      <p className="text-xs text-white/70">Used for sales, orders, and financial reporting.</p>
+                      <select
+                        value={currency}
+                        onChange={e => setCurrency(e.target.value)}
+                        className="bg-black/60 border border-white/10 text-white rounded-md px-3 py-2 text-sm font-bold focus:outline-none focus:border-purple-400/60 focus:ring-1 focus:ring-purple-400/30"
+                      >
+                        <option value="GHS">Ghanaian Cedi (GHS)</option>
+                        <option value="USD">US Dollar (USD)</option>
+                        <option value="NGN">Nigerian Naira (NGN)</option>
+                        <option value="KES">Kenyan Shilling (KES)</option>
+                      </select>
+                    </div>
+
+                    <div className="p-4 rounded-md bg-amber-500/10 border border-amber-500/20 space-y-2">
+                      <p className="text-sm font-bold text-amber-400 uppercase tracking-widest">📊 Default Growth Target</p>
+                      <p className="text-xs text-white/70">Benchmark flock performance against industry standards.</p>
+                      <select
+                        value={growthTarget || ''}
+                        onChange={e => setGrowthTarget(e.target.value ? Number(e.target.value) : undefined)}
+                        className="bg-black/60 border border-white/10 text-white rounded-md px-3 py-2 text-sm font-bold focus:outline-none focus:border-amber-400/60 focus:ring-1 focus:ring-amber-400/30 w-full"
+                      >
+                        <option value="">Select a Standard...</option>
+                        {growthStandards.map(s => (
+                          <option key={s.id} value={s.id}>{s.name} ({s.livestockType})</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <Button onClick={handleSaveFarmDefaults} isLoading={savingSection === 'farm-defaults'}>
+                      <Save className="w-4 h-4 mr-2" /> Save Defaults
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
                 <CardTitle>House Configuration</CardTitle>
               </CardHeader>
               <CardContent>
@@ -323,136 +398,148 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
                     />
                   </div>
 
-                  <div className="p-4 rounded-md bg-purple-500/10 border border-purple-500/20 space-y-2">
-                    <p className="text-sm font-bold text-purple-400 uppercase tracking-widest">💰 Farm Currency</p>
-                    <p className="text-xs text-white/70">Used for sales, orders, and financial reporting.</p>
-                    <select
-                      value={currency}
-                      onChange={e => setCurrency(e.target.value)}
-                      className="bg-black/60 border border-white/10 text-white rounded-md px-3 py-2 text-sm font-bold focus:outline-none focus:border-purple-400/60 focus:ring-1 focus:ring-purple-400/30"
-                    >
-                      <option value="GHS">Ghanaian Cedi (GHS)</option>
-                      <option value="USD">US Dollar (USD)</option>
-                      <option value="NGN">Nigerian Naira (NGN)</option>
-                      <option value="KES">Kenyan Shilling (KES)</option>
-                    </select>
-                  </div>
+                  <Button onClick={handleSaveReminders} isLoading={savingSection === 'reminders'} className="w-full">
+                    <Save className="w-4 h-4 mr-2" /> Save Reminder Times
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
-                  <div className="p-4 rounded-md bg-amber-500/10 border border-amber-500/20 space-y-2">
-                    <p className="text-sm font-bold text-amber-400 uppercase tracking-widest">📊 Default Growth Target</p>
-                    <p className="text-xs text-white/70">Benchmark flock performance against industry standards.</p>
-                    <select
-                      value={growthTarget || ''}
-                      onChange={e => setGrowthTarget(Number(e.target.value))}
-                      className="bg-black/60 border border-white/10 text-white rounded-md px-3 py-2 text-sm font-bold focus:outline-none focus:border-amber-400/60 focus:ring-1 focus:ring-amber-400/30 w-full"
-                    >
-                      <option value="">Select a Standard...</option>
-                      {growthStandards.map(s => (
-                        <option key={s.id} value={s.id}>{s.name} ({s.livestockType})</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="p-4 rounded-md bg-green-500/10 border border-green-500/20 space-y-3">
-                    <p className="text-sm font-bold text-green-400 uppercase tracking-widest">🥚 Egg Logging Defaults</p>
-                    <p className="text-xs text-white/70">Default unit and sorting mode for worker egg production entries.</p>
-                    <div className="space-y-2">
-                      <p className="text-xs font-bold text-white/60 uppercase tracking-widest">Default Unit</p>
-                      <div className="grid grid-cols-2 gap-2">
-                        {(['crate', 'individual'] as const).map((unit) => (
-                          <button
-                            key={unit}
-                            type="button"
-                            onClick={() => setDefaultEggUnit(unit)}
-                            className={`py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${
-                              defaultEggUnit === unit
-                                ? 'bg-green-500 text-black'
-                                : 'bg-white/10 text-white/70 hover:bg-white/10'
-                            }`}
-                          >
-                            {unit === 'crate' ? 'Crate' : 'Individual'}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={allowEggUnitChange}
-                        onChange={(e) => setAllowEggUnitChange(e.target.checked)}
-                        className="rounded border-white/20 bg-black/60 text-green-500 focus:ring-green-500/30"
-                      />
-                      <span className="text-xs font-bold text-white/80">Let workers change the unit per entry</span>
-                    </label>
-                    <div className="space-y-2">
-                      <p className="text-xs font-bold text-white/60 uppercase tracking-widest">Default Sort Mode</p>
-                      <div className="grid grid-cols-2 gap-2">
-                        {(['unsorted', 'sorted'] as const).map((mode) => (
-                          <button
-                            key={mode}
-                            type="button"
-                            onClick={() => setDefaultEggSortMode(mode)}
-                            className={`py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${
-                              defaultEggSortMode === mode
-                                ? 'bg-emerald-500 text-white'
-                                : 'bg-white/10 text-white/70 hover:bg-white/10'
-                            }`}
-                          >
-                            {mode === 'sorted' ? 'Sorted' : 'Unsorted'}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={allowEggSortModeChange}
-                        onChange={(e) => setAllowEggSortModeChange(e.target.checked)}
-                        className="rounded border-white/20 bg-black/60 text-green-500 focus:ring-green-500/30"
-                      />
-                      <span className="text-xs font-bold text-white/80">Let workers change sort mode per entry</span>
-                    </label>
-                  </div>
-
-                  <div className="p-4 rounded-md bg-cyan-500/10 border border-cyan-500/20 space-y-3">
-                    <p className="text-sm font-bold text-cyan-400 uppercase tracking-widest">🛒 Sales Settings</p>
-                    <p className="text-xs text-white/70">Control what workers can override during farm-gate sales.</p>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={allowBatchOverride}
-                        onChange={(e) => setAllowBatchOverride(e.target.checked)}
-                        className="rounded border-white/20 bg-black/60 text-cyan-500 focus:ring-cyan-500/30"
-                      />
-                      <span className="text-xs font-bold text-white/80">Allow selecting a specific batch instead of FIFO</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={allowWorkerDiscounts}
-                        onChange={(e) => setAllowWorkerDiscounts(e.target.checked)}
-                        className="rounded border-white/20 bg-black/60 text-cyan-500 focus:ring-cyan-500/30"
-                      />
-                      <span className="text-xs font-bold text-white/80">Allow workers to apply discounts</span>
-                    </label>
-                    {allowWorkerDiscounts ? (
-                      <div className="space-y-2">
-                        <p className="text-xs font-bold text-white/60 uppercase tracking-widest">Worker Discount Type</p>
-                        <select
-                          value={defaultDiscountType}
-                          onChange={(e) => setDefaultDiscountType(e.target.value as 'flat' | 'percent' | 'item')}
-                          className="bg-black/60 border border-white/10 text-white rounded-md px-3 py-2 text-sm font-bold focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30 w-full"
+        {activeTab === 'egg-logging' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Egg className="w-5 h-5 text-green-400" />
+                Egg Logging Defaults
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <p className="text-sm text-white/80 leading-relaxed">
+                Default unit and sorting mode for worker egg production entries.
+              </p>
+              {isLoadingPrefs ? (
+                <div className="flex items-center gap-2 text-white/70"><Loader2 className="animate-spin w-4 h-4" /> Loading…</div>
+              ) : (
+                <div className="space-y-5">
+                  <div className="space-y-2">
+                    <p className="text-xs font-bold text-white/60 uppercase tracking-widest">Default Unit</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {(['crate', 'individual'] as const).map((unit) => (
+                        <button
+                          key={unit}
+                          type="button"
+                          onClick={() => setDefaultEggUnit(unit)}
+                          className={`py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${
+                            defaultEggUnit === unit
+                              ? 'bg-green-500 text-black'
+                              : 'bg-white/10 text-white/70 hover:bg-white/10'
+                          }`}
                         >
-                          <option value="item">Give away items</option>
-                          <option value="flat">Flat amount</option>
-                          <option value="percent">Percent</option>
-                        </select>
-                      </div>
-                    ) : null}
+                          {unit === 'crate' ? 'Crate' : 'Individual'}
+                        </button>
+                      ))}
+                    </div>
                   </div>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={allowEggUnitChange}
+                      onChange={(e) => setAllowEggUnitChange(e.target.checked)}
+                      className="rounded border-white/20 bg-black/60 text-green-500 focus:ring-green-500/30"
+                    />
+                    <span className="text-xs font-bold text-white/80">Let workers change the unit per entry</span>
+                  </label>
+                  <div className="space-y-2">
+                    <p className="text-xs font-bold text-white/60 uppercase tracking-widest">Default Sort Mode</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {(['unsorted', 'sorted'] as const).map((mode) => (
+                        <button
+                          key={mode}
+                          type="button"
+                          onClick={() => setDefaultEggSortMode(mode)}
+                          className={`py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${
+                            defaultEggSortMode === mode
+                              ? 'bg-emerald-500 text-white'
+                              : 'bg-white/10 text-white/70 hover:bg-white/10'
+                          }`}
+                        >
+                          {mode === 'sorted' ? 'Sorted' : 'Unsorted'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={allowEggSortModeChange}
+                      onChange={(e) => setAllowEggSortModeChange(e.target.checked)}
+                      className="rounded border-white/20 bg-black/60 text-green-500 focus:ring-green-500/30"
+                    />
+                    <span className="text-xs font-bold text-white/80">Let workers change sort mode per entry</span>
+                  </label>
 
-                  <Button onClick={handleSaveReminders} isLoading={isSavingPrefs} className="w-full">
-                    <Save className="w-4 h-4 mr-2" /> Save Reminder Settings
+                  <Button onClick={handleSaveEggLogging} isLoading={savingSection === 'egg-logging'} className="w-full">
+                    <Save className="w-4 h-4 mr-2" /> Save Egg Logging Defaults
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {activeTab === 'sales' && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShoppingCart className="w-5 h-5 text-cyan-400" />
+                Sales Settings
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5">
+              <p className="text-sm text-white/80 leading-relaxed">
+                Control what workers can override during farm-gate sales.
+              </p>
+              {isLoadingPrefs ? (
+                <div className="flex items-center gap-2 text-white/70"><Loader2 className="animate-spin w-4 h-4" /> Loading…</div>
+              ) : (
+                <div className="space-y-5">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={allowBatchOverride}
+                      onChange={(e) => setAllowBatchOverride(e.target.checked)}
+                      className="rounded border-white/20 bg-black/60 text-cyan-500 focus:ring-cyan-500/30"
+                    />
+                    <span className="text-xs font-bold text-white/80">Allow selecting a specific batch instead of FIFO</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={allowWorkerDiscounts}
+                      onChange={(e) => setAllowWorkerDiscounts(e.target.checked)}
+                      className="rounded border-white/20 bg-black/60 text-cyan-500 focus:ring-cyan-500/30"
+                    />
+                    <span className="text-xs font-bold text-white/80">Allow workers to apply discounts</span>
+                  </label>
+                  {allowWorkerDiscounts ? (
+                    <div className="space-y-2">
+                      <p className="text-xs font-bold text-white/60 uppercase tracking-widest">Worker Discount Type</p>
+                      <select
+                        value={defaultDiscountType}
+                        onChange={(e) => setDefaultDiscountType(e.target.value as 'flat' | 'percent' | 'item')}
+                        className="bg-black/60 border border-white/10 text-white rounded-md px-3 py-2 text-sm font-bold focus:outline-none focus:border-cyan-400/60 focus:ring-1 focus:ring-cyan-400/30 w-full"
+                      >
+                        <option value="item">Give away items</option>
+                        <option value="flat">Flat amount</option>
+                        <option value="percent">Percent</option>
+                      </select>
+                    </div>
+                  ) : null}
+
+                  <Button onClick={handleSaveSales} isLoading={savingSection === 'sales'} className="w-full">
+                    <Save className="w-4 h-4 mr-2" /> Save Sales Settings
                   </Button>
                 </div>
               )}
