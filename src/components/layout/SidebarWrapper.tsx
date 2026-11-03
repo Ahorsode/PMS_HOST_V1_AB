@@ -3,7 +3,8 @@
 import React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { signOut } from 'next-auth/react';
+import { ArrowLeft, LogOut } from 'lucide-react';
 import { Sidebar } from './Sidebar';
 import { BottomNav } from './BottomNav';
 import { cn } from '@/lib/utils';
@@ -81,6 +82,14 @@ export const SidebarWrapper = ({
             >
               {(role?.charAt(0) || '?').toUpperCase()}
             </Link>
+            <button
+              type="button"
+              onClick={() => signOut({ callbackUrl: '/login' })}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/70 transition-colors hover:bg-red-500/15 hover:text-red-300"
+              aria-label="Sign out"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
           </header>
         )}
         <div className={cn(
