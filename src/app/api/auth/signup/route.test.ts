@@ -117,6 +117,7 @@ describe("signup route", () => {
       firstname: "Ama",
       phoneNumber: "0554101675",
       password: "a-strong-password",
+      acceptTerms: true,
     });
 
     const farmData = mocks.txFarmCreate.mock.calls[0][0].data;
