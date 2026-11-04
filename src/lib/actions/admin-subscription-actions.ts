@@ -4,9 +4,13 @@ import { revalidatePath } from 'next/cache'
 import { requirePaymentAdminAction } from '@/lib/admin-auth'
 import { logAdminAction } from '@/lib/admin-audit'
 import prisma from '@/lib/db'
-import { applyPaidUpgrade } from '@/lib/billing/apply-paid-upgrade'
+import { applyPaidUpgrade, computePaidPeriodEnd } from '@/lib/billing/apply-paid-upgrade'
 import { isPlanType } from '@/lib/billing/pricing'
 import type { PlanType } from '@prisma/client'
+
+export type AdminUpgradeFarmTierResult =
+  | { success: true; periodEnd: string }
+  | { success: false; error: string }
 
 export async function adminUpgradeFarmTier(
   farmId: string,
@@ -14,7 +18,7 @@ export async function adminUpgradeFarmTier(
   durationDays: number,
   /** Defaults to the farm's current plan type. */
   planType?: PlanType,
-) {
+): Promise<AdminUpgradeFarmTierResult> {
   let admin: { id: string; username: string }
   try {
     admin = await requirePaymentAdminAction('farms.manage')
@@ -26,17 +30,29 @@ export async function adminUpgradeFarmTier(
     return { success: false, error: 'Choose a valid access duration' }
   }
 
-  const periodEnd = new Date()
-  periodEnd.setUTCDate(periodEnd.getUTCDate() + durationDays)
-
   try {
-    await prisma.$transaction(async (tx) => {
-      const farm = await tx.farm.findUnique({ where: { id: farmId }, select: { planType: true } })
+    const periodEnd = await prisma.$transaction(async (tx) => {
+      const farm = await tx.farm.findUnique({
+        where: { id: farmId },
+        select: { planType: true, masterLicenseStatus: true, trialExpiresAt: true },
+      })
       if (!farm) throw new Error('Farm not found')
+
+      const nextPlanType = isPlanType(planType) ? planType : farm.planType
+
+      // Same-tier renewals extend from the current paid expiry, matching Paystack.
+      const periodEnd = computePaidPeriodEnd({
+        tier,
+        planType: nextPlanType,
+        currentPlanType: farm.planType,
+        durationDays,
+        currentStatus: farm.masterLicenseStatus,
+        currentExpiresAt: farm.trialExpiresAt,
+      })
 
       await applyPaidUpgrade(tx, {
         farmId,
-        planType: isPlanType(planType) ? planType : farm.planType,
+        planType: nextPlanType,
         tier,
         periodEnd,
         eventMetadata: {
@@ -45,6 +61,8 @@ export async function adminUpgradeFarmTier(
           durationDays,
         },
       })
+
+      return periodEnd
     })
 
     await logAdminAction(admin, {
@@ -55,10 +73,10 @@ export async function adminUpgradeFarmTier(
       details: { tier, durationDays, planType: planType ?? null },
     })
     revalidatePath('/admin/licenses')
-      revalidatePath('/admin/farms')
+    revalidatePath('/admin/farms')
     revalidatePath(`/admin/farms/${farmId}`)
 
-    return { success: true }
+    return { success: true, periodEnd: periodEnd.toISOString() }
   } catch (error) {
     console.error('[adminUpgradeFarmTier]', error)
     return {

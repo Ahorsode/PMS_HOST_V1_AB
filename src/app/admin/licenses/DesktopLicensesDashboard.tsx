@@ -342,12 +342,19 @@ export default function DesktopLicensesDashboard({
     setGeneratedExpiry(null)
 
     startTransition(async () => {
-      const result = await confirmManualLicensePayment({
-        deviceRegistrationId: selectedRow.id,
-        durationDays,
-        amount: Number(amount),
-        paymentModeNote,
-      })
+      let result: Awaited<ReturnType<typeof confirmManualLicensePayment>>
+      try {
+        result = await confirmManualLicensePayment({
+          deviceRegistrationId: selectedRow.id,
+          durationDays,
+          amount: Number(amount),
+          paymentModeNote,
+        })
+      } catch (error) {
+        console.error('[PaymentAdminDashboard] confirm payment failed', error)
+        setFormError('Request failed. Check your connection and try again.')
+        return
+      }
 
       if (!result.success) {
         setFormError(result.error)
