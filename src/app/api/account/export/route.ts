@@ -4,6 +4,9 @@ import { getAuthContext } from '@/lib/auth-utils';
 import { checkRateLimit, rateLimitHeaders } from '@/lib/performance/rate-limit';
 import { BRAND_NAME } from '@/lib/brand';
 
+// Per-user download: never prerender or cache it at build time.
+export const dynamic = 'force-dynamic';
+
 /**
  * Lets any signed-in user download their personal data. Farm owners also get
  * every record of their active farm. Secrets (password hashes, OAuth and
