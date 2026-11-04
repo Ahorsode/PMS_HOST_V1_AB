@@ -6,7 +6,7 @@ vi.mock('@/lib/db', () => ({ default: {} }))
 import { isValidPaystackSignature } from './paystack'
 import { checkTransactionMatches, type PaystackCheckoutRecord } from './paystack-fulfillment'
 import { computePaidPeriodEnd } from './apply-paid-upgrade'
-import { calculateUpgradeTotal, normalizeTermMonths, toPesewas } from './pricing'
+import { calculateUpgradeTotal, DEFAULT_BILLING_CONFIG, normalizeTermMonths, toPesewas } from './pricing'
 
 const SECRET = 'sk_test_example'
 
@@ -91,17 +91,17 @@ describe('computePaidPeriodEnd', () => {
 
 describe('pricing', () => {
   it('prices the four plans monthly', () => {
-    expect(calculateUpgradeTotal('SOLO', 'STANDARD', 1).total).toBe(200)
-    expect(calculateUpgradeTotal('SOLO', 'PREMIUM', 1).total).toBe(330)
-    expect(calculateUpgradeTotal('TEAM', 'STANDARD', 1).total).toBe(350)
-    expect(calculateUpgradeTotal('TEAM', 'PREMIUM', 1).total).toBe(470)
+    expect(calculateUpgradeTotal(DEFAULT_BILLING_CONFIG, 'SOLO', 'STANDARD', 1).total).toBe(200)
+    expect(calculateUpgradeTotal(DEFAULT_BILLING_CONFIG, 'SOLO', 'PREMIUM', 1).total).toBe(330)
+    expect(calculateUpgradeTotal(DEFAULT_BILLING_CONFIG, 'TEAM', 'STANDARD', 1).total).toBe(350)
+    expect(calculateUpgradeTotal(DEFAULT_BILLING_CONFIG, 'TEAM', 'PREMIUM', 1).total).toBe(470)
   })
 
   it('applies term discounts and converts to pesewas', () => {
-    expect(calculateUpgradeTotal('TEAM', 'STANDARD', 3).total).toBe(997.5)
+    expect(calculateUpgradeTotal(DEFAULT_BILLING_CONFIG, 'TEAM', 'STANDARD', 3).total).toBe(997.5)
     expect(toPesewas(997.5)).toBe(99750)
-    expect(calculateUpgradeTotal('TEAM', 'PREMIUM', 12).total).toBe(4794)
-    expect(calculateUpgradeTotal('SOLO', 'PREMIUM', 6).total).toBe(1782)
+    expect(calculateUpgradeTotal(DEFAULT_BILLING_CONFIG, 'TEAM', 'PREMIUM', 12).total).toBe(4794)
+    expect(calculateUpgradeTotal(DEFAULT_BILLING_CONFIG, 'SOLO', 'PREMIUM', 6).total).toBe(1782)
   })
 
   it('falls back to one month for unsupported terms', () => {

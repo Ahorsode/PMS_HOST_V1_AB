@@ -34,13 +34,14 @@ import { getDevicesForFarm, type AdminFarmDevice } from '@/lib/actions/admin-dev
 import { adminUpgradeFarmTier } from '@/lib/actions/admin-subscription-actions'
 import { cn, formatCurrency } from '@/lib/utils'
 import { MobileCardList } from '@/components/ui/MobileCardList'
+import { DESKTOP_LICENSE_DAYS, type BillingConfig, type DesktopLicenseDays } from '@/lib/billing/pricing'
 
-const durationPacks = [
-  { value: 30, label: '+30 Days Starter Extension', amount: '120' },
-  { value: 90, label: '+3 Months Subscription', amount: '300' },
-  { value: 180, label: '+6 Months Subscription', amount: '560' },
-  { value: 365, label: '+12 Months Subscription', amount: '1000' },
-]
+const durationPackLabels: Record<DesktopLicenseDays, string> = {
+  30: '+30 Days Starter Extension',
+  90: '+3 Months Subscription',
+  180: '+6 Months Subscription',
+  365: '+12 Months Subscription',
+}
 
 const statusStyle: Record<LicenseStatus, string> = {
   PAID: 'border-emerald-300/40 bg-emerald-300/15 text-emerald-100',
@@ -175,11 +176,19 @@ function getDeviceAccessLabel(device: AdminFarmDevice) {
 export default function PaymentAdminDashboard({
   data,
   adminName,
+  desktopLicensePrices,
 }: {
   data: PaymentAdminDashboardData
   adminName: string
+  /** Admin-set cash/MoMo price per pack, from Plans & Pricing. */
+  desktopLicensePrices: BillingConfig['desktopLicensePrices']
 }) {
   const router = useRouter()
+  const durationPacks = DESKTOP_LICENSE_DAYS.map((value) => ({
+    value,
+    label: durationPackLabels[value],
+    amount: String(desktopLicensePrices[`${value}`]),
+  }))
   const [rows, setRows] = useState<PaymentAdminRow[]>(Array.isArray(data?.rows) ? data.rows : [])
   const [metrics, setMetrics] = useState(
     data?.metrics ?? {
@@ -197,7 +206,7 @@ export default function PaymentAdminDashboard({
   const [devicesError, setDevicesError] = useState<string | null>(null)
   const [selectedRow, setSelectedRow] = useState<PaymentAdminRow | null>(null)
   const [durationDays, setDurationDays] = useState(90)
-  const [amount, setAmount] = useState('300')
+  const [amount, setAmount] = useState(() => String(desktopLicensePrices['90']))
   const [paymentModeNote, setPaymentModeNote] = useState('')
   const [generatedToken, setGeneratedToken] = useState<string | null>(null)
   const [generatedExpiry, setGeneratedExpiry] = useState<string | null>(null)

@@ -8,7 +8,15 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { requestSubscriptionUpgrade, startPaystackCheckout } from "@/lib/actions/subscription-actions";
 import { type DesktopLicenseRow } from "@/lib/actions/licenses";
-import { PLAN_MONTHLY_PRICE, PLAN_NAMES, TERM_DISCOUNTS, type PaidTier } from "@/lib/billing/pricing";
+import {
+  PLAN_FEATURE_DETAILS,
+  PLAN_FEATURE_KEYS,
+  staffLimitLabel,
+  termDiscount,
+  TERM_MONTHS,
+  type BillingConfig,
+  type PaidTier,
+} from "@/lib/billing/pricing";
 import { cn } from "@/lib/utils";
 
 type PlanTypeValue = "SOLO" | "TEAM";
@@ -23,31 +31,14 @@ export type PlanAccessView = {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-const SOME_FEATURES = [
+/** Included in every paid plan; the admin-configurable features are listed after these. */
+const CORE_FEATURES = [
   "Egg, feed and mortality logging for every batch",
   "Houses and livestock batches",
-  "Sales, orders and PDF invoices",
+  "Sales and orders",
   "Inventory and feed formulation",
   "Reports and analytics",
 ];
-
-const ALL_FEATURES_EXTRA = [
-  "Customers (CRM)",
-  "Suppliers",
-  "Finance hub and executive dashboard",
-  "Detailed batch management",
-  "Health schedules and quarantine",
-];
-
-const STAFF_LINE: Record<PlanTypeValue, Record<PaidTier, string>> = {
-  SOLO: { STANDARD: "Owner only, no staff", PREMIUM: "Owner only, no staff" },
-  TEAM: { STANDARD: "Up to 4 staff", PREMIUM: "Unlimited staff" },
-};
-
-const monthOptions = Object.entries(TERM_DISCOUNTS).map(([months, discount]) => ({
-  months: Number(months),
-  discount,
-}));
 
 function formatCurrency(value: number) {
   return `GHS ${new Intl.NumberFormat("en-GH", {
@@ -113,8 +104,7 @@ function formatRemaining(expiry: Date | null, now: Date) {
   return `${days} days · ${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")} remaining`;
 }
 
-function getTermPricing(months: number, monthlyPrice: number) {
-  const discount = TERM_DISCOUNTS[months] ?? 0;
+function getTermPricing(months: number, monthlyPrice: number, discount: number) {
   const subtotal = months * monthlyPrice;
   const total = subtotal * (1 - discount);
 
@@ -125,7 +115,7 @@ function getTermPricing(months: number, monthlyPrice: number) {
   };
 }
 
-function describeCurrentPlan(access: PlanAccessView, planType: PlanTypeValue) {
+function describeCurrentPlan(access: PlanAccessView, planType: PlanTypeValue, billing: BillingConfig) {
   if (access.state === "LOCKED") {
     return {
       label: "NO ACTIVE PLAN",
@@ -141,7 +131,7 @@ function describeCurrentPlan(access: PlanAccessView, planType: PlanTypeValue) {
     ? "FREE TRIAL · ALL FEATURES"
     : access.tier === "BASIC"
       ? "NO ACTIVE PLAN"
-      : PLAN_NAMES[planType][access.tier].toUpperCase();
+      : billing.plans[planType][access.tier].name.toUpperCase();
 
   if (access.state === "GRACE") {
     return {
@@ -167,6 +157,7 @@ export default function LicenseUpgradeClient({
   initialType,
   access,
   devices,
+  billing,
 }: {
   /** The farm's current plan type. */
   planType: PlanTypeValue;
@@ -174,13 +165,16 @@ export default function LicenseUpgradeClient({
   initialType: PlanTypeValue;
   access: PlanAccessView;
   devices: DesktopLicenseRow[];
+  /** Admin-set plan names, prices, features and discounts. */
+  billing: BillingConfig;
 }) {
   const router = useRouter();
   const [selectedType, setSelectedType] = useState<PlanTypeValue>(initialType);
   const [selectedMonths, setSelectedMonths] = useState(1);
   const [now, setNow] = useState(() => new Date());
   const [isUpgrading, startTransition] = useTransition();
-  const current = describeCurrentPlan(access, planType);
+  const current = describeCurrentPlan(access, planType, billing);
+  const monthOptions = TERM_MONTHS.map((months) => ({ months, discount: billing.termDiscounts[`${months}`] }));
   const timerEnd = current.timerEnd ? new Date(current.timerEnd) : null;
 
   React.useEffect(() => {
@@ -340,8 +334,9 @@ export default function LicenseUpgradeClient({
 
       <section className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {tiers.map((plan) => {
-          const monthly = PLAN_MONTHLY_PRICE[selectedType][plan.tier];
-          const pricing = getTermPricing(selectedMonths, monthly);
+          const planConfig = billing.plans[selectedType][plan.tier];
+          const monthly = planConfig.monthlyPrice;
+          const pricing = getTermPricing(selectedMonths, monthly, termDiscount(billing, selectedMonths));
           const Icon = plan.icon;
           const isCurrent =
             !access.isTrial &&
@@ -367,7 +362,7 @@ export default function LicenseUpgradeClient({
                     </div>
                     <div>
                       <h3 className="text-2xl font-bold text-white">
-                        {PLAN_NAMES[selectedType][plan.tier]}
+                        {planConfig.name}
                         {isCurrent ? (
                           <span className="ml-3 align-middle rounded-full border border-emerald-300/25 bg-emerald-400/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-100">
                             Current
@@ -375,7 +370,7 @@ export default function LicenseUpgradeClient({
                         ) : null}
                       </h3>
                       <p className="mt-2 text-sm font-medium leading-6 text-white/70">
-                        {STAFF_LINE[selectedType][plan.tier]}
+                        {staffLimitLabel(selectedType, planConfig.staffLimit)}
                       </p>
                     </div>
                   </div>
@@ -386,7 +381,7 @@ export default function LicenseUpgradeClient({
                   </div>
 
                   <ul className="flex-1 space-y-2">
-                    {SOME_FEATURES.map((feature) => (
+                    {CORE_FEATURES.map((feature) => (
                       <li key={feature} className="flex items-center gap-2 text-sm font-medium text-white/75">
                         <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/10">
                           <Check className="h-3 w-3 text-emerald-300" />
@@ -394,11 +389,12 @@ export default function LicenseUpgradeClient({
                         {feature}
                       </li>
                     ))}
-                    {ALL_FEATURES_EXTRA.map((feature) => {
-                      const included = plan.tier === "PREMIUM";
+                    {PLAN_FEATURE_KEYS.map((key) => {
+                      const feature = PLAN_FEATURE_DETAILS[key].label;
+                      const included = planConfig.features.includes(key);
                       return (
                         <li
-                          key={feature}
+                          key={key}
                           className={cn("flex items-center gap-2 text-sm font-medium", included ? "text-white/75" : "text-white/35 line-through")}
                         >
                           <span className={cn("flex h-5 w-5 shrink-0 items-center justify-center rounded-full", included ? "bg-emerald-500/10" : "bg-white/5")}>

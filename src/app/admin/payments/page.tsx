@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { JetBrains_Mono, Space_Grotesk } from 'next/font/google'
 import { requirePaymentAdminPage } from '@/lib/admin-auth'
 import { getPaymentAdminDashboardData } from '@/lib/actions/admin-payment-actions'
+import { getBillingConfig } from '@/lib/billing/billing-config'
 import PaymentAdminDashboard from './PaymentAdminDashboard'
 
 export const dynamic = 'force-dynamic'
@@ -25,7 +26,7 @@ const jetBrainsMono = JetBrains_Mono({
 
 export default async function AdminPaymentsPage() {
   const adminUser = await requirePaymentAdminPage()
-  const dashboardData = await getPaymentAdminDashboardData()
+  const [dashboardData, billing] = await Promise.all([getPaymentAdminDashboardData(), getBillingConfig()])
 
   const adminName = adminUser.username || 'Payment admin'
 
@@ -33,7 +34,7 @@ export default async function AdminPaymentsPage() {
     <main
       className={`${spaceGrotesk.variable} ${jetBrainsMono.variable} min-h-screen bg-[#11140d] text-[#f7f1df] font-[var(--font-payment-admin)]`}
     >
-      <PaymentAdminDashboard data={dashboardData} adminName={adminName} />
+      <PaymentAdminDashboard data={dashboardData} adminName={adminName} desktopLicensePrices={billing.desktopLicensePrices} />
     </main>
   )
 }

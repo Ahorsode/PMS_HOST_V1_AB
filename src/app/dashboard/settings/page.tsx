@@ -6,6 +6,8 @@ import { getAuthContext } from '@/lib/auth-utils';
 import { Settings } from 'lucide-react';
 import { feedCategoryFilter } from '@/lib/inventory/feed-categories';
 import { getFarmAccess } from '@/lib/subscription-utils';
+import { getBillingConfig } from '@/lib/billing/billing-config';
+import { planTypePriceSummary } from '@/lib/billing/pricing';
 import { PlanTypeCard } from './PlanTypeCard';
 
 export default async function SettingsPage() {
@@ -32,6 +34,7 @@ export default async function SettingsPage() {
     : [];
 
   const access = activeFarmId && isFarmOwner ? await getFarmAccess(activeFarmId) : null;
+  const billing = await getBillingConfig();
 
   const serializedInventory = inventory.map((item: any) => ({
     ...item,
@@ -54,7 +57,16 @@ export default async function SettingsPage() {
         </div>
       </div>
 
-      {access ? <PlanTypeCard planType={access.planType} onPaidPlan={access.state === 'PAID'} /> : null}
+      {access ? (
+        <PlanTypeCard
+          planType={access.planType}
+          onPaidPlan={access.state === 'PAID'}
+          priceSummaries={{
+            SOLO: planTypePriceSummary(billing, 'SOLO'),
+            TEAM: planTypePriceSummary(billing, 'TEAM'),
+          }}
+        />
+      ) : null}
 
       <Suspense fallback={<div className="text-white/70 text-sm animate-pulse py-8">Loading settings…</div>}>
         <SettingsContent farm={farm} inventory={serializedInventory} />

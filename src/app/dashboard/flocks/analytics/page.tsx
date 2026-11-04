@@ -23,6 +23,7 @@ export default async function FlocksAnalyticsPage() {
   if (!activeFarmId || !(await checkFeature(activeFarmId, 'BATCH_DETAILS'))) {
     return (
       <PlanFeatureLocked
+        feature="BATCH_DETAILS"
         title="Batch"
         accent="Reports"
         description="Batch performance reports compare growth, laying and costs for each batch."

@@ -19,6 +19,7 @@ import {
 } from '@/lib/billing/paystack'
 import { PAYSTACK_INITIATED_EVENT } from '@/lib/billing/paystack-fulfillment'
 import { getFarmAccess } from '@/lib/subscription-utils'
+import { getBillingConfig } from '@/lib/billing/billing-config'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 
 import { PlanType, SubscriptionTier } from '@prisma/client'
@@ -39,7 +40,8 @@ export async function requestSubscriptionUpgrade(planType: PlanType, tier: Subsc
   }
 
   const normalizedMonths = normalizeTermMonths(months)
-  const pricing = calculateUpgradeTotal(planType, tier, normalizedMonths)
+  const config = await getBillingConfig()
+  const pricing = calculateUpgradeTotal(config, planType, tier, normalizedMonths)
 
   try {
     const farm = await prisma.farm.findUnique({
@@ -59,7 +61,7 @@ export async function requestSubscriptionUpgrade(planType: PlanType, tier: Subsc
         metadata: {
           requestedTier: tier,
           planType,
-          planName: planName(planType, tier),
+          planName: planName(config, planType, tier),
           months: normalizedMonths,
           monthlyPrice: pricing.monthly,
           discount: pricing.discount,
@@ -115,7 +117,8 @@ export async function startPaystackCheckout(planType: PlanType, tier: Subscripti
   if (!limitResult.ok) return rateLimitActionError(limitResult)
 
   const normalizedMonths = normalizeTermMonths(months)
-  const pricing = calculateUpgradeTotal(planType, tier, normalizedMonths)
+  const config = await getBillingConfig()
+  const pricing = calculateUpgradeTotal(config, planType, tier, normalizedMonths)
   const amountPesewas = toPesewas(pricing.total)
   const reference = createPaystackReference()
 

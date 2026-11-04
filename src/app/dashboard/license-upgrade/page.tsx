@@ -1,6 +1,7 @@
 import { getAuthContext } from '@/lib/auth-utils'
 import { getDesktopLicenses } from '@/lib/actions/licenses'
 import { getFarmAccess } from '@/lib/subscription-utils'
+import { getBillingConfig } from '@/lib/billing/billing-config'
 import LicenseUpgradeClient from './LicenseUpgradeClient'
 
 export default async function LicenseUpgradePage({
@@ -11,9 +12,10 @@ export default async function LicenseUpgradePage({
   const { activeFarmId } = await getAuthContext()
   const { type } = await searchParams
 
-  const [access, deviceData] = await Promise.all([
+  const [access, deviceData, billing] = await Promise.all([
     getFarmAccess(activeFarmId!),
     getDesktopLicenses(),
+    getBillingConfig(),
   ])
 
   const initialType = type === 'SOLO' || type === 'TEAM' ? type : access.planType
@@ -30,6 +32,7 @@ export default async function LicenseUpgradePage({
         graceEndsAt: access.graceEndsAt?.toISOString() ?? null,
       }}
       devices={deviceData.licenses}
+      billing={billing}
     />
   )
 }

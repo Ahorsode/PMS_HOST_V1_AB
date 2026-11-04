@@ -17,20 +17,23 @@ import {
   type AdminFarmDevice,
 } from '@/lib/actions/admin-device-actions'
 import { confirmManualLicensePayment } from '@/lib/actions/admin-payment-actions'
+import { DESKTOP_LICENSE_DAYS, type BillingConfig, type DesktopLicenseDays } from '@/lib/billing/pricing'
 
 type Props = {
   adminName: string
   accounts: AdminLicenseAccountOption[]
+  /** Admin-set cash/MoMo price per pack, from Plans & Pricing. */
+  desktopLicensePrices: BillingConfig['desktopLicensePrices']
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
-const durationOptions = [
-  { days: 30, label: '+1 Month', amount: 120 },
-  { days: 90, label: '+3 Months', amount: 300 },
-  { days: 180, label: '+6 Months', amount: 560 },
-  { days: 365, label: '+1 Year', amount: 1000 },
-]
+const durationLabels: Record<DesktopLicenseDays, string> = {
+  30: '+1 Month',
+  90: '+3 Months',
+  180: '+6 Months',
+  365: '+1 Year',
+}
 
 function formatDate(value: string | Date | null) {
   if (!value) return 'Not set'
@@ -82,7 +85,12 @@ function getDeviceStatus(device: AdminFarmDevice) {
   return device.status || 'Pending'
 }
 
-export default function FarmSubscriptionPanel({ adminName, accounts }: Props) {
+export default function FarmSubscriptionPanel({ adminName, accounts, desktopLicensePrices }: Props) {
+  const durationOptions = DESKTOP_LICENSE_DAYS.map((days) => ({
+    days,
+    label: durationLabels[days],
+    amount: desktopLicensePrices[`${days}`],
+  }))
   const [accountQuery, setAccountQuery] = useState('')
   const [selectedFarmId, setSelectedFarmId] = useState('')
   const [devices, setDevices] = useState<AdminFarmDevice[]>([])

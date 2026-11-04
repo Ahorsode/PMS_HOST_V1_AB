@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { JetBrains_Mono, Space_Grotesk } from 'next/font/google'
 import { requirePaymentAdminPage } from '@/lib/admin-auth'
 import { getAdminLicenseAccountOptions } from '@/lib/actions/admin-license-actions'
+import { getBillingConfig } from '@/lib/billing/billing-config'
 import LicenseIssuePanel from './LicenseIssuePanel'
 
 export const dynamic = 'force-dynamic'
@@ -25,11 +26,11 @@ const jetBrainsMono = JetBrains_Mono({
 
 export default async function AdminIssueLicensePage() {
   const admin = await requirePaymentAdminPage()
-  const accounts = await getAdminLicenseAccountOptions()
+  const [accounts, billing] = await Promise.all([getAdminLicenseAccountOptions(), getBillingConfig()])
 
   return (
     <main className={`${spaceGrotesk.variable} ${jetBrainsMono.variable} min-h-screen bg-[#11140d] text-[#f7f1df] font-[var(--font-payment-admin)]`}>
-      <LicenseIssuePanel adminName={admin.username} accounts={accounts} />
+      <LicenseIssuePanel adminName={admin.username} accounts={accounts} desktopLicensePrices={billing.desktopLicensePrices} />
     </main>
   )
 }
