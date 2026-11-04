@@ -2,6 +2,9 @@ import React from 'react'
 import dynamic from 'next/dynamic'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { getBatchPerformanceReports } from '@/lib/actions/analytics-actions'
+import { getAuthContext } from '@/lib/auth-utils'
+import { checkFeature } from '@/lib/subscription-utils'
+import { PlanFeatureLocked } from '@/components/billing/PlanFeatureLocked'
 
 const BatchPerformanceReportsPanel = dynamic(
   () =>
@@ -16,6 +19,17 @@ const BatchPerformanceReportsPanel = dynamic(
 export const revalidate = 60
 
 export default async function FlocksAnalyticsPage() {
+  const { activeFarmId } = await getAuthContext()
+  if (!activeFarmId || !(await checkFeature(activeFarmId, 'BATCH_DETAILS'))) {
+    return (
+      <PlanFeatureLocked
+        title="Batch"
+        accent="Reports"
+        description="Batch performance reports compare growth, laying and costs for each batch."
+      />
+    )
+  }
+
   const reports = await getBatchPerformanceReports()
 
   return (

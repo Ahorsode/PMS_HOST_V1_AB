@@ -120,6 +120,7 @@ model Farm {
   updatedAt             DateTime               @updatedAt
   userId                String                 @default("user_placeholder")
   subscriptionTier      SubscriptionTier       @default(BASIC)
+  planType              PlanType               @default(TEAM) @map("plan_type")
   masterLicenseStatus   String?                @default("NO_TRIAL") @map("master_license_status")
   trialStartedAt        DateTime?              @map("trial_started_at")
   trialExpiresAt        DateTime?              @map("trial_expires_at")
@@ -477,6 +478,8 @@ model FarmMember {
   farmId    String
   userId    String
   role      Role     @default(WORKER)
+  /// Set when the owner pauses this member's access (e.g. to fit a smaller plan).
+  accessPausedAt DateTime? @map("access_paused_at")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   farm      Farm     @relation(fields: [farmId], references: [id])
@@ -1071,10 +1074,17 @@ enum ExpenseCategory {
   TRANSPORT
 }
 
+/// BASIC means no plan; STANDARD is "some features" and PREMIUM is "all features".
 enum SubscriptionTier {
   BASIC
   STANDARD
   PREMIUM
+}
+
+/// Solo plans are owner-only; Team plans allow staff.
+enum PlanType {
+  SOLO
+  TEAM
 }
 
 enum FeedType {

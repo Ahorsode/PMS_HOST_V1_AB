@@ -11,6 +11,7 @@ export type AdminFarmRow = {
   ownerName: string | null
   ownerEmail: string | null
   subscriptionTier: string
+  planType: 'SOLO' | 'TEAM'
   masterLicenseStatus: string
   trialStartedAt: string | null
   trialExpiresAt: string | null
@@ -146,6 +147,7 @@ export async function adminListFarms(): Promise<AdminFarmRow[]> {
       location: true,
       createdAt: true,
       subscriptionTier: true,
+      planType: true,
       masterLicenseStatus: true,
       trialStartedAt: true,
       trialExpiresAt: true,
@@ -176,6 +178,7 @@ export async function adminListFarms(): Promise<AdminFarmRow[]> {
     ownerName: ownerDisplayName(farm.user),
     ownerEmail: farm.user?.email ?? null,
     subscriptionTier: farm.subscriptionTier,
+    planType: farm.planType,
     masterLicenseStatus: farm.masterLicenseStatus ?? 'UNPAID',
     trialStartedAt: serializeDate(farm.trialStartedAt),
     trialExpiresAt: serializeDate(farm.trialExpiresAt),
@@ -237,6 +240,7 @@ export async function adminGetFarmDetail(farmId: string): Promise<AdminFarmDetai
     ownerName: ownerDisplayName(farm.user),
     ownerEmail: farm.user?.email ?? null,
     subscriptionTier: farm.subscriptionTier,
+    planType: farm.planType,
     masterLicenseStatus: farm.masterLicenseStatus ?? 'UNPAID',
     trialStartedAt: serializeDate(farm.trialStartedAt),
     trialExpiresAt: serializeDate(farm.trialExpiresAt),

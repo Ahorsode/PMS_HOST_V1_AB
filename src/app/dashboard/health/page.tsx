@@ -5,6 +5,9 @@ import { getHealthSchedules, getHealthInventory } from "@/lib/actions/health-act
 import { getAllBatches } from "@/lib/actions/dashboard-actions";
 import { checkWorkerPermissions } from "@/lib/actions/staff-actions";
 import { HealthScheduleManager } from "./HealthScheduleManager";
+import { getAuthContext } from "@/lib/auth-utils";
+import { checkFeature } from "@/lib/subscription-utils";
+import { PlanFeatureLocked } from "@/components/billing/PlanFeatureLocked";
 
 export default async function HealthPage() {
   const hasAccess = await checkWorkerPermissions("health", "view");
@@ -12,6 +15,17 @@ export default async function HealthPage() {
 
   if (!hasAccess) {
     redirect("/dashboard/unauthorized");
+  }
+
+  const { activeFarmId } = await getAuthContext();
+  if (!activeFarmId || !(await checkFeature(activeFarmId, "HEALTH"))) {
+    return (
+      <PlanFeatureLocked
+        title="Health"
+        accent="Schedules"
+        description="Vaccination and medication planning keeps every batch's health schedule in one place."
+      />
+    );
   }
 
   const [{ vaccinations, medications }, batches, { vaccine, medicine }] =

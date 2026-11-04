@@ -8,6 +8,8 @@ import { FinanceHubClient } from './FinanceHubClient';
 import { MissingCostPrompt } from '@/components/finance/MissingCostPrompt';
 import { MissingHealthCostPrompt } from '@/components/finance/MissingHealthCostPrompt';
 import { getHealthItemsMissingCost, repairMissingHealthStockExpenses } from '@/lib/actions/health-actions';
+import { checkFeature } from '@/lib/subscription-utils';
+import { PlanFeatureLocked } from '@/components/billing/PlanFeatureLocked';
 
 export default async function FinancePage() {
   const { activeFarmId } = await getAuthContext();
@@ -21,6 +23,16 @@ export default async function FinancePage() {
 
   if (!hasAccess) {
     redirect('/dashboard/unauthorized');
+  }
+
+  if (!(await checkFeature(activeFarmId, 'FINANCE'))) {
+    return (
+      <PlanFeatureLocked
+        title="Finance"
+        accent="Hub"
+        description="The finance hub covers expenses, transactions, statements and profit tracking."
+      />
+    );
   }
 
   // Check for active batches with missing costs

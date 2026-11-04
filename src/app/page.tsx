@@ -102,35 +102,53 @@ const contacts = [
   { icon: Phone, label: 'Call', value: 'Call 0554101675', href: 'tel:+233554101675' },
 ];
 
+const someFeatures = [
+  'Egg, feed and mortality logging',
+  'Houses and livestock batches',
+  'Sales, orders and invoices',
+  'Inventory and feed formulation',
+  'Reports and analytics',
+];
+
+const allFeatures = [
+  'Everything in the basic plans',
+  'Customers and suppliers',
+  'Finance hub and statements',
+  'Detailed batch management',
+  'Health schedules and quarantine',
+];
+
 const plans = [
   {
-    name: 'Standard Pro',
-    price: 'GHS 350',
+    name: 'Solo Basic',
+    price: 'GHS 200',
     cadence: 'per month',
-    description: 'For commercial farms that need automation, team controls and stronger reporting.',
-    features: [
-      'Up to 10 livestock units',
-      'Advanced health analytics',
-      'Full financial controls',
-      'Inventory management',
-      'Team management for 3 workers',
-      'Email and WhatsApp notifications',
-    ],
+    description: 'For an owner running the farm alone who needs the daily records.',
+    features: ['Owner only', ...someFeatures],
     highlight: false,
   },
   {
-    name: 'Enterprise Suite',
-    price: 'GHS 950',
+    name: 'Solo Plus',
+    price: 'GHS 330',
     cadence: 'per month',
-    description: 'For large operations with multiple farms, unlimited teams and priority support.',
-    features: [
-      'Unlimited livestock units',
-      'Predictive analytics',
-      'Custom financial reporting',
-      'Multi-farm consolidation',
-      'Unlimited team members',
-      'Priority concierge support',
-    ],
+    description: 'Every feature for an owner running the farm alone.',
+    features: ['Owner only', ...allFeatures],
+    highlight: false,
+  },
+  {
+    name: 'Business',
+    price: 'GHS 350',
+    cadence: 'per month',
+    description: 'For farms with a small team logging the daily work.',
+    features: ['Up to 4 staff', ...someFeatures],
+    highlight: false,
+  },
+  {
+    name: 'Business Plus',
+    price: 'GHS 470',
+    cadence: 'per month',
+    description: 'Every feature for growing farms with a full team.',
+    features: ['Unlimited staff', ...allFeatures],
     highlight: true,
   },
 ];
@@ -393,14 +411,14 @@ export default function LandingPage() {
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-300">Pricing</p>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Start on Basic. Upgrade when the farm grows.</h2>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Try everything free for 30 days.</h2>
               <p className="mt-4 text-base text-white/65 sm:text-lg">
-                Every new farm begins on the Basic plan. Upgrade from inside the app when you need more units, more
-                staff or deeper reporting. Pay for 3, 6 or 12 months to save up to 15%.
+                Every new farm gets all features free for 30 days. Then pick a Solo plan if you run the farm alone,
+                or a Business plan if your staff log work too. Pay for 3, 6 or 12 months to save up to 15%.
               </p>
             </div>
 
-            <div className="mx-auto mt-12 grid max-w-4xl gap-5 md:grid-cols-2">
+            <div className="mx-auto mt-12 grid max-w-6xl gap-5 md:grid-cols-2 xl:grid-cols-4">
               {plans.map((plan) => (
                 <div
                   key={plan.name}

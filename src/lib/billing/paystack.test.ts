@@ -39,6 +39,7 @@ describe('isValidPaystackSignature', () => {
 describe('checkTransactionMatches', () => {
   const expected: PaystackCheckoutRecord = {
     reference: 'PL-1',
+    planType: 'TEAM',
     tier: 'STANDARD',
     months: 3,
     amountPesewas: 99750,
@@ -77,6 +78,11 @@ describe('computePaidPeriodEnd', () => {
     expect(end.toISOString()).toBe('2026-11-19T00:00:00.000Z')
   })
 
+  it('starts from now when switching between Solo and Team on the same tier', () => {
+    const end = computePaidPeriodEnd({ tier: 'STANDARD', planType: 'SOLO', currentPlanType: 'TEAM', durationDays: 30, currentStatus: 'PAID_STANDARD', currentExpiresAt: new Date('2026-10-20T00:00:00Z'), now })
+    expect(end.toISOString()).toBe('2026-10-31T00:00:00.000Z')
+  })
+
   it('starts from now when the same plan has already expired', () => {
     const end = computePaidPeriodEnd({ tier: 'STANDARD', durationDays: 30, currentStatus: 'PAID_STANDARD', currentExpiresAt: new Date('2026-09-01T00:00:00Z'), now })
     expect(end.toISOString()).toBe('2026-10-31T00:00:00.000Z')
@@ -84,10 +90,18 @@ describe('computePaidPeriodEnd', () => {
 })
 
 describe('pricing', () => {
+  it('prices the four plans monthly', () => {
+    expect(calculateUpgradeTotal('SOLO', 'STANDARD', 1).total).toBe(200)
+    expect(calculateUpgradeTotal('SOLO', 'PREMIUM', 1).total).toBe(330)
+    expect(calculateUpgradeTotal('TEAM', 'STANDARD', 1).total).toBe(350)
+    expect(calculateUpgradeTotal('TEAM', 'PREMIUM', 1).total).toBe(470)
+  })
+
   it('applies term discounts and converts to pesewas', () => {
-    expect(calculateUpgradeTotal('STANDARD', 3).total).toBe(997.5)
+    expect(calculateUpgradeTotal('TEAM', 'STANDARD', 3).total).toBe(997.5)
     expect(toPesewas(997.5)).toBe(99750)
-    expect(calculateUpgradeTotal('PREMIUM', 12).total).toBe(9690)
+    expect(calculateUpgradeTotal('TEAM', 'PREMIUM', 12).total).toBe(4794)
+    expect(calculateUpgradeTotal('SOLO', 'PREMIUM', 6).total).toBe(1782)
   })
 
   it('falls back to one month for unsupported terms', () => {

@@ -5,6 +5,7 @@ import { normalizePhoneNumber } from '@/lib/phone-auth';
 import { checkRateLimit, getRateLimitIp, rateLimitHeaders } from '@/lib/performance/rate-limit';
 import { MAX_PASSWORD_LENGTH, passwordPolicyError } from '@/lib/password-policy';
 import { z } from 'zod';
+import { freeTrialFields } from '@/lib/billing/trial';
 
 const signupSchema = z.object({
   firstname: z.string().trim().min(1, 'First name is required').max(100),
@@ -135,6 +136,16 @@ export async function POST(req: Request) {
             userId: txUser.id,
             capacity: 0,
             location: '',
+            ...freeTrialFields(),
+          }
+        });
+
+        await tx.subscriptionEvent.create({
+          data: {
+            farmId: newFarm.id,
+            userId: txUser.id,
+            eventType: 'TRIAL_STARTED',
+            metadata: { source: 'signup', expiresAt: newFarm.trialExpiresAt?.toISOString() ?? null },
           }
         });
 

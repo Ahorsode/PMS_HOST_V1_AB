@@ -5,9 +5,11 @@ import { SettingsContent } from './SettingsContent';
 import { getAuthContext } from '@/lib/auth-utils';
 import { Settings } from 'lucide-react';
 import { feedCategoryFilter } from '@/lib/inventory/feed-categories';
+import { getFarmAccess } from '@/lib/subscription-utils';
+import { PlanTypeCard } from './PlanTypeCard';
 
 export default async function SettingsPage() {
-  const { userId, activeFarmId } = await getAuthContext();
+  const { userId, activeFarmId, isFarmOwner } = await getAuthContext();
 
   if (!userId) {
     return <div>Unauthorized</div>;
@@ -29,6 +31,8 @@ export default async function SettingsPage() {
       })
     : [];
 
+  const access = activeFarmId && isFarmOwner ? await getFarmAccess(activeFarmId) : null;
+
   const serializedInventory = inventory.map((item: any) => ({
     ...item,
     stockLevel: Number(item.stockLevel),
@@ -49,6 +53,8 @@ export default async function SettingsPage() {
           </p>
         </div>
       </div>
+
+      {access ? <PlanTypeCard planType={access.planType} onPaidPlan={access.state === 'PAID'} /> : null}
 
       <Suspense fallback={<div className="text-white/70 text-sm animate-pulse py-8">Loading settings…</div>}>
         <SettingsContent farm={farm} inventory={serializedInventory} />

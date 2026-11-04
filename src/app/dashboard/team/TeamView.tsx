@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Users, Mail, Shield, UserPlus, Loader2, CheckCircle2, XCircle, Trash2, ShieldCheck, UserCheck, Settings, AlertCircle, Phone, ChevronDown, RotateCcw, KeyRound } from 'lucide-react';
-import { inviteWorker, getFarmMembers, deleteMember, deleteInvitation, updateWorkerPermissions, resetWorkerPermissions, updateFarmMemberRole, getUserForInvite, regenerateInviteCode } from '@/lib/actions/staff-actions';
+import { Users, Mail, Shield, UserPlus, Loader2, CheckCircle2, XCircle, Trash2, ShieldCheck, UserCheck, Settings, AlertCircle, Phone, ChevronDown, RotateCcw, KeyRound, PauseCircle, PlayCircle } from 'lucide-react';
+import { inviteWorker, getFarmMembers, deleteMember, deleteInvitation, updateWorkerPermissions, resetWorkerPermissions, updateFarmMemberRole, getUserForInvite, regenerateInviteCode, setMemberAccessPaused } from '@/lib/actions/staff-actions';
+import Link from 'next/link';
 import { InviteCodePanel, type IssuedInviteCode } from '@/components/team/InviteCodePanel';
 import { getDefaultPermissionsForRole } from '@/lib/staff-permission-defaults';
 import { Button } from '@/components/ui/Button';
@@ -31,7 +32,9 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
   const [issuingCodeFor, setIssuingCodeFor] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string, type: 'member' | 'invite' } | null>(null);
   const [permissionTarget, setPermissionTarget] = useState<any>(null);
-  const [limitCheck, setLimitCheck] = useState<{ canAdd: boolean, limit: number, current: number } | null>(null);
+  const [limitCheck, setLimitCheck] = useState<{ canAdd: boolean, limit: number | null, current: number } | null>(null);
+  const [staffPlan, setStaffPlan] = useState<{ planType: 'SOLO' | 'TEAM', staffLimit: number | null, overLimitCount: number } | null>(null);
+  const [changingAccessUserId, setChangingAccessUserId] = useState<string | null>(null);
   const [showPermissions, setShowPermissions] = useState(false);
   const [inviteRole, setInviteRole] = useState<string>('WORKER');
   const [pendingPermissions, setPendingPermissions] = useState<Record<string, boolean>>({});
@@ -60,6 +63,7 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
         setInvitations(data.invitations || []);
         setCurrentUserRole(data.currentUserRole || 'WORKER');
         setLimitCheck(data.limitCheck || null);
+        setStaffPlan(data.staffPlan || null);
       }
     } catch (err) {
       console.error(err);
@@ -211,6 +215,22 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
     }
   };
 
+  const handleAccessChange = async (member: any, paused: boolean) => {
+    if (changingAccessUserId) return;
+    setChangingAccessUserId(member.userId);
+    try {
+      const result = await setMemberAccessPaused(member.userId, paused);
+      if (!result.success) {
+        toast.error(result.error || 'Could not change access');
+        return;
+      }
+      toast.success(paused ? 'Access paused' : 'Access restored');
+      await loadTeam();
+    } finally {
+      setChangingAccessUserId(null);
+    }
+  };
+
   const handleRoleChange = async (member: any, nextRole: string) => {
     if (member.role === nextRole || updatingRoleUserId) return;
 
@@ -289,6 +309,26 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
                 </div>
               ) : (
                 <div className="space-y-3">
+                  {staffPlan && currentUserRole === 'OWNER' && (staffPlan.overLimitCount > 0 || staffPlan.staffLimit === 0) && members.some((m) => m.role !== 'OWNER') && (
+                    <div className="flex items-start gap-3 rounded-lg border border-amber-400/30 bg-amber-500/10 p-4 text-sm text-amber-100">
+                      <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
+                      <div className="space-y-1">
+                        {staffPlan.staffLimit === 0 ? (
+                          <p className="font-bold">Solo plans are owner only, so your staff cannot sign in.</p>
+                        ) : (
+                          <p className="font-bold">
+                            Your plan allows {staffPlan.staffLimit} staff, so {staffPlan.overLimitCount} {staffPlan.overLimitCount === 1 ? 'person is' : 'people are'} locked out.
+                          </p>
+                        )}
+                        <p className="text-amber-100/80">
+                          {staffPlan.staffLimit === 0
+                            ? 'Switch to a Team plan to give them access again.'
+                            : 'The most recently added staff are locked unless you choose. Pause someone with the pause button to give their seat to a locked person.'}{' '}
+                          <Link href="/dashboard/license-upgrade" className="font-bold underline underline-offset-2">See plans</Link>
+                        </p>
+                      </div>
+                    </div>
+                  )}
                   {members.map((member) => {
                     const isMutatingMember = isDeleting && deleteTarget?.type === 'member' && deleteTarget.id === member.id;
                     const isUpdatingRole = updatingRoleUserId === member.userId;
@@ -350,6 +390,28 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
                           </div>
                         ) : (
                           getRoleBadge(member.role)
+                        )}
+                        {member.accessStatus && member.accessStatus !== 'ACTIVE' && (
+                          <span className="rounded-full border border-amber-400/30 bg-amber-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-widest text-amber-200">
+                            {member.accessStatus === 'PAUSED' ? 'Paused' : 'Locked · over limit'}
+                          </span>
+                        )}
+                        {canEdit && currentUserRole === 'OWNER' && member.role !== 'OWNER' && (
+                          <button
+                            type="button"
+                            onClick={() => handleAccessChange(member, member.accessStatus !== 'PAUSED')}
+                            disabled={changingAccessUserId !== null}
+                            title={member.accessStatus === 'PAUSED' ? 'Restore access' : 'Pause access'}
+                            className="p-2.5 text-amber-300 hover:bg-amber-500/10 rounded-md transition-all border border-transparent hover:border-amber-500/20 disabled:opacity-50"
+                          >
+                            {changingAccessUserId === member.userId ? (
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : member.accessStatus === 'PAUSED' ? (
+                              <PlayCircle className="w-5 h-5" />
+                            ) : (
+                              <PauseCircle className="w-5 h-5" />
+                            )}
+                          </button>
                         )}
                         {canEdit && currentUserRole === 'OWNER' && member.userId !== (members.find(m => m.role === 'OWNER')?.userId || '') && (
                           <>
@@ -517,7 +579,7 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
                   <div className="text-right">
                     <span className="text-3xl font-bold text-emerald-400">{limitCheck.current}</span>
                     <span className="text-white/70 font-bold text-lg mx-1">/</span>
-                    <span className="text-white font-bold">{limitCheck.limit >= 1000 ? '∞' : limitCheck.limit}</span>
+                    <span className="text-white font-bold">{limitCheck.limit === null ? '∞' : limitCheck.limit}</span>
                   </div>
                 </div>
                 
@@ -525,7 +587,7 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
                 <div className="h-3 w-full bg-white/10 rounded-full overflow-hidden mb-3 relative shadow-inner">
                   <div 
                     className={`h-full rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(16,185,129,0.5)] ${limitCheck.canAdd ? 'bg-gradient-to-r from-emerald-400 to-teal-500' : 'bg-gradient-to-r from-rose-400 to-red-500'}`}
-                    style={{ width: `${Math.min((limitCheck.current / limitCheck.limit) * 100, 100)}%` }}
+                    style={{ width: `${limitCheck.limit === null ? Math.min(limitCheck.current * 5, 100) : limitCheck.limit === 0 ? 100 : Math.min((limitCheck.current / limitCheck.limit) * 100, 100)}%` }}
                   ></div>
                 </div>
 
@@ -534,7 +596,7 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
                     <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
                     <div>
                       <p className="text-rose-400 font-bold text-sm tracking-normal">Subscription Limit Reached</p>
-                      <p className="text-rose-400/70 text-xs mt-1 leading-relaxed">Upgrade your tier to invite addition personnel to this farm.</p>
+                      <p className="text-rose-400/70 text-xs mt-1 leading-relaxed">{limitCheck.limit === 0 ? 'Solo plans are owner only. Switch to a Team plan to invite staff.' : 'Upgrade to Business Plus for unlimited staff.'}</p>
                     </div>
                   </div>
                 )}

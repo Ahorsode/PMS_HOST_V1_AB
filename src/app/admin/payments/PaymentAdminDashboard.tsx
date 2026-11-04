@@ -402,7 +402,7 @@ export default function PaymentAdminDashboard({
         return
       }
 
-      setTierUpgradeMessage('Farm upgraded to Standard. Connected devices are active.')
+      setTierUpgradeMessage('Farm moved to its basic paid plan (Solo Basic or Business). Connected devices are active.')
       setRows((currentRows) =>
         currentRows.map((row) =>
           row.farmId === selectedRow.farmId

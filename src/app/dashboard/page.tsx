@@ -3,6 +3,7 @@ import { getDashboardStats } from '@/lib/actions/dashboard-actions';
 import { DashboardContent } from './DashboardContent';
 import prisma from '@/lib/db';
 import { getAuthContext } from '@/lib/auth-utils';
+import { effectiveFarmTier } from '@/lib/subscription-utils';
 import { getMonthlyProductionSummary } from '@/lib/actions/preference-actions';
 import { PullToRefresh } from '@/components/layout/PullToRefresh';
 import { redirect } from 'next/navigation';
@@ -74,7 +75,7 @@ export default async function DashboardPage() {
           houses={houses as any} 
           summary={summary} 
           role={role as any} 
-          subscriptionTier={farm?.subscriptionTier}
+          subscriptionTier={farm ? effectiveFarmTier(farm) : undefined}
           permissions={permissions}
           currency={currency}
           eggsPerCrate={eggsPerCrate}

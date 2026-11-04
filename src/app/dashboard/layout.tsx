@@ -7,6 +7,9 @@ import { acceptInvitation } from '@/lib/actions/staff-actions';
 import { resolveFarmNavigationRole } from '@/lib/navigation-permissions';
 import { XCircle } from 'lucide-react';
 import Link from 'next/link';
+import { getFarmStaffAccess } from '@/lib/subscription-utils';
+import { PlanAccessGate } from '@/components/billing/PlanAccessGate';
+import { AccessBlocked } from '@/components/billing/AccessBlocked';
 
 export default async function DashboardLayout({
   children,
@@ -131,6 +134,39 @@ export default async function DashboardLayout({
     }
   }
 
+  // Plan access: owners are steered to the payment page once locked; staff
+  // are blocked when the farm is locked or their seat is paused/over limit.
+  const isOwner = !!farm && farm.userId === dbUser.id;
+  const staffAccess = farm ? await getFarmStaffAccess(farm.id) : null;
+
+  if (farm && staffAccess && !isOwner) {
+    if (staffAccess.access.state === 'LOCKED') {
+      return (
+        <AccessBlocked
+          title="Farm Plan Ended"
+          message={`${farm.name}'s plan has ended. Ask the farm owner to renew it to get access again.`}
+        />
+      );
+    }
+    if (staffAccess.locked.has(dbUser.id)) {
+      return (
+        <AccessBlocked
+          title="Access Paused"
+          message={`Your access to ${farm.name} is paused because the farm's plan has no free staff seat. Ask the farm owner to restore your access.`}
+        />
+      );
+    }
+  }
+
+  const planStatus = staffAccess
+    ? {
+        state: staffAccess.access.state,
+        isTrial: staffAccess.access.isTrial,
+        endsAt: staffAccess.access.endsAt?.toISOString() ?? null,
+        graceEndsAt: staffAccess.access.graceEndsAt?.toISOString() ?? null,
+      }
+    : null;
+
   const navigationRole = farm
     ? resolveFarmNavigationRole({
         farmOwnerId: farm.userId,
@@ -147,7 +183,7 @@ export default async function DashboardLayout({
 
   return (
     <SidebarWrapper role={navigationRole} permissions={userPermissions} farmName={mobileFarmTitle}>
-      {children}
+      {isOwner && planStatus ? <PlanAccessGate status={planStatus}>{children}</PlanAccessGate> : children}
     </SidebarWrapper>
   );
 }
