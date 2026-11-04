@@ -13,7 +13,7 @@ import { z } from 'zod'
 
 const PAID_STATUSES = ['ACTIVE', 'PAID', 'PAID_AND_ACTIVE']
 const TRIAL_STATUSES = ['CLOUD_TRIAL', 'GRACE_PERIOD', 'TRIALING', 'TRIAL', 'PENDING']
-const EXPIRED_STATUSES = ['EXPIRED', 'LAPSED']
+const EXPIRED_STATUSES = ['EXPIRED', 'LAPSED', 'DEACTIVATED']
 const DURATION_OPTIONS = [30, 90, 180, 365] as const
 
 export type LicenseStatus = 'PAID' | 'TRIALING' | 'EXPIRED' | 'PENDING'
@@ -46,7 +46,6 @@ export type PaymentAdminRow = {
 export type PaymentAdminDashboardData = {
   metrics: {
     totalRegisteredFarms: number
-    activeFreeTrialsCurrentMonth: number
     activePaidLicenses: number
     expiredLicenses: number
     totalManualRevenueGhs: number
@@ -113,24 +112,15 @@ export async function getPaymentAdminDashboardData(): Promise<PaymentAdminDashbo
   await requirePaymentAdminAction('payments.manage')
 
   const now = new Date()
-  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
 
   const [
     totalRegisteredFarms,
-    activeFreeTrialsCurrentMonth,
     activePaidLicenses,
     expiredLicenses,
     totalRevenue,
     registrations,
   ] = await prisma.$transaction([
     prisma.farm.count(),
-    prisma.deviceRegistration.count({
-      where: {
-        status: { in: TRIAL_STATUSES },
-        registeredAt: { gte: monthStart },
-        OR: [{ licenseExpiresAt: null }, { licenseExpiresAt: { gte: now } }],
-      },
-    }),
     prisma.deviceRegistration.count({
       where: {
         status: { in: PAID_STATUSES },
@@ -185,7 +175,6 @@ export async function getPaymentAdminDashboardData(): Promise<PaymentAdminDashbo
   return {
     metrics: {
       totalRegisteredFarms,
-      activeFreeTrialsCurrentMonth,
       activePaidLicenses,
       expiredLicenses,
       totalManualRevenueGhs: Number(totalRevenue._sum.amount ?? 0),
@@ -323,7 +312,7 @@ export async function confirmManualLicensePayment(input: unknown): Promise<Confi
       summary: `Recorded a GHS ${amount} payment for ${durationDays} days of desktop access`,
       details: { amount, durationDays, paymentId: result.paymentId, expiresAt: result.expiresAt },
     })
-    revalidatePath('/admin/payments')
+    revalidatePath('/admin/licenses')
 
     return {
       success: true,

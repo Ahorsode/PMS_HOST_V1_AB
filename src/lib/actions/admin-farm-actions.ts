@@ -13,6 +13,7 @@ export type AdminFarmRow = {
   id: string
   name: string
   location: string | null
+  ownerId: string
   ownerName: string | null
   ownerEmail: string | null
   subscriptionTier: string
@@ -90,8 +91,7 @@ function isPaidMasterStatus(status: string | null | undefined) {
 function revalidateFarmAdminPaths(farmId: string) {
   revalidatePath('/admin/farms')
   revalidatePath(`/admin/farms/${farmId}`)
-  revalidatePath('/admin/payments')
-  revalidatePath('/admin/licenses/issue')
+  revalidatePath('/admin/licenses')
 }
 
 export type AdminActivityRow = {
@@ -151,6 +151,7 @@ export async function adminListFarms(): Promise<AdminFarmRow[]> {
       id: true,
       name: true,
       location: true,
+      userId: true,
       createdAt: true,
       subscriptionTier: true,
       planType: true,
@@ -181,6 +182,7 @@ export async function adminListFarms(): Promise<AdminFarmRow[]> {
     id: farm.id,
     name: farm.name,
     location: farm.location ?? null,
+    ownerId: farm.userId,
     ownerName: ownerDisplayName(farm.user),
     ownerEmail: farm.user?.email ?? null,
     subscriptionTier: farm.subscriptionTier,
@@ -246,6 +248,7 @@ export async function adminGetFarmDetail(farmId: string): Promise<AdminFarmDetai
     id: farm.id,
     name: farm.name,
     location: farm.location ?? null,
+    ownerId: farm.userId,
     ownerName: ownerDisplayName(farm.user),
     ownerEmail: farm.user?.email ?? null,
     subscriptionTier: farm.subscriptionTier,

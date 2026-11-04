@@ -7,6 +7,8 @@ import { KeyRound, UserCog, UserPlus } from 'lucide-react'
 import {
   adminCreateAdmin,
   adminResetAdminPassword,
+  adminResetAdminTwoStep,
+  adminSignOutAdmin,
   adminUpdateAdmin,
   type AdminAccountRow,
   type AdminUserActionResult,
@@ -121,7 +123,9 @@ export default function AdminAccountsPanel({ admins, currentAdminId }: { admins:
                           <span className="ml-2 rounded-full border border-red-500/35 bg-red-950/60 px-2 py-0.5 text-[10px] font-semibold uppercase text-red-200">Deactivated</span>
                         ) : null}
                       </p>
-                      <p className="mt-1 text-xs text-zinc-500">Last sign-in: {formatDateTime(admin.lastLoginAt)}</p>
+                      <p className="mt-1 text-xs text-zinc-500">
+                        Last sign-in: {formatDateTime(admin.lastLoginAt)} · two-step {admin.twoStepEnabled ? 'on' : 'off'} · {admin.activeSessions} active session{admin.activeSessions === 1 ? '' : 's'}
+                      </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-2">
                       <select
@@ -147,6 +151,24 @@ export default function AdminAccountsPanel({ admins, currentAdminId }: { admins:
                       >
                         <KeyRound className="h-4 w-4" /> Reset password
                       </button>
+                      {!isSelf && admin.twoStepEnabled ? (
+                        <button type="button" disabled={isPending}
+                          onClick={() => {
+                            if (window.confirm(`Reset two-step sign-in for ${admin.username}? They will be signed out and must set it up again.`)) {
+                              run(() => adminResetAdminTwoStep(admin.id), `Two-step reset for ${admin.username}`)
+                            }
+                          }}
+                          className="h-9 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 hover:border-zinc-500 disabled:opacity-50">
+                          Reset two-step
+                        </button>
+                      ) : null}
+                      {!isSelf && admin.activeSessions > 0 ? (
+                        <button type="button" disabled={isPending}
+                          onClick={() => run(() => adminSignOutAdmin(admin.id), `${admin.username} signed out`)}
+                          className="h-9 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 hover:border-zinc-500 disabled:opacity-50">
+                          Sign out
+                        </button>
+                      ) : null}
                       <button
                         type="button"
                         disabled={isPending || isSelf}

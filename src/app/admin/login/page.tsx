@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import { JetBrains_Mono, Space_Grotesk } from 'next/font/google'
 import { redirect } from 'next/navigation'
-import { getAdminSession, sanitizeAdminCallbackUrl } from '@/lib/admin-session'
+import { getActiveAdminUser } from '@/lib/admin-auth'
+import { sanitizeAdminCallbackUrl } from '@/lib/admin-session'
 import AdminLoginForm from './AdminLoginForm'
 
 export const metadata: Metadata = {
@@ -28,9 +29,12 @@ export default async function AdminLoginPage({
 }) {
   const params = await searchParams
   const callbackUrl = sanitizeAdminCallbackUrl(params?.callbackUrl)
-  const session = await getAdminSession()
+  // Check the session is still live, not just that the cookie is signed:
+  // an ended session or deactivated admin would otherwise loop between here
+  // and the page guard.
+  const adminUser = await getActiveAdminUser()
 
-  if (session) {
+  if (adminUser) {
     redirect(callbackUrl)
   }
 
@@ -49,19 +53,19 @@ export default async function AdminLoginPage({
                 Poultry Ledger internal
               </div>
               <h1 className="mt-6 max-w-sm text-5xl font-black tracking-[-0.05em] text-[#fff9e8]">
-                Payment ops gatehouse.
+                Admin console.
               </h1>
               <p className="mt-4 max-w-md text-sm font-semibold leading-6 text-[#d7ccb0]/80">
-                Sign in here before opening the manual billing and offline activation dashboard.
+                Farms, payments, plans and settings for Poultry Ledger. For staff of Poultry Ledger only.
               </p>
             </div>
 
             <div className="rounded-[1.5rem] border border-[#f7f1df]/10 bg-black/25 p-5">
               <p className="font-[var(--font-admin-login-mono)] text-xs font-bold uppercase tracking-[0.18em] text-[#d8c78f]/80">
-                Protected route
+                Two-step sign-in
               </p>
               <p className="mt-3 text-sm font-semibold leading-6 text-[#fff9e8]/80">
-                `/admin/payments` redirects here until a valid signed admin session exists.
+                Super admins need an authenticator app code as well as their password. Other admins can turn it on from their Account page.
               </p>
             </div>
           </div>

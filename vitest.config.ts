@@ -16,6 +16,10 @@ export default defineConfig({
     },
   },
   resolve: {
-    alias: { "@": path.resolve(__dirname, "./src") },
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+      // Next provides "server-only" at build time; tests use an empty stand-in.
+      "server-only": path.resolve(__dirname, "./src/test/server-only-stub.ts"),
+    },
   },
 });

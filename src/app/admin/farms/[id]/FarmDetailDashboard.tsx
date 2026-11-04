@@ -25,6 +25,8 @@ import {
 } from '@/lib/actions/admin-farm-actions'
 import { MobileCardList } from '@/components/ui/MobileCardList'
 import FarmCustomDeal from './FarmCustomDeal'
+import FarmNotes from './FarmNotes'
+import type { FarmNoteRow } from '@/lib/actions/admin-farmer-actions'
 
 type DialogMode =
   | { type: 'upgrade'; tier: 'STANDARD' | 'PREMIUM' }
@@ -165,10 +167,12 @@ function ActionButton({
 export default function FarmDetailDashboard({
   farm,
   billing,
+  notes,
   canManage,
 }: {
   farm: AdminFarmDetail
   billing: BillingConfig
+  notes: FarmNoteRow[]
   /** Support admins can view the farm but not change it. */
   canManage: boolean
 }) {
@@ -267,7 +271,9 @@ export default function FarmDetailDashboard({
           </div>
 
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <StatChip label="Owner" value={farm.ownerName ?? '-'} />
+            <Link href={`/admin/users/${farm.ownerId}`} className="block transition-opacity hover:opacity-80" title="Open the owner's account">
+              <StatChip label="Owner" value={farm.ownerName ?? '-'} />
+            </Link>
             <StatChip label="Email" value={farm.ownerEmail ?? '-'} />
             <StatChip label="Location" value={farm.location ?? '-'} />
             <StatChip label="Created" value={formatDate(farm.createdAt)} />
@@ -336,6 +342,8 @@ export default function FarmDetailDashboard({
         ) : null}
 
         <FarmCustomDeal farmId={farm.id} initial={farm.override} canManage={canManage} />
+
+        <FarmNotes farmId={farm.id} notes={notes} />
 
         <section className="rounded-lg border border-zinc-800 bg-zinc-900/40">
           <div className="flex items-center gap-3 border-b border-zinc-800 px-5 py-4">
