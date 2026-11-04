@@ -6,7 +6,7 @@ import prisma from '@/lib/db'
 /** Like requirePaymentAdminAction, but resolves to false instead of throwing; also rejects deactivated admins (SEC-15). */
 async function isActiveAdmin() {
   try {
-    await requirePaymentAdminAction()
+    await requirePaymentAdminAction('payments.manage')
     return true
   } catch {
     return false

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { useMaintenanceMessage } from '@/components/site/MaintenanceContext'
 
 export default function DashboardError({
   error,
@@ -9,9 +10,31 @@ export default function DashboardError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  const maintenanceMessage = useMaintenanceMessage()
+
   useEffect(() => {
     console.error('[dashboard-error]', error)
   }, [error])
+
+  // While maintenance mode is on, saves are refused on purpose; say so plainly.
+  if (maintenanceMessage) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center px-6 py-12 text-white">
+        <div className="max-w-md space-y-4 text-center">
+          <p className="text-sm uppercase tracking-[0.2em] text-amber-400">Maintenance</p>
+          <h2 className="text-2xl font-semibold">Changes are paused right now.</h2>
+          <p className="text-sm text-white/65">{maintenanceMessage}</p>
+          <button
+            type="button"
+            onClick={reset}
+            className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-emerald-950 hover:bg-emerald-400"
+          >
+            Back to the page
+          </button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-6 py-12 text-white">

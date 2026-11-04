@@ -1,5 +1,6 @@
 'use server'
 
+import { logAdminAction } from '@/lib/admin-audit'
 import prisma from '@/lib/db'
 import { requirePaymentAdminAction } from '@/lib/admin-auth'
 import {
@@ -27,7 +28,7 @@ export type BindResult =
     }
 
 export async function getActiveWebAccounts(): Promise<WebAccount[]> {
-  await requirePaymentAdminAction()
+  await requirePaymentAdminAction('payments.manage')
 
   return prisma.user.findMany({
     select: {
@@ -46,7 +47,7 @@ export async function bindDesktopToWebAccount(
   userId: string,
   hardwareId: string
 ): Promise<BindResult> {
-  const admin = await requirePaymentAdminAction()
+  const admin = await requirePaymentAdminAction('payments.manage')
 
   if (!userId) {
     return { success: false, error: 'Web account user ID is required' }
@@ -160,6 +161,13 @@ export async function bindDesktopToWebAccount(
       }
     })
 
+    await logAdminAction(admin, {
+      action: 'device.bind',
+      targetType: 'user',
+      targetId: userId,
+      summary: `Bound hardware ${normalizedHardwareId} to a web account with a 365-day license`,
+      details: { hardwareId: normalizedHardwareId, expiresAt: result.expiresAt },
+    })
     revalidatePath('/admin/payments')
     revalidatePath('/admin/users/map')
 

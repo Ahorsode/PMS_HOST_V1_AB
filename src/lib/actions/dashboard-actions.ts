@@ -11,6 +11,8 @@ import { farmCacheTags, revalidateFarmPerformanceCaches } from '@/lib/performanc
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 import { passwordPolicyError } from '@/lib/password-policy'
 import { freeTrialFields } from '@/lib/billing/trial'
+import { getBillingConfig } from '@/lib/billing/billing-config'
+import { getAppSettings } from '@/lib/settings/app-settings'
 import type { PlanType } from '@prisma/client'
 import {
   buildRevenueVelocitySeries,
@@ -897,6 +899,10 @@ export async function createHouse(data: { houseNumber: string, capacity: number 
 export async function onboardFarmer(data: { name: string, location: string, capacity: number, planType?: PlanType }) {
   const { userId } = await getAuthContext()
   const planType: PlanType = data.planType === 'SOLO' ? 'SOLO' : 'TEAM'
+  const [trialDays, farmDefaults] = await Promise.all([
+    getBillingConfig().then((config) => config.trial.days),
+    getAppSettings('farm-defaults'),
+  ])
   try {
     const result = await prisma.$transaction(async (tx: any) => {
       // Find if there is an existing placeholder/default farm created during signup
@@ -943,7 +949,7 @@ export async function onboardFarmer(data: { name: string, location: string, capa
         if (!hadTrial) {
           farm = await tx.farm.update({
             where: { id: farm.id },
-            data: freeTrialFields()
+            data: freeTrialFields(new Date(), trialDays)
           })
           await tx.subscriptionEvent.create({
             data: {
@@ -995,6 +1001,21 @@ export async function onboardFarmer(data: { name: string, location: string, capa
             eggsPerCrate: 30
           }
         })
+      }
+
+      // Admin Farm defaults: starting egg categories and sales settings.
+      if (farmDefaults.eggCategories.length > 0) {
+        const existing = await tx.eggCategory.findMany({ where: { farmId: farm.id }, select: { name: true } })
+        const taken = new Set(existing.map((category: { name: string }) => category.name.toLowerCase()))
+        const toCreate = farmDefaults.eggCategories.filter((category) => !taken.has(category.name.toLowerCase()))
+        if (toCreate.length > 0) {
+          await tx.eggCategory.createMany({
+            data: toCreate.map((category) => ({ farmId: farm.id, name: category.name, description: category.description || null })),
+          })
+        }
+      }
+      if (!(await tx.salesSettings.findUnique({ where: { farmId: farm.id } }))) {
+        await tx.salesSettings.create({ data: { farmId: farm.id, ...farmDefaults.salesSettings } })
       }
 
       return farm

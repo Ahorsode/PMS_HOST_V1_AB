@@ -6,7 +6,7 @@ import { Users, Mail, Shield, UserPlus, Loader2, CheckCircle2, XCircle, Trash2, 
 import { inviteWorker, getFarmMembers, deleteMember, deleteInvitation, updateWorkerPermissions, resetWorkerPermissions, updateFarmMemberRole, getUserForInvite, regenerateInviteCode, setMemberAccessPaused } from '@/lib/actions/staff-actions';
 import Link from 'next/link';
 import { InviteCodePanel, type IssuedInviteCode } from '@/components/team/InviteCodePanel';
-import { getDefaultPermissionsForRole } from '@/lib/staff-permission-defaults';
+import { getDefaultPermissionsForRole, type RolePermissionDefaults } from '@/lib/staff-permission-defaults';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { Input } from '@/components/ui/Input';
@@ -16,7 +16,14 @@ import { useRouter } from 'next/navigation';
 import { MutationBoundary } from '@/components/ui/MutationFeedback';
 import { toast } from 'sonner';
 
-export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
+export default function TeamView({
+  canEdit = true,
+  rolePermissions,
+}: {
+  canEdit?: boolean;
+  /** Admin-set starting permissions per role (Farm defaults settings). */
+  rolePermissions?: RolePermissionDefaults;
+}) {
   const router = useRouter();
   const [members, setMembers] = useState<any[]>([]);
   const [invitations, setInvitations] = useState<any[]>([]);
@@ -671,6 +678,7 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
                         </p>
                         <InlinePermissionToggles
                           role={inviteRole}
+                          roleDefaults={rolePermissions}
                           value={pendingPermissions}
                           onChange={setPendingPermissions}
                         />
@@ -752,7 +760,7 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
           onClose={() => setPermissionTarget(null)}
           staffName={`${permissionTarget.user?.firstname || ''} ${permissionTarget.user?.surname || ''}`}
           role={permissionTarget.role}
-          defaultPermissions={getDefaultPermissionsForRole(permissionTarget.role)}
+          defaultPermissions={getDefaultPermissionsForRole(permissionTarget.role, undefined, rolePermissions)}
           initialPermissions={permissionTarget.user?.userPermissions?.[0]}
           isLoading={isSavingPermissions || resettingPermissionsUserId === permissionTarget.userId}
           onSave={handleSavePermissions}
@@ -770,7 +778,7 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
           onClose={() => setEditPermissionsInvite(null)}
           staffName={`${editPermissionsInvite.name} (Pending)`}
           role={editPermissionsInvite.role}
-          defaultPermissions={getDefaultPermissionsForRole(editPermissionsInvite.role)}
+          defaultPermissions={getDefaultPermissionsForRole(editPermissionsInvite.role, undefined, rolePermissions)}
           initialPermissions={editPermissionsInvite.currentPermissions}
           isLoading={isSavingPermissions || resettingPermissionsUserId === editPermissionsInvite.userId}
           onSave={handleSavePendingInvitePermissions}
@@ -798,20 +806,22 @@ const PERMISSION_MODULES = [
   { label: 'Team Management', view: 'canViewTeam', edit: 'canEditTeam' },
 ] as const;
 
-function getInviteRoleDefaults(role: string): Record<string, boolean> {
-  return getDefaultPermissionsForRole(role);
+function getInviteRoleDefaults(role: string, roleDefaults?: RolePermissionDefaults): Record<string, boolean> {
+  return getDefaultPermissionsForRole(role, undefined, roleDefaults);
 }
 
 function InlinePermissionToggles({
   role,
+  roleDefaults,
   value,
   onChange,
 }: {
   role: string;
+  roleDefaults?: RolePermissionDefaults;
   value: Record<string, boolean>;
   onChange: (value: Record<string, boolean>) => void;
 }) {
-  const effective = { ...getInviteRoleDefaults(role), ...value };
+  const effective = { ...getInviteRoleDefaults(role, roleDefaults), ...value };
 
   function toggle(key: string) {
     const next = { ...value, [key]: !effective[key] };

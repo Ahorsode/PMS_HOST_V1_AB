@@ -6,6 +6,7 @@ import { checkRateLimit, getRateLimitIp, rateLimitHeaders } from '@/lib/performa
 import { MAX_PASSWORD_LENGTH, passwordPolicyError } from '@/lib/password-policy';
 import { z } from 'zod';
 import { freeTrialFields } from '@/lib/billing/trial';
+import { getBillingConfig } from '@/lib/billing/billing-config';
 
 const signupSchema = z.object({
   firstname: z.string().trim().min(1, 'First name is required').max(100),
@@ -101,6 +102,7 @@ export async function POST(req: Request) {
     const mustChangePassword = false;
 
     // Create the user and associated resources in a transaction
+    const trialDays = (await getBillingConfig()).trial.days;
     const user = await prisma.$transaction(async (tx) => {
       const txUser = await tx.user.create({
         data: {
@@ -136,7 +138,7 @@ export async function POST(req: Request) {
             userId: txUser.id,
             capacity: 0,
             location: '',
-            ...freeTrialFields(),
+            ...freeTrialFields(new Date(), trialDays),
           }
         });
 

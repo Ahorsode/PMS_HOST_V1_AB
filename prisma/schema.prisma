@@ -107,11 +107,76 @@ model BillingSettings {
   @@map("billing_settings")
 }
 
+/// Other admin-editable settings, one JSON row per section ("site", "system",
+/// "farm-defaults", "messages"). Code defaults apply until a section is saved.
+model AppSetting {
+  key              String   @id
+  value            Json
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  updatedByAdminId String?  @map("updated_by_admin_id")
+
+  @@map("app_settings")
+}
+
+/// Every change made from the admin console.
+model AdminAuditLog {
+  id            String   @id @default(cuid())
+  adminUserId   String?  @map("admin_user_id")
+  adminUsername String   @map("admin_username")
+  action        String
+  targetType    String?  @map("target_type")
+  targetId      String?  @map("target_id")
+  summary       String
+  details       Json?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@index([targetType, targetId])
+  @@map("admin_audit_log")
+}
+
+/// Checkout discount codes managed from the admin console.
+model PromoCode {
+  id               String     @id @default(cuid())
+  code             String     @unique
+  description      String?
+  percentOff       Int        @map("percent_off")
+  /// Plan types the code applies to; empty means all.
+  planTypes        PlanType[] @default([]) @map("plan_types")
+  expiresAt        DateTime?  @map("expires_at")
+  maxRedemptions   Int?       @map("max_redemptions")
+  redemptions      Int        @default(0)
+  isActive         Boolean    @default(true) @map("is_active")
+  createdByAdminId String?    @map("created_by_admin_id")
+  createdAt        DateTime   @default(now()) @map("created_at")
+  updatedAt        DateTime   @updatedAt @map("updated_at")
+
+  @@map("promo_codes")
+}
+
+/// Per-farm exceptions to its plan: extra features, a custom staff limit, a checkout discount.
+model FarmOverride {
+  farmId             String   @id @map("farm_id")
+  extraFeatures      String[] @default([]) @map("extra_features")
+  /// When true, staffLimit replaces the plan's limit (null = unlimited).
+  overrideStaffLimit Boolean  @default(false) @map("override_staff_limit")
+  staffLimit         Int?     @map("staff_limit")
+  discountPercent    Int      @default(0) @map("discount_percent")
+  notes              String?
+  updatedAt          DateTime @updatedAt @map("updated_at")
+  updatedByAdminId   String?  @map("updated_by_admin_id")
+  farm               Farm     @relation(fields: [farmId], references: [id], onDelete: Cascade)
+
+  @@map("farm_overrides")
+}
+
 model AdminUser {
   id                    String                   @id @default(cuid())
   username              String                   @unique
   passwordHash          String                   @map("password_hash")
   isActive              Boolean                  @default(true) @map("is_active")
+  /// SUPER_ADMIN, BILLING or SUPPORT; see src/lib/admin-permissions.ts.
+  role                  String                   @default("SUPER_ADMIN")
   createdAt             DateTime                 @default(now()) @map("created_at")
   updatedAt             DateTime                 @updatedAt @map("updated_at")
   lastLoginAt           DateTime?                @map("last_login_at")
@@ -165,6 +230,7 @@ model Farm {
   saleItems             SaleItem[]
   sales                 Sale[]
   subscription          Subscription?
+  override              FarmOverride?
   suppliers             Supplier[]
   userPermissions       UserPermission[]
   vaccinations          VaccinationSchedule[]

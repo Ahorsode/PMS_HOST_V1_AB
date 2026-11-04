@@ -24,7 +24,7 @@ const jetBrainsMono = JetBrains_Mono({
 })
 
 export default async function AdminUserMapPage() {
-  const adminUser = await requirePaymentAdminPage()
+  const adminUser = await requirePaymentAdminPage('payments.manage')
   const webAccounts = await getActiveWebAccounts()
   const adminName = adminUser.username || 'System admin'
 

@@ -31,7 +31,10 @@ export async function getBillingConfig(): Promise<BillingConfig> {
     if (!parsed) console.error('[getBillingConfig] stored billing config is invalid; using defaults')
     return parsed ?? DEFAULT_BILLING_CONFIG
   } catch (error) {
-    console.error('[getBillingConfig] failed to load billing config; using defaults', error)
+    // Outside a Next request (tests, scripts) unstable_cache is unavailable.
+    if (!(error instanceof Error && error.message.includes('incrementalCache'))) {
+      console.error('[getBillingConfig] failed to load billing config; using defaults', error)
+    }
     return DEFAULT_BILLING_CONFIG
   }
 }

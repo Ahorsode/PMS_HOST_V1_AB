@@ -2,6 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import { Lock } from 'lucide-react';
 import { getBillingConfig } from '@/lib/billing/billing-config';
+import { getAppSettings } from '@/lib/settings/app-settings';
 import { plansWithFeature, type PlanFeature } from '@/lib/billing/pricing';
 
 /** Shown in place of a page whose feature is not on the farm's current plan. */
@@ -17,7 +18,10 @@ export async function PlanFeatureLocked({
   accent: string;
   description: React.ReactNode;
 }) {
-  const planNames = plansWithFeature(await getBillingConfig(), feature);
+  const [billing, system] = await Promise.all([getBillingConfig(), getAppSettings('system')]);
+  const planNames = plansWithFeature(billing, feature);
+  // Switched off for every farm by an admin (System settings), whatever the plan.
+  const turnedOff = system.disabledFeatures.includes(feature);
 
   return (
     <div className="max-w-[1600px] mx-auto min-h-[60vh] flex flex-col items-center justify-center px-5 py-9 relative">
@@ -29,7 +33,9 @@ export async function PlanFeatureLocked({
       </h1>
       <p className="text-white/80 mb-7 max-w-lg text-center leading-relaxed">
         {description}{' '}
-        {planNames.length === 0 ? (
+        {turnedOff ? (
+          'It is switched off for everyone for a short while. Please check back later.'
+        ) : planNames.length === 0 ? (
           'It is not included in any plan right now.'
         ) : (
           <>

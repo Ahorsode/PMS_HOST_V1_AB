@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { requirePaymentAdminPage } from '@/lib/admin-auth'
 import { adminGetFarmDetail } from '@/lib/actions/admin-farm-actions'
 import { getBillingConfig } from '@/lib/billing/billing-config'
+import { adminCan } from '@/lib/admin-permissions'
 import FarmDetailDashboard from './FarmDetailDashboard'
 
 export const dynamic = 'force-dynamic'
@@ -17,11 +18,11 @@ export default async function AdminFarmDetailPage({
 }: {
   params: Promise<{ id: string }>
 }) {
-  await requirePaymentAdminPage()
+  const admin = await requirePaymentAdminPage()
   const { id } = await params
   const [farm, billing] = await Promise.all([adminGetFarmDetail(id), getBillingConfig()])
 
   if (!farm) notFound()
 
-  return <FarmDetailDashboard farm={farm} billing={billing} />
+  return <FarmDetailDashboard farm={farm} billing={billing} canManage={adminCan(admin.role, 'farms.manage')} />
 }

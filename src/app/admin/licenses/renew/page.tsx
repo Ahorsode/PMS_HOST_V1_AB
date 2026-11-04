@@ -23,7 +23,7 @@ const jetBrainsMono = JetBrains_Mono({
 })
 
 export default async function AdminRenewLicensePage() {
-  const admin = await requirePaymentAdminPage()
+  const admin = await requirePaymentAdminPage('payments.manage')
 
   return (
     <main className={`${spaceGrotesk.variable} ${jetBrainsMono.variable} min-h-screen bg-[#11140d] text-[#f7f1df] font-[var(--font-payment-admin)]`}>

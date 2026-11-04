@@ -1,5 +1,6 @@
 'use server'
 
+import { logAdminAction } from '@/lib/admin-audit'
 import prisma from '@/lib/db'
 import { requirePaymentAdminAction } from '@/lib/admin-auth'
 import {
@@ -34,7 +35,7 @@ export type AdminLicenseAccountOption = {
 }
 
 export async function getAdminLicenseAccountOptions() {
-  await requirePaymentAdminAction()
+  await requirePaymentAdminAction('payments.manage')
 
   const farms = await prisma.farm.findMany({
     select: {
@@ -87,7 +88,7 @@ export type IssueManualLicenseResult =
   | { success: false; error: string }
 
 export async function issueManualLicenseKey(input: unknown): Promise<IssueManualLicenseResult> {
-  const admin = await requirePaymentAdminAction()
+  const admin = await requirePaymentAdminAction('payments.manage')
   const parsed = issueSchema.safeParse(input)
 
   if (!parsed.success) {
@@ -132,6 +133,13 @@ export async function issueManualLicenseKey(input: unknown): Promise<IssueManual
       },
     })
 
+    await logAdminAction(admin, {
+      action: 'license.issue',
+      targetType: 'farm',
+      targetId: farm.id,
+      summary: `Issued a ${duration.days}-day license key for hardware ${normalizedHardware}`,
+      details: { issuedLogId: log.id, hardwareId: normalizedHardware, durationDays: duration.days },
+    })
     revalidatePath('/admin/licenses/issue')
 
     return {

@@ -1,9 +1,8 @@
 import type { PlanType, SubscriptionTier } from '@prisma/client'
-import { DEFAULT_BILLING_CONFIG, isPaidTier, type BillingConfig } from './pricing'
-import { FREE_TRIAL_DAYS, FREE_TRIAL_TIER } from './trial'
+import { DEFAULT_BILLING_CONFIG, isPaidTier, planHasFeature, type BillingConfig, type PlanFeature } from './pricing'
 
-/** Days a farm keeps its features after its trial or paid period ends, before it is locked. */
-export const GRACE_PERIOD_DAYS = 3
+/** Default days a farm keeps its features after its trial or paid period ends, before it is locked (admin-configurable). */
+export const GRACE_PERIOD_DAYS = DEFAULT_BILLING_CONFIG.trial.graceDays
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -75,12 +74,12 @@ export function resolveFarmAccess(
 
   const endsAt = isPaid
     ? farm.trialExpiresAt!
-    : farm.trialExpiresAt ?? new Date(farm.createdAt.getTime() + FREE_TRIAL_DAYS * DAY_MS)
-  const graceEndsAt = new Date(endsAt.getTime() + GRACE_PERIOD_DAYS * DAY_MS)
+    : farm.trialExpiresAt ?? new Date(farm.createdAt.getTime() + config.trial.days * DAY_MS)
+  const graceEndsAt = new Date(endsAt.getTime() + config.trial.graceDays * DAY_MS)
 
   const state: AccessState =
     now < endsAt ? (isPaid ? 'PAID' : 'TRIAL') : now < graceEndsAt ? 'GRACE' : 'LOCKED'
-  const tier: SubscriptionTier = state === 'LOCKED' ? 'BASIC' : isPaid ? farm.subscriptionTier : FREE_TRIAL_TIER
+  const tier: SubscriptionTier = state === 'LOCKED' ? 'BASIC' : isPaid ? farm.subscriptionTier : config.trial.tier
 
   return {
     state,
@@ -125,4 +124,35 @@ export function resolveStaffAccess(members: StaffMemberInput[], ownerId: string,
     activeCount: active.length - (staffLimit === null ? 0 : Math.max(0, active.length - staffLimit)),
     overLimitCount: staffLimit === null ? 0 : Math.max(0, active.length - staffLimit),
   }
+}
+
+/** Admin-set exceptions for one farm (Farm detail → Custom deal). */
+export type FarmOverrideInput = {
+  extraFeatures: string[]
+  overrideStaffLimit: boolean
+  staffLimit: number | null
+}
+
+/** A custom staff limit replaces the plan's, except on a locked farm. */
+export function applyStaffLimitOverride(access: FarmAccess, override: FarmOverrideInput | null): FarmAccess {
+  if (!override?.overrideStaffLimit || access.state === 'LOCKED') return access
+  return { ...access, staffLimit: override.staffLimit }
+}
+
+/**
+ * Whether a farm can use a plan feature now: switched off for everyone wins,
+ * then a locked farm has nothing, then a per-farm extra, then the plan.
+ */
+export function farmHasPlanFeature(input: {
+  config: BillingConfig
+  access: FarmAccess
+  feature: PlanFeature
+  disabledFeatures: readonly string[]
+  override: FarmOverrideInput | null
+}) {
+  const { config, access, feature, disabledFeatures, override } = input
+  if (disabledFeatures.includes(feature)) return false
+  if (access.state === 'LOCKED') return false
+  if (override?.extraFeatures.includes(feature)) return true
+  return planHasFeature(config, access.planType, access.tier, feature)
 }

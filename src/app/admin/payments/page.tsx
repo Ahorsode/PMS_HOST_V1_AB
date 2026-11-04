@@ -25,7 +25,7 @@ const jetBrainsMono = JetBrains_Mono({
 })
 
 export default async function AdminPaymentsPage() {
-  const adminUser = await requirePaymentAdminPage()
+  const adminUser = await requirePaymentAdminPage('payments.manage')
   const [dashboardData, billing] = await Promise.all([getPaymentAdminDashboardData(), getBillingConfig()])
 
   const adminName = adminUser.username || 'Payment admin'
@@ -34,7 +34,7 @@ export default async function AdminPaymentsPage() {
     <main
       className={`${spaceGrotesk.variable} ${jetBrainsMono.variable} min-h-screen bg-[#11140d] text-[#f7f1df] font-[var(--font-payment-admin)]`}
     >
-      <PaymentAdminDashboard data={dashboardData} adminName={adminName} desktopLicensePrices={billing.desktopLicensePrices} />
+      <PaymentAdminDashboard data={dashboardData} adminName={adminName} desktopLicensePrices={billing.desktopLicensePrices} offeredDesktopPacks={billing.offeredDesktopPacks} />
     </main>
   )
 }

@@ -17,13 +17,15 @@ import {
   type AdminFarmDevice,
 } from '@/lib/actions/admin-device-actions'
 import { confirmManualLicensePayment } from '@/lib/actions/admin-payment-actions'
-import { DESKTOP_LICENSE_DAYS, type BillingConfig, type DesktopLicenseDays } from '@/lib/billing/pricing'
+import type { BillingConfig, DesktopLicenseDays } from '@/lib/billing/pricing'
 
 type Props = {
   adminName: string
   accounts: AdminLicenseAccountOption[]
   /** Admin-set cash/MoMo price per pack, from Plans & Pricing. */
   desktopLicensePrices: BillingConfig['desktopLicensePrices']
+  /** Packs admins may sell, from Plans & Pricing. */
+  offeredDesktopPacks: BillingConfig['offeredDesktopPacks']
 }
 
 const DAY_MS = 24 * 60 * 60 * 1000
@@ -85,8 +87,8 @@ function getDeviceStatus(device: AdminFarmDevice) {
   return device.status || 'Pending'
 }
 
-export default function FarmSubscriptionPanel({ adminName, accounts, desktopLicensePrices }: Props) {
-  const durationOptions = DESKTOP_LICENSE_DAYS.map((days) => ({
+export default function FarmSubscriptionPanel({ adminName, accounts, desktopLicensePrices, offeredDesktopPacks }: Props) {
+  const durationOptions = offeredDesktopPacks.map((days) => ({
     days,
     label: durationLabels[days],
     amount: desktopLicensePrices[`${days}`],
@@ -95,7 +97,7 @@ export default function FarmSubscriptionPanel({ adminName, accounts, desktopLice
   const [selectedFarmId, setSelectedFarmId] = useState('')
   const [devices, setDevices] = useState<AdminFarmDevice[]>([])
   const [deviceError, setDeviceError] = useState<string | null>(null)
-  const [durationDays, setDurationDays] = useState(30)
+  const [durationDays, setDurationDays] = useState<number>(offeredDesktopPacks[0] ?? 30)
   const [paymentReference, setPaymentReference] = useState('')
   const [result, setResult] = useState<{
     expiry: string

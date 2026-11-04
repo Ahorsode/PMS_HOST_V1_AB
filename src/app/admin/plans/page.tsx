@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 }
 
 export default async function AdminPlansPage() {
-  await requirePaymentAdminPage()
+  await requirePaymentAdminPage('pricing.manage')
   const settings = await adminGetBillingSettings()
 
   return <PlanPricingEditor initialSettings={settings} />

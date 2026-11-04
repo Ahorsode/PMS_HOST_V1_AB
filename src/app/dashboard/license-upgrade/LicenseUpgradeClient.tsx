@@ -3,17 +3,16 @@
 import React, { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Check, Clock3, Crown, Monitor, Shield, User, Users, X } from "lucide-react";
+import { Check, Clock3, Crown, Monitor, Shield, Smartphone, Tag, User, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
-import { requestSubscriptionUpgrade, startPaystackCheckout } from "@/lib/actions/subscription-actions";
+import { previewPromoCode, requestSubscriptionUpgrade, startPaystackCheckout } from "@/lib/actions/subscription-actions";
 import { type DesktopLicenseRow } from "@/lib/actions/licenses";
 import {
   PLAN_FEATURE_DETAILS,
   PLAN_FEATURE_KEYS,
   staffLimitLabel,
   termDiscount,
-  TERM_MONTHS,
   type BillingConfig,
   type PaidTier,
 } from "@/lib/billing/pricing";
@@ -104,9 +103,10 @@ function formatRemaining(expiry: Date | null, now: Date) {
   return `${days} days · ${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")} remaining`;
 }
 
-function getTermPricing(months: number, monthlyPrice: number, discount: number) {
+/** Same order as the server's calculateUpgradeTotal: term discount, then the extra percents. */
+function getTermPricing(months: number, monthlyPrice: number, discount: number, extraPercents: number[] = []) {
   const subtotal = months * monthlyPrice;
-  const total = subtotal * (1 - discount);
+  const total = Math.round(extraPercents.reduce((value, percent) => value * (1 - percent / 100), subtotal * (1 - discount)) * 100) / 100;
 
   return {
     total,
@@ -158,6 +158,8 @@ export default function LicenseUpgradeClient({
   access,
   devices,
   billing,
+  paystackAvailable,
+  farmDiscountPercent,
 }: {
   /** The farm's current plan type. */
   planType: PlanTypeValue;
@@ -167,14 +169,23 @@ export default function LicenseUpgradeClient({
   devices: DesktopLicenseRow[];
   /** Admin-set plan names, prices, features and discounts. */
   billing: BillingConfig;
+  /** Paystack keys are configured and an admin has online checkout switched on. */
+  paystackAvailable: boolean;
+  /** Admin-set custom discount for this farm (0 when none). */
+  farmDiscountPercent: number;
 }) {
   const router = useRouter();
   const [selectedType, setSelectedType] = useState<PlanTypeValue>(initialType);
-  const [selectedMonths, setSelectedMonths] = useState(1);
+  const [selectedMonths, setSelectedMonths] = useState<number>(billing.offeredTerms[0] ?? 1);
+  const [promoInput, setPromoInput] = useState("");
+  const [appliedPromo, setAppliedPromo] = useState<{ code: string; percentOff: number } | null>(null);
+  const [isCheckingPromo, startPromoCheck] = useTransition();
+  const [manualRequest, setManualRequest] = useState<{ amount: number; planName: string } | null>(null);
+  const extraDiscounts = [farmDiscountPercent, appliedPromo?.percentOff ?? 0].filter((value) => value > 0);
   const [now, setNow] = useState(() => new Date());
   const [isUpgrading, startTransition] = useTransition();
   const current = describeCurrentPlan(access, planType, billing);
-  const monthOptions = TERM_MONTHS.map((months) => ({ months, discount: billing.termDiscounts[`${months}`] }));
+  const monthOptions = billing.offeredTerms.map((months) => ({ months, discount: billing.termDiscounts[`${months}`] }));
   const timerEnd = current.timerEnd ? new Date(current.timerEnd) : null;
 
   React.useEffect(() => {
@@ -200,7 +211,7 @@ export default function LicenseUpgradeClient({
 
   function handlePaystackCheckout(tier: PaidTier) {
     startTransition(async () => {
-      const result = await startPaystackCheckout(selectedType, tier, selectedMonths);
+      const result = await startPaystackCheckout(selectedType, tier, selectedMonths, appliedPromo?.code);
 
       if (!result.success || !("authorizationUrl" in result) || !result.authorizationUrl) {
         toast.error(result.error || "Could not start the payment");
@@ -213,7 +224,7 @@ export default function LicenseUpgradeClient({
 
   function handleUpgrade(tier: PaidTier) {
     startTransition(async () => {
-      const result = await requestSubscriptionUpgrade(selectedType, tier, selectedMonths);
+      const result = await requestSubscriptionUpgrade(selectedType, tier, selectedMonths, appliedPromo?.code);
 
       if (!result.success) {
         toast.error(result.error || "Failed to submit upgrade request");
@@ -224,7 +235,29 @@ export default function LicenseUpgradeClient({
         result.message ||
           "Upgrade request submitted. Complete payment to activate your plan.",
       );
+      if ("totalAmount" in result && typeof result.totalAmount === "number") {
+        setManualRequest({ amount: result.totalAmount, planName: billing.plans[selectedType][tier].name });
+      }
       router.refresh();
+    });
+  }
+
+  function applyPromo() {
+    const code = promoInput.trim();
+    if (!code) return;
+    startPromoCheck(async () => {
+      try {
+        const result = await previewPromoCode(code, selectedType);
+        if (!result.success) {
+          setAppliedPromo(null);
+          toast.error(result.error);
+          return;
+        }
+        setAppliedPromo({ code: result.code, percentOff: result.percentOff });
+        toast.success(`${result.code}: ${result.percentOff}% off applied`);
+      } catch {
+        toast.error("Could not check the promo code. Try again.");
+      }
     });
   }
 
@@ -330,13 +363,70 @@ export default function LicenseUpgradeClient({
             );
           })}
         </div>
+
+        <div className="flex flex-col gap-3 border-t border-white/10 pt-4 sm:flex-row sm:items-center">
+          <label className="relative flex-1 sm:max-w-xs">
+            <Tag className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+            <span className="sr-only">Promo code</span>
+            <input
+              value={promoInput}
+              onChange={(event) => {
+                setPromoInput(event.target.value);
+                if (appliedPromo) setAppliedPromo(null);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  event.preventDefault();
+                  applyPromo();
+                }
+              }}
+              placeholder="Promo code"
+              className="h-10 w-full rounded-full border border-white/10 bg-white/5 pl-9 pr-4 text-sm font-semibold uppercase text-white outline-none placeholder:normal-case placeholder:text-white/40 focus:border-emerald-300/50"
+            />
+          </label>
+          <button
+            type="button"
+            onClick={applyPromo}
+            disabled={!promoInput.trim() || isCheckingPromo}
+            className="h-10 rounded-full border border-white/15 px-5 text-sm font-bold text-white/80 transition hover:border-white/30 hover:text-white disabled:opacity-50"
+          >
+            {isCheckingPromo ? "Checking..." : "Apply"}
+          </button>
+          <div className="text-sm text-emerald-200/90">
+            {appliedPromo ? <p>{appliedPromo.code}: {appliedPromo.percentOff}% off</p> : null}
+            {farmDiscountPercent > 0 ? <p>Your farm has a {farmDiscountPercent}% discount.</p> : null}
+          </div>
+        </div>
       </section>
+
+      {manualRequest ? (
+        <section className="rounded-lg border border-amber-300/25 bg-amber-400/10 p-5 text-sm text-amber-50">
+          <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-amber-200">
+            <Smartphone className="h-4 w-4" /> Pay by Mobile Money
+          </p>
+          <p className="mt-3 text-base font-bold text-white">
+            Send {formatCurrency(manualRequest.amount)} for {manualRequest.planName}
+          </p>
+          <dl className="mt-3 grid gap-2 sm:grid-cols-3">
+            {billing.manualPayment.network ? (
+              <div><dt className="text-xs text-amber-200/70">Network</dt><dd className="font-semibold">{billing.manualPayment.network}</dd></div>
+            ) : null}
+            {billing.manualPayment.momoNumber ? (
+              <div><dt className="text-xs text-amber-200/70">Number</dt><dd className="font-semibold">{billing.manualPayment.momoNumber}</dd></div>
+            ) : null}
+            {billing.manualPayment.accountName ? (
+              <div><dt className="text-xs text-amber-200/70">Account name</dt><dd className="font-semibold">{billing.manualPayment.accountName}</dd></div>
+            ) : null}
+          </dl>
+          {billing.manualPayment.instructions ? <p className="mt-3 leading-6 text-amber-50/90">{billing.manualPayment.instructions}</p> : null}
+        </section>
+      ) : null}
 
       <section className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {tiers.map((plan) => {
           const planConfig = billing.plans[selectedType][plan.tier];
           const monthly = planConfig.monthlyPrice;
-          const pricing = getTermPricing(selectedMonths, monthly, termDiscount(billing, selectedMonths));
+          const pricing = getTermPricing(selectedMonths, monthly, termDiscount(billing, selectedMonths), extraDiscounts);
           const Icon = plan.icon;
           const isCurrent =
             !access.isTrial &&
@@ -411,14 +501,23 @@ export default function LicenseUpgradeClient({
                     <p className="mt-2 text-xl font-black text-white">
                       {selectedMonths} {selectedMonths === 1 ? "Month" : "Months"} - {formatCurrency(pricing.total)}
                     </p>
-                    {pricing.discount > 0 ? (
+                    {pricing.savings > 0 ? (
                       <p className="mt-1 text-sm font-semibold text-emerald-300">
-                        {Math.round(pricing.discount * 100)}% off · save {formatCurrency(pricing.savings)}
+                        {[
+                          pricing.discount > 0 ? `${Math.round(pricing.discount * 100)}% term discount` : null,
+                          farmDiscountPercent > 0 ? `${farmDiscountPercent}% farm discount` : null,
+                          appliedPromo ? `${appliedPromo.percentOff}% promo` : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" + ")}{" "}
+                        · save {formatCurrency(pricing.savings)}
                       </p>
                     ) : null}
                   </div>
 
                   <div className="space-y-3">
+                    {paystackAvailable ? (
+                    <>
                     <Button
                       onClick={() => handlePaystackCheckout(plan.tier)}
                       isLoading={isUpgrading}
@@ -435,15 +534,38 @@ export default function LicenseUpgradeClient({
                     </Button>
                     <p className="text-center text-xs text-white/50">
                       Mobile Money (MTN, Telecel, AirtelTigo), card or bank transfer.{" "}
-                      <button
-                        type="button"
-                        onClick={() => handleUpgrade(plan.tier)}
-                        disabled={isUpgrading}
-                        className="font-semibold text-white/70 underline underline-offset-2 hover:text-white disabled:opacity-50"
-                      >
-                        Pay manually instead
-                      </button>
+                      {billing.manualPayment.enabled ? (
+                        <button
+                          type="button"
+                          onClick={() => handleUpgrade(plan.tier)}
+                          disabled={isUpgrading}
+                          className="font-semibold text-white/70 underline underline-offset-2 hover:text-white disabled:opacity-50"
+                        >
+                          Pay manually instead
+                        </button>
+                      ) : null}
                     </p>
+                    </>
+                    ) : billing.manualPayment.enabled ? (
+                      <Button
+                        onClick={() => handleUpgrade(plan.tier)}
+                        isLoading={isUpgrading}
+                        loadingText="Submitting..."
+                        disabled={isUpgrading}
+                        className={cn(
+                          "h-14 w-full rounded-lg font-bold uppercase tracking-widest",
+                          plan.tier === "STANDARD"
+                            ? "bg-emerald-500 text-[#064e3b] shadow-emerald-500/20 hover:bg-emerald-400"
+                            : "bg-amber-500 text-[#451a03] shadow-amber-500/20 hover:bg-amber-400",
+                        )}
+                      >
+                        Pay {formatCurrency(pricing.total)} by Mobile Money
+                      </Button>
+                    ) : (
+                      <p className="rounded-lg border border-white/10 bg-white/5 p-3 text-center text-sm text-white/70">
+                        Payments are paused right now. Please contact us to subscribe.
+                      </p>
+                    )}
                   </div>
                 </CardContent>
               </Card>

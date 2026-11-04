@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { requirePaymentAdminAction } from '@/lib/admin-auth'
+import { logAdminAction } from '@/lib/admin-audit'
 import prisma from '@/lib/db'
 import { applyPaidUpgrade } from '@/lib/billing/apply-paid-upgrade'
 import { isPlanType } from '@/lib/billing/pricing'
@@ -16,7 +17,7 @@ export async function adminUpgradeFarmTier(
 ) {
   let admin: { id: string; username: string }
   try {
-    admin = await requirePaymentAdminAction()
+    admin = await requirePaymentAdminAction('farms.manage')
   } catch {
     return { success: false, error: 'Unauthorized' }
   }
@@ -46,6 +47,13 @@ export async function adminUpgradeFarmTier(
       })
     })
 
+    await logAdminAction(admin, {
+      action: 'farm.upgrade',
+      targetType: 'farm',
+      targetId: farmId,
+      summary: `Granted ${tier.toLowerCase()} access for ${durationDays} days`,
+      details: { tier, durationDays, planType: planType ?? null },
+    })
     revalidatePath('/admin/payments')
     revalidatePath('/admin/licenses/issue')
     revalidatePath('/admin/farms')
