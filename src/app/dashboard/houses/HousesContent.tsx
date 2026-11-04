@@ -155,7 +155,7 @@ export default function HousesPage({ houses, canEdit = true, openAddOnLoad = fal
               </CardTitle>
               {canEdit && (
                 <div className="flex items-center gap-1 transition-opacity">
-                  <button 
+                  <button aria-label="Edit House" 
                     onClick={() => setEditingHouse(house)}
                     disabled={deletingHouseId === house.id}
                     className="p-1.5 hover:bg-blue-50 rounded-md text-blue-600 transition-colors"

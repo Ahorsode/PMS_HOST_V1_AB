@@ -74,7 +74,7 @@ export default async function SalesAnalyticsPage() {
                       </td>
                       <td className="px-7 py-5">
                          <p className="text-white font-bold text-sm tracking-normal">{sale.customerName || 'Walk-in Customer'}</p>
-                         <p className="text-white/20 text-[8px] font-bold uppercase tracking-widest">Order {index + 1}</p>
+                         <p className="text-white/60 text-[8px] font-bold uppercase tracking-widest">Order {index + 1}</p>
                       </td>
                       <td className="px-7 py-5 text-center">
                          <span className="text-white/70 font-bold text-sm tracking-normal">{sale.items?.length || 0}</span>
@@ -107,7 +107,7 @@ const MetricBox = ({ title, value, icon: Icon, color, bgColor }: any) => (
      </div>
      <div>
         <h3 className="text-white font-bold text-3xl tracking-normal">{value}</h3>
-        <p className="text-white/20 font-bold uppercase tracking-widest text-[9px] mt-1 italic">{title}</p>
+        <p className="text-white/60 font-bold uppercase tracking-widest text-[9px] mt-1 italic">{title}</p>
      </div>
   </div>
 );

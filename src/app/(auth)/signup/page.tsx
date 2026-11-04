@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
@@ -16,6 +17,7 @@ export default function SignUpPage() {
     phoneNumber: '',
     password: '',
   });
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -29,6 +31,10 @@ export default function SignUpPage() {
     e.preventDefault();
     if (isLoading) return;
     if (!formData.phoneNumber || !formData.password) return;
+    if (!acceptTerms) {
+      setError('Please accept the Terms of Service and Privacy Policy.');
+      return;
+    }
 
     if (formData.password.length < MIN_PASSWORD_LENGTH) {
       setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters long.`);
@@ -47,7 +53,7 @@ export default function SignUpPage() {
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, acceptTerms }),
       });
 
       const data = await res.json();
@@ -130,7 +136,7 @@ export default function SignUpPage() {
                           onChange={handleChange}
                           placeholder="First"
                           disabled={isLoading}
-                          className="w-full h-12 pl-9 pr-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
+                          className="w-full h-12 pl-9 pr-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
                         />
                       </div>
                       <div className="relative group/input">
@@ -141,7 +147,7 @@ export default function SignUpPage() {
                           onChange={handleChange}
                           placeholder="Surname"
                           disabled={isLoading}
-                          className="w-full h-12 px-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
+                          className="w-full h-12 px-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
                         />
                       </div>
                     </div>
@@ -157,7 +163,7 @@ export default function SignUpPage() {
                         onChange={handleChange}
                         placeholder="Email Address (Optional)"
                         disabled={isLoading}
-                        className="w-full h-12 pl-9 pr-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
+                        className="w-full h-12 pl-9 pr-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
                       />
                     </div>
 
@@ -173,7 +179,7 @@ export default function SignUpPage() {
                         placeholder="+233 54 000 0000"
                         required
                         disabled={isLoading}
-                        className="w-full h-12 pl-9 pr-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
+                        className="w-full h-12 pl-9 pr-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
                       />
                     </div>
 
@@ -189,9 +195,28 @@ export default function SignUpPage() {
                         placeholder={`Create Password (${MIN_PASSWORD_LENGTH}+ characters)`}
                         required
                         disabled={isLoading}
-                        className="w-full h-12 pl-9 pr-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
+                        className="w-full h-12 pl-9 pr-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
                       />
                     </div>
+
+                    <label className="flex items-start gap-3 rounded-md px-1 py-2 text-left text-xs leading-5 text-white/80">
+                      <input
+                        type="checkbox"
+                        name="acceptTerms"
+                        checked={acceptTerms}
+                        onChange={(e) => setAcceptTerms(e.target.checked)}
+                        required
+                        disabled={isLoading}
+                        className="mt-0.5 h-4 w-4 shrink-0 accent-emerald-500"
+                      />
+                      <span>
+                        I agree to the{' '}
+                        <Link href="/terms" target="_blank" className="font-semibold text-emerald-400 underline underline-offset-2">Terms of Service</Link>
+                        {' '}and{' '}
+                        <Link href="/privacy" target="_blank" className="font-semibold text-emerald-400 underline underline-offset-2">Privacy Policy</Link>
+                        , and I am 18 or older.
+                      </span>
+                    </label>
 
                     <AnimatePresence>
                       {error && (
@@ -208,7 +233,7 @@ export default function SignUpPage() {
 
                     <button
                       type="submit"
-                      disabled={isLoading || !formData.phoneNumber || !formData.password}
+                      disabled={isLoading || !formData.phoneNumber || !formData.password || !acceptTerms}
                       className="w-full h-14 bg-white hover:bg-gray-100 text-black rounded-md font-bold text-lg transition-all shadow-xl hover:scale-[1.02] active:scale-95 disabled:opacity-50 flex items-center justify-center group/btn"
                     >
                       {isLoading ? (
@@ -250,6 +275,9 @@ export default function SignUpPage() {
                       </svg>}
                       <span>{isLoading ? 'Opening Google...' : 'Google'}</span>
                     </button>
+                    <p className="pt-3 text-xs leading-5 text-white/60">
+                      With Google, you will be asked to accept the Terms of Service and Privacy Policy before you start.
+                    </p>
                   </div>
                 </div>
               </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useTransition } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Check, Clock3, Crown, Monitor, Shield, Smartphone, Tag, User, Users, X } from "lucide-react";
@@ -566,6 +567,14 @@ export default function LicenseUpgradeClient({
                         Payments are paused right now. Please contact us to subscribe.
                       </p>
                     )}
+                    <p className="text-center text-xs leading-5 text-white/60">
+                      One-time payment of {formatCurrency(pricing.total)} for {selectedMonths}{" "}
+                      {selectedMonths === 1 ? "month" : "months"}. It does not renew automatically. When the term ends you have{" "}
+                      {billing.trial.graceDays} {billing.trial.graceDays === 1 ? "day" : "days"} to renew before paid features lock, and your records are kept.{" "}
+                      <Link href="/refunds" className="font-semibold text-white/80 underline underline-offset-2 hover:text-white">
+                        Refund Policy
+                      </Link>
+                    </p>
                   </div>
                 </CardContent>
               </Card>

@@ -117,7 +117,7 @@ export function FeedingHistoryPanel({
           <div className="py-16 text-center">
             <Utensils className="w-10 h-10 text-white/20 mx-auto mb-3" />
             <p className="text-white/50 font-medium">No feeding logs recorded yet.</p>
-            <p className="text-white/30 text-sm mt-1">Use Log Feeding to record your first entry.</p>
+            <p className="text-white/60 text-sm mt-1">Use Log Feeding to record your first entry.</p>
           </div>
         ) : (
           <>

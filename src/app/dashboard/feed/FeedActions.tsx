@@ -70,10 +70,10 @@ export const FeedLogActions = ({ log, batches, inventory, formulations = [] }: {
 
   return (
     <div className="flex items-center gap-2">
-      <button onClick={() => setMode('edit')} className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors">
+      <button aria-label="Edit feeding log" onClick={() => setMode('edit')} className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors">
         <Edit2 className="h-4 w-4" />
       </button>
-      <button onClick={() => setShowDeleteModal(true)} className="p-1 text-gray-400 hover:bg-gray-100 rounded transition-colors">
+      <button aria-label="Delete feeding log" onClick={() => setShowDeleteModal(true)} className="p-1 text-gray-400 hover:bg-gray-100 rounded transition-colors">
         <Trash2 className="h-4 w-4" />
       </button>
 
@@ -127,10 +127,10 @@ export const InventoryActions = ({ item }: { item: any }) => {
         <Eye className="h-3 w-3" />
         <span>Indept</span>
       </Link>
-      <button onClick={() => setMode('edit')} className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors">
+      <button aria-label="Edit inventory item" onClick={() => setMode('edit')} className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors">
         <Edit2 className="h-4 w-4" />
       </button>
-      <button onClick={() => setShowDeleteModal(true)} className="p-1 text-gray-400 hover:bg-gray-100 rounded transition-colors">
+      <button aria-label="Delete inventory item" onClick={() => setShowDeleteModal(true)} className="p-1 text-gray-400 hover:bg-gray-100 rounded transition-colors">
         <Trash2 className="h-4 w-4" />
       </button>
 

@@ -180,7 +180,7 @@ export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: Feed
           Create New Formulation
         </CardTitle>
         {onClose && (
-          <Button
+          <Button aria-label="Close"
             type="button"
             variant="ghost"
             size="sm"
@@ -199,7 +199,7 @@ export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: Feed
               value={name} 
               onChange={(e) => setName(e.target.value)} 
               placeholder="e.g. Broiler Power Starter"
-              className="bg-white/10 border-white/10 text-white placeholder:text-white/30 focus:ring-emerald-500/50 focus:border-emerald-500/50 font-bold h-12"
+              className="bg-white/10 border-white/10 text-white placeholder:text-white/50 focus:ring-emerald-500/50 focus:border-emerald-500/50 font-bold h-12"
             />
           </div>
           <div className="space-y-2">
@@ -263,7 +263,7 @@ export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: Feed
                     className="bg-white text-[#064e3b] font-black h-14 text-xl border-2 border-emerald-500/30 shadow-inner"
                   />
                 </div>
-                <Button 
+                <Button aria-label="Remove ingredient" 
                   variant="ghost" 
                   size="icon" 
                   onClick={() => removeIngredient(idx)}

@@ -6,6 +6,7 @@ import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Phone, ArrowRight, Loader2, Plus, Lock, ShieldAlert } from 'lucide-react';
 import Background3D from '@/components/auth/Background3D';
+import { LegalLinks } from '@/components/legal/LegalPage';
 
 const SECURITY_NOTICE = 'Your security permissions have been updated. Please sign in again to activate your new features.';
 
@@ -119,7 +120,7 @@ export default function LoginPage() {
                         placeholder="+233 54 000 0000"
                         disabled={isLoading}
                         required
-                        className="w-full h-14 pl-11 pr-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all font-medium text-lg disabled:opacity-50 shadow-inner"
+                        className="w-full h-14 pl-11 pr-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all font-medium text-lg disabled:opacity-50 shadow-inner"
                       />
                     </div>
 
@@ -136,7 +137,7 @@ export default function LoginPage() {
                         aria-describedby="login-code-hint"
                         disabled={isLoading}
                         required
-                        className="w-full h-14 pl-11 pr-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all font-medium text-lg disabled:opacity-50 shadow-inner"
+                        className="w-full h-14 pl-11 pr-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all font-medium text-lg disabled:opacity-50 shadow-inner"
                       />
                     </div>
                     <p id="login-code-hint" className="-mt-2 text-left text-xs text-white/50">
@@ -218,6 +219,8 @@ export default function LoginPage() {
                       <span>{isLoading ? 'Opening Google...' : 'Google'}</span>
                     </button>
                   </div>
+
+                  <LegalLinks className="justify-center pt-5 text-xs text-white/60" />
                 </div>
               </div>
             </motion.div>

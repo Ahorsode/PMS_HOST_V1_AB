@@ -105,7 +105,7 @@ function EmptyState({ label }: { label: string }) {
         <CheckCircle2 className="w-8 h-8 text-emerald-400/60" />
       </div>
       <p className="text-white/60 font-semibold text-sm">No deleted {label} found</p>
-      <p className="text-white/30 text-xs">Records you delete will appear here for recovery</p>
+      <p className="text-white/60 text-xs">Records you delete will appear here for recovery</p>
     </div>
   )
 }
@@ -205,7 +205,7 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
           </div>
           <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${m.type === 'DEAD' ? 'bg-red-500/20 text-red-300' : 'bg-orange-500/20 text-orange-300'}`}>{m.type}</span>
           {/* Mortality restore intentionally omitted — mortality records should not be undone silently */}
-          <span className="text-xs text-white/30 italic">Audit only</span>
+          <span className="text-xs text-white/60 italic">Audit only</span>
         </Row>
       ))
     }
@@ -318,7 +318,7 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
           placeholder="Search records…"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="w-full pl-9 pr-4 py-2.5 text-sm bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
+          className="w-full pl-9 pr-4 py-2.5 text-sm bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/50 focus:outline-none focus:border-white/30 transition-colors"
         />
       </div>
 

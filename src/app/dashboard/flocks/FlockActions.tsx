@@ -77,28 +77,28 @@ export const FlockRowActions = ({ batch, houses, isolationRooms, canEdit = true 
       </Link>
       {canEdit && (
         <>
-          <button 
+          <button aria-label="Log Mortality" 
             onClick={() => setMode('mortality')}
             className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
             title="Log Mortality"
           >
             <Skull className="h-4 w-4" />
           </button>
-          <button 
+          <button aria-label="Quick Sell" 
             onClick={() => router.push(`/dashboard/sales?sellBatchId=${batch.id}`)}
             className="p-1 text-emerald-600 hover:bg-emerald-50 rounded transition-colors"
             title="Quick Sell"
           >
             <ShoppingCart className="h-4 w-4" />
           </button>
-          <button 
+          <button aria-label="Edit Unit" 
             onClick={() => setMode('edit')}
             className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
             title="Edit Unit"
           >
             <Edit2 className="h-4 w-4" />
           </button>
-          <button 
+          <button aria-label="Delete Unit" 
             onClick={() => setShowDeleteModal(true)}
             className="p-1 text-gray-400 hover:bg-gray-100 rounded transition-colors"
             title="Delete Unit"

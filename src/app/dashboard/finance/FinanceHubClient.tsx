@@ -732,7 +732,7 @@ export function FinanceHubClient({
                                   Settle
                                 </button>
                               )}
-                              <button
+                              <button aria-label="Delete Transaction (Soft)"
                                 onClick={() => {
                                   setSelectedTx(tx)
                                   setIsDeleteOpen(true)
@@ -761,7 +761,7 @@ export function FinanceHubClient({
       {isAddOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
           <Card className="bg-[#18181b] border-white/10 w-full max-w-lg shadow-2xl relative">
-            <button 
+            <button aria-label="Close" 
               onClick={() => setIsAddOpen(false)}
               disabled={isAddingTransaction}
               className="absolute top-4 right-4 text-slate-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
@@ -967,7 +967,7 @@ export function FinanceHubClient({
       {isSettleOpen && selectedTx && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
           <Card className="bg-[#18181b] border-white/10 w-full max-w-md shadow-2xl relative">
-            <button 
+            <button aria-label="Close" 
               onClick={() => setIsSettleOpen(false)}
               disabled={isSettlingTransaction}
               className="absolute top-4 right-4 text-slate-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1040,7 +1040,7 @@ export function FinanceHubClient({
       {isDeleteOpen && selectedTx && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
           <Card className="bg-[#18181b] border-white/10 w-full max-w-md shadow-2xl relative">
-            <button 
+            <button aria-label="Close" 
               onClick={() => setIsDeleteOpen(false)}
               disabled={isDeletingTransaction}
               className="absolute top-4 right-4 text-slate-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"

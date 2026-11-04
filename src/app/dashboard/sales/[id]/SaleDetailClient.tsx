@@ -158,7 +158,7 @@ const MetricCard = ({ title, value, icon: Icon, color, subtext }: any) => {
 
 const MetaItem = ({ label, value }: any) => (
   <div className="flex flex-col gap-1">
-     <span className="text-white/20 text-[8px] font-bold uppercase tracking-[0.2em]">{label}</span>
+     <span className="text-white/60 text-[8px] font-bold uppercase tracking-[0.2em]">{label}</span>
      <span className="text-white font-bold text-sm tracking-normal">{value}</span>
   </div>
 );

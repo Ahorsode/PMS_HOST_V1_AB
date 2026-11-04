@@ -429,7 +429,7 @@ export default function InventoryView({
                     label: 'Cost/Unit',
                     value: item.costPerUnit != null
                       ? <span className="text-amber-400 font-black">GHS {Number(item.costPerUnit).toFixed(2)}</span>
-                      : <span className="text-white/20">—</span>,
+                      : <span className="text-white/60">—</span>,
                   },
                   { label: 'Unit', value: item.unit },
                 ]}
@@ -496,7 +496,7 @@ export default function InventoryView({
                             <SkeletonLine className="ml-auto h-4 w-20" />
                           ) : item.costPerUnit != null ? (
                             <span className="text-amber-400 font-black text-base">GHS {Number(item.costPerUnit).toFixed(2)}</span>
-                          ) : <span className="text-white/20">—</span>}
+                          ) : <span className="text-white/60">—</span>}
                         </td>
                         <td className="px-4 py-2 text-right text-white/70">
                           {isMutatingItem ? <SkeletonLine className="ml-auto h-3 w-12" /> : item.unit}
@@ -505,10 +505,10 @@ export default function InventoryView({
                            <WorkerStamp user={item.user} />
                            {canEdit && !showUsedUp && (
                              <>
-                               <button onClick={() => openEdit(item)} className="p-1.5 rounded-md hover:bg-white/10 text-white/70 hover:text-white transition-colors">
+                               <button aria-label="Edit item" onClick={() => openEdit(item)} className="p-1.5 rounded-md hover:bg-white/10 text-white/70 hover:text-white transition-colors">
                                  <Pencil className="w-4 h-4" />
                                </button>
-                               <button onClick={() => confirmDelete(item)} className="p-1.5 rounded-md hover:bg-red-500/20 text-white/70 hover:text-red-400 transition-colors">
+                               <button aria-label="Delete item" onClick={() => confirmDelete(item)} className="p-1.5 rounded-md hover:bg-red-500/20 text-white/70 hover:text-red-400 transition-colors">
                                  <Trash2 className="w-4 h-4" />
                                </button>
                              </>
@@ -538,7 +538,7 @@ export default function InventoryView({
             >
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold text-white">{editing ? 'Edit Item' : 'Add Inventory Item'}</h2>
-                <button onClick={() => setShowForm(false)} className="p-2 rounded-md hover:bg-white/10 text-white/70 hover:text-white">
+                <button aria-label="Close form" onClick={() => setShowForm(false)} className="p-2 rounded-md hover:bg-white/10 text-white/70 hover:text-white">
                   <X className="w-5 h-5" />
                 </button>
               </div>

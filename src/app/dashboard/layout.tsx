@@ -4,6 +4,7 @@ import prisma from '@/lib/db';
 import { redirect } from 'next/navigation';
 import { SidebarWrapper } from '@/components/layout/SidebarWrapper';
 import { acceptInvitation } from '@/lib/actions/staff-actions';
+import { hasAcceptedCurrentTerms } from '@/lib/legal-acceptance';
 import { resolveFarmNavigationRole } from '@/lib/navigation-permissions';
 import { XCircle } from 'lucide-react';
 import Link from 'next/link';
@@ -27,9 +28,10 @@ export default async function DashboardLayout({
 
   let dbUser: Awaited<ReturnType<typeof prisma.user.findUnique>>;
   let farm: Awaited<ReturnType<typeof prisma.farm.findFirst>>;
+  let acceptedTerms = true;
 
   try {
-    [dbUser, farm] = await Promise.all([
+    [dbUser, farm, acceptedTerms] = await Promise.all([
       prisma.user.findUnique({
         where: { id: session.user.id }
       }),
@@ -41,6 +43,7 @@ export default async function DashboardLayout({
           ]
         }
       }),
+      hasAcceptedCurrentTerms(session.user.id),
     ]);
   } catch (error) {
     console.error('[DashboardLayout] Database error:', error);
@@ -51,6 +54,12 @@ export default async function DashboardLayout({
   // passing an undefined role into the client navigation shell.
   if (!dbUser) {
     redirect('/login?error=user_not_found');
+  }
+
+  // Everyone accepts the current Terms and Privacy Policy once, including
+  // Google sign-ups, invited staff and accounts created before the terms.
+  if (!acceptedTerms) {
+    redirect('/onboarding/terms');
   }
 
   const isPlaceholder = farm && farm.capacity === 0 && farm.location === '';

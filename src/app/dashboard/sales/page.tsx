@@ -454,7 +454,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                     {monthOverMonthChange >= 0 ? '+' : ''}{monthOverMonthChange.toFixed(1)}% vs last month
                   </p>
                 ) : (
-                  <p className="text-[9px] font-bold text-white/30 mt-2 uppercase tracking-widest">
+                  <p className="text-[9px] font-bold text-white/60 mt-2 uppercase tracking-widest">
                     No prior month data
                   </p>
                 )}

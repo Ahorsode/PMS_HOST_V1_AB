@@ -49,7 +49,7 @@ export function QuickMortalityLogger({ activeBatches, isolationRooms = [], defau
                   </p>
                   <h4 className="font-bold text-gray-100">{batch.batchName || `Unit ${index + 1}`}</h4>
                 </div>
-                <button 
+                <button aria-label="Log mortality" 
                   onClick={() => setSelectedBatch(batch)}
                   className={`p-2 ${isDead ? 'bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500' : 'bg-amber-500/20 text-amber-400 border-amber-500/30 hover:bg-amber-500'} rounded-md hover:text-white active:scale-95 transition-all border`}
                 >

@@ -847,12 +847,12 @@ export function SalesForm({
                     </div>
 
                     <div className="hidden items-end md:flex md:justify-end">
-                      <button
+                      <button aria-label="Remove line"
                         type="button"
                         onClick={() => removeItem(index)}
                         disabled={items.length === 1}
                         title="Remove line"
-                        className="h-14 w-14 shrink-0 rounded-md border border-transparent text-white/30 transition-all hover:border-red-500/20 hover:bg-red-500/10 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-30"
+                        className="h-14 w-14 shrink-0 rounded-md border border-transparent text-white/60 transition-all hover:border-red-500/20 hover:bg-red-500/10 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-30"
                       >
                         <Trash2 className="mx-auto h-4 w-4" />
                       </button>
@@ -940,12 +940,12 @@ export function SalesForm({
                       : ''}
                   </span>
                   <div className="flex items-center gap-2">
-                    <button
+                    <button aria-label="Remove line"
                       type="button"
                       onClick={() => removeItem(index)}
                       disabled={items.length === 1}
                       title="Remove line"
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-transparent text-white/30 transition-all hover:border-red-500/20 hover:bg-red-500/10 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-30 md:hidden"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-transparent text-white/60 transition-all hover:border-red-500/20 hover:bg-red-500/10 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-30 md:hidden"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -994,7 +994,7 @@ export function SalesForm({
               >
                 GHS
               </button>
-              <button
+              <button aria-label="Percentage discount"
                 type="button"
                 onClick={() => setDiscountType('percent')}
                 className={`shrink-0 border-r border-white/10 px-4 py-3 text-xs font-bold transition-all ${discountType === 'percent' ? 'bg-emerald-500 text-[#064e3b]' : 'text-white/60'}`}

@@ -33,6 +33,11 @@ import {
 } from 'lucide-react';
 import { LandingNav } from '@/components/layout/LandingNav';
 import { BRAND_NAME } from '@/lib/brand';
+import { LegalLinks } from '@/components/legal/LegalPage';
+import {
+  BUSINESS_ADDRESS,
+  BUSINESS_NAME,
+} from '@/lib/legal';
 
 const features = [
   {
@@ -167,7 +172,7 @@ function DashboardPreview() {
             <span className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-300">Farm overview</span>
           </div>
           <span className="rounded-full bg-emerald-400/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-300">
-            Live
+            Sample data
           </span>
         </div>
 
@@ -576,7 +581,10 @@ export default async function LandingPage() {
               ))}
             </ul>
           </div>
-          <p className="text-sm text-white/50">{`© ${year} ${BRAND_NAME}. All rights reserved.`}</p>
+          <div className="space-y-2 text-sm text-white/60 md:text-right">
+            <LegalLinks className="md:justify-end" />
+            <p>{`© ${year} ${BUSINESS_NAME}${BUSINESS_ADDRESS ? `, ${BUSINESS_ADDRESS}` : ''}. All rights reserved.`}</p>
+          </div>
         </div>
       </footer>
     </div>

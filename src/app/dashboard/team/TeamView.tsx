@@ -422,7 +422,7 @@ export default function TeamView({
                         )}
                         {canEdit && currentUserRole === 'OWNER' && member.userId !== (members.find(m => m.role === 'OWNER')?.userId || '') && (
                           <>
-                          <button 
+                          <button aria-label="Edit granular permissions" 
                             onClick={() => setPermissionTarget(member)}
                             title="Edit granular permissions"
                             className="p-2.5 text-blue-400 hover:bg-blue-500/10 rounded-md transition-all border border-transparent hover:border-blue-500/20"
@@ -448,7 +448,7 @@ export default function TeamView({
                           </>
                         )}
                         {canEdit && (currentUserRole === 'OWNER' || currentUserRole === 'MANAGER') && (member.role !== 'OWNER') && (
-                          <button 
+                          <button aria-label="Remove team member" 
                             onClick={() => setDeleteTarget({ id: member.id, type: 'member' })}
                             className="p-2.5 text-red-400 hover:bg-red-500/10 rounded-md transition-all border border-transparent hover:border-red-500/20"
                           >
@@ -514,7 +514,7 @@ export default function TeamView({
                         )}
                         {canEdit && currentUserRole === 'OWNER' && (
                           <>
-                          <button
+                          <button aria-label="Edit access control"
                             onClick={async () => {
                               const result = await getUserForInvite(invite.id) as any;
                               if (result?.userId) {
@@ -534,7 +534,7 @@ export default function TeamView({
                           >
                             <Settings className="w-4 h-4" />
                           </button>
-                          <button
+                          <button aria-label="Reset to role default permissions"
                             onClick={async () => {
                               const result = await getUserForInvite(invite.id) as any;
                               if (result?.userId) {
@@ -556,7 +556,7 @@ export default function TeamView({
                           </>
                         )}
                         {canEdit && (currentUserRole === 'OWNER' || currentUserRole === 'MANAGER') && (
-                          <button 
+                          <button aria-label="Cancel invitation" 
                             onClick={() => setDeleteTarget({ id: invite.id, type: 'invite' })}
                             className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
                           >
