@@ -32,7 +32,7 @@ const LEGACY_SIDEBAR_HREFS = [
 ]
 
 // Pages added with the profile menu (reachable from it and from Governance).
-const PROFILE_MENU_HREFS = ['/dashboard/messages', '/dashboard/notifications']
+const PROFILE_MENU_HREFS = ['/dashboard/inbox']
 
 const hrefsFor = (role?: string, permissions?: Record<string, boolean> | null) => [
   ...(canShowDashboardNavItem(role, permissions) ? [DASHBOARD_NAV_ITEM.href] : []),
@@ -67,12 +67,11 @@ describe('getVisibleNavCategories', () => {
     expect(hrefs).not.toContain('/dashboard/settings')
   })
 
-  it('always leaves workers the governance group for profile, messages, notifications and sign-out', () => {
+  it('always leaves workers the governance group for profile, inbox and sign-out', () => {
     const governance = getVisibleNavCategories('WORKER', null).find((group) => group.id === 'governance')
     expect(governance?.items.map((item) => item.href)).toEqual([
       '/dashboard/profile',
-      '/dashboard/messages',
-      '/dashboard/notifications',
+      '/dashboard/inbox',
     ])
   })
 
