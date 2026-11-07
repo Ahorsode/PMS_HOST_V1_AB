@@ -9,6 +9,8 @@ import { LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatRoleLabel } from '@/lib/navigation-permissions';
 import {
+  DASHBOARD_NAV_ITEM,
+  canShowDashboardNavItem,
   getActiveNavCategoryId,
   getVisibleNavCategories,
   isNavItemActive,
@@ -25,6 +27,8 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
   const categories = useMemo(() => getVisibleNavCategories(role, permissions), [role, permissions]);
   const allItems = useMemo(() => categories.flatMap((category) => category.items), [categories]);
   const activeId = getActiveNavCategoryId(pathname, categories);
+  const showDashboard = canShowDashboardNavItem(role, permissions);
+  const dashboardActive = pathname === DASHBOARD_NAV_ITEM.href;
 
   return (
     <aside
@@ -46,8 +50,30 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
           />
         </Link>
 
-        {/* One icon per group; each opens a flyout with that group's pages */}
+        {/* Dashboard is a direct link; each group icon opens a flyout with that group's pages */}
         <nav aria-label="Main" className="flex flex-col items-center gap-4">
+          {showDashboard && (
+            <Link
+              href={DASHBOARD_NAV_ITEM.href}
+              title={DASHBOARD_NAV_ITEM.name}
+              aria-current={dashboardActive ? 'page' : undefined}
+              className={cn(
+                "flex w-16 flex-col items-center gap-1 rounded-md py-2 transition-all duration-300 group/item focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60",
+                dashboardActive
+                  ? "bg-emerald-500/20 text-emerald-400 shadow-[inset_0_0_20px_rgba(16,185,129,0.1)] border border-emerald-500/20"
+                  : "text-white/80 hover:text-white hover:bg-white/15 border border-transparent"
+              )}
+            >
+              <DASHBOARD_NAV_ITEM.icon
+                className={cn(
+                  "w-6 h-6 transition-all duration-300 group-hover/item:scale-110",
+                  dashboardActive ? "text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]" : "text-white/70 group-hover/item:text-white"
+                )}
+              />
+              <span className="text-[10px] font-semibold leading-none">{DASHBOARD_NAV_ITEM.name}</span>
+            </Link>
+          )}
+
           {categories.map((category) => {
             const isOpen = openId === category.id;
             const isActive = activeId === category.id;
@@ -77,7 +103,7 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
                       isActive ? "text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]" : "text-white/70 group-hover/item:text-white"
                     )}
                   />
-                  <span className="text-[10px] font-bold uppercase tracking-wider">{category.name}</span>
+                  <span className="text-[10px] font-semibold leading-none">{category.name}</span>
                 </button>
 
                 <AnimatePresence>
@@ -118,7 +144,7 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
                         })}
                       </ul>
 
-                      {category.id === 'account' && (
+                      {category.id === 'governance' && (
                         <div className="mt-3 px-3 pt-3 border-t border-white/10 space-y-2">
                           <p className="px-3 text-xs text-white/50 font-bold uppercase tracking-wider">
                             Signed in as {roleLabel}
@@ -155,7 +181,7 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
             <span className="w-8 h-8 rounded-md bg-emerald-400/10 flex items-center justify-center text-emerald-400 text-sm font-bold uppercase group-hover/profile:bg-emerald-400/20 transition-colors">
               {roleInitial}
             </span>
-            <span className="text-[10px] font-bold uppercase tracking-wider">Profile</span>
+            <span className="text-[10px] font-semibold leading-none">Profile</span>
           </Link>
 
           <button
@@ -165,7 +191,7 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
             className="flex w-16 flex-col items-center gap-1 rounded-md py-2 text-white/70 transition-colors hover:bg-red-500/10 hover:text-red-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/60"
           >
             <LogOut className="w-5 h-5" />
-            <span className="text-[10px] font-bold uppercase tracking-wider">Sign out</span>
+            <span className="text-[10px] font-semibold leading-none">Sign out</span>
           </button>
         </div>
       </div>

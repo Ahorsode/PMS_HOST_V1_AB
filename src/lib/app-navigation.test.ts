@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   APP_NAV_CATEGORIES,
+  DASHBOARD_NAV_ITEM,
+  canShowDashboardNavItem,
   getActiveNavCategoryId,
   getVisibleNavCategories,
 } from './app-navigation'
@@ -29,12 +31,19 @@ const LEGACY_SIDEBAR_HREFS = [
   '/dashboard/profile',
 ]
 
-const hrefsFor = (role?: string, permissions?: Record<string, boolean> | null) =>
-  getVisibleNavCategories(role, permissions).flatMap((category) => category.items.map((item) => item.href))
+const hrefsFor = (role?: string, permissions?: Record<string, boolean> | null) => [
+  ...(canShowDashboardNavItem(role, permissions) ? [DASHBOARD_NAV_ITEM.href] : []),
+  ...getVisibleNavCategories(role, permissions).flatMap((category) => category.items.map((item) => item.href)),
+]
 
 describe('APP_NAV_CATEGORIES', () => {
-  it('has exactly three top-level groups', () => {
-    expect(APP_NAV_CATEGORIES.map((category) => category.id)).toEqual(['farm', 'business', 'account'])
+  it('has exactly three groups after the Dashboard link', () => {
+    expect(APP_NAV_CATEGORIES.map((category) => category.name)).toEqual(['Farm', 'Business', 'Governance'])
+  })
+
+  it('keeps Dashboard as its own link rather than inside a group', () => {
+    const groupedHrefs = APP_NAV_CATEGORIES.flatMap((category) => category.items.map((item) => item.href))
+    expect(groupedHrefs).not.toContain(DASHBOARD_NAV_ITEM.href)
   })
 
   it('keeps every legacy sidebar destination reachable for owners', () => {
@@ -45,7 +54,7 @@ describe('APP_NAV_CATEGORIES', () => {
 describe('getVisibleNavCategories', () => {
   it('drops groups with no visible items', () => {
     const groups = getVisibleNavCategories('CASHIER', { canViewSales: true })
-    expect(groups.map((group) => group.id)).toEqual(['business', 'account'])
+    expect(groups.map((group) => group.id)).toEqual(['business', 'governance'])
   })
 
   it('still applies per-item permissions for workers', () => {
@@ -55,9 +64,14 @@ describe('getVisibleNavCategories', () => {
     expect(hrefs).not.toContain('/dashboard/settings')
   })
 
-  it('always leaves workers the account group for profile and sign-out', () => {
-    const account = getVisibleNavCategories('WORKER', null).find((group) => group.id === 'account')
-    expect(account?.items.map((item) => item.href)).toEqual(['/dashboard/profile'])
+  it('always leaves workers the governance group for profile and sign-out', () => {
+    const governance = getVisibleNavCategories('WORKER', null).find((group) => group.id === 'governance')
+    expect(governance?.items.map((item) => item.href)).toEqual(['/dashboard/profile'])
+  })
+
+  it('keeps the Dashboard link role rules (hidden for cashiers)', () => {
+    expect(canShowDashboardNavItem('WORKER', null)).toBe(true)
+    expect(canShowDashboardNavItem('CASHIER', { canViewSales: true })).toBe(false)
   })
 })
 
@@ -65,13 +79,13 @@ describe('getActiveNavCategoryId', () => {
   const groups = getVisibleNavCategories('OWNER')
 
   it('highlights the group holding the current page or its subpages', () => {
-    expect(getActiveNavCategoryId('/dashboard', groups)).toBe('farm')
     expect(getActiveNavCategoryId('/dashboard/flocks/abc', groups)).toBe('farm')
     expect(getActiveNavCategoryId('/dashboard/sales/customers/1/statement', groups)).toBe('business')
-    expect(getActiveNavCategoryId('/dashboard/settings', groups)).toBe('account')
+    expect(getActiveNavCategoryId('/dashboard/settings', groups)).toBe('governance')
   })
 
-  it('returns null for pages outside the menu', () => {
+  it('returns null for the Dashboard and pages outside the groups', () => {
+    expect(getActiveNavCategoryId('/dashboard', groups)).toBeNull()
     expect(getActiveNavCategoryId('/dashboard/climate', groups)).toBeNull()
   })
 })

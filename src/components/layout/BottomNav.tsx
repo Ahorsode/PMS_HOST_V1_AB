@@ -9,6 +9,8 @@ import { signOut } from 'next-auth/react';
 import { cn } from '@/lib/utils';
 import { formatRoleLabel } from '@/lib/navigation-permissions';
 import {
+  DASHBOARD_NAV_ITEM,
+  canShowDashboardNavItem,
   getActiveNavCategoryId,
   getVisibleNavCategories,
   isNavItemActive,
@@ -24,6 +26,9 @@ export const BottomNav = ({ role, permissions }: { role?: string; permissions?: 
   const allItems = useMemo(() => categories.flatMap((category) => category.items), [categories]);
   const activeId = getActiveNavCategoryId(pathname, categories);
   const openCategory = categories.find((category) => category.id === openId);
+  const showDashboard = canShowDashboardNavItem(role, permissions);
+  const dashboardActive = pathname === DASHBOARD_NAV_ITEM.href;
+  const dashboardHighlighted = !openId && dashboardActive;
 
   return (
     <div ref={containerRef} className="md:hidden">
@@ -102,7 +107,7 @@ export const BottomNav = ({ role, permissions }: { role?: string; permissions?: 
                 })}
               </div>
 
-              {openCategory.id === 'account' && (
+              {openCategory.id === 'governance' && (
                 <div className="mt-4 border-t border-white/10 pt-3">
                   <p className="mb-2 px-1 text-[11px] font-medium uppercase tracking-wider text-white/45">
                     Signed in as {roleLabel}
@@ -130,8 +135,29 @@ export const BottomNav = ({ role, permissions }: { role?: string; permissions?: 
       >
         <div
           className="grid h-16"
-          style={{ gridTemplateColumns: `repeat(${Math.max(categories.length, 1)}, minmax(0, 1fr))` }}
+          style={{ gridTemplateColumns: `repeat(${Math.max(categories.length + (showDashboard ? 1 : 0), 1)}, minmax(0, 1fr))` }}
         >
+          {showDashboard && (
+            <Link
+              href={DASHBOARD_NAV_ITEM.href}
+              onClick={close}
+              aria-current={dashboardActive ? 'page' : undefined}
+              className={cn(
+                'flex flex-col items-center justify-center gap-1 px-1',
+                dashboardHighlighted ? 'text-emerald-300' : 'text-white/55',
+              )}
+            >
+              <span
+                className={cn(
+                  'flex h-8 w-12 items-center justify-center rounded-full transition-colors',
+                  dashboardHighlighted && 'bg-emerald-400/15',
+                )}
+              >
+                <DASHBOARD_NAV_ITEM.icon className="h-[22px] w-[22px]" strokeWidth={dashboardHighlighted ? 2.4 : 2} />
+              </span>
+              <span className="text-[10px] font-semibold leading-none">{DASHBOARD_NAV_ITEM.name}</span>
+            </Link>
+          )}
           {categories.map((category) => {
             const isOpen = openId === category.id;
             const highlighted = isOpen || (!openId && activeId === category.id);

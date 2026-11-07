@@ -31,7 +31,7 @@ export type AppNavItem = {
 };
 
 export type AppNavCategory = {
-  id: 'farm' | 'business' | 'account';
+  id: 'farm' | 'business' | 'governance';
   name: string;
   icon: LucideIcon;
   items: AppNavItem[];
@@ -39,14 +39,22 @@ export type AppNavCategory = {
 
 const ALL_ROLES = ['OWNER', 'MANAGER', 'WORKER', 'CASHIER', 'ACCOUNTANT', 'FINANCE_OFFICER'];
 
-/** The three top-level groups shown as icons in the sidebar rail and mobile tab bar. */
+/** Direct link shown as its own icon ahead of the groups in the rail and mobile tab bar. */
+export const DASHBOARD_NAV_ITEM: AppNavItem = {
+  name: 'Dashboard',
+  shortLabel: 'Home',
+  icon: LayoutDashboard,
+  href: '/dashboard',
+  roles: ['OWNER', 'MANAGER', 'WORKER', 'ACCOUNTANT', 'FINANCE_OFFICER'],
+};
+
+/** The three groups shown as icons (after Dashboard) in the sidebar rail and mobile tab bar. */
 export const APP_NAV_CATEGORIES: AppNavCategory[] = [
   {
     id: 'farm',
     name: 'Farm',
     icon: PawPrint,
     items: [
-      { name: 'Dashboard', shortLabel: 'Home', icon: LayoutDashboard, href: '/dashboard', roles: ['OWNER', 'MANAGER', 'WORKER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
       { name: 'Livestock', shortLabel: 'Flocks', icon: PawPrint, href: '/dashboard/flocks', roles: ['OWNER', 'MANAGER', 'WORKER'] },
       { name: 'Analytics', shortLabel: 'Stats', icon: BarChart3, href: '/dashboard/analytics/compare', roles: ['OWNER', 'MANAGER'] },
       { name: 'Houses', shortLabel: 'Houses', icon: ThermometerSun, href: '/dashboard/houses', roles: ['OWNER', 'MANAGER'] },
@@ -71,8 +79,8 @@ export const APP_NAV_CATEGORIES: AppNavCategory[] = [
     ],
   },
   {
-    id: 'account',
-    name: 'Account',
+    id: 'governance',
+    name: 'Governance',
     icon: ShieldCheck,
     items: [
       { name: 'My Profile', shortLabel: 'Profile', icon: User, href: '/dashboard/profile', roles: ALL_ROLES },
@@ -83,6 +91,18 @@ export const APP_NAV_CATEGORIES: AppNavCategory[] = [
     ],
   },
 ];
+
+export function canShowDashboardNavItem(
+  role?: string,
+  permissions?: Record<string, boolean | null | undefined> | null,
+) {
+  return canShowNavigationItem({
+    name: DASHBOARD_NAV_ITEM.name,
+    role,
+    roles: DASHBOARD_NAV_ITEM.roles,
+    permissions,
+  });
+}
 
 /** Categories with only the items this role/permission set may see; empty groups are dropped. */
 export function getVisibleNavCategories(
