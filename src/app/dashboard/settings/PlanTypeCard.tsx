@@ -41,7 +41,7 @@ export function PlanTypeCard({
         toast.error(result.error || 'Could not change the plan type');
         return;
       }
-      toast.success(next === 'SOLO' ? 'Switched to Solo' : 'Switched to Team');
+      toast.success(next === 'SOLO' ? 'Switched to solo' : 'Switched to team');
       router.refresh();
     });
   }
@@ -50,8 +50,8 @@ export function PlanTypeCard({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5 text-emerald-400" />
-          Plan Type
+          <Users className="h-5 w-5 text-[#85858b]" />
+          Plan type
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -61,11 +61,11 @@ export function PlanTypeCard({
             const selected = option.value === planType;
             const content = (
               <>
-                <span className="flex items-center gap-2 text-base font-bold text-white">
-                  <Icon className="h-5 w-5 text-emerald-300" />
+                <span className="flex items-center gap-2 text-base font-medium text-white">
+                  <Icon className="h-5 w-5 text-[#85858b]" />
                   {option.label}
                   {selected ? (
-                    <span className="rounded-full bg-emerald-400/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-emerald-200">
+                    <span className="rounded-full bg-white/[0.04] px-2 py-0.5 text-xs font-medium text-[#ededed]">
                       Current
                     </span>
                   ) : null}
@@ -74,8 +74,8 @@ export function PlanTypeCard({
               </>
             );
             const className = cn(
-              'flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-all',
-              selected ? 'border-emerald-400 bg-emerald-500/15' : 'border-white/10 bg-white/5 hover:border-white/30',
+              'flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-colors',
+              selected ? 'border-white/[0.12] bg-white/[0.04]' : 'border-white/10 bg-white/5 hover:border-white/30',
             );
 
             if (!selected && onPaidPlan) {

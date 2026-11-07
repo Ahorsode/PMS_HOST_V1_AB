@@ -32,8 +32,8 @@ type TrashItems = {
 
 const TABS = [
   { key: 'batches',      label: 'Batches',     icon: PawPrint,     color: 'emerald' },
-  { key: 'eggProduction',label: 'Egg Logs',    icon: Egg,          color: 'yellow'  },
-  { key: 'feedingLogs',  label: 'Feed Logs',   icon: Wheat,        color: 'orange'  },
+  { key: 'eggProduction',label: 'Egg logs',    icon: Egg,          color: 'yellow'  },
+  { key: 'feedingLogs',  label: 'Feed logs',   icon: Wheat,        color: 'orange'  },
   { key: 'mortality',    label: 'Mortality',   icon: XCircle,      color: 'red'     },
   { key: 'expenses',     label: 'Expenses',    icon: Wallet,       color: 'purple'  },
   { key: 'sales',        label: 'Sales',       icon: ShoppingBag,  color: 'blue'    },
@@ -42,14 +42,14 @@ const TABS = [
 ]
 
 const COLOR_MAP: Record<string, { tab: string; badge: string; btn: string; glow: string }> = {
-  emerald: { tab: 'text-emerald-400 border-emerald-500', badge: 'bg-emerald-500/20 text-emerald-300', btn: 'bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300', glow: 'shadow-emerald-500/30' },
-  yellow:  { tab: 'text-yellow-400 border-yellow-500',  badge: 'bg-yellow-500/20 text-yellow-300',  btn: 'bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-300',  glow: 'shadow-yellow-500/30'  },
-  orange:  { tab: 'text-orange-400 border-orange-500',  badge: 'bg-orange-500/20 text-orange-300',  btn: 'bg-orange-500/20 hover:bg-orange-500/40 text-orange-300',  glow: 'shadow-orange-500/30'  },
-  red:     { tab: 'text-red-400 border-red-500',        badge: 'bg-red-500/20 text-red-300',        btn: 'bg-red-500/20 hover:bg-red-500/40 text-red-300',           glow: 'shadow-red-500/30'     },
-  purple:  { tab: 'text-purple-400 border-purple-500',  badge: 'bg-purple-500/20 text-purple-300',  btn: 'bg-purple-500/20 hover:bg-purple-500/40 text-purple-300',  glow: 'shadow-purple-500/30'  },
-  blue:    { tab: 'text-blue-400 border-blue-500',      badge: 'bg-blue-500/20 text-blue-300',      btn: 'bg-blue-500/20 hover:bg-blue-500/40 text-blue-300',        glow: 'shadow-blue-500/30'    },
-  indigo:  { tab: 'text-indigo-400 border-indigo-500',  badge: 'bg-indigo-500/20 text-indigo-300',  btn: 'bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-300',  glow: 'shadow-indigo-500/30'  },
-  teal:    { tab: 'text-teal-400 border-teal-500',      badge: 'bg-teal-500/20 text-teal-300',      btn: 'bg-teal-500/20 hover:bg-teal-500/40 text-teal-300',        glow: 'shadow-teal-500/30'    },
+  emerald: { tab: 'text-[#ededed] border-white/[0.12]', badge: 'bg-white/[0.04] text-[#ededed]', btn: 'bg-white/[0.04] hover:bg-white/[0.04] text-[#ededed]', glow: '' },
+  yellow:  { tab: 'text-[#ededed] border-yellow-500',  badge: 'bg-white/[0.04] text-[#ededed]',  btn: 'bg-white/[0.04] hover:bg-white/[0.04] text-[#ededed]',  glow: ''  },
+  orange:  { tab: 'text-[#ededed] border-orange-500',  badge: 'bg-white/[0.04] text-[#ededed]',  btn: 'bg-white/[0.04] hover:bg-white/[0.04] text-[#ededed]',  glow: ''  },
+  red:     { tab: 'text-[#f2777b] border-red-500',        badge: 'bg-white/[0.04] text-[#f2777b]',        btn: 'bg-white/[0.04] hover:bg-white/[0.04] text-[#f2777b]',           glow: ''     },
+  purple:  { tab: 'text-[#a1a1a6] border-white/[0.08]',  badge: 'bg-white/[0.06] text-[#a1a1a6]',  btn: 'bg-white/[0.06] hover:bg-white/[0.06] text-[#a1a1a6]',  glow: ''  },
+  blue:    { tab: 'text-[#a1a1a6] border-white/[0.08]',      badge: 'bg-white/[0.06] text-[#a1a1a6]',      btn: 'bg-white/[0.06] hover:bg-white/[0.06] text-[#a1a1a6]',        glow: ''    },
+  indigo:  { tab: 'text-[#a1a1a6] border-white/[0.08]',  badge: 'bg-white/[0.06] text-[#a1a1a6]',  btn: 'bg-white/[0.06] hover:bg-white/[0.06] text-[#a1a1a6]',  glow: ''  },
+  teal:    { tab: 'text-[#a1a1a6] border-white/[0.08]',      badge: 'bg-white/[0.06] text-[#a1a1a6]',      btn: 'bg-white/[0.06] hover:bg-white/[0.06] text-[#a1a1a6]',        glow: ''    },
 }
 
 function fmt(date: string | Date) {
@@ -79,18 +79,18 @@ function RestoreButton({ id, onRestore, color }: { id: string; onRestore: Restor
   }
 
   if (done) return (
-    <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-400">
+    <span className="flex items-center gap-1.5 text-xs font-medium text-[#ededed]">
       <CheckCircle2 className="w-4 h-4" /> Restored
     </span>
   )
 
   return (
     <motion.button
-      whileHover={{ scale: 1.04 }}
+      
       whileTap={{ scale: 0.96 }}
       onClick={handle}
       disabled={isPending}
-      className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-md transition-all ${c.btn} shadow-md ${c.glow}`}
+      className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md transition-colors ${c.btn} shadow-md ${c.glow}`}
     >
       {isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCcw className="w-3.5 h-3.5" />}
       {isPending ? 'Restoring...' : 'Restore'}
@@ -102,9 +102,9 @@ function EmptyState({ label }: { label: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
       <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center">
-        <CheckCircle2 className="w-8 h-8 text-emerald-400/60" />
+        <CheckCircle2 className="w-8 h-8 text-[#85858b]" />
       </div>
-      <p className="text-white/60 font-semibold text-sm">No deleted {label} found</p>
+      <p className="text-white/60 font-medium text-sm">No deleted {label} found</p>
       <p className="text-white/60 text-xs">Records you delete will appear here for recovery</p>
     </div>
   )
@@ -117,7 +117,7 @@ function Row({ children, isMutating = false }: { children: React.ReactNode; isMu
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="flex items-center justify-between gap-4 px-4 py-3 rounded-lg bg-white/5 border border-white/10 hover:border-white/20 hover:bg-white/8 transition-all"
+      className="flex items-center justify-between gap-4 px-4 py-3 rounded-lg bg-white/5 border border-white/10 hover:border-white/20 hover:bg-white/8 transition-colors"
     >
       {children}
     </motion.div>
@@ -151,10 +151,10 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
       return items.map(b => (
         <Row key={b.id}>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm text-white truncate">{b.batchName}</p>
+            <p className="font-medium text-sm text-white truncate">{b.batchName}</p>
             <p className="text-xs text-white/50">{getBreedDisplayName(b.breedType)} &bull; {b.initialCount} birds &bull; Arrived {fmt(b.arrivalDate)}</p>
           </div>
-          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${c.badge}`}>{b.status}</span>
+          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${c.badge}`}>{b.status}</span>
           <RestoreButton id={b.id} onRestore={restoreBatch} color={activeTabConfig.color} />
         </Row>
       ))
@@ -168,7 +168,7 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
       return items.map(e => (
         <Row key={e.id}>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm text-white">{e.batch?.batchName || 'Recovered egg log'}</p>
+            <p className="font-medium text-sm text-white">{e.batch?.batchName || 'Recovered egg log'}</p>
             <p className="text-xs text-white/50">{e.eggsCollected} collected &bull; {e.unusableCount} unusable &bull; {fmt(e.logDate)}</p>
           </div>
           <RestoreButton id={e.id} onRestore={restoreEggProduction} color={activeTabConfig.color} />
@@ -184,7 +184,7 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
       return items.map(l => (
         <Row key={l.id}>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm text-white">{l.batch?.batchName || 'Recovered feed log'}</p>
+            <p className="font-medium text-sm text-white">{l.batch?.batchName || 'Recovered feed log'}</p>
             <p className="text-xs text-white/50">{l.amountConsumed} kg consumed &bull; {fmt(l.logDate)}</p>
           </div>
           <RestoreButton id={l.id} onRestore={restoreFeedingLog} color={activeTabConfig.color} />
@@ -200,12 +200,12 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
       return items.map(m => (
         <Row key={m.id}>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm text-white">{m.batch?.batchName || 'Recovered mortality record'}</p>
+            <p className="font-medium text-sm text-white">{m.batch?.batchName || 'Recovered mortality record'}</p>
             <p className="text-xs text-white/50">{m.count} {m.type.toLowerCase()} &bull; {m.reason || 'No reason'} &bull; {fmt(m.logDate)}</p>
           </div>
-          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${m.type === 'DEAD' ? 'bg-red-500/20 text-red-300' : 'bg-orange-500/20 text-orange-300'}`}>{m.type}</span>
+          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${m.type === 'DEAD' ? 'bg-white/[0.04] text-[#f2777b]' : 'bg-white/[0.04] text-[#d9a441]'}`}>{m.type}</span>
           {/* Mortality restore intentionally omitted — mortality records should not be undone silently */}
-          <span className="text-xs text-white/60 italic">Audit only</span>
+          <span className="text-xs text-white/60">Audit only</span>
         </Row>
       ))
     }
@@ -218,10 +218,10 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
       return items.map(e => (
         <Row key={e.id}>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm text-white">{e.description || e.category}</p>
+            <p className="font-medium text-sm text-white">{e.description || e.category}</p>
             <p className="text-xs text-white/50">{e.category} &bull; {fmt(e.expenseDate)}</p>
           </div>
-          <span className="text-sm font-bold text-white/80">{currency(e.amount)}</span>
+          <span className="text-sm font-medium text-white/80">{currency(e.amount)}</span>
           <RestoreButton id={e.id} onRestore={restoreExpense} color={activeTabConfig.color} />
         </Row>
       ))
@@ -235,10 +235,10 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
       return items.map(s => (
         <Row key={s.id}>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm text-white">{s.customerName || 'Walk-in Customer'}</p>
+            <p className="font-medium text-sm text-white">{s.customerName || 'Walk-in Customer'}</p>
             <p className="text-xs text-white/50">{s.items.length} item(s) &bull; {s.status} &bull; {fmt(s.saleDate)}</p>
           </div>
-          <span className="text-sm font-bold text-white/80">{currency(s.totalAmount)}</span>
+          <span className="text-sm font-medium text-white/80">{currency(s.totalAmount)}</span>
           <RestoreButton id={s.id} onRestore={restoreSale} color={activeTabConfig.color} />
         </Row>
       ))
@@ -252,10 +252,10 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
       return items.map(o => (
         <Row key={o.id}>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm text-white">{o.customer?.name || 'No Customer'}</p>
+            <p className="font-medium text-sm text-white">{o.customer?.name || 'No Customer'}</p>
             <p className="text-xs text-white/50">{o.items.length} item(s) &bull; {o.status} &bull; {fmt(o.orderDate)}</p>
           </div>
-          <span className="text-sm font-bold text-white/80">{currency(o.totalAmount)}</span>
+          <span className="text-sm font-medium text-white/80">{currency(o.totalAmount)}</span>
           <RestoreButton id={o.id} onRestore={restoreOrder} color={activeTabConfig.color} />
         </Row>
       ))
@@ -269,7 +269,7 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
       return items.map(i => (
         <Row key={i.id}>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm text-white">{i.itemName}</p>
+            <p className="font-medium text-sm text-white">{i.itemName}</p>
             <p className="text-xs text-white/50">{i.stockLevel} {i.unit} &bull; {i.category || 'General'}</p>
           </div>
           <RestoreButton id={i.id} onRestore={restoreInventory} color={activeTabConfig.color} />
@@ -284,28 +284,28 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
     <div className="min-h-screen px-0 pt-2 pb-7 md:p-8 space-y-6">
       <Link
         href="/dashboard/settings?tab=farm"
-        className="inline-flex items-center gap-2 text-sm font-bold text-white/60 hover:text-emerald-400 transition-colors"
+        className="inline-flex items-center gap-2 text-sm font-medium text-white/60 hover:text-[#ededed] transition-colors"
       >
         <ArrowLeft className="w-4 h-4" />
-        Back to Settings
+        Back to settings
       </Link>
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <div className="w-10 h-10 rounded-xl bg-red-500/15 border border-red-500/20 flex items-center justify-center">
-              <Trash2 className="w-5 h-5 text-red-400" />
+            <div className="w-10 h-10 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center">
+              <Trash2 className="w-5 h-5 text-[#f2777b]" />
             </div>
-            <h1 className="text-2xl font-black text-white tracking-tight">Data Recovery Center</h1>
+            <h1 className="text-3xl font-medium leading-tight text-[#ededed]">Deleted records</h1>
           </div>
           <p className="text-white/40 text-sm ml-13 pl-0.5">
-            Restore soft-deleted records. Actual data is preserved in the delete log table.
+            Restore records that were deleted. The data is kept until you restore it.
           </p>
         </div>
         {totalCount > 0 && (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-500/15 border border-red-500/20">
-            <AlertTriangle className="w-4 h-4 text-red-400" />
-            <span className="text-xs font-bold text-red-300">{totalCount} record{totalCount !== 1 ? 's' : ''} in trash</span>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08]">
+            <AlertTriangle className="w-4 h-4 text-[#f2777b]" />
+            <span className="text-xs font-medium text-[#f2777b]">{totalCount} record{totalCount !== 1 ? 's' : ''} in trash</span>
           </div>
         )}
       </div>
@@ -331,10 +331,10 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
           return (
             <motion.button
               key={tab.key}
-              whileHover={{ scale: 1.03 }}
+              
               whileTap={{ scale: 0.97 }}
               onClick={() => { setActiveTab(tab.key); setSearch('') }}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all ${
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium border transition-colors ${
                 isActive
                   ? `border-current bg-white/10 ${tc.tab}`
                   : 'border-white/10 text-white/50 hover:text-white/70 hover:border-white/20 bg-transparent'
@@ -343,7 +343,7 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
               <tab.icon className="w-3.5 h-3.5" />
               {tab.label}
               {count > 0 && (
-                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${isActive ? tc.badge : 'bg-white/10 text-white/50'}`}>
+                <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${isActive ? tc.badge : 'bg-white/10 text-white/50'}`}>
                   {count}
                 </span>
               )}

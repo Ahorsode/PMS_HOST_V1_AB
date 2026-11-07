@@ -35,7 +35,7 @@ export default async function FlocksAnalyticsPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-6 px-0 md:px-3 pt-2 pb-7 md:py-7">
-      <Breadcrumbs items={[{ label: 'Livestock', href: '/dashboard/flocks' }, { label: 'Performance Reports' }]} />
+      <Breadcrumbs items={[{ label: 'Livestock', href: '/dashboard/flocks' }, { label: 'Performance reports' }]} />
       <BatchPerformanceReportsPanel reports={reports} />
     </div>
   )

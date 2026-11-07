@@ -124,14 +124,14 @@ export const EggForm = ({
       <div className="space-y-4">
         {allowEggUnitChange ? (
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-white/70 uppercase tracking-wider">Logging Mode</label>
+            <label className="text-xs font-medium text-white/70">Logging mode</label>
             <div className="grid grid-cols-2 gap-2">
               {['individual', 'crates'].map(modeOpt => (
                 <button
                   key={modeOpt}
                   type="button"
                   onClick={() => setLoggingMode(modeOpt as 'individual' | 'crates')}
-                  className={`py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${loggingMode === modeOpt ? 'bg-amber-500 text-black' : 'bg-white/10 text-white/70 hover:bg-white/10'}`}
+                  className={`py-2 rounded-md text-xs font-medium transition-colors ${loggingMode === modeOpt ? 'bg-[#2c2c2f] text-[#ededed] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'bg-white/10 text-white/70 hover:bg-white/10'}`}
                 >
                   {modeOpt === 'individual' ? 'Individual Eggs' : `Crates (${eggsPerCrate}/ea)`}
                 </button>
@@ -142,7 +142,7 @@ export const EggForm = ({
 
         {allowEggSortModeChange ? (
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-white/70 uppercase tracking-wider">Sorting Status</label>
+            <label className="text-xs font-medium text-white/70">Sorting status</label>
             <div className="grid grid-cols-2 gap-2">
               {[false, true].map(isSorted => (
                 <button
@@ -153,7 +153,7 @@ export const EggForm = ({
                     isSorted,
                     ...(isSorted ? {} : { smallCount: 0, mediumCount: 0, largeCount: 0 })
                   })}
-                  className={`py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${formData.isSorted === isSorted ? 'bg-emerald-500 text-white' : 'bg-white/10 text-white/70 hover:bg-white/10'}`}
+                  className={`py-2 rounded-md text-xs font-medium transition-colors ${formData.isSorted === isSorted ? 'bg-[#2c2c2f] text-[#ededed] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'bg-white/10 text-white/70 hover:bg-white/10'}`}
                 >
                   {isSorted ? 'Sorted' : 'Unsorted'}
                 </button>
@@ -166,7 +166,7 @@ export const EggForm = ({
       <div className="space-y-4">
         {loggingMode === 'individual' ? (
           <Input
-            label="Total Eggs Collected"
+            label="Total eggs collected"
             type="number"
             min="0"
             value={formData.eggsCollected}
@@ -185,7 +185,7 @@ export const EggForm = ({
         ) : (
           <div className="space-y-4">
              <Input
-                label="Number of Crates"
+                label="Number of crates"
                 type="number"
                 min="0"
                 value={crates}
@@ -202,7 +202,7 @@ export const EggForm = ({
                 required
               />
               <Input
-                label="Remainder Eggs"
+                label="Remainder eggs"
                 type="number"
                 min="0"
                 max={remainderMax}
@@ -227,7 +227,7 @@ export const EggForm = ({
         
         {!formData.isSorted && (
           <Select
-            label="General Egg Size"
+            label="General egg size"
             options={[
               { label: 'Small', value: 'SMALL' },
               { label: 'Medium', value: 'MEDIUM' },
@@ -240,10 +240,10 @@ export const EggForm = ({
       </div>
 
       {formData.isSorted && (
-        <div className="p-4 bg-emerald-500/5 border border-emerald-500/20 rounded-xl space-y-3">
+        <div className="p-4 bg-white/[0.04] border border-white/[0.08] rounded-xl space-y-3">
           <div className="flex justify-between items-center mb-1">
-            <label className="text-xs font-bold text-emerald-400 uppercase tracking-widest">Size Distribution</label>
-            <span className={`text-xs font-bold ${isOverTotal ? 'text-red-400' : 'text-emerald-500/70'}`}>
+            <label className="text-xs font-medium text-[#ededed]">Size distribution</label>
+            <span className={`text-xs font-medium ${isOverTotal ? 'text-[#f2777b]' : 'text-[#34d399]'}`}>
               Allocated: {sortedTotal} / {formData.eggsCollected}
             </span>
           </div>
@@ -267,7 +267,7 @@ export const EggForm = ({
                 setFormData({ ...formData, smallCount: val });
               }}
               onFocus={(e) => e.target.select()}
-              className="bg-emerald-950/20 border-emerald-900/30"
+              className="bg-white/[0.04] border-white/[0.08]"
             />
             <Input
               label="Medium"
@@ -288,7 +288,7 @@ export const EggForm = ({
                 setFormData({ ...formData, mediumCount: val });
               }}
               onFocus={(e) => e.target.select()}
-              className="bg-emerald-950/20 border-emerald-900/30"
+              className="bg-white/[0.04] border-white/[0.08]"
             />
             <Input
               label="Large"
@@ -309,11 +309,11 @@ export const EggForm = ({
                 setFormData({ ...formData, largeCount: val });
               }}
               onFocus={(e) => e.target.select()}
-              className="bg-emerald-950/20 border-emerald-900/30"
+              className="bg-white/[0.04] border-white/[0.08]"
             />
           </div>
           {isOverTotal && (
-            <p className="text-[10px] text-red-400 font-bold uppercase italic">
+            <p className="text-xs text-[#f2777b] font-medium">
               Warning: Sum of sizes exceeds total eggs collected!
             </p>
           )}
@@ -322,7 +322,7 @@ export const EggForm = ({
 
       <div className="space-y-4">
         <Input
-          label="Unusable Eggs (Damaged/Cracked)"
+          label="Unusable eggs (damaged/cracked)"
           type="number"
           min="0"
           value={formData.unusableCount}
@@ -341,7 +341,7 @@ export const EggForm = ({
           onFocus={(e) => e.target.select()}
         />
         <Input
-          label="Log Date"
+          label="Log date"
           type="date"
           value={formData.logDate}
           onChange={(e) => setFormData({ ...formData, logDate: e.target.value })}
@@ -352,7 +352,7 @@ export const EggForm = ({
       <div className="flex justify-end gap-2 pt-2">
         <Button variant="outline" type="button" onClick={onClose}>Cancel</Button>
         <Button type="submit" isLoading={isLoading} disabled={isOverTotal}>
-          {mode === 'create' ? 'Save Log' : mode === 'edit' ? 'Update Log' : 'Save'}
+          {mode === 'create' ? 'Save Log' : mode === 'edit' ? 'Update log' : 'Save'}
         </Button>
       </div>
     </form>

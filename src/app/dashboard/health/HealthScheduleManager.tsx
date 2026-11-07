@@ -395,12 +395,12 @@ export function HealthScheduleManager({
     <div className="space-y-6">
       {/* New schedule form */}
       {canEdit ? (
-        <Card className="border border-gray-800 bg-[#111827]">
+        <Card className="border border-white/[0.08] bg-[#19191b]">
           <CardContent className="p-6">
             <div className="flex items-center gap-2 mb-5">
-              <Plus className="w-5 h-5 text-emerald-400" />
-              <h3 className="text-lg font-bold text-white uppercase tracking-normal italic">
-                New Health Schedule
+              <Plus className="w-5 h-5 text-[#85858b]" />
+              <h3 className="text-lg font-medium text-white tracking-normal">
+                New health schedule
               </h3>
             </div>
 
@@ -410,9 +410,9 @@ export function HealthScheduleManager({
                 type="button"
                 onClick={() => switchType("VACCINATION")}
                 className={cn(
-                  "flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border text-sm font-bold uppercase tracking-widest transition-all",
+                  "flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border text-sm font-medium transition-colors",
                   isVaccine
-                    ? "bg-amber-500/20 text-amber-300 border-amber-500/40"
+                    ? "bg-white/[0.04] text-[#d9a441] border-white/[0.08]"
                     : "bg-white/5 text-white/60 border-white/10 hover:bg-white/10"
                 )}
               >
@@ -422,9 +422,9 @@ export function HealthScheduleManager({
                 type="button"
                 onClick={() => switchType("MEDICATION")}
                 className={cn(
-                  "flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border text-sm font-bold uppercase tracking-widest transition-all",
+                  "flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border text-sm font-medium transition-colors",
                   !isVaccine
-                    ? "bg-sky-500/20 text-sky-300 border-sky-500/40"
+                    ? "bg-white/[0.06] text-[#a1a1a6] border-white/[0.08]"
                     : "bg-white/5 text-white/60 border-white/10 hover:bg-white/10"
                 )}
               >
@@ -448,8 +448,8 @@ export function HealthScheduleManager({
                 />
               </div>
 
-              <p className="-mt-1 flex items-center gap-1.5 text-xs text-white/50 italic">
-                <Boxes className="w-3.5 h-3.5 text-sky-400/70" />
+              <p className="-mt-1 flex items-center gap-1.5 text-xs text-white/50">
+                <Boxes className="w-3.5 h-3.5 text-[#a1a1a6]" />
                 {inventory.length > 0
                   ? `${isVaccine ? "Vaccines" : "Medications"} are sourced from your Inventory stock.`
                   : `No ${isVaccine ? "vaccine" : "medicine"} in inventory yet — use “Add new”, or stock it under Inventory first.`}
@@ -457,7 +457,7 @@ export function HealthScheduleManager({
 
               {isAddingNew && (
                 <Input
-                  label={isVaccine ? "New Vaccine Name" : "New Medication Name"}
+                  label={isVaccine ? "New vaccine name" : "New medication name"}
                   placeholder={isVaccine ? "e.g. Newcastle Lasota" : "e.g. Florfenicol"}
                   value={customName}
                   onChange={(e) => setCustomName(e.target.value)}
@@ -468,7 +468,7 @@ export function HealthScheduleManager({
               {/* Usage type — ONLY shown when adding a brand-new item. */}
               {isAddingNew && (
                 <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-white/70 block mb-2">
+                  <label className="text-xs font-medium text-white/70 block mb-2">
                     Usage (set once for this new item)
                   </label>
                   <div className="flex gap-2">
@@ -476,9 +476,9 @@ export function HealthScheduleManager({
                       type="button"
                       onClick={() => setNewUsageType("ONE_TIME")}
                       className={cn(
-                        "flex-1 px-3 py-2.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all",
+                        "flex-1 px-3 py-2.5 rounded-lg border text-xs font-medium transition-colors",
                         newUsageType === "ONE_TIME"
-                          ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                          ? "bg-white/[0.04] text-[#34d399] border-white/[0.08]"
                           : "bg-white/5 text-white/60 border-white/10 hover:bg-white/10"
                       )}
                     >
@@ -488,9 +488,9 @@ export function HealthScheduleManager({
                       type="button"
                       onClick={() => setNewUsageType("QUANTITY")}
                       className={cn(
-                        "flex-1 px-3 py-2.5 rounded-lg border text-xs font-bold uppercase tracking-wider transition-all",
+                        "flex-1 px-3 py-2.5 rounded-lg border text-xs font-medium transition-colors",
                         newUsageType === "QUANTITY"
-                          ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                          ? "bg-white/[0.04] text-[#34d399] border-white/[0.08]"
                           : "bg-white/5 text-white/60 border-white/10 hover:bg-white/10"
                       )}
                     >
@@ -501,17 +501,17 @@ export function HealthScheduleManager({
               )}
 
               {isNewItem && resolvedName && (
-                <p className="-mt-1 flex items-center gap-1.5 text-xs text-emerald-300/80 italic">
+                <p className="-mt-1 flex items-center gap-1.5 text-xs text-[#ededed]">
                   <Sparkles className="w-3.5 h-3.5" />
                   Save “{resolvedName}” to inventory first, then select it here — or pick a batch
-                  and use Add Schedule to save the item and schedule together.
+                  and use Add schedule to save the item and schedule together.
                 </p>
               )}
 
               {/* For an EXISTING item, show its locked usage type (read-only). */}
               {!isAddingNew && selectedItem && (
-                <p className="-mt-1 flex items-center gap-1.5 text-xs text-white/50 italic">
-                  <Zap className="w-3.5 h-3.5 text-emerald-400/70" />
+                <p className="-mt-1 flex items-center gap-1.5 text-xs text-white/50">
+                  <Zap className="w-3.5 h-3.5 text-[#85858b]" />
                   {showQuantity
                     ? `Quantity-tracked item (in ${selectedItem.unit}).`
                     : "One-time use item — no quantity needed."}
@@ -548,7 +548,7 @@ export function HealthScheduleManager({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Input
-                  label="Scheduled Date"
+                  label="Scheduled date"
                   type="date"
                   value={scheduledDate}
                   onChange={(e) => setScheduledDate(e.target.value)}
@@ -571,7 +571,7 @@ export function HealthScheduleManager({
               {/* Staged list for multi-add */}
               {drafts.length > 0 && (
                 <div className="rounded-lg border border-white/10 bg-white/5 p-3 space-y-2">
-                  <p className="text-xs font-bold uppercase tracking-widest text-white/60">
+                  <p className="text-xs font-medium text-white/60">
                     Staged to save ({drafts.length})
                   </p>
                   {drafts.map((d) => (
@@ -580,11 +580,11 @@ export function HealthScheduleManager({
                       className="flex items-center gap-2 text-xs bg-black/20 rounded-md px-3 py-2"
                     >
                       {d.type === "VACCINATION" ? (
-                        <Syringe className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        <Syringe className="w-3.5 h-3.5 text-[#85858b] shrink-0" />
                       ) : (
-                        <Pill className="w-3.5 h-3.5 text-sky-400 shrink-0" />
+                        <Pill className="w-3.5 h-3.5 text-[#a1a1a6] shrink-0" />
                       )}
-                      <span className="font-bold text-white truncate">{d.name}</span>
+                      <span className="font-medium text-white truncate">{d.name}</span>
                       <span className="text-white/40">·</span>
                       <span className="text-white/60 truncate">{d.batchLabel}</span>
                       <span className="text-white/40">·</span>
@@ -594,12 +594,12 @@ export function HealthScheduleManager({
                           : "One-time"}
                       </span>
                       {d.isNewItem && (
-                        <span className="text-emerald-300/80">· new</span>
+                        <span className="text-[#ededed]">· new</span>
                       )}
                       <button
                         type="button"
                         onClick={() => removeDraft(d._key)}
-                        className="ml-auto text-red-400/70 hover:text-red-400"
+                        className="ml-auto text-[#f2777b] hover:text-[#f2777b]"
                         aria-label="Remove staged item"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -610,21 +610,21 @@ export function HealthScheduleManager({
               )}
 
               {error && (
-                <p className="text-xs text-red-400 font-bold uppercase tracking-wider">
+                <p className="text-xs text-[#f2777b] font-medium">
                   {error}
                 </p>
               )}
 
               {successMsg && (
-                <p className="text-xs text-emerald-400 font-bold uppercase tracking-wider">
+                <p className="text-xs text-[#ededed] font-medium">
                   {successMsg}
                 </p>
               )}
 
               {isAddingNew && resolvedName && (
-                <div className="rounded-lg border border-emerald-500/25 bg-emerald-500/10 p-3">
-                  <p className="text-xs font-bold uppercase tracking-widest text-emerald-300 mb-2">
-                    Step 1 — Stock this item
+                <div className="rounded-lg border border-white/[0.08] bg-white/[0.04] p-3">
+                  <p className="text-xs font-medium text-[#ededed] mb-2">
+                    Step 1 — stock this item
                   </p>
                   <Button
                     type="button"
@@ -633,20 +633,20 @@ export function HealthScheduleManager({
                     disabled={!canSaveToInventory}
                     isLoading={isSavingItem}
                     loadingText="Saving…"
-                    className="w-full sm:w-auto border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/20"
+                    className="w-full sm:w-auto border-white/[0.08] text-[#ededed] hover:bg-white/[0.04]"
                   >
                     <Boxes className="w-4 h-4" />
                     Save “{resolvedName}” to inventory
                   </Button>
-                  <p className="mt-2 text-xs text-white/50 italic">
+                  <p className="mt-2 text-xs text-white/50">
                     No batch required. After saving, it appears in the {isVaccine ? "Vaccine" : "Medication"} dropdown above.
                   </p>
                 </div>
               )}
 
-              <p className="flex items-center gap-1.5 text-xs text-white/40 italic">
+              <p className="flex items-center gap-1.5 text-xs text-white/40">
                 <ListPlus className="w-3.5 h-3.5" />
-                Step 2 — Select a batch, then Add Schedule (or stage several with “Add another”).
+                Step 2 — Select a batch, then Add schedule (or stage several with “Add another”).
               </p>
 
               <div className="flex flex-col sm:flex-row justify-end gap-2">
@@ -660,14 +660,14 @@ export function HealthScheduleManager({
                 </Button>
                 <Button type="submit" isLoading={isPending} disabled={!canSave}>
                   <Plus className="w-4 h-4" />
-                  {totalToSave > 1 ? `Save ${totalToSave} schedules` : "Add Schedule"}
+                  {totalToSave > 1 ? `Save ${totalToSave} schedules` : "Add schedule"}
                 </Button>
               </div>
             </form>
           </CardContent>
         </Card>
       ) : (
-        <div className="bg-[#1F2937]/50 rounded-lg border border-dashed border-gray-700 p-5 text-center text-sm italic text-gray-500">
+        <div className="bg-[#19191b]/50 rounded-lg border border-dashed border-white/[0.08] p-5 text-center text-sm text-[#85858b]">
           You have read-only access to health schedules.
         </div>
       )}
@@ -675,8 +675,8 @@ export function HealthScheduleManager({
       {/* Lists */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ScheduleList
-          title="Vaccination Schedule"
-          icon={<Syringe className="w-4 h-4 text-amber-400" />}
+          title="Vaccination schedule"
+          icon={<Syringe className="w-4 h-4 text-[#85858b]" />}
           accent="amber"
           type="VACCINATION"
           records={vaccinations}
@@ -686,8 +686,8 @@ export function HealthScheduleManager({
           onDelete={handleDelete}
         />
         <ScheduleList
-          title="Medication Schedule"
-          icon={<Pill className="w-4 h-4 text-sky-400" />}
+          title="Medication schedule"
+          icon={<Pill className="w-4 h-4 text-[#a1a1a6]" />}
           accent="sky"
           type="MEDICATION"
           records={medications}
@@ -735,33 +735,33 @@ function ScheduleList({
   today.setHours(0, 0, 0, 0);
 
   return (
-    <div className="bg-[#111827] rounded-xl shadow-xl border border-gray-800 overflow-hidden">
+    <div className="bg-[#19191b] rounded-xl border border-white/[0.08] overflow-hidden">
       <div
         className={cn(
-          "px-5 py-4 border-b border-gray-800 flex items-center gap-2",
-          accent === "amber" ? "bg-amber-950/30" : "bg-sky-950/30"
+          "px-5 py-4 border-b border-white/[0.08] flex items-center gap-2",
+          accent === "amber" ? "bg-white/[0.04]" : "bg-white/[0.06]"
         )}
       >
         {icon}
         <h3
           className={cn(
-            "font-bold uppercase tracking-wide text-sm",
-            accent === "amber" ? "text-amber-400" : "text-sky-400"
+            "font-medium text-sm",
+            "text-[#ededed]"
           )}
         >
           {title}
         </h3>
-        <span className="ml-auto text-xs font-bold text-white/40">
+        <span className="ml-auto text-xs font-medium text-white/40">
           {records.length}
         </span>
       </div>
 
       {records.length === 0 ? (
-        <div className="py-16 text-center text-white/50 text-sm italic">
+        <div className="py-16 text-center text-white/50 text-sm">
           No {accent === "amber" ? "vaccinations" : "medications"} scheduled yet.
         </div>
       ) : (
-        <div className="divide-y divide-gray-800">
+        <div className="divide-y divide-white/[0.06]">
           {records.map((rec) => {
             const name = rec.vaccineName ?? rec.medicationName ?? "—";
             const date = new Date(rec.scheduledDate);
@@ -775,17 +775,17 @@ function ScheduleList({
                 key={rec.id}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="flex items-center gap-3 px-5 py-3 hover:bg-[#1F2937] transition-colors"
+                className="flex items-center gap-3 px-5 py-3 hover:bg-white/[0.03] transition-colors"
               >
                 {isDone ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-[#85858b] flex-shrink-0" />
                 ) : isCancelled ? (
-                  <XCircle className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                  <XCircle className="w-4 h-4 text-[#85858b] flex-shrink-0" />
                 ) : (
                   <Circle
                     className={cn(
                       "w-4 h-4 flex-shrink-0",
-                      isPast ? "text-red-400" : accent === "amber" ? "text-amber-400" : "text-sky-400"
+                      isPast ? "text-[#f2777b]" : accent === "amber" ? "text-[#d9a441]" : "text-[#a1a1a6]"
                     )}
                   />
                 )}
@@ -794,14 +794,14 @@ function ScheduleList({
                   <div className="flex items-center gap-2">
                     <p
                       className={cn(
-                        "text-sm font-bold truncate",
-                        isCancelled ? "text-gray-500 line-through" : "text-white"
+                        "text-sm font-medium truncate",
+                        isCancelled ? "text-[#85858b] line-through" : "text-white"
                       )}
                     >
                       {name}
                     </p>
                     {usage && (
-                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-white/10 text-white/60 border border-white/10 flex-shrink-0">
+                      <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-white/10 text-white/60 border border-white/10 flex-shrink-0">
                         {usage}
                       </span>
                     )}
@@ -816,11 +816,11 @@ function ScheduleList({
                       {formatDate(date)}
                     </span>
                     {isPast && !isDone && !isCancelled && (
-                      <span className="text-red-400 font-bold">· Overdue</span>
+                      <span className="text-[#f2777b] font-medium">· Overdue</span>
                     )}
                   </div>
                   {rec.notes && (
-                    <p className="text-xs text-white/40 italic mt-1 truncate">
+                    <p className="text-xs text-white/40 mt-1 truncate">
                       {rec.notes}
                     </p>
                   )}
@@ -832,10 +832,10 @@ function ScheduleList({
                       value={rec.status}
                       disabled={isPending}
                       onChange={(e) => onStatusChange(type, rec.id, e.target.value)}
-                      className="h-9 rounded-md border border-white/10 bg-white/10 px-2 text-xs text-white font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500/50 cursor-pointer disabled:opacity-50"
+                      className="h-9 rounded-md border border-white/10 bg-white/10 px-2 text-xs text-white font-medium focus:outline-none focus:ring-2 focus:ring-white/10 cursor-pointer disabled:opacity-50"
                     >
                       {STATUS_OPTIONS.map((o) => (
-                        <option key={o.value} value={o.value} className="bg-[#064e3b]">
+                        <option key={o.value} value={o.value} className="bg-[#19191b]">
                           {o.label}
                         </option>
                       ))}
@@ -844,7 +844,7 @@ function ScheduleList({
                       type="button"
                       disabled={isPending}
                       onClick={() => onDelete(type, rec.id)}
-                      className="p-2 rounded-md bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-all disabled:opacity-50"
+                      className="p-2 rounded-md bg-white/[0.04] text-[#f2777b] border border-white/[0.08] hover:bg-white/[0.04] transition-colors disabled:opacity-50"
                       aria-label="Delete schedule"
                     >
                       {isPending ? (
@@ -857,12 +857,12 @@ function ScheduleList({
                 ) : (
                   <span
                     className={cn(
-                      "px-2 py-1 rounded text-[10px] font-bold uppercase border flex-shrink-0",
+                      "px-2 py-1 rounded text-xs font-medium border flex-shrink-0",
                       isDone
-                        ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                        ? "bg-white/[0.04] text-[#ededed] border-white/[0.08]"
                         : isCancelled
-                        ? "bg-gray-500/10 text-gray-400 border-gray-500/20"
-                        : "bg-amber-500/10 text-amber-400 border-amber-500/20"
+                        ? "bg-gray-500/10 text-[#85858b] border-white/[0.08]"
+                        : "bg-white/[0.04] text-[#d9a441] border-white/[0.08]"
                     )}
                   >
                     {rec.status}

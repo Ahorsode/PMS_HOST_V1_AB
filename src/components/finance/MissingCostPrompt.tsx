@@ -88,28 +88,28 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
     <Dialog 
       isOpen={isOpen} 
       onOpenChange={() => {}} // Force user to address it
-      title="Missing Financial Data"
+      title="Missing financial data"
       description={`Unit "${currentBatch.batchName}" is missing its initial purchase cost. Please record it now for accurate P&L tracking.`}
     >
       <div className="space-y-5 pt-3">
         {/* Progress Indicator */}
         <div className="flex gap-1 mb-3">
            {batches.map((_, i) => (
-             <div key={i} className={`h-1 flex-1 rounded-full ${i === currentIndex ? 'bg-emerald-500' : i < currentIndex ? 'bg-emerald-500/40' : 'bg-white/10'}`} />
+             <div key={i} className={`h-1 flex-1 rounded-full ${i === currentIndex ? 'bg-emerald-500' : i < currentIndex ? 'bg-white/[0.04]' : 'bg-white/10'}`} />
            ))}
         </div>
 
-        <div className="p-3 rounded-md bg-amber-500/10 border border-amber-500/20 flex gap-2">
-           <AlertCircle className="w-5 h-5 text-amber-400 shrink-0" />
-           <p className="text-xs text-amber-200/80 leading-relaxed font-medium">
-             Financial accuracy depends on recording the initial investment. This ensures your <span className="text-amber-400 font-bold">Return on Investment (ROI)</span> calculations are correct.
+        <div className="p-3 rounded-md bg-white/[0.04] border border-white/[0.08] flex gap-2">
+           <AlertCircle className="w-5 h-5 text-[#85858b] shrink-0" />
+           <p className="text-xs text-[#ededed] leading-relaxed font-medium">
+             Financial accuracy depends on recording the initial investment. This ensures your <span className="text-[#ededed] font-medium">Return on investment (ROI)</span> calculations are correct.
            </p>
         </div>
 
         <div className="space-y-3">
           <div className="space-y-1">
             <Input 
-              label="Cost Per Unit"
+              label="Cost per unit"
               placeholder="0.00"
               type="number"
               min="0"
@@ -122,14 +122,14 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
               }}
             />
             {costPerUnit && Number(costPerUnit) > 0 && (
-              <p className="text-xs font-bold text-emerald-400 px-1 text-right">
+              <p className="text-xs font-medium text-[#ededed] px-1 text-right">
                 Total Purchase Cost: GH₵ {(Number(costPerUnit) * currentBatch.initialCount).toFixed(2)}
               </p>
             )}
           </div>
 
           <Input 
-            label="Carriage Inward (Transport cost)"
+            label="Carriage inward (transport cost)"
             placeholder="0.00"
             type="number"
             min="0"
@@ -143,11 +143,11 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
           />
 
           <div className="space-y-2">
-             <label className="text-xs font-bold uppercase tracking-widest text-white/70 block">Additional Expenses</label>
+             <label className="text-xs font-medium text-white/70 block">Additional expenses</label>
              <div className="grid grid-cols-5 gap-2">
                 <input 
-                  placeholder="Label (e.g. Loading)"
-                  className="col-span-3 bg-white/10 border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                  placeholder="Label (e.g. loading)"
+                  className="col-span-3 bg-white/10 border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-white/[0.08]"
                   value={newExpenseLabel}
                   onChange={e => setNewExpenseLabel(e.target.value)}
                 />
@@ -155,7 +155,7 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
                   placeholder="0.00"
                   type="number"
                   min="0"
-                  className="col-span-1 bg-white/10 border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                  className="col-span-1 bg-white/10 border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-white/[0.08]"
                   value={newExpenseAmount}
                   onChange={e => {
                     const val = e.target.value;
@@ -168,7 +168,7 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
                   type="button" 
                   variant="outline" 
                    onClick={handleAddOther}
-                  className="col-span-1 rounded-md h-10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10"
+                  className="col-span-1 rounded-md h-10 border-white/[0.08] text-[#85858b] hover:bg-white/[0.04]"
                 >
                    <Plus className="w-4 h-4" />
                 </Button>
@@ -178,10 +178,10 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
                <div className="space-y-2 max-h-32 overflow-y-auto pr-2 custom-scrollbar">
                   {otherExpenses.map((exp, i) => (
                     <div key={i} className="flex items-center justify-between p-2 rounded-md bg-white/10 border border-white/5">
-                       <span className="text-xs font-bold text-white/80">{exp.label}</span>
+                       <span className="text-xs font-medium text-white/80">{exp.label}</span>
                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-emerald-400">GH₵ {exp.amount}</span>
-                          <button aria-label="Remove cost" onClick={() => removeOther(i)} className="text-red-400/60 hover:text-red-400 transition-colors">
+                          <span className="text-xs font-medium text-[#ededed]">GH₵ {exp.amount}</span>
+                          <button aria-label="Remove cost" onClick={() => removeOther(i)} className="text-[#f2777b] hover:text-[#f2777b] transition-colors">
                              <Trash2 className="w-3.5 h-3.5" />
                           </button>
                        </div>
@@ -196,17 +196,17 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
            <Button 
              variant="ghost" 
              onClick={handleSkip}
-             className="flex-1 rounded-md text-white/70 hover:text-red-400 hover:bg-red-400/5"
+             className="flex-1 rounded-md text-white/70 hover:text-[#f2777b] hover:bg-white/[0.04]"
            >
-              Confirm Zero Cost
+              Confirm zero cost
            </Button>
            <Button 
              onClick={() => handleSubmit(false)}
              isLoading={isSubmitting}
              disabled={!costPerUnit || Number(costPerUnit) <= 0}
-             className="flex-[2] rounded-md bg-emerald-500 text-black font-bold uppercase tracking-widest hover:bg-emerald-400"
+             className="flex-[2] rounded-md bg-[#ededed] text-[#141415] font-medium hover:bg-white"
            >
-              Save & {currentIndex < batches.length - 1 ? 'Next Unit' : 'Finish'}
+              Save & {currentIndex < batches.length - 1 ? 'Next unit' : 'Finish'}
            </Button>
         </div>
       </div>

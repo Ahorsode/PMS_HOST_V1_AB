@@ -1,164 +1,96 @@
 'use client';
 
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { 
-  Banknote, 
-  Receipt, 
-  ShoppingBag, 
-  ChevronRight,
-  Clock,
-  User,
-  Activity,
-  Calendar,
-  Package,
-  ArrowLeft
-} from 'lucide-react';
-import { motion } from 'framer-motion';
+import { ArrowLeft } from 'lucide-react';
 import { formatDate, formatCurrency } from '@/lib/utils';
 import Link from 'next/link';
 import { MobileCardList } from '@/components/ui/MobileCardList';
+import { g } from '@/components/ui/graphite';
 
 interface SaleDetailClientProps {
   sale: any;
 }
 
+function statusLabel(status: string | null | undefined) {
+  const text = String(status || 'completed').replace(/_/g, ' ').toLowerCase();
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 export const SaleDetailClient = ({ sale }: SaleDetailClientProps) => {
+  const itemCount = sale.items?.length || 0;
   return (
-    <div className="space-y-7 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-      {/* Overview Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        <MetricCard 
-          title="Total Amount" 
-          value={formatCurrency(sale.totalAmount)} 
-          icon={Banknote} 
-          color="emerald" 
-          subtext="Processed Order"
-        />
-        <MetricCard 
-          title="Item Count" 
-          value={`${sale.items?.length || 0} Positions`} 
-          icon={Package} 
-          color="blue" 
-          subtext="Transaction size"
-        />
-        <MetricCard 
-          title="Log Date" 
-          value={formatDate(sale.saleDate)} 
-          icon={Calendar} 
-          color="amber" 
-          subtext="Ledger entry"
-        />
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <Stat label="Total" value={formatCurrency(sale.totalAmount)} />
+        <Stat label="Items" value={`${itemCount} ${itemCount === 1 ? 'item' : 'items'}`} />
+        <Stat label="Sale date" value={formatDate(sale.saleDate)} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-7">
-        {/* Items Breakdown */}
-        <div className="lg:col-span-2 space-y-7">
-          <Card className="rounded-lg bg-white/10 border-white/10 backdrop-blur-xl overflow-hidden shadow-2xl">
-              <CardHeader className="bg-white/10 border-b border-white/10 px-7 py-5">
-                <CardTitle className="text-white italic font-bold flex items-center gap-2">
-                   <Receipt className="w-5 h-5 text-emerald-400" /> Itemized Invoice
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                 <MobileCardList
-                    items={sale.items ?? []}
-                    getKey={(_item: any, idx: number) => idx}
-                    title={(item: any) => item.description}
-                    badge={(item: any) => <span className="text-white font-bold text-sm">{formatCurrency(item.totalPrice)}</span>}
-                    fields={(item: any) => [
-                      { label: 'Qty', value: <span className="text-emerald-400 font-bold">{item.quantity}</span> },
-                      { label: 'Unit Price', value: formatCurrency(item.unitPrice) },
-                    ]}
-                 />
-                 <table className="hidden md:table w-full text-left">
-                    <thead>
-                       <tr className="bg-white/10 border-b border-white/10">
-                          <th className="px-7 py-3 text-xs font-bold uppercase tracking-widest text-white/70 italic">Description</th>
-                          <th className="px-7 py-3 text-xs font-bold uppercase tracking-widest text-white/70 italic text-center">Qty</th>
-                          <th className="px-7 py-3 text-xs font-bold uppercase tracking-widest text-white/70 italic text-right">Unit Price</th>
-                          <th className="px-7 py-3 text-xs font-bold uppercase tracking-widest text-white/70 italic text-right">Total</th>
-                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-white/10">
-                       {sale.items?.map((item: any, idx: number) => (
-                         <tr key={idx} className="hover:bg-white/[0.02] transition-colors">
-                            <td className="px-7 py-3">
-                               <span className="text-white font-bold text-sm tracking-normal">{item.description}</span>
-                            </td>
-                            <td className="px-7 py-3 text-center">
-                               <span className="text-emerald-400 font-bold text-sm tracking-normal">{item.quantity}</span>
-                            </td>
-                            <td className="px-7 py-3 text-right">
-                               <span className="text-white/80 font-medium text-sm tracking-normal">{formatCurrency(item.unitPrice)}</span>
-                            </td>
-                            <td className="px-7 py-3 text-right">
-                               <span className="text-white font-bold text-sm tracking-normal">{formatCurrency(item.totalPrice)}</span>
-                            </td>
-                         </tr>
-                       ))}
-                    </tbody>
-                 </table>
-              </CardContent>
-          </Card>
-        </div>
-
-        {/* Sidebar Info */}
-        <div className="space-y-7">
-           <Card className="rounded-lg bg-white/10 border-white/10 backdrop-blur-xl p-7 relative overflow-hidden shadow-2xl">
-              <div className="absolute top-0 right-0 p-7 opacity-[0.03] rotate-12 pointer-events-none">
-                 <User className="w-56 h-56 text-emerald-400" />
-              </div>
-              <h4 className="text-white font-bold italic text-xl mb-5">Customer Details</h4>
-              <div className="space-y-4">
-                 <MetaItem label="Client Name" value={sale.customerName || 'Walk-in Customer'} />
-                 <MetaItem label="Transaction" value="Current order" />
-                 <MetaItem label="Payment Status" value="PAID / SETTLED" />
-              </div>
-           </Card>
-
-           <Link 
-             href="/dashboard/sales"
-             className="flex items-center justify-center gap-2 w-full py-5 bg-white/10 hover:bg-white/20 border border-white/10 rounded-[1.5rem] text-white/70 hover:text-white transition-all group"
-           >
-              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-              <span className="text-xs font-bold uppercase tracking-widest">Back to Ledger</span>
-           </Link>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const MetricCard = ({ title, value, icon: Icon, color, subtext }: any) => {
-  const colors: any = {
-    emerald: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
-    amber: "text-amber-400 bg-amber-500/10 border-amber-500/20",
-    red: "text-red-500 bg-red-500/10 border-red-500/20",
-    blue: "text-blue-400 bg-blue-500/10 border-blue-500/20",
-  };
-
-  return (
-    <div className="p-5 rounded-lg bg-white/10 border-white/10 border backdrop-blur-md shadow-2xl flex flex-col justify-between h-40 transition-all duration-500 group">
-       <div className="flex justify-between items-start">
-          <div className={`p-2 rounded-md border ${colors[color]}`}>
-             <Icon className="w-5 h-5" />
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <section className={`${g.card} overflow-hidden lg:col-span-2`}>
+          <div className={`border-b ${g.hairline} px-5 py-4`}>
+            <h2 className={g.sectionTitle}>Items</h2>
           </div>
-          <ChevronRight className="w-4 h-4 text-white/10 group-hover:text-white/40 group-hover:translate-x-1 transition-all" />
-       </div>
-       <div>
-          <h3 className="text-white font-bold text-2xl tracking-normal">{value}</h3>
-          <p className="text-white/70 font-bold uppercase tracking-widest text-[9px] mt-1 italic flex justify-between items-center">
-             {title} <span className="text-[8px] opacity-70">{subtext}</span>
-          </p>
-       </div>
+          <MobileCardList
+            items={sale.items ?? []}
+            getKey={(_item: any, idx: number) => idx}
+            title={(item: any) => item.description}
+            badge={(item: any) => <span className="text-sm font-medium tabular-nums text-[#ededed]">{formatCurrency(item.totalPrice)}</span>}
+            fields={(item: any) => [
+              { label: 'Quantity', value: item.quantity },
+              { label: 'Unit price', value: formatCurrency(item.unitPrice) },
+            ]}
+          />
+          <table className="hidden w-full text-left md:table">
+            <thead className={`border-b ${g.hairline}`}>
+              <tr>
+                <th className="px-5 py-3 text-xs font-normal text-[#85858b]">Description</th>
+                <th className="px-5 py-3 text-right text-xs font-normal text-[#85858b]">Quantity</th>
+                <th className="px-5 py-3 text-right text-xs font-normal text-[#85858b]">Unit price</th>
+                <th className="px-5 py-3 text-right text-xs font-normal text-[#85858b]">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {sale.items?.map((item: any, idx: number) => (
+                <tr key={idx} className="border-b border-white/[0.06] transition-colors duration-150 hover:bg-white/[0.03]">
+                  <td className="px-5 py-3 text-sm text-[#ededed]">{item.description}</td>
+                  <td className="px-5 py-3 text-right text-sm tabular-nums text-[#ededed]">{item.quantity}</td>
+                  <td className="px-5 py-3 text-right text-sm tabular-nums text-[#a1a1a6]">{formatCurrency(item.unitPrice)}</td>
+                  <td className="px-5 py-3 text-right text-sm font-medium tabular-nums text-[#ededed]">{formatCurrency(item.totalPrice)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </section>
+
+        <div className="space-y-4">
+          <section className={`${g.card} p-5`}>
+            <h2 className={g.sectionTitle}>Customer</h2>
+            <dl className="mt-4 space-y-4">
+              <div>
+                <dt className="text-xs text-[#a1a1a6]">Name</dt>
+                <dd className="mt-1 text-sm text-[#ededed]">{sale.customerName || 'Walk-in customer'}</dd>
+              </div>
+              <div>
+                <dt className="text-xs text-[#a1a1a6]">Status</dt>
+                <dd className="mt-1 text-sm text-[#ededed]">{statusLabel(sale.status)}</dd>
+              </div>
+            </dl>
+          </section>
+
+          <Link href="/dashboard/sales" className={`${g.buttonSecondary} w-full`}>
+            <ArrowLeft className="h-4 w-4 text-[#a1a1a6]" strokeWidth={1.5} />
+            Back to sales
+          </Link>
+        </div>
+      </div>
     </div>
   );
 };
 
-const MetaItem = ({ label, value }: any) => (
-  <div className="flex flex-col gap-1">
-     <span className="text-white/60 text-[8px] font-bold uppercase tracking-[0.2em]">{label}</span>
-     <span className="text-white font-bold text-sm tracking-normal">{value}</span>
+const Stat = ({ label, value }: { label: string; value: string }) => (
+  <div className="min-w-0 rounded-xl border border-white/[0.08] bg-[#19191b] p-5">
+    <p className="text-sm text-[#a1a1a6]">{label}</p>
+    <p className="mt-2 truncate text-2xl font-medium leading-none tabular-nums text-[#ededed]">{value}</p>
   </div>
 );

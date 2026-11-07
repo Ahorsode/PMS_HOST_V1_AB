@@ -113,21 +113,18 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight flex items-center gap-3">
-            <ShieldCheck className="w-8 h-8 text-emerald-400" />
-            Security <span className="text-emerald-400 italic">Audit</span>
-          </h1>
-          <p className="text-white/60 text-sm font-medium mt-1 uppercase tracking-widest">
-            System Activity & Data Recovery
+          <h1 className="text-3xl font-medium leading-tight text-[#ededed]">Audit log</h1>
+          <p className="mt-2 text-sm text-[#a1a1a6]">
+            Who changed what, and records you can restore
           </p>
         </div>
         
-        <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 backdrop-blur-md">
+        <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
           <button
             onClick={() => setActiveTab('edits')}
-            className={`px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
+            className={`px-6 py-2 rounded-lg text-xs font-medium transition-colors ${
               activeTab === 'edits' 
-                ? 'bg-emerald-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.3)]' 
+                ? 'bg-[#2c2c2f] text-[#ededed] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' 
                 : 'text-white/60 hover:text-white'
             }`}
           >
@@ -135,9 +132,9 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
           </button>
           <button
             onClick={() => setActiveTab('deletes')}
-            className={`px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
+            className={`px-6 py-2 rounded-lg text-xs font-medium transition-colors ${
               activeTab === 'deletes' 
-                ? 'bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.3)]' 
+                ? 'bg-red-500 text-white' 
                 : 'text-white/60 hover:text-white'
             }`}
           >
@@ -145,15 +142,15 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
           </button>
           <button
             onClick={() => setActiveTab('recovery')}
-            className={`relative px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-widest transition-all ${
+            className={`relative px-6 py-2 rounded-lg text-xs font-medium transition-colors ${
               activeTab === 'recovery' 
-                ? 'bg-amber-500 text-black shadow-[0_0_15px_rgba(245,158,11,0.3)]' 
+                ? 'bg-[#2c2c2f] text-[#ededed] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' 
                 : 'text-white/60 hover:text-white'
             }`}
           >
             Recovery
             {trashCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-[9px] font-black flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 text-white text-xs font-medium flex items-center justify-center">
                 {trashCount > 9 ? '9+' : trashCount}
               </span>
             )}
@@ -163,14 +160,14 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
 
       <div className="grid grid-cols-1 gap-6">
         {activeTab === 'edits' ? (
-          <Card className="bg-white/5 border-white/10 backdrop-blur-xl overflow-hidden">
+          <Card className="bg-white/5 border-white/10 overflow-hidden">
             <CardHeader className="border-b border-white/5 flex flex-row items-center justify-between">
               <CardTitle className="text-white flex items-center gap-2">
-                <History className="w-5 h-5 text-emerald-400" />
-                Resource Modifications
+                <History className="w-5 h-5 text-[#85858b]" />
+                Resource modifications
               </CardTitle>
-              <div className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">
-                Last 100 Edits
+              <div className="text-xs font-medium text-white/40">
+                Last 100 edits
               </div>
             </CardHeader>
             <CardContent className="p-0">
@@ -178,17 +175,17 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                 items={initialEditLogs}
                 getKey={(log) => log.id}
                 title={(log) => new Date(log.createdAt).toLocaleString()}
-                subtitle={(_log, index) => <span className="font-mono text-emerald-400 font-bold">Change {index + 1}</span>}
+                subtitle={(_log, index) => <span className="font-mono text-[#ededed] font-medium">Change {index + 1}</span>}
                 badge={(log) => (
-                  <span className="bg-white/10 text-white/70 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest border border-white/5">
+                  <span className="bg-white/10 text-white/70 px-2 py-0.5 rounded text-xs font-medium border border-white/5">
                     {log.tableName}
                   </span>
                 )}
                 fields={(log) => [
                   { label: 'Worker', full: true, value: <WorkerStamp user={log.user} /> },
-                  { label: 'Attribute', full: true, value: <span className="text-emerald-400/80">{log.attributeName}</span> },
-                  { label: 'Old Value', value: <span className="text-red-400/60 line-through">{log.oldValue || 'none'}</span> },
-                  { label: 'New Value', value: <span className="text-emerald-400 font-bold">{log.newValue}</span> },
+                  { label: 'Attribute', full: true, value: <span className="text-[#ededed]">{log.attributeName}</span> },
+                  { label: 'Old value', value: <span className="text-[#f2777b] line-through">{log.oldValue || 'none'}</span> },
+                  { label: 'New value', value: <span className="text-[#ededed] font-medium">{log.newValue}</span> },
                 ]}
                 empty="No modification logs found."
               />
@@ -196,10 +193,10 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                 <table className="w-full text-left">
                   <thead>
                     <tr className="bg-white/5">
-                      <th className="px-6 py-3 text-[10px] font-bold text-white/50 uppercase tracking-widest">Timestamp</th>
-                      <th className="px-6 py-3 text-[10px] font-bold text-white/50 uppercase tracking-widest">Worker</th>
-                      <th className="px-6 py-3 text-[10px] font-bold text-white/50 uppercase tracking-widest">Table / Entity</th>
-                      <th className="px-6 py-3 text-[10px] font-bold text-white/50 uppercase tracking-widest">Changes</th>
+                      <th className="px-6 py-3 text-xs font-medium text-white/50">Timestamp</th>
+                      <th className="px-6 py-3 text-xs font-medium text-white/50">Worker</th>
+                      <th className="px-6 py-3 text-xs font-medium text-white/50">Table / entity</th>
+                      <th className="px-6 py-3 text-xs font-medium text-white/50">Changes</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
@@ -216,23 +213,23 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex flex-col gap-1">
-                            <span className="bg-white/10 text-white/70 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest border border-white/5 w-fit">
+                            <span className="bg-white/10 text-white/70 px-2 py-0.5 rounded text-xs font-medium border border-white/5 w-fit">
                               {log.tableName}
                             </span>
-                            <span className="text-[10px] font-mono text-emerald-400 font-bold">
+                            <span className="text-xs font-mono text-[#ededed] font-medium">
                               Change {index + 1}
                             </span>
                           </div>
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex flex-col gap-1">
-                            <p className="text-[10px] text-white/40 uppercase font-bold tracking-wider">
-                              Attribute: <span className="text-emerald-400/80">{log.attributeName}</span>
+                            <p className="text-xs text-white/40 font-medium">
+                              Attribute: <span className="text-[#ededed]">{log.attributeName}</span>
                             </p>
                             <div className="flex items-center gap-2 text-[11px]">
-                              <span className="text-red-400/60 line-through truncate max-w-[100px]">{log.oldValue || 'none'}</span>
+                              <span className="text-[#f2777b] line-through truncate max-w-[100px]">{log.oldValue || 'none'}</span>
                               <ArrowRight className="w-3 h-3 text-white/20" />
-                              <span className="text-emerald-400 font-bold truncate max-w-[100px]">{log.newValue}</span>
+                              <span className="text-[#ededed] font-medium truncate max-w-[100px]">{log.newValue}</span>
                             </div>
                           </div>
                         </td>
@@ -240,7 +237,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                     ))}
                     {initialEditLogs.length === 0 && (
                       <tr>
-                        <td colSpan={4} className="px-6 py-20 text-center text-white/60 italic text-sm">
+                        <td colSpan={4} className="px-6 py-20 text-center text-white/60 text-sm">
                           No modification logs found.
                         </td>
                       </tr>
@@ -251,14 +248,14 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
             </CardContent>
           </Card>
         ) : activeTab === 'deletes' ? (
-          <Card className="bg-white/5 border-white/10 backdrop-blur-xl overflow-hidden">
+          <Card className="bg-white/5 border-white/10 overflow-hidden">
             <CardHeader className="border-b border-white/5 flex flex-row items-center justify-between">
               <CardTitle className="text-white flex items-center gap-2">
-                <Trash2 className="w-5 h-5 text-red-400" />
-                Recovery Vault
+                <Trash2 className="w-5 h-5 text-[#f2777b]" />
+                Recovery vault
               </CardTitle>
-              <div className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">
-                Deleted Records
+              <div className="text-xs font-medium text-white/40">
+                Deleted records
               </div>
             </CardHeader>
             <CardContent className="p-0">
@@ -267,31 +264,31 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                 getKey={(log: any) => log.id}
                 title={(log: any) => new Date(log.deletedAt).toLocaleString()}
                 badge={(log: any) => (
-                  <span className="bg-red-500/10 text-red-400 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest border border-red-500/20">
+                  <span className="bg-white/[0.04] text-[#f2777b] px-2 py-0.5 rounded text-xs font-medium border border-white/[0.08]">
                     {log.tableName}
                   </span>
                 )}
                 fields={(log: any) => [
-                  { label: 'By Whom', full: true, value: <WorkerStamp user={log.user} /> },
+                  { label: 'By whom', full: true, value: <WorkerStamp user={log.user} /> },
                   ...(log.reason ? [{ label: 'Reason', full: true, value: <span className="text-white/60">"{log.reason}"</span> }] : []),
                   {
-                    label: 'Data Summary',
+                    label: 'Data summary',
                     full: true,
-                    value: <span className="text-[10px] text-white/40 font-mono break-all">{log.deletedDataCsv.split('\n')[1]?.slice(0, 50)}...</span>,
+                    value: <span className="text-xs text-white/40 font-mono break-all">{log.deletedDataCsv.split('\n')[1]?.slice(0, 50)}...</span>,
                   },
                 ]}
                 actions={(log: any) => (
                   <>
                     <button
                       onClick={() => setSelectedLog(log)}
-                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-emerald-400 border border-white/10 transition-all text-[10px] font-bold uppercase tracking-widest"
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-[#ededed] border border-white/10 transition-colors text-xs font-medium"
                     >
                       <Eye className="w-3.5 h-3.5" /> Details
                     </button>
                     <button
                       onClick={() => handleRestore(log.id)}
                       disabled={isRestoring(`audit:${log.id}`)}
-                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/10 transition-all text-[10px] font-bold uppercase tracking-widest disabled:opacity-50"
+                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/10 transition-colors text-xs font-medium disabled:opacity-50"
                     >
                       {isRestoring(`audit:${log.id}`) ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
                       {isRestoring(`audit:${log.id}`) ? 'Restoring...' : 'Restore'}
@@ -304,11 +301,11 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                 <table className="w-full text-left">
                   <thead>
                     <tr className="bg-white/5">
-                      <th className="px-6 py-3 text-[10px] font-bold text-white/50 uppercase tracking-widest">Deleted At</th>
-                      <th className="px-6 py-3 text-[10px] font-bold text-white/50 uppercase tracking-widest">By Whom</th>
-                      <th className="px-6 py-3 text-[10px] font-bold text-white/50 uppercase tracking-widest">Entity & Reason</th>
-                      <th className="px-6 py-3 text-[10px] font-bold text-white/50 uppercase tracking-widest">Data Summary</th>
-                      <th className="px-6 py-3 text-right text-[10px] font-bold text-white/50 uppercase tracking-widest">Action</th>
+                      <th className="px-6 py-3 text-xs font-medium text-white/50">Deleted at</th>
+                      <th className="px-6 py-3 text-xs font-medium text-white/50">By whom</th>
+                      <th className="px-6 py-3 text-xs font-medium text-white/50">Entity & reason</th>
+                      <th className="px-6 py-3 text-xs font-medium text-white/50">Data summary</th>
+                      <th className="px-6 py-3 text-right text-xs font-medium text-white/50">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
@@ -321,24 +318,24 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                           <WorkerStamp user={log.user} />
                         </td>
                         <td className="px-6 py-4">
-                          <span className="bg-red-500/10 text-red-400 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest border border-red-500/20 mb-1 inline-block">
+                          <span className="bg-white/[0.04] text-[#f2777b] px-2 py-0.5 rounded text-xs font-medium border border-white/[0.08] mb-1 inline-block">
                             {log.tableName}
                           </span>
                           {log.reason && (
-                            <p className="text-[10px] text-white/60 font-medium truncate max-w-[150px]" title={log.reason}>
+                            <p className="text-xs text-white/60 font-medium truncate max-w-[150px]" title={log.reason}>
                               "{log.reason}"
                             </p>
                           )}
                         </td>
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
-                            <p className="text-[10px] text-white/40 font-mono truncate max-w-[200px]" title={log.deletedDataCsv}>
+                            <p className="text-xs text-white/40 font-mono truncate max-w-[200px]" title={log.deletedDataCsv}>
                               {log.deletedDataCsv.split('\n')[1]?.slice(0, 50)}...
                             </p>
-                            <button aria-label="View Details" 
+                            <button aria-label="View details" 
                               onClick={() => setSelectedLog(log)}
-                              className="text-white/40 hover:text-emerald-400 transition-colors" 
-                              title="View Details"
+                              className="text-white/40 hover:text-[#ededed] transition-colors" 
+                              title="View details"
                             >
                               <Eye className="w-3.5 h-3.5" />
                             </button>
@@ -348,7 +345,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                           <button
                             onClick={() => handleRestore(log.id)}
                             disabled={isRestoring(`audit:${log.id}`)}
-                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/10 transition-all text-[10px] font-bold uppercase tracking-widest disabled:opacity-50"
+                            className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/70 hover:text-white border border-white/10 transition-colors text-xs font-medium disabled:opacity-50"
                           >
                             {isRestoring(`audit:${log.id}`) ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />}
                             {isRestoring(`audit:${log.id}`) ? 'Restoring...' : 'Restore'}
@@ -358,7 +355,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                     ))}
                     {uniqueDeleteLogs.length === 0 && (
                       <tr>
-                        <td colSpan={5} className="px-6 py-20 text-center text-white/60 italic text-sm">
+                        <td colSpan={5} className="px-6 py-20 text-center text-white/60 text-sm">
                           No deletion logs found.
                         </td>
                       </tr>
@@ -370,33 +367,33 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
           </Card>
         ) : (
           /* Recovery Tab — soft-deleted records (isDeleted: true) */
-          <Card className="bg-white/5 border-white/10 backdrop-blur-xl overflow-hidden">
+          <Card className="bg-white/5 border-white/10 overflow-hidden">
             <CardHeader className="border-b border-white/5 flex flex-row items-center justify-between">
               <CardTitle className="text-white flex items-center gap-2">
-                <RotateCcw className="w-5 h-5 text-amber-400" />
-                Soft-Deleted Records
+                <RotateCcw className="w-5 h-5 text-[#85858b]" />
+                Soft-deleted records
               </CardTitle>
-              <div className="text-[10px] font-bold text-white/40 uppercase tracking-[0.2em]">
+              <div className="text-xs font-medium text-white/40">
                 {trashCount} record{trashCount !== 1 ? 's' : ''} recoverable
               </div>
             </CardHeader>
             <CardContent className="p-4 space-y-4">
               {!trashItems || trashCount === 0 ? (
-                <p className="text-center text-white/60 italic text-sm py-16">All records are active — nothing in the recovery queue.</p>
+                <p className="text-center text-white/60 text-sm py-16">All records are active — nothing in the recovery queue.</p>
               ) : (
                 <>
                   {/* Batches */}
                   {trashItems.batches?.length > 0 && (
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-400 mb-2">Batches ({trashItems.batches.length})</p>
+                      <p className="text-xs font-medium text-[#ededed] mb-2">Batches ({trashItems.batches.length})</p>
                       <div className="space-y-1.5">
                         {trashItems.batches.map((b: any) => (
                           <div key={b.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-white/5 border border-white/10">
                             <div>
-                              <p className="text-xs font-bold text-white">{b.batchName}</p>
-                              <p className="text-[10px] text-white/40">{getBreedDisplayName(b.breedType)} · {b.currentCount} birds</p>
+                              <p className="text-xs font-medium text-white">{b.batchName}</p>
+                              <p className="text-xs text-white/40">{getBreedDisplayName(b.breedType)} · {b.currentCount} birds</p>
                             </div>
-                            <button onClick={() => handleSoftRestore(restoreBatch, b.id, 'Batch')} disabled={isRestoring(`Batch:${b.id}`)} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/30 text-emerald-400 border border-emerald-500/20 transition-all flex items-center gap-1 disabled:opacity-50">
+                            <button onClick={() => handleSoftRestore(restoreBatch, b.id, 'Batch')} disabled={isRestoring(`Batch:${b.id}`)} className="text-xs font-medium px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.04] text-[#ededed] border border-white/[0.08] transition-colors flex items-center gap-1 disabled:opacity-50">
                               {isRestoring(`Batch:${b.id}`) ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />} {isRestoring(`Batch:${b.id}`) ? 'Restoring...' : 'Restore'}
                             </button>
                           </div>
@@ -407,15 +404,15 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                   {/* Expenses */}
                   {trashItems.expenses?.length > 0 && (
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-purple-400 mb-2">Expenses ({trashItems.expenses.length})</p>
+                      <p className="text-xs font-medium text-[#a1a1a6] mb-2">Expenses ({trashItems.expenses.length})</p>
                       <div className="space-y-1.5">
                         {trashItems.expenses.map((e: any) => (
                           <div key={e.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-white/5 border border-white/10">
                             <div>
-                              <p className="text-xs font-bold text-white">{e.description || e.category}</p>
-                              <p className="text-[10px] text-white/40">{e.category} · GHS {e.amount.toFixed(2)}</p>
+                              <p className="text-xs font-medium text-white">{e.description || e.category}</p>
+                              <p className="text-xs text-white/40">{e.category} · GHS {e.amount.toFixed(2)}</p>
                             </div>
-                            <button onClick={() => handleSoftRestore(restoreExpense, e.id, 'Expense')} disabled={isRestoring(`Expense:${e.id}`)} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-purple-500/15 hover:bg-purple-500/30 text-purple-400 border border-purple-500/20 transition-all flex items-center gap-1 disabled:opacity-50">
+                            <button onClick={() => handleSoftRestore(restoreExpense, e.id, 'Expense')} disabled={isRestoring(`Expense:${e.id}`)} className="text-xs font-medium px-3 py-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.06] text-[#a1a1a6] border border-white/[0.08] transition-colors flex items-center gap-1 disabled:opacity-50">
                               {isRestoring(`Expense:${e.id}`) ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />} {isRestoring(`Expense:${e.id}`) ? 'Restoring...' : 'Restore'}
                             </button>
                           </div>
@@ -426,15 +423,15 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                   {/* Sales */}
                   {trashItems.sales?.length > 0 && (
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-blue-400 mb-2">Sales ({trashItems.sales.length})</p>
+                      <p className="text-xs font-medium text-[#a1a1a6] mb-2">Sales ({trashItems.sales.length})</p>
                       <div className="space-y-1.5">
                         {trashItems.sales.map((s: any) => (
                           <div key={s.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-white/5 border border-white/10">
                             <div>
-                              <p className="text-xs font-bold text-white">{s.customerName || 'Walk-in'}</p>
-                              <p className="text-[10px] text-white/40">GHS {s.totalAmount.toFixed(2)} · {s.status}</p>
+                              <p className="text-xs font-medium text-white">{s.customerName || 'Walk-in'}</p>
+                              <p className="text-xs text-white/40">GHS {s.totalAmount.toFixed(2)} · {s.status}</p>
                             </div>
-                            <button onClick={() => handleSoftRestore(restoreSale, s.id, 'Sale')} disabled={isRestoring(`Sale:${s.id}`)} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-blue-500/15 hover:bg-blue-500/30 text-blue-400 border border-blue-500/20 transition-all flex items-center gap-1 disabled:opacity-50">
+                            <button onClick={() => handleSoftRestore(restoreSale, s.id, 'Sale')} disabled={isRestoring(`Sale:${s.id}`)} className="text-xs font-medium px-3 py-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.06] text-[#a1a1a6] border border-white/[0.08] transition-colors flex items-center gap-1 disabled:opacity-50">
                               {isRestoring(`Sale:${s.id}`) ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />} {isRestoring(`Sale:${s.id}`) ? 'Restoring...' : 'Restore'}
                             </button>
                           </div>
@@ -445,15 +442,15 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                   {/* Orders */}
                   {trashItems.orders?.length > 0 && (
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-400 mb-2">Orders ({trashItems.orders.length})</p>
+                      <p className="text-xs font-medium text-[#a1a1a6] mb-2">Orders ({trashItems.orders.length})</p>
                       <div className="space-y-1.5">
                         {trashItems.orders.map((o: any) => (
                           <div key={o.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-white/5 border border-white/10">
                             <div>
-                              <p className="text-xs font-bold text-white">{o.customer?.name || 'No customer'}</p>
-                              <p className="text-[10px] text-white/40">GHS {o.totalAmount.toFixed(2)} · {o.status}</p>
+                              <p className="text-xs font-medium text-white">{o.customer?.name || 'No customer'}</p>
+                              <p className="text-xs text-white/40">GHS {o.totalAmount.toFixed(2)} · {o.status}</p>
                             </div>
-                            <button onClick={() => handleSoftRestore(restoreOrder, o.id, 'Order')} disabled={isRestoring(`Order:${o.id}`)} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/30 text-indigo-400 border border-indigo-500/20 transition-all flex items-center gap-1 disabled:opacity-50">
+                            <button onClick={() => handleSoftRestore(restoreOrder, o.id, 'Order')} disabled={isRestoring(`Order:${o.id}`)} className="text-xs font-medium px-3 py-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.06] text-[#a1a1a6] border border-white/[0.08] transition-colors flex items-center gap-1 disabled:opacity-50">
                               {isRestoring(`Order:${o.id}`) ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />} {isRestoring(`Order:${o.id}`) ? 'Restoring...' : 'Restore'}
                             </button>
                           </div>
@@ -464,15 +461,15 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                   {/* Inventory */}
                   {trashItems.inventory?.length > 0 && (
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-teal-400 mb-2">Inventory ({trashItems.inventory.length})</p>
+                      <p className="text-xs font-medium text-[#a1a1a6] mb-2">Inventory ({trashItems.inventory.length})</p>
                       <div className="space-y-1.5">
                         {trashItems.inventory.map((i: any) => (
                           <div key={i.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-white/5 border border-white/10">
                             <div>
-                              <p className="text-xs font-bold text-white">{i.itemName}</p>
-                              <p className="text-[10px] text-white/40">{i.stockLevel} {i.unit} · {i.category}</p>
+                              <p className="text-xs font-medium text-white">{i.itemName}</p>
+                              <p className="text-xs text-white/40">{i.stockLevel} {i.unit} · {i.category}</p>
                             </div>
-                            <button onClick={() => handleSoftRestore(restoreInventory, i.id, 'Inventory')} disabled={isRestoring(`Inventory:${i.id}`)} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-teal-500/15 hover:bg-teal-500/30 text-teal-400 border border-teal-500/20 transition-all flex items-center gap-1 disabled:opacity-50">
+                            <button onClick={() => handleSoftRestore(restoreInventory, i.id, 'Inventory')} disabled={isRestoring(`Inventory:${i.id}`)} className="text-xs font-medium px-3 py-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.06] text-[#a1a1a6] border border-white/[0.08] transition-colors flex items-center gap-1 disabled:opacity-50">
                               {isRestoring(`Inventory:${i.id}`) ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />} {isRestoring(`Inventory:${i.id}`) ? 'Restoring...' : 'Restore'}
                             </button>
                           </div>
@@ -483,15 +480,15 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                   {/* Egg Production */}
                   {trashItems.eggProduction?.length > 0 && (
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-yellow-400 mb-2">Egg Logs ({trashItems.eggProduction.length})</p>
+                      <p className="text-xs font-medium text-[#ededed] mb-2">Egg Logs ({trashItems.eggProduction.length})</p>
                       <div className="space-y-1.5">
                         {trashItems.eggProduction.map((e: any) => (
                           <div key={e.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-white/5 border border-white/10">
                             <div>
-                              <p className="text-xs font-bold text-white">{e.batch?.batchName || 'Recovered egg log'}</p>
-                              <p className="text-[10px] text-white/40">{e.eggsCollected} collected · {new Date(e.logDate).toLocaleDateString()}</p>
+                              <p className="text-xs font-medium text-white">{e.batch?.batchName || 'Recovered egg log'}</p>
+                              <p className="text-xs text-white/40">{e.eggsCollected} collected · {new Date(e.logDate).toLocaleDateString()}</p>
                             </div>
-                            <button onClick={() => handleSoftRestore(restoreEggProduction, e.id, 'Egg Log')} disabled={isRestoring(`Egg Log:${e.id}`)} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-yellow-500/15 hover:bg-yellow-500/30 text-yellow-400 border border-yellow-500/20 transition-all flex items-center gap-1 disabled:opacity-50">
+                            <button onClick={() => handleSoftRestore(restoreEggProduction, e.id, 'Egg Log')} disabled={isRestoring(`Egg Log:${e.id}`)} className="text-xs font-medium px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.04] text-[#ededed] border border-white/[0.08] transition-colors flex items-center gap-1 disabled:opacity-50">
                               {isRestoring(`Egg Log:${e.id}`) ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />} {isRestoring(`Egg Log:${e.id}`) ? 'Restoring...' : 'Restore'}
                             </button>
                           </div>
@@ -502,15 +499,15 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                   {/* Feed Logs */}
                   {trashItems.feedingLogs?.length > 0 && (
                     <div>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-orange-400 mb-2">Feed Logs ({trashItems.feedingLogs.length})</p>
+                      <p className="text-xs font-medium text-[#ededed] mb-2">Feed Logs ({trashItems.feedingLogs.length})</p>
                       <div className="space-y-1.5">
                         {trashItems.feedingLogs.map((l: any) => (
                           <div key={l.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-white/5 border border-white/10">
                             <div>
-                              <p className="text-xs font-bold text-white">{l.batch?.batchName || 'Recovered feed log'}</p>
-                              <p className="text-[10px] text-white/40">{l.amountConsumed} kg · {new Date(l.logDate).toLocaleDateString()}</p>
+                              <p className="text-xs font-medium text-white">{l.batch?.batchName || 'Recovered feed log'}</p>
+                              <p className="text-xs text-white/40">{l.amountConsumed} kg · {new Date(l.logDate).toLocaleDateString()}</p>
                             </div>
-                            <button onClick={() => handleSoftRestore(restoreFeedingLog, l.id, 'Feed Log')} disabled={isRestoring(`Feed Log:${l.id}`)} className="text-[10px] font-bold px-3 py-1.5 rounded-lg bg-orange-500/15 hover:bg-orange-500/30 text-orange-400 border border-orange-500/20 transition-all flex items-center gap-1 disabled:opacity-50">
+                            <button onClick={() => handleSoftRestore(restoreFeedingLog, l.id, 'Feed Log')} disabled={isRestoring(`Feed Log:${l.id}`)} className="text-xs font-medium px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.04] text-[#ededed] border border-white/[0.08] transition-colors flex items-center gap-1 disabled:opacity-50">
                               {isRestoring(`Feed Log:${l.id}`) ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />} {isRestoring(`Feed Log:${l.id}`) ? 'Restoring...' : 'Restore'}
                             </button>
                           </div>
@@ -529,7 +526,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
       <Dialog 
         isOpen={!!selectedLog} 
         onOpenChange={(open) => !open && setSelectedLog(null)}
-        title="Deleted Record Details"
+        title="Deleted record details"
         description={selectedLog ? `Entity: ${selectedLog.tableName} | Deleted: ${new Date(selectedLog.deletedAt).toLocaleString()}` : ''}
       >
         {selectedLog && (
@@ -541,8 +538,8 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                   const value = selectedLog.deletedDataCsv.split('\n')[1]?.split('|')[i]?.trim().replace(/^'|'$/g, '').replace(/''/g, "'") || 'N/A';
                   return (
                     <tr key={i} className="border-b border-white/5 last:border-0 hover:bg-white/5 transition-colors">
-                      <td className="py-2 px-3 font-bold text-white/50 tracking-widest">{cleanHeader}</td>
-                      <td className="py-2 px-3 font-mono break-all">{value === 'NULL' || value === '' ? <span className="text-white/60 italic">none</span> : value}</td>
+                      <td className="py-2 px-3 font-medium text-white/50">{cleanHeader}</td>
+                      <td className="py-2 px-3 font-mono break-all">{value === 'NULL' || value === '' ? <span className="text-white/60">none</span> : value}</td>
                     </tr>
                   );
                 })}
@@ -556,7 +553,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                   handleRestore(id);
                 }}
                 disabled={isRestoring(`audit:${selectedLog.id}`)}
-                className="bg-emerald-500 hover:bg-emerald-600 text-black px-6 py-2 rounded-md font-bold uppercase text-[10px] tracking-widest transition-all hover:scale-105 disabled:opacity-50"
+                className="bg-[#ededed] hover:bg-white text-[#141415] px-6 py-2 rounded-md font-medium text-xs transition-colors disabled:opacity-50"
               >
                 {isRestoring(`audit:${selectedLog.id}`) ? 'Restoring...' : 'Restore Record'}
               </button>

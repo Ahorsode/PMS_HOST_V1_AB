@@ -60,12 +60,12 @@ export default async function CustomersPage() {
     <div className="max-w-[1600px] mx-auto space-y-7 px-0 md:px-5 pt-2 pb-9 md:py-9 relative">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-2">
         <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="p-3 bg-white/5 hover:bg-white/10 rounded-full transition-colors border border-white/10 shrink-0 hover:scale-105">
-            <ArrowLeft className="w-6 h-6 text-emerald-400" />
+          <Link href="/dashboard" className="p-3 bg-white/5 hover:bg-white/10 rounded-full transition-colors border border-white/10 shrink-0">
+            <ArrowLeft className="w-6 h-6 text-[#85858b]" />
           </Link>
           <div>
-            <h1 className="text-4xl font-bold text-white tracking-normal">CRM <span className="text-emerald-400 italic">Network</span></h1>
-            <p className="text-white/70 font-bold uppercase tracking-widest text-xs mt-2">Manage Customer Lifecycle & Relationships</p>
+            <h1 className="text-3xl font-medium leading-tight text-[#ededed]">Customers</h1>
+            <p className="mt-2 text-sm text-[#a1a1a6]">The people and businesses who buy from you, and what they owe</p>
           </div>
         </div>
         <CustomerActionsHeader canEdit={canEdit} />
@@ -73,57 +73,57 @@ export default async function CustomersPage() {
 
       {/* CRM Stats Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
-          <Card className="bg-white/10 border-white/10 backdrop-blur-xl">
+          <Card className="bg-white/10 border-white/10">
              <CardContent className="pt-3 md:pt-8">
                 <div className="flex items-center gap-2 md:gap-4">
-                   <div className="p-2 md:p-3 rounded-md bg-emerald-500/10 border border-emerald-500/10">
-                     <Users className="w-4 h-4 md:w-6 md:h-6 text-emerald-400" />
+                   <div className="p-2 md:p-3 rounded-md bg-white/[0.04] border border-white/[0.08]">
+                     <Users className="w-4 h-4 md:w-6 md:h-6 text-[#85858b]" />
                    </div>
                    <div>
-                     <p className="text-xl md:text-2xl font-bold text-white">{customerStats.length}</p>
-                     <p className="text-[9px] md:text-[10px] font-bold uppercase text-white/70 tracking-widest">Total Profiles</p>
+                     <p className="text-xl md:text-2xl font-medium text-white">{customerStats.length}</p>
+                     <p className="text-xs md:text-xs font-medium text-white/70">Total profiles</p>
                    </div>
                 </div>
              </CardContent>
           </Card>
 
-          <Card className="bg-white/10 border-white/10 backdrop-blur-xl">
+          <Card className="bg-white/10 border-white/10">
              <CardContent className="pt-3 md:pt-8">
                 <div className="flex items-center gap-2 md:gap-4">
-                   <div className="p-2 md:p-3 rounded-md bg-purple-500/10 border border-purple-500/10">
-                     <Star className="w-4 h-4 md:w-6 md:h-6 text-purple-400" />
+                   <div className="p-2 md:p-3 rounded-md bg-white/[0.06] border border-white/[0.08]">
+                     <Star className="w-4 h-4 md:w-6 md:h-6 text-[#a1a1a6]" />
                    </div>
                    <div>
-                     <p className="text-xl md:text-2xl font-bold text-white">{vipClients}</p>
-                     <p className="text-[9px] md:text-[10px] font-bold uppercase text-white/70 tracking-widest">VIP Clients</p>
+                     <p className="text-xl md:text-2xl font-medium text-white">{vipClients}</p>
+                     <p className="text-xs md:text-xs font-medium text-white/70">VIP clients</p>
                    </div>
                 </div>
              </CardContent>
           </Card>
 
-          <Card className="bg-white/10 border-white/10 backdrop-blur-xl">
+          <Card className="bg-white/10 border-white/10">
              <CardContent className="pt-3 md:pt-8">
                 <div className="flex items-center gap-2 md:gap-4">
-                   <div className="p-2 md:p-3 rounded-md bg-blue-500/10 border border-blue-500/10">
-                     <TrendingUp className="w-4 h-4 md:w-6 md:h-6 text-blue-400" />
+                   <div className="p-2 md:p-3 rounded-md bg-white/[0.06] border border-white/[0.08]">
+                     <TrendingUp className="w-4 h-4 md:w-6 md:h-6 text-[#a1a1a6]" />
                    </div>
                    <div>
-                     <p className="text-xl md:text-2xl font-bold text-white">{formatCurrency(totalValue)}</p>
-                     <p className="text-[9px] md:text-[10px] font-bold uppercase text-white/70 tracking-widest">Portfolio Value</p>
+                     <p className="text-xl md:text-2xl font-medium text-white">{formatCurrency(totalValue)}</p>
+                     <p className="text-xs md:text-xs font-medium text-white/70">Portfolio value</p>
                    </div>
                 </div>
              </CardContent>
           </Card>
 
-          <Card className="bg-red-500/5 border-red-500/20 backdrop-blur-xl">
+          <Card className="bg-white/[0.04] border-white/[0.08]">
              <CardContent className="pt-3 md:pt-8">
                 <div className="flex items-center gap-2 md:gap-4">
-                   <div className="p-2 md:p-3 rounded-md bg-red-500/10 border border-red-500/10">
-                     <AlertCircle className="w-4 h-4 md:w-6 md:h-6 text-red-400" />
+                   <div className="p-2 md:p-3 rounded-md bg-white/[0.04] border border-white/[0.08]">
+                     <AlertCircle className="w-4 h-4 md:w-6 md:h-6 text-[#f2777b]" />
                    </div>
                    <div>
-                     <p className="text-xl md:text-2xl font-bold text-red-400">{formatCurrency(totalOwed)}</p>
-                     <p className="text-[9px] md:text-[10px] font-bold uppercase text-red-500/40 tracking-widest">Total Outstanding</p>
+                     <p className="text-xl md:text-2xl font-medium text-[#f2777b]">{formatCurrency(totalOwed)}</p>
+                     <p className="text-xs md:text-xs font-medium text-[#f2777b]">Total outstanding</p>
                    </div>
                 </div>
              </CardContent>

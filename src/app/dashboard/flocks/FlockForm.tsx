@@ -241,7 +241,7 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
                 <div className="grid grid-cols-2 gap-3 rounded-lg border border-white/[0.08] bg-[#141415] p-4">
                   <Input
                     label="New room name"
-                    placeholder="e.g., Room A"
+                    placeholder="e.g. Room A"
                     value={formData.newRoomName}
                     onChange={(e) => setFormData({ ...formData, newRoomName: e.target.value })}
                     required
@@ -334,11 +334,11 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
                   label="Benchmark override"
                   options={[
                     { label: 'Default (from breed)', value: '' },
-                    { label: 'Ross 308 (Meat)', value: 'Ross 308' },
-                    { label: 'Cobb 500 (Meat)', value: 'Cobb 500' },
-                    { label: 'ISA Brown (Eggs)', value: 'ISA Brown' },
-                    { label: 'Lohmann (Eggs)', value: 'Lohmann' },
-                    { label: 'Ankole (Cattle)', value: 'Ankole' },
+                    { label: 'Ross 308 (meat)', value: 'Ross 308' },
+                    { label: 'Cobb 500 (meat)', value: 'Cobb 500' },
+                    { label: 'ISA brown (eggs)', value: 'ISA Brown' },
+                    { label: 'Lohmann (eggs)', value: 'Lohmann' },
+                    { label: 'Ankole (cattle)', value: 'Ankole' },
                   ]}
                   value={formData.growthTargetOverride}
                   onChange={(e) => setFormData({ ...formData, growthTargetOverride: e.target.value })}

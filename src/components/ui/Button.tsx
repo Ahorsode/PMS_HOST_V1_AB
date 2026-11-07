@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
-import { motion, AnimatePresence, HTMLMotionProps } from 'framer-motion';
+import React from 'react';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 import { Slot } from '@radix-ui/react-slot';
@@ -14,117 +13,67 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   asChild?: boolean;
 }
 
+// Graphite ramp: an off-white primary, raised neutral secondary, and red only for destructive actions.
+const variants = {
+  primary: 'bg-[#ededed] text-[#141415] hover:bg-white font-medium',
+  secondary:
+    'border border-white/[0.08] bg-[#232325] text-[#ededed] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] hover:bg-[#2c2c2f] font-medium',
+  outline: 'border border-white/[0.12] bg-transparent text-[#ededed] hover:bg-white/[0.04] font-medium',
+  danger: 'border border-[#e5484d]/30 bg-[#e5484d]/10 text-[#f2777b] hover:bg-[#e5484d]/20 font-medium',
+  ghost: 'bg-transparent text-[#a1a1a6] hover:bg-white/[0.06] hover:text-[#ededed]',
+  glass:
+    'border border-white/[0.08] bg-[#232325] text-[#ededed] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] hover:bg-[#2c2c2f] font-medium',
+};
+
+// Touch-sized on phones, a little denser from md up.
+const sizes = {
+  sm: 'min-h-10 md:min-h-9 px-3 text-sm rounded-lg',
+  md: 'min-h-11 md:min-h-10 px-4 text-sm rounded-lg',
+  lg: 'min-h-12 px-6 text-base rounded-xl',
+  icon: 'h-11 w-11 md:h-10 md:w-10 rounded-lg',
+};
+
+const base =
+  'relative inline-flex items-center justify-center gap-2 whitespace-nowrap transition-[background-color,border-color,color,transform] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34d399]/60 disabled:pointer-events-none disabled:opacity-50';
+
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', size = 'md', isLoading, loadingText, children, disabled, onClick, asChild = false, ...props }, ref) => {
-    const [ripples, setRipples] = useState<{ x: number; y: number; id: number }[]>([]);
-
-    const createRipple = (event: React.MouseEvent<HTMLButtonElement>) => {
-      if (disabled || isLoading) {
-        event.preventDefault();
-        return;
-      }
-
-      const button = event.currentTarget;
-      const rect = button.getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
-      const id = Date.now();
-      
-      setRipples((prev) => [...prev, { x, y, id }]);
-      setTimeout(() => {
-        setRipples((prev) => prev.filter((r) => r.id !== id));
-      }, 600);
-      
-      onClick?.(event);
-    };
-
-    const variants = {
-      primary: 'bg-gradient-to-br from-emerald-400 to-teal-600 text-white shadow-lg shadow-emerald-500/20 active:shadow-none font-bold uppercase tracking-widest text-xs',
-      secondary: 'bg-white/10 text-white hover:bg-white/20 border border-white/10 backdrop-blur-md font-bold',
-      outline: 'border-2 border-emerald-500/30 bg-transparent hover:bg-emerald-500/10 text-emerald-400 font-bold',
-      danger: 'bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 font-bold',
-      ghost: 'bg-transparent hover:bg-white/5 text-white/80 hover:text-white',
-      glass: 'glass-morphism text-white hover:bg-white/10 font-bold tracking-normal'
-    };
-
-    const sizes = {
-      sm: 'min-h-[44px] px-3 text-xs rounded-md py-2',
-      md: 'min-h-[44px] h-11 px-5 text-sm rounded-md',
-      lg: 'min-h-[56px] h-14 px-9 text-base rounded-[1.5rem]',
-      icon: 'w-11 h-11 min-w-[44px] min-h-[44px] rounded-md',
-    };
-
     if (asChild) {
       return (
-        <Slot
-          className={cn(
-            'relative inline-flex items-center justify-center overflow-hidden transition-all focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed',
-            variants[variant],
-            sizes[size],
-            className
-          )}
-          ref={ref as any}
-          {...props}
-        >
+        <Slot className={cn(base, variants[variant], sizes[size], className)} ref={ref as any} {...props}>
           {children}
         </Slot>
       );
     }
 
+    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+      if (disabled || isLoading) {
+        event.preventDefault();
+        return;
+      }
+      onClick?.(event);
+    };
+
     return (
-      <motion.button
+      <button
         ref={ref}
-        whileHover={{ scale: 1.02, y: -2 }}
-        whileTap={{ scale: 0.98 }}
         disabled={isLoading || disabled}
         aria-busy={isLoading || undefined}
-        onClick={createRipple}
-        className={cn(
-          'relative inline-flex items-center justify-center overflow-hidden transition-all focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed',
-          variants[variant],
-          sizes[size],
-          className
-        )}
-        {...(props as any)}
+        onClick={handleClick}
+        className={cn(base, variants[variant], sizes[size], className)}
+        {...props}
       >
-        {/* Ripple Effect Container */}
-        <span className="absolute inset-0 pointer-events-none">
-          <AnimatePresence>
-            {ripples.map((ripple) => (
-              <motion.span
-                key={ripple.id}
-                initial={{ scale: 0, opacity: 0.5 }}
-                animate={{ scale: 4, opacity: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.6 }}
-                style={{
-                  position: 'absolute',
-                  left: ripple.x,
-                  top: ripple.y,
-                  width: 20,
-                  height: 20,
-                  borderRadius: '100%',
-                  background: 'rgba(255, 255, 255, 0.3)',
-                  transform: 'translate(-50%, -50%)',
-                }}
-              />
-            ))}
-          </AnimatePresence>
-        </span>
-
-        <span className="relative z-10 flex items-center gap-2">
-          {isLoading ? (
-            <>
-              <Loader2 className="h-4 w-4 animate-spin" />
-              {size !== 'icon' && (
-                <span>{loadingText ?? (typeof children === 'string' ? children : 'Processing...')}</span>
-              )}
-            </>
-          ) : (
-            children
-          )}
-        </span>
-      </motion.button>
+        {isLoading ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} />
+            {size !== 'icon' && (
+              <span>{loadingText ?? (typeof children === 'string' ? children : 'Working')}</span>
+            )}
+          </>
+        ) : (
+          children
+        )}
+      </button>
     );
   }
 );

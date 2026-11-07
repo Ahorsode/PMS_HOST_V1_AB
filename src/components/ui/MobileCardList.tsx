@@ -16,29 +16,39 @@ export type MobileCardField = {
 type Tone = 'glass' | 'light' | 'zinc' | 'graphite';
 
 const TONES: Record<Tone, { card: string; title: string; label: string; value: string; divider: string; empty: string; fieldLabel?: string; emptyText?: string; titleText?: string }> = {
+  // Every tone now renders as graphite: plain surface, sentence-case labels.
   glass: {
-    card: 'bg-white/10 border-white/10 backdrop-blur-md',
-    title: 'text-white',
-    label: 'text-white/60',
-    value: 'text-white/90',
-    divider: 'border-white/10',
-    empty: 'text-white/70',
+    card: 'bg-[#19191b] border-white/[0.08]',
+    title: 'text-[#ededed]',
+    label: 'text-[#a1a1a6]',
+    value: 'text-[#ededed]',
+    divider: 'border-white/[0.08]',
+    empty: 'text-[#a1a1a6]',
+    fieldLabel: 'text-xs',
+    emptyText: 'text-sm',
+    titleText: 'text-sm font-medium',
   },
   light: {
-    card: 'bg-white border-gray-100 shadow-sm',
-    title: 'text-gray-900',
-    label: 'text-gray-500',
-    value: 'text-gray-800',
-    divider: 'border-gray-100',
-    empty: 'text-gray-500',
+    card: 'bg-[#19191b] border-white/[0.08]',
+    title: 'text-[#ededed]',
+    label: 'text-[#a1a1a6]',
+    value: 'text-[#ededed]',
+    divider: 'border-white/[0.08]',
+    empty: 'text-[#a1a1a6]',
+    fieldLabel: 'text-xs',
+    emptyText: 'text-sm',
+    titleText: 'text-sm font-medium',
   },
   zinc: {
-    card: 'bg-zinc-900/80 border-zinc-800',
-    title: 'text-zinc-100',
-    label: 'text-zinc-500',
-    value: 'text-zinc-200',
-    divider: 'border-zinc-800',
-    empty: 'text-zinc-500',
+    card: 'bg-[#19191b] border-white/[0.08]',
+    title: 'text-[#ededed]',
+    label: 'text-[#a1a1a6]',
+    value: 'text-[#ededed]',
+    divider: 'border-white/[0.08]',
+    empty: 'text-[#a1a1a6]',
+    fieldLabel: 'text-xs',
+    emptyText: 'text-sm',
+    titleText: 'text-sm font-medium',
   },
   graphite: {
     card: 'bg-[#19191b] border-white/[0.08]',
@@ -91,7 +101,7 @@ export function MobileCardList<T>({
   if (items.length === 0) {
     if (!empty) return null;
     return (
-      <div className={cn('md:hidden py-12 px-4 text-center', t.emptyText ?? 'text-sm font-bold italic', t.empty, className)}>
+      <div className={cn('md:hidden py-12 px-4 text-center', t.emptyText ?? 'text-sm font-medium', t.empty, className)}>
         {empty}
       </div>
     );
@@ -116,7 +126,7 @@ export function MobileCardList<T>({
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <div className={cn('break-words', t.titleText ?? 'text-sm font-bold', t.title)}>{title(item, index)}</div>
+                <div className={cn('break-words', t.titleText ?? 'text-sm font-medium', t.title)}>{title(item, index)}</div>
                 {rowSubtitle ? <div className={cn('mt-0.5 text-xs break-words', t.label)}>{rowSubtitle}</div> : null}
               </div>
               {rowBadge ? <div className="shrink-0">{rowBadge}</div> : null}
@@ -125,7 +135,7 @@ export function MobileCardList<T>({
             <dl className="grid grid-cols-2 gap-x-3 gap-y-2">
               {fields(item, index).map((field) => (
                 <div key={field.label} className={cn('min-w-0', field.full && 'col-span-2')}>
-                  <dt className={cn(t.fieldLabel ?? 'text-[10px] font-bold uppercase tracking-widest', t.label)}>{field.label}</dt>
+                  <dt className={cn(t.fieldLabel ?? 'text-xs font-medium', t.label)}>{field.label}</dt>
                   <dd className={cn('mt-0.5 text-sm break-words tabular-nums', t.value)}>{field.value}</dd>
                 </div>
               ))}

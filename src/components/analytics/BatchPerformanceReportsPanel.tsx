@@ -80,8 +80,8 @@ export function BatchPerformanceReportsPanel({ reports }: { reports: ReportsPayl
 
   if (!selectedBatch) {
     return (
-      <Card className="border-white/10 bg-slate-950/80">
-        <CardContent className="p-10 text-center text-white/60 font-bold">
+      <Card className="border-white/10 bg-[#19191b]">
+        <CardContent className="p-10 text-center text-white/60 font-medium">
           No livestock batch data available yet.
         </CardContent>
       </Card>
@@ -92,10 +92,10 @@ export function BatchPerformanceReportsPanel({ reports }: { reports: ReportsPayl
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-3xl md:text-4xl font-black tracking-normal text-white">
-            Batch Performance
+          <h1 className="text-3xl md:text-4xl font-medium tracking-normal text-white">
+            Batch performance
           </h1>
-          <p className="mt-1 text-xs font-bold uppercase tracking-widest text-white/50">
+          <p className="mt-1 text-xs font-medium text-white/50">
             {selectedBatch.houseName} · {selectedBatch.type.replaceAll('_', ' ')}
           </p>
         </div>
@@ -104,10 +104,10 @@ export function BatchPerformanceReportsPanel({ reports }: { reports: ReportsPayl
           <select
             value={selectedBatch.id}
             onChange={(event) => setSelectedBatchId(event.target.value)}
-            className="h-12 w-full appearance-none rounded-md border border-white/10 bg-slate-950/80 px-4 pr-10 text-sm font-bold text-white outline-none transition focus:border-emerald-400/50 focus:ring-2 focus:ring-emerald-400/20"
+            className="h-12 w-full appearance-none rounded-md border border-white/10 bg-[#19191b] px-4 pr-10 text-sm font-medium text-white outline-none transition focus:border-white/[0.08] focus:ring-2 focus:ring-white/10"
           >
             {reports.batches.map((batch) => (
-              <option key={batch.id} value={batch.id} className="bg-slate-950">
+              <option key={batch.id} value={batch.id} className="bg-[#19191b]">
                 {batch.name} · {batch.status}
               </option>
             ))}
@@ -119,16 +119,16 @@ export function BatchPerformanceReportsPanel({ reports }: { reports: ReportsPayl
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
         <MetricTile icon={Activity} label="FCR" value={selectedBatch.fcr ? selectedBatch.fcr.toFixed(2) : '0.00'} tone="emerald" />
         <MetricTile icon={Skull} label="Mortality" value={`${selectedBatch.mortalityRate.toFixed(2)}%`} tone={selectedBatch.mortalityRate > 5 ? 'amber' : 'emerald'} />
-        <MetricTile icon={Banknote} label="Net Profit" value={formatCurrency(selectedBatch.netProfitability, 'GHS')} tone={selectedBatch.netProfitability >= 0 ? 'blue' : 'amber'} />
-        <MetricTile icon={Bird} label="Current Birds" value={selectedBatch.currentCount.toLocaleString()} tone="slate" />
+        <MetricTile icon={Banknote} label="Net profit" value={formatCurrency(selectedBatch.netProfitability, 'GHS')} tone={selectedBatch.netProfitability >= 0 ? 'blue' : 'amber'} />
+        <MetricTile icon={Bird} label="Current birds" value={selectedBatch.currentCount.toLocaleString()} tone="slate" />
       </div>
 
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(320px,0.55fr)]">
-        <Card className="border-white/10 bg-slate-950/80">
+        <Card className="border-white/10 bg-[#19191b]">
           <CardHeader className="border-b border-white/10 px-5 py-4">
             <CardTitle className="flex items-center gap-2 text-white">
-              <TrendingUp className="h-4 w-4 text-emerald-400" />
-              FCR Trend
+              <TrendingUp className="h-4 w-4 text-[#85858b]" />
+              FCR trend
             </CardTitle>
           </CardHeader>
           <CardContent className="h-[360px] p-4">
@@ -155,11 +155,11 @@ export function BatchPerformanceReportsPanel({ reports }: { reports: ReportsPayl
           </CardContent>
         </Card>
 
-        <Card className="border-white/10 bg-slate-950/80">
+        <Card className="border-white/10 bg-[#19191b]">
           <CardHeader className="border-b border-white/10 px-5 py-4">
             <CardTitle className="flex items-center gap-2 text-white">
               <Skull className="h-4 w-4" style={{ color: mortalityColor }} />
-              Mortality Threshold
+              Mortality threshold
             </CardTitle>
           </CardHeader>
           <CardContent className="flex h-[360px] flex-col items-center justify-center p-5">
@@ -177,18 +177,18 @@ export function BatchPerformanceReportsPanel({ reports }: { reports: ReportsPayl
                 </RadialBarChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-4xl font-black text-white">{selectedBatch.mortalityRate.toFixed(1)}%</span>
-                <span className="mt-1 text-xs font-bold uppercase tracking-widest text-white/50">
+                <span className="text-4xl font-medium text-white">{selectedBatch.mortalityRate.toFixed(1)}%</span>
+                <span className="mt-1 text-xs font-medium text-white/50">
                   {selectedBatch.totalDead.toLocaleString()} deaths
                 </span>
               </div>
             </div>
             <div
               className={cn(
-                'mt-4 rounded-md border px-3 py-2 text-xs font-bold uppercase tracking-widest',
+                'mt-4 rounded-md border px-3 py-2 text-xs font-medium',
                 selectedBatch.mortalityRate <= 5
-                  ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
-                  : 'border-orange-500/30 bg-orange-500/10 text-orange-300'
+                  ? 'border-white/[0.08] bg-white/[0.04] text-[#34d399]'
+                  : 'border-white/[0.08] bg-white/[0.04] text-[#d9a441]'
               )}
             >
               Threshold {selectedBatch.mortalityRate <= 5 ? 'stable' : 'exceeded'}
@@ -197,11 +197,11 @@ export function BatchPerformanceReportsPanel({ reports }: { reports: ReportsPayl
         </Card>
       </div>
 
-      <Card className="border-white/10 bg-slate-950/80">
+      <Card className="border-white/10 bg-[#19191b]">
         <CardHeader className="border-b border-white/10 px-5 py-4">
           <CardTitle className="flex items-center gap-2 text-white">
-            <Banknote className="h-4 w-4 text-blue-400" />
-            Financial Comparison
+            <Banknote className="h-4 w-4 text-[#a1a1a6]" />
+            Financial comparison
           </CardTitle>
         </CardHeader>
         <CardContent className="h-[390px] p-4">
@@ -249,28 +249,28 @@ function MetricTile({
   tone: 'emerald' | 'amber' | 'blue' | 'slate'
 }) {
   const tones = {
-    emerald: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300',
-    amber: 'border-orange-500/20 bg-orange-500/10 text-orange-300',
-    blue: 'border-sky-500/20 bg-sky-500/10 text-sky-300',
-    slate: 'border-white/10 bg-white/[0.04] text-slate-300',
+    emerald: 'border-white/[0.08] bg-white/[0.04] text-[#ededed]',
+    amber: 'border-white/[0.08] bg-white/[0.04] text-[#ededed]',
+    blue: 'border-white/[0.08] bg-white/[0.06] text-[#a1a1a6]',
+    slate: 'border-white/10 bg-white/[0.04] text-[#a1a1a6]',
   }
 
   return (
-    <div className="rounded-lg border border-white/10 bg-slate-950/80 p-4">
+    <div className="rounded-lg border border-white/10 bg-[#19191b] p-4">
       <div className="flex items-center justify-between gap-3">
         <div className={cn('flex h-10 w-10 items-center justify-center rounded-md border', tones[tone])}>
           <Icon className="h-5 w-5" />
         </div>
-        <span className="text-right text-[10px] font-bold uppercase tracking-widest text-white/40">{label}</span>
+        <span className="text-right text-xs font-medium text-white/40">{label}</span>
       </div>
-      <p className="mt-4 truncate text-2xl font-black text-white">{value}</p>
+      <p className="mt-4 truncate text-2xl font-medium text-white">{value}</p>
     </div>
   )
 }
 
 function EmptyChart({ label }: { label: string }) {
   return (
-    <div className="flex h-full items-center justify-center rounded-md border border-dashed border-white/10 bg-white/[0.02] text-sm font-bold text-white/50">
+    <div className="flex h-full items-center justify-center rounded-md border border-dashed border-white/10 bg-white/[0.02] text-sm font-medium text-white/50">
       {label}
     </div>
   )
@@ -281,9 +281,9 @@ function ChartTooltip({ active, payload, label }: any) {
   const point = payload[0]?.payload
 
   return (
-    <div className="rounded-md border border-white/10 bg-slate-950/95 p-3 text-xs shadow-2xl">
-      <p className="font-bold text-white">{label}</p>
-      <p className="mt-1 text-emerald-300">FCR: {Number(point.fcr || 0).toFixed(2)}</p>
+    <div className="rounded-md border border-white/10 bg-[#19191b] p-3 text-xs">
+      <p className="font-medium text-white">{label}</p>
+      <p className="mt-1 text-[#ededed]">FCR: {Number(point.fcr || 0).toFixed(2)}</p>
       <p className="text-white/60">Feed: {Number(point.feed || 0).toLocaleString()}</p>
       <p className="text-white/60">Output: {Number(point.output || 0).toLocaleString()}</p>
     </div>
@@ -294,8 +294,8 @@ function CurrencyTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
 
   return (
-    <div className="rounded-md border border-white/10 bg-slate-950/95 p-3 text-xs shadow-2xl">
-      <p className="mb-1 font-bold text-white">{label}</p>
+    <div className="rounded-md border border-white/10 bg-[#19191b] p-3 text-xs">
+      <p className="mb-1 font-medium text-white">{label}</p>
       {payload.map((item: any) => (
         <p key={item.dataKey} style={{ color: item.color }}>
           {item.dataKey}: {formatCurrency(item.value, 'GHS')}

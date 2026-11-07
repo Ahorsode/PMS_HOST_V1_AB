@@ -166,7 +166,7 @@ function buildAutoSelectedProduct(
   if (productType === 'custom') {
     return {
       productId: '',
-      description: 'Custom Sale Item',
+      description: 'Custom sale item',
       unitPrice: 0,
     };
   }
@@ -595,14 +595,14 @@ export function SalesForm({
     <form onSubmit={handleSubmit} className="space-y-5 overflow-hidden">
       <div className="flex flex-nowrap gap-2 overflow-x-auto">
         {[
-          { key: 1 as const, label: 'Customer & Products' },
-          { key: 2 as const, label: 'Payment & Discounts' },
+          { key: 1 as const, label: 'Customer & products' },
+          { key: 2 as const, label: 'Payment & discounts' },
         ].map((wizardStep) => (
           <div
             key={wizardStep.key}
-            className={`rounded-lg border px-3 py-1 text-[10px] font-bold uppercase tracking-wider ${
+            className={`rounded-lg border px-3 py-1 text-xs font-medium ${
               step === wizardStep.key
-                ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-300'
+                ? 'border-white/[0.08] bg-white/[0.04] text-[#34d399]'
                 : step > wizardStep.key
                   ? 'border-white/15 bg-white/[0.04] text-white/60'
                   : 'border-white/10 bg-white/[0.02] text-white/35'
@@ -617,16 +617,16 @@ export function SalesForm({
         <>
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="space-y-2 min-w-0">
-          <label className="px-1 text-xs font-bold uppercase tracking-widest text-white/90">Customer</label>
+          <label className="px-1 text-xs font-medium text-white/90">Customer</label>
           <div className="flex items-center gap-2 sm:block sm:space-y-2">
             <select
               value={customerId}
               onChange={(event) => setCustomerId(event.target.value)}
-              className="h-11 min-w-0 flex-1 rounded-md border border-white/10 bg-white/10 px-3 text-sm font-bold text-white outline-none transition-all focus:border-emerald-500/50 sm:w-full"
+              className="h-11 min-w-0 flex-1 rounded-md border border-white/10 bg-white/10 px-3 text-sm font-medium text-white outline-none transition-colors focus:border-white/[0.08] sm:w-full"
             >
-              <option value="" className="bg-slate-900">Walk-in Customer</option>
+              <option value="" className="bg-[#19191b]">Walk-in customer</option>
               {customerOptions.map((customer) => (
-                <option key={customer.id} value={customer.id} className="bg-slate-900">{customer.name}</option>
+                <option key={customer.id} value={customer.id} className="bg-[#19191b]">{customer.name}</option>
               ))}
             </select>
             {canAddCustomer ? (
@@ -644,41 +644,41 @@ export function SalesForm({
         </div>
 
         <div className="flex items-center gap-2 min-w-0 sm:block sm:space-y-2">
-          <label className="flex shrink-0 items-center gap-1 px-1 text-xs font-bold uppercase tracking-widest text-white/90">
-            <Calendar className="h-3.5 w-3.5 shrink-0 text-emerald-300" />
-            Sale Date & Time
+          <label className="flex shrink-0 items-center gap-1 px-1 text-xs font-medium text-white/90">
+            <Calendar className="h-3.5 w-3.5 shrink-0 text-[#85858b]" />
+            Sale date & time
           </label>
           <input
             type="datetime-local"
             required
             value={saleDate}
             onChange={(event) => setSaleDate(event.target.value)}
-            className="h-11 min-w-0 flex-1 rounded-md border border-white/10 bg-white/10 px-3 text-sm font-bold text-white outline-none transition-all focus:border-emerald-500/50 sm:w-full"
+            className="h-11 min-w-0 flex-1 rounded-md border border-white/10 bg-white/10 px-3 text-sm font-medium text-white outline-none transition-colors focus:border-white/[0.08] sm:w-full"
           />
         </div>
       </div>
 
       {(canOverridePrice || hasAnyLockedLine) ? (
-      <div className="rounded-md border border-emerald-500/20 bg-emerald-500/10 p-4">
+      <div className="rounded-md border border-white/[0.08] bg-white/[0.04] p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-emerald-300">
+          <div className="flex items-center gap-2 text-xs font-medium text-[#ededed]">
             {canOverridePrice ? <ShieldCheck className="h-4 w-4 shrink-0" /> : <Lock className="h-4 w-4 shrink-0" />}
-            {canOverridePrice ? 'Manager Controls' : 'Locked Pricing'}
+            {canOverridePrice ? 'Manager controls' : 'Locked pricing'}
           </div>
-          <p className="text-2xl font-bold text-white">GHS {total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+          <p className="text-2xl font-medium text-white">GHS {total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
         </div>
       </div>
       ) : null}
 
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-3 px-1">
-          <label className="text-xs font-bold uppercase tracking-widest text-white/90">Sale Lines</label>
+          <label className="text-xs font-medium text-white/90">Sale lines</label>
           <button
             type="button"
             onClick={addItem}
-            className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-widest text-emerald-400 transition-colors hover:text-emerald-300"
+            className="inline-flex items-center gap-1 text-xs font-medium text-[#ededed] transition-colors hover:text-[#ededed]"
           >
-            <Plus className="h-3 w-3" /> Add Line
+            <Plus className="h-3 w-3" /> Add line
           </button>
         </div>
 
@@ -699,11 +699,11 @@ export function SalesForm({
               <div key={index} className="overflow-hidden rounded-md border border-white/10 bg-white/5 p-4">
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div className="space-y-1 min-w-0">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-white/50">Type</label>
+                    <label className="text-xs font-medium text-white/50">Type</label>
                     <select
                       value={item.productType}
                       onChange={(event) => updateProductType(index, event.target.value as ProductType)}
-                      className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+                      className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-[#19191b] px-3 text-sm font-medium text-white outline-none focus:border-white/[0.08]"
                     >
                       <option value="inventory">Eggs</option>
                       <option value="livestock">Birds</option>
@@ -712,51 +712,51 @@ export function SalesForm({
                   </div>
 
                   <div className="space-y-1 min-w-0">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-white/50">Product</label>
+                    <label className="text-xs font-medium text-white/50">Product</label>
                     {item.productType === 'custom' ? (
                       <input
                         value={item.description}
                         onChange={(event) => updateItem(index, { description: event.target.value })}
-                        className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+                        className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-[#19191b] px-3 text-sm font-medium text-white outline-none focus:border-white/[0.08]"
                       />
                     ) : item.productType === 'inventory' && eggInventory.length === 0 ? (
-                      <div className="flex h-11 min-w-0 items-center rounded-md border border-amber-500/30 bg-amber-500/10 px-3 text-sm font-bold text-amber-200">
+                      <div className="flex h-11 min-w-0 items-center rounded-md border border-white/[0.08] bg-white/[0.04] px-3 text-sm font-medium text-[#ededed]">
                         No eggs in stock — log egg production first
                       </div>
                     ) : item.productType === 'inventory' ? (
                       <div className="space-y-2">
                         {showBatchToggle ? (
-                          <div className="flex min-w-0 overflow-hidden rounded-md border border-white/10 bg-slate-950/70">
+                          <div className="flex min-w-0 overflow-hidden rounded-md border border-white/10 bg-[#19191b]">
                             <button
                               type="button"
                               onClick={() => updateItem(index, { eggAllocationMode: 'fifo', eggBatchId: undefined })}
-                              className={`flex-1 px-3 py-2 text-xs font-bold uppercase tracking-widest ${item.eggAllocationMode !== 'batch' ? 'bg-emerald-500 text-[#064e3b]' : 'text-white/60'}`}
+                              className={`flex-1 px-3 py-2 text-xs font-medium ${item.eggAllocationMode !== 'batch' ? 'bg-emerald-500 text-[#064e3b]' : 'text-white/60'}`}
                             >
                               FIFO
                             </button>
                             <button
                               type="button"
                               onClick={() => updateItem(index, { eggAllocationMode: 'batch' })}
-                              className={`flex-1 px-3 py-2 text-xs font-bold uppercase tracking-widest ${item.eggAllocationMode === 'batch' ? 'bg-emerald-500 text-[#064e3b]' : 'text-white/60'}`}
+                              className={`flex-1 px-3 py-2 text-xs font-medium ${item.eggAllocationMode === 'batch' ? 'bg-emerald-500 text-[#064e3b]' : 'text-white/60'}`}
                             >
-                              By Batch
+                              By batch
                             </button>
                           </div>
                         ) : null}
                         {showBatchToggle && item.eggAllocationMode === 'batch' ? (
                           eggBatchStock.length === 0 ? (
-                            <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm font-bold text-amber-200">
+                            <div className="rounded-md border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm font-medium text-[#ededed]">
                               No active layer batches with eggs in stock
                             </div>
                           ) : (
                             <select
                               value={item.eggBatchId ?? ''}
                               onChange={(event) => updateItem(index, { eggBatchId: event.target.value })}
-                              className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+                              className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-[#19191b] px-3 text-sm font-medium text-white outline-none focus:border-white/[0.08]"
                             >
-                              <option value="" className="bg-slate-900">Select batch</option>
+                              <option value="" className="bg-[#19191b]">Select batch</option>
                               {eggBatchStock.map((batch) => (
-                                <option key={batch.batchId} value={batch.batchId} className="bg-slate-900">
+                                <option key={batch.batchId} value={batch.batchId} className="bg-[#19191b]">
                                   {batch.batchName} ({Math.floor(batch.eggsRemaining / eggsPerCrate)} crates, {batch.eggsRemaining % eggsPerCrate} eggs remaining)
                                 </option>
                               ))}
@@ -767,13 +767,13 @@ export function SalesForm({
                           <button
                             type="button"
                             onClick={() => setSizePickerIndex(index)}
-                            className="flex h-11 w-full items-center justify-between rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white transition-colors hover:border-emerald-500/50"
+                            className="flex h-11 w-full items-center justify-between rounded-md border border-white/10 bg-[#19191b] px-3 text-sm font-medium text-white transition-colors hover:border-white/[0.08]"
                           >
                             <span>{item.productId ? `Size: ${eggSizeLabelFromRow(eggInventory.find((entry: any) => entry.id === item.productId))}` : 'Select egg size'}</span>
-                            <span className="text-[10px] uppercase tracking-widest text-emerald-300">Choose</span>
+                            <span className="text-xs text-[#ededed]">Choose</span>
                           </button>
                         ) : (
-                          <div className="flex h-11 min-w-0 items-center rounded-md border border-white/10 bg-slate-950/40 px-3 text-sm font-bold text-white">
+                          <div className="flex h-11 min-w-0 items-center rounded-md border border-white/10 bg-[#19191b] px-3 text-sm font-medium text-white">
                             {item.description || 'Eggs'}
                             {' '}
                             ({formatEggStockCrateLabel(
@@ -784,18 +784,18 @@ export function SalesForm({
                         )}
                       </div>
                     ) : shouldHideProductPicker(item, eggInventory, livestock) ? (
-                      <div className="flex h-11 min-w-0 items-center rounded-md border border-white/10 bg-slate-950/40 px-3 text-sm font-bold text-white">
+                      <div className="flex h-11 min-w-0 items-center rounded-md border border-white/10 bg-[#19191b] px-3 text-sm font-medium text-white">
                         {item.description || 'Livestock batch'}
                       </div>
                     ) : (
                       <select
                         value={item.productId}
                         onChange={(event) => updateProduct(index, event.target.value)}
-                        className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+                        className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-[#19191b] px-3 text-sm font-medium text-white outline-none focus:border-white/[0.08]"
                       >
-                        <option value="" className="bg-slate-900">Select product</option>
+                        <option value="" className="bg-[#19191b]">Select product</option>
                         {livestock.map((entry: any) => (
-                          <option key={entry.id} value={entry.id} className="bg-slate-900">
+                          <option key={entry.id} value={entry.id} className="bg-[#19191b]">
                             {`${entry.batchName} (${entry.currentCount} birds)`}
                           </option>
                         ))}
@@ -807,8 +807,8 @@ export function SalesForm({
                 <div className="mt-4 space-y-3">
                   <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end">
                     <div className="space-y-1 min-w-0">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-white/50">
-                        {item.productType === 'inventory' ? 'Crates Sold' : 'Quantity Sold'}
+                      <label className="text-xs font-medium text-white/50">
+                        {item.productType === 'inventory' ? 'Crates sold' : 'Quantity sold'}
                       </label>
                       <input
                         type="number"
@@ -817,16 +817,16 @@ export function SalesForm({
                         step="1"
                         value={item.quantity}
                         onChange={(event) => updateItem(index, { quantity: event.target.value === '' ? '' : Number(event.target.value) })}
-                        className="h-14 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 px-4 text-base font-bold text-white outline-none transition-all focus:border-emerald-500/50"
+                        className="h-14 w-full min-w-0 rounded-md border border-white/10 bg-[#19191b] px-4 text-base font-medium text-white outline-none transition-colors focus:border-white/[0.08]"
                       />
                     </div>
 
                     <div className="space-y-1 min-w-0">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-white/50">
+                      <label className="text-xs font-medium text-white/50">
                         {item.productType === 'inventory' ? 'Price / Crate' : 'Unit Price'}
                       </label>
                       <div className="relative min-w-0">
-                        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-300/60">GHS</span>
+                        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs font-medium text-[#ededed]">GHS</span>
                         <input
                           type="number"
                           min="0"
@@ -834,12 +834,12 @@ export function SalesForm({
                           value={isPriceLocked ? effectivePrice : item.unitPrice}
                           onChange={(event) => updateItem(index, { unitPrice: event.target.value === '' ? '' : Number(event.target.value) })}
                           disabled={isPriceLocked}
-                          className="box-border h-14 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 py-0 pl-11 pr-10 text-base font-bold text-emerald-300 outline-none transition-all focus:border-emerald-500/50 disabled:cursor-not-allowed disabled:bg-slate-950/40 disabled:text-white/60"
+                          className="box-border h-14 w-full min-w-0 rounded-md border border-white/10 bg-[#19191b] py-0 pl-11 pr-10 text-base font-medium text-[#ededed] outline-none transition-colors focus:border-white/[0.08] disabled:cursor-not-allowed disabled:bg-[#19191b] disabled:text-white/60"
                         />
                         {isPriceLocked && <Lock className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />}
                       </div>
                       {item.productType === 'inventory' && catalogPrice <= 0 && (
-                        <p className="text-xs text-amber-400 mt-1 flex items-center gap-1">
+                        <p className="text-xs text-[#ededed] mt-1 flex items-center gap-1">
                           <AlertTriangle className="w-3 h-3" />
                           No catalog price — enter the sale price.
                         </p>
@@ -852,7 +852,7 @@ export function SalesForm({
                         onClick={() => removeItem(index)}
                         disabled={items.length === 1}
                         title="Remove line"
-                        className="h-14 w-14 shrink-0 rounded-md border border-transparent text-white/60 transition-all hover:border-red-500/20 hover:bg-red-500/10 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-30"
+                        className="h-14 w-14 shrink-0 rounded-md border border-transparent text-white/60 transition-colors hover:border-white/[0.08] hover:bg-white/[0.04] hover:text-[#f2777b] disabled:cursor-not-allowed disabled:opacity-30"
                       >
                         <Trash2 className="mx-auto h-4 w-4" />
                       </button>
@@ -865,7 +865,7 @@ export function SalesForm({
                     {canOverridePrice ? (
                       <>
                         <div className="space-y-1 min-w-0">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-white/50">
+                          <label className="text-xs font-medium text-white/50">
                             {(item.lineDiscountType ?? 'flat') === 'item' ? 'Extra free crates (on top)' : 'Line Discount'}
                           </label>
                           <input
@@ -874,25 +874,25 @@ export function SalesForm({
                             step={(item.lineDiscountType ?? 'flat') === 'item' ? '1' : '0.01'}
                             value={item.lineDiscountAmount ?? 0}
                             onChange={(event) => updateItem(index, { lineDiscountAmount: event.target.value === '' ? '' : Number(event.target.value) })}
-                            className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+                            className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-[#19191b] px-3 text-sm font-medium text-white outline-none focus:border-white/[0.08]"
                           />
                         </div>
                         <div className="space-y-1 min-w-0">
-                          <label className="text-[10px] font-black uppercase tracking-widest text-white/50">Type</label>
+                          <label className="text-xs font-medium text-white/50">Type</label>
                           <select
                             value={item.lineDiscountType ?? 'flat'}
                             onChange={(event) => updateItem(index, { lineDiscountType: event.target.value as LineDiscountType })}
-                            className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+                            className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-[#19191b] px-3 text-sm font-medium text-white outline-none focus:border-white/[0.08]"
                           >
-                            <option value="flat" className="bg-slate-900">GHS</option>
-                            <option value="percent" className="bg-slate-900">%</option>
-                            <option value="item" className="bg-slate-900">Giveaway</option>
+                            <option value="flat" className="bg-[#19191b]">GHS</option>
+                            <option value="percent" className="bg-[#19191b]">%</option>
+                            <option value="item" className="bg-[#19191b]">Giveaway</option>
                           </select>
                         </div>
                       </>
                     ) : defaultDiscountType === 'item' ? (
                       <div className="space-y-1 min-w-0 sm:col-span-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-white/50">
+                        <label className="text-xs font-medium text-white/50">
                           Extra free crates (on top)
                         </label>
                         <input
@@ -901,31 +901,31 @@ export function SalesForm({
                           step="1"
                           value={item.lineDiscountAmount ?? 0}
                           onChange={(event) => updateItem(index, { lineDiscountAmount: event.target.value === '' ? '' : Number(event.target.value) })}
-                          className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+                          className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-[#19191b] px-3 text-sm font-medium text-white outline-none focus:border-white/[0.08]"
                         />
                       </div>
                     ) : defaultDiscountType === 'percent' ? (
                       <div className="space-y-1 min-w-0 sm:col-span-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-white/50">Line Discount (%)</label>
+                        <label className="text-xs font-medium text-white/50">Line discount (%)</label>
                         <input
                           type="number"
                           min="0"
                           step="0.01"
                           value={item.lineDiscountAmount ?? 0}
                           onChange={(event) => updateItem(index, { lineDiscountAmount: event.target.value === '' ? '' : Number(event.target.value) })}
-                          className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+                          className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-[#19191b] px-3 text-sm font-medium text-white outline-none focus:border-white/[0.08]"
                         />
                       </div>
                     ) : (
                       <div className="space-y-1 min-w-0 sm:col-span-2">
-                        <label className="text-[10px] font-black uppercase tracking-widest text-white/50">Line Discount (GHS)</label>
+                        <label className="text-xs font-medium text-white/50">Line discount (GHS)</label>
                         <input
                           type="number"
                           min="0"
                           step="0.01"
                           value={item.lineDiscountAmount ?? 0}
                           onChange={(event) => updateItem(index, { lineDiscountAmount: event.target.value === '' ? '' : Number(event.target.value) })}
-                          className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/70 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+                          className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-[#19191b] px-3 text-sm font-medium text-white outline-none focus:border-white/[0.08]"
                         />
                       </div>
                     )}
@@ -933,7 +933,7 @@ export function SalesForm({
                 ) : null}
 
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 pt-3">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">
+                  <span className="text-xs font-medium text-white/50">
                     Base: GHS {basePrice.toFixed(2)} | Subtotal: GHS {lineSubtotal.toFixed(2)}
                     {giveawayQty > 0
                       ? ` | +${giveawayQty} free ${giveawayQty === 1 ? 'crate' : 'crates'}`
@@ -945,11 +945,11 @@ export function SalesForm({
                       onClick={() => removeItem(index)}
                       disabled={items.length === 1}
                       title="Remove line"
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-transparent text-white/60 transition-all hover:border-red-500/20 hover:bg-red-500/10 hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-30 md:hidden"
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-transparent text-white/60 transition-colors hover:border-white/[0.08] hover:bg-white/[0.04] hover:text-[#f2777b] disabled:cursor-not-allowed disabled:opacity-30 md:hidden"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
-                    <span className="text-sm font-bold text-emerald-300">Line Total: GHS {lineTotal.toFixed(2)}</span>
+                    <span className="text-sm font-medium text-[#ededed]">Line total: GHS {lineTotal.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -959,21 +959,21 @@ export function SalesForm({
       </div>
 
       {step1Errors.length > 0 && (
-        <div className="rounded-md border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm font-bold text-amber-200">
+        <div className="rounded-md border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-sm font-medium text-[#ededed]">
           {step1Errors[0]}
         </div>
       )}
 
       <div className="flex flex-col gap-3 rounded-md border border-white/10 bg-white/5 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-white/50">Line Subtotal</p>
-          <p className="text-lg font-bold text-white">GHS {subtotal.toFixed(2)}</p>
+          <p className="text-xs font-medium text-white/50">Line subtotal</p>
+          <p className="text-lg font-medium text-white">GHS {subtotal.toFixed(2)}</p>
         </div>
         <button
           type="button"
           disabled={!canContinueStep1}
           onClick={() => setStep(2)}
-          className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-emerald-500 px-5 text-[11px] font-bold uppercase tracking-widest text-[#064e3b] transition-all hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-emerald-500 px-5 text-[11px] font-medium text-[#064e3b] transition-colors disabled:cursor-not-allowed disabled:opacity-50"
         >
           Continue
           <ChevronRight className="h-4 w-4" />
@@ -985,19 +985,19 @@ export function SalesForm({
       {canOverridePrice && (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_160px]">
           <div className="space-y-2 min-w-0">
-            <label className="px-1 text-xs font-bold uppercase tracking-widest text-white/90">Discount</label>
+            <label className="px-1 text-xs font-medium text-white/90">Discount</label>
             <div className="flex min-w-0 overflow-hidden rounded-md border border-white/10 bg-white/5">
               <button
                 type="button"
                 onClick={() => setDiscountType('flat')}
-                className={`shrink-0 border-r border-white/10 px-4 py-3 text-xs font-bold transition-all ${discountType === 'flat' ? 'bg-emerald-500 text-[#064e3b]' : 'text-white/60'}`}
+                className={`shrink-0 border-r border-white/10 px-4 py-3 text-xs font-medium transition-colors ${discountType === 'flat' ? 'bg-emerald-500 text-[#064e3b]' : 'text-white/60'}`}
               >
                 GHS
               </button>
               <button aria-label="Percentage discount"
                 type="button"
                 onClick={() => setDiscountType('percent')}
-                className={`shrink-0 border-r border-white/10 px-4 py-3 text-xs font-bold transition-all ${discountType === 'percent' ? 'bg-emerald-500 text-[#064e3b]' : 'text-white/60'}`}
+                className={`shrink-0 border-r border-white/10 px-4 py-3 text-xs font-medium transition-colors ${discountType === 'percent' ? 'bg-emerald-500 text-[#064e3b]' : 'text-white/60'}`}
               >
                 %
               </button>
@@ -1007,26 +1007,26 @@ export function SalesForm({
                 step="0.01"
                 value={discountValue}
                 onChange={(event) => setDiscountValue(event.target.value === '' ? '' : Number(event.target.value))}
-                className="h-12 min-w-0 flex-1 bg-transparent px-3 text-sm font-bold text-white outline-none"
+                className="h-12 min-w-0 flex-1 bg-transparent px-3 text-sm font-medium text-white outline-none"
               />
             </div>
           </div>
           <div className="rounded-md border border-white/10 bg-white/5 p-3 text-right">
-            <p className="text-[10px] font-black uppercase tracking-widest text-white/50">Discount</p>
-            <p className="text-xl font-bold text-amber-300">GHS {calculatedDiscount.toFixed(2)}</p>
+            <p className="text-xs font-medium text-white/50">Discount</p>
+            <p className="text-xl font-medium text-[#ededed]">GHS {calculatedDiscount.toFixed(2)}</p>
           </div>
         </div>
       )}
 
       <div className="space-y-2 min-w-0">
-        <label className="px-1 text-xs font-bold uppercase tracking-widest text-white/90">Payment Method</label>
+        <label className="px-1 text-xs font-medium text-white/90">Payment method</label>
         <select
           value={paymentMethod}
           onChange={(event) => setPaymentMethod(event.target.value as SalePaymentMethod)}
-          className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-white/10 px-3 text-sm font-bold text-white outline-none transition-all focus:border-emerald-500/50"
+          className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-white/10 px-3 text-sm font-medium text-white outline-none transition-colors focus:border-white/[0.08]"
         >
           {SALE_PAYMENT_METHOD_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value} className="bg-slate-900">
+            <option key={option.value} value={option.value} className="bg-[#19191b]">
               {option.label}
             </option>
           ))}
@@ -1036,34 +1036,34 @@ export function SalesForm({
       {paymentMethod === 'MOBILE_MONEY' ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="space-y-2 min-w-0">
-            <label className="px-1 text-xs font-bold uppercase tracking-widest text-white/90">MoMo Phone Number</label>
+            <label className="px-1 text-xs font-medium text-white/90">MoMo phone number</label>
             <input
               type="tel"
               value={paymentReference}
               onChange={(event) => setPaymentReference(event.target.value)}
-              className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-white/10 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+              className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-white/10 px-3 text-sm font-medium text-white outline-none focus:border-white/[0.08]"
               placeholder="e.g. 0241234567"
             />
           </div>
           <div className="space-y-2 min-w-0">
-            <label className="px-1 text-xs font-bold uppercase tracking-widest text-white/90">Account Holder Name</label>
+            <label className="px-1 text-xs font-medium text-white/90">Account holder name</label>
             <input
               type="text"
               value={paymentAccountName}
               onChange={(event) => setPaymentAccountName(event.target.value)}
-              className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-white/10 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+              className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-white/10 px-3 text-sm font-medium text-white outline-none focus:border-white/[0.08]"
               placeholder="Name on MoMo account"
             />
           </div>
         </div>
       ) : paymentMethod === 'BANK_TRANSFER' ? (
         <div className="space-y-2 min-w-0">
-          <label className="px-1 text-xs font-bold uppercase tracking-widest text-white/90">Bank Reference (optional)</label>
+          <label className="px-1 text-xs font-medium text-white/90">Bank reference (optional)</label>
           <input
             type="text"
             value={paymentReference}
             onChange={(event) => setPaymentReference(event.target.value)}
-            className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-white/10 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/50"
+            className="h-11 w-full min-w-0 rounded-md border border-white/10 bg-white/10 px-3 text-sm font-medium text-white outline-none focus:border-white/[0.08]"
             placeholder="Transfer reference"
           />
         </div>
@@ -1071,9 +1071,9 @@ export function SalesForm({
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_240px]">
         <div className="space-y-2 min-w-0">
-          <label className="px-1 text-xs font-bold uppercase tracking-widest text-white/90">Total Cash Received (GHS)</label>
+          <label className="px-1 text-xs font-medium text-white/90">Total cash received (GHS)</label>
           <div className="relative min-w-0">
-            <Banknote className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-emerald-300/70" />
+            <Banknote className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#85858b]" />
             <input
               type="number"
               inputMode="decimal"
@@ -1085,22 +1085,22 @@ export function SalesForm({
                 if (isWalkIn) return;
                 setTotalCashReceived(event.target.value === '' ? '' : Number(event.target.value));
               }}
-              className={`box-border h-14 w-full min-w-0 rounded-md border bg-slate-950/70 pl-12 pr-4 text-xl font-bold text-white outline-none transition-all focus:border-emerald-500/60 sm:text-2xl ${
+              className={`box-border h-14 w-full min-w-0 rounded-md border bg-[#19191b] pl-12 pr-4 text-xl font-medium text-white outline-none transition-colors focus:border-emerald-500/60 sm:text-2xl ${
                 !isCreditSale && !isWalkIn && !canOverridePrice && totalCashReceived !== '' && !cashBalances ? 'border-red-500/60' : 'border-white/10'
               }`}
             />
           </div>
         </div>
 
-        <div className={`min-w-0 rounded-md border p-4 ${!isCreditSale && !isWalkIn && !canOverridePrice && totalCashReceived !== '' && !cashBalances ? 'border-red-500/30 bg-red-500/10' : 'border-emerald-500/20 bg-emerald-500/10'}`}>
-          <p className="text-[10px] font-black uppercase tracking-widest text-white/50">Balance Check</p>
+        <div className={`min-w-0 rounded-md border p-4 ${!isCreditSale && !isWalkIn && !canOverridePrice && totalCashReceived !== '' && !cashBalances ? 'border-white/[0.08] bg-white/[0.04]' : 'border-white/[0.08] bg-white/[0.04]'}`}>
+          <p className="text-xs font-medium text-white/50">Balance check</p>
           <div className="mt-2 flex items-start gap-2">
             {!isCreditSale && !isWalkIn && !canOverridePrice && totalCashReceived !== '' && !cashBalances ? (
-              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-red-300" />
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-[#f2777b]" />
             ) : (
-              <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300" />
+              <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[#85858b]" />
             )}
-            <span className={`text-sm font-bold leading-snug ${!isCreditSale && !isWalkIn && !canOverridePrice && totalCashReceived !== '' && !cashBalances ? 'text-red-200' : 'text-emerald-200'}`}>
+            <span className={`text-sm font-medium leading-snug ${!isCreditSale && !isWalkIn && !canOverridePrice && totalCashReceived !== '' && !cashBalances ? 'text-[#f2777b]' : 'text-[#34d399]'}`}>
               {isCreditSale
                 ? 'Credit sale: partial or zero payment allowed for saved customers'
                 : isWalkIn
@@ -1118,28 +1118,28 @@ export function SalesForm({
       <div className="rounded-md border border-white/10 bg-white/5 p-4">
         <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-white/50">Subtotal</p>
-            <p className="font-bold text-white">GHS {subtotal.toFixed(2)}</p>
+            <p className="text-xs font-medium text-white/50">Subtotal</p>
+            <p className="font-medium text-white">GHS {subtotal.toFixed(2)}</p>
           </div>
           {calculatedDiscount > 0 ? (
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-white/50">Discount</p>
-              <p className="font-bold text-amber-300">- GHS {calculatedDiscount.toFixed(2)}</p>
+              <p className="text-xs font-medium text-white/50">Discount</p>
+              <p className="font-medium text-[#ededed]">- GHS {calculatedDiscount.toFixed(2)}</p>
             </div>
           ) : null}
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-white/50">Total</p>
-            <p className="font-bold text-emerald-300">GHS {total.toFixed(2)}</p>
+            <p className="text-xs font-medium text-white/50">Total</p>
+            <p className="font-medium text-[#ededed]">GHS {total.toFixed(2)}</p>
           </div>
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-white/50">Outstanding</p>
-            <p className="font-bold text-white">GHS {Math.max(total - (Number.isFinite(cashValue) ? cashValue : 0), 0).toFixed(2)}</p>
+            <p className="text-xs font-medium text-white/50">Outstanding</p>
+            <p className="font-medium text-white">GHS {Math.max(total - (Number.isFinite(cashValue) ? cashValue : 0), 0).toFixed(2)}</p>
           </div>
         </div>
       </div>
 
       {step2Errors.length > 0 && (
-        <div className="rounded-md border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm font-bold text-amber-200">
+        <div className="rounded-md border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-sm font-medium text-[#ededed]">
           {step2Errors[0]}
         </div>
       )}
@@ -1148,7 +1148,7 @@ export function SalesForm({
         <button
           type="button"
           onClick={() => setStep(1)}
-          className="inline-flex h-12 items-center justify-center gap-2 rounded-md border border-white/10 px-5 text-[11px] font-bold uppercase tracking-widest text-white/80 hover:bg-white/5"
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-md border border-white/10 px-5 text-[11px] font-medium text-white/80 hover:bg-white/5"
         >
           <ChevronLeft className="h-4 w-4" />
           Back
@@ -1156,7 +1156,7 @@ export function SalesForm({
         <button
           type="submit"
           disabled={!canSubmit}
-          className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-emerald-500 px-5 text-[11px] font-bold uppercase tracking-widest text-[#064e3b] transition-all hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[#ededed] px-5 text-sm font-medium text-[#141415] transition-[background-color,transform] duration-150 hover:bg-white active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
         >
           <ShoppingCart className="h-4 w-4" />
           {isSubmitting ? 'Processing...' : 'Record Sale'}
@@ -1167,8 +1167,8 @@ export function SalesForm({
 
       {completionDialogOpen ? (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 p-4 pb-safe">
-          <div className="w-full max-w-md max-h-[90dvh] overflow-y-auto custom-scrollbar pb-safe rounded-md border border-white/10 bg-slate-950 p-5 shadow-2xl">
-            <h3 className="text-lg font-bold text-white">Complete this sale now?</h3>
+          <div className="w-full max-w-md max-h-[90dvh] overflow-y-auto custom-scrollbar pb-safe rounded-md border border-white/10 bg-[#19191b] p-5">
+            <h3 className="text-lg font-medium text-white">Complete this sale now?</h3>
             <p className="mt-2 text-sm text-white/70">
               This credit or partial-payment sale can be completed now to deduct stock and finalize fulfillment, or saved to complete later.
             </p>
@@ -1177,7 +1177,7 @@ export function SalesForm({
                 type="button"
                 onClick={() => submitOrder(false)}
                 disabled={isSubmitting}
-                className="inline-flex h-11 items-center justify-center rounded-md border border-white/10 px-4 text-xs font-bold uppercase tracking-widest text-white/80 hover:bg-white/5 disabled:opacity-50"
+                className="inline-flex h-11 items-center justify-center rounded-md border border-white/10 px-4 text-xs font-medium text-white/80 hover:bg-white/5 disabled:opacity-50"
               >
                 Skip for now
               </button>
@@ -1185,7 +1185,7 @@ export function SalesForm({
                 type="button"
                 onClick={() => submitOrder(true)}
                 disabled={isSubmitting}
-                className="inline-flex h-11 items-center justify-center rounded-md bg-emerald-500 px-4 text-xs font-bold uppercase tracking-widest text-[#064e3b] disabled:opacity-50"
+                className="inline-flex h-11 items-center justify-center rounded-md bg-emerald-500 px-4 text-xs font-medium text-[#064e3b] disabled:opacity-50"
               >
                 {isSubmitting ? 'Processing...' : 'Complete sale now'}
               </button>
@@ -1196,15 +1196,15 @@ export function SalesForm({
 
       {sizePickerIndex !== null ? (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 p-4 pb-safe">
-          <div className="w-full max-w-md max-h-[90dvh] overflow-y-auto custom-scrollbar pb-safe rounded-md border border-white/10 bg-slate-950 p-4 shadow-2xl">
-            <h3 className="text-lg font-bold text-white">Select egg size</h3>
+          <div className="w-full max-w-md max-h-[90dvh] overflow-y-auto custom-scrollbar pb-safe rounded-md border border-white/10 bg-[#19191b] p-4">
+            <h3 className="text-lg font-medium text-white">Select egg size</h3>
             <div className="mt-3 space-y-2">
               {eggInventory.map((entry: any) => (
                 <button
                   key={entry.id}
                   type="button"
                   onClick={() => selectEggSize(sizePickerIndex, entry)}
-                  className="flex w-full items-center justify-between rounded-md border border-white/10 bg-white/5 px-4 py-3 text-left text-sm font-bold text-white transition-colors hover:border-emerald-500/50 hover:bg-emerald-500/10"
+                  className="flex w-full items-center justify-between rounded-md border border-white/10 bg-white/5 px-4 py-3 text-left text-sm font-medium text-white transition-colors hover:border-white/[0.08] hover:bg-white/[0.04]"
                 >
                   <span>{eggSizeLabelFromRow(entry)}</span>
                   <span className="text-xs text-white/60">
@@ -1216,7 +1216,7 @@ export function SalesForm({
             <button
               type="button"
               onClick={() => setSizePickerIndex(null)}
-              className="mt-4 w-full rounded-md border border-white/10 px-4 py-2 text-sm font-bold text-white/70 hover:bg-white/5"
+              className="mt-4 w-full rounded-md border border-white/10 px-4 py-2 text-sm font-medium text-white/70 hover:bg-white/5"
             >
               Cancel
             </button>

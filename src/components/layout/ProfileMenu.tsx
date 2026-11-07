@@ -66,13 +66,13 @@ export const ProfileMenu = ({ role, permissions }: { role?: string; permissions?
         aria-controls="mobile-profile-menu"
         aria-label="Open profile menu"
         className={cn(
-          'flex h-10 w-10 items-center justify-center rounded-full border transition-colors',
+          'flex h-10 w-10 items-center justify-center rounded-full border transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34d399]/60',
           open
-            ? 'border-emerald-400/50 bg-emerald-400/25 text-emerald-200'
-            : 'border-emerald-400/20 bg-emerald-400/15 text-emerald-300',
+            ? 'border-white/[0.12] bg-[#2c2c2f] text-[#ededed]'
+            : 'border-white/[0.08] bg-[#232325] text-[#a1a1a6]',
         )}
       >
-        <User className="h-5 w-5" />
+        <User className="h-5 w-5" strokeWidth={1.5} />
       </button>
 
       <AnimatePresence>
@@ -82,12 +82,12 @@ export const ProfileMenu = ({ role, permissions }: { role?: string; permissions?
             initial={{ opacity: 0, y: -6, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.98 }}
-            transition={{ duration: 0.15, ease: 'easeOut' }}
-            className="absolute right-0 top-full z-50 mt-2 w-60 max-w-[calc(100vw-2rem)] origin-top-right overflow-hidden rounded-2xl border border-emerald-900/60 bg-[#07140f] shadow-[0_18px_50px_rgba(0,0,0,0.6)]"
+            transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
+            className="absolute right-0 top-full z-50 mt-2 w-60 max-w-[calc(100vw-2rem)] origin-top-right overflow-hidden rounded-xl border border-white/[0.08] bg-[#19191b] shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
           >
-            <div className="border-b border-white/10 px-4 py-3">
-              <p className="text-sm font-bold text-white">My account</p>
-              <p className="text-[11px] font-medium uppercase tracking-wider text-white/45">{roleLabel}</p>
+            <div className="border-b border-white/[0.08] px-4 py-3">
+              <p className="text-sm font-medium text-[#ededed]">My account</p>
+              <p className="text-xs text-[#85858b]">{roleLabel}</p>
             </div>
             <ul className="p-2">
               {items.map((item) => {
@@ -98,24 +98,24 @@ export const ProfileMenu = ({ role, permissions }: { role?: string; permissions?
                       href={item.href}
                       aria-current={active ? 'page' : undefined}
                       className={cn(
-                        'flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-semibold transition-colors',
-                        active ? 'bg-emerald-500/15 text-emerald-300' : 'text-white/85 hover:bg-white/10',
+                        'flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm transition-colors duration-150',
+                        active ? 'bg-[#232325] text-[#ededed]' : 'text-[#a1a1a6] hover:bg-white/[0.04] hover:text-[#ededed]',
                       )}
                     >
-                      <item.icon className="h-[18px] w-[18px] shrink-0" />
+                      <item.icon className={cn('h-4 w-4 shrink-0', active ? 'text-[#34d399]' : 'text-[#85858b]')} strokeWidth={1.5} />
                       {item.name}
                     </Link>
                   </li>
                 );
               })}
             </ul>
-            <div className="border-t border-white/10 p-2">
+            <div className="border-t border-white/[0.08] p-2">
               <button
                 type="button"
                 onClick={() => signOut({ callbackUrl: '/login' })}
-                className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-semibold text-red-300 transition-colors hover:bg-red-500/10"
+                className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-sm text-[#a1a1a6] transition-colors duration-150 hover:bg-white/[0.04] hover:text-[#f2777b]"
               >
-                <LogOut className="h-[18px] w-[18px] shrink-0" />
+                <LogOut className="h-4 w-4 shrink-0" strokeWidth={1.5} />
                 Sign out
               </button>
             </div>

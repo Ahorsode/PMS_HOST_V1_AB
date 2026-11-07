@@ -10,13 +10,13 @@ export default function DashboardLoading() {
           <div className="h-10 w-64 bg-white/10 rounded-md" />
           <div className="h-3 w-40 bg-white/10 rounded-full" />
         </div>
-        <div className="h-12 w-48 bg-emerald-500/10 rounded-md border border-white/5" />
+        <div className="h-12 w-48 bg-white/[0.04] rounded-md border border-white/5" />
       </div>
 
       {/* Stats Grid Skeleton */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {[...Array(4)].map((_, i) => (
-          <Card key={i} className="bg-white/10 border-white/10 h-32 backdrop-blur-xl">
+          <Card key={i} className="bg-white/10 border-white/10 h-32">
             <CardContent className="p-5">
               <div className="flex items-center justify-between">
                 <div className="space-y-2">
@@ -32,7 +32,7 @@ export default function DashboardLoading() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-7">
         {/* Main Chart Skeleton */}
-        <div className="lg:col-span-2 bg-white/10 rounded-lg border border-white/10 h-[500px] backdrop-blur-md overflow-hidden p-7 space-y-5">
+        <div className="lg:col-span-2 bg-white/10 rounded-lg border border-white/10 h-[500px] overflow-hidden p-7 space-y-5">
           <div className="flex justify-between items-center">
             <div className="h-6 w-48 bg-white/10 rounded-lg" />
             <div className="h-10 w-32 bg-white/10 rounded-md" />
@@ -42,12 +42,12 @@ export default function DashboardLoading() {
 
         {/* Sidebar Widgets Skeleton */}
         <div className="space-y-7">
-          <div className="bg-emerald-500/10 rounded-lg border border-emerald-500/10 h-[240px] p-7 space-y-5">
-            <div className="h-5 w-32 bg-emerald-500/10 rounded-lg" />
+          <div className="bg-white/[0.04] rounded-lg border border-white/[0.08] h-[240px] p-7 space-y-5">
+            <div className="h-5 w-32 bg-white/[0.04] rounded-lg" />
             <div className="space-y-3">
-              <div className="h-10 w-48 bg-emerald-500/20 rounded-md" />
+              <div className="h-10 w-48 bg-white/[0.04] rounded-md" />
               <div className="h-2 w-full bg-white/10 rounded-full" />
-              <div className="h-3 w-24 bg-emerald-500/10 rounded-full" />
+              <div className="h-3 w-24 bg-white/[0.04] rounded-full" />
             </div>
           </div>
           <div className="bg-white/10 rounded-lg border border-white/10 h-[240px] p-7 space-y-5">

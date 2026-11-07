@@ -106,22 +106,22 @@ export function ReportGeneratorLauncher({
         className={cn('shrink-0', buttonClassName)}
       >
         <FileText className="h-4 w-4" />
-        Generate Report
+        Generate report
       </Button>
 
       <Dialog isOpen={open} onOpenChange={handleOpenChange} className="max-w-3xl" title={undefined}>
         {loading && !showWizard ? (
           <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-            <Loader2 className="h-8 w-8 animate-spin text-emerald-400" />
-            <p className="text-xs font-bold uppercase tracking-widest text-white/50">Preparing report data...</p>
+            <Loader2 className="h-8 w-8 animate-spin text-[#85858b]" />
+            <p className="text-xs font-medium text-white/50">Preparing report data...</p>
           </div>
         ) : showWizard && dataSources?.length ? (
           <BatchReportWizard dataSources={dataSources} />
         ) : showScopeStep ? (
           <div className="space-y-5 pt-1">
             <div>
-              <h3 className="text-xl font-bold uppercase italic tracking-normal text-white">Generate report</h3>
-              <p className="mt-1 text-xs font-bold text-white/90">Choose all batches or one batch, then continue.</p>
+              <h3 className="text-xl font-medium tracking-normal text-white">Generate report</h3>
+              <p className="mt-1 text-xs font-medium text-white/90">Choose all batches or one batch, then continue.</p>
             </div>
 
             <div className="grid gap-2 sm:grid-cols-2">
@@ -131,12 +131,12 @@ export function ReportGeneratorLauncher({
                 className={cn(
                   'rounded-lg border px-4 py-4 text-left transition-colors',
                   scopeMode === 'all'
-                    ? 'border-emerald-500/40 bg-emerald-500/10'
+                    ? 'border-white/[0.08] bg-white/[0.04]'
                     : 'border-white/10 bg-white/[0.03] hover:border-white/20'
                 )}
               >
-                <p className="text-sm font-bold text-white">All batches</p>
-                <p className="mt-0.5 text-[10px] text-white/45">Combined report for every unit ({batches.length})</p>
+                <p className="text-sm font-medium text-white">All batches</p>
+                <p className="mt-0.5 text-xs text-white/45">Combined report for every unit ({batches.length})</p>
               </button>
               <button
                 type="button"
@@ -144,25 +144,25 @@ export function ReportGeneratorLauncher({
                 className={cn(
                   'rounded-lg border px-4 py-4 text-left transition-colors',
                   scopeMode === 'single'
-                    ? 'border-emerald-500/40 bg-emerald-500/10'
+                    ? 'border-white/[0.08] bg-white/[0.04]'
                     : 'border-white/10 bg-white/[0.03] hover:border-white/20'
                 )}
               >
-                <p className="text-sm font-bold text-white">One batch</p>
-                <p className="mt-0.5 text-[10px] text-white/45">Report for a single livestock unit</p>
+                <p className="text-sm font-medium text-white">One batch</p>
+                <p className="mt-0.5 text-xs text-white/45">Report for a single livestock unit</p>
               </button>
             </div>
 
             {scopeMode === 'single' ? (
               <label className="block space-y-1">
-                <span className="px-1 text-[10px] font-bold uppercase tracking-widest text-white/45">Select batch</span>
+                <span className="px-1 text-xs font-medium text-white/45">Select batch</span>
                 <select
                   value={selectedBatchId}
                   onChange={(e) => setSelectedBatchId(e.target.value)}
-                  className="h-11 w-full rounded-md border border-white/10 bg-black/30 px-3 text-sm font-bold text-white outline-none focus:border-emerald-500/40"
+                  className="h-11 w-full rounded-md border border-white/10 bg-black/30 px-3 text-sm font-medium text-white outline-none focus:border-white/[0.08]"
                 >
                   {batches.map((batch) => (
-                    <option key={batch.id} value={batch.id} className="bg-slate-900">
+                    <option key={batch.id} value={batch.id} className="bg-[#19191b]">
                       {batch.batchName || 'Unnamed batch'}
                     </option>
                   ))}

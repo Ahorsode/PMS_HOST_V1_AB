@@ -106,36 +106,36 @@ export function EditProfileModal({ isOpen, onOpenChange, initialData }: EditProf
     <Dialog 
       isOpen={isOpen} 
       onOpenChange={onOpenChange}
-      title="Edit Personal Identity"
+      title="Edit personal identity"
       description="Update your legal name and account security settings."
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 pt-3">
-        <div className="flex items-center gap-3 mb-5 p-3 bg-emerald-500/10 border border-emerald-500/10 rounded-md">
-          <div className="w-12 h-12 rounded-md bg-emerald-500/10 flex items-center justify-center">
-            <Fingerprint className="w-6 h-6 text-emerald-400" />
+        <div className="flex items-center gap-3 mb-5 p-3 bg-white/[0.04] border border-white/[0.08] rounded-md">
+          <div className="w-12 h-12 rounded-md bg-white/[0.04] flex items-center justify-center">
+            <Fingerprint className="w-6 h-6 text-[#85858b]" />
           </div>
           <div>
-            <p className="text-xs font-bold text-emerald-500 uppercase tracking-widest leading-tight">Identity Control</p>
+            <p className="text-xs font-medium text-[#ededed] leading-tight">Identity control</p>
             <p className="text-sm font-medium text-white/80">Changes will be reflected across all farm records.</p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Input
-            label="First Name"
+            label="First name"
             placeholder="John"
             {...register("firstname")}
             error={errors.firstname?.message}
           />
           <Input
-            label="Middle Name (Optional)"
+            label="Middle name (optional)"
             placeholder="Quincy"
             {...register("middleName")}
           />
         </div>
 
         <Input
-          label="Surname / Last Name"
+          label="Surname / last name"
           placeholder="Doe"
           {...register("surname")}
           error={errors.surname?.message}
@@ -145,32 +145,32 @@ export function EditProfileModal({ isOpen, onOpenChange, initialData }: EditProf
         <div className="pt-3 border-t border-white/5">
            <div 
              onClick={() => setValue("changePassword", !changePasswordActive)}
-             className="flex items-center justify-between p-3 rounded-md bg-white/10 border border-white/5 cursor-pointer hover:bg-white/10 transition-all group"
+             className="flex items-center justify-between p-3 rounded-md bg-white/10 border border-white/5 cursor-pointer hover:bg-white/10 transition-colors group"
            >
               <div className="flex items-center gap-2">
-                 <Shield className={`w-5 h-5 ${changePasswordActive ? 'text-amber-400' : 'text-white/70 group-hover:text-white/60'}`} />
-                 <p className="text-sm font-bold uppercase tracking-widest text-white/80">Change Password</p>
+                 <Shield className={`w-5 h-5 ${changePasswordActive ? 'text-[#d9a441]' : 'text-white/70 group-hover:text-white/60'}`} />
+                 <p className="text-sm font-medium text-white/80">Change password</p>
               </div>
-              <div className={`w-10 h-5 rounded-full relative transition-colors ${changePasswordActive ? 'bg-amber-500/40' : 'bg-white/10'}`}>
-                 <div className={`absolute top-1 w-3 h-3 rounded-full transition-all ${changePasswordActive ? 'right-1 bg-amber-400' : 'left-1 bg-white/40'}`} />
+              <div className={`w-10 h-5 rounded-full relative transition-colors ${changePasswordActive ? 'bg-white/[0.04]' : 'bg-white/10'}`}>
+                 <div className={`absolute top-1 w-3 h-3 rounded-full transition-colors ${changePasswordActive ? 'right-1 bg-amber-400' : 'left-1 bg-white/40'}`} />
               </div>
            </div>
 
            {changePasswordActive && (
               <div className="mt-3 space-y-3 animate-in slide-in-from-top-2 duration-300">
                  <Input 
-                   label="Current Password"
+                   label="Current password"
                    type="password"
                    {...register("currentPassword")}
                  />
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <Input 
-                      label="New Password"
+                      label="New password"
                       type="password"
                       {...register("newPassword")}
                     />
                     <Input 
-                      label="Confirm New Password"
+                      label="Confirm new password"
                       type="password"
                       {...register("confirmPassword")}
                       error={errors.confirmPassword?.message}
@@ -192,9 +192,9 @@ export function EditProfileModal({ isOpen, onOpenChange, initialData }: EditProf
           <Button
             type="submit"
             isLoading={isSubmitting}
-            className="flex-[2] bg-emerald-500 hover:bg-emerald-400 text-black font-bold uppercase tracking-widest rounded-md h-12"
+            className="flex-[2] bg-[#ededed] hover:bg-white text-[#141415] font-medium rounded-md h-12"
           >
-            Save Changes
+            Save changes
           </Button>
         </div>
       </form>

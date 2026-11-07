@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, Eye } from 'lucide-react';
+import { Plus, Edit2, Trash2, Eye, BarChart3, ArrowUpRight } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { useRouter } from 'next/navigation';
@@ -18,25 +18,25 @@ export const FeedActionsHeader = ({ batches, inventory, formulations = [] }: { b
     <div className="flex gap-2">
       <Link 
         href="/dashboard/feed/analytics"
-        className="flex items-center gap-2 px-3 py-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-md hover:bg-emerald-500/20 transition-all font-bold uppercase text-xs tracking-widest group"
+        className="inline-flex h-10 items-center gap-2 rounded-lg border border-white/[0.08] bg-[#232325] px-4 text-sm font-medium text-[#ededed] transition-colors duration-150 hover:bg-[#2c2c2f] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34d399]/60"
       >
-        <Eye className="w-4 h-4 group-hover:scale-110 transition-transform" />
-        Indept Management
+        <BarChart3 className="h-4 w-4 text-[#a1a1a6]" strokeWidth={1.5} />
+        Feed analytics
       </Link>
       <Button variant="outline" onClick={() => setOpenItem(true)}>
         <Plus className="mr-2 h-4 w-4" />
-        Add Item
+        Add item
       </Button>
       <Button onClick={() => setOpenFeed(true)}>
         <Plus className="mr-2 h-4 w-4" />
-        Log Feeding
+        Log feeding
       </Button>
 
-      <Dialog isOpen={openFeed} onOpenChange={setOpenFeed} title="Log Feeding">
+      <Dialog isOpen={openFeed} onOpenChange={setOpenFeed} title="Log feeding">
         <FeedForm batches={batches} inventory={inventory} formulations={formulations} mode="create" onClose={() => setOpenFeed(false)} />
       </Dialog>
 
-      <Dialog isOpen={openItem} onOpenChange={setOpenItem} title="Add Inventory Item">
+      <Dialog isOpen={openItem} onOpenChange={setOpenItem} title="Add inventory item">
         <InventoryForm mode="create" onClose={() => setOpenItem(false)} />
       </Dialog>
     </div>
@@ -70,14 +70,14 @@ export const FeedLogActions = ({ log, batches, inventory, formulations = [] }: {
 
   return (
     <div className="flex items-center gap-2">
-      <button aria-label="Edit feeding log" onClick={() => setMode('edit')} className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors">
+      <button aria-label="Edit feeding log" onClick={() => setMode('edit')} className="p-1 text-[#a1a1a6] hover:bg-white/[0.06] rounded transition-colors">
         <Edit2 className="h-4 w-4" />
       </button>
-      <button aria-label="Delete feeding log" onClick={() => setShowDeleteModal(true)} className="p-1 text-gray-400 hover:bg-gray-100 rounded transition-colors">
+      <button aria-label="Delete feeding log" onClick={() => setShowDeleteModal(true)} className="p-1 text-[#85858b] hover:bg-[#232325] rounded transition-colors">
         <Trash2 className="h-4 w-4" />
       </button>
 
-      <Dialog isOpen={mode !== null} onOpenChange={(open) => !open && setMode(null)} title="Edit Feeding Log">
+      <Dialog isOpen={mode !== null} onOpenChange={(open) => !open && setMode(null)} title="Edit feeding log">
         {mode && <FeedForm log={log} batches={batches} inventory={inventory} formulations={formulations} mode={mode} onClose={() => setMode(null)} />}
       </Dialog>
       
@@ -121,20 +121,20 @@ export const InventoryActions = ({ item }: { item: any }) => {
     <div className="flex items-center gap-2">
       <Link 
         href={`/dashboard/feed/inventory/${item.id}`}
-        className="flex items-center gap-1.5 px-2 py-1 text-xs font-bold uppercase tracking-normal text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/20 transition-all"
-        title="Indept Management"
+        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[#85858b] transition-colors duration-150 hover:bg-white/[0.06] hover:text-[#ededed]"
+        title="Open item"
+        aria-label="Open item"
       >
-        <Eye className="h-3 w-3" />
-        <span>Indept</span>
+        <ArrowUpRight className="h-4 w-4" strokeWidth={1.5} />
       </Link>
-      <button aria-label="Edit inventory item" onClick={() => setMode('edit')} className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors">
+      <button aria-label="Edit inventory item" onClick={() => setMode('edit')} className="p-1 text-[#a1a1a6] hover:bg-white/[0.06] rounded transition-colors">
         <Edit2 className="h-4 w-4" />
       </button>
-      <button aria-label="Delete inventory item" onClick={() => setShowDeleteModal(true)} className="p-1 text-gray-400 hover:bg-gray-100 rounded transition-colors">
+      <button aria-label="Delete inventory item" onClick={() => setShowDeleteModal(true)} className="p-1 text-[#85858b] hover:bg-[#232325] rounded transition-colors">
         <Trash2 className="h-4 w-4" />
       </button>
 
-      <Dialog isOpen={mode !== null} onOpenChange={(open) => !open && setMode(null)} title="Edit Item">
+      <Dialog isOpen={mode !== null} onOpenChange={(open) => !open && setMode(null)} title="Edit item">
         {mode && <InventoryForm item={item} mode={mode} onClose={() => setMode(null)} />}
       </Dialog>
 

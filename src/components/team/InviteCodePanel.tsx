@@ -28,7 +28,7 @@ export function InviteCodePanel({ issued, onDismiss }: { issued: IssuedInviteCod
   }
 
   return (
-    <div role="status" className="relative rounded-lg border border-emerald-400/30 bg-emerald-500/10 p-5 backdrop-blur-md">
+    <div role="status" className="relative rounded-lg border border-white/[0.08] bg-white/[0.04] p-5">
       <button
         type="button"
         onClick={onDismiss}
@@ -38,12 +38,12 @@ export function InviteCodePanel({ issued, onDismiss }: { issued: IssuedInviteCod
         <X className="h-4 w-4" />
       </button>
       <div className="flex items-start gap-3">
-        <KeyRound className="mt-0.5 h-5 w-5 shrink-0 text-emerald-300" />
+        <KeyRound className="mt-0.5 h-5 w-5 shrink-0 text-[#85858b]" />
         <div className="min-w-0 flex-1 space-y-3">
-          <p className="text-sm font-semibold text-white">
-            One-time login code for <span className="break-all text-emerald-200">{issued.recipient}</span>
+          <p className="text-sm font-medium text-white">
+            One-time login code for <span className="break-all text-[#ededed]">{issued.recipient}</span>
           </p>
-          <p className="select-all font-mono text-3xl font-black tracking-[0.2em] text-white">{issued.code}</p>
+          <p className="select-all font-mono text-3xl font-medium text-white">{issued.code}</p>
           <p className="text-xs text-white/70">
             Share it with them yourself. It works once, expires in {INVITE_CODE_TTL_HOURS} hours, and they will
             choose their own password after signing in. You won't be able to see this code again.
@@ -52,16 +52,16 @@ export function InviteCodePanel({ issued, onDismiss }: { issued: IssuedInviteCod
             <button
               type="button"
               onClick={copyCode}
-              className="inline-flex items-center gap-2 rounded-md border border-white/15 bg-white/10 px-3 py-2 text-xs font-bold uppercase tracking-widest text-white transition hover:bg-white/15"
+              className="inline-flex items-center gap-2 rounded-md border border-white/15 bg-white/10 px-3 py-2 text-xs font-medium text-white transition hover:bg-white/15"
             >
-              {copied ? <Check className="h-4 w-4 text-emerald-300" /> : <Copy className="h-4 w-4" />}
+              {copied ? <Check className="h-4 w-4 text-[#85858b]" /> : <Copy className="h-4 w-4" />}
               {copied ? 'Copied' : 'Copy code'}
             </button>
             <a
               href={`https://wa.me/?text=${encodeURIComponent(shareText)}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-md border border-emerald-400/30 bg-emerald-500/15 px-3 py-2 text-xs font-bold uppercase tracking-widest text-emerald-100 transition hover:bg-emerald-500/25"
+              className="inline-flex items-center gap-2 rounded-md border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-xs font-medium text-[#ededed] transition hover:bg-white/[0.04]"
             >
               <MessageCircle className="h-4 w-4" />
               Share on WhatsApp

@@ -88,21 +88,21 @@ export default async function DashboardLayout({
   if ((!farm || isPlaceholder) && dbUser?.role !== 'OWNER') {
     const identifier = dbUser?.email || (dbUser as any)?.phoneNumber || 'your account';
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black/20 backdrop-blur-xl text-white p-7">
+      <div className="min-h-screen flex items-center justify-center bg-black/20 text-white p-7">
         <div className="glass-morphism p-11 rounded-lg text-center max-w-md">
-           <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/30">
-              <XCircle className="w-10 h-10 text-red-500" />
+           <div className="w-20 h-20 bg-white/[0.04] rounded-full flex items-center justify-center mx-auto mb-6 border border-white/[0.08]">
+              <XCircle className="w-10 h-10 text-[#f2777b]" />
            </div>
-           <h2 className="text-2xl font-bold mb-3 uppercase tracking-widest text-red-400">Access Restricted</h2>
+           <h2 className="text-2xl font-medium mb-3 text-[#f2777b]">Access restricted</h2>
            <p className="opacity-70 leading-relaxed font-medium mb-6">
-             You are not currently linked to any farm. We checked for invitations sent to <span className="text-emerald-400 font-bold underline">{identifier}</span>.
+             You are not currently linked to any farm. We checked for invitations sent to <span className="text-[#ededed] font-medium underline">{identifier}</span>.
            </p>
-           <p className="text-xs text-white/40 italic">
+           <p className="text-xs text-white/40">
              Please contact your farm administrator to verify which email or phone number was used for your invitation.
            </p>
            <div className="mt-8">
-              <Link href="/login" className="text-emerald-400 font-bold uppercase tracking-widest text-xs hover:underline">
-                Try Logging in with a different account
+              <Link href="/login" className="text-[#ededed] font-medium text-xs hover:underline">
+                Try logging in with a different account
               </Link>
            </div>
         </div>
@@ -155,7 +155,7 @@ export default async function DashboardLayout({
     if (staffAccess.access.state === 'LOCKED') {
       return (
         <AccessBlocked
-          title="Farm Plan Ended"
+          title="Farm plan ended"
           message={`${farm.name}'s plan has ended. Ask the farm owner to renew it to get access again.`}
         />
       );
@@ -163,7 +163,7 @@ export default async function DashboardLayout({
     if (staffAccess.locked.has(dbUser.id)) {
       return (
         <AccessBlocked
-          title="Access Paused"
+          title="Access paused"
           message={`Your access to ${farm.name} is paused because the farm's plan has no free staff seat. Ask the farm owner to restore your access.`}
         />
       );

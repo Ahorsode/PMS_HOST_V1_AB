@@ -46,22 +46,16 @@ export default async function HealthPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 px-0 md:px-3 pt-2 pb-7 md:py-7">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-[#0B1120] p-6 rounded-xl shadow-lg border border-gray-800 gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-[#141415] p-6 rounded-xl border border-white/[0.08] gap-4">
         <div>
-          <h2 className="text-3xl font-extrabold text-white tracking-normal uppercase italic flex items-center gap-3">
-            <HeartPulse className="w-8 h-8 text-emerald-400" />
-            Vaccination &amp; Medication
-          </h2>
-          <p className="text-gray-400 mt-1">
-            Plan and track every vaccine and medication schedule across your
-            active batches — all in one place.
-          </p>
+          <h1 className="text-3xl font-medium leading-tight text-[#ededed]">Vaccination and medication</h1>
+          <p className="mt-2 text-sm text-[#a1a1a6]">Plan and track vaccine and medication schedules across your active batches</p>
         </div>
-        <div className="bg-[#111827] px-5 py-3 rounded-xl border border-gray-800 text-center">
-          <p className="text-xs font-bold uppercase tracking-widest text-emerald-400">
+        <div className="bg-[#19191b] px-5 py-3 rounded-xl border border-white/[0.08] text-center">
+          <p className="text-xs font-medium text-[#ededed]">
             Pending
           </p>
-          <p className="text-3xl font-bold text-white">{pendingCount}</p>
+          <p className="text-3xl font-medium text-white">{pendingCount}</p>
         </div>
       </div>
 

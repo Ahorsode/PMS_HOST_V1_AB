@@ -10,11 +10,11 @@ export const HealthBadge: React.FC<HealthBadgeProps> = ({ status }) => {
   const getBadgeStyles = () => {
     switch (status) {
       case 'Healthy':
-        return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.1)]';
+        return 'bg-white/[0.04] text-[#ededed] border-white/[0.08]';
       case 'Warning':
-        return 'bg-amber-500/10 text-amber-400 border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.1)]';
+        return 'bg-white/[0.04] text-[#ededed] border-white/[0.08]';
       case 'Critical':
-        return 'bg-red-500/10 text-red-400 border-red-500/30 shadow-[0_0_15px_rgba(239,68,68,0.1)]';
+        return 'bg-white/[0.04] text-[#f2777b] border-white/[0.08]';
       default:
         return 'bg-white/10 text-white/80 border-white/10';
     }
@@ -22,9 +22,9 @@ export const HealthBadge: React.FC<HealthBadgeProps> = ({ status }) => {
 
   return (
     <span
-      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-bold uppercase tracking-widest border backdrop-blur-md transition-all duration-300 ${getBadgeStyles()}`}
+      className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border transition-colors duration-300 ${getBadgeStyles()}`}
     >
-      <span className="w-1.5 h-1.5 rounded-full bg-current mr-2 animate-pulse shadow-[0_0_5px_currentColor]" />
+      <span className="w-1.5 h-1.5 rounded-full bg-current mr-2" />
       {status}
     </span>
   );

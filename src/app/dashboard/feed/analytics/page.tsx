@@ -12,47 +12,39 @@ export default async function FeedAnalyticsPage() {
   const lowStock = feedInventory.filter((item: any) => isLowStock(item));
 
   return (
-    <div className="max-w-7xl mx-auto px-0 md:px-3 pt-2 pb-7 md:py-7 space-y-7">
-      <Breadcrumbs items={[{ label: 'Feed & Inventory', href: '/dashboard/feed' }, { label: 'Inventory Intelligence' }]} />
+    <div className="max-w-7xl mx-auto px-1 md:px-4 pt-2 pb-8 md:py-8 space-y-6">
+      <Breadcrumbs items={[{ label: 'Feed & inventory', href: '/dashboard/feed' }, { label: 'Feed analytics' }]} />
       
-      <div className="flex justify-between items-center bg-white/10 backdrop-blur-md p-7 rounded-lg border border-white/10 relative overflow-hidden">
-        <div className="relative z-10 font-bold">
-          <h2 className="text-4xl font-bold text-white tracking-normal italic uppercase">
-            Inventory <span className="text-emerald-400">Intelligence</span>
-          </h2>
-          <p className="text-white/70 font-bold uppercase tracking-widest text-xs mt-2 italic flex items-center gap-2">
-             Stock Monitoring Active • Consumption Rate Analysis
-          </p>
-        </div>
+      <header className="px-1">
+        <h1 className="text-3xl font-medium leading-tight text-[#ededed]">Feed analytics</h1>
+        <p className="mt-2 text-sm text-[#a1a1a6]">Stock levels and low-stock alerts for feed</p>
+      </header>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <MetricBox title="Inventory items" value={feedInventory.length.toString()} icon={Package} color="text-[#ededed]" bgColor="bg-white/[0.04]" />
+        <MetricBox title="Low stock alerts" value={lowStock.length.toString()} icon={AlertTriangle} color="text-[#f2777b]" bgColor="bg-white/[0.04]" />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        <MetricBox title="Inventory Items" value={feedInventory.length.toString()} icon={Package} color="text-emerald-400" bgColor="bg-emerald-500/10" />
-        <MetricBox title="Low Stock Alerts" value={lowStock.length.toString()} icon={AlertTriangle} color="text-red-400" bgColor="bg-red-500/10" />
-        <MetricBox title="Active Consumption" value="7.2 bags / day" icon={Activity} color="text-blue-400" bgColor="bg-blue-500/10" />
-        <MetricBox title="Avg. Stock Depth" value="84%" icon={Battery} color="text-emerald-400" bgColor="bg-emerald-500/10" />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-7">
-         <div className="bg-white/10 backdrop-blur-md rounded-lg border border-white/10 overflow-hidden shadow-2xl">
-            <div className="px-7 py-5 border-b border-white/10">
-               <h3 className="text-white font-bold italic uppercase tracking-widest text-sm">Strategic Stock Levels</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+         <div className="rounded-xl border border-white/[0.08] bg-[#19191b] overflow-hidden">
+            <div className="px-5 py-4 border-b border-white/[0.08]">
+               <h2 className="text-lg font-medium text-[#ededed]">Stock levels</h2>
             </div>
-            <div className="p-7 space-y-5">
+            <div className="p-5 space-y-5">
                {feedInventory.map((item: any) => {
                  const threshold = getReorderThreshold(item);
                  const low = isLowStock(item);
                  return (
                  <div key={item.id} className="space-y-2">
                     <div className="flex justify-between items-center">
-                       <p className="text-white font-bold text-sm">{item.itemName}</p>
-                       <span className={`text-xs font-bold ${low ? 'text-red-400' : 'text-emerald-400'}`}>
+                       <p className="text-white font-medium text-sm">{item.itemName}</p>
+                       <span className={`text-xs font-medium ${low ? 'text-[#f2777b]' : 'text-emerald-400'}`}>
                           {item.stockLevel} {item.unit || 'bags'} left
                        </span>
                     </div>
-                    <div className="h-2 bg-white/10 rounded-full overflow-hidden border border-white/5">
+                    <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
                        <div 
-                         className={`h-full transition-all duration-1000 ${low ? 'bg-gradient-to-r from-red-500 to-amber-500' : 'bg-gradient-to-r from-emerald-500 to-teal-500'}`}
+                         className={`h-full rounded-full ${low ? 'bg-[#e5484d]' : 'bg-[#4a4a4f]'}`}
                          style={{ width: `${Math.min(100, threshold > 0 ? (item.stockLevel / threshold) * 100 : 0)}%` }}
                        />
                     </div>
@@ -61,9 +53,9 @@ export default async function FeedAnalyticsPage() {
             </div>
          </div>
 
-         <div className="bg-white/10 backdrop-blur-md rounded-lg border border-white/10 overflow-hidden shadow-2xl flex flex-col">
-            <div className="px-7 py-5 border-b border-white/10">
-               <h3 className="text-white font-bold italic uppercase tracking-widest text-sm">Consumption Insights (Recent)</h3>
+         <div className="rounded-xl border border-white/[0.08] bg-[#19191b] overflow-hidden flex flex-col">
+            <div className="px-5 py-4 border-b border-white/[0.08]">
+               <h2 className="text-lg font-medium text-[#ededed]">Consumption insights (recent)</h2>
             </div>
             <div className="flex-1 overflow-y-auto max-h-[400px] divide-y divide-white/10">
                   {inventory
@@ -74,14 +66,14 @@ export default async function FeedAnalyticsPage() {
                     )
                     .slice(0, 10)
                     .map((log: any, idx: number) => (
-                    <div key={idx} className="hover:bg-white/[0.02] px-7 py-3 flex items-center justify-between">
+                    <div key={idx} className="hover:bg-white/[0.02] px-5 py-3 flex items-center justify-between">
                        <div>
-                          <p className="text-white font-bold text-xs">{getBreedDisplayName(log.batch?.breedType)}</p>
-                          <p className="text-white/60 text-[8px] font-bold uppercase tracking-widest italic">{log.feedType}</p>
+                          <p className="text-white font-medium text-xs">{getBreedDisplayName(log.batch?.breedType)}</p>
+                          <p className="text-white/60 text-xs font-medium">{log.feedType}</p>
                        </div>
                        <div className="text-right">
-                          <p className="text-emerald-400 font-bold text-sm tracking-normal">{log.amountConsumed} bags</p>
-                          <p className="text-white/60 text-[8px] italic">Logged consumption</p>
+                          <p className="text-[#ededed] font-medium text-sm tracking-normal">{log.amountConsumed} bags</p>
+                          <p className="text-white/60 text-xs">Logged consumption</p>
                        </div>
                     </div>
                   ))}
@@ -92,14 +84,9 @@ export default async function FeedAnalyticsPage() {
   );
 }
 
-const MetricBox = ({ title, value, icon: Icon, color, bgColor }: any) => (
-  <div className="p-5 rounded-lg bg-white/10 border-white/10 border backdrop-blur-md shadow-2xl flex flex-col justify-between h-40">
-     <div className={`p-2 rounded-md w-fit ${bgColor} ${color}`}>
-        <Icon className="w-5 h-5" />
-     </div>
-     <div>
-        <h3 className="text-white font-bold text-3xl tracking-normal">{value}</h3>
-        <p className="text-white/60 font-bold uppercase tracking-widest text-[9px] mt-1 italic">{title}</p>
-     </div>
+const MetricBox = ({ title, value }: any) => (
+  <div className="min-w-0 rounded-xl border border-white/[0.08] bg-[#19191b] p-5">
+    <p className="text-sm text-[#a1a1a6]">{title}</p>
+    <p className="mt-2 truncate text-2xl font-medium leading-none tabular-nums text-[#ededed]">{value}</p>
   </div>
 );

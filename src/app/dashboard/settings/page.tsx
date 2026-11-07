@@ -45,14 +45,11 @@ export default async function SettingsPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-7 px-0 md:px-3 pt-2 pb-7 md:py-7">
-      <div className="flex justify-between items-center bg-white/10 backdrop-blur-md p-7 rounded-lg border border-white/10 relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-7 opacity-5">
-          <Settings className="w-32 h-32 text-emerald-400" />
-        </div>
+      <div className="flex justify-between items-center bg-white/10 p-7 rounded-lg border border-white/10 relative overflow-hidden">
         <div className="relative z-10">
-          <h2 className="text-4xl font-bold text-white tracking-normal">Farm <span className="text-emerald-400 italic">Settings</span></h2>
-          <p className="text-white/80 font-bold uppercase tracking-widest text-xs mt-2 flex items-center gap-2 italic">
-            Configure your farm preferences and management options
+          <h1 className="text-3xl font-medium leading-tight text-[#ededed]">Settings</h1>
+          <p className="mt-2 text-sm text-[#a1a1a6]">
+            Farm details, preferences and defaults
           </p>
         </div>
       </div>

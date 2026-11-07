@@ -44,7 +44,7 @@ const MORTALITY_CATEGORIES = [
   { label: 'Disease', value: 'Disease' },
   { label: 'Environmental', value: 'Environmental' },
   { label: 'Predator', value: 'Predator' },
-  { label: 'Injury / Trauma', value: 'Injury' },
+  { label: 'Injury / trauma', value: 'Injury' },
   { label: 'Culled', value: 'Culled' },
   { label: 'Unknown', value: 'Unknown' },
 ]
@@ -54,7 +54,7 @@ const EXPENSE_CATEGORIES = [
   { label: 'Medication', value: 'MEDICATION' },
   { label: 'Equipment', value: 'EQUIPMENT' },
   { label: 'Utilities', value: 'UTILITIES' },
-  { label: 'Labor / Salary', value: 'SALARY' },
+  { label: 'Labor / salary', value: 'SALARY' },
   { label: 'Maintenance', value: 'MAINTENANCE' },
   { label: 'Transport', value: 'TRANSPORT' },
   { label: 'Other', value: 'OTHER' },
@@ -375,7 +375,7 @@ function SaleForm({
       </div>
       <FormError error={error} />
       <ActionButton type="submit" variant="primary" className="w-full" isLoading={isPending} loadingText="Recording sale…">
-        Record Sale
+        Record sale
       </ActionButton>
     </form>
   )

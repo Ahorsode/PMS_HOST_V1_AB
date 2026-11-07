@@ -10,13 +10,13 @@ export default function SalesLoading() {
           <div className="h-10 w-64 bg-white/10 rounded-md" />
           <div className="h-3 w-40 bg-white/10 rounded-full" />
         </div>
-        <div className="h-12 w-48 bg-emerald-500/10 rounded-md border border-white/5" />
+        <div className="h-12 w-48 bg-white/[0.04] rounded-md border border-white/5" />
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
         {[...Array(4)].map((_, i) => (
-          <Card key={i} className="bg-white/10 border-white/10 h-28 backdrop-blur-xl">
+          <Card key={i} className="bg-white/10 border-white/10 h-28">
             <CardContent className="pt-5">
               <div className="flex justify-between items-center">
                 <div className="space-y-2">
@@ -32,7 +32,7 @@ export default function SalesLoading() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-7">
         {/* Table Skeleton */}
-        <div className="lg:col-span-2 bg-white/10 rounded-lg border border-white/10 h-[600px] backdrop-blur-md overflow-hidden">
+        <div className="lg:col-span-2 bg-white/10 rounded-lg border border-white/10 h-[600px] overflow-hidden">
            <div className="p-7 border-b border-white/5 flex justify-between items-center">
               <div className="h-6 w-40 bg-white/10 rounded-lg" />
               <div className="h-5 w-20 bg-white/10 rounded-full" />
@@ -51,9 +51,9 @@ export default function SalesLoading() {
 
         {/* Sidebar Widgets */}
         <div className="space-y-5">
-           <div className="bg-emerald-500/10 rounded-lg border border-emerald-500/10 h-[220px] p-7 space-y-3">
-              <div className="h-5 w-32 bg-emerald-500/10 rounded-lg" />
-              <div className="h-10 w-48 bg-emerald-500/20 rounded-md" />
+           <div className="bg-white/[0.04] rounded-lg border border-white/[0.08] h-[220px] p-7 space-y-3">
+              <div className="h-5 w-32 bg-white/[0.04] rounded-lg" />
+              <div className="h-10 w-48 bg-white/[0.04] rounded-md" />
               <div className="h-2 w-full bg-white/10 rounded-full" />
            </div>
            <div className="bg-white/10 rounded-lg border border-white/10 h-[380px] p-7 space-y-5">

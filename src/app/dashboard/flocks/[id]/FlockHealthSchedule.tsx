@@ -403,7 +403,7 @@ export function FlockHealthSchedule({
 
             {isNewItem && resolvedName ? (
               <p className={cn('text-xs', tone.text2)}>
-                Save to inventory first, then select it, or use Add schedule to save both together
+                Save to inventory first, then select it, or use add schedule to save both together
               </p>
             ) : null}
 

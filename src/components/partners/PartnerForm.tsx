@@ -55,57 +55,57 @@ export function PartnerForm({ setIsOpen, defaultType = 'supplier', onSuccess }: 
        <div className="space-y-4">
           <input type="hidden" name="partnerType" value={partnerType} />
           <div className="space-y-1">
-             <label className="text-sm font-black uppercase text-emerald-400 tracking-widest px-1">Partner Type</label>
-             <div className="bg-white/5 border border-white/10 rounded-md p-3 text-emerald-400 font-black flex items-center gap-2">
+             <label className="text-sm font-medium text-[#ededed] px-1">Partner type</label>
+             <div className="bg-white/5 border border-white/10 rounded-md p-3 text-[#ededed] font-medium flex items-center gap-2">
                {partnerType === 'supplier' ? <Truck className="w-4 h-4" /> : <Users className="w-4 h-4" />}
                {partnerType === 'supplier' ? 'Supplier (Vendor)' : 'Buyer (Customer)'}
              </div>
           </div>
 
           <div className="space-y-1">
-             <label className="text-sm font-black uppercase text-white/80 tracking-widest px-1">
+             <label className="text-sm font-medium text-white/80 px-1">
                {partnerType === 'supplier' ? 'Supplier Name / Company *' : 'Full Name / Company *'}
              </label>
              <input 
                name="name"
                required
                autoFocus
-               className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-bold outline-none focus:border-emerald-500/50 transition-all"
+               className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-medium outline-none focus:border-white/[0.08] transition-colors"
                placeholder={partnerType === 'supplier' ? "e.g. Acme Feeds Ltd." : "e.g. John Doe / Kumasi Allied Feed"}
              />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
              <div className="space-y-1">
-                <label className="text-sm font-black uppercase text-white/80 tracking-widest px-1">Phone Number</label>
+                <label className="text-sm font-medium text-white/80 px-1">Phone number</label>
                 <input 
                   name="phone"
-                  className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-bold outline-none focus:border-emerald-500/50 transition-all"
+                  className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-medium outline-none focus:border-white/[0.08] transition-colors"
                   placeholder="+233..."
                 />
              </div>
              <div className="space-y-1">
-                <label className="text-sm font-black uppercase text-white/80 tracking-widest px-1">Email Address</label>
+                <label className="text-sm font-medium text-white/80 px-1">Email address</label>
                 <input 
                   name="email"
                   type="email"
-                  className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-bold outline-none focus:border-emerald-500/50 transition-all"
+                  className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-medium outline-none focus:border-white/[0.08] transition-colors"
                   placeholder={partnerType === 'supplier' ? "vendor@supply.com" : "client@growth.com"}
                 />
              </div>
           </div>
 
           <div className="space-y-1">
-             <label className="text-sm font-black uppercase text-white/80 tracking-widest px-1">Location / Address</label>
+             <label className="text-sm font-medium text-white/80 px-1">Location / address</label>
              <textarea 
                name="address"
-               className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-bold outline-none focus:border-emerald-500/50 transition-all h-24"
+               className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-medium outline-none focus:border-white/[0.08] transition-colors h-24"
                placeholder={partnerType === 'supplier' ? "Warehouse or business location" : "Global shipping or warehouse location"}
              />
           </div>
 
           <div className="space-y-1">
-             <label className="text-sm font-black uppercase text-emerald-400 tracking-widest px-1">Old Debt / Amount Owing (GHS)</label>
+             <label className="text-sm font-medium text-[#ededed] px-1">Old debt / amount owing (GHS)</label>
              <input 
                name="balanceOwed"
                type="number"
@@ -118,7 +118,7 @@ export function PartnerForm({ setIsOpen, defaultType = 'supplier', onSuccess }: 
                    setBalanceOwed(val);
                  }
                }}
-               className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-bold outline-none focus:border-emerald-500/50 transition-all"
+               className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-medium outline-none focus:border-white/[0.08] transition-colors"
                placeholder="0.00"
              />
           </div>
@@ -127,7 +127,7 @@ export function PartnerForm({ setIsOpen, defaultType = 'supplier', onSuccess }: 
        <button 
          type="submit"
          disabled={isSubmitting}
-         className="w-full bg-emerald-500 text-[#064e3b] py-4 rounded-md font-bold uppercase tracking-widest text-xs transition-all hover:scale-[1.01] active:scale-[0.99] shadow-xl shadow-emerald-500/20"
+         className="w-full bg-emerald-500 text-[#064e3b] py-4 rounded-md font-medium text-xs transition-colors active:scale-[0.99]"
        >
          {isSubmitting ? 'Expanding Network...' : `Create ${partnerType === 'supplier' ? 'Supplier' : 'Partner'} Profile`}
        </button>
