@@ -219,7 +219,7 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
               options={[
                 { label: "Select House Location", value: "" }, 
                 ...houseOptions,
-                { label: "➕ Add New House", value: "NEW_HOUSE" }
+                { label: "+ Add New House", value: "NEW_HOUSE" }
               ]}
               {...register("houseId")}
               error={errors.houseId?.message}
@@ -275,7 +275,7 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
       <Dialog
         isOpen={showHouseModal}
         onOpenChange={(open) => !isCreatingHouse && setShowHouseModal(open)}
-        title="➕ Create New Farm House"
+        title="Create New Farm House"
         description="Add a new housing unit to your farm to accommodate this livestock unit."
       >
         <MutationBoundary active={isCreatingHouse} label="Creating house...">

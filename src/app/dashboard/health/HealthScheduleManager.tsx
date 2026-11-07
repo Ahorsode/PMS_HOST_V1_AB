@@ -170,7 +170,7 @@ export function HealthScheduleManager({
             : `${m.itemName} — out of stock`,
         value: m.itemName,
       })),
-      { label: "➕ Add new (type your own)", value: CUSTOM },
+      { label: "+ Add new (type your own)", value: CUSTOM },
     ];
   }, [inventory]);
 

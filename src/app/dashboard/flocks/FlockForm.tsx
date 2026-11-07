@@ -7,7 +7,7 @@ import { Select } from '@/components/ui/Select';
 import { BreedSelect } from '@/components/ui/BreedSelect';
 import { createBatch, updateBatch, logHealthEvent } from '@/lib/actions/batch-actions';
 import { createIsolationRoom } from '@/lib/actions/dashboard-actions';
-import { Activity, Skull } from 'lucide-react';
+import { Activity, CircleX, Skull } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { MutationBoundary } from '@/components/ui/MutationFeedback';
@@ -222,10 +222,15 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
               placeholder={formData.healthType === 'DEAD' ? "How many were lost?" : "How many are showing symptoms?"}
               className={isMortalityExceeded ? "border-red-500 focus:ring-red-500" : ""}
             />
-            <p className={`text-[11px] font-medium ${isMortalityExceeded ? "text-red-600 animate-pulse" : "text-gray-500"}`}>
-              {isMortalityExceeded 
-                ? `❌ Error: Only ${currentRemaining} birds remaining. Input exceeds population.`
-                : `Info: ${currentRemaining} birds remaining in this batch.`}
+            <p className={`flex items-center gap-1 text-[11px] font-medium ${isMortalityExceeded ? "text-red-600 animate-pulse" : "text-gray-500"}`}>
+              {isMortalityExceeded ? (
+                <>
+                  <CircleX className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  {`Error: Only ${currentRemaining} birds remaining. Input exceeds population.`}
+                </>
+              ) : (
+                `Info: ${currentRemaining} birds remaining in this batch.`
+              )}
             </p>
           </div>
           {/* Health Details: Isolation Room (Show only if not DEAD) */}

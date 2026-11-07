@@ -5,7 +5,7 @@ import { HealthBadge } from '@/components/ui/HealthBadge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { useLivestockStats } from '@/hooks/useLivestockStats';
 import { motion } from 'framer-motion';
-import { Bird, Skull, Wheat, TrendingUp, Activity, Plus, Package, Eye, Banknote, Syringe } from 'lucide-react';
+import { Bird, Skull, Wheat, TrendingUp, Activity, Plus, Package, Eye, Banknote, Syringe, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import { Dialog } from '@/components/ui/Dialog';
 import { formatCurrency } from '@/lib/utils';
@@ -352,8 +352,8 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
                    <CardTitle className="text-amber-400 flex items-center gap-2">
                      <Package className="w-4 h-4" /> Egg Stock
                    </CardTitle>
-                   <Link href="/dashboard/inventory" className="text-[9px] font-bold uppercase tracking-widest text-amber-400/50 hover:text-amber-400 transition-colors">
-                     View Hub →
+                   <Link href="/dashboard/inventory" className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-widest text-amber-400/50 hover:text-amber-400 transition-colors">
+                     View Hub <ArrowRight className="w-3 h-3" aria-hidden="true" />
                    </Link>
                  </CardHeader>
                  <CardContent className="pt-2">
