@@ -2,57 +2,50 @@
 
 import React, { useMemo } from 'react'
 import dynamic from 'next/dynamic'
-import {
-  Activity,
-  Banknote,
-  Calendar,
-  Clock,
-  Egg,
-  Scale,
-  Skull,
-  TrendingDown,
-  TrendingUp,
-  Wallet,
-} from 'lucide-react'
 import { cn, formatCurrency } from '@/lib/utils'
 import { compareNewestFirst } from '@/lib/utils/chronological-sort'
 import { WorkerStamp } from '@/components/ui/WorkerStamp'
+import { Panel, PanelHeader, formatCount, formatShortDate, statusLabel, tone } from '../flock-ui'
 import { FlockHealthSchedule } from './FlockHealthSchedule'
 import { FlockQuickLog } from './FlockQuickLog'
 
-const ChartCard = dynamic(() => import('./FlockCharts').then((mod) => mod.ChartCard), {
-  ssr: false,
-  loading: () => <div className="h-64 animate-pulse rounded-lg bg-white/5" />,
-})
+const chartLoading = () => <div className={cn(tone.panel, 'h-80')} />
+
 const EggTrendPanel = dynamic(() => import('./FlockCharts').then((mod) => mod.EggTrendPanel), {
   ssr: false,
-  loading: () => <div className="h-64 animate-pulse rounded-lg bg-white/5" />,
+  loading: chartLoading,
 })
 const FinanceTrendPanel = dynamic(
   () => import('./FlockCharts').then((mod) => mod.FinanceTrendPanel),
   {
     ssr: false,
-    loading: () => <div className="h-64 animate-pulse rounded-lg bg-white/5" />,
+    loading: chartLoading,
   }
 )
-const MetricCard = dynamic(() => import('./FlockCharts').then((mod) => mod.MetricCard), {
-  ssr: false,
-})
 const MortalityTrendPanel = dynamic(
   () => import('./FlockCharts').then((mod) => mod.MortalityTrendPanel),
   {
     ssr: false,
-    loading: () => <div className="h-64 animate-pulse rounded-lg bg-white/5" />,
+    loading: chartLoading,
   }
 )
 const SalesTrendPanel = dynamic(() => import('./FlockCharts').then((mod) => mod.SalesTrendPanel), {
   ssr: false,
-  loading: () => <div className="h-64 animate-pulse rounded-lg bg-white/5" />,
+  loading: chartLoading,
 })
 
 interface FlockDetailClientProps {
   data: any
   eggsPerCrate?: number
+}
+
+const KIND_LABELS: Record<string, string> = {
+  EggBatch: 'Egg batch',
+}
+
+function kindLabel(kind: string | null | undefined, percentage?: number | null) {
+  const label = kind ? KIND_LABELS[kind] ?? kind : ''
+  return percentage != null ? `${label} ${percentage}%` : label
 }
 
 export const FlockDetailClient = ({ data, eggsPerCrate = 30 }: FlockDetailClientProps) => {
@@ -65,7 +58,7 @@ export const FlockDetailClient = ({ data, eggsPerCrate = 30 }: FlockDetailClient
     (batch.initialCostOther?.reduce((s: number, e: any) => s + Number(e.amount || 0), 0) || 0)
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-4 space-y-7 duration-700">
+    <div className="animate-in fade-in slide-in-from-bottom-2 space-y-6 duration-300">
       <FlockQuickLog
         batchId={batch.id}
         batchName={batch.batchName || 'This batch'}
@@ -77,46 +70,36 @@ export const FlockDetailClient = ({ data, eggsPerCrate = 30 }: FlockDetailClient
       />
 
       {/* Operational metrics */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard
-          title="Current Age"
-          value={`${metrics.ageInDays} Days`}
-          icon={Calendar}
-          color="emerald"
-          subtext={`Arrived ${new Date(batch.arrivalDate).toLocaleDateString()}`}
+      <StatStrip className="grid-cols-2 lg:grid-cols-4">
+        <Stat
+          title="Current age"
+          value={`${formatCount(metrics.ageInDays)} days`}
+          subtext={`Arrived ${formatShortDate(batch.arrivalDate)}`}
         />
-        <MetricCard
-          title="Feed Conversion (FCR)"
-          value={metrics.fcr > 0 ? metrics.fcr.toFixed(2) : '---'}
-          icon={Activity}
-          color="amber"
-          subtext={`${metrics.totalFeed.toLocaleString()} bags fed`}
+        <Stat
+          title="Feed conversion (FCR)"
+          value={metrics.fcr > 0 ? metrics.fcr.toFixed(2) : '—'}
+          subtext={`${formatCount(metrics.totalFeed)} bags fed`}
         />
-        <MetricCard
-          title="Mortality Rate"
+        <Stat
+          title="Mortality rate"
           value={`${metrics.mortalityRate.toFixed(1)}%`}
-          icon={Skull}
-          color="red"
-          subtext={`${metrics.totalMortality} total deaths`}
+          subtext={`${formatCount(metrics.totalMortality)} deaths in total`}
         />
-        <MetricCard
-          title="Current Stock"
-          value={batch.currentCount.toLocaleString()}
-          icon={TrendingUp}
-          color="blue"
-          subtext={batch.isolationCount > 0 ? `${batch.isolationCount} in isolation` : `from ${batch.initialCount.toLocaleString()}`}
+        <Stat
+          title="Current stock"
+          value={formatCount(batch.currentCount)}
+          subtext={batch.isolationCount > 0 ? `${formatCount(batch.isolationCount)} in isolation` : `from ${formatCount(batch.initialCount)}`}
         />
-      </div>
+      </StatStrip>
 
       {/* Finance metrics */}
       {finance.canViewFinance ? (
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-          <MetricCard title="Total Revenue" value={formatCurrency(finance.totalRevenue, 'GHS')} icon={Wallet} color="sky" subtext="From sales" />
-          <MetricCard
-            title="Total Expenses"
+        <StatStrip className="grid-cols-1 sm:grid-cols-3">
+          <Stat title="Total revenue" value={formatCurrency(finance.totalRevenue, 'GHS')} subtext="From sales" />
+          <Stat
+            title="Total expenses"
             value={formatCurrency(finance.totalExpenses, 'GHS')}
-            icon={Banknote}
-            color="orange"
             subtext={
               [
                 finance.initialInvestment > 0 ? `${formatCurrency(finance.initialInvestment, 'GHS')} initial` : null,
@@ -129,19 +112,18 @@ export const FlockDetailClient = ({ data, eggsPerCrate = 30 }: FlockDetailClient
                 .join(' · ') || 'Operating costs'
             }
           />
-          <MetricCard
-            title="Net Profit"
+          <Stat
+            title="Net profit"
             value={formatCurrency(finance.netProfit, 'GHS')}
-            icon={finance.netProfit >= 0 ? TrendingUp : TrendingDown}
-            color={finance.netProfit >= 0 ? 'emerald' : 'red'}
+            valueClassName={finance.netProfit >= 0 ? tone.accent : tone.negative}
             subtext={finance.netProfit >= 0 ? 'In profit' : 'In loss'}
           />
-        </div>
+        </StatStrip>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-7 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Charts column */}
-        <div className="space-y-7 lg:col-span-2">
+        <div className="min-w-0 space-y-6 lg:col-span-2">
           <FinanceTrendPanel
             summary={series.financeSummary}
             monthly={series.financeMonthly}
@@ -155,7 +137,7 @@ export const FlockDetailClient = ({ data, eggsPerCrate = 30 }: FlockDetailClient
         </div>
 
         {/* Sidebar column */}
-        <div className="space-y-7">
+        <div className="min-w-0 space-y-6">
           <FlockHealthSchedule
             batchId={batch.id}
             vaccinations={logs.vaccinations}
@@ -169,37 +151,74 @@ export const FlockDetailClient = ({ data, eggsPerCrate = 30 }: FlockDetailClient
 
           {finance.canViewFinance ? <ExpenseBreakdown items={finance.expenseBreakdown} /> : null}
 
-          <div className="glass-morphism rounded-lg border-dashed p-7 shadow-2xl">
-            <h4 className="mb-5 border-b border-white/5 pb-2 text-xs font-bold uppercase italic tracking-widest text-white/80">Batch Metadata</h4>
-            <div className="space-y-5">
-              <MetaItem label="Unit Name" value={batch.batchName || 'Selected unit'} />
+          <Panel>
+            <PanelHeader title="Batch details" />
+            <dl className="divide-y divide-white/[0.06]">
+              <MetaItem label="Unit name" value={batch.batchName || 'Selected unit'} />
               <MetaItem label="Housing" value={batch.house?.name || 'House not named'} />
-              <MetaItem label="Status" value={String(batch.status).toUpperCase()} />
-            </div>
-          </div>
+              <MetaItem label="Status" value={statusLabel(batch.status)} />
+            </dl>
+          </Panel>
 
           {initialInvestment > 0 ? (
-            <div className="rounded-lg border border-emerald-500/10 bg-emerald-500/10 p-7 shadow-2xl backdrop-blur-xl">
-              <h4 className="mb-5 flex items-center gap-2 border-b border-emerald-500/10 pb-2 text-xs font-bold uppercase italic tracking-widest text-emerald-400">
-                <Banknote className="h-3.5 w-3.5" /> Initial Investment
-              </h4>
-              <div className="space-y-3">
-                <InvestmentRow label="Purchase Cost" value={batch.initialCostActual} />
-                {batch.initialCostCarriage > 0 ? <InvestmentRow label="Transport / Carriage" value={batch.initialCostCarriage} /> : null}
+            <Panel>
+              <PanelHeader title="Initial investment" />
+              <dl className="space-y-3 px-5 py-4">
+                <InvestmentRow label="Purchase cost" value={batch.initialCostActual} />
+                {batch.initialCostCarriage > 0 ? <InvestmentRow label="Transport and carriage" value={batch.initialCostCarriage} /> : null}
                 {batch.initialCostOther?.map((expense: any, idx: number) => (
                   <InvestmentRow key={idx} label={expense.label} value={Number(expense.amount)} />
                 ))}
-                <div className="mt-2 flex items-center justify-between border-t border-emerald-500/10 pt-3">
-                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">Total</span>
-                  <span className="text-lg font-bold text-emerald-400">{formatCurrency(initialInvestment, 'GHS')}</span>
-                </div>
+              </dl>
+              <div className={cn('flex items-baseline justify-between gap-3 border-t px-5 py-4', tone.hairline)}>
+                <span className={cn('text-[13px]', tone.text2)}>Total</span>
+                <span className={cn('text-base font-medium tabular-nums', tone.text)}>
+                  {formatCurrency(initialInvestment, 'GHS')}
+                </span>
               </div>
-            </div>
+            </Panel>
           ) : null}
         </div>
       </div>
     </div>
   )
+}
+
+function StatStrip({ className, children }: { className?: string; children: React.ReactNode }) {
+  return (
+    <div className={cn('grid gap-px overflow-hidden rounded-xl border border-white/[0.08] bg-[#29292c]', className)}>
+      {children}
+    </div>
+  )
+}
+
+function Stat({
+  title,
+  value,
+  subtext,
+  valueClassName,
+}: {
+  title: string
+  value: string
+  subtext?: string
+  valueClassName?: string
+}) {
+  return (
+    <div className="min-w-0 bg-[#19191b] p-4 md:p-5">
+      <p className={cn('text-[13px]', tone.text2)}>{title}</p>
+      <p className={cn('mt-2 text-2xl font-medium leading-none tabular-nums md:text-[28px]', tone.text, valueClassName)}>
+        {value}
+      </p>
+      {subtext ? <p className={cn('mt-2 text-xs', tone.muted)}>{subtext}</p> : null}
+    </div>
+  )
+}
+
+const TIMELINE_LABELS: Record<string, string> = {
+  FEED: 'Feed',
+  MORTALITY: 'Mortality',
+  EGGS: 'Eggs',
+  WEIGHT: 'Weight',
 }
 
 function ActivityTimeline({ logs, eggsPerCrate = 30 }: { logs: any; eggsPerCrate?: number }) {
@@ -218,51 +237,75 @@ function ActivityTimeline({ logs, eggsPerCrate = 30 }: { logs: any; eggsPerCrate
     const rem = eggs % epc
     const crateLabel = crates === 1 ? 'crate' : 'crates'
     return rem > 0
-      ? `Collected ${crates} ${crateLabel} / ${rem} eggs`
+      ? `Collected ${crates} ${crateLabel} and ${rem} eggs`
       : `Collected ${crates} ${crateLabel}`
   }
 
   return (
-    <ChartCard title="Activity Timeline" icon={Clock} iconClass="text-blue-400">
+    <Panel>
+      <PanelHeader title="Recent activity" />
       {items.length === 0 ? (
-        <div className="py-10 text-center text-xs font-bold uppercase italic tracking-widest text-white/40">No activity logged yet.</div>
+        <p className={cn('px-5 py-10 text-center text-[13px]', tone.text2)}>No activity logged yet</p>
       ) : (
-        <div className="relative translate-x-3 space-y-0">
-          <div className="absolute bottom-0 left-0 top-0 w-px bg-white/15" />
+        <ol className="px-5 py-2">
           {items.map((item, idx) => (
-            <div key={idx} className="relative pb-6 pl-9">
-              <div className="absolute left-0 top-0.5 h-2.5 w-2.5 -translate-x-1/2 rounded-full border-2 border-slate-900 bg-white shadow-[0_0_10px_rgba(255,255,255,0.5)]" />
-              <p className="mb-1 text-[9px] font-bold uppercase italic tracking-widest text-white/50">{new Date(item.logDate).toLocaleString()}</p>
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  <span
-                    className={cn(
-                      'rounded-lg border px-2 py-0.5 text-xs font-bold',
-                      item._type === 'FEED'
-                        ? 'border-amber-500/20 bg-amber-500/10 text-amber-400'
-                        : item._type === 'MORTALITY'
-                          ? 'border-red-500/20 bg-red-500/10 text-red-500'
-                          : item._type === 'EGGS'
-                            ? 'border-blue-500/20 bg-blue-500/10 text-blue-400'
-                            : 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400'
-                    )}
-                  >
-                    {item._type}
-                  </span>
-                  <span className="text-sm font-bold text-white">
-                    {item._type === 'FEED' ? `Logged ${item.amountConsumed} bags consumption` : null}
-                    {item._type === 'MORTALITY' ? `Recorded ${item.count} ${item.type === 'SICK' ? 'sick' : 'deaths'}` : null}
+            <li key={idx} className="relative flex gap-4 py-3">
+              <div className="relative flex w-2 shrink-0 justify-center">
+                {idx < items.length - 1 ? <span className="absolute bottom-[-12px] top-5 w-px bg-white/[0.08]" /> : null}
+                <span
+                  className={cn(
+                    'mt-1.5 h-2 w-2 rounded-full',
+                    item._type === 'MORTALITY' ? 'bg-[#e5484d]' : item._type === 'EGGS' ? 'bg-[#34d399]' : 'bg-[#5f5f65]'
+                  )}
+                />
+              </div>
+              <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className={cn('text-sm', tone.text)}>
+                    {item._type === 'FEED' ? `Logged ${formatCount(item.amountConsumed)} bags of feed` : null}
+                    {item._type === 'MORTALITY' ? `Recorded ${formatCount(item.count)} ${item.type === 'SICK' ? 'sick' : 'deaths'}` : null}
                     {item._type === 'EGGS' ? formatEggLine(Number(item.eggsCollected || 0)) : null}
-                    {item._type === 'WEIGHT' ? `Average weight: ${item.averageWeight}kg` : null}
-                  </span>
+                    {item._type === 'WEIGHT' ? `Average weight ${item.averageWeight} kg` : null}
+                  </p>
+                  <p className={cn('mt-0.5 text-xs', tone.muted)}>
+                    {TIMELINE_LABELS[item._type]} ·{' '}
+                    <span className="font-mono tabular-nums">
+                      {new Date(item.logDate).toLocaleString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  </p>
                 </div>
                 <WorkerStamp user={item.user} />
               </div>
-            </div>
+            </li>
           ))}
-        </div>
+        </ol>
       )}
-    </ChartCard>
+    </Panel>
+  )
+}
+
+function BreakdownRow({
+  title,
+  meta,
+  amount,
+}: {
+  title: string
+  meta: React.ReactNode
+  amount: number
+}) {
+  return (
+    <div className="flex items-start justify-between gap-3 px-5 py-3">
+      <div className="min-w-0">
+        <p className={cn('truncate text-sm', tone.text)}>{title}</p>
+        <p className={cn('mt-0.5 text-xs', tone.muted)}>{meta}</p>
+      </div>
+      <span className={cn('shrink-0 text-sm tabular-nums', tone.text)}>{formatCurrency(amount, 'GHS')}</span>
+    </div>
   )
 }
 
@@ -270,58 +313,35 @@ function RevenueBreakdown({ items }: { items?: any[] }) {
   const rows = Array.isArray(items) ? items : []
   const total = rows.reduce((sum, item) => sum + Number(item.amount || 0), 0)
   return (
-    <div className="glass-morphism overflow-hidden rounded-lg shadow-2xl">
-      <div className="flex items-center gap-2 border-b border-white/10 bg-white/[0.04] px-5 py-4">
-        <Wallet className="h-4 w-4 text-sky-400" />
-        <h3 className="text-sm font-bold uppercase italic tracking-normal text-white">Revenue Breakdown</h3>
-      </div>
+    <Panel>
+      <PanelHeader title="Revenue breakdown" />
       {rows.length === 0 ? (
-        <div className="py-8 text-center text-xs italic text-white/40">No revenue recorded for this batch.</div>
+        <p className={cn('px-5 py-8 text-center text-[13px]', tone.text2)}>No revenue recorded for this batch</p>
       ) : (
-        <div className="max-h-80 divide-y divide-white/5 overflow-y-auto custom-scrollbar">
+        <div className="custom-scrollbar max-h-80 divide-y divide-white/[0.06] overflow-y-auto">
           {rows.map((item) => (
-            <div key={item.id} className="flex items-center justify-between gap-3 px-5 py-3">
-              <div className="min-w-0">
-                <p className="truncate text-xs font-bold text-white">{item.description}</p>
-                <div className="mt-0.5 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-white/45">
-                  <span>{new Date(item.date).toLocaleDateString()}</span>
-                  {item.quantity != null ? (
-                    <>
-                      <span className="text-white/20">·</span>
-                      <span>{item.quantity} units</span>
-                    </>
-                  ) : null}
-                  <span
-                    className={cn(
-                      'rounded px-1.5 py-0.5',
-                      item.kind === 'Direct'
-                        ? 'bg-sky-500/10 text-sky-300'
-                        : item.kind === 'Allocated'
-                          ? 'bg-emerald-500/10 text-emerald-300'
-                          : item.kind === 'EggBatch'
-                            ? 'bg-blue-500/10 text-blue-300'
-                            : item.kind === 'Ledger'
-                              ? 'bg-violet-500/10 text-violet-300'
-                              : 'bg-amber-500/10 text-amber-300'
-                    )}
-                  >
-                    {item.kind}
-                    {item.percentage != null ? ` ${item.percentage}%` : ''}
-                  </span>
-                </div>
-              </div>
-              <span className="shrink-0 text-sm font-bold text-emerald-400">{formatCurrency(item.amount, 'GHS')}</span>
-            </div>
+            <BreakdownRow
+              key={item.id}
+              title={item.description}
+              amount={item.amount}
+              meta={[
+                formatShortDate(item.date),
+                item.quantity != null ? `${formatCount(item.quantity)} units` : null,
+                kindLabel(item.kind, item.percentage),
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            />
           ))}
         </div>
       )}
-      <div className="flex items-center justify-between border-t border-white/10 bg-white/[0.03] px-5 py-3">
-        <span className="text-[10px] font-bold uppercase tracking-widest text-white/60">
-          {rows.length} entr{rows.length === 1 ? 'y' : 'ies'}
+      <div className={cn('flex items-baseline justify-between gap-3 border-t px-5 py-4', tone.hairline)}>
+        <span className={cn('text-xs', tone.muted)}>
+          <span className="font-mono tabular-nums">{rows.length}</span> entr{rows.length === 1 ? 'y' : 'ies'}
         </span>
-        <span className="text-sm font-bold text-sky-300">{formatCurrency(total, 'GHS')}</span>
+        <span className={cn('text-sm font-medium tabular-nums', tone.text)}>{formatCurrency(total, 'GHS')}</span>
       </div>
-    </div>
+    </Panel>
   )
 }
 
@@ -333,65 +353,46 @@ function ExpenseBreakdown({ items }: { items?: any[] }) {
     )
   }, [items])
   return (
-    <div className="glass-morphism overflow-hidden rounded-lg shadow-2xl">
-      <div className="flex items-center gap-2 border-b border-white/10 bg-white/[0.04] px-5 py-4">
-        <Banknote className="h-4 w-4 text-orange-400" />
-        <h3 className="text-sm font-bold uppercase italic tracking-normal text-white">Expense Breakdown</h3>
-      </div>
+    <Panel>
+      <PanelHeader title="Expense breakdown" />
       {rows.length === 0 ? (
-        <div className="py-8 text-center text-xs italic text-white/40">No expenses recorded for this batch.</div>
+        <p className={cn('px-5 py-8 text-center text-[13px]', tone.text2)}>No expenses recorded for this batch</p>
       ) : (
-        <div className="max-h-80 divide-y divide-white/5 overflow-y-auto custom-scrollbar">
+        <div className="custom-scrollbar max-h-80 divide-y divide-white/[0.06] overflow-y-auto">
           {rows.map((item) => (
-            <div key={item.id} className="flex items-center justify-between gap-3 px-5 py-3">
-              <div className="min-w-0">
-                <p className="truncate text-xs font-bold text-white">{item.description}</p>
-                <div className="mt-0.5 flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-white/45">
-                  <span>{item.category}</span>
-                  <span className="text-white/20">·</span>
-                  <span>{new Date(item.date).toLocaleDateString()}</span>
-                  <span
-                    className={cn(
-                      'rounded px-1.5 py-0.5',
-                      item.kind === 'Initial'
-                        ? 'bg-violet-500/10 text-violet-300'
-                        : item.kind === 'Allocated'
-                          ? 'bg-sky-500/10 text-sky-300'
-                          : item.kind === 'Consumption'
-                            ? 'bg-emerald-500/10 text-emerald-300'
-                            : item.kind === 'General'
-                              ? 'bg-amber-500/10 text-amber-300'
-                              : 'bg-orange-500/10 text-orange-300'
-                    )}
-                  >
-                    {item.kind}
-                    {item.percentage != null ? ` ${item.percentage}%` : ''}
-                  </span>
-                </div>
-              </div>
-              <span className="shrink-0 text-sm font-bold text-white">{formatCurrency(item.amount, 'GHS')}</span>
-            </div>
+            <BreakdownRow
+              key={item.id}
+              title={item.description}
+              amount={item.amount}
+              meta={[
+                item.category ? String(item.category).charAt(0) + String(item.category).slice(1).toLowerCase() : null,
+                formatShortDate(item.date),
+                kindLabel(item.kind, item.percentage),
+              ]
+                .filter(Boolean)
+                .join(' · ')}
+            />
           ))}
         </div>
       )}
-    </div>
+    </Panel>
   )
 }
 
 function MetaItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col gap-1">
-      <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-white/60">{label}</span>
-      <span className="text-sm font-bold tracking-normal text-white">{value}</span>
+    <div className="flex items-baseline justify-between gap-4 px-5 py-3">
+      <dt className={cn('text-[13px]', tone.text2)}>{label}</dt>
+      <dd className={cn('min-w-0 truncate text-right text-sm', tone.text)}>{value}</dd>
     </div>
   )
 }
 
 function InvestmentRow({ label, value }: { label: string; value: number }) {
   return (
-    <div className="flex items-center justify-between">
-      <span className="text-xs font-bold text-white/70">{label}</span>
-      <span className="text-sm font-bold text-white">{formatCurrency(value, 'GHS')}</span>
+    <div className="flex items-baseline justify-between gap-4">
+      <dt className={cn('text-[13px]', tone.text2)}>{label}</dt>
+      <dd className={cn('text-sm tabular-nums', tone.text)}>{formatCurrency(value, 'GHS')}</dd>
     </div>
   )
 }

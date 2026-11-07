@@ -1,7 +1,6 @@
 import React from 'react';
 import { getAllBatches, getHouses, getIsolationRooms } from '@/lib/actions/dashboard-actions';
 import { FlockActionsHeader } from './FlockActions';
-import { Bird } from 'lucide-react';
 import { LivestockTable } from './LivestockTable';
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
 import { redirect } from 'next/navigation';
@@ -33,22 +32,16 @@ export default async function FlocksPage() {
   const isolationRooms = JSON.parse(JSON.stringify(rawIsolationRooms));
 
   return (
-    <div className="max-w-7xl mx-auto space-y-7 px-0 md:px-3 pt-2 pb-7 md:py-7">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white p-7 rounded-lg shadow-sm border border-gray-100 gap-4">
-        <div>
-          <h1 className="text-2xl md:text-4xl font-bold text-gray-900 tracking-normal">Livestock <span className="text-emerald-600 italic tracking-normal">Management</span></h1>
-          <p className="text-gray-500 font-bold uppercase tracking-widest text-[10px] md:text-xs mt-1 flex items-center gap-2">
-            <Bird className="w-3 h-3 md:w-4 md:h-4 text-emerald-600" /> Lifecycle &amp; Performance Tracking
-          </p>
+    <div className="mx-auto max-w-7xl space-y-6 px-0 pb-8 pt-2 md:px-4 md:py-8">
+      <header className="flex flex-col gap-4 px-1 md:flex-row md:items-end md:justify-between md:px-0">
+        <div className="min-w-0">
+          <h1 className="text-[28px] font-medium leading-tight text-[#ededed] md:text-[32px]">Livestock</h1>
+          <p className="mt-1 text-sm text-[#a1a1a6]">Every batch and herd on the farm, from arrival to sale</p>
         </div>
-        <div className="w-full md:w-auto">
-          <FlockActionsHeader houses={houses} canEdit={canEdit} />
-        </div>
-      </div>
+        <FlockActionsHeader houses={houses} canEdit={canEdit} />
+      </header>
 
-      <div className="w-full mt-4">
-        <LivestockTable initialBatches={batches} houses={houses} isolationRooms={isolationRooms} canEdit={canEdit} />
-      </div>
+      <LivestockTable initialBatches={batches} houses={houses} isolationRooms={isolationRooms} canEdit={canEdit} />
     </div>
   );
 }
