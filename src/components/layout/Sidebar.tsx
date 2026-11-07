@@ -52,26 +52,23 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
 
         {/* Dashboard is a direct link; each group icon opens a flyout with that group's pages */}
         <nav aria-label="Main" className="flex flex-col items-center gap-4">
+          {/* Dashboard stands out from the groups: solid emerald tile, set apart by a divider */}
           {showDashboard && (
-            <Link
-              href={DASHBOARD_NAV_ITEM.href}
-              title={DASHBOARD_NAV_ITEM.name}
-              aria-current={dashboardActive ? 'page' : undefined}
-              className={cn(
-                "flex w-16 flex-col items-center gap-1 rounded-md py-2 transition-all duration-300 group/item focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400/60",
-                dashboardActive
-                  ? "bg-emerald-500/20 text-emerald-400 shadow-[inset_0_0_20px_rgba(16,185,129,0.1)] border border-emerald-500/20"
-                  : "text-white/80 hover:text-white hover:bg-white/15 border border-transparent"
-              )}
-            >
-              <DASHBOARD_NAV_ITEM.icon
+            <>
+              <Link
+                href={DASHBOARD_NAV_ITEM.href}
+                title={DASHBOARD_NAV_ITEM.name}
+                aria-current={dashboardActive ? 'page' : undefined}
                 className={cn(
-                  "w-6 h-6 transition-all duration-300 group-hover/item:scale-110",
-                  dashboardActive ? "text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]" : "text-white/70 group-hover/item:text-white"
+                  "flex w-16 flex-col items-center gap-1 rounded-lg py-2.5 border border-emerald-300/60 bg-gradient-to-b from-emerald-400 to-emerald-600 text-[#04120c] shadow-[0_6px_20px_rgba(16,185,129,0.35)] transition-all duration-300 group/item hover:from-emerald-300 hover:to-emerald-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200",
+                  dashboardActive && "ring-2 ring-emerald-300/70 ring-offset-2 ring-offset-[#0a140f]"
                 )}
-              />
-              <span className="text-[10px] font-semibold leading-none">{DASHBOARD_NAV_ITEM.name}</span>
-            </Link>
+              >
+                <DASHBOARD_NAV_ITEM.icon className="w-6 h-6 transition-transform duration-300 group-hover/item:scale-110" strokeWidth={2.4} />
+                <span className="text-[10px] font-bold leading-none">{DASHBOARD_NAV_ITEM.name}</span>
+              </Link>
+              <div aria-hidden="true" className="h-px w-10 bg-white/15" />
+            </>
           )}
 
           {categories.map((category) => {

@@ -142,20 +142,18 @@ export const BottomNav = ({ role, permissions }: { role?: string; permissions?: 
               href={DASHBOARD_NAV_ITEM.href}
               onClick={close}
               aria-current={dashboardActive ? 'page' : undefined}
-              className={cn(
-                'flex flex-col items-center justify-center gap-1 px-1',
-                dashboardHighlighted ? 'text-emerald-300' : 'text-white/55',
-              )}
+              className="flex flex-col items-center justify-center gap-1 border-r border-white/10 px-1 text-emerald-300"
             >
+              {/* Larger raised emerald button so Dashboard stands out from the three group tabs */}
               <span
                 className={cn(
-                  'flex h-8 w-12 items-center justify-center rounded-full transition-colors',
-                  dashboardHighlighted && 'bg-emerald-400/15',
+                  '-mt-6 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-b from-emerald-400 to-emerald-600 text-[#04120c] shadow-[0_8px_22px_rgba(16,185,129,0.45)] ring-4 ring-[#06110d]',
+                  dashboardHighlighted && 'outline outline-2 outline-offset-4 outline-emerald-300/70',
                 )}
               >
-                <DASHBOARD_NAV_ITEM.icon className="h-[22px] w-[22px]" strokeWidth={dashboardHighlighted ? 2.4 : 2} />
+                <DASHBOARD_NAV_ITEM.icon className="h-7 w-7" strokeWidth={2.4} />
               </span>
-              <span className="text-[10px] font-semibold leading-none">{DASHBOARD_NAV_ITEM.name}</span>
+              <span className="text-[10px] font-bold leading-none">{DASHBOARD_NAV_ITEM.name}</span>
             </Link>
           )}
           {categories.map((category) => {
