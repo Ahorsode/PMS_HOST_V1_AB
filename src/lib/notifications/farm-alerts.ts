@@ -1,4 +1,4 @@
-import prisma from '@/lib/db'
+import prisma, { type DbTransactionClient } from '@/lib/db'
 import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions'
 import { feedCategoryFilter, isLowStock, type StockItem } from '@/lib/inventory/feed-categories'
@@ -146,7 +146,7 @@ export async function getFarmAlerts(now = new Date()): Promise<FarmAlert[]> {
     b?.batchName || (b?.localBatchId != null ? `Batch ${b.localBatchId}` : id)
 
   try {
-    return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    return await prisma.$withFarmContext(userId, activeFarmId, async (tx: DbTransactionClient): Promise<FarmAlert[]> => {
       const [settings, eggsToday, feedLogsToday, layerCount, vaccinations, medications, feedStock] = await Promise.all([
         tx.farmSettings.findUnique({
           where: { farmId: activeFarmId },
@@ -179,19 +179,23 @@ export async function getFarmAlerts(now = new Date()): Promise<FarmAlert[]> {
         hasEggLogToday: Number(eggsToday?._sum?.eggsCollected ?? 0) > 0,
         hasFeedLogToday: feedLogsToday > 0,
         activeLayerBatchCount: layerCount,
-        vaccinations: vaccinations.map((v: any) => ({
+        vaccinations: vaccinations.map((v) => ({
           id: v.id,
           name: v.vaccineName,
           batchName: batchName(v.batch, v.batchId),
           scheduledDate: v.scheduledDate,
         })),
-        medications: medications.map((m: any) => ({
+        medications: medications.map((m) => ({
           id: m.id,
           name: m.medicationName,
           batchName: batchName(m.batch, m.batchId),
           scheduledDate: m.scheduledDate,
         })),
-        feedStock,
+        feedStock: feedStock.map((item) => ({
+          ...item,
+          stockLevel: Number(item.stockLevel),
+          reorderLevel: item.reorderLevel == null ? null : Number(item.reorderLevel),
+        })),
       })
     })
   } catch (error) {
