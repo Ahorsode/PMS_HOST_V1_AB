@@ -7,13 +7,13 @@ import { redirect } from 'next/navigation';
 const BatchComparison = dynamic(
   () => import('@/components/analytics/BatchComparison').then((mod) => mod.BatchComparison),
   {
-    loading: () => <div className="h-64 animate-pulse rounded-lg bg-white/5" />,
+    loading: () => <div className="h-64 animate-pulse rounded-2xl bg-white/[0.04]" />,
   }
 );
 
 export const metadata = {
-  title: 'Comparative Analytics | Poultry PMS',
-  description: 'Compare batch performance, egg production, and finance side-by-side with industry benchmarks.',
+  title: 'Batch comparison | Poultry PMS',
+  description: 'Compare batch profit, egg production, feed conversion and mortality side by side.',
 };
 
 export default async function CompareAnalyticsPage() {
