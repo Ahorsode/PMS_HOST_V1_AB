@@ -183,9 +183,9 @@ export function SpecifyAllocationDialog({ isOpen, onOpenChange, totalAmount, onS
     >
       <div className="space-y-5 pt-2">
         {loading ? (
-          <p className="text-xs font-bold uppercase tracking-wider text-white/50">Loading active batches…</p>
+          <p className="text-xs font-medium text-white/50">Loading active batches…</p>
         ) : batches.length === 0 ? (
-          <p className="text-xs font-bold text-amber-300">No active livestock batches found to allocate to.</p>
+          <p className="text-xs font-medium text-[#ededed]">No active livestock batches found to allocate to.</p>
         ) : (
           <>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
@@ -285,12 +285,12 @@ export function SpecifyAllocationDialog({ isOpen, onOpenChange, totalAmount, onS
                 {buildPresetPreview(batches, totalAmount, preset, allocationMode).map((row) => (
                   <div key={row.batchId} className="flex items-center justify-between gap-3 text-xs">
                     <span className="min-w-0 truncate text-white/70">{row.name}</span>
-                    <span className="shrink-0 text-right font-bold text-emerald-400">
+                    <span className="shrink-0 text-right font-medium text-[#ededed]">
                       {row.amount != null && row.amount > 0 ? (
                         <>
                           GH₵ {formatMoney(row.amount)}
                           {row.percentage != null ? (
-                            <span className="ml-1.5 font-semibold text-white/45">· {row.percentage.toFixed(2)}%</span>
+                            <span className="ml-1.5 font-medium text-white/45">· {row.percentage.toFixed(2)}%</span>
                           ) : null}
                         </>
                       ) : (
@@ -304,23 +304,23 @@ export function SpecifyAllocationDialog({ isOpen, onOpenChange, totalAmount, onS
 
             <div
               className={cn(
-                'flex items-center gap-2 rounded-md border px-3 py-2 text-xs font-bold',
+                'flex items-center gap-2 rounded-md border px-3 py-2 text-xs font-medium',
                 canSave
-                  ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
-                  : 'border-amber-500/30 bg-amber-500/10 text-amber-200'
+                  ? 'border-white/[0.08] bg-white/[0.04] text-[#34d399]'
+                  : 'border-white/[0.08] bg-white/[0.04] text-[#d9a441]'
               )}
             >
               {canSave ? <CheckCircle2 className="h-4 w-4 shrink-0" /> : <AlertCircle className="h-4 w-4 shrink-0" />}
               {balanceLabel}
             </div>
 
-            {error ? <p className="text-xs font-bold text-red-400">{error}</p> : null}
+            {error ? <p className="text-xs font-medium text-[#f2777b]">{error}</p> : null}
 
             <div className="flex gap-2 pt-1">
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="flex-1">
                 Cancel
               </Button>
-              <Button type="button" onClick={handleSave} disabled={!canSave} className="flex-[2] bg-emerald-500 text-black font-bold">
+              <Button type="button" onClick={handleSave} disabled={!canSave} className="flex-[2] bg-[#232325] text-[#ededed] border border-white/[0.08] font-medium">
                 Apply allocation
               </Button>
             </div>
@@ -370,15 +370,15 @@ function PresetButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'rounded-lg border p-3 text-left transition-all',
+        'rounded-lg border p-3 text-left transition-colors',
         active
-          ? 'border-emerald-500/40 bg-emerald-500/10 text-white'
+          ? 'border-white/[0.08] bg-white/[0.04] text-white'
           : 'border-white/10 bg-white/[0.03] text-white/70 hover:bg-white/[0.06]'
       )}
     >
       <Icon className={cn('mb-2 h-4 w-4', active ? 'text-emerald-400' : 'text-white/40')} />
-      <p className="text-xs font-bold">{title}</p>
-      <p className="text-[10px] text-white/45">{subtitle}</p>
+      <p className="text-xs font-medium">{title}</p>
+      <p className="text-xs text-white/45">{subtitle}</p>
     </button>
   )
 }
@@ -399,8 +399,8 @@ function ModeButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'inline-flex w-full items-center justify-center gap-1.5 rounded-md px-2 py-2.5 text-[11px] font-bold transition-all sm:text-xs',
-        active ? 'bg-emerald-500 text-black' : 'text-white/60 hover:text-white'
+        'inline-flex w-full items-center justify-center gap-1.5 rounded-md px-2 py-2.5 text-[11px] font-medium transition-colors sm:text-xs',
+        active ? 'bg-[#2c2c2f] text-[#ededed] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'text-white/60 hover:text-white'
       )}
     >
       <Icon className="h-3.5 w-3.5" />

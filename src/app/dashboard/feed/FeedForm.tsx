@@ -112,7 +112,7 @@ export const FeedForm = ({
   if (feedOptions.length === 0) {
     return (
       <div className="space-y-4 p-4 text-center">
-        <p className="text-amber-400 font-bold text-base">
+        <p className="text-[#ededed] font-medium text-base">
           No Feed Inventory or Formulations!
         </p>
         <p className="text-white/70 text-sm">
@@ -124,18 +124,18 @@ export const FeedForm = ({
               onClose();
               router.push('/dashboard/inventory');
             }}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+            className="w-full bg-[#ededed] hover:bg-white text-[#141415] font-medium"
           >
-            Go to Inventory
+            Go to inventory
           </Button>
           <Button
             onClick={() => {
               onClose();
               router.push('/dashboard/feed');
             }}
-            className="w-full border border-white/20 text-white hover:bg-white/10 font-bold bg-transparent"
+            className="w-full border border-white/20 text-white hover:bg-white/10 font-medium bg-transparent"
           >
-            Create Formulation
+            Create formulation
           </Button>
         </div>
       </div>
@@ -145,11 +145,11 @@ export const FeedForm = ({
   if (batches.length === 0) {
     return (
       <div className="space-y-4 p-4 text-center">
-        <p className="text-amber-400 font-bold text-base">No active batches found</p>
+        <p className="text-[#ededed] font-medium text-base">No active batches found</p>
         <p className="text-white/70 text-sm">
           Create or activate a livestock batch before logging feed consumption.
         </p>
-        <Button onClick={onClose} className="w-full border border-white/20 text-white hover:bg-white/10 font-bold bg-transparent">
+        <Button onClick={onClose} className="w-full border border-white/20 text-white hover:bg-white/10 font-medium bg-transparent">
           Close
         </Button>
       </div>
@@ -159,7 +159,7 @@ export const FeedForm = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       {error && (
-        <p className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm font-medium text-red-300">
+        <p className="rounded-md border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm font-medium text-[#f2777b]">
           {error}
         </p>
       )}
@@ -175,7 +175,7 @@ export const FeedForm = ({
         required
       />
       <Select
-        label="Feed Type"
+        label="Feed type"
         options={feedOptions}
         value={formData.feedSource}
         onChange={(e) => setFormData({ ...formData, feedSource: e.target.value })}
@@ -184,7 +184,7 @@ export const FeedForm = ({
       />
       <div>
         <Input
-          label="Amount Consumed (Bags)"
+          label="Amount consumed (bags)"
           type="number"
           min="0"
           step="0.01"
@@ -204,7 +204,7 @@ export const FeedForm = ({
               size="sm"
               variant="outline"
               onClick={() => setFormData({ ...formData, amountConsumed: amt })}
-              className="flex-1 text-sm font-bold border-emerald-500/30 text-emerald-100 hover:bg-emerald-500/20"
+              className="flex-1 text-sm font-medium border-white/[0.08] text-[#ededed] hover:bg-white/[0.04]"
             >
               {amt === 0.25 ? '1/4' : amt === 0.5 ? '1/2' : amt === 0.75 ? '3/4' : '1'} Bag
             </Button>
@@ -212,7 +212,7 @@ export const FeedForm = ({
         </div>
       </div>
       <Input
-        label="Log Date"
+        label="Log date"
         type="date"
         value={formData.logDate}
         onChange={(e) => setFormData({ ...formData, logDate: e.target.value })}
@@ -222,7 +222,7 @@ export const FeedForm = ({
       <div className="flex justify-end gap-2 pt-3">
         <Button variant="outline" type="button" onClick={onClose}>Cancel</Button>
         <Button type="submit" isLoading={isLoading}>
-          {mode === 'create' ? 'Save Log' : mode === 'edit' ? 'Update Log' : 'Save'}
+          {mode === 'create' ? 'Save Log' : mode === 'edit' ? 'Update log' : 'Save'}
         </Button>
       </div>
     </form>

@@ -1,6 +1,6 @@
 /**
- * Graphite surface tokens for the redesigned dashboard pages (Analytics, Eggs,
- * Quarantine). Neutral surfaces, three text roles and one emerald accent, so
+ * Graphite surface tokens shared by the dashboard shell and pages (flock-ui.tsx
+ * builds on these too). Neutral surfaces, three text roles and one emerald accent, so
  * the content carries the color instead of the chrome.
  */
 export const ink = {
@@ -17,6 +17,8 @@ export const ink = {
   positive: '#4cc38a',
   warning: '#d9a441',
   negative: '#e5484d',
+  /** Red for text and small marks on dark surfaces, where #e5484d reads too dim. */
+  negativeText: '#f2777b',
 } as const
 
 const focus = 'outline-none focus-visible:ring-2 focus-visible:ring-[#34d399]/60'

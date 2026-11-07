@@ -16,13 +16,13 @@ interface DialogProps {
 }
 
 export const DialogTitle = ({ children, className, id }: { children: React.ReactNode, className?: string, id?: string }) => (
-  <h3 id={id} className={cn("text-xl font-bold text-white tracking-normal uppercase italic translate-y-0.5", className)}>
+  <h3 id={id} className={cn("text-lg font-medium text-[#ededed]", className)}>
     {children}
   </h3>
 );
 
 export const DialogDescription = ({ children, className, id }: { children: React.ReactNode, className?: string, id?: string }) => (
-  <p id={id} className={cn("text-xs text-white/90 font-bold mt-1 tracking-normal", className)}>
+  <p id={id} className={cn("mt-1 text-sm text-[#a1a1a6]", className)}>
     {children}
   </p>
 );
@@ -66,27 +66,29 @@ export const Dialog = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
             onClick={() => onOpenChange(false)}
-            className="absolute inset-0 bg-black/90 backdrop-blur-md"
+            className="absolute inset-0 bg-black/70"
           />
 
           {/* Dialog Content */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
             role="dialog"
             aria-modal="true"
             aria-labelledby={title ? dialogId : undefined}
             aria-describedby={description ? descriptionId : undefined}
             className={cn(
-              "relative w-full max-w-xl max-h-[calc(90dvh-5.5rem)] md:max-h-[90dvh] flex flex-col bg-[#0f1115] border border-white/10 rounded-lg shadow-2xl overflow-hidden backdrop-blur-3xl",
+              "relative w-full max-w-xl max-h-[calc(90dvh-5.5rem)] md:max-h-[90dvh] flex flex-col overflow-hidden rounded-xl border border-white/[0.08] bg-[#19191b] shadow-[0_8px_24px_rgba(0,0,0,0.4)]",
               className
             )}
           >
             {/* Header */}
             {(title || description) && (
-              <div className="flex items-center justify-between border-b border-white/5 px-7 py-5 bg-white/[0.02]">
+              <div className="flex items-center justify-between gap-4 border-b border-white/[0.08] px-5 py-4">
                 <div>
                   {title && (
                     <DialogTitle id={dialogId}>
@@ -101,10 +103,10 @@ export const Dialog = ({
                 </div>
                 <button
                   onClick={() => onOpenChange(false)}
-                  className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md p-2 text-white/70 transition-all hover:bg-white/5 hover:text-white group"
+                  className="flex min-h-[40px] min-w-[40px] shrink-0 items-center justify-center rounded-lg text-[#85858b] transition-colors duration-150 hover:bg-white/[0.06] hover:text-[#ededed] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34d399]/60"
                   aria-label="Close dialog"
                 >
-                  <X className="w-5 h-5 group-hover:rotate-90 transition-transform" />
+                  <X className="h-5 w-5" strokeWidth={1.5} />
                 </button>
               </div>
             )}
@@ -113,14 +115,14 @@ export const Dialog = ({
             {!title && !description && (
               <button
                 onClick={() => onOpenChange(false)}
-                className="absolute top-6 right-8 flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md p-2 text-white/70 transition-all hover:bg-white/5 hover:text-white z-10 group"
+                className="absolute right-4 top-4 z-10 flex min-h-[40px] min-w-[40px] items-center justify-center rounded-lg text-[#85858b] transition-colors duration-150 hover:bg-white/[0.06] hover:text-[#ededed] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34d399]/60"
                 aria-label="Close dialog"
               >
-                <X className="w-5 h-5 group-hover:rotate-90 transition-transform" />
+                <X className="h-5 w-5" strokeWidth={1.5} />
               </button>
             )}
 
-            <div className="flex-1 min-h-0 overflow-y-auto px-7 py-5 custom-scrollbar pb-safe">
+            <div className="flex-1 min-h-0 overflow-y-auto px-5 py-5 custom-scrollbar pb-safe">
               {children}
             </div>
           </motion.div>

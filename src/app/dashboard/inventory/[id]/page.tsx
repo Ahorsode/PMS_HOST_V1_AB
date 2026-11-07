@@ -15,10 +15,10 @@ export default async function InventoryDetailPage({ params }: { params: Promise<
   return (
     <div className="mx-auto max-w-5xl space-y-6 px-0 pt-2 pb-7 md:p-8">
       <div>
-        <h1 className="text-3xl font-black tracking-tight text-white">
+        <h1 className="text-3xl font-medium leading-tight text-[#ededed]">
           {data.item.itemName}
           {data.isUsedUp ? (
-            <span className="ml-3 align-middle text-sm font-bold uppercase tracking-widest text-red-400">
+            <span className="ml-3 align-middle text-sm font-medium text-[#f2777b]">
               Used up
             </span>
           ) : null}

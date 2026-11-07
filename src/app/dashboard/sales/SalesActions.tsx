@@ -36,17 +36,17 @@ export function SalesActionsHeader({ customers, inventory, eggInventory, eggBatc
       {canEdit && (
         <button 
           onClick={() => setIsOpen(true)}
-          className="flex items-center gap-2 bg-emerald-500 text-[#064e3b] px-5 py-2 rounded-md font-bold uppercase tracking-widest text-[11px] transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] border border-emerald-400/50 hover:scale-105"
+          className="flex items-center gap-2 bg-emerald-500 text-[#064e3b] px-5 py-2 rounded-md font-medium text-[11px] transition-colors border border-white/[0.08]"
         >
           <Plus className="w-4 h-4" />
-          Record New Order
+          Record new order
         </button>
       )}
 
       <Dialog 
         isOpen={isOpen} 
         onOpenChange={setIsOpen}
-        title="Farm-Gate Sale Entry"
+        title="Farm-Gate sale entry"
         className="max-w-4xl"
       >
         <SalesForm 
@@ -156,16 +156,16 @@ export function SalesRowActions({ order, canEdit = true, canRecordPayment = fals
       <button 
         onClick={handleDownloadInvoice}
         disabled={isDownloadingInvoice}
-        title="Download Invoice"
-        className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md p-2.5 hover:bg-blue-500/10 text-blue-500/40 hover:text-blue-400 transition-all border border-transparent hover:border-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+        title="Download invoice"
+        className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md p-2.5 hover:bg-white/[0.06] text-[#a1a1a6] hover:text-[#a1a1a6] transition-colors border border-transparent hover:border-white/[0.08] disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isDownloadingInvoice ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
       </button>
       <button
         onClick={handleShareWhatsApp}
         disabled={!!updatingAction || isDownloadingInvoice}
-        title="Download and Share to WhatsApp Web"
-        className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md p-2.5 hover:bg-emerald-500/10 text-emerald-500/40 hover:text-emerald-400 transition-all border border-transparent hover:border-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+        title="Download and share to WhatsApp web"
+        className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md p-2.5 hover:bg-white/[0.04] text-[#ededed] hover:text-[#ededed] transition-colors border border-transparent hover:border-white/[0.08] disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {updatingAction === 'whatsapp' ? <Loader2 className="w-4 h-4 animate-spin" /> : <MessageCircle className="w-4 h-4" />}
       </button>
@@ -173,14 +173,14 @@ export function SalesRowActions({ order, canEdit = true, canRecordPayment = fals
       {canEdit && (
         <>
           {canRecordPayment && order.customerId && order.status === 'PENDING' && (
-            <button aria-label="Record Payment" 
+            <button aria-label="Record payment" 
               onClick={() => {
                 setPaymentAmount(Number(order.totalAmount));
                 setPaymentDate(toLocalDateTimeInputValue());
                 setIsPaymentOpen(true);
               }}
-              title="Record Payment"
-              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md p-2.5 hover:bg-emerald-500/10 text-emerald-500/40 hover:text-emerald-400 transition-all border border-transparent hover:border-emerald-500/20"
+              title="Record payment"
+              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md p-2.5 hover:bg-white/[0.04] text-[#ededed] hover:text-[#ededed] transition-colors border border-transparent hover:border-white/[0.08]"
             >
               <CreditCard className="w-4 h-4" />
             </button>
@@ -190,8 +190,8 @@ export function SalesRowActions({ order, canEdit = true, canRecordPayment = fals
             <button 
               onClick={() => handleStatusUpdate('COMPLETED')}
               disabled={!!updatingAction}
-              title="Mark as Completed"
-              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md p-2.5 hover:bg-emerald-500/10 text-emerald-500/40 hover:text-emerald-400 transition-all border border-transparent hover:border-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Mark as completed"
+              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md p-2.5 hover:bg-white/[0.04] text-[#ededed] hover:text-[#ededed] transition-colors border border-transparent hover:border-white/[0.08] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {updatingAction === 'completed' ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
             </button>
@@ -201,8 +201,8 @@ export function SalesRowActions({ order, canEdit = true, canRecordPayment = fals
             <button 
               onClick={() => handleStatusUpdate('CANCELLED')}
               disabled={!!updatingAction}
-              title="Cancel Order"
-              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md p-2.5 hover:bg-red-500/10 text-red-500/40 hover:text-red-400 transition-all border border-transparent hover:border-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Cancel order"
+              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md p-2.5 hover:bg-white/[0.04] text-[#f2777b] hover:text-[#f2777b] transition-colors border border-transparent hover:border-white/[0.08] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {updatingAction === 'cancelled' ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
             </button>
@@ -213,34 +213,34 @@ export function SalesRowActions({ order, canEdit = true, canRecordPayment = fals
       <Dialog 
         isOpen={isPaymentOpen} 
         onOpenChange={setIsPaymentOpen}
-        title="Record Payment"
+        title="Record payment"
       >
         <form onSubmit={handleRecordPayment} className="space-y-5">
-           <div className="p-5 bg-emerald-500/10 rounded-md border border-emerald-500/10 mb-3">
-              <p className="text-xs font-bold uppercase text-emerald-400/60 tracking-widest mb-1">Customer Owed Balance</p>
-              <p className="text-2xl font-bold text-white italic tracking-normal">GHS {Number(order.customer?.balanceOwed || 0).toLocaleString()}</p>
+           <div className="p-5 bg-white/[0.04] rounded-md border border-white/[0.08] mb-3">
+              <p className="text-xs font-medium text-[#ededed] mb-1">Customer owed balance</p>
+              <p className="text-2xl font-medium text-white tracking-normal">GHS {Number(order.customer?.balanceOwed || 0).toLocaleString()}</p>
            </div>
 
            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase text-white/70 tracking-widest px-1">Payment Amount (GHS)</label>
+              <label className="text-xs font-medium text-white/70 px-1">Payment amount (GHS)</label>
               <input 
                 type="number"
                 step="0.01"
                 min="0"
                 value={paymentAmount}
                 onChange={(e) => setPaymentAmount(Number(e.target.value))}
-                className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-bold outline-none focus:border-emerald-500/50 transition-all"
+                className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-medium outline-none focus:border-white/[0.08] transition-colors"
                 required
               />
            </div>
 
            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase text-white/70 tracking-widest px-1">Payment Date & Time</label>
+              <label className="text-xs font-medium text-white/70 px-1">Payment date & time</label>
               <input
                 type="datetime-local"
                 value={paymentDate}
                 onChange={(e) => setPaymentDate(e.target.value)}
-                className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-bold outline-none focus:border-emerald-500/50 transition-all"
+                className="w-full bg-white/10 border border-white/10 rounded-md p-3 text-white font-medium outline-none focus:border-white/[0.08] transition-colors"
                 required
               />
            </div>
@@ -248,7 +248,7 @@ export function SalesRowActions({ order, canEdit = true, canRecordPayment = fals
            <button 
              type="submit"
              disabled={updatingAction === 'payment'}
-             className="w-full flex items-center justify-center gap-2 bg-emerald-500 text-[#064e3b] px-5 py-3 rounded-md font-bold uppercase tracking-widest text-[11px] transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+             className="w-full flex items-center justify-center gap-2 bg-emerald-500 text-[#064e3b] px-5 py-3 rounded-md font-medium text-[11px] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
            >
              {updatingAction === 'payment' && <Loader2 className="w-4 h-4 animate-spin" />}
              {updatingAction === 'payment' ? 'Recording...' : 'Record Payment & Settle Order'}

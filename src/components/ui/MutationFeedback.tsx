@@ -30,15 +30,15 @@ export function MutationOverlay({ active, label = 'Updating...', className }: Mu
   return (
     <div
       className={cn(
-        'absolute inset-0 z-20 flex items-center justify-center rounded-[inherit] border border-emerald-400/20 bg-slate-950/55 backdrop-blur-[2px]',
+        'absolute inset-0 z-20 flex items-center justify-center rounded-[inherit] bg-[#141415]/60',
         'before:absolute before:inset-0 before:rounded-[inherit] before:mutation-shimmer before:opacity-70',
         className
       )}
       aria-live="polite"
       aria-busy="true"
     >
-      <div className="relative z-10 flex items-center gap-2 rounded-full border border-white/10 bg-black/50 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-emerald-300 shadow-2xl">
-        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+      <div className="relative z-10 flex items-center gap-2 rounded-lg border border-white/[0.08] bg-[#232325] px-3 py-1.5 text-xs text-[#ededed]">
+        <Loader2 className="h-4 w-4 animate-spin text-[#a1a1a6]" strokeWidth={1.5} />
         {label}
       </div>
     </div>
@@ -62,7 +62,7 @@ export function MutationBoundary({
 }: MutationBoundaryProps) {
   return (
     <div className={cn('relative overflow-hidden rounded-[inherit]', className)}>
-      <div className={cn('transition-all duration-200', active && 'opacity-45 saturate-50')}>
+      <div className={cn('transition-opacity duration-200', active && 'opacity-45')}>
         {children}
       </div>
       <MutationOverlay active={active} label={label} className={overlayClassName} />

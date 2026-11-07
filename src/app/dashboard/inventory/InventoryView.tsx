@@ -37,11 +37,11 @@ const BAG_OPTIONS = [
 ];
 
 const CATEGORY_META: Record<string, { icon: React.ElementType; color: string; label: string }> = {
-  EGGS:      { icon: Egg,           color: 'from-amber-500/20 to-yellow-500/10 border-amber-500/30',  label: 'Eggs'        },
-  FEED:      { icon: Wheat,         color: 'from-emerald-500/20 to-green-500/10 border-emerald-500/30', label: 'Feed'      },
-  MEDICINE:  { icon: FlaskConical,  color: 'from-blue-500/20 to-cyan-500/10 border-blue-500/30',       label: 'Medicine'  },
-  VACCINE:   { icon: Syringe,       color: 'from-amber-500/20 to-orange-500/10 border-amber-500/30',   label: 'Vaccine'   },
-  OTHER:     { icon: Package,       color: 'from-white/10 to-white/5 border-white/10',                 label: 'Other'     },
+  EGGS:      { icon: Egg,           color: 'border-white/[0.08]',  label: 'Eggs'        },
+  FEED:      { icon: Wheat,         color: 'border-white/[0.08]', label: 'Feed'      },
+  MEDICINE:  { icon: FlaskConical,  color: 'border-white/[0.08]',       label: 'Medicine'  },
+  VACCINE:   { icon: Syringe,       color: 'border-white/[0.08]',   label: 'Vaccine'   },
+  OTHER:     { icon: Package,       color: 'border-white/10',                 label: 'Other'     },
 };
 
 type InventoryItem = {
@@ -249,18 +249,16 @@ export default function InventoryView({
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-black tracking-tight text-white">
-            Inventory <span className="text-emerald-400">Hub</span>
-          </h1>
-          <p className="text-white/80 mt-1 text-base font-medium">Feed, medicine &amp; egg stock — all in one place</p>
+          <h1 className="text-3xl font-medium leading-tight text-[#ededed]">Inventory</h1>
+          <p className="mt-2 text-sm text-[#a1a1a6]">Feed, medicine and egg stock</p>
         </div>
         {canEdit && (
           <motion.button
-            whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}
+            whileTap={{ scale: 0.98 }}
             onClick={openAdd}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-md bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-sm shadow-[0_0_20px_rgba(52,211,153,0.3)] transition-all"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-md bg-[#ededed] hover:bg-white text-[#141415] font-medium text-sm transition-colors"
           >
-            <Plus className="w-4 h-4" /> Add Item
+            <Plus className="w-4 h-4" /> Add item
           </motion.button>
         )}
       </div>
@@ -269,9 +267,9 @@ export default function InventoryView({
         <button
           type="button"
           onClick={() => setShowUsedUp(false)}
-          className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-bold transition-all ${
+          className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
             !showUsedUp
-              ? 'bg-emerald-500 text-black'
+              ? 'bg-[#2c2c2f] text-[#ededed] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
               : 'bg-white/10 text-white/70 hover:bg-white/15 hover:text-white'
           }`}
         >
@@ -281,16 +279,16 @@ export default function InventoryView({
         <button
           type="button"
           onClick={() => setShowUsedUp(true)}
-          className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-bold transition-all ${
+          className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
             showUsedUp
-              ? 'bg-amber-500 text-black'
+              ? 'bg-[#2c2c2f] text-[#ededed] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
               : 'bg-white/10 text-white/70 hover:bg-white/15 hover:text-white'
           }`}
         >
           <Archive className="h-4 w-4" />
           Used up
           {usedUpCount > 0 ? (
-            <span className={`rounded-full px-2 py-0.5 text-[10px] font-black ${showUsedUp ? 'bg-black/20 text-black' : 'bg-amber-500/20 text-amber-300'}`}>
+            <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${showUsedUp ? 'bg-white/[0.08] text-[#ededed]' : 'bg-white/[0.04] text-[#d9a441]'}`}>
               {usedUpCount}
             </span>
           ) : null}
@@ -306,39 +304,39 @@ export default function InventoryView({
       {!showUsedUp && eggStock.totalEggs > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-          className="rounded-lg border bg-gradient-to-br from-amber-500/20 to-yellow-500/10 border-amber-500/30 p-5 space-y-4"
+          className="rounded-lg border bg-[#1e1e20] border-white/[0.08] p-5 space-y-4"
         >
           <div className="flex flex-col sm:flex-row items-center justify-between gap-5">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-md bg-amber-500/20 flex items-center justify-center shadow-inner">
-                <Egg className="w-8 h-8 text-amber-400" />
+              <div className="w-16 h-16 rounded-md bg-white/[0.04] flex items-center justify-center shadow-inner">
+                <Egg className="w-8 h-8 text-[#85858b]" />
               </div>
               <div>
-                <p className="text-white/80 text-sm uppercase tracking-widest font-black mb-1">Egg Inventory (Active Batches)</p>
-                <p className="text-5xl font-black text-white leading-tight">
+                <p className="text-white/80 text-sm font-medium mb-1">Egg inventory (active batches)</p>
+                <p className="text-5xl font-medium text-white leading-tight">
                   {eggDisplay(eggStock.totalEggs, eggsPerCrate).crates}
-                  <span className="text-2xl font-bold text-white/80 ml-1">crates</span>
+                  <span className="text-2xl font-medium text-white/80 ml-1">crates</span>
                 </p>
                 {eggDisplay(eggStock.totalEggs, eggsPerCrate).remainder > 0 && (
-                  <p className="text-amber-400 text-base font-bold mt-1">
+                  <p className="text-[#ededed] text-base font-medium mt-1">
                     + {eggDisplay(eggStock.totalEggs, eggsPerCrate).remainder} eggs remaining
                   </p>
                 )}
               </div>
             </div>
             <div className="text-right">
-              <p className="text-white/80 text-sm font-bold mb-1">Raw count</p>
-              <p className="text-3xl font-black text-white">{eggStock.totalEggs.toLocaleString()}</p>
-              <p className="text-white/80 text-sm font-bold">eggs from active layer batches</p>
+              <p className="text-white/80 text-sm font-medium mb-1">Raw count</p>
+              <p className="text-3xl font-medium text-white">{eggStock.totalEggs.toLocaleString()}</p>
+              <p className="text-white/80 text-sm font-medium">eggs from active layer batches</p>
             </div>
           </div>
           {eggStock.batches.length > 0 && (
-            <div className="rounded-md border border-amber-500/20 bg-black/10 overflow-hidden">
+            <div className="rounded-md border border-white/[0.08] bg-black/10 overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-white/10">
-                    <th className="text-left px-4 py-2 text-white/70 font-black uppercase tracking-wider text-xs">Batch</th>
-                    <th className="text-right px-4 py-2 text-white/70 font-black uppercase tracking-wider text-xs">Stock</th>
+                    <th className="text-left px-4 py-2 text-white/70 font-medium text-xs">Batch</th>
+                    <th className="text-right px-4 py-2 text-white/70 font-medium text-xs">Stock</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -346,8 +344,8 @@ export default function InventoryView({
                     const display = eggDisplay(batch.eggsRemaining, eggsPerCrate);
                     return (
                     <tr key={batch.batchId} className="border-b border-white/5 last:border-0">
-                      <td className="px-4 py-2 font-bold text-white">{batch.batchName}</td>
-                      <td className="px-4 py-2 text-right font-bold text-amber-300">
+                      <td className="px-4 py-2 font-medium text-white">{batch.batchName}</td>
+                      <td className="px-4 py-2 text-right font-medium text-[#ededed]">
                         {display.crates} {display.crates === 1 ? 'crate' : 'crates'}
                         {display.remainder > 0 ? ` / ${display.remainder} eggs` : ''}
                       </td>
@@ -365,16 +363,16 @@ export default function InventoryView({
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {[
           { label: 'Total SKUs', value: items.length, icon: Package, color: 'text-white' },
-          { label: 'Feed Items', value: (grouped['FEED'] || []).length, icon: Wheat, color: 'text-emerald-400' },
-          { label: 'Medicine', value: (grouped['MEDICINE'] || []).length, icon: FlaskConical, color: 'text-blue-400' },
-          { label: 'Vaccine', value: (grouped['VACCINE'] || []).length, icon: Syringe, color: 'text-amber-400' },
-          { label: 'Other', value: (grouped['OTHER'] || []).length, icon: ShoppingBag, color: 'text-purple-400' },
+          { label: 'Feed items', value: (grouped['FEED'] || []).length, icon: Wheat, color: 'text-[#ededed]' },
+          { label: 'Medicine', value: (grouped['MEDICINE'] || []).length, icon: FlaskConical, color: 'text-[#a1a1a6]' },
+          { label: 'Vaccine', value: (grouped['VACCINE'] || []).length, icon: Syringe, color: 'text-[#ededed]' },
+          { label: 'Other', value: (grouped['OTHER'] || []).length, icon: ShoppingBag, color: 'text-[#a1a1a6]' },
         ].map(card => (
           <div key={card.label} className="glass-pill rounded-md p-3 flex items-center gap-2">
             <card.icon className={`w-5 h-5 ${card.color}`} />
             <div>
-              <p className="text-3xl font-black text-white leading-none">{card.value}</p>
-              <p className="text-white/80 text-sm font-bold mt-1">{card.label}</p>
+              <p className="text-3xl font-medium text-white leading-none">{card.value}</p>
+              <p className="text-white/80 text-sm font-medium mt-1">{card.label}</p>
             </div>
           </div>
         ))}
@@ -399,13 +397,13 @@ export default function InventoryView({
           const meta = CATEGORY_META[cat] || CATEGORY_META['OTHER'];
           return (
             <div key={cat} className="space-y-2">
-              <p className="text-sm font-black uppercase tracking-[0.2em] text-emerald-400 ml-1">{meta.label}</p>
+              <p className="text-sm font-medium text-[#ededed] ml-1">{meta.label}</p>
               <MobileCardList
-                className={`rounded-lg border bg-gradient-to-br ${meta.color}`}
+                className={`rounded-lg border bg-[#1e1e20] ${meta.color}`}
                 items={catItems}
                 getKey={(item) => item.id}
                 onItemClick={(item) => router.push(`/dashboard/inventory/${item.id}`)}
-                cardClassName={(item) => (mutatingItemId === item.id ? 'bg-emerald-500/10 animate-pulse' : undefined)}
+                cardClassName={(item) => (mutatingItemId === item.id ? 'bg-white/[0.04] animate-pulse' : undefined)}
                 title={(item) => (
                   <span className="flex items-center gap-2">
                     {item.itemName}
@@ -413,11 +411,11 @@ export default function InventoryView({
                   </span>
                 )}
                 badge={(item) => (
-                  <span className={`font-black text-lg ${showUsedUp ? 'text-red-400' : item.stockLevel <= 5 ? 'text-red-400 animate-pulse' : 'text-emerald-400'}`}>
+                  <span className={`font-medium text-lg ${showUsedUp ? 'text-[#f2777b]' : item.stockLevel <= 5 ? 'text-[#f2777b]' : 'text-emerald-400'}`}>
                     {showUsedUp ? (
-                      <span className="text-sm font-bold uppercase tracking-wider">Used up</span>
+                      <span className="text-sm font-medium">Used up</span>
                     ) : item.unit === 'bags' ? (
-                      <span>{item.stockLevel} <span className="text-white/60 font-bold text-sm uppercase">bags</span></span>
+                      <span>{item.stockLevel} <span className="text-white/60 font-medium text-sm">bags</span></span>
                     ) : (
                       item.stockLevel.toLocaleString()
                     )}
@@ -426,9 +424,9 @@ export default function InventoryView({
                 )}
                 fields={(item) => [
                   {
-                    label: 'Cost/Unit',
+                    label: 'Cost/unit',
                     value: item.costPerUnit != null
-                      ? <span className="text-amber-400 font-black">GHS {Number(item.costPerUnit).toFixed(2)}</span>
+                      ? <span className="text-[#ededed] font-medium">GHS {Number(item.costPerUnit).toFixed(2)}</span>
                       : <span className="text-white/60">—</span>,
                   },
                   { label: 'Unit', value: item.unit },
@@ -441,7 +439,7 @@ export default function InventoryView({
                         <button onClick={() => openEdit(item)} aria-label="Edit item" className="p-2 rounded-md hover:bg-white/10 text-white/70 hover:text-white transition-colors">
                           <Pencil className="w-4 h-4" />
                         </button>
-                        <button onClick={() => confirmDelete(item)} aria-label="Delete item" className="p-2 rounded-md hover:bg-red-500/20 text-white/70 hover:text-red-400 transition-colors">
+                        <button onClick={() => confirmDelete(item)} aria-label="Delete item" className="p-2 rounded-md hover:bg-white/[0.04] text-white/70 hover:text-[#f2777b] transition-colors">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </>
@@ -449,14 +447,14 @@ export default function InventoryView({
                   </>
                 )}
               />
-              <div className={`hidden md:block rounded-lg border bg-gradient-to-br ${meta.color} overflow-hidden`}>
+              <div className={`hidden md:block rounded-lg border bg-[#1e1e20] ${meta.color} overflow-hidden`}>
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-white/10">
-                        <th className="text-left px-4 py-3 text-white/80 font-black text-sm uppercase tracking-wider">Item</th>
-                        <th className="text-right px-4 py-3 text-white/80 font-black text-sm uppercase tracking-wider">Stock</th>
-                        <th className="text-right px-4 py-3 text-white/80 font-black text-sm uppercase tracking-wider">Cost/Unit</th>
-                        <th className="text-right px-4 py-3 text-white/80 font-black text-sm uppercase tracking-wider">Unit</th>
+                        <th className="text-left px-4 py-3 text-white/80 font-medium text-sm">Item</th>
+                        <th className="text-right px-4 py-3 text-white/80 font-medium text-sm">Stock</th>
+                        <th className="text-right px-4 py-3 text-white/80 font-medium text-sm">Cost/unit</th>
+                        <th className="text-right px-4 py-3 text-white/80 font-medium text-sm">Unit</th>
                         <th className="px-4 py-2" />
                       </tr>
 
@@ -469,9 +467,9 @@ export default function InventoryView({
                       <tr
                         key={item.id}
                         onClick={() => router.push(`/dashboard/inventory/${item.id}`)}
-                        className={`${idx < catItems.length - 1 ? 'border-b border-white/5' : ''} hover:bg-white/5 transition-colors cursor-pointer ${isMutatingItem ? 'bg-emerald-500/10 animate-pulse' : ''}`}
+                        className={`${idx < catItems.length - 1 ? 'border-b border-white/5' : ''} hover:bg-white/5 transition-colors cursor-pointer ${isMutatingItem ? 'bg-white/[0.04] animate-pulse' : ''}`}
                       >
-                        <td className="px-4 py-2 font-semibold text-white">
+                        <td className="px-4 py-2 font-medium text-white">
                           <div className="flex items-center gap-2">
                             {isMutatingItem ? <SkeletonLine className="h-4 w-32" /> : item.itemName}
                             {!isMutatingItem ? (
@@ -479,13 +477,13 @@ export default function InventoryView({
                             ) : null}
                           </div>
                         </td>
-                        <td className={`px-4 py-3 text-right font-black text-lg ${showUsedUp ? 'text-red-400' : item.stockLevel <= 5 ? 'text-red-400 animate-pulse' : 'text-emerald-400'}`}>
+                        <td className={`px-4 py-3 text-right font-medium text-lg ${showUsedUp ? 'text-[#f2777b]' : item.stockLevel <= 5 ? 'text-[#f2777b]' : 'text-emerald-400'}`}>
                           {isMutatingItem ? (
                             <SkeletonLine className="ml-auto h-4 w-16" />
                           ) : showUsedUp ? (
-                            <span className="text-sm font-bold uppercase tracking-wider">Used up</span>
+                            <span className="text-sm font-medium">Used up</span>
                           ) : item.unit === 'bags' ? (
-                            <span>{item.stockLevel} <span className="text-white/60 font-bold text-sm uppercase">bags</span></span>
+                            <span>{item.stockLevel} <span className="text-white/60 font-medium text-sm">bags</span></span>
                           ) : (
                             item.stockLevel.toLocaleString()
                           )}
@@ -495,7 +493,7 @@ export default function InventoryView({
                           {isMutatingItem ? (
                             <SkeletonLine className="ml-auto h-4 w-20" />
                           ) : item.costPerUnit != null ? (
-                            <span className="text-amber-400 font-black text-base">GHS {Number(item.costPerUnit).toFixed(2)}</span>
+                            <span className="text-[#ededed] font-medium text-base">GHS {Number(item.costPerUnit).toFixed(2)}</span>
                           ) : <span className="text-white/60">—</span>}
                         </td>
                         <td className="px-4 py-2 text-right text-white/70">
@@ -508,7 +506,7 @@ export default function InventoryView({
                                <button aria-label="Edit item" onClick={() => openEdit(item)} className="p-1.5 rounded-md hover:bg-white/10 text-white/70 hover:text-white transition-colors">
                                  <Pencil className="w-4 h-4" />
                                </button>
-                               <button aria-label="Delete item" onClick={() => confirmDelete(item)} className="p-1.5 rounded-md hover:bg-red-500/20 text-white/70 hover:text-red-400 transition-colors">
+                               <button aria-label="Delete item" onClick={() => confirmDelete(item)} className="p-1.5 rounded-md hover:bg-white/[0.04] text-white/70 hover:text-[#f2777b] transition-colors">
                                  <Trash2 className="w-4 h-4" />
                                </button>
                              </>
@@ -530,14 +528,14 @@ export default function InventoryView({
         {showForm && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-3 pb-safe"
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-3 pb-safe"
           >
             <motion.div
               initial={{ scale: 0.92, y: 24 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.92, y: 24 }}
               className="glass-pill rounded-lg p-5 w-full max-w-md max-h-[90dvh] overflow-y-auto custom-scrollbar pb-safe space-y-4 border border-white/10"
             >
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-bold text-white">{editing ? 'Edit Item' : 'Add Inventory Item'}</h2>
+                <h2 className="text-lg font-medium text-white">{editing ? 'Edit item' : 'Add inventory item'}</h2>
                 <button aria-label="Close form" onClick={() => setShowForm(false)} className="p-2 rounded-md hover:bg-white/10 text-white/70 hover:text-white">
                   <X className="w-5 h-5" />
                 </button>
@@ -545,7 +543,7 @@ export default function InventoryView({
 
               {/* Category */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-white/70 uppercase tracking-wider">Category</label>
+                <label className="text-xs font-medium text-white/70">Category</label>
                 <div className="grid grid-cols-2 gap-2">
                   {['FEED', 'MEDICINE', 'VACCINE', 'OTHER'].map(cat => (
                     <button
@@ -555,7 +553,7 @@ export default function InventoryView({
                         category: cat,
                         unit: cat === 'FEED' ? 'bags' : cat === 'VACCINE' ? 'doses' : 'units',
                       }))}
-                      className={`py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${form.category === cat ? 'bg-emerald-500 text-black' : 'bg-white/10 text-white/70 hover:bg-white/10'}`}
+                      className={`py-2 rounded-md text-xs font-medium transition-colors ${form.category === cat ? 'bg-[#2c2c2f] text-[#ededed] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'bg-white/10 text-white/70 hover:bg-white/10'}`}
                     >
                       {cat}
                     </button>
@@ -566,24 +564,24 @@ export default function InventoryView({
               {/* Usage — only for health stock (vaccines/medicines) */}
               {HEALTH_CATEGORIES.includes(form.category) && (
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-white/70 uppercase tracking-wider">Usage</label>
+                  <label className="text-xs font-medium text-white/70">Usage</label>
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       type="button"
                       onClick={() => setForm(p => ({ ...p, usageType: 'ONE_TIME', stockLevel: '1' }))}
-                      className={`py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${form.usageType === 'ONE_TIME' ? 'bg-emerald-500 text-black' : 'bg-white/10 text-white/70 hover:bg-white/10'}`}
+                      className={`py-2 rounded-md text-xs font-medium transition-colors ${form.usageType === 'ONE_TIME' ? 'bg-[#2c2c2f] text-[#ededed] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'bg-white/10 text-white/70 hover:bg-white/10'}`}
                     >
                       One-time use
                     </button>
                     <button
                       type="button"
                       onClick={() => setForm(p => ({ ...p, usageType: 'QUANTITY' }))}
-                      className={`py-2 rounded-md text-xs font-bold uppercase tracking-wider transition-all ${form.usageType === 'QUANTITY' ? 'bg-emerald-500 text-black' : 'bg-white/10 text-white/70 hover:bg-white/10'}`}
+                      className={`py-2 rounded-md text-xs font-medium transition-colors ${form.usageType === 'QUANTITY' ? 'bg-[#2c2c2f] text-[#ededed] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'bg-white/10 text-white/70 hover:bg-white/10'}`}
                     >
                       Quantity-tracked
                     </button>
                   </div>
-                  <p className="text-[11px] text-white/40 italic">
+                  <p className="text-[11px] text-white/40">
                     {form.usageType === 'ONE_TIME'
                       ? 'Single application only — stock is capped at 1 and depletes when marked completed on a batch.'
                       : 'Tracked by stock quantity and unit.'}
@@ -593,18 +591,18 @@ export default function InventoryView({
 
               {/* Name */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-white/70 uppercase tracking-wider">Item Name</label>
+                <label className="text-xs font-medium text-white/70">Item name</label>
                 <input
                   value={form.itemName}
                   onChange={e => setForm(p => ({ ...p, itemName: e.target.value }))}
                   placeholder="e.g. Layers Mash, Tylosin 50…"
-                  className="w-full bg-white/10 border border-white/10 rounded-md px-3 py-2.5 text-white text-sm placeholder-white/20 focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-white/10 border border-white/10 rounded-md px-3 py-2.5 text-white text-sm placeholder-white/20 focus:outline-none focus:border-white/[0.08]"
                 />
               </div>
 
               {/* Stock level — bag fractions for FEED */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-white/70 uppercase tracking-wider">
+                <label className="text-xs font-medium text-white/70">
                   {form.category === 'FEED' ? 'Quantity (bags)' : 'Stock Level'}
                 </label>
                 {form.category === 'FEED' ? (
@@ -621,14 +619,14 @@ export default function InventoryView({
                         }
                       }}
                       placeholder="0"
-                      className="w-full bg-white/10 border border-white/10 rounded-md px-3 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500/50"
+                      className="w-full bg-white/10 border border-white/10 rounded-md px-3 py-2.5 text-white text-sm focus:outline-none focus:border-white/[0.08]"
                     />
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       {BAG_OPTIONS.map(opt => (
                         <button
                           key={opt.value}
                           onClick={() => setForm(p => ({ ...p, stockLevel: String((parseFloat(p.stockLevel || '0') + opt.value).toFixed(2)) }))}
-                          className="py-1.5 text-xs rounded-md bg-white/10 hover:bg-emerald-500/20 text-white/70 hover:text-emerald-400 font-semibold transition-all"
+                          className="py-1.5 text-xs rounded-md bg-white/10 hover:bg-white/[0.04] text-white/70 hover:text-[#ededed] font-medium transition-colors"
                         >
                           + {opt.label}
                         </button>
@@ -647,7 +645,7 @@ export default function InventoryView({
                       }
                     }}
                     placeholder="0"
-                    className="w-full bg-white/10 border border-white/10 rounded-md px-3 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-white/10 border border-white/10 rounded-md px-3 py-2.5 text-white text-sm focus:outline-none focus:border-white/[0.08]"
                   />
                 )}
               </div>
@@ -655,19 +653,19 @@ export default function InventoryView({
               {/* Unit (non-FEED) */}
               {form.category !== 'FEED' && (
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-white/70 uppercase tracking-wider">Unit</label>
+                  <label className="text-xs font-medium text-white/70">Unit</label>
                   <input
                     value={form.unit}
                     onChange={e => setForm(p => ({ ...p, unit: e.target.value }))}
                     placeholder="e.g. vials, sachets, litres…"
-                    className="w-full bg-white/10 border border-white/10 rounded-md px-3 py-2.5 text-white text-sm placeholder-white/20 focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-white/10 border border-white/10 rounded-md px-3 py-2.5 text-white text-sm placeholder-white/20 focus:outline-none focus:border-white/[0.08]"
                   />
                 </div>
               )}
 
               {/* Cost per unit */}
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-white/70 uppercase tracking-wider">Cost Per Unit (GHS)</label>
+                <label className="text-xs font-medium text-white/70">Cost per unit (GHS)</label>
                 <input
                   type="number"
                   step="0.01"
@@ -680,13 +678,13 @@ export default function InventoryView({
                     }
                   }}
                   placeholder="0.00"
-                  className="w-full bg-white/10 border border-white/10 rounded-md px-3 py-2.5 text-amber-400 text-sm font-bold placeholder-white/20 focus:outline-none focus:border-amber-500/50"
+                  className="w-full bg-white/10 border border-white/10 rounded-md px-3 py-2.5 text-[#ededed] text-sm font-medium placeholder-white/20 focus:outline-none focus:border-white/[0.08]"
                 />
               </div>
 
               {/* Supplier & Payment */}
               <div className="space-y-1.5">
-                <label className="text-sm font-black text-white/80 uppercase tracking-widest">Supplier</label>
+                <label className="text-sm font-medium text-white/80">Supplier</label>
                 <div className="flex gap-2">
                   <select
                     value={form.supplierId}
@@ -702,10 +700,10 @@ export default function InventoryView({
                         }));
                       }
                     }}
-                    className="flex-1 bg-white/10 border border-white/10 rounded-md px-3 py-2.5 text-white text-sm font-bold focus:outline-none focus:border-emerald-500/50 [&>option]:bg-gray-800"
+                    className="flex-1 bg-white/10 border border-white/10 rounded-md px-3 py-2.5 text-white text-sm font-medium focus:outline-none focus:border-white/[0.08] [&>option]:bg-[#232325]"
                   >
                     <option value="">-- Select Supplier --</option>
-                    <option value="onetime">One-Time Supplier</option>
+                    <option value="onetime">One-Time supplier</option>
                     {suppliers.map(sup => (
                       <option key={sup.id} value={sup.id}>{sup.name}</option>
                     ))}
@@ -714,7 +712,7 @@ export default function InventoryView({
                   <button
                     type="button"
                     onClick={() => setForm(p => ({ ...p, supplierId: 'onetime', paymentPlan: 'full' }))}
-                    className="px-3 py-2 rounded-md bg-white/10 hover:bg-emerald-500/30 text-white/80 hover:text-white text-xs font-black transition-all whitespace-nowrap uppercase tracking-tighter"
+                    className="px-3 py-2 rounded-md bg-white/10 hover:bg-white/[0.04] text-white/80 hover:text-white text-xs font-medium transition-colors whitespace-nowrap"
                   >
                     Set One-Time
                   </button>
@@ -722,14 +720,14 @@ export default function InventoryView({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-black text-white/80 uppercase tracking-widest">Payment Plan</label>
+                <label className="text-sm font-medium text-white/80">Payment plan</label>
                 <select
                   value={form.paymentPlan}
                   onChange={e => setForm(p => ({ ...p, paymentPlan: e.target.value }))}
                   disabled={form.supplierId === 'onetime'}
-                  className="w-full bg-white/10 border border-white/10 rounded-md px-3 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500/50 [&>option]:bg-gray-800 disabled:opacity-50"
+                  className="w-full bg-white/10 border border-white/10 rounded-md px-3 py-2.5 text-white text-sm focus:outline-none focus:border-white/[0.08] [&>option]:bg-[#232325] disabled:opacity-50"
                 >
-                  <option value="full">Paid in Full</option>
+                  <option value="full">Paid in full</option>
                   <option value="installments">Installments</option>
                   <option value="none">None</option>
                 </select>
@@ -737,7 +735,7 @@ export default function InventoryView({
 
               {form.paymentPlan === 'installments' && (
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-white/70 uppercase tracking-wider">Amount Paid (Initial Payment)</label>
+                  <label className="text-xs font-medium text-white/70">Amount paid (initial payment)</label>
                   <input
                     type="number"
                     step="0.01"
@@ -750,19 +748,19 @@ export default function InventoryView({
                       }
                     }}
                     placeholder="0.00"
-                    className="w-full bg-white/10 border border-white/10 rounded-md px-3 py-2.5 text-emerald-400 text-sm font-bold placeholder-white/20 focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-white/10 border border-white/10 rounded-md px-3 py-2.5 text-[#ededed] text-sm font-medium placeholder-white/20 focus:outline-none focus:border-white/[0.08]"
                   />
                 </div>
               )}
 
               <motion.button
-                whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={handleSave}
                 disabled={isPending}
-                className="w-full py-2 rounded-md bg-emerald-500 hover:bg-emerald-400 text-black font-bold text-sm flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+                className="w-full py-2 rounded-md bg-[#ededed] hover:bg-white text-[#141415] font-medium text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
               >
                 <Save className="w-4 h-4" />
-                {isPending ? 'Saving…' : editing ? 'Update Item' : 'Add to Inventory'}
+                {isPending ? 'Saving…' : editing ? 'Update item' : 'Add to inventory'}
               </motion.button>
             </motion.div>
           </motion.div>
@@ -773,7 +771,7 @@ export default function InventoryView({
       <Dialog
         isOpen={showSupplierModal}
         onOpenChange={setShowSupplierModal}
-        title="Add Distribution Partner"
+        title="Add distribution partner"
       >
         <PartnerForm 
           setIsOpen={setShowSupplierModal} 
@@ -791,8 +789,8 @@ export default function InventoryView({
         {toast && (
           <motion.div
             initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
-            className={`fixed bottom-24 right-4 md:bottom-6 md:right-6 z-[99] flex items-center gap-2 px-4 py-2 rounded-md font-semibold text-sm shadow-xl
-              ${toast.ok ? 'bg-emerald-500 text-black' : 'bg-red-500/90 text-white'}`}
+            className={`fixed bottom-24 right-4 md:bottom-6 md:right-6 z-[99] flex items-center gap-2 px-4 py-2 rounded-md font-medium text-sm 
+              ${toast.ok ? 'bg-[#2c2c2f] text-[#ededed] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'bg-red-500/90 text-white'}`}
           >
             {toast.ok ? <CheckCircle2 className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
             {toast.msg}

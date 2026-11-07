@@ -29,7 +29,7 @@ export async function DashboardNotices({
   return (
     <div className="mx-auto mb-4 max-w-[1600px] space-y-3">
       {maintenanceMessage ? (
-        <div role="alert" className="flex items-start gap-3 rounded-lg border border-amber-400/40 bg-amber-500/15 px-4 py-3 text-sm leading-6 text-amber-50">
+        <div role="alert" className="flex items-start gap-3 rounded-lg border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-sm leading-6 text-amber-50">
           <Wrench className="mt-0.5 h-4 w-4 shrink-0" />
           <p>{maintenanceMessage}</p>
         </div>

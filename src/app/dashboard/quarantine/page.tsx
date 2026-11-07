@@ -22,7 +22,7 @@ export default async function QuarantinePage() {
         feature="HEALTH"
         title="Quarantine"
         accent="& Isolation"
-        description="Quarantine management tracks isolated birds and recovery rooms. Deaths can still be logged on the Mortality page."
+        description="Quarantine management tracks isolated birds and recovery rooms. deaths can still be logged on the mortality page."
       />
     );
   }

@@ -16,18 +16,16 @@ export default async function SaleDetailPage({ params }: { params: Promise<{ id:
     <div className="max-w-7xl mx-auto px-0 md:px-3 pt-2 pb-7 md:py-7 relative">
       <Breadcrumbs 
         items={[
-          { label: 'Sales & Finance', href: '/dashboard/sales' },
+          { label: 'Sales & finance', href: '/dashboard/sales' },
           { label: sale.customerName ? `${sale.customerName} order` : 'Order details' }
         ]} 
       />
       
-      <div className="flex justify-between items-center mb-9 bg-white/10 backdrop-blur-md p-7 rounded-lg border border-white/10 relative overflow-hidden">
+      <div className="flex justify-between items-center mb-9 bg-white/10 p-7 rounded-lg border border-white/10 relative overflow-hidden">
         <div className="relative z-10">
-          <h2 className="text-4xl font-bold text-white tracking-normal">
-            Transaction <span className="text-green-400 italic">Analysis</span>
-          </h2>
-          <p className="text-white/70 font-bold uppercase tracking-widest text-xs mt-2 flex items-center gap-2 italic">
-             {sale.customerName || 'Walk-in Customer'} • Payment Ledger
+          <h1 className="text-3xl font-medium leading-tight text-[#ededed]">Sale details</h1>
+          <p className="mt-2 text-sm text-[#a1a1a6]">
+             {sale.customerName || 'Walk-in customer'} · payments
           </p>
         </div>
       </div>

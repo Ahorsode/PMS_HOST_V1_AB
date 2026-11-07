@@ -1,6 +1,7 @@
 import React from 'react'
 import { Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { g } from '@/components/ui/graphite'
 
 /**
  * Shared look for the Livestock screens (list and batch detail).
@@ -9,10 +10,10 @@ import { cn } from '@/lib/utils'
 export const tone = {
   panel: 'rounded-xl border border-white/[0.08] bg-[#19191b]',
   raised: 'bg-[#232325]',
-  hairline: 'border-white/[0.08]',
-  text: 'text-[#ededed]',
-  text2: 'text-[#a1a1a6]',
-  muted: 'text-[#85858b]',
+  hairline: g.hairline,
+  text: g.text,
+  text2: g.secondary,
+  muted: g.muted,
   accent: 'text-[#34d399]',
   negative: 'text-[#f2777b]',
   focus: 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34d399]/60',

@@ -3,9 +3,9 @@ import type { SiteSettings } from '@/lib/settings/schemas'
 import { cn } from '@/lib/utils'
 
 const TONES = {
-  info: { icon: Info, className: 'border-sky-400/30 bg-sky-500/10 text-sky-100' },
-  warning: { icon: TriangleAlert, className: 'border-amber-400/30 bg-amber-500/10 text-amber-100' },
-  success: { icon: CheckCircle2, className: 'border-emerald-400/30 bg-emerald-500/10 text-emerald-100' },
+  info: { icon: Info, className: 'border-white/[0.08] bg-white/[0.06] text-[#ededed]' },
+  warning: { icon: TriangleAlert, className: 'border-white/[0.08] bg-white/[0.04] text-amber-100' },
+  success: { icon: CheckCircle2, className: 'border-white/[0.08] bg-white/[0.04] text-[#ededed]' },
 } as const
 
 /** Admin-set announcement (Settings → Website & announcements). */

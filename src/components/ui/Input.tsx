@@ -11,7 +11,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full space-y-2">
         {label && (
-          <label className="text-sm font-bold uppercase tracking-widest text-emerald-400 italic ml-1">
+          <label htmlFor={props.id} className="block text-sm text-[#a1a1a6]">
             {label}
           </label>
         )}
@@ -20,13 +20,13 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           inputMode={props.type === 'number' ? 'decimal' : props.inputMode}
           pattern={props.type === 'number' && !props.pattern ? '[0-9]*' : props.pattern}
           className={cn(
-            'flex min-h-[44px] w-full rounded-md border border-white/10 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 disabled:cursor-not-allowed disabled:opacity-50 transition-all font-medium',
-            error && 'border-red-500/50 focus:ring-red-500/50',
+            'flex min-h-[44px] w-full rounded-lg border border-white/[0.08] bg-[#141415] px-3 py-2 text-sm text-[#ededed] placeholder:text-[#85858b] transition-[border-color,box-shadow] duration-150 focus:outline-none focus:border-[#34d399]/50 focus:ring-2 focus:ring-[#34d399]/25 disabled:cursor-not-allowed disabled:opacity-50',
+            error && 'border-[#e5484d]/50 focus:border-[#e5484d]/60 focus:ring-[#e5484d]/25',
             className
           )}
           {...props}
         />
-        {error && <span className="text-xs text-red-400 font-bold uppercase tracking-wider ml-1">{error}</span>}
+        {error && <span className="block text-xs text-[#f2777b]">{error}</span>}
       </div>
     );
   }

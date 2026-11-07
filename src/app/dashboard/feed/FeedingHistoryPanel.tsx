@@ -26,14 +26,14 @@ function feedLabel(log: FeedingLog): string {
 
 function FeedLogSkeletonRow() {
   return (
-    <tr className="border-b border-white/5 bg-emerald-500/5">
+    <tr className="border-b border-white/5 bg-white/[0.04]">
       <td className="px-5 py-3" colSpan={6}>
         <div className="flex items-center gap-3">
           <div className="h-2 w-2 rounded-full bg-emerald-400 animate-glow-pulse" />
-          <div className="h-3 flex-1 max-w-[120px] rounded bg-emerald-500/20 animate-glow-pulse" />
-          <div className="h-3 flex-1 max-w-[100px] rounded bg-emerald-500/15 animate-glow-pulse" style={{ animationDelay: '150ms' }} />
-          <div className="h-3 flex-1 max-w-[140px] rounded bg-emerald-500/15 animate-glow-pulse" style={{ animationDelay: '300ms' }} />
-          <div className="h-3 flex-1 max-w-[80px] rounded bg-emerald-500/15 animate-glow-pulse" style={{ animationDelay: '450ms' }} />
+          <div className="h-3 flex-1 max-w-[120px] rounded bg-white/[0.04] animate-glow-pulse" />
+          <div className="h-3 flex-1 max-w-[100px] rounded bg-white/[0.04] animate-glow-pulse" style={{ animationDelay: '150ms' }} />
+          <div className="h-3 flex-1 max-w-[140px] rounded bg-white/[0.04] animate-glow-pulse" style={{ animationDelay: '300ms' }} />
+          <div className="h-3 flex-1 max-w-[80px] rounded bg-white/[0.04] animate-glow-pulse" style={{ animationDelay: '450ms' }} />
         </div>
       </td>
     </tr>
@@ -42,17 +42,17 @@ function FeedLogSkeletonRow() {
 
 function FeedLogSkeletonCard() {
   return (
-    <div className="p-4 space-y-2 border-b border-white/5 bg-emerald-500/5">
+    <div className="p-4 space-y-2 border-b border-white/5 bg-white/[0.04]">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 flex-1">
           <div className="h-2 w-2 rounded-full bg-emerald-400 animate-glow-pulse shrink-0" />
-          <div className="h-3 flex-1 max-w-[100px] rounded bg-emerald-500/20 animate-glow-pulse" />
+          <div className="h-3 flex-1 max-w-[100px] rounded bg-white/[0.04] animate-glow-pulse" />
         </div>
-        <div className="h-5 w-16 rounded bg-emerald-500/15 animate-glow-pulse" style={{ animationDelay: '150ms' }} />
+        <div className="h-5 w-16 rounded bg-white/[0.04] animate-glow-pulse" style={{ animationDelay: '150ms' }} />
       </div>
       <div className="flex items-center justify-between gap-3">
-        <div className="h-3 flex-1 max-w-[120px] rounded bg-emerald-500/15 animate-glow-pulse" style={{ animationDelay: '300ms' }} />
-        <div className="h-3 flex-1 max-w-[80px] rounded bg-emerald-500/15 animate-glow-pulse" style={{ animationDelay: '450ms' }} />
+        <div className="h-3 flex-1 max-w-[120px] rounded bg-white/[0.04] animate-glow-pulse" style={{ animationDelay: '300ms' }} />
+        <div className="h-3 flex-1 max-w-[80px] rounded bg-white/[0.04] animate-glow-pulse" style={{ animationDelay: '450ms' }} />
       </div>
     </div>
   )
@@ -93,21 +93,18 @@ export function FeedingHistoryPanel({
     .reduce((sum, log) => sum + Number(log.amountConsumed || 0), 0)
 
   return (
-    <Card className="bg-[#1a2332] border-white/10 shadow-xl rounded-lg overflow-hidden">
+    <Card className="bg-[#19191b] border-white/10 rounded-lg overflow-hidden">
       <CardHeader className="border-b border-white/10">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-          <CardTitle className="text-white text-xl border-none flex items-center gap-2">
-            <History className="w-5 h-5 text-emerald-400" />
-            Feeding History
-          </CardTitle>
+          <CardTitle className="text-lg">Feeding history</CardTitle>
           <div className="flex gap-4 text-sm">
             <div>
-              <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest">Today</p>
-              <p className="text-emerald-300 font-bold">{todayTotal.toLocaleString()} bags</p>
+              <p className="text-white/50 text-xs font-medium">Today</p>
+              <p className="text-[#ededed] font-medium">{todayTotal.toLocaleString()} bags</p>
             </div>
             <div>
-              <p className="text-white/50 text-[10px] font-bold uppercase tracking-widest">This Week</p>
-              <p className="text-emerald-300 font-bold">{weekTotal.toLocaleString()} bags</p>
+              <p className="text-white/50 text-xs font-medium">This week</p>
+              <p className="text-[#ededed] font-medium">{weekTotal.toLocaleString()} bags</p>
             </div>
           </div>
         </div>
@@ -117,7 +114,7 @@ export function FeedingHistoryPanel({
           <div className="py-16 text-center">
             <Utensils className="w-10 h-10 text-white/20 mx-auto mb-3" />
             <p className="text-white/50 font-medium">No feeding logs recorded yet.</p>
-            <p className="text-white/60 text-sm mt-1">Use Log Feeding to record your first entry.</p>
+            <p className="text-white/60 text-sm mt-1">Use log feeding to record your first entry.</p>
           </div>
         ) : (
           <>
@@ -125,13 +122,13 @@ export function FeedingHistoryPanel({
               <table className="min-w-full divide-y divide-white/10">
                 <thead className="bg-white/5">
                   <tr>
-                    <th className="px-5 py-3 text-left text-xs font-bold text-white/50 uppercase tracking-widest">Date</th>
-                    <th className="px-5 py-3 text-left text-xs font-bold text-white/50 uppercase tracking-widest">Batch</th>
-                    <th className="px-5 py-3 text-left text-xs font-bold text-white/50 uppercase tracking-widest">Feed</th>
-                    <th className="px-5 py-3 text-left text-xs font-bold text-white/50 uppercase tracking-widest">Amount</th>
-                    <th className="px-5 py-3 text-left text-xs font-bold text-white/50 uppercase tracking-widest">Logged By</th>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-white/50">Date</th>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-white/50">Batch</th>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-white/50">Feed</th>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-white/50">Amount</th>
+                    <th className="px-5 py-3 text-left text-xs font-medium text-white/50">Logged by</th>
                     {canEdit && (
-                      <th className="px-5 py-3 text-right text-xs font-bold text-white/50 uppercase tracking-widest">Actions</th>
+                      <th className="px-5 py-3 text-right text-xs font-medium text-white/50">Actions</th>
                     )}
                   </tr>
                 </thead>
@@ -143,7 +140,7 @@ export function FeedingHistoryPanel({
                     return (
                       <tr key={log.id} className="hover:bg-white/[0.03] transition-colors">
                         <td className="px-5 py-3 text-sm text-white/80">{formatDate(log.logDate)}</td>
-                        <td className="px-5 py-3 text-sm font-bold text-white">
+                        <td className="px-5 py-3 text-sm font-medium text-white">
                           {batchLabel}
                           {log.batch?.breedType ? (
                             <span className="block text-xs font-medium text-white/50">
@@ -151,8 +148,8 @@ export function FeedingHistoryPanel({
                             </span>
                           ) : null}
                         </td>
-                        <td className="px-5 py-3 text-sm text-emerald-200">{feedLabel(log)}</td>
-                        <td className="px-5 py-3 text-sm font-bold text-emerald-400">
+                        <td className="px-5 py-3 text-sm text-[#ededed]">{feedLabel(log)}</td>
+                        <td className="px-5 py-3 text-sm font-medium text-[#ededed]">
                           {Number(log.amountConsumed).toLocaleString()} bags
                         </td>
                         <td className="px-5 py-3 text-sm text-white/60">{loggedBy}</td>
@@ -182,17 +179,17 @@ export function FeedingHistoryPanel({
                   <div key={log.id} className="p-4 space-y-2">
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <p className="text-xs font-bold uppercase tracking-widest text-white/50">
+                        <p className="text-xs font-medium text-white/50">
                           {formatDate(log.logDate)}
                         </p>
-                        <p className="text-white font-bold">{batchLabel}</p>
+                        <p className="text-white font-medium">{batchLabel}</p>
                       </div>
-                      <p className="text-lg font-bold text-emerald-400">
+                      <p className="text-lg font-medium text-[#ededed]">
                         {Number(log.amountConsumed).toLocaleString()} bags
                       </p>
                     </div>
                     <div className="flex items-center justify-between gap-3 text-sm">
-                      <span className="text-emerald-200">{feedLabel(log)}</span>
+                      <span className="text-[#ededed]">{feedLabel(log)}</span>
                       <span className="text-white/50">{loggedBy}</span>
                     </div>
                     {canEdit && (

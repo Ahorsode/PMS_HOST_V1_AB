@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import { getAuthContext } from '@/lib/auth-utils'
 
 export const metadata = {
-  title: 'Data Recovery Center | Poultry Ledger',
+  title: 'Data recovery center | Poultry Ledger',
   description: 'Review and restore soft-deleted records from all operational modules.',
 }
 

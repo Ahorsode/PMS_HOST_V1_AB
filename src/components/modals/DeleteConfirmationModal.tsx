@@ -46,22 +46,22 @@ export function DeleteConfirmationModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 pb-safe bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 pb-safe bg-black/60">
       <div 
-        className="bg-black border border-white/10 rounded-xl max-w-md w-full max-h-[90dvh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="bg-black border border-white/10 rounded-xl max-w-md w-full max-h-[90dvh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
       >
         <div className="flex-1 min-h-0 overflow-y-auto p-6 custom-scrollbar">
           <div className="flex items-start gap-4 mb-4">
-            <div className="p-3 bg-red-500/10 rounded-full shrink-0">
-              <AlertCircle className="w-6 h-6 text-red-500" />
+            <div className="p-3 bg-white/[0.04] rounded-full shrink-0">
+              <AlertCircle className="w-6 h-6 text-[#f2777b]" />
             </div>
             <div>
-              <h3 className="text-xl font-bold text-white mb-1">{title}</h3>
+              <h3 className="text-xl font-medium text-white mb-1">{title}</h3>
               <p className="text-sm text-white/60 leading-relaxed">
                 {description}
               </p>
               {itemName && (
-                <p className="text-sm font-bold text-white mt-2 p-2 bg-white/5 rounded-md border border-white/5">
+                <p className="text-sm font-medium text-white mt-2 p-2 bg-white/5 rounded-md border border-white/5">
                   Item: {itemName}
                 </p>
               )}
@@ -70,7 +70,7 @@ export function DeleteConfirmationModal({
 
           <div className="mt-6 space-y-3">
             <label className="block text-sm font-medium text-white/80">
-              Reason for Deletion <span className="text-red-400">*</span>
+              Reason for Deletion <span className="text-[#f2777b]">*</span>
             </label>
             <textarea
               value={reason}
@@ -79,11 +79,11 @@ export function DeleteConfirmationModal({
                 if (error) setError("");
               }}
               placeholder="e.g. Duplicated entry, wrong calculation, customer cancelled..."
-              className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white placeholder-white/30 focus:border-red-500/50 focus:ring-1 focus:ring-red-500/50 transition-all resize-none h-24"
+              className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white placeholder-white/30 focus:border-white/[0.08] focus:ring-1 focus:ring-white/10 transition-colors resize-none h-24"
               disabled={isLoading}
             />
             {error && (
-              <p className="text-xs font-bold text-red-400">{error}</p>
+              <p className="text-xs font-medium text-[#f2777b]">{error}</p>
             )}
           </div>
         </div>
@@ -92,14 +92,14 @@ export function DeleteConfirmationModal({
           <button
             onClick={handleClose}
             disabled={isLoading}
-            className="px-4 py-2 text-sm font-bold text-white hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
           <button
             onClick={handleConfirm}
             disabled={isLoading || !reason.trim()}
-            className="px-4 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(220,38,38,0.3)] hover:shadow-[0_0_20px_rgba(220,38,38,0.5)]"
+            className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
               <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

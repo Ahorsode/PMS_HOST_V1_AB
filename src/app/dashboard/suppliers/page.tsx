@@ -60,12 +60,12 @@ export default async function SuppliersPage() {
     <div className="max-w-[1600px] mx-auto space-y-7 px-0 md:px-5 pt-2 pb-9 md:py-9 relative">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-2">
         <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="p-3 bg-white/5 hover:bg-white/10 rounded-full transition-colors border border-white/10 shrink-0 hover:scale-105">
-            <ArrowLeft className="w-6 h-6 text-emerald-400" />
+          <Link href="/dashboard" className="p-3 bg-white/5 hover:bg-white/10 rounded-full transition-colors border border-white/10 shrink-0">
+            <ArrowLeft className="w-6 h-6 text-[#85858b]" />
           </Link>
           <div>
-            <h1 className="text-4xl font-black text-white tracking-normal">Supply <span className="text-emerald-400 italic">Network</span></h1>
-            <p className="text-white/80 font-black uppercase tracking-[0.2em] text-sm mt-2">Manage Vendors & Supply Chain</p>
+            <h1 className="text-3xl font-medium leading-tight text-[#ededed]">Suppliers</h1>
+            <p className="mt-2 text-sm text-[#a1a1a6]">Who you buy feed, stock and services from, and what you owe them</p>
           </div>
         </div>
         <SupplierActionsHeader canEdit={canEdit} />
@@ -73,57 +73,57 @@ export default async function SuppliersPage() {
 
       {/* CRM Stats Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
-          <Card className="bg-white/10 border-white/10 backdrop-blur-xl">
+          <Card className="bg-white/10 border-white/10">
              <CardContent className="pt-3 md:pt-8">
                 <div className="flex items-center gap-2 md:gap-4">
-                   <div className="p-2 md:p-3 rounded-md bg-emerald-500/10 border border-emerald-500/10">
-                     <Truck className="w-4 h-4 md:w-6 md:h-6 text-emerald-400" />
+                   <div className="p-2 md:p-3 rounded-md bg-white/[0.04] border border-white/[0.08]">
+                     <Truck className="w-4 h-4 md:w-6 md:h-6 text-[#85858b]" />
                    </div>
                    <div>
-                     <p className="text-2xl md:text-3xl font-black text-white">{supplierStats.length}</p>
-                     <p className="text-xs md:text-sm font-black uppercase text-emerald-400 tracking-widest mt-1">Total Vendors</p>
+                     <p className="text-2xl md:text-3xl font-medium text-white">{supplierStats.length}</p>
+                     <p className="text-xs md:text-sm font-medium text-[#ededed] mt-1">Total vendors</p>
                    </div>
                 </div>
              </CardContent>
           </Card>
 
-          <Card className="bg-white/10 border-white/10 backdrop-blur-xl">
+          <Card className="bg-white/10 border-white/10">
              <CardContent className="pt-3 md:pt-8">
                 <div className="flex items-center gap-2 md:gap-4">
-                   <div className="p-2 md:p-3 rounded-md bg-purple-500/10 border border-purple-500/10">
-                     <Star className="w-4 h-4 md:w-6 md:h-6 text-purple-400" />
+                   <div className="p-2 md:p-3 rounded-md bg-white/[0.06] border border-white/[0.08]">
+                     <Star className="w-4 h-4 md:w-6 md:h-6 text-[#a1a1a6]" />
                    </div>
                    <div>
-                     <p className="text-2xl md:text-3xl font-black text-white">{vipVendors}</p>
-                     <p className="text-xs md:text-sm font-black uppercase text-purple-400 tracking-widest mt-1">Key Suppliers</p>
+                     <p className="text-2xl md:text-3xl font-medium text-white">{vipVendors}</p>
+                     <p className="text-xs md:text-sm font-medium text-[#a1a1a6] mt-1">Key suppliers</p>
                    </div>
                 </div>
              </CardContent>
           </Card>
 
-          <Card className="bg-white/10 border-white/10 backdrop-blur-xl">
+          <Card className="bg-white/10 border-white/10">
              <CardContent className="pt-3 md:pt-8">
                 <div className="flex items-center gap-2 md:gap-4">
-                   <div className="p-2 md:p-3 rounded-md bg-blue-500/10 border border-blue-500/10">
-                     <TrendingUp className="w-4 h-4 md:w-6 md:h-6 text-blue-400" />
+                   <div className="p-2 md:p-3 rounded-md bg-white/[0.06] border border-white/[0.08]">
+                     <TrendingUp className="w-4 h-4 md:w-6 md:h-6 text-[#a1a1a6]" />
                    </div>
                    <div>
-                     <p className="text-2xl md:text-3xl font-black text-white">{formatCurrency(totalValue)}</p>
-                     <p className="text-xs md:text-sm font-black uppercase text-blue-400 tracking-widest mt-1">Total Purchased</p>
+                     <p className="text-2xl md:text-3xl font-medium text-white">{formatCurrency(totalValue)}</p>
+                     <p className="text-xs md:text-sm font-medium text-[#a1a1a6] mt-1">Total purchased</p>
                    </div>
                 </div>
              </CardContent>
           </Card>
 
-          <Card className="bg-red-500/5 border-red-500/20 backdrop-blur-xl">
+          <Card className="bg-white/[0.04] border-white/[0.08]">
              <CardContent className="pt-3 md:pt-8">
                 <div className="flex items-center gap-2 md:gap-4">
-                   <div className="p-2 md:p-3 rounded-md bg-red-500/10 border border-red-500/10">
-                     <AlertCircle className="w-4 h-4 md:w-6 md:h-6 text-red-400" />
+                   <div className="p-2 md:p-3 rounded-md bg-white/[0.04] border border-white/[0.08]">
+                     <AlertCircle className="w-4 h-4 md:w-6 md:h-6 text-[#f2777b]" />
                    </div>
                    <div>
-                     <p className="text-2xl md:text-3xl font-black text-red-400">{formatCurrency(totalOwed)}</p>
-                     <p className="text-xs md:text-sm font-black uppercase text-red-500/60 tracking-widest mt-1">Total Outstanding</p>
+                     <p className="text-2xl md:text-3xl font-medium text-[#f2777b]">{formatCurrency(totalOwed)}</p>
+                     <p className="text-xs md:text-sm font-medium text-[#f2777b] mt-1">Total outstanding</p>
                    </div>
                 </div>
              </CardContent>

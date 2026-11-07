@@ -221,11 +221,11 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
   }
 
   return (
-    <Card className="bg-[#1a1a1a]/80 border-white/10 backdrop-blur-xl shadow-2xl">
+    <Card className="bg-[#1a1a1a]/80 border-white/10">
       <CardHeader className="border-b border-white/5 pb-3">
-        <CardTitle className="text-xl font-bold text-white flex items-center gap-2">
-          <CircleDollarSign className="w-5 h-5 text-emerald-400" />
-          Log Expense
+        <CardTitle className="text-xl font-medium text-white flex items-center gap-2">
+          <CircleDollarSign className="w-5 h-5 text-[#85858b]" />
+          Log expense
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-5">
@@ -271,7 +271,7 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
                 </div>
 
                 <div className="space-y-2">
-                  <FieldLabel icon={ReceiptText} label="Reference / Receipt" />
+                  <FieldLabel icon={ReceiptText} label="Reference / receipt" />
                   <Input
                     name="reference"
                     placeholder="Ref-001"
@@ -292,11 +292,11 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
               <div className="rounded-lg border border-white/10 bg-white/[0.04] p-4 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-md border border-emerald-500/20 bg-emerald-500/10 text-emerald-400">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-md border border-white/[0.08] bg-white/[0.04] text-[#85858b]">
                       <GitBranch className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-white">Allocate this expense across multiple batches</p>
+                      <p className="text-sm font-medium text-white">Allocate this expense across multiple batches</p>
                       <p className="text-xs text-white/50">{batchesLoading ? 'Loading active batches...' : `${batches.length} active batches available`}</p>
                     </div>
                   </div>
@@ -308,15 +308,15 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
                     aria-label="Allocate this expense across multiple batches"
                     onClick={() => setAllocateAcrossBatches((active) => !active)}
                     className={cn(
-                      'h-7 w-12 rounded-full border p-0.5 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/50',
+                      'h-7 w-12 rounded-full border p-0.5 transition-colors focus:outline-none focus:ring-2 focus:ring-white/10',
                       allocateAcrossBatches
-                        ? 'border-emerald-400/40 bg-emerald-500'
+                        ? 'border-white/[0.08] bg-emerald-500'
                         : 'border-white/10 bg-white/10'
                     )}
                   >
                     <span
                       className={cn(
-                        'block h-5 w-5 rounded-full bg-white transition-transform',
+                        'block h-5 w-5 rounded-full bg-[#ededed] transition-transform',
                         allocateAcrossBatches && 'translate-x-5'
                       )}
                     />
@@ -350,10 +350,10 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
                         {balanceBadge && (
                           <span
                             className={cn(
-                              'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-bold',
+                              'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium',
                               balanceBadge.tone === 'success'
-                                ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
-                                : 'border-amber-500/30 bg-amber-500/10 text-amber-300'
+                                ? 'border-white/[0.08] bg-white/[0.04] text-emerald-400'
+                                : 'border-white/[0.08] bg-white/[0.04] text-[#d9a441]'
                             )}
                           >
                             {balanceBadge.tone === 'success' ? (
@@ -380,17 +380,17 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
                                 value={row.batchId}
                                 onChange={(event) => updateRow(row.key, { batchId: event.target.value })}
                                 className={cn(
-                                  'h-11 w-full rounded-md border bg-black/40 px-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50',
-                                  rowHasDuplicate ? 'border-amber-500/50' : 'border-white/10'
+                                  'h-11 w-full rounded-md border bg-black/40 px-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/10',
+                                  rowHasDuplicate ? 'border-white/[0.08]' : 'border-white/10'
                                 )}
                               >
-                                <option value="" className="bg-[#111827]">Select active batch #{index + 1}</option>
+                                <option value="" className="bg-[#19191b]">Select active batch #{index + 1}</option>
                                 {batches.map((batch) => (
                                   <option
                                     key={batch.id}
                                     value={batch.id}
                                     disabled={selectedIdsForRow.includes(batch.id)}
-                                    className="bg-[#111827]"
+                                    className="bg-[#19191b]"
                                   >
                                     {batch.name} · {batch.houseName} · {batch.currentCount.toLocaleString()} birds
                                   </option>
@@ -411,7 +411,7 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
                                   placeholder={allocationMode === 'PERCENTAGE' ? '0.00' : '0.00'}
                                   className="bg-black/40 border-white/10 rounded-md text-white pr-10 placeholder:text-white/50"
                                 />
-                                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-white/40">
+                                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-white/40">
                                   {allocationMode === 'PERCENTAGE' ? '%' : '₵'}
                                 </span>
                               </div>
@@ -422,7 +422,7 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
                                 size="icon"
                                 onClick={() => removeRow(row.key)}
                                 disabled={allocationRows.length <= 1}
-                                className="border border-white/10 text-white/60 hover:text-rose-300"
+                                className="border border-white/10 text-white/60 hover:text-[#f2777b]"
                                 title="Remove allocation row"
                                 aria-label={`Remove allocation row ${index + 1}`}
                               >
@@ -440,7 +440,7 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
                         className="w-full border border-white/10 bg-white/[0.06]"
                       >
                         <ListPlus className="h-4 w-4" />
-                        Add Batch Allocation
+                        Add batch allocation
                       </Button>
                     </motion.div>
                   )}
@@ -453,7 +453,7 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="bg-red-500/10 border border-red-500/20 text-red-400 p-2 rounded-md flex items-center gap-2 text-xs font-bold"
+                    className="bg-white/[0.04] border border-white/[0.08] text-[#f2777b] p-2 rounded-md flex items-center gap-2 text-xs font-medium"
                   >
                     <AlertCircle className="w-4 h-4 shrink-0" />
                     {error}
@@ -465,7 +465,7 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 p-2 rounded-md flex items-center gap-2 text-xs font-bold"
+                    className="bg-white/[0.04] border border-white/[0.08] text-[#ededed] p-2 rounded-md flex items-center gap-2 text-xs font-medium"
                   >
                     <CheckCircle2 className="w-4 h-4 shrink-0" />
                     Expense logged successfully.
@@ -478,9 +478,9 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
                 loadingText="Logging..."
                 type="submit"
                 disabled={!canSubmit}
-                className="w-full bg-emerald-500 hover:bg-emerald-600 text-black font-bold uppercase tracking-widest h-12 rounded-md"
+                className="w-full bg-[#ededed] hover:bg-white text-[#141415] font-medium h-12 rounded-md"
               >
-                Log Expense
+                Log expense
               </Button>
             </fieldset>
           </MutationBoundary>
@@ -492,8 +492,8 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
 
 function FieldLabel({ icon: Icon, label }: { icon: React.ElementType; label: string }) {
   return (
-    <label className="text-xs uppercase font-bold text-white/70 tracking-widest flex items-center gap-1 ml-1 opacity-70">
-      <Icon className="w-3 h-3 text-emerald-400" />
+    <label className="text-xs font-medium text-white/70 flex items-center gap-1 ml-1 opacity-70">
+      <Icon className="w-3 h-3 text-[#85858b]" />
       {label}
     </label>
   )
@@ -515,8 +515,8 @@ function ModeButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'flex h-9 items-center justify-center gap-2 rounded px-3 text-xs font-bold transition-colors',
-        active ? 'bg-emerald-500 text-black' : 'text-white/60 hover:text-white'
+        'flex h-9 items-center justify-center gap-2 rounded px-3 text-xs font-medium transition-colors',
+        active ? 'bg-[#2c2c2f] text-[#ededed] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'text-white/60 hover:text-white'
       )}
     >
       <Icon className="h-3.5 w-3.5" />

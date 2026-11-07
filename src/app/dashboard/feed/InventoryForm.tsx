@@ -52,14 +52,14 @@ export const InventoryForm = ({ item, mode, onClose }: InventoryFormProps) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       <Input
-        label="Item Name"
+        label="Item name"
         value={formData.itemName}
         onChange={(e) => setFormData({ ...formData, itemName: e.target.value })}
         required
       />
       <div className="grid grid-cols-2 gap-3">
         <Input
-          label="Stock Level"
+          label="Stock level"
           type="number"
           min="0"
           step="0.01"
@@ -93,7 +93,7 @@ export const InventoryForm = ({ item, mode, onClose }: InventoryFormProps) => {
       <div className="flex justify-end gap-2 pt-3">
         <Button variant="outline" type="button" onClick={onClose}>Cancel</Button>
         <Button type="submit" isLoading={isLoading}>
-          {mode === 'create' ? 'Add Item' : mode === 'edit' ? 'Update Item' : 'Save'}
+          {mode === 'create' ? 'Add Item' : mode === 'edit' ? 'Update item' : 'Save'}
         </Button>
       </div>
     </form>

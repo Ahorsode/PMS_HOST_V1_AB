@@ -123,10 +123,10 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
   if (houses.length === 0) {
     return (
       <div className="p-5 text-center space-y-3">
-        <p className="text-gray-400">You don't have any active farm houses yet.</p>
-        <p className="text-sm text-gray-500 italic">A farm house is required before you can register a new livestock unit.</p>
-        <Button asChild className="w-full bg-amber-500 hover:bg-amber-600 text-black font-semibold">
-          <Link href="/dashboard/houses">Add New House First</Link>
+        <p className="text-[#85858b]">You don't have any active farm houses yet.</p>
+        <p className="text-sm text-[#85858b]">A farm house is required before you can register a new livestock unit.</p>
+        <Button asChild className="w-full bg-amber-500 hover:bg-amber-600 text-black font-medium">
+          <Link href="/dashboard/houses">Add new house first</Link>
         </Button>
       </div>
     );
@@ -174,14 +174,14 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
         <fieldset disabled={isSubmitting} className="space-y-5 disabled:opacity-70">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Input
-              label="Unit Name / Identity"
+              label="Unit name / identity"
               placeholder="e.g., Q1-Broiler-Alpha"
               {...register("batchName")}
               error={errors.batchName?.message}
             />
 
             <Select
-              label="Livestock Category"
+              label="Livestock category"
               options={[...LIVESTOCK_CATEGORY_OPTIONS]}
               {...register("type")}
               error={errors.type?.message}
@@ -194,7 +194,7 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
               control={control}
               render={({ field }) => (
                 <BreedSelect
-                  label="Primary Breed / Specie"
+                  label="Primary breed / specie"
                   options={breedOptions}
                   value={field.value}
                   onChange={field.onChange}
@@ -205,7 +205,7 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
             />
 
             <Input
-              label="Initial Quantity"
+              label="Initial quantity"
               type="number"
               min="1"
               placeholder="1000"
@@ -215,33 +215,33 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
           </div>
 
             <Select
-              label="Farm House"
+              label="Farm house"
               options={[
-                { label: "Select House Location", value: "" }, 
+                { label: "Select house location", value: "" }, 
                 ...houseOptions,
-                { label: "+ Add New House", value: "NEW_HOUSE" }
+                { label: "+ Add new house", value: "NEW_HOUSE" }
               ]}
               {...register("houseId")}
               error={errors.houseId?.message}
             />
 
           <Input
-            label="Arrival / Hatch Date"
+            label="Arrival / hatch date"
             type="date"
             {...register("hatchDate")}
             error={errors.hatchDate?.message}
           />
 
           <div className="border-t border-white/10 pt-3 mt-2">
-            <h3 className="text-sm font-medium text-amber-500 mb-3 italic uppercase tracking-widest text-xs">Optional Initial Schedule</h3>
+            <h3 className="text-sm font-medium text-[#ededed] mb-3 text-xs">Optional initial schedule</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Input
-                label="1st Vaccination Date"
+                label="1st vaccination date"
                 type="date"
                 {...register("vaccinationDate")}
               />
               <Input
-                label="Vaccine Name"
+                label="Vaccine name"
                 placeholder="e.g., Gumboro"
                 {...register("vaccineName")}
               />
@@ -253,9 +253,9 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
               type="submit"
               isLoading={isSubmitting}
               loadingText="Registering unit..."
-              className="w-full bg-emerald-500 hover:bg-emerald-400 text-[#064e3b] font-bold h-14 rounded-lg uppercase tracking-widest transition-all shadow-[0_0_30px_rgba(16,185,129,0.2)]"
+              className="w-full bg-[#ededed] hover:bg-white text-[#141415] font-medium h-14 rounded-lg transition-colors"
             >
-              Register Unit & Continue
+              Register unit & continue
             </Button>
           </div>
         </fieldset>
@@ -275,20 +275,20 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
       <Dialog
         isOpen={showHouseModal}
         onOpenChange={(open) => !isCreatingHouse && setShowHouseModal(open)}
-        title="Create New Farm House"
+        title="Create new farm house"
         description="Add a new housing unit to your farm to accommodate this livestock unit."
       >
         <MutationBoundary active={isCreatingHouse} label="Creating house...">
         <div className="space-y-4 pt-3">
           <Input 
-            label="House Name / Number"
+            label="House name / number"
             placeholder="e.g. House Alpha, Pen 1"
             value={newHouseData.name}
             onChange={e => setNewHouseData(p => ({ ...p, name: e.target.value }))}
             disabled={isCreatingHouse}
           />
           <Input 
-            label="Total Capacity (Birds/Heads)"
+            label="Total capacity (birds/heads)"
             type="number"
             min="1"
             placeholder="e.g. 500"
@@ -302,9 +302,9 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
                onClick={handleCreateHouse} 
                isLoading={isCreatingHouse}
                loadingText="Creating..."
-               className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-black font-bold"
+               className="flex-1 bg-[#ededed] hover:bg-white text-[#141415] font-medium"
              >
-               Create House
+               Create house
              </Button>
           </div>
         </div>

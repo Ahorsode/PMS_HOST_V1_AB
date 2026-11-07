@@ -30,7 +30,7 @@ export default async function ReportsPage() {
 
   if (!report) {
     return (
-      <div className="rounded-lg border border-rose-500/20 bg-rose-500/10 p-8 text-center text-sm font-bold uppercase text-rose-400">
+      <div className="rounded-lg border border-white/[0.08] bg-white/[0.04] p-8 text-center text-sm font-medium text-[#f2777b]">
         Failed to fetch farm data. Please ensure the farm is correctly initialized.
       </div>
     )
@@ -53,7 +53,7 @@ export default async function ReportsPage() {
   }
 
   return (
-    <div className="relative mx-auto max-w-7xl animate-in fade-in px-0 md:px-3 pt-2 pb-7 md:py-7 duration-700">
+    <div className="relative mx-auto max-w-7xl animate-in fade-in px-0 md:px-3 pt-2 pb-7 md:py-7 duration-200">
       <ReportsClient initialReport={report} batches={batches} eggsPerCrate={eggsPerCrate} onDateChange={fetchReport} />
     </div>
   )
