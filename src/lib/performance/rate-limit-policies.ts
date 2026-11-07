@@ -25,6 +25,7 @@ export const RATE_LIMIT_POLICY_NAMES = [
   "audit.restore",
   "billing.checkout",
   "account.export",
+  "team.message",
 ] as const;
 
 export type RateLimitPolicyName = (typeof RATE_LIMIT_POLICY_NAMES)[number];
@@ -47,6 +48,7 @@ export const RATE_LIMIT_POLICIES: Record<RateLimitPolicyName, RateLimitPolicy> =
   "audit.restore": { limit: 8, window: "1 m", sensitivity: "admin" },
   "billing.checkout": { limit: 10, window: "10 m", sensitivity: "financial" },
   "account.export": { limit: 3, window: "10 m", sensitivity: "authenticated" },
+  "team.message": { limit: 30, window: "1 m", sensitivity: "authenticated" },
 };
 
 export const RATE_LIMIT_POLICY_LABELS: Record<RateLimitPolicyName, string> = {
@@ -67,6 +69,7 @@ export const RATE_LIMIT_POLICY_LABELS: Record<RateLimitPolicyName, string> = {
   "audit.restore": "Restoring deleted records",
   "billing.checkout": "Paystack checkouts",
   "account.export": "Account data exports",
+  "team.message": "Team chat messages",
 };
 
 /** "15 m" -> 15 minutes, "1 h" -> 60. */

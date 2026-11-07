@@ -9,6 +9,7 @@ import {
   Inbox,
   Megaphone,
   MessageSquare,
+  MessagesSquare,
   Package,
   Settings,
   Syringe,
@@ -24,7 +25,9 @@ import { getDashboardNotices } from '@/lib/settings/dashboard-notices';
 import { getDashboardMessages } from '@/lib/settings/farm-messages';
 import { activeAnnouncement } from '@/lib/settings/schemas';
 import { getFarmAlerts, type FarmAlert } from '@/lib/notifications/farm-alerts';
+import { getTeamChatViewer, getTeamUnreadCount } from '@/lib/team-messages/team-chat';
 import { cn } from '@/lib/utils';
+import { InboxTabs } from './InboxTabs';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,10 +35,12 @@ type Filter = 'all' | 'messages' | 'alerts';
 
 /**
  * The colour tells you who it is from: steel for the Poultry Ledger team,
- * yolk for something the farm needs to do, red when it is urgent.
+ * green for your own team, yolk for something the farm needs to do, red when
+ * it is urgent.
  */
 const STYLES = {
-  message: { card: 'border-l-steel', dot: 'bg-steel', icon: 'text-steel', badge: 'bg-steel/15 text-steel', label: 'Message' },
+  team: { card: 'border-l-pos', dot: 'bg-pos', icon: 'text-pos', badge: 'bg-pos/15 text-pos', label: 'Team' },
+  message: { card: 'border-l-steel', dot: 'bg-steel', icon: 'text-steel', badge: 'bg-steel/15 text-steel', label: 'Poultry Ledger' },
   alert: { card: 'border-l-yolk', dot: 'bg-yolk', icon: 'text-yolk', badge: 'bg-yolk/15 text-yolk', label: 'Notification' },
   urgent: { card: 'border-l-neg', dot: 'bg-neg', icon: 'text-neg', badge: 'bg-neg/15 text-neg', label: 'Urgent' },
 } as const;
@@ -72,17 +77,30 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
   const farm = activeFarmId
     ? await prisma.farm.findUnique({ where: { id: activeFarmId }, select: { id: true, name: true, createdAt: true } }).catch(() => null)
     : null;
-  const [access, alerts, messages, site] = await Promise.all([
+  const [access, alerts, messages, site, teamViewer] = await Promise.all([
     farm ? getFarmAccess(farm.id).catch(() => null) : Promise.resolve(null),
     farm ? getFarmAlerts() : Promise.resolve([]),
     farm ? getDashboardMessages(farm.id, isFarmOwner, new Date(), 50) : Promise.resolve([]),
     getAppSettings('site'),
+    farm ? getTeamChatViewer().catch(() => null) : Promise.resolve(null),
   ]);
+  const teamUnread = teamViewer ? await getTeamUnreadCount(teamViewer) : 0;
   const { maintenanceMessage, notice } = await getDashboardNotices({ farm, access, isOwner: isFarmOwner });
   const announcement = activeAnnouncement(site, 'dashboard');
 
-  // Alerts first (most urgent at the top), then the team's messages, newest first.
+  // Unread team chat first, then alerts (most urgent at the top), then messages from Poultry Ledger, newest first.
   const items: InboxItem[] = [];
+  if (teamUnread > 0) {
+    items.push({
+      id: 'team-unread',
+      group: 'messages',
+      style: 'team',
+      icon: MessagesSquare,
+      title: teamUnread === 1 ? '1 unread team message' : `${teamUnread} unread team messages`,
+      body: isFarmOwner ? 'Your team has written to you.' : 'The farm owner has written to you.',
+      action: { href: '/dashboard/inbox/team', label: 'Open team chat' },
+    });
+  }
   if (maintenanceMessage) {
     items.push({ id: 'maintenance', group: 'alerts', style: 'alert', icon: Wrench, title: 'Maintenance', body: maintenanceMessage });
   }
@@ -132,12 +150,6 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
   const visible = filter === 'all' ? items : items.filter((item) => item.group === filter);
   const canEditReminders = role === 'OWNER' || role === 'MANAGER';
 
-  const tabs: { id: Filter; label: string }[] = [
-    { id: 'all', label: 'All' },
-    { id: 'alerts', label: 'Notifications' },
-    { id: 'messages', label: 'Messages' },
-  ];
-
   return (
     <div className="max-w-3xl mx-auto space-y-6 px-0 md:px-5 pt-2 pb-9 md:py-9">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
@@ -147,7 +159,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
           </Link>
           <div>
             <h1 className="text-3xl font-medium leading-tight text-fg">Inbox</h1>
-            <p className="text-fg/70 font-medium text-xs md:text-sm mt-2">Farm notifications and messages from the Poultry Ledger team</p>
+            <p className="text-fg/70 font-medium text-xs md:text-sm mt-2">Farm notifications, team chat and messages from Poultry Ledger</p>
           </div>
         </div>
         {canEditReminders && (
@@ -162,24 +174,9 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
       </div>
 
       <div className="flex flex-col gap-3 px-2 sm:flex-row sm:items-center sm:justify-between">
-        <nav aria-label="Filter inbox" className="flex gap-1 rounded-lg border border-fg/10 bg-fg/5 p-1">
-          {tabs.map((tab) => (
-            <Link
-              key={tab.id}
-              href={tab.id === 'all' ? '/dashboard/inbox' : `/dashboard/inbox?show=${tab.id}`}
-              aria-current={filter === tab.id ? 'page' : undefined}
-              className={cn(
-                'flex-1 rounded-md px-3 py-1.5 text-center text-sm font-medium transition-colors sm:flex-none',
-                filter === tab.id ? 'bg-fg/10 text-fg' : 'text-fg/60 hover:text-fg',
-              )}
-            >
-              {tab.label}
-              <span className="ml-1.5 tabular-nums text-fg/50">{counts[tab.id]}</span>
-            </Link>
-          ))}
-        </nav>
+        <InboxTabs active={filter} counts={counts} unreadTeam={teamUnread} />
         <ul aria-label="Colour key" className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-fg/60">
-          {(['alert', 'urgent', 'message'] as const).map((key) => (
+          {(['alert', 'urgent', 'message', 'team'] as const).map((key) => (
             <li key={key} className="flex items-center gap-1.5">
               <span className={cn('h-2.5 w-2.5 rounded-full', STYLES[key].dot)} />
               {STYLES[key].label}
