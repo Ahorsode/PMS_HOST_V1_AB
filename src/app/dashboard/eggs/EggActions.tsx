@@ -1,8 +1,8 @@
 'use client'
 
 import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, Eye } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
+import { Plus, Pencil, Trash2, ArrowUpRight, BarChart3 } from 'lucide-react';
+import { g } from '@/components/ui/graphite';
 import { Dialog } from '@/components/ui/Dialog';
 import { EggForm } from './EggForm';
 import Link from 'next/link';
@@ -32,21 +32,18 @@ export const EggActionsHeader = ({
   return (
     <>
       <div className="flex flex-wrap items-center gap-2">
-        <Link 
-          href="/dashboard/eggs/analytics"
-          className="flex items-center gap-2 px-3 py-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-md hover:bg-emerald-500/20 transition-all font-bold uppercase text-xs tracking-widest group"
-        >
-          <Eye className="w-4 h-4 group-hover:scale-110 transition-transform" />
-          Indept Management
+        <Link href="/dashboard/eggs/analytics" className={g.buttonSecondary}>
+          <BarChart3 className="h-4 w-4 text-[#a1a1a6]" strokeWidth={1.5} />
+          Egg analytics
         </Link>
         {canEdit && (
-          <Button onClick={() => setIsOpen(true)}>
-            <Plus className="mr-2 h-4 w-4" />
-            Log New Production
-          </Button>
+          <button type="button" onClick={() => setIsOpen(true)} className={g.buttonPrimary}>
+            <Plus className="h-4 w-4" strokeWidth={1.5} />
+            Log production
+          </button>
         )}
       </div>
-      <Dialog isOpen={isOpen} onOpenChange={setIsOpen} title="Log Egg Production">
+      <Dialog isOpen={isOpen} onOpenChange={setIsOpen} title="Log egg production">
         <EggForm batches={batches} mode="create" onClose={() => setIsOpen(false)} {...eggSettings} />
       </Dialog>
     </>
@@ -88,28 +85,34 @@ export const EggLogActions = ({
   };
 
   return (
-    <div className="flex items-center gap-2">
-      <Link 
+    <div className="flex items-center justify-end gap-1">
+      <Link
         href={`/dashboard/flocks/${log.batchId}`}
-        className="flex items-center gap-1.5 px-2 py-1 text-xs font-bold uppercase tracking-normal text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg hover:bg-emerald-500/20 transition-all"
-        title="Indept Management"
+        className={g.iconButton}
+        title="Open batch"
+        aria-label="Open batch"
       >
-        <Eye className="h-3 w-3" />
-        <span>Indept</span>
+        <ArrowUpRight className="h-4 w-4" strokeWidth={1.5} />
       </Link>
       {canEdit && (
         <>
-          <button aria-label="Edit egg record" 
+          <button
+            type="button"
+            aria-label="Edit egg record"
+            title="Edit"
             onClick={() => setMode('edit')}
-            className="p-1 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+            className={g.iconButton}
           >
-            <Edit2 className="h-4 w-4" />
+            <Pencil className="h-4 w-4" strokeWidth={1.5} />
           </button>
-          <button aria-label="Delete egg record" 
+          <button
+            type="button"
+            aria-label="Delete egg record"
+            title="Delete"
             onClick={() => setShowDeleteModal(true)}
-            className="p-1 text-gray-400 hover:bg-gray-100 rounded transition-colors"
+            className={`${g.iconButton} hover:text-[#e5484d]`}
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className="h-4 w-4" strokeWidth={1.5} />
           </button>
         </>
       )}
@@ -117,7 +120,7 @@ export const EggLogActions = ({
       <Dialog 
         isOpen={mode !== null} 
         onOpenChange={(open) => !open && setMode(null)} 
-        title="Edit Production Log"
+        title="Edit production log"
       >
         {mode && (
           <EggForm 
@@ -134,7 +137,7 @@ export const EggLogActions = ({
         isOpen={showDeleteModal}
         onClose={() => setShowDeleteModal(false)}
         onConfirm={handleDelete}
-        itemName={`Egg Collection Log (${new Date(log.logDate).toLocaleDateString()})`}
+        itemName={`Egg collection log (${new Date(log.logDate).toLocaleDateString()})`}
         isLoading={isDeleting}
       />
     </div>
@@ -156,14 +159,17 @@ export const LogProductionButton = ({
   return (
     <>
       {canEdit && (
-        <button 
+        <button
+          type="button"
           onClick={() => setIsOpen(true)}
-          className="bg-green-800 text-white px-3 py-2 rounded-md text-sm hover:bg-green-700 transition-colors"
+          aria-label="Log production"
+          className={`${g.buttonSecondary} h-8 px-3`}
         >
-          Log Production
+          <span className="sm:hidden">Log</span>
+          <span className="hidden sm:inline">Log production</span>
         </button>
       )}
-      <Dialog isOpen={isOpen} onOpenChange={setIsOpen} title="Log Egg Production">
+      <Dialog isOpen={isOpen} onOpenChange={setIsOpen} title="Log egg production">
         <EggForm 
           batches={batches} 
           mode="create" 

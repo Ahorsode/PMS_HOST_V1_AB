@@ -1,11 +1,16 @@
 'use client'
 
 import React, { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/Card';
-import { Skull, Plus, Activity } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { Dialog } from '@/components/ui/Dialog';
 import { LivestockForm } from '../flocks/FlockForm';
 import { getLivestockUnit, formatLivestockType } from '@/lib/utils/growth-utils';
+import { g } from '@/components/ui/graphite';
+
+function sentenceCase(text: string) {
+  const lower = text.toLowerCase();
+  return lower.charAt(0).toUpperCase() + lower.slice(1);
+}
 
 interface QuickMortalityLoggerProps {
   activeBatches: any[];
@@ -23,73 +28,62 @@ export function QuickMortalityLogger({ activeBatches, isolationRooms = [], defau
   const selectedBatchLabel = selectedBatch?.batchName || (selectedBatchIndex >= 0 ? `Unit ${selectedBatchIndex + 1}` : 'Selected unit');
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2 mb-2">
-        {isDead ? (
-          <Skull className="w-5 h-5 text-red-500" />
-        ) : (
-          <Activity className="w-5 h-5 text-amber-500" />
-        )}
-        <h3 className="text-lg font-bold text-white uppercase tracking-normal italic">
-          {isDead ? "Quick Mortality Logging" : "Quick Quarantine Logging"}
-        </h3>
-      </div>
-      
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        {activeBatches.map((batch, index) => (
-          <Card 
-            key={batch.id} 
-            className={`group hover:border-${isDead ? 'red-500/50' : 'amber-500/50'} transition-all border border-gray-800 bg-[#1F2937]`}
-          >
-            <CardContent className="p-3">
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <p className={`text-xs font-bold ${isDead ? 'text-red-400' : 'text-amber-400'} uppercase tracking-widest leading-none mb-1`}>
-                    Active Unit
-                  </p>
-                  <h4 className="font-bold text-gray-100">{batch.batchName || `Unit ${index + 1}`}</h4>
-                </div>
-                <button aria-label="Log mortality" 
-                  onClick={() => setSelectedBatch(batch)}
-                  className={`p-2 ${isDead ? 'bg-red-500/20 text-red-400 border-red-500/30 hover:bg-red-500' : 'bg-amber-500/20 text-amber-400 border-amber-500/30 hover:bg-amber-500'} rounded-md hover:text-white active:scale-95 transition-all border`}
-                >
-                  <Plus className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="flex justify-between items-end">
-                <p className="text-xs text-gray-400 font-medium">{formatLivestockType(batch.type)}</p>
-                <p className="text-sm font-bold text-white">
-                  {batch.currentCount.toLocaleString()} 
-                  <span className="text-xs text-gray-500 font-normal ml-1 lowercase">
-                    {getLivestockUnit(batch.type)}
-                  </span>
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-        {activeBatches.length === 0 && (
-          <div className="col-span-full py-7 text-center bg-[#1F2937]/50 rounded-md border border-dashed border-gray-700 italic text-gray-500 text-sm">
-            {isDead ? "No active units to log mortality for." : "No active units to isolate or quarantine."}
-          </div>
-        )}
+    <div>
+      <div className="mb-4">
+        <h2 className={g.sectionTitle}>{isDead ? 'Log deaths' : 'Isolate birds'}</h2>
+        <p className={`mt-1 text-sm ${g.secondary}`}>
+          {isDead ? 'Pick a batch to record birds that died' : 'Pick a batch to move sick birds into isolation'}
+        </p>
       </div>
 
-      <Dialog 
-        isOpen={!!selectedBatch} 
-        onOpenChange={(open) => !open && setSelectedBatch(null)} 
-        title={isDead ? `Log Mortality: ${selectedBatchLabel}` : `Isolate/Quarantine: ${selectedBatchLabel}`}
+      {activeBatches.length > 0 ? (
+        <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+          {activeBatches.map((batch, index) => {
+            const label = batch.batchName || `Unit ${index + 1}`;
+            return (
+              <li key={batch.id}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedBatch(batch)}
+                  aria-label={isDead ? `Log deaths for ${label}` : `Isolate birds from ${label}`}
+                  className={`${g.tile} group flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors duration-150 hover:bg-[#232325] ${g.focus}`}
+                >
+                  <span className="min-w-0">
+                    <span className={`block truncate text-sm font-medium ${g.text}`}>{label}</span>
+                    <span className={`block truncate ${g.ledger} tabular-nums`}>
+                      {sentenceCase(formatLivestockType(batch.type))} · {batch.currentCount.toLocaleString()} {getLivestockUnit(batch.type).toLowerCase()}
+                    </span>
+                  </span>
+                  <Plus
+                    className="h-4 w-4 shrink-0 text-[#85858b] transition-colors duration-150 group-hover:text-[#ededed]"
+                    strokeWidth={1.5}
+                  />
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <p className={`rounded-xl border border-dashed ${g.hairline} py-8 text-center text-sm ${g.secondary}`}>
+          {isDead ? 'No active batches to log deaths for' : 'No active batches to isolate birds from'}
+        </p>
+      )}
+
+      <Dialog
+        isOpen={!!selectedBatch}
+        onOpenChange={(open) => !open && setSelectedBatch(null)}
+        title={isDead ? `Log deaths: ${selectedBatchLabel}` : `Isolate birds: ${selectedBatchLabel}`}
       >
         {selectedBatch && (
           <div className="p-2">
-             <LivestockForm 
-               batch={selectedBatch} 
-               houses={[]} // Not needed for mortality mode in LivestockForm
-               isolationRooms={isolationRooms}
-               mode="mortality" 
-               defaultHealthType={defaultType}
-               onClose={() => setSelectedBatch(null)} 
-             />
+            <LivestockForm
+              batch={selectedBatch}
+              houses={[]} // Not needed for mortality mode in LivestockForm
+              isolationRooms={isolationRooms}
+              mode="mortality"
+              defaultHealthType={defaultType}
+              onClose={() => setSelectedBatch(null)}
+            />
           </div>
         )}
       </Dialog>

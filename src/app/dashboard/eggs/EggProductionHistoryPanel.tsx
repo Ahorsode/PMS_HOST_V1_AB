@@ -2,7 +2,9 @@
 
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { formatDate } from '@/lib/utils';
+import { ArrowUpRight } from 'lucide-react';
+import { cn, formatCurrency, formatDate } from '@/lib/utils';
+import { g, ink } from '@/components/ui/graphite';
 import { EggLogActions } from './EggActions';
 import { MobileCardList } from '@/components/ui/MobileCardList';
 
@@ -87,6 +89,15 @@ function paidEggsFromSale(row: EggSaleRow) {
   return Math.max(0, totalEggs - giveawayEggs);
 }
 
+const th = 'px-4 py-3 text-left text-xs font-normal text-[#85858b] whitespace-nowrap';
+const thNum = 'px-4 py-3 text-right text-xs font-normal text-[#85858b] whitespace-nowrap';
+const td = 'px-4 py-3 whitespace-nowrap text-sm text-[#a1a1a6]';
+const tdNum = 'px-4 py-3 whitespace-nowrap text-right text-sm tabular-nums text-[#ededed]';
+const tdEmpty = `${tdNum} text-[#85858b]`;
+const rowHover = 'transition-colors duration-150 hover:bg-white/[0.03]';
+
+const ghs = (value: number | string) => formatCurrency(Number(value), 'GHS');
+
 export function EggProductionHistoryPanel({
   productionHistory,
   eggSalesHistory,
@@ -144,61 +155,58 @@ export function EggProductionHistoryPanel({
   }, [productionHistory]);
 
   return (
-    <div className={`w-full flex flex-col min-h-[50vh] bg-white rounded-md shadow-xl shadow-gray-200/50 border border-gray-100 overflow-hidden ${className}`.trim()}>
-      <div className="bg-gray-50/50 px-5 py-4 border-b border-gray-100 space-y-3 shrink-0">
+    <section className={cn('w-full flex flex-col min-h-[50vh] overflow-hidden', g.card, className)}>
+      <div className={`space-y-5 border-b ${g.hairline} px-5 py-4 shrink-0`}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="font-bold text-gray-800">Egg Inventory & History</h3>
-            <p className="text-xs text-gray-500 mt-1">FIFO: oldest production logs sell first.</p>
+            <h2 className={g.sectionTitle}>Egg stock and history</h2>
+            <p className={`mt-1 text-sm ${g.secondary}`}>The oldest collections sell first</p>
           </div>
-          <div className="flex flex-nowrap gap-2 overflow-x-auto custom-scrollbar w-full sm:w-auto pb-1 sm:pb-0">
-            <button
-              type="button"
-              onClick={() => setTab('production')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide shrink-0 ${
-                tab === 'production' ? 'bg-emerald-600 text-white' : 'bg-white border border-gray-200 text-gray-600'
-              }`}
-            >
-              Production
-            </button>
-            <button
-              type="button"
-              onClick={() => setTab('sales')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide shrink-0 ${
-                tab === 'sales' ? 'bg-emerald-600 text-white' : 'bg-white border border-gray-200 text-gray-600'
-              }`}
-            >
-              Sales History
-            </button>
-            <Link
-              href="/dashboard/sales"
-              className="px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wide bg-white border border-gray-200 text-gray-600 hover:border-emerald-300 shrink-0"
-            >
-              Open Sales Hub
+          <div className="flex items-center gap-2">
+            <div role="tablist" aria-label="History" className={g.segmented}>
+              {([
+                ['production', 'Production'],
+                ['sales', 'Sales'],
+              ] as const).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === value}
+                  onClick={() => setTab(value)}
+                  className={cn(g.segment, tab === value ? g.segmentOn : g.segmentOff)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <Link href="/dashboard/sales" className={g.buttonQuiet}>
+              Sales page
+              <ArrowUpRight className="h-4 w-4" strokeWidth={1.5} />
             </Link>
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-1.5 sm:gap-3">
-          <div className="rounded-lg border border-emerald-100 bg-emerald-50/60 px-1.5 py-2 sm:px-4 sm:py-3">
-            <div className="text-[8px] sm:text-[10px] font-bold uppercase tracking-wider sm:tracking-widest text-emerald-700 truncate">Active Stock</div>
-            <div className="text-xs sm:text-2xl font-black text-emerald-800 truncate">{formatCratesAndEggs(summary.totalRemaining, eggsPerCrate)}</div>
-            <div className="text-[9px] sm:text-xs font-bold text-emerald-700 mt-1 truncate">{summary.totalRemaining.toLocaleString()} eggs · {summary.activePct}% of usable</div>
-          </div>
-          <div className="rounded-lg border border-amber-100 bg-amber-50/60 px-1.5 py-2 sm:px-4 sm:py-3">
-            <div className="text-[8px] sm:text-[10px] font-bold uppercase tracking-wider sm:tracking-widest text-amber-700 truncate">Sold (FIFO)</div>
-            <div className="text-xs sm:text-2xl font-black text-amber-800 truncate">{formatCratesAndEggs(summary.totalSold, eggsPerCrate)}</div>
-            <div className="text-[9px] sm:text-xs font-bold text-amber-700 mt-1 truncate">{summary.totalSold.toLocaleString()} eggs · {summary.soldPct}% of usable</div>
-          </div>
-          <div className="rounded-lg border border-gray-200 bg-gray-50 px-1.5 py-2 sm:px-4 sm:py-3">
-            <div className="text-[8px] sm:text-[10px] font-bold uppercase tracking-wider sm:tracking-widest text-gray-500 truncate">Usable Logged</div>
-            <div className="text-xs sm:text-2xl font-black text-gray-900 truncate">{formatCratesAndEggs(summary.totalUsable, eggsPerCrate)}</div>
-            <div className="text-[9px] sm:text-xs font-bold text-gray-500 mt-1 truncate">{summary.totalUsable.toLocaleString()} eggs · usable logs</div>
-          </div>
-        </div>
+        <dl className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          {[
+            { label: 'In stock', eggs: summary.totalRemaining, note: `${summary.activePct}% of usable` },
+            { label: 'Sold', eggs: summary.totalSold, note: `${summary.soldPct}% of usable` },
+            { label: 'Usable logged', eggs: summary.totalUsable, note: 'all collections' },
+          ].map((item) => (
+            <div key={item.label} className={`${g.tile} min-w-0 px-4 py-3`}>
+              <dt className={`text-sm ${g.secondary}`}>{item.label}</dt>
+              <dd className={`mt-1 truncate text-xl font-medium tabular-nums ${g.text}`}>
+                {formatCratesAndEggs(item.eggs, eggsPerCrate)}
+              </dd>
+              <dd className={`mt-1 truncate ${g.ledger} tabular-nums`}>
+                {item.eggs.toLocaleString()} eggs · {item.note}
+              </dd>
+            </div>
+          ))}
+        </dl>
 
         {tab === 'production' && (
-          <div className="flex flex-wrap gap-2">
+          <div role="radiogroup" aria-label="Stock filter" className={`${g.segmented} w-fit`}>
             {([
               ['active', 'In stock'],
               ['sold_out', 'Sold out'],
@@ -207,12 +215,10 @@ export function EggProductionHistoryPanel({
               <button
                 key={value}
                 type="button"
+                role="radio"
+                aria-checked={stockFilter === value}
                 onClick={() => setStockFilter(value)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold ${
-                  stockFilter === value
-                    ? 'bg-gray-900 text-white'
-                    : 'bg-white border border-gray-200 text-gray-600'
-                }`}
+                className={cn(g.segment, stockFilter === value ? g.segmentOn : g.segmentOff)}
               >
                 {label}
               </button>
@@ -223,210 +229,212 @@ export function EggProductionHistoryPanel({
 
       {tab === 'production' ? (
         <>
-        <MobileCardList
-          tone="light"
-          items={filteredLogs}
-          getKey={(log) => log.id}
-          title={(log, logIndex) => log.batch?.batchName || `Livestock ${logIndex + 1}`}
-          subtitle={(log) => formatDate(log.logDate)}
-          badge={(log) => {
-            const remaining = Number(log.eggsRemaining || 0);
-            return (
-              <span className={`px-2 py-1 text-[10px] font-bold rounded-lg uppercase ${remaining > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'}`}>
-                {remaining > 0 ? 'Active' : 'Sold out'}
-              </span>
-            );
-          }}
-          fields={(log) => [
-            { label: 'Remaining', value: <span className="font-bold text-emerald-700">{formatCratesAndEggs(Number(log.eggsRemaining || 0), eggsPerCrate)}</span> },
-            { label: 'Sold', value: <span className="font-bold text-amber-700">{formatCratesAndEggs(soldEggs(log), eggsPerCrate)}</span> },
-            { label: 'Active %', value: <span className="font-bold text-emerald-700">{activePercent(log)}%</span> },
-            { label: 'Sold %', value: <span className="font-bold text-amber-700">{soldPercent(log)}%</span> },
-            { label: 'Total', value: <span className="font-bold text-emerald-700">{formatCratesAndEggs(log.eggsCollected, eggsPerCrate)}</span> },
-            { label: 'Unusable', value: <span className="text-red-600">{log.unusableCount || 0}</span> },
-            log.isSorted
-              ? {
-                  label: 'Sizes (S / M / L)',
-                  full: true,
-                  value: <span className="font-bold text-gray-600">{log.smallCount || 0} / {log.mediumCount || 0} / {log.largeCount || 0}</span>,
-                }
-              : { label: 'Sort', full: true, value: <span className="italic font-bold text-gray-400">Bulk Collection (unsorted)</span> },
-          ]}
-          actions={(log) => <EggLogActions log={log} batches={layerBatches} canEdit={canEdit} {...eggLoggingSettings} />}
-          empty="No production logs match this filter."
-        />
-        <div className="hidden md:block flex-1 min-h-0 overflow-auto w-full">
-          <table className="w-full min-w-[960px] divide-y divide-gray-100">
-            <thead>
-              <tr>
-                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Date</th>
-                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Livestock</th>
-                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Sort</th>
-                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Stock</th>
-                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Remaining</th>
-                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Sold</th>
-                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Active %</th>
-                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Sold %</th>
-                <th className="px-5 py-3 text-center text-xs font-bold text-gray-400 uppercase tracking-widest bg-gray-50/30">Small</th>
-                <th className="px-5 py-3 text-center text-xs font-bold text-gray-400 uppercase tracking-widest bg-gray-50/30">Medium</th>
-                <th className="px-5 py-3 text-center text-xs font-bold text-gray-400 uppercase tracking-widest bg-gray-50/30">Large</th>
-                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Total</th>
-                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Unusable</th>
-                <th className="px-5 py-3 text-right text-xs font-bold text-gray-500 uppercase tracking-widest">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {filteredLogs.length === 0 ? (
+          <MobileCardList
+            tone="graphite"
+            items={filteredLogs}
+            getKey={(log) => log.id}
+            title={(log, logIndex) => log.batch?.batchName || `Livestock ${logIndex + 1}`}
+            subtitle={(log) => formatDate(log.logDate)}
+            badge={(log) => <StockStatus remaining={Number(log.eggsRemaining || 0)} />}
+            fields={(log) => [
+              { label: 'Remaining', value: formatCratesAndEggs(Number(log.eggsRemaining || 0), eggsPerCrate) },
+              { label: 'Sold', value: formatCratesAndEggs(soldEggs(log), eggsPerCrate) },
+              { label: 'In stock', value: `${activePercent(log)}%` },
+              { label: 'Sold share', value: `${soldPercent(log)}%` },
+              { label: 'Collected', value: formatCratesAndEggs(log.eggsCollected, eggsPerCrate) },
+              { label: 'Unusable', value: <Unusable count={log.unusableCount || 0} /> },
+              log.isSorted
+                ? {
+                    label: 'Small, medium, large',
+                    full: true,
+                    value: `${log.smallCount || 0} / ${log.mediumCount || 0} / ${log.largeCount || 0}`,
+                  }
+                : { label: 'Sizes', full: true, value: <span className={g.secondary}>Not sorted</span> },
+            ]}
+            actions={(log) => <EggLogActions log={log} batches={layerBatches} canEdit={canEdit} {...eggLoggingSettings} />}
+            empty="No collections match this filter"
+          />
+          <div className="hidden md:block flex-1 min-h-0 overflow-auto w-full">
+            <table className="w-full min-w-[960px]">
+              <thead className={`border-b ${g.hairline}`}>
                 <tr>
-                  <td colSpan={14} className="px-5 py-10 text-center text-sm font-semibold text-gray-400">
-                    No production logs match this filter.
-                  </td>
+                  <th className={th}>Date</th>
+                  <th className={th}>Batch</th>
+                  <th className={th}>Sort</th>
+                  <th className={th}>Stock</th>
+                  <th className={thNum}>Remaining</th>
+                  <th className={thNum}>Sold</th>
+                  <th className={thNum}>In stock</th>
+                  <th className={thNum}>Sold share</th>
+                  <th className={thNum}>Small</th>
+                  <th className={thNum}>Medium</th>
+                  <th className={thNum}>Large</th>
+                  <th className={thNum}>Collected</th>
+                  <th className={thNum}>Unusable</th>
+                  <th className={thNum}>
+                    <span className="sr-only">Actions</span>
+                  </th>
                 </tr>
-              ) : (
-                filteredLogs.flatMap((log, logIndex) => {
-                  const livestockLabel = log.batch?.batchName || `Livestock ${logIndex + 1}`;
-                  const remaining = Number(log.eggsRemaining || 0);
-                  const stockLabel = remaining > 0 ? 'Active' : 'Sold out';
-                  const stockClass = remaining > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600';
+              </thead>
+              <tbody>
+                {filteredLogs.length === 0 ? (
+                  <tr>
+                    <td colSpan={14} className={`px-4 py-12 text-center text-sm ${g.secondary}`}>
+                      No collections match this filter
+                    </td>
+                  </tr>
+                ) : (
+                  filteredLogs.flatMap((log, logIndex) => {
+                    const livestockLabel = log.batch?.batchName || `Livestock ${logIndex + 1}`;
+                    const remaining = Number(log.eggsRemaining || 0);
 
-                  if (!log.isSorted) {
-                    return [(
-                      <tr key={log.id} className="hover:bg-gray-50/50 transition-colors">
-                        <td className="px-5 py-3 whitespace-nowrap text-sm text-gray-600 font-medium">{formatDate(log.logDate)}</td>
-                        <td className="px-5 py-3 whitespace-nowrap text-sm text-gray-900 font-bold">{livestockLabel}</td>
-                        <td className="px-5 py-3 whitespace-nowrap">
-                          <span className="px-2 py-1 text-[10px] font-bold rounded-lg uppercase bg-gray-100 text-gray-600">Unsorted</span>
+                    if (!log.isSorted) {
+                      return [
+                        <tr key={log.id} className={`${rowHover} border-b border-white/[0.06]`}>
+                          <td className={`${td} font-mono text-xs tabular-nums`}>{formatDate(log.logDate)}</td>
+                          <td className={`${td} font-medium text-[#ededed]`}>{livestockLabel}</td>
+                          <td className={td}>Not sorted</td>
+                          <td className={td}>
+                            <StockStatus remaining={remaining} />
+                          </td>
+                          <td className={tdNum}>{formatCratesAndEggs(remaining, eggsPerCrate)}</td>
+                          <td className={tdNum}>{formatCratesAndEggs(soldEggs(log), eggsPerCrate)}</td>
+                          <td className={tdNum}>{activePercent(log)}%</td>
+                          <td className={tdNum}>{soldPercent(log)}%</td>
+                          <td className={tdEmpty}>–</td>
+                          <td className={tdEmpty}>–</td>
+                          <td className={tdEmpty}>–</td>
+                          <td className={`${tdNum} font-medium`}>{formatCratesAndEggs(log.eggsCollected, eggsPerCrate)}</td>
+                          <td className={tdNum}>
+                            <Unusable count={log.unusableCount || 0} />
+                          </td>
+                          <td className="px-4 py-2 whitespace-nowrap text-right">
+                            <EggLogActions log={log} batches={layerBatches} canEdit={canEdit} {...eggLoggingSettings} />
+                          </td>
+                        </tr>,
+                      ];
+                    }
+
+                    const sizes = [
+                      { label: 'Small', count: log.smallCount || 0 },
+                      { label: 'Medium', count: log.mediumCount || 0 },
+                      { label: 'Large', count: log.largeCount || 0 },
+                    ].filter((size) => size.count > 0);
+
+                    return sizes.map((size, idx) => (
+                      <tr
+                        key={`${log.id}-${size.label}`}
+                        className={cn(rowHover, idx === sizes.length - 1 && 'border-b border-white/[0.06]')}
+                      >
+                        <td className={`${td} font-mono text-xs tabular-nums`}>{idx === 0 ? formatDate(log.logDate) : ''}</td>
+                        <td className={`${td} font-medium text-[#ededed]`}>{idx === 0 ? livestockLabel : ''}</td>
+                        <td className={td}>{size.label}</td>
+                        <td className={td}>{idx === 0 ? <StockStatus remaining={remaining} /> : null}</td>
+                        <td className={tdNum}>{idx === 0 ? formatCratesAndEggs(remaining, eggsPerCrate) : ''}</td>
+                        <td className={tdNum}>{idx === 0 ? formatCratesAndEggs(soldEggs(log), eggsPerCrate) : ''}</td>
+                        <td className={tdNum}>{idx === 0 ? `${activePercent(log)}%` : ''}</td>
+                        <td className={tdNum}>{idx === 0 ? `${soldPercent(log)}%` : ''}</td>
+                        <td className={size.label === 'Small' ? tdNum : tdEmpty}>{size.label === 'Small' ? size.count : '–'}</td>
+                        <td className={size.label === 'Medium' ? tdNum : tdEmpty}>{size.label === 'Medium' ? size.count : '–'}</td>
+                        <td className={size.label === 'Large' ? tdNum : tdEmpty}>{size.label === 'Large' ? size.count : '–'}</td>
+                        <td className={`${tdNum} font-medium`}>
+                          {idx === 0 ? formatCratesAndEggs(log.eggsCollected, eggsPerCrate) : ''}
                         </td>
-                        <td className="px-5 py-3 whitespace-nowrap">
-                          <span className={`px-2 py-1 text-[10px] font-bold rounded-lg uppercase ${stockClass}`}>{stockLabel}</span>
-                        </td>
-                        <td className="px-5 py-3 whitespace-nowrap text-sm font-bold text-emerald-700">{formatCratesAndEggs(remaining, eggsPerCrate)}</td>
-                        <td className="px-5 py-3 whitespace-nowrap text-sm font-bold text-amber-700">{formatCratesAndEggs(soldEggs(log), eggsPerCrate)}</td>
-                        <td className="px-5 py-3 whitespace-nowrap text-sm font-bold text-emerald-700">{activePercent(log)}%</td>
-                        <td className="px-5 py-3 whitespace-nowrap text-sm font-bold text-amber-700">{soldPercent(log)}%</td>
-                        <td colSpan={3} className="px-5 py-3 whitespace-nowrap text-center text-sm font-bold text-gray-400 bg-gray-50/10 italic">Bulk Collection</td>
-                        <td className="px-5 py-3 whitespace-nowrap text-sm text-green-700 font-bold">
-                          {formatCratesAndEggs(log.eggsCollected, eggsPerCrate)}
-                        </td>
-                        <td className="px-5 py-3 whitespace-nowrap text-sm text-red-600">{log.unusableCount || 0}</td>
-                        <td className="px-5 py-3 whitespace-nowrap text-right">
-                          <EggLogActions log={log} batches={layerBatches} canEdit={canEdit} {...eggLoggingSettings} />
+                        <td className={tdNum}>{idx === 0 ? <Unusable count={log.unusableCount || 0} /> : ''}</td>
+                        <td className="px-4 py-2 whitespace-nowrap text-right">
+                          {idx === 0 && (
+                            <EggLogActions log={log} batches={layerBatches} canEdit={canEdit} {...eggLoggingSettings} />
+                          )}
                         </td>
                       </tr>
-                    )];
-                  }
-
-                  const sizes = [
-                    { label: 'Small', count: log.smallCount || 0, color: 'text-amber-600 bg-amber-50' },
-                    { label: 'Medium', count: log.mediumCount || 0, color: 'text-emerald-600 bg-emerald-50' },
-                    { label: 'Large', count: log.largeCount || 0, color: 'text-blue-600 bg-blue-50' },
-                  ].filter((size) => size.count > 0);
-
-                  return sizes.map((size, idx) => (
-                    <tr key={`${log.id}-${size.label}`} className={`hover:bg-gray-50/50 transition-colors ${idx === 0 ? 'border-t-2 border-emerald-500/10' : ''}`}>
-                      <td className="px-5 py-3 whitespace-nowrap text-sm text-gray-600 font-medium">{idx === 0 ? formatDate(log.logDate) : ''}</td>
-                      <td className="px-5 py-3 whitespace-nowrap text-sm text-gray-900 font-bold">{idx === 0 ? livestockLabel : ''}</td>
-                      <td className="px-5 py-3 whitespace-nowrap">
-                        <span className="px-2 py-1 text-[10px] font-bold rounded-lg uppercase bg-emerald-100 text-emerald-700">{size.label} Size</span>
-                      </td>
-                      <td className="px-5 py-3 whitespace-nowrap">
-                        {idx === 0 ? (
-                          <span className={`px-2 py-1 text-[10px] font-bold rounded-lg uppercase ${stockClass}`}>{stockLabel}</span>
-                        ) : null}
-                      </td>
-                      <td className="px-5 py-3 whitespace-nowrap text-sm font-bold text-emerald-700">{idx === 0 ? formatCratesAndEggs(remaining, eggsPerCrate) : ''}</td>
-                      <td className="px-5 py-3 whitespace-nowrap text-sm font-bold text-amber-700">{idx === 0 ? formatCratesAndEggs(soldEggs(log), eggsPerCrate) : ''}</td>
-                      <td className="px-5 py-3 whitespace-nowrap text-sm font-bold text-emerald-700">{idx === 0 ? `${activePercent(log)}%` : ''}</td>
-                      <td className="px-5 py-3 whitespace-nowrap text-sm font-bold text-amber-700">{idx === 0 ? `${soldPercent(log)}%` : ''}</td>
-                      <td className="px-5 py-3 whitespace-nowrap text-center text-sm font-bold text-gray-500 bg-gray-50/10">{size.label === 'Small' ? size.count : '-'}</td>
-                      <td className="px-5 py-3 whitespace-nowrap text-center text-sm font-bold text-gray-500 bg-gray-50/10">{size.label === 'Medium' ? size.count : '-'}</td>
-                      <td className="px-5 py-3 whitespace-nowrap text-center text-sm font-bold text-gray-500 bg-gray-50/10">{size.label === 'Large' ? size.count : '-'}</td>
-                      <td className="px-5 py-3 whitespace-nowrap text-sm text-emerald-700 font-bold">
-                        {idx === 0 ? formatCratesAndEggs(log.eggsCollected, eggsPerCrate) : ''}
-                      </td>
-                      <td className="px-5 py-3 whitespace-nowrap text-sm text-red-600">{idx === 0 ? (log.unusableCount || 0) : ''}</td>
-                      <td className="px-5 py-3 whitespace-nowrap text-right">{idx === 0 && <EggLogActions log={log} batches={layerBatches} canEdit={canEdit} {...eggLoggingSettings} />}</td>
-                    </tr>
-                  ));
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+                    ));
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </>
       ) : (
         <>
-        <MobileCardList
-          tone="light"
-          items={eggSalesHistory}
-          getKey={(row) => row.id}
-          title={(row) => row.order.customer?.name || 'Walk-in Customer'}
-          subtitle={(row) => formatDate(row.order.orderDate)}
-          badge={(row) => <span className="text-sm font-black text-emerald-700">GHS {Number(row.totalPrice).toFixed(2)}</span>}
-          fields={(row) => {
-            const giveawayCrates = giveawayCratesFromSale(row, eggsPerCrate);
-            return [
-              { label: 'Product', full: true, value: row.inventory?.itemName || row.description },
-              { label: 'Qty', value: <span className="font-bold">{formatCratesAndEggs(paidEggsFromSale(row), eggsPerCrate)}</span> },
-              {
-                label: 'Giveaway',
-                value: (
-                  <span className="font-bold text-amber-700">
-                    {giveawayCrates > 0 ? `${giveawayCrates} ${giveawayCrates === 1 ? 'crate' : 'crates'}` : '—'}
-                  </span>
-                ),
-              },
-              { label: 'Unit Price', value: <span className="font-bold">GHS {Number(row.unitPrice).toFixed(2)}</span> },
-            ];
-          }}
-          empty="No completed egg sales yet."
-        />
-        <div className="hidden md:block flex-1 min-h-0 overflow-auto w-full">
-          <table className="w-full min-w-[960px] divide-y divide-gray-100">
-            <thead>
-              <tr>
-                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Date</th>
-                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Customer</th>
-                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Product</th>
-                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Qty</th>
-                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Giveaway</th>
-                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Unit Price</th>
-                <th className="px-5 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-widest">Total</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {eggSalesHistory.length === 0 ? (
+          <MobileCardList
+            tone="graphite"
+            items={eggSalesHistory}
+            getKey={(row) => row.id}
+            title={(row) => row.order.customer?.name || 'Walk-in customer'}
+            subtitle={(row) => formatDate(row.order.orderDate)}
+            badge={(row) => <span className={`text-sm font-medium tabular-nums ${g.text}`}>{ghs(row.totalPrice)}</span>}
+            fields={(row) => {
+              const giveawayCrates = giveawayCratesFromSale(row, eggsPerCrate);
+              return [
+                { label: 'Product', full: true, value: row.inventory?.itemName || row.description },
+                { label: 'Quantity', value: formatCratesAndEggs(paidEggsFromSale(row), eggsPerCrate) },
+                {
+                  label: 'Giveaway',
+                  value: giveawayCrates > 0 ? `${giveawayCrates} ${giveawayCrates === 1 ? 'crate' : 'crates'}` : '–',
+                },
+                { label: 'Unit price', value: ghs(row.unitPrice) },
+              ];
+            }}
+            empty="No completed egg sales yet"
+          />
+          <div className="hidden md:block flex-1 min-h-0 overflow-auto w-full">
+            <table className="w-full min-w-[960px]">
+              <thead className={`border-b ${g.hairline}`}>
                 <tr>
-                  <td colSpan={7} className="px-5 py-10 text-center text-sm font-semibold text-gray-400">
-                    No completed egg sales yet.
-                  </td>
+                  <th className={th}>Date</th>
+                  <th className={th}>Customer</th>
+                  <th className={th}>Product</th>
+                  <th className={thNum}>Quantity</th>
+                  <th className={thNum}>Giveaway</th>
+                  <th className={thNum}>Unit price</th>
+                  <th className={thNum}>Total</th>
                 </tr>
-              ) : (
-                eggSalesHistory.map((row) => {
-                  const giveawayCrates = giveawayCratesFromSale(row, eggsPerCrate);
-                  const paidEggs = paidEggsFromSale(row);
-                  return (
-                    <tr key={row.id} className="hover:bg-gray-50/50">
-                      <td className="px-5 py-3 text-sm font-medium text-gray-600">{formatDate(row.order.orderDate)}</td>
-                      <td className="px-5 py-3 text-sm font-bold text-gray-900">{row.order.customer?.name || 'Walk-in Customer'}</td>
-                      <td className="px-5 py-3 text-sm text-gray-700">{row.inventory?.itemName || row.description}</td>
-                      <td className="px-5 py-3 text-sm font-bold text-gray-900">{formatCratesAndEggs(paidEggs, eggsPerCrate)}</td>
-                      <td className="px-5 py-3 text-sm font-bold text-amber-700">
-                        {giveawayCrates > 0
-                          ? `${giveawayCrates} ${giveawayCrates === 1 ? 'crate' : 'crates'}`
-                          : '—'}
-                      </td>
-                      <td className="px-5 py-3 text-sm font-bold text-gray-700">GHS {Number(row.unitPrice).toFixed(2)}</td>
-                      <td className="px-5 py-3 text-sm font-black text-emerald-700">GHS {Number(row.totalPrice).toFixed(2)}</td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {eggSalesHistory.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className={`px-4 py-12 text-center text-sm ${g.secondary}`}>
+                      No completed egg sales yet
+                    </td>
+                  </tr>
+                ) : (
+                  eggSalesHistory.map((row) => {
+                    const giveawayCrates = giveawayCratesFromSale(row, eggsPerCrate);
+                    const paidEggs = paidEggsFromSale(row);
+                    return (
+                      <tr key={row.id} className={`${rowHover} border-b border-white/[0.06]`}>
+                        <td className={`${td} font-mono text-xs tabular-nums`}>{formatDate(row.order.orderDate)}</td>
+                        <td className={`${td} font-medium text-[#ededed]`}>{row.order.customer?.name || 'Walk-in customer'}</td>
+                        <td className={td}>{row.inventory?.itemName || row.description}</td>
+                        <td className={tdNum}>{formatCratesAndEggs(paidEggs, eggsPerCrate)}</td>
+                        <td className={giveawayCrates > 0 ? tdNum : tdEmpty}>
+                          {giveawayCrates > 0 ? `${giveawayCrates} ${giveawayCrates === 1 ? 'crate' : 'crates'}` : '–'}
+                        </td>
+                        <td className={tdNum}>{ghs(row.unitPrice)}</td>
+                        <td className={`${tdNum} font-medium`}>{ghs(row.totalPrice)}</td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
         </>
       )}
-    </div>
+    </section>
   );
+}
+
+function StockStatus({ remaining }: { remaining: number }) {
+  const inStock = remaining > 0;
+  return (
+    <span className="inline-flex items-center gap-2 whitespace-nowrap text-xs text-[#a1a1a6]">
+      <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: inStock ? ink.positive : ink.muted }} />
+      {inStock ? 'In stock' : 'Sold out'}
+    </span>
+  );
+}
+
+function Unusable({ count }: { count: number }) {
+  return <span className={count > 0 ? 'text-[#e5484d]' : 'text-[#85858b]'}>{count}</span>;
 }
