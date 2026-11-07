@@ -13,7 +13,7 @@ import { PROFILE_MENU_ITEMS } from '@/lib/app-navigation';
 
 /**
  * Profile icon for the mobile header. Opens a dropdown with My Profile,
- * Messages, Notifications and Sign out; closes on Escape, outside taps and
+ * Inbox and Sign out; closes on Escape, outside taps and
  * navigation.
  */
 export const ProfileMenu = ({ role, permissions }: { role?: string; permissions?: any }) => {

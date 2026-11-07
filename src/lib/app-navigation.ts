@@ -2,14 +2,13 @@ import {
   Activity,
   Banknote,
   BarChart3,
-  Bell,
   Briefcase,
   Crown,
   Egg,
   FileText,
   HeartPulse,
+  Inbox,
   LayoutDashboard,
-  MessageSquare,
   PawPrint,
   Settings,
   ShieldCheck,
@@ -53,8 +52,7 @@ export const DASHBOARD_NAV_ITEM: AppNavItem = {
 /** Personal pages: the mobile profile menu (plus Sign out) and the top of the Governance group. */
 export const PROFILE_MENU_ITEMS: AppNavItem[] = [
   { name: 'My Profile', shortLabel: 'Profile', icon: User, href: '/dashboard/profile', roles: ALL_ROLES },
-  { name: 'Messages', shortLabel: 'Messages', icon: MessageSquare, href: '/dashboard/messages', roles: ALL_ROLES },
-  { name: 'Notifications', shortLabel: 'Alerts', icon: Bell, href: '/dashboard/notifications', roles: ALL_ROLES },
+  { name: 'Inbox', shortLabel: 'Inbox', icon: Inbox, href: '/dashboard/inbox', roles: ALL_ROLES },
 ];
 
 /** The three groups shown as icons (after Dashboard) in the sidebar rail and mobile tab bar. */
