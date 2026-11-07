@@ -8,8 +8,8 @@ export const Card = ({ children, className = '', interactive = false }: { childr
   return (
     <div
       className={cn(
-        'relative overflow-hidden rounded-xl border border-white/[0.08] bg-[#19191b]',
-        interactive && 'cursor-pointer transition-colors duration-150 hover:bg-[#1e1e20]',
+        'relative overflow-hidden rounded-xl border border-fg/[0.08] bg-card',
+        interactive && 'cursor-pointer transition-colors duration-150 hover:bg-tile',
         className
       )}
     >
@@ -25,7 +25,7 @@ export const CardHeader = ({ children, className = '' }: { children: React.React
 );
 
 export const CardTitle = ({ children, className = '' }: { children: React.ReactNode, className?: string }) => (
-  <h3 className={cn('text-base font-medium text-[#ededed]', className)}>
+  <h3 className={cn('text-base font-medium text-fg', className)}>
     {children}
   </h3>
 );
@@ -37,7 +37,7 @@ export const CardContent = ({ children, className = '' }: { children: React.Reac
 );
 
 export const CardDescription = ({ children, className = '' }: { children: React.ReactNode, className?: string }) => (
-  <p className={cn('text-sm text-[#a1a1a6]', className)}>
+  <p className={cn('text-sm text-fg-2', className)}>
     {children}
   </p>
 );

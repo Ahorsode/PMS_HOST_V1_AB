@@ -1,13 +1,87 @@
 @import "tailwindcss";
 
+/*
+ * Graphite theme. Dark is the default everywhere; the dashboard opts into
+ * light with <html data-theme="light"> (set by ThemeToggle / the no-flash
+ * script in the root layout). Surfaces stay neutral in both, the content
+ * carries the color.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #141415;
+  --foreground: #ededed;
+
+  --page: #141415;
+  --deep: #0f0f10;
+  --card: #19191b;
+  --tile: #1e1e20;
+  --raised: #232325;
+  --raised-2: #2c2c2f;
+  --fg: #ededed;
+  --fg-2: #a1a1a6;
+  --fg-3: #85858b;
+  --bar: #4a4a4f;
+  --accent: #34d399;
+  --accent-fg: #062016;
+  --pos: #4cc38a;
+  --neg: #f2777b;
+  --neg-solid: #e5484d;
+  --yolk: #d9a441;
+  --straw: #c9b37e;
+  --clay: #b5735a;
+  --steel: #8fa8c8;
+  --shadow: rgba(0, 0, 0, 0.35);
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --background: #f6f6f7;
+  --foreground: #18181b;
+
+  --page: #f6f6f7;
+  --deep: #ffffff;
+  --card: #ffffff;
+  --tile: #fafafa;
+  --raised: #f0f0f2;
+  --raised-2: #e6e6e9;
+  --fg: #18181b;
+  --fg-2: #52525b;
+  --fg-3: #71717a;
+  --bar: #c8c8cd;
+  --accent: #059669;
+  --accent-fg: #ffffff;
+  --pos: #15803d;
+  --neg: #dc2626;
+  --neg-solid: #dc2626;
+  --yolk: #b7791f;
+  --straw: #8f7a3f;
+  --clay: #a15c40;
+  --steel: #4b6a91;
+  --shadow: rgba(24, 24, 27, 0.08);
+  color-scheme: light;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-page: var(--page);
+  --color-deep: var(--deep);
+  --color-card: var(--card);
+  --color-tile: var(--tile);
+  --color-raised: var(--raised);
+  --color-raised-2: var(--raised-2);
+  --color-fg: var(--fg);
+  --color-fg-2: var(--fg-2);
+  --color-fg-3: var(--fg-3);
+  --color-bar: var(--bar);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-pos: var(--pos);
+  --color-neg: var(--neg);
+  --color-neg-solid: var(--neg-solid);
+  --color-yolk: var(--yolk);
+  --color-straw: var(--straw);
+  --color-clay: var(--clay);
+  --color-steel: var(--steel);
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
@@ -29,21 +103,21 @@
 
 /* Graphite ramp: one neutral page surface, the content carries the color. */
 body {
-  background: #141415;
-  color: #ededed;
+  background: var(--page);
+  color: var(--fg);
   min-height: 100vh;
 }
 
 /* Kept for existing markup: both are now plain graphite surfaces with a
    hairline, no blur, tint or shadow. */
 .glass-morphism {
-  background: #19191b;
-  border: 1px solid rgba(237, 237, 237, 0.08);
+  background: var(--card);
+  border: 1px solid color-mix(in srgb, var(--fg) 8%, transparent);
 }
 
 .glass-pill {
-  background: #19191b;
-  border: 1px solid rgba(237, 237, 237, 0.08);
+  background: var(--card);
+  border: 1px solid color-mix(in srgb, var(--fg) 8%, transparent);
 }
 
 @layer utilities {
@@ -54,9 +128,9 @@ body {
   .mutation-shimmer {
     background-image: linear-gradient(
       110deg,
-      rgba(255, 255, 255, 0.06) 8%,
-      rgba(255, 255, 255, 0.14) 18%,
-      rgba(255, 255, 255, 0.06) 33%
+      color-mix(in srgb, var(--fg) 6%, transparent) 8%,
+      color-mix(in srgb, var(--fg) 14%, transparent) 18%,
+      color-mix(in srgb, var(--fg) 6%, transparent) 33%
     );
     background-size: 200% 100%;
     animation: mutation-shimmer 1.15s linear infinite;
@@ -81,7 +155,7 @@ body {
     border-radius: 10px;
   }
   .custom-scrollbar:hover::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
+    background: color-mix(in srgb, var(--fg) 12%, transparent);
   }
 
   .pb-safe {

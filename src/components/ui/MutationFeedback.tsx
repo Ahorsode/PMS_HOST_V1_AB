@@ -11,7 +11,7 @@ export function SkeletonLine({ className }: SkeletonLineProps) {
     <span
       aria-hidden="true"
       className={cn(
-        'block h-3 rounded-full bg-white/10 mutation-shimmer',
+        'block h-3 rounded-full bg-fg/10 mutation-shimmer',
         className
       )}
     />
@@ -30,15 +30,15 @@ export function MutationOverlay({ active, label = 'Updating...', className }: Mu
   return (
     <div
       className={cn(
-        'absolute inset-0 z-20 flex items-center justify-center rounded-[inherit] bg-[#141415]/60',
+        'absolute inset-0 z-20 flex items-center justify-center rounded-[inherit] bg-page/60',
         'before:absolute before:inset-0 before:rounded-[inherit] before:mutation-shimmer before:opacity-70',
         className
       )}
       aria-live="polite"
       aria-busy="true"
     >
-      <div className="relative z-10 flex items-center gap-2 rounded-lg border border-white/[0.08] bg-[#232325] px-3 py-1.5 text-xs text-[#ededed]">
-        <Loader2 className="h-4 w-4 animate-spin text-[#a1a1a6]" strokeWidth={1.5} />
+      <div className="relative z-10 flex items-center gap-2 rounded-lg border border-fg/[0.08] bg-raised px-3 py-1.5 text-xs text-fg">
+        <Loader2 className="h-4 w-4 animate-spin text-fg-2" strokeWidth={1.5} />
         {label}
       </div>
     </div>

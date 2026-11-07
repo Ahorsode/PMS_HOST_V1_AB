@@ -287,8 +287,8 @@ export function FinanceHubClient({
       {/* Page header */}
       <div className="flex flex-col justify-between gap-4 px-1 md:flex-row md:items-end">
         <div>
-          <h1 className="text-3xl font-medium leading-tight text-[#ededed]">Finance</h1>
-          <p className="mt-2 text-sm text-[#a1a1a6]">Every sale, expense and balance owed, in one ledger</p>
+          <h1 className="text-3xl font-medium leading-tight text-fg">Finance</h1>
+          <p className="mt-2 text-sm text-fg-2">Every sale, expense and balance owed, in one ledger</p>
         </div>
         {canEdit && (
           <Button onClick={() => setIsAddOpen(true)}>
@@ -300,20 +300,20 @@ export function FinanceHubClient({
 
       {/* Totals */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="min-w-0 rounded-xl border border-white/[0.08] bg-[#19191b] p-5">
-          <p className="flex items-center gap-2 text-sm text-[#a1a1a6]"><span className="h-1.5 w-1.5 rounded-full bg-[#34d399]" />Revenue</p>
-          <p className="mt-2 truncate text-3xl font-medium leading-none tabular-nums text-[#ededed]">{formatGhs(totalRevenue)}</p>
-          <p className="mt-2 font-mono text-xs text-[#85858b]">All income in the ledger</p>
+        <div className="min-w-0 rounded-xl border border-fg/[0.08] bg-card p-5">
+          <p className="flex items-center gap-2 text-sm text-fg-2"><span className="h-1.5 w-1.5 rounded-full bg-accent" />Revenue</p>
+          <p className="mt-2 truncate text-3xl font-medium leading-none tabular-nums text-fg">{formatGhs(totalRevenue)}</p>
+          <p className="mt-2 font-mono text-xs text-fg-3">All income in the ledger</p>
         </div>
-        <div className="min-w-0 rounded-xl border border-white/[0.08] bg-[#19191b] p-5">
-          <p className="flex items-center gap-2 text-sm text-[#a1a1a6]"><span className="h-1.5 w-1.5 rounded-full bg-[#b5735a]" />Expenses</p>
-          <p className="mt-2 truncate text-3xl font-medium leading-none tabular-nums text-[#ededed]">{formatGhs(totalExpense)}</p>
-          <p className="mt-2 font-mono text-xs text-[#85858b]">Operating and capital costs</p>
+        <div className="min-w-0 rounded-xl border border-fg/[0.08] bg-card p-5">
+          <p className="flex items-center gap-2 text-sm text-fg-2"><span className="h-1.5 w-1.5 rounded-full bg-clay" />Expenses</p>
+          <p className="mt-2 truncate text-3xl font-medium leading-none tabular-nums text-fg">{formatGhs(totalExpense)}</p>
+          <p className="mt-2 font-mono text-xs text-fg-3">Operating and capital costs</p>
         </div>
-        <div className="min-w-0 rounded-xl border border-white/[0.08] bg-[#19191b] p-5">
-          <p className="text-sm text-[#a1a1a6]">{netPosition >= 0 ? 'Net profit' : 'Net deficit'}</p>
-          <p className={`mt-2 truncate text-3xl font-medium leading-none tabular-nums ${netPosition >= 0 ? 'text-[#34d399]' : 'text-[#f2777b]'}`}>{formatGhs(netPosition)}</p>
-          <p className="mt-2 font-mono text-xs text-[#85858b]">Revenue minus expenses</p>
+        <div className="min-w-0 rounded-xl border border-fg/[0.08] bg-card p-5">
+          <p className="text-sm text-fg-2">{netPosition >= 0 ? 'Net profit' : 'Net deficit'}</p>
+          <p className={`mt-2 truncate text-3xl font-medium leading-none tabular-nums ${netPosition >= 0 ? 'text-accent' : 'text-neg'}`}>{formatGhs(netPosition)}</p>
+          <p className="mt-2 font-mono text-xs text-fg-3">Revenue minus expenses</p>
         </div>
       </div>
 
@@ -322,48 +322,48 @@ export function FinanceHubClient({
         <CardContent className="p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
           <div className="relative w-full md:w-80">
             <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-4 w-4 text-[#85858b]" />
+              <Search className="h-4 w-4 text-fg-3" />
             </span>
             <input
               type="text"
               placeholder="Search"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="block w-full pl-9 pr-3 py-2 bg-[#232325] border border-white/[0.08] rounded-lg text-sm text-white placeholder:text-[#85858b] focus:outline-none focus:ring-2 focus:ring-[#34d399]/30 focus:border-[#34d399]/50 transition-colors"
+              className="block w-full pl-9 pr-3 py-2 bg-raised border border-fg/[0.08] rounded-lg text-sm text-fg placeholder:text-fg-3 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/50 transition-colors"
             />
           </div>
 
           <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
-            <div className="flex bg-[#232325] rounded-lg p-0.5 border border-white/[0.08]">
+            <div className="flex bg-raised rounded-lg p-0.5 border border-fg/[0.08]">
               <button
                 onClick={() => setFilterType('ALL')}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${filterType === 'ALL' ? 'bg-[#2c2c2f] text-[#ededed] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'text-[#a1a1a6] hover:text-[#ededed]'}`}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${filterType === 'ALL' ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'text-fg-2 hover:text-fg'}`}
               >
                 All
               </button>
               <button
                 onClick={() => setFilterType('REVENUE')}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${filterType === 'REVENUE' ? 'bg-[#2c2c2f] text-[#ededed] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'text-[#a1a1a6] hover:text-[#ededed]'}`}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${filterType === 'REVENUE' ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'text-fg-2 hover:text-fg'}`}
               >
                 Revenue
               </button>
               <button
                 onClick={() => setFilterType('EXPENSE')}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${filterType === 'EXPENSE' ? 'bg-[#2c2c2f] text-[#ededed] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'text-[#a1a1a6] hover:text-[#ededed]'}`}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${filterType === 'EXPENSE' ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'text-fg-2 hover:text-fg'}`}
               >
                 Expenses
               </button>
             </div>
 
             <div className="flex items-center gap-1.5">
-              <span className="text-[#85858b] text-xs font-medium flex items-center gap-1">
+              <span className="text-fg-3 text-xs font-medium flex items-center gap-1">
                 <Filter className="w-3.5 h-3.5" />
                 Status:
               </span>
               <select
                 value={filterStatus}
                 onChange={e => setFilterStatus(e.target.value)}
-                className="bg-[#232325] border border-white/[0.08] rounded-lg text-xs font-medium text-white px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#34d399]/30 focus:border-[#34d399]/50 transition-colors"
+                className="bg-raised border border-fg/[0.08] rounded-lg text-xs font-medium text-fg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/50 transition-colors"
               >
                 <option value="ALL">All status</option>
                 <option value="PAID">Paid</option>
@@ -377,18 +377,18 @@ export function FinanceHubClient({
 
       {/* Outstanding Ledger Balances (Accounts Payable / Receivable) */}
       <Card className="overflow-hidden">
-        <CardHeader className="border-b border-white/[0.08] px-5 py-4 flex items-center justify-between">
-          <CardTitle className="text-lg font-medium text-[#ededed]">
+        <CardHeader className="border-b border-fg/[0.08] px-5 py-4 flex items-center justify-between">
+          <CardTitle className="text-lg font-medium text-fg">
             Outstanding balances
           </CardTitle>
-          <span className="font-mono text-xs tabular-nums text-[#85858b]">
+          <span className="font-mono text-xs tabular-nums text-fg-3">
             {transactions.filter(t => t.paymentStatus !== 'PAID').length} open
           </span>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             {transactions.filter(t => t.paymentStatus !== 'PAID').length === 0 ? (
-              <div className="p-8 text-center text-[#85858b] text-xs font-medium">
+              <div className="p-8 text-center text-fg-3 text-xs font-medium">
                 Nothing outstanding
               </div>
             ) : (
@@ -400,14 +400,14 @@ export function FinanceHubClient({
                   setSelectedTx(tx)
                   setIsSettleOpen(true)
                 } : undefined}
-                cardClassName={(tx) => (!!mutationMode && selectedTx?.id === tx.id ? 'bg-white/[0.04] animate-pulse' : undefined)}
+                cardClassName={(tx) => (!!mutationMode && selectedTx?.id === tx.id ? 'bg-fg/[0.04] animate-pulse' : undefined)}
                 title={(tx) => tx.category}
                 subtitle={(tx) => `Due ${new Date(tx.transactionDate).toLocaleDateString(undefined, { dateStyle: 'medium' })}`}
                 badge={(tx) => (
                   <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-medium text-xs border ${
                     tx.paymentStatus === 'UNPAID'
-                      ? 'bg-white/[0.04] text-[#f2777b] border-white/[0.08]'
-                      : 'bg-white/[0.04] text-[#d9a441] border-white/[0.08]'
+                      ? 'bg-fg/[0.04] text-neg border-fg/[0.08]'
+                      : 'bg-fg/[0.04] text-yolk border-fg/[0.08]'
                   }`}>
                     <AlertTriangle className="w-3 h-3" />
                     {statusLabel(tx.paymentStatus)}
@@ -416,13 +416,13 @@ export function FinanceHubClient({
                 fields={(tx) => [
                   {
                     label: 'Amount',
-                    value: <span className={`font-medium ${tx.type === 'REVENUE' ? 'text-[#ededed]' : 'text-[#d9a441]'}`}>{`GH₵ ${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</span>,
+                    value: <span className={`font-medium ${tx.type === 'REVENUE' ? 'text-fg' : 'text-yolk'}`}>{`GH₵ ${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</span>,
                   },
                   {
                     label: 'Type',
-                    value: <span className={`text-xs font-medium ${tx.type === 'REVENUE' ? 'text-[#ededed]' : 'text-[#d9a441]'}`}>{tx.type === 'REVENUE' ? 'Receivable' : 'Payable'}</span>,
+                    value: <span className={`text-xs font-medium ${tx.type === 'REVENUE' ? 'text-fg' : 'text-yolk'}`}>{tx.type === 'REVENUE' ? 'Receivable' : 'Payable'}</span>,
                   },
-                  { label: 'Reference', full: true, value: <span className="font-mono text-xs text-[#85858b]">{tx.referenceNum || '—'}</span> },
+                  { label: 'Reference', full: true, value: <span className="font-mono text-xs text-fg-3">{tx.referenceNum || '—'}</span> },
                 ]}
                 actions={canEdit ? (tx) => (
                   <button
@@ -430,7 +430,7 @@ export function FinanceHubClient({
                       setSelectedTx(tx)
                       setIsSettleOpen(true)
                     }}
-                    className="inline-flex items-center gap-1 bg-white/[0.04] text-[#ededed] px-3 py-2 rounded text-xs font-medium border border-white/[0.08]"
+                    className="inline-flex items-center gap-1 bg-fg/[0.04] text-fg px-3 py-2 rounded text-xs font-medium border border-fg/[0.08]"
                   >
                     <Check className="w-3.5 h-3.5" />
                     Settle
@@ -439,7 +439,7 @@ export function FinanceHubClient({
               />
               <table className="hidden md:table w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-white/5 text-[#85858b] text-xs font-medium border-b border-white/5">
+                  <tr className="bg-fg/5 text-fg-3 text-xs font-medium border-b border-fg/5">
                     <th className="py-3 px-6">Due date</th>
                     <th className="py-3 px-4">Type</th>
                     <th className="py-3 px-4">Category</th>
@@ -449,7 +449,7 @@ export function FinanceHubClient({
                     {canEdit && <th className="py-3 px-6 text-center">Quick action</th>}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody className="divide-y divide-fg/5">
                   {transactions
                     .filter(t => t.paymentStatus !== 'PAID')
                     .map((tx) => {
@@ -464,14 +464,14 @@ export function FinanceHubClient({
                             setIsSettleOpen(true)
                           }
                         }}
-                        className={`hover:bg-white/[0.04] transition-colors group cursor-pointer ${isMutatingTx ? 'bg-white/[0.04] animate-pulse' : ''}`}
+                        className={`hover:bg-fg/[0.04] transition-colors group cursor-pointer ${isMutatingTx ? 'bg-fg/[0.04] animate-pulse' : ''}`}
                         title="Click to quickly settle transaction"
                       >
-                        <td className="py-4 px-6 text-white text-xs font-medium">
+                        <td className="py-4 px-6 text-fg text-xs font-medium">
                           {isMutatingTx ? <SkeletonLine className="h-3 w-24" /> : new Date(tx.transactionDate).toLocaleDateString(undefined, { dateStyle: 'medium' })}
                         </td>
                         <td className="py-4 px-4 text-xs font-medium">
-                          {isMutatingTx ? <SkeletonLine className="h-3 w-28" /> : <span className={`inline-flex items-center gap-1 ${tx.type === 'REVENUE' ? 'text-[#ededed]' : 'text-[#d9a441]'}`}>
+                          {isMutatingTx ? <SkeletonLine className="h-3 w-28" /> : <span className={`inline-flex items-center gap-1 ${tx.type === 'REVENUE' ? 'text-fg' : 'text-yolk'}`}>
                             {tx.type === 'REVENUE' ? (
                               <>
                                 <ArrowUpRight className="w-4 h-4" />
@@ -485,28 +485,28 @@ export function FinanceHubClient({
                             )}
                           </span>}
                         </td>
-                        <td className="py-4 px-4 text-xs font-medium text-white max-w-[150px] truncate">
+                        <td className="py-4 px-4 text-xs font-medium text-fg max-w-[150px] truncate">
                           {isMutatingTx ? <SkeletonLine className="h-3 w-24" /> : tx.category}
                         </td>
-                        <td className="py-4 px-4 text-xs text-[#85858b] font-medium font-mono">
+                        <td className="py-4 px-4 text-xs text-fg-3 font-medium font-mono">
                           {isMutatingTx ? <SkeletonLine className="h-3 w-16" /> : tx.referenceNum || '—'}
                         </td>
                         <td className="py-4 px-4 text-xs">
                           {isMutatingTx ? <SkeletonLine className="h-5 w-20" /> : <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-medium text-xs border ${
                             tx.paymentStatus === 'UNPAID'
-                              ? 'bg-white/[0.04] text-[#f2777b] border-white/[0.08]'
-                              : 'bg-white/[0.04] text-[#d9a441] border-white/[0.08]'
+                              ? 'bg-fg/[0.04] text-neg border-fg/[0.08]'
+                              : 'bg-fg/[0.04] text-yolk border-fg/[0.08]'
                           }`}>
                             <AlertTriangle className="w-3 h-3" />
                             {statusLabel(tx.paymentStatus)}
                           </span>}
                         </td>
-                        <td className={`py-4 px-6 text-right text-sm font-medium ${tx.type === 'REVENUE' ? 'text-[#ededed]' : 'text-[#d9a441]'}`}>
+                        <td className={`py-4 px-6 text-right text-sm font-medium ${tx.type === 'REVENUE' ? 'text-fg' : 'text-yolk'}`}>
                           {isMutatingTx ? <SkeletonLine className="ml-auto h-3 w-20" /> : `GH₵ ${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                         </td>
                         {canEdit && (
                           <td className="py-4 px-6 text-center">
-                            <span className="inline-flex items-center gap-1 bg-white/[0.04] text-[#ededed] group-hover:bg-white/[0.08] group-hover:text-[#ededed] px-2.5 py-1 rounded text-xs font-medium transition-colors border border-white/[0.08]">
+                            <span className="inline-flex items-center gap-1 bg-fg/[0.04] text-fg group-hover:bg-fg/[0.08] group-hover:text-fg px-2.5 py-1 rounded text-xs font-medium transition-colors border border-fg/[0.08]">
                               <Check className="w-3.5 h-3.5" />
                               Settle
                             </span>
@@ -525,18 +525,18 @@ export function FinanceHubClient({
 
       {/* Main Ledger Table */}
       <Card className="overflow-hidden">
-        <CardHeader className="border-b border-white/[0.08] px-5 py-4 flex items-center justify-between">
-          <CardTitle className="text-lg font-medium text-[#ededed]">
+        <CardHeader className="border-b border-fg/[0.08] px-5 py-4 flex items-center justify-between">
+          <CardTitle className="text-lg font-medium text-fg">
             All transactions
           </CardTitle>
-          <span className="font-mono text-xs tabular-nums text-[#85858b]">
+          <span className="font-mono text-xs tabular-nums text-fg-3">
             {filteredTransactions.length} {filteredTransactions.length === 1 ? 'entry' : 'entries'}
           </span>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             {filteredTransactions.length === 0 ? (
-              <div className="p-12 text-center text-[#85858b] text-sm font-medium">
+              <div className="p-12 text-center text-fg-3 text-sm font-medium">
                 No financial ledger records found matching current criteria.
               </div>
             ) : (
@@ -544,16 +544,16 @@ export function FinanceHubClient({
               <MobileCardList
                 items={filteredTransactions}
                 getKey={(tx) => tx.id}
-                cardClassName={(tx) => (!!mutationMode && selectedTx?.id === tx.id ? 'bg-white/[0.04] animate-pulse' : undefined)}
+                cardClassName={(tx) => (!!mutationMode && selectedTx?.id === tx.id ? 'bg-fg/[0.04] animate-pulse' : undefined)}
                 title={(tx) => tx.category}
                 subtitle={(tx) => new Date(tx.transactionDate).toLocaleDateString(undefined, { dateStyle: 'medium' })}
                 badge={(tx) => (
                   <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-medium text-xs border ${
                     tx.paymentStatus === 'PAID'
-                      ? 'bg-white/[0.04] text-emerald-400 border-white/[0.08]'
+                      ? 'bg-fg/[0.04] text-emerald-400 border-fg/[0.08]'
                       : tx.paymentStatus === 'UNPAID'
-                      ? 'bg-white/[0.04] text-[#f2777b] border-white/[0.08]'
-                      : 'bg-white/[0.04] text-[#d9a441] border-white/[0.08]'
+                      ? 'bg-fg/[0.04] text-neg border-fg/[0.08]'
+                      : 'bg-fg/[0.04] text-yolk border-fg/[0.08]'
                   }`}>
                     {tx.paymentStatus === 'PAID' && <CheckCircle2 className="w-3 h-3" />}
                     {tx.paymentStatus === 'UNPAID' && <AlertTriangle className="w-3 h-3" />}
@@ -564,19 +564,19 @@ export function FinanceHubClient({
                 fields={(tx) => [
                   {
                     label: 'Amount',
-                    value: <span className={`font-medium ${tx.type === 'REVENUE' ? 'text-emerald-400' : 'text-[#f2777b]'}`}>{`${tx.type === 'REVENUE' ? '+' : '-'}GH₵ ${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</span>,
+                    value: <span className={`font-medium ${tx.type === 'REVENUE' ? 'text-emerald-400' : 'text-neg'}`}>{`${tx.type === 'REVENUE' ? '+' : '-'}GH₵ ${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</span>,
                   },
                   {
                     label: 'Type',
-                    value: <span className={`text-xs font-medium ${tx.type === 'REVENUE' ? 'text-emerald-400' : 'text-[#f2777b]'}`}>{tx.type === 'REVENUE' ? 'Revenue' : 'Expense'}</span>,
+                    value: <span className={`text-xs font-medium ${tx.type === 'REVENUE' ? 'text-emerald-400' : 'text-neg'}`}>{tx.type === 'REVENUE' ? 'Revenue' : 'Expense'}</span>,
                   },
-                  { label: 'Method', value: <span className="text-xs font-medium text-[#a1a1a6]">{tx.paymentMethod}</span> },
-                  { label: 'Reference', value: <span className="font-mono text-xs text-[#85858b]">{tx.referenceNum || '—'}</span> },
+                  { label: 'Method', value: <span className="text-xs font-medium text-fg-2">{tx.paymentMethod}</span> },
+                  { label: 'Reference', value: <span className="font-mono text-xs text-fg-3">{tx.referenceNum || '—'}</span> },
                 ]}
                 actions={canEdit ? (tx) => (
                   tx.source === 'EXPENSE' ? (
                     <span
-                      className="inline-flex items-center gap-1 bg-[#232325] text-[#85858b] px-2.5 py-1 rounded text-xs font-medium border border-white/[0.08]"
+                      className="inline-flex items-center gap-1 bg-raised text-fg-3 px-2.5 py-1 rounded text-xs font-medium border border-fg/[0.08]"
                       title="Auto-logged operational expense — manage it from inventory, health, or the source module"
                     >
                       Auto-logged
@@ -589,7 +589,7 @@ export function FinanceHubClient({
                             setSelectedTx(tx)
                             setIsSettleOpen(true)
                           }}
-                          className="bg-white/[0.04] text-[#ededed] hover:bg-white/[0.08] hover:text-[#ededed] px-3 py-2 rounded text-xs font-medium transition-colors border border-white/[0.08] flex items-center gap-1"
+                          className="bg-fg/[0.04] text-fg hover:bg-fg/[0.08] hover:text-fg px-3 py-2 rounded text-xs font-medium transition-colors border border-fg/[0.08] flex items-center gap-1"
                         >
                           <Check className="w-3.5 h-3.5" />
                           Settle
@@ -600,7 +600,7 @@ export function FinanceHubClient({
                           setSelectedTx(tx)
                           setIsDeleteOpen(true)
                         }}
-                        className="bg-white/[0.04] text-[#f2777b] hover:bg-rose-500 hover:text-white p-2 rounded transition-colors border border-white/[0.08]"
+                        className="bg-fg/[0.04] text-neg hover:bg-rose-500 hover:text-white p-2 rounded transition-colors border border-fg/[0.08]"
                         aria-label="Delete transaction"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -611,7 +611,7 @@ export function FinanceHubClient({
               />
               <table className="hidden md:table w-full text-left border-collapse">
                 <thead>
-                  <tr className="bg-white/5 text-[#85858b] text-xs font-medium border-b border-white/5">
+                  <tr className="bg-fg/5 text-fg-3 text-xs font-medium border-b border-fg/5">
                     <th className="py-3 px-6">Date</th>
                     <th className="py-3 px-4">Type</th>
                     <th className="py-3 px-4">Category</th>
@@ -622,17 +622,17 @@ export function FinanceHubClient({
                     {canEdit && <th className="py-3 px-6 text-center">Actions</th>}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody className="divide-y divide-fg/5">
                   {filteredTransactions.map((tx) => {
                     const isMutatingTx = !!mutationMode && selectedTx?.id === tx.id
 
                     return (
-                    <tr key={tx.id} className={`hover:bg-white/5 transition-colors group ${isMutatingTx ? 'bg-white/[0.04] animate-pulse' : ''}`}>
-                      <td className="py-4 px-6 text-white text-xs font-medium">
+                    <tr key={tx.id} className={`hover:bg-fg/5 transition-colors group ${isMutatingTx ? 'bg-fg/[0.04] animate-pulse' : ''}`}>
+                      <td className="py-4 px-6 text-fg text-xs font-medium">
                         {isMutatingTx ? <SkeletonLine className="h-3 w-24" /> : new Date(tx.transactionDate).toLocaleDateString(undefined, { dateStyle: 'medium' })}
                       </td>
                       <td className="py-4 px-4 text-xs font-medium">
-                        {isMutatingTx ? <SkeletonLine className="h-3 w-20" /> : <span className={`inline-flex items-center gap-1 ${tx.type === 'REVENUE' ? 'text-emerald-400' : 'text-[#f2777b]'}`}>
+                        {isMutatingTx ? <SkeletonLine className="h-3 w-20" /> : <span className={`inline-flex items-center gap-1 ${tx.type === 'REVENUE' ? 'text-emerald-400' : 'text-neg'}`}>
                           {tx.type === 'REVENUE' ? (
                             <ArrowUpRight className="w-4 h-4" />
                           ) : (
@@ -641,22 +641,22 @@ export function FinanceHubClient({
                           {tx.type === 'REVENUE' ? 'Revenue' : 'Expense'}
                         </span>}
                       </td>
-                      <td className="py-4 px-4 text-xs font-medium text-white max-w-[150px] truncate" title={tx.category}>
+                      <td className="py-4 px-4 text-xs font-medium text-fg max-w-[150px] truncate" title={tx.category}>
                         {isMutatingTx ? <SkeletonLine className="h-3 w-28" /> : tx.category}
                       </td>
-                      <td className="py-4 px-4 text-xs text-[#a1a1a6] font-medium">
+                      <td className="py-4 px-4 text-xs text-fg-2 font-medium">
                         {isMutatingTx ? <SkeletonLine className="h-3 w-16" /> : tx.paymentMethod}
                       </td>
-                      <td className="py-4 px-4 text-xs text-[#85858b] font-medium font-mono" title={tx.referenceNum || ''}>
+                      <td className="py-4 px-4 text-xs text-fg-3 font-medium font-mono" title={tx.referenceNum || ''}>
                         {isMutatingTx ? <SkeletonLine className="h-3 w-16" /> : tx.referenceNum || '—'}
                       </td>
                       <td className="py-4 px-4 text-xs">
                         {isMutatingTx ? <SkeletonLine className="h-5 w-20" /> : <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-medium text-xs border ${
                           tx.paymentStatus === 'PAID' 
-                            ? 'bg-white/[0.04] text-emerald-400 border-white/[0.08]' 
+                            ? 'bg-fg/[0.04] text-emerald-400 border-fg/[0.08]' 
                             : tx.paymentStatus === 'UNPAID'
-                            ? 'bg-white/[0.04] text-[#f2777b] border-white/[0.08]'
-                            : 'bg-white/[0.04] text-[#d9a441] border-white/[0.08]'
+                            ? 'bg-fg/[0.04] text-neg border-fg/[0.08]'
+                            : 'bg-fg/[0.04] text-yolk border-fg/[0.08]'
                         }`}>
                           {tx.paymentStatus === 'PAID' && <CheckCircle2 className="w-3 h-3" />}
                           {tx.paymentStatus === 'UNPAID' && <AlertTriangle className="w-3 h-3" />}
@@ -664,14 +664,14 @@ export function FinanceHubClient({
                           {statusLabel(tx.paymentStatus)}
                         </span>}
                       </td>
-                      <td className={`py-4 px-6 text-right text-sm font-medium ${tx.type === 'REVENUE' ? 'text-emerald-400' : 'text-[#f2777b]'}`}>
+                      <td className={`py-4 px-6 text-right text-sm font-medium ${tx.type === 'REVENUE' ? 'text-emerald-400' : 'text-neg'}`}>
                         {isMutatingTx ? <SkeletonLine className="ml-auto h-3 w-20" /> : `${tx.type === 'REVENUE' ? '+' : '-'}GH₵ ${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
                       </td>
                       {canEdit && (
                         <td className="py-4 px-6 text-center">
                           {tx.source === 'EXPENSE' ? (
                             <span
-                              className="inline-flex items-center gap-1 bg-[#232325] text-[#85858b] px-2.5 py-1 rounded text-xs font-medium border border-white/[0.08]"
+                              className="inline-flex items-center gap-1 bg-raised text-fg-3 px-2.5 py-1 rounded text-xs font-medium border border-fg/[0.08]"
                               title="Auto-logged operational expense — manage it from inventory, health, or the source module"
                             >
                               Auto-logged
@@ -684,7 +684,7 @@ export function FinanceHubClient({
                                     setSelectedTx(tx)
                                     setIsSettleOpen(true)
                                   }}
-                                  className="bg-white/[0.04] text-[#ededed] hover:bg-white/[0.08] hover:text-[#ededed] px-2.5 py-1 rounded text-xs font-medium transition-colors border border-white/[0.08] flex items-center gap-1"
+                                  className="bg-fg/[0.04] text-fg hover:bg-fg/[0.08] hover:text-fg px-2.5 py-1 rounded text-xs font-medium transition-colors border border-fg/[0.08] flex items-center gap-1"
                                   title="Settle outstanding balance"
                                 >
                                   <Check className="w-3.5 h-3.5" />
@@ -696,7 +696,7 @@ export function FinanceHubClient({
                                   setSelectedTx(tx)
                                   setIsDeleteOpen(true)
                                 }}
-                                className="bg-white/[0.04] text-[#f2777b] hover:bg-rose-500 hover:text-white p-1 rounded transition-colors border border-white/[0.08]"
+                                className="bg-fg/[0.04] text-neg hover:bg-rose-500 hover:text-white p-1 rounded transition-colors border border-fg/[0.08]"
                                 title="Delete transaction (soft)"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -719,32 +719,32 @@ export function FinanceHubClient({
       {/* CREATE ENTRY MODAL */}
       {isAddOpen && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
-          <Card className="bg-[#18181b] border-white/10 w-full max-w-lg relative">
+          <Card className="bg-card border-fg/10 w-full max-w-lg relative">
             <button aria-label="Close" 
               onClick={() => setIsAddOpen(false)}
               disabled={isAddingTransaction}
-              className="absolute top-4 right-4 text-[#85858b] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              className="absolute top-4 right-4 text-fg-3 hover:text-fg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <X className="w-5 h-5" />
             </button>
             <CardHeader>
-              <CardTitle className="text-white text-xl font-medium">Record ledger entry</CardTitle>
+              <CardTitle className="text-fg text-xl font-medium">Record ledger entry</CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleAddSubmit} className="space-y-4 text-white">
+              <form onSubmit={handleAddSubmit} className="space-y-4 text-fg">
                 {errorMsg && (
-                  <div className="p-3 bg-white/[0.04] border border-white/[0.08] text-[#f2777b] text-xs rounded-lg font-medium flex items-center gap-2">
+                  <div className="p-3 bg-fg/[0.04] border border-fg/[0.08] text-neg text-xs rounded-lg font-medium flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 shrink-0" />
                     <span>{errorMsg}</span>
                   </div>
                 )}
 
                 {/* Type selector tabs */}
-                <div className="grid grid-cols-2 bg-[#232325] rounded-lg p-1 border border-white/[0.08]">
+                <div className="grid grid-cols-2 bg-raised rounded-lg p-1 border border-fg/[0.08]">
                   <button
                     type="button"
                     onClick={() => handleTypeChange('REVENUE')}
-                    className={`py-2 rounded-md text-xs font-medium transition-colors flex items-center justify-center gap-1.5 ${formData.type === 'REVENUE' ? 'bg-[#2c2c2f] text-[#ededed] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'text-[#a1a1a6] hover:text-[#ededed]'}`}
+                    className={`py-2 rounded-md text-xs font-medium transition-colors flex items-center justify-center gap-1.5 ${formData.type === 'REVENUE' ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'text-fg-2 hover:text-fg'}`}
                   >
                     <ArrowUpRight className="w-4 h-4" />
                     Revenue (inflow)
@@ -752,7 +752,7 @@ export function FinanceHubClient({
                   <button
                     type="button"
                     onClick={() => handleTypeChange('EXPENSE')}
-                    className={`py-2 rounded-md text-xs font-medium transition-colors flex items-center justify-center gap-1.5 ${formData.type === 'EXPENSE' ? 'bg-rose-500 text-white shadow' : 'text-[#a1a1a6] hover:text-[#ededed]'}`}
+                    className={`py-2 rounded-md text-xs font-medium transition-colors flex items-center justify-center gap-1.5 ${formData.type === 'EXPENSE' ? 'bg-rose-500 text-white shadow' : 'text-fg-2 hover:text-fg'}`}
                   >
                     <ArrowDownRight className="w-4 h-4" />
                     Expense (outflow)
@@ -761,11 +761,11 @@ export function FinanceHubClient({
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[#85858b] text-xs font-medium mb-1.5">Category</label>
+                    <label className="block text-fg-3 text-xs font-medium mb-1.5">Category</label>
                     <select
                       value={formData.category}
                       onChange={e => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                      className="w-full bg-[#232325] border border-white/[0.08] rounded-lg text-sm text-white px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                      className="w-full bg-raised border border-fg/[0.08] rounded-lg text-sm text-fg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                     >
                       {formData.type === 'REVENUE' ? (
                         <optgroup label="Consolidated revenue streams">
@@ -785,7 +785,7 @@ export function FinanceHubClient({
                   </div>
 
                   <div>
-                    <label className="block text-[#85858b] text-xs font-medium mb-1.5">Amount (GHS)</label>
+                    <label className="block text-fg-3 text-xs font-medium mb-1.5">Amount (GHS)</label>
                     <input
                       type="number"
                       step="0.01"
@@ -793,29 +793,29 @@ export function FinanceHubClient({
                       placeholder="0.00"
                       value={formData.amount}
                       onChange={e => setFormData(prev => ({ ...prev, amount: e.target.value }))}
-                      className="w-full bg-[#232325] border border-white/[0.08] rounded-lg text-sm text-white px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                      className="w-full bg-raised border border-fg/[0.08] rounded-lg text-sm text-fg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[#85858b] text-xs font-medium mb-1.5">Payment method</label>
+                    <label className="block text-fg-3 text-xs font-medium mb-1.5">Payment method</label>
                     <select
                       value={formData.paymentMethod}
                       onChange={e => setFormData(prev => ({ ...prev, paymentMethod: e.target.value }))}
-                      className="w-full bg-[#232325] border border-white/[0.08] rounded-lg text-sm text-white px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                      className="w-full bg-raised border border-fg/[0.08] rounded-lg text-sm text-fg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                     >
                       {PAYMENT_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-[#85858b] text-xs font-medium mb-1.5">Payment status</label>
+                    <label className="block text-fg-3 text-xs font-medium mb-1.5">Payment status</label>
                     <select
                       value={formData.paymentStatus}
                       onChange={e => setFormData(prev => ({ ...prev, paymentStatus: e.target.value as any }))}
-                      className="w-full bg-[#232325] border border-white/[0.08] rounded-lg text-sm text-white px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                      className="w-full bg-raised border border-fg/[0.08] rounded-lg text-sm text-fg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                     >
                       <option value="PAID">Paid</option>
                       <option value="UNPAID">Unpaid</option>
@@ -826,62 +826,62 @@ export function FinanceHubClient({
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-[#85858b] text-xs font-medium mb-1.5">Date & time</label>
+                    <label className="block text-fg-3 text-xs font-medium mb-1.5">Date & time</label>
                     <input
                       type="datetime-local"
                       required
                       value={formData.transactionDate}
                       onChange={e => setFormData(prev => ({ ...prev, transactionDate: e.target.value }))}
-                      className="w-full bg-[#232325] border border-white/[0.08] rounded-lg text-sm text-white px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                      className="w-full bg-raised border border-fg/[0.08] rounded-lg text-sm text-fg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[#85858b] text-xs font-medium mb-1.5">Reference number</label>
+                    <label className="block text-fg-3 text-xs font-medium mb-1.5">Reference number</label>
                     <input
                       type="text"
                       placeholder="e.g. TxRef-12345"
                       value={formData.referenceNum}
                       onChange={e => setFormData(prev => ({ ...prev, referenceNum: e.target.value }))}
-                      className="w-full bg-[#232325] border border-white/[0.08] rounded-lg text-sm text-white px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                      className="w-full bg-raised border border-fg/[0.08] rounded-lg text-sm text-fg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-[#85858b] text-xs font-medium mb-1.5">Description (notes)</label>
+                  <label className="block text-fg-3 text-xs font-medium mb-1.5">Description (notes)</label>
                   <textarea
                     placeholder="Log detail notes..."
                     value={formData.description}
                     onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
                     rows={3}
-                    className="w-full bg-[#232325] border border-white/[0.08] rounded-lg text-sm text-white px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none resize-none"
+                    className="w-full bg-raised border border-fg/[0.08] rounded-lg text-sm text-fg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none resize-none"
                   />
                 </div>
 
-                <div className="rounded-lg border border-white/[0.08] bg-[#232325] p-4 space-y-3">
+                <div className="rounded-lg border border-fg/[0.08] bg-raised p-4 space-y-3">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
-                      <p className="text-xs font-medium text-white">Specify allocation</p>
-                      <p className="text-[11px] text-[#85858b]">Split this entry across livestock batches</p>
+                      <p className="text-xs font-medium text-fg">Specify allocation</p>
+                      <p className="text-[11px] text-fg-3">Split this entry across livestock batches</p>
                     </div>
                     <Button
                       type="button"
                       onClick={() => setIsAllocationOpen(true)}
                       disabled={!formData.amount || Number(formData.amount) <= 0}
-                      className="bg-[#232325] hover:bg-slate-600 text-white font-medium text-xs"
+                      className="bg-raised hover:bg-slate-600 text-fg font-medium text-xs"
                     >
                       <GitBranch className="w-4 h-4" />
                       {savedAllocation ? 'Edit allocation' : 'Specify allocation'}
                     </Button>
                   </div>
                   {savedAllocation ? (
-                    <div className="flex items-center justify-between rounded-md border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-xs">
-                      <span className="font-medium text-[#34d399]">{savedAllocation.label}</span>
+                    <div className="flex items-center justify-between rounded-md border border-fg/[0.08] bg-fg/[0.04] px-3 py-2 text-xs">
+                      <span className="font-medium text-accent">{savedAllocation.label}</span>
                       <button
                         type="button"
                         onClick={() => setSavedAllocation(null)}
-                        className="inline-flex items-center gap-1 text-[#f2777b] hover:text-[#f2777b]"
+                        className="inline-flex items-center gap-1 text-neg hover:text-neg"
                       >
                         <XCircle className="w-3.5 h-3.5" />
                         Clear
@@ -903,7 +903,7 @@ export function FinanceHubClient({
                     type="button"
                     onClick={() => setIsAddOpen(false)}
                     disabled={isAddingTransaction}
-                    className="bg-[#232325] hover:bg-slate-600 text-white font-medium"
+                    className="bg-raised hover:bg-slate-600 text-fg font-medium"
                   >
                     Cancel
                   </Button>
@@ -911,7 +911,7 @@ export function FinanceHubClient({
                     type="submit"
                     isLoading={isAddingTransaction}
                     loadingText="Submitting..."
-                    className="bg-[#ededed] hover:bg-white text-[#141415] font-medium"
+                    className="bg-fg hover:bg-fg/90 text-page font-medium"
                   >
                     Record transaction
                   </Button>
@@ -925,49 +925,49 @@ export function FinanceHubClient({
       {/* SETTLE MODAL */}
       {isSettleOpen && selectedTx && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
-          <Card className="bg-[#18181b] border-white/10 w-full max-w-md relative">
+          <Card className="bg-card border-fg/10 w-full max-w-md relative">
             <button aria-label="Close" 
               onClick={() => setIsSettleOpen(false)}
               disabled={isSettlingTransaction}
-              className="absolute top-4 right-4 text-[#85858b] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              className="absolute top-4 right-4 text-fg-3 hover:text-fg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <X className="w-5 h-5" />
             </button>
             <CardHeader className="pb-2">
-              <CardTitle className="text-white text-xl font-medium">Record settle payment</CardTitle>
-              <p className="text-xs text-[#85858b] font-medium mt-1">
+              <CardTitle className="text-fg text-xl font-medium">Record settle payment</CardTitle>
+              <p className="text-xs text-fg-3 font-medium mt-1">
                 Settling {selectedTx.type === 'REVENUE' ? 'Receivable' : 'Payable'} invoice {selectedTx.referenceNum ? `#${selectedTx.referenceNum}` : 'for this transaction'} generated on {new Date(selectedTx.transactionDate).toLocaleDateString()} for GH₵ {selectedTx.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </p>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSettleSubmit} className="space-y-4 text-white">
+              <form onSubmit={handleSettleSubmit} className="space-y-4 text-fg">
                 {errorMsg && (
-                  <div className="p-3 bg-white/[0.04] border border-white/[0.08] text-[#f2777b] text-xs rounded-lg font-medium flex items-center gap-2">
+                  <div className="p-3 bg-fg/[0.04] border border-fg/[0.08] text-neg text-xs rounded-lg font-medium flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 shrink-0" />
                     <span>{errorMsg}</span>
                   </div>
                 )}
 
-                <div className="p-3 bg-[#232325] rounded-lg border border-white/[0.08] space-y-1.5">
-                  <p className="text-[#85858b] text-xs font-medium">Unpaid transaction info</p>
+                <div className="p-3 bg-raised rounded-lg border border-fg/[0.08] space-y-1.5">
+                  <p className="text-fg-3 text-xs font-medium">Unpaid transaction info</p>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium text-white">{selectedTx.category}</span>
-                    <span className="font-medium text-[#ededed]">GH₵ {selectedTx.amount.toFixed(2)}</span>
+                    <span className="font-medium text-fg">{selectedTx.category}</span>
+                    <span className="font-medium text-fg">GH₵ {selectedTx.amount.toFixed(2)}</span>
                   </div>
                   {selectedTx.description && (
-                    <p className="text-xs text-[#85858b] truncate">{selectedTx.description}</p>
+                    <p className="text-xs text-fg-3 truncate">{selectedTx.description}</p>
                   )}
                 </div>
 
                 <div>
-                  <label className="block text-[#85858b] text-xs font-medium mb-1.5">Settlement transaction reference (optional)</label>
+                  <label className="block text-fg-3 text-xs font-medium mb-1.5">Settlement transaction reference (optional)</label>
                   <input
                     type="text"
                     required
                     placeholder="Momo TxID, bank ref, cheque num..."
                     value={settleRef}
                     onChange={e => setSettleRef(e.target.value)}
-                    className="w-full bg-[#232325] border border-white/[0.08] rounded-lg text-sm text-white px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                    className="w-full bg-raised border border-fg/[0.08] rounded-lg text-sm text-fg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                   />
                 </div>
 
@@ -976,7 +976,7 @@ export function FinanceHubClient({
                     type="button"
                     onClick={() => setIsSettleOpen(false)}
                     disabled={isSettlingTransaction}
-                    className="bg-[#232325] hover:bg-slate-600 text-white font-medium"
+                    className="bg-raised hover:bg-slate-600 text-fg font-medium"
                   >
                     Cancel
                   </Button>
@@ -984,7 +984,7 @@ export function FinanceHubClient({
                     type="submit"
                     isLoading={isSettlingTransaction}
                     loadingText="Saving..."
-                    className="bg-[#ededed] hover:bg-white text-[#141415] font-medium"
+                    className="bg-fg hover:bg-fg/90 text-page font-medium"
                   >
                     Confirm settlement
                   </Button>
@@ -998,27 +998,27 @@ export function FinanceHubClient({
       {/* SOFT DELETE MODAL */}
       {isDeleteOpen && selectedTx && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
-          <Card className="bg-[#18181b] border-white/10 w-full max-w-md relative">
+          <Card className="bg-card border-fg/10 w-full max-w-md relative">
             <button aria-label="Close" 
               onClick={() => setIsDeleteOpen(false)}
               disabled={isDeletingTransaction}
-              className="absolute top-4 right-4 text-[#85858b] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+              className="absolute top-4 right-4 text-fg-3 hover:text-fg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <X className="w-5 h-5" />
             </button>
             <CardHeader>
-              <CardTitle className="text-white text-xl font-medium">Soft delete transaction</CardTitle>
+              <CardTitle className="text-fg text-xl font-medium">Soft delete transaction</CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleDeleteSubmit} className="space-y-4 text-white">
+              <form onSubmit={handleDeleteSubmit} className="space-y-4 text-fg">
                 {errorMsg && (
-                  <div className="p-3 bg-white/[0.04] border border-white/[0.08] text-[#f2777b] text-xs rounded-lg font-medium flex items-center gap-2">
+                  <div className="p-3 bg-fg/[0.04] border border-fg/[0.08] text-neg text-xs rounded-lg font-medium flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4 shrink-0" />
                     <span>{errorMsg}</span>
                   </div>
                 )}
 
-                <div className="p-3 bg-white/[0.04] border border-white/[0.08] rounded-lg space-y-1 text-[#f2777b] text-xs">
+                <div className="p-3 bg-fg/[0.04] border border-fg/[0.08] rounded-lg space-y-1 text-neg text-xs">
                   <p className="font-medium flex items-center gap-1.5">
                     <AlertTriangle className="w-4 h-4" />
                     Destructive ledger action
@@ -1027,14 +1027,14 @@ export function FinanceHubClient({
                 </div>
 
                 <div>
-                  <label className="block text-[#85858b] text-xs font-medium mb-1.5">Reason for deletion</label>
+                  <label className="block text-fg-3 text-xs font-medium mb-1.5">Reason for deletion</label>
                   <textarea
                     required
                     rows={3}
                     placeholder="Provide a valid accounting explanation (minimum 5 characters)..."
                     value={deleteReason}
                     onChange={e => setDeleteReason(e.target.value)}
-                    className="w-full bg-[#232325] border border-white/[0.08] rounded-lg text-sm text-white px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:outline-none resize-none"
+                    className="w-full bg-raised border border-fg/[0.08] rounded-lg text-sm text-fg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:outline-none resize-none"
                   />
                 </div>
 
@@ -1043,7 +1043,7 @@ export function FinanceHubClient({
                     type="button"
                     onClick={() => setIsDeleteOpen(false)}
                     disabled={isDeletingTransaction}
-                    className="bg-[#232325] hover:bg-slate-600 text-white font-medium"
+                    className="bg-raised hover:bg-slate-600 text-fg font-medium"
                   >
                     Cancel
                   </Button>

@@ -178,7 +178,7 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
         {mode === 'mortality' ? (
           <>
           {!defaultHealthType && (
-            <div className="mb-4 flex gap-1 rounded-xl border border-white/[0.08] bg-[#19191b] p-1">
+            <div className="mb-4 flex gap-1 rounded-xl border border-fg/[0.08] bg-card p-1">
               <button
                 type="button"
                 aria-pressed={formData.healthType === 'DEAD'}
@@ -217,7 +217,7 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
               placeholder={formData.healthType === 'DEAD' ? "How many were lost?" : "How many are showing symptoms?"}
               className={isMortalityExceeded ? "border-red-500 focus:ring-red-500" : ""}
             />
-            <p className={`text-xs ${isMortalityExceeded ? "text-[#f2777b]" : "text-[#85858b]"}`}>
+            <p className={`text-xs ${isMortalityExceeded ? "text-neg" : "text-fg-3"}`}>
               {isMortalityExceeded
                 ? `Only ${currentRemaining} birds remain in this batch, so the count is too high`
                 : `${currentRemaining} birds remain in this batch`}
@@ -238,7 +238,7 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
               />
 
               {formData.isolationRoomId === 'add_new' && (
-                <div className="grid grid-cols-2 gap-3 rounded-lg border border-white/[0.08] bg-[#141415] p-4">
+                <div className="grid grid-cols-2 gap-3 rounded-lg border border-fg/[0.08] bg-page p-4">
                   <Input
                     label="New room name"
                     placeholder="e.g. Room A"
@@ -384,7 +384,7 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
         )}
       </fieldset>
       </MutationBoundary>
-      <div className="flex justify-end gap-2 border-t border-white/[0.08] pt-5">
+      <div className="flex justify-end gap-2 border-t border-fg/[0.08] pt-5">
         <ActionButton type="button" onClick={onClose} disabled={isLoading}>Cancel</ActionButton>
         <ActionButton
           type="submit"

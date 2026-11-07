@@ -15,15 +15,15 @@ export default async function InventoryDetailPage({ params }: { params: Promise<
   return (
     <div className="mx-auto max-w-5xl space-y-6 px-0 pt-2 pb-7 md:p-8">
       <div>
-        <h1 className="text-3xl font-medium leading-tight text-[#ededed]">
+        <h1 className="text-3xl font-medium leading-tight text-fg">
           {data.item.itemName}
           {data.isUsedUp ? (
-            <span className="ml-3 align-middle text-sm font-medium text-[#f2777b]">
+            <span className="ml-3 align-middle text-sm font-medium text-neg">
               Used up
             </span>
           ) : null}
         </h1>
-        <p className="mt-1 text-sm font-medium text-white/60">
+        <p className="mt-1 text-sm font-medium text-fg/60">
           Usage history — which batch consumed this stock and when
         </p>
       </div>

@@ -118,7 +118,7 @@ export function InfirmaryManagement({ batches }: { batches: Batch[] }) {
                             }
                             setCounts(prev => ({ ...prev, [batch.id]: e.target.value }));
                           }}
-                          className={`${g.input} h-9 text-center ${tooMany ? 'border-[#e5484d]' : ''}`}
+                          className={`${g.input} h-9 text-center ${tooMany ? 'border-neg-solid' : ''}`}
                         />
                       </div>
                       <button
@@ -131,7 +131,7 @@ export function InfirmaryManagement({ batches }: { batches: Batch[] }) {
                         {isRecovering ? (
                           <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} />
                         ) : (
-                          <Check className="h-4 w-4 text-[#4cc38a]" strokeWidth={1.5} />
+                          <Check className="h-4 w-4 text-pos" strokeWidth={1.5} />
                         )}
                         Mark recovered
                       </button>
@@ -140,7 +140,7 @@ export function InfirmaryManagement({ batches }: { batches: Batch[] }) {
                         onClick={() => handleAction(batch.id, 'DEAD', batch.isolationCount)}
                         disabled={isRowLoading}
                         aria-busy={isLoggingMortality || undefined}
-                        className={`${g.buttonQuiet} hover:text-[#e5484d]`}
+                        className={`${g.buttonQuiet} hover:text-neg-solid`}
                       >
                         {isLoggingMortality ? <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} /> : null}
                         Record deaths

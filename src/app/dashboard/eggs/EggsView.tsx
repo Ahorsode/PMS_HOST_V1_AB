@@ -119,7 +119,7 @@ function EggTray({ filled, size }: { filled: number; size: number }) {
   return (
     <figure className="mt-5">
       <div
-        className="grid w-fit gap-1.5 rounded-xl border border-white/[0.06] bg-[#141415] p-3"
+        className="grid w-fit gap-1.5 rounded-xl border border-fg/[0.06] bg-page p-3"
         style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
         aria-hidden="true"
       >
@@ -128,8 +128,8 @@ function EggTray({ filled, size }: { filled: number; size: number }) {
             key={i}
             className={
               i < filled
-                ? 'h-3.5 w-3 rounded-[50%] bg-[#d9a441] shadow-[inset_0_-2px_0_rgba(0,0,0,0.18)]'
-                : 'h-3.5 w-3 rounded-[50%] border border-white/[0.1]'
+                ? 'h-3.5 w-3 rounded-[50%] bg-yolk shadow-[inset_0_-2px_0_rgba(0,0,0,0.18)]'
+                : 'h-3.5 w-3 rounded-[50%] border border-fg/[0.1]'
             }
           />
         ))}

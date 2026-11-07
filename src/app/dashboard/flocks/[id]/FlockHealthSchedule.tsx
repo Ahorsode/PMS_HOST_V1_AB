@@ -322,7 +322,7 @@ export function FlockHealthSchedule({
               onClick={() => setShowForm((v) => !v)}
               disabled={isPending}
               aria-expanded={showForm}
-              className={iconButtonClass('default', 'border border-white/[0.08] bg-[#232325]')}
+              className={iconButtonClass('default', 'border border-fg/[0.08] bg-raised')}
               aria-label="Add health schedule"
             >
               <Plus className="h-4 w-4" strokeWidth={1.5} />
@@ -333,7 +333,7 @@ export function FlockHealthSchedule({
 
       <div className="space-y-4 p-4">
         {showForm && canEdit ? (
-          <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-white/[0.08] bg-[#141415] p-4">
+          <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-fg/[0.08] bg-page p-4">
             <div className={cn(tone.panel, 'flex gap-1 p-1')}>
               <button
                 type="button"
@@ -447,7 +447,7 @@ export function FlockHealthSchedule({
                 <p className={cn('text-[13px]', tone.text2)}>
                   Staged <span className={cn('font-mono tabular-nums', tone.muted)}>{drafts.length}</span>
                 </p>
-                <ul className="divide-y divide-white/[0.06] rounded-lg border border-white/[0.08]">
+                <ul className="divide-y divide-fg/[0.06] rounded-lg border border-fg/[0.08]">
                   {drafts.map((d) => (
                     <li key={d._key} className="flex items-center gap-2 py-1 pl-3 pr-1 text-[13px]">
                       {d.type === 'VACCINATION' ? (
@@ -473,7 +473,7 @@ export function FlockHealthSchedule({
               </div>
             ) : null}
 
-            {error ? <p className="text-[13px] text-[#f2777b]">{error}</p> : null}
+            {error ? <p className="text-[13px] text-neg">{error}</p> : null}
             {successMsg ? <p className={cn('text-[13px]', tone.accent)}>{successMsg}</p> : null}
 
             {isAddingNew && resolvedName ? (
@@ -485,7 +485,7 @@ export function FlockHealthSchedule({
                 loadingText="Saving…"
                 className="w-full"
               >
-                <Boxes className="h-4 w-4 text-[#a1a1a6]" strokeWidth={1.5} />
+                <Boxes className="h-4 w-4 text-fg-2" strokeWidth={1.5} />
                 <span className="truncate">Save “{resolvedName}” to inventory</span>
               </ActionButton>
             ) : null}
@@ -494,7 +494,7 @@ export function FlockHealthSchedule({
 
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
               <ActionButton size="sm" onClick={handleAddToList} disabled={!currentEntryValid || isPending}>
-                <ListPlus className="h-4 w-4 text-[#a1a1a6]" strokeWidth={1.5} /> Add another
+                <ListPlus className="h-4 w-4 text-fg-2" strokeWidth={1.5} /> Add another
               </ActionButton>
               <ActionButton type="submit" variant="primary" size="sm" isLoading={isPending} disabled={!canSave}>
                 <Plus className="h-4 w-4" strokeWidth={1.5} />
@@ -559,8 +559,8 @@ function ScheduleGroup({
   today.setHours(0, 0, 0, 0)
 
   return (
-    <div className="rounded-lg border border-white/[0.08]">
-      <div className="flex h-10 items-center gap-2 border-b border-white/[0.08] px-3">
+    <div className="rounded-lg border border-fg/[0.08]">
+      <div className="flex h-10 items-center gap-2 border-b border-fg/[0.08] px-3">
         <Icon className={cn('h-4 w-4', tone.muted)} strokeWidth={1.5} />
         <h3 className={cn('text-[13px] font-medium', tone.text)}>{title}</h3>
         <span className={cn('ml-auto font-mono text-xs tabular-nums', tone.muted)}>{records.length}</span>
@@ -569,7 +569,7 @@ function ScheduleGroup({
       {records.length === 0 ? (
         <p className={cn('py-6 text-center text-[13px]', tone.text2)}>Nothing scheduled</p>
       ) : (
-        <ul className="divide-y divide-white/[0.06]">
+        <ul className="divide-y divide-fg/[0.06]">
           {records.map((rec) => {
             const name = rec.vaccineName ?? rec.medicationName ?? '—'
             const date = new Date(rec.scheduledDate)
@@ -587,14 +587,14 @@ function ScheduleGroup({
                 ) : isCancelled ? (
                   <XCircle className={cn('h-4 w-4 shrink-0', tone.muted)} strokeWidth={1.5} />
                 ) : (
-                  <Circle className={cn('h-4 w-4 shrink-0', isOverdue ? 'text-[#f2777b]' : tone.muted)} strokeWidth={1.5} />
+                  <Circle className={cn('h-4 w-4 shrink-0', isOverdue ? 'text-neg' : tone.muted)} strokeWidth={1.5} />
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className={cn('truncate text-[13px]', isCancelled ? 'text-[#85858b] line-through' : tone.text)}>{name}</p>
+                  <p className={cn('truncate text-[13px]', isCancelled ? 'text-fg-3 line-through' : tone.text)}>{name}</p>
                   <p className={cn('mt-0.5 flex flex-wrap items-center gap-x-2 text-xs', tone.muted)}>
                     <span className="font-mono tabular-nums">{formatDate(date)}</span>
                     {usage ? <span>· {usage}</span> : null}
-                    {isOverdue ? <span className="text-[#f2777b]">· Overdue</span> : null}
+                    {isOverdue ? <span className="text-neg">· Overdue</span> : null}
                   </p>
                 </div>
 
@@ -606,12 +606,12 @@ function ScheduleGroup({
                       onChange={(e) => onStatusChange(type, rec.id, e.target.value)}
                       aria-label={`Status of ${name}`}
                       className={cn(
-                        'h-8 cursor-pointer rounded-lg border border-white/[0.08] bg-[#232325] px-2 text-xs text-[#ededed] disabled:opacity-50',
+                        'h-8 cursor-pointer rounded-lg border border-fg/[0.08] bg-raised px-2 text-xs text-fg disabled:opacity-50',
                         tone.focus
                       )}
                     >
                       {STATUS_OPTIONS.map((o) => (
-                        <option key={o.value} value={o.value} className="bg-[#232325]">
+                        <option key={o.value} value={o.value} className="bg-raised">
                           {o.label}
                         </option>
                       ))}

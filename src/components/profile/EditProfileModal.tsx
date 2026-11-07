@@ -110,13 +110,13 @@ export function EditProfileModal({ isOpen, onOpenChange, initialData }: EditProf
       description="Update your legal name and account security settings."
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 pt-3">
-        <div className="flex items-center gap-3 mb-5 p-3 bg-white/[0.04] border border-white/[0.08] rounded-md">
-          <div className="w-12 h-12 rounded-md bg-white/[0.04] flex items-center justify-center">
-            <Fingerprint className="w-6 h-6 text-[#85858b]" />
+        <div className="flex items-center gap-3 mb-5 p-3 bg-fg/[0.04] border border-fg/[0.08] rounded-md">
+          <div className="w-12 h-12 rounded-md bg-fg/[0.04] flex items-center justify-center">
+            <Fingerprint className="w-6 h-6 text-fg-3" />
           </div>
           <div>
-            <p className="text-xs font-medium text-[#ededed] leading-tight">Identity control</p>
-            <p className="text-sm font-medium text-white/80">Changes will be reflected across all farm records.</p>
+            <p className="text-xs font-medium text-fg leading-tight">Identity control</p>
+            <p className="text-sm font-medium text-fg/80">Changes will be reflected across all farm records.</p>
           </div>
         </div>
 
@@ -142,17 +142,17 @@ export function EditProfileModal({ isOpen, onOpenChange, initialData }: EditProf
         />
 
         {/* Password Change Toggle */}
-        <div className="pt-3 border-t border-white/5">
+        <div className="pt-3 border-t border-fg/5">
            <div 
              onClick={() => setValue("changePassword", !changePasswordActive)}
-             className="flex items-center justify-between p-3 rounded-md bg-white/10 border border-white/5 cursor-pointer hover:bg-white/10 transition-colors group"
+             className="flex items-center justify-between p-3 rounded-md bg-fg/10 border border-fg/5 cursor-pointer hover:bg-fg/10 transition-colors group"
            >
               <div className="flex items-center gap-2">
-                 <Shield className={`w-5 h-5 ${changePasswordActive ? 'text-[#d9a441]' : 'text-white/70 group-hover:text-white/60'}`} />
-                 <p className="text-sm font-medium text-white/80">Change password</p>
+                 <Shield className={`w-5 h-5 ${changePasswordActive ? 'text-yolk' : 'text-fg/70 group-hover:text-fg/60'}`} />
+                 <p className="text-sm font-medium text-fg/80">Change password</p>
               </div>
-              <div className={`w-10 h-5 rounded-full relative transition-colors ${changePasswordActive ? 'bg-white/[0.04]' : 'bg-white/10'}`}>
-                 <div className={`absolute top-1 w-3 h-3 rounded-full transition-colors ${changePasswordActive ? 'right-1 bg-amber-400' : 'left-1 bg-white/40'}`} />
+              <div className={`w-10 h-5 rounded-full relative transition-colors ${changePasswordActive ? 'bg-fg/[0.04]' : 'bg-fg/10'}`}>
+                 <div className={`absolute top-1 w-3 h-3 rounded-full transition-colors ${changePasswordActive ? 'right-1 bg-amber-400' : 'left-1 bg-fg/40'}`} />
               </div>
            </div>
 
@@ -185,14 +185,14 @@ export function EditProfileModal({ isOpen, onOpenChange, initialData }: EditProf
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="flex-1 rounded-md border-white/10 text-white/80 hover:text-white"
+            className="flex-1 rounded-md border-fg/10 text-fg/80 hover:text-fg"
           >
             Cancel
           </Button>
           <Button
             type="submit"
             isLoading={isSubmitting}
-            className="flex-[2] bg-[#ededed] hover:bg-white text-[#141415] font-medium rounded-md h-12"
+            className="flex-[2] bg-fg hover:bg-fg/90 text-page font-medium rounded-md h-12"
           >
             Save changes
           </Button>

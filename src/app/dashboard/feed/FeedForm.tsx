@@ -112,10 +112,10 @@ export const FeedForm = ({
   if (feedOptions.length === 0) {
     return (
       <div className="space-y-4 p-4 text-center">
-        <p className="text-[#ededed] font-medium text-base">
+        <p className="text-fg font-medium text-base">
           No Feed Inventory or Formulations!
         </p>
-        <p className="text-white/70 text-sm">
+        <p className="text-fg/70 text-sm">
           To log a feeding, you need at least one Feed Item in your inventory or an active Feed Formulation.
         </p>
         <div className="flex flex-col gap-2 pt-2">
@@ -124,7 +124,7 @@ export const FeedForm = ({
               onClose();
               router.push('/dashboard/inventory');
             }}
-            className="w-full bg-[#ededed] hover:bg-white text-[#141415] font-medium"
+            className="w-full bg-fg hover:bg-fg/90 text-page font-medium"
           >
             Go to inventory
           </Button>
@@ -133,7 +133,7 @@ export const FeedForm = ({
               onClose();
               router.push('/dashboard/feed');
             }}
-            className="w-full border border-white/20 text-white hover:bg-white/10 font-medium bg-transparent"
+            className="w-full border border-fg/20 text-fg hover:bg-fg/10 font-medium bg-transparent"
           >
             Create formulation
           </Button>
@@ -145,11 +145,11 @@ export const FeedForm = ({
   if (batches.length === 0) {
     return (
       <div className="space-y-4 p-4 text-center">
-        <p className="text-[#ededed] font-medium text-base">No active batches found</p>
-        <p className="text-white/70 text-sm">
+        <p className="text-fg font-medium text-base">No active batches found</p>
+        <p className="text-fg/70 text-sm">
           Create or activate a livestock batch before logging feed consumption.
         </p>
-        <Button onClick={onClose} className="w-full border border-white/20 text-white hover:bg-white/10 font-medium bg-transparent">
+        <Button onClick={onClose} className="w-full border border-fg/20 text-fg hover:bg-fg/10 font-medium bg-transparent">
           Close
         </Button>
       </div>
@@ -159,7 +159,7 @@ export const FeedForm = ({
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       {error && (
-        <p className="rounded-md border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-sm font-medium text-[#f2777b]">
+        <p className="rounded-md border border-fg/[0.08] bg-fg/[0.04] px-3 py-2 text-sm font-medium text-neg">
           {error}
         </p>
       )}
@@ -204,7 +204,7 @@ export const FeedForm = ({
               size="sm"
               variant="outline"
               onClick={() => setFormData({ ...formData, amountConsumed: amt })}
-              className="flex-1 text-sm font-medium border-white/[0.08] text-[#ededed] hover:bg-white/[0.04]"
+              className="flex-1 text-sm font-medium border-fg/[0.08] text-fg hover:bg-fg/[0.04]"
             >
               {amt === 0.25 ? '1/4' : amt === 0.5 ? '1/2' : amt === 0.75 ? '3/4' : '1'} Bag
             </Button>

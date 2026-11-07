@@ -88,20 +88,20 @@ export default async function DashboardLayout({
   if ((!farm || isPlaceholder) && dbUser?.role !== 'OWNER') {
     const identifier = dbUser?.email || (dbUser as any)?.phoneNumber || 'your account';
     return (
-      <div className="min-h-screen flex items-center justify-center bg-black/20 text-white p-7">
+      <div className="min-h-screen flex items-center justify-center bg-fg/[0.04] text-fg p-7">
         <div className="glass-morphism p-11 rounded-lg text-center max-w-md">
-           <div className="w-20 h-20 bg-white/[0.04] rounded-full flex items-center justify-center mx-auto mb-6 border border-white/[0.08]">
-              <XCircle className="w-10 h-10 text-[#f2777b]" />
+           <div className="w-20 h-20 bg-fg/[0.04] rounded-full flex items-center justify-center mx-auto mb-6 border border-fg/[0.08]">
+              <XCircle className="w-10 h-10 text-neg" />
            </div>
-           <h2 className="text-2xl font-medium mb-3 text-[#f2777b]">Access restricted</h2>
+           <h2 className="text-2xl font-medium mb-3 text-neg">Access restricted</h2>
            <p className="opacity-70 leading-relaxed font-medium mb-6">
-             You are not currently linked to any farm. We checked for invitations sent to <span className="text-[#ededed] font-medium underline">{identifier}</span>.
+             You are not currently linked to any farm. We checked for invitations sent to <span className="text-fg font-medium underline">{identifier}</span>.
            </p>
-           <p className="text-xs text-white/40">
+           <p className="text-xs text-fg/40">
              Please contact your farm administrator to verify which email or phone number was used for your invitation.
            </p>
            <div className="mt-8">
-              <Link href="/login" className="text-[#ededed] font-medium text-xs hover:underline">
+              <Link href="/login" className="text-fg font-medium text-xs hover:underline">
                 Try logging in with a different account
               </Link>
            </div>

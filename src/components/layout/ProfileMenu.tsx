@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { LogOut, User } from 'lucide-react';
+import { LogOut, Moon, Sun, User } from 'lucide-react';
+import { useTheme } from './theme';
 import { cn } from '@/lib/utils';
 import { canShowNavigationItem, formatRoleLabel } from '@/lib/navigation-permissions';
 import { PROFILE_MENU_ITEMS } from '@/lib/app-navigation';
@@ -21,6 +22,7 @@ export const ProfileMenu = ({ role, permissions }: { role?: string; permissions?
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const roleLabel = formatRoleLabel(role);
+  const { theme, toggle: toggleTheme } = useTheme();
 
   const items = useMemo(
     () =>
@@ -66,10 +68,10 @@ export const ProfileMenu = ({ role, permissions }: { role?: string; permissions?
         aria-controls="mobile-profile-menu"
         aria-label="Open profile menu"
         className={cn(
-          'flex h-10 w-10 items-center justify-center rounded-full border transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34d399]/60',
+          'flex h-10 w-10 items-center justify-center rounded-full border transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60',
           open
-            ? 'border-white/[0.12] bg-[#2c2c2f] text-[#ededed]'
-            : 'border-white/[0.08] bg-[#232325] text-[#a1a1a6]',
+            ? 'border-fg/[0.12] bg-raised-2 text-fg'
+            : 'border-fg/[0.08] bg-raised text-fg-2',
         )}
       >
         <User className="h-5 w-5" strokeWidth={1.5} />
@@ -83,11 +85,11 @@ export const ProfileMenu = ({ role, permissions }: { role?: string; permissions?
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.98 }}
             transition={{ duration: 0.16, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute right-0 top-full z-50 mt-2 w-60 max-w-[calc(100vw-2rem)] origin-top-right overflow-hidden rounded-xl border border-white/[0.08] bg-[#19191b] shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
+            className="absolute right-0 top-full z-50 mt-2 w-60 max-w-[calc(100vw-2rem)] origin-top-right overflow-hidden rounded-xl border border-fg/[0.08] bg-card shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
           >
-            <div className="border-b border-white/[0.08] px-4 py-3">
-              <p className="text-sm font-medium text-[#ededed]">My account</p>
-              <p className="text-xs text-[#85858b]">{roleLabel}</p>
+            <div className="border-b border-fg/[0.08] px-4 py-3">
+              <p className="text-sm font-medium text-fg">My account</p>
+              <p className="text-xs text-fg-3">{roleLabel}</p>
             </div>
             <ul className="p-2">
               {items.map((item) => {
@@ -99,21 +101,29 @@ export const ProfileMenu = ({ role, permissions }: { role?: string; permissions?
                       aria-current={active ? 'page' : undefined}
                       className={cn(
                         'flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm transition-colors duration-150',
-                        active ? 'bg-[#232325] text-[#ededed]' : 'text-[#a1a1a6] hover:bg-white/[0.04] hover:text-[#ededed]',
+                        active ? 'bg-raised text-fg' : 'text-fg-2 hover:bg-fg/[0.04] hover:text-fg',
                       )}
                     >
-                      <item.icon className={cn('h-4 w-4 shrink-0', active ? 'text-[#34d399]' : 'text-[#85858b]')} strokeWidth={1.5} />
+                      <item.icon className={cn('h-4 w-4 shrink-0', active ? 'text-accent' : 'text-fg-3')} strokeWidth={1.5} />
                       {item.name}
                     </Link>
                   </li>
                 );
               })}
             </ul>
-            <div className="border-t border-white/[0.08] p-2">
+            <div className="border-t border-fg/[0.08] p-2">
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-sm text-fg-2 transition-colors duration-150 hover:bg-fg/[0.04] hover:text-fg"
+              >
+                {theme === 'light' ? <Moon className="h-4 w-4 shrink-0" strokeWidth={1.5} /> : <Sun className="h-4 w-4 shrink-0" strokeWidth={1.5} />}
+                {theme === 'light' ? 'Dark mode' : 'Light mode'}
+              </button>
               <button
                 type="button"
                 onClick={() => signOut({ callbackUrl: '/login' })}
-                className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-sm text-[#a1a1a6] transition-colors duration-150 hover:bg-white/[0.04] hover:text-[#f2777b]"
+                className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-sm text-fg-2 transition-colors duration-150 hover:bg-fg/[0.04] hover:text-neg"
               >
                 <LogOut className="h-4 w-4 shrink-0" strokeWidth={1.5} />
                 Sign out

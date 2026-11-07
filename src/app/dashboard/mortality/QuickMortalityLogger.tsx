@@ -46,7 +46,7 @@ export function QuickMortalityLogger({ activeBatches, isolationRooms = [], defau
                   type="button"
                   onClick={() => setSelectedBatch(batch)}
                   aria-label={isDead ? `Log deaths for ${label}` : `Isolate birds from ${label}`}
-                  className={`${g.tile} group flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors duration-150 hover:bg-[#232325] ${g.focus}`}
+                  className={`${g.tile} group flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors duration-150 hover:bg-raised ${g.focus}`}
                 >
                   <span className="min-w-0">
                     <span className={`block truncate text-sm font-medium ${g.text}`}>{label}</span>
@@ -55,7 +55,7 @@ export function QuickMortalityLogger({ activeBatches, isolationRooms = [], defau
                     </span>
                   </span>
                   <Plus
-                    className="h-4 w-4 shrink-0 text-[#85858b] transition-colors duration-150 group-hover:text-[#ededed]"
+                    className="h-4 w-4 shrink-0 text-fg-3 transition-colors duration-150 group-hover:text-fg"
                     strokeWidth={1.5}
                   />
                 </button>

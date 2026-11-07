@@ -64,20 +64,20 @@ export const BottomNav = ({ role, permissions }: { role?: string; permissions?: 
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 24, opacity: 0 }}
             transition={{ duration: 0.24, ease }}
-            className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-40 flex max-h-[min(75dvh,640px)] flex-col overflow-hidden rounded-t-2xl border border-b-0 border-white/[0.08] bg-[#141415] shadow-[0_-16px_48px_rgba(0,0,0,0.45)]"
+            className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-40 flex max-h-[min(75dvh,640px)] flex-col overflow-hidden rounded-t-2xl border border-b-0 border-fg/[0.08] bg-page shadow-[0_-16px_48px_rgba(0,0,0,0.45)]"
           >
             <div className="flex items-center justify-between px-4 pb-3 pt-4">
               <div>
-                <p className="flex items-center gap-2 text-xs text-[#85858b]">
+                <p className="flex items-center gap-2 text-xs text-fg-3">
                   <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: groupHue[openCategory.id] }} />
                   Farm menu
                 </p>
-                <h2 className="text-lg font-medium text-[#ededed]">{openCategory.name}</h2>
+                <h2 className="text-lg font-medium text-fg">{openCategory.name}</h2>
               </div>
               <button
                 type="button"
                 onClick={close}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/[0.08] bg-[#232325] text-[#a1a1a6]"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-fg/[0.08] bg-raised text-fg-2"
                 aria-label="Close menu"
               >
                 <X className="h-5 w-5" strokeWidth={1.5} />
@@ -96,13 +96,13 @@ export const BottomNav = ({ role, permissions }: { role?: string; permissions?: 
                       className={cn(
                         'flex min-h-14 min-w-0 items-center gap-3 rounded-xl border px-3 py-2 transition-colors duration-150',
                         active
-                          ? 'border-white/[0.1] bg-[#232325] text-[#ededed]'
-                          : 'border-white/[0.06] bg-[#19191b] text-[#ededed]'
+                          ? 'border-fg/[0.1] bg-raised text-fg'
+                          : 'border-fg/[0.06] bg-card text-fg'
                       )}
                     >
                       <item.icon
                         className="h-5 w-5 shrink-0"
-                        style={{ color: active ? groupHue[openCategory.id] : '#85858b' }}
+                        style={{ color: active ? groupHue[openCategory.id] : 'var(--fg-3)' }}
                         strokeWidth={1.5}
                       />
                       <span className="min-w-0 text-sm leading-tight">{item.name}</span>
@@ -112,12 +112,12 @@ export const BottomNav = ({ role, permissions }: { role?: string; permissions?: 
               </div>
 
               {openCategory.id === 'governance' && (
-                <div className="mt-4 border-t border-white/[0.08] pt-3">
-                  <p className="mb-2 px-1 text-xs text-[#85858b]">Signed in as {roleLabel}</p>
+                <div className="mt-4 border-t border-fg/[0.08] pt-3">
+                  <p className="mb-2 px-1 text-xs text-fg-3">Signed in as {roleLabel}</p>
                   <button
                     type="button"
                     onClick={() => signOut({ callbackUrl: '/login' })}
-                    className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-sm text-[#f2777b]"
+                    className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-sm text-neg"
                   >
                     <LogOut className="h-5 w-5" strokeWidth={1.5} />
                     Sign out
@@ -131,7 +131,7 @@ export const BottomNav = ({ role, permissions }: { role?: string; permissions?: 
 
       <nav
         aria-label="Main"
-        className="fixed inset-x-0 bottom-0 z-50 border-t border-white/[0.08] bg-[#0f0f10] pb-[env(safe-area-inset-bottom)]"
+        className="fixed inset-x-0 bottom-0 z-50 border-t border-fg/[0.08] bg-deep pb-[env(safe-area-inset-bottom)]"
       >
         <div
           className="grid h-16"
@@ -142,13 +142,13 @@ export const BottomNav = ({ role, permissions }: { role?: string; permissions?: 
               href={DASHBOARD_NAV_ITEM.href}
               onClick={close}
               aria-current={dashboardActive ? 'page' : undefined}
-              className="flex flex-col items-center justify-center gap-1 border-r border-white/[0.06] px-1 text-[#ededed]"
+              className="flex flex-col items-center justify-center gap-1 border-r border-fg/[0.06] px-1 text-fg"
             >
               {/* Raised flat emerald button so Dashboard stays apart from the group tabs */}
               <span
                 className={cn(
-                  '-mt-5 flex h-12 w-12 items-center justify-center rounded-full bg-[#34d399] text-[#062016] ring-4 ring-[#0f0f10]',
-                  dashboardHighlighted && 'outline outline-1 outline-offset-4 outline-[#34d399]/60'
+                  '-mt-5 flex h-12 w-12 items-center justify-center rounded-full bg-accent text-accent-fg ring-4 ring-deep',
+                  dashboardHighlighted && 'outline outline-1 outline-offset-4 outline-accent/60'
                 )}
               >
                 <DASHBOARD_NAV_ITEM.icon className="h-6 w-6" strokeWidth={1.75} />
@@ -169,13 +169,13 @@ export const BottomNav = ({ role, permissions }: { role?: string; permissions?: 
                 aria-controls={`mobile-nav-sheet-${category.id}`}
                 className={cn(
                   'flex flex-col items-center justify-center gap-1 px-1 transition-colors duration-150',
-                  highlighted ? 'text-[#ededed]' : 'text-[#85858b]'
+                  highlighted ? 'text-fg' : 'text-fg-3'
                 )}
               >
                 <span
                   className={cn(
                     'flex h-8 w-12 items-center justify-center rounded-full transition-colors duration-150',
-                    highlighted && 'bg-[#232325]'
+                    highlighted && 'bg-raised'
                   )}
                 >
                   <category.icon

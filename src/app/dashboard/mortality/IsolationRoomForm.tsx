@@ -84,7 +84,7 @@ export const IsolationRoomForm = () => {
               />
             </div>
             {error && (
-              <p role="alert" className="text-sm text-[#e5484d]">
+              <p role="alert" className="text-sm text-neg-solid">
                 {error}
               </p>
             )}

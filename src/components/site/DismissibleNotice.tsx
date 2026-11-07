@@ -8,9 +8,9 @@ import { cn } from '@/lib/utils'
 const UPGRADE_KINDS = new Set(['trialEnding', 'planExpired'])
 
 const TONES = {
-  info: 'border-white/[0.08] bg-white/[0.04] text-emerald-50',
-  warning: 'border-amber-400/35 bg-white/[0.04] text-amber-50',
-  success: 'border-white/[0.08] bg-white/[0.04] text-emerald-50',
+  info: 'border-fg/[0.08] bg-fg/[0.04] text-emerald-50',
+  warning: 'border-amber-400/35 bg-fg/[0.04] text-amber-50',
+  success: 'border-fg/[0.08] bg-fg/[0.04] text-emerald-50',
 } as const
 
 /**
@@ -42,12 +42,12 @@ export function DismissibleNotice({
 
   return (
     <div role="status" className={cn('flex items-start gap-3 rounded-lg border px-4 py-3 text-sm', TONES[tone])}>
-      <BellRing className="mt-0.5 h-4 w-4 shrink-0 text-[#85858b]" />
+      <BellRing className="mt-0.5 h-4 w-4 shrink-0 text-fg-3" />
       <div className="min-w-0 flex-1">
-        <p className="font-medium text-white">{notice.title}</p>
+        <p className="font-medium text-fg">{notice.title}</p>
         <p className="mt-0.5 whitespace-pre-line leading-6 opacity-85">{notice.body}</p>
         {notice.kind && UPGRADE_KINDS.has(notice.kind) ? (
-          <Link href="/dashboard/license-upgrade" className="mt-2 inline-block text-xs font-medium text-[#ededed] hover:underline">
+          <Link href="/dashboard/license-upgrade" className="mt-2 inline-block text-xs font-medium text-fg hover:underline">
             Choose a plan
           </Link>
         ) : null}
@@ -63,7 +63,7 @@ export function DismissibleNotice({
             // Storage unavailable (private mode): the notice returns next visit.
           }
         }}
-        className="rounded p-1 text-[#ededed] hover:bg-white/10 hover:text-white"
+        className="rounded p-1 text-fg hover:bg-fg/10 hover:text-fg"
       >
         <X className="h-4 w-4" />
       </button>

@@ -238,8 +238,8 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
             onClick={() => navigateToTab(tab)}
             className={`w-full text-left px-3 py-2 rounded-md flex items-center transition-colors duration-300 ${
               activeTab === tab.id
-                ? 'bg-white/[0.04] text-emerald-400 shadow-[inset_0_0_20px_rgba(16,185,129,0.1)] border border-white/[0.08]'
-                : 'text-white/80 hover:bg-white/5 hover:text-white'
+                ? 'bg-fg/[0.04] text-emerald-400 shadow-[inset_0_0_20px_rgba(16,185,129,0.1)] border border-fg/[0.08]'
+                : 'text-fg/80 hover:bg-fg/5 hover:text-fg'
             }`}
           >
             <tab.icon className="w-4 h-4 mr-2" /> {tab.label}
@@ -250,7 +250,7 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
       <div className="md:col-span-3 space-y-5">
         {message && (
           <div className={`p-3 rounded-md text-sm font-medium border flex items-center gap-2 ${
-            message.type === 'success' ? 'bg-white/[0.04] border-white/[0.08] text-emerald-400' : 'bg-white/[0.04] border-white/[0.08] text-[#f2777b]'
+            message.type === 'success' ? 'bg-fg/[0.04] border-fg/[0.08] text-emerald-400' : 'bg-fg/[0.04] border-fg/[0.08] text-neg'
           }`}>
             <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
             {message.text}
@@ -299,22 +299,22 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <SlidersHorizontal className="w-5 h-5 text-[#a1a1a6]" />
+                  <SlidersHorizontal className="w-5 h-5 text-fg-2" />
                   Farm defaults
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-5">
                 {isLoadingPrefs ? (
-                  <div className="flex items-center gap-2 text-white/70"><Loader2 className="animate-spin w-4 h-4" /> Loading…</div>
+                  <div className="flex items-center gap-2 text-fg/70"><Loader2 className="animate-spin w-4 h-4" /> Loading…</div>
                 ) : (
                   <div className="space-y-5">
-                    <div className="p-4 rounded-md bg-white/[0.06] border border-white/[0.08] space-y-2">
-                      <p className="flex items-center gap-2 text-sm font-medium text-[#a1a1a6]"><Coins className="w-4 h-4" aria-hidden="true" /> Farm currency</p>
-                      <p className="text-xs text-white/70">Used for sales, orders, and financial reporting.</p>
+                    <div className="p-4 rounded-md bg-fg/[0.06] border border-fg/[0.08] space-y-2">
+                      <p className="flex items-center gap-2 text-sm font-medium text-fg-2"><Coins className="w-4 h-4" aria-hidden="true" /> Farm currency</p>
+                      <p className="text-xs text-fg/70">Used for sales, orders, and financial reporting.</p>
                       <select
                         value={currency}
                         onChange={e => setCurrency(e.target.value)}
-                        className="bg-black/60 border border-white/10 text-white rounded-md px-3 py-2 text-sm font-medium focus:outline-none focus:border-white/[0.08] focus:ring-1 focus:ring-white/10"
+                        className="bg-fg/[0.04] border border-fg/10 text-fg rounded-md px-3 py-2 text-sm font-medium focus:outline-none focus:border-fg/[0.08] focus:ring-1 focus:ring-fg/10"
                       >
                         <option value="GHS">Ghanaian cedi (GHS)</option>
                         <option value="USD">US dollar (USD)</option>
@@ -323,13 +323,13 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
                       </select>
                     </div>
 
-                    <div className="p-4 rounded-md bg-white/[0.04] border border-white/[0.08] space-y-2">
-                      <p className="flex items-center gap-2 text-sm font-medium text-[#ededed]"><ChartColumn className="w-4 h-4" aria-hidden="true" /> Default growth target</p>
-                      <p className="text-xs text-white/70">Benchmark flock performance against industry standards.</p>
+                    <div className="p-4 rounded-md bg-fg/[0.04] border border-fg/[0.08] space-y-2">
+                      <p className="flex items-center gap-2 text-sm font-medium text-fg"><ChartColumn className="w-4 h-4" aria-hidden="true" /> Default growth target</p>
+                      <p className="text-xs text-fg/70">Benchmark flock performance against industry standards.</p>
                       <select
                         value={growthTarget || ''}
                         onChange={e => setGrowthTarget(e.target.value ? Number(e.target.value) : undefined)}
-                        className="bg-black/60 border border-white/10 text-white rounded-md px-3 py-2 text-sm font-medium focus:outline-none focus:border-amber-400/60 focus:ring-1 focus:ring-white/10 w-full"
+                        className="bg-fg/[0.04] border border-fg/10 text-fg rounded-md px-3 py-2 text-sm font-medium focus:outline-none focus:border-amber-400/60 focus:ring-1 focus:ring-fg/10 w-full"
                       >
                         <option value="">Select a standard...</option>
                         {growthStandards.map(s => (
@@ -351,7 +351,7 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
                 <CardTitle>House configuration</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-white/80 mb-5 font-medium">Manage your poultry houses and their sensor configurations.</p>
+                <p className="text-sm text-fg/80 mb-5 font-medium">Manage your poultry houses and their sensor configurations.</p>
                 <Button onClick={() => router.push('/dashboard/houses')} variant="outline">
                   <Plus className="w-4 h-4 mr-2" /> Add new house
                 </Button>
@@ -364,37 +364,37 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Bell className="w-5 h-5 text-[#85858b]" />
+                <Bell className="w-5 h-5 text-fg-3" />
                 Daily record reminders
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-5">
-              <p className="text-sm text-white/80 leading-relaxed">
+              <p className="text-sm text-fg/80 leading-relaxed">
                 Set the time by which daily records must be submitted. If no record is logged before this time, the system will trigger an alert.
               </p>
               {isLoadingPrefs ? (
-                <div className="flex items-center gap-2 text-white/70"><Loader2 className="animate-spin w-4 h-4" /> Loading…</div>
+                <div className="flex items-center gap-2 text-fg/70"><Loader2 className="animate-spin w-4 h-4" /> Loading…</div>
               ) : (
                 <div className="space-y-5">
-                  <div className="p-4 rounded-md bg-white/[0.06] border border-white/[0.08] space-y-2">
-                    <p className="flex items-center gap-2 text-sm font-medium text-[#a1a1a6]"><Egg className="w-4 h-4" aria-hidden="true" /> Egg collection reminder</p>
-                    <p className="text-xs text-white/70">Alert if no egg record is logged by this time each day.</p>
+                  <div className="p-4 rounded-md bg-fg/[0.06] border border-fg/[0.08] space-y-2">
+                    <p className="flex items-center gap-2 text-sm font-medium text-fg-2"><Egg className="w-4 h-4" aria-hidden="true" /> Egg collection reminder</p>
+                    <p className="text-xs text-fg/70">Alert if no egg record is logged by this time each day.</p>
                     <input
                       type="time"
                       value={eggReminderTime}
                       onChange={e => setEggReminderTime(e.target.value)}
-                      className="bg-black/60 border border-white/10 text-white rounded-md px-3 py-2 text-sm font-medium focus:outline-none focus:border-white/[0.08] focus:ring-1 focus:ring-white/10"
+                      className="bg-fg/[0.04] border border-fg/10 text-fg rounded-md px-3 py-2 text-sm font-medium focus:outline-none focus:border-fg/[0.08] focus:ring-1 focus:ring-fg/10"
                     />
                   </div>
 
-                  <div className="p-4 rounded-md bg-white/[0.04] border border-white/[0.08] space-y-2">
-                    <p className="flex items-center gap-2 text-sm font-medium text-[#ededed]"><Wheat className="w-4 h-4" aria-hidden="true" /> Feed log reminder</p>
-                    <p className="text-xs text-white/70">Alert if no feeding record is logged by this time each day.</p>
+                  <div className="p-4 rounded-md bg-fg/[0.04] border border-fg/[0.08] space-y-2">
+                    <p className="flex items-center gap-2 text-sm font-medium text-fg"><Wheat className="w-4 h-4" aria-hidden="true" /> Feed log reminder</p>
+                    <p className="text-xs text-fg/70">Alert if no feeding record is logged by this time each day.</p>
                     <input
                       type="time"
                       value={feedReminderTime}
                       onChange={e => setFeedReminderTime(e.target.value)}
-                      className="bg-black/60 border border-white/10 text-white rounded-md px-3 py-2 text-sm font-medium focus:outline-none focus:border-orange-400/60 focus:ring-1 focus:ring-white/10"
+                      className="bg-fg/[0.04] border border-fg/10 text-fg rounded-md px-3 py-2 text-sm font-medium focus:outline-none focus:border-orange-400/60 focus:ring-1 focus:ring-fg/10"
                     />
                   </div>
 
@@ -411,20 +411,20 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Egg className="w-5 h-5 text-[#4cc38a]" />
+                <Egg className="w-5 h-5 text-pos" />
                 Egg logging defaults
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-5">
-              <p className="text-sm text-white/80 leading-relaxed">
+              <p className="text-sm text-fg/80 leading-relaxed">
                 Default unit and sorting mode for worker egg production entries.
               </p>
               {isLoadingPrefs ? (
-                <div className="flex items-center gap-2 text-white/70"><Loader2 className="animate-spin w-4 h-4" /> Loading…</div>
+                <div className="flex items-center gap-2 text-fg/70"><Loader2 className="animate-spin w-4 h-4" /> Loading…</div>
               ) : (
                 <div className="space-y-5">
                   <div className="space-y-2">
-                    <p className="text-xs font-medium text-white/60">Default unit</p>
+                    <p className="text-xs font-medium text-fg/60">Default unit</p>
                     <div className="grid grid-cols-2 gap-2">
                       {(['crate', 'individual'] as const).map((unit) => (
                         <button
@@ -433,8 +433,8 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
                           onClick={() => setDefaultEggUnit(unit)}
                           className={`py-2 rounded-md text-xs font-medium transition-colors ${
                             defaultEggUnit === unit
-                              ? 'bg-green-500 text-black'
-                              : 'bg-white/10 text-white/70 hover:bg-white/10'
+                              ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
+                              : 'bg-fg/10 text-fg/70 hover:bg-fg/10'
                           }`}
                         >
                           {unit === 'crate' ? 'Crate' : 'Individual'}
@@ -447,12 +447,12 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
                       type="checkbox"
                       checked={allowEggUnitChange}
                       onChange={(e) => setAllowEggUnitChange(e.target.checked)}
-                      className="rounded border-white/20 bg-black/60 text-[#4cc38a] focus:ring-white/10"
+                      className="rounded border-fg/20 bg-fg/[0.04] text-pos focus:ring-fg/10"
                     />
-                    <span className="text-xs font-medium text-white/80">Let workers change the unit per entry</span>
+                    <span className="text-xs font-medium text-fg/80">Let workers change the unit per entry</span>
                   </label>
                   <div className="space-y-2">
-                    <p className="text-xs font-medium text-white/60">Default sort mode</p>
+                    <p className="text-xs font-medium text-fg/60">Default sort mode</p>
                     <div className="grid grid-cols-2 gap-2">
                       {(['unsorted', 'sorted'] as const).map((mode) => (
                         <button
@@ -461,8 +461,8 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
                           onClick={() => setDefaultEggSortMode(mode)}
                           className={`py-2 rounded-md text-xs font-medium transition-colors ${
                             defaultEggSortMode === mode
-                              ? 'bg-[#2c2c2f] text-[#ededed] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
-                              : 'bg-white/10 text-white/70 hover:bg-white/10'
+                              ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
+                              : 'bg-fg/10 text-fg/70 hover:bg-fg/10'
                           }`}
                         >
                           {mode === 'sorted' ? 'Sorted' : 'Unsorted'}
@@ -475,9 +475,9 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
                       type="checkbox"
                       checked={allowEggSortModeChange}
                       onChange={(e) => setAllowEggSortModeChange(e.target.checked)}
-                      className="rounded border-white/20 bg-black/60 text-[#4cc38a] focus:ring-white/10"
+                      className="rounded border-fg/20 bg-fg/[0.04] text-pos focus:ring-fg/10"
                     />
-                    <span className="text-xs font-medium text-white/80">Let workers change sort mode per entry</span>
+                    <span className="text-xs font-medium text-fg/80">Let workers change sort mode per entry</span>
                   </label>
 
                   <Button onClick={handleSaveEggLogging} isLoading={savingSection === 'egg-logging'} className="w-full">
@@ -493,16 +493,16 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <ShoppingCart className="w-5 h-5 text-[#a1a1a6]" />
+                <ShoppingCart className="w-5 h-5 text-fg-2" />
                 Sales settings
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-5">
-              <p className="text-sm text-white/80 leading-relaxed">
+              <p className="text-sm text-fg/80 leading-relaxed">
                 Control what workers can override during farm-gate sales.
               </p>
               {isLoadingPrefs ? (
-                <div className="flex items-center gap-2 text-white/70"><Loader2 className="animate-spin w-4 h-4" /> Loading…</div>
+                <div className="flex items-center gap-2 text-fg/70"><Loader2 className="animate-spin w-4 h-4" /> Loading…</div>
               ) : (
                 <div className="space-y-5">
                   <label className="flex items-center gap-2 cursor-pointer">
@@ -510,26 +510,26 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
                       type="checkbox"
                       checked={allowBatchOverride}
                       onChange={(e) => setAllowBatchOverride(e.target.checked)}
-                      className="rounded border-white/20 bg-black/60 text-[#a1a1a6] focus:ring-white/10"
+                      className="rounded border-fg/20 bg-fg/[0.04] text-fg-2 focus:ring-fg/10"
                     />
-                    <span className="text-xs font-medium text-white/80">Allow selecting a specific batch instead of FIFO</span>
+                    <span className="text-xs font-medium text-fg/80">Allow selecting a specific batch instead of FIFO</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={allowWorkerDiscounts}
                       onChange={(e) => setAllowWorkerDiscounts(e.target.checked)}
-                      className="rounded border-white/20 bg-black/60 text-[#a1a1a6] focus:ring-white/10"
+                      className="rounded border-fg/20 bg-fg/[0.04] text-fg-2 focus:ring-fg/10"
                     />
-                    <span className="text-xs font-medium text-white/80">Allow workers to apply discounts</span>
+                    <span className="text-xs font-medium text-fg/80">Allow workers to apply discounts</span>
                   </label>
                   {allowWorkerDiscounts ? (
                     <div className="space-y-2">
-                      <p className="text-xs font-medium text-white/60">Worker discount type</p>
+                      <p className="text-xs font-medium text-fg/60">Worker discount type</p>
                       <select
                         value={defaultDiscountType}
                         onChange={(e) => setDefaultDiscountType(e.target.value as 'flat' | 'percent' | 'item')}
-                        className="bg-black/60 border border-white/10 text-white rounded-md px-3 py-2 text-sm font-medium focus:outline-none focus:border-white/[0.08] focus:ring-1 focus:ring-white/10 w-full"
+                        className="bg-fg/[0.04] border border-fg/10 text-fg rounded-md px-3 py-2 text-sm font-medium focus:outline-none focus:border-fg/[0.08] focus:ring-1 focus:ring-fg/10 w-full"
                       >
                         <option value="item">Give away items</option>
                         <option value="flat">Flat amount</option>
@@ -552,24 +552,24 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <SettingsIcon className="w-5 h-5 text-[#85858b]" />
+                <SettingsIcon className="w-5 h-5 text-fg-3" />
                 Feed reorder levels
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <p className="text-sm text-white/80 leading-relaxed">
+              <p className="text-sm text-fg/80 leading-relaxed">
                 Set the minimum stock threshold (in kg) for each feed item. When stock falls below this level, a low-stock alert will be triggered on your dashboard.
               </p>
               {inventory.length === 0 ? (
-                <div className="text-center py-9 text-white/70 text-sm">No feed inventory items found. add inventory first.</div>
+                <div className="text-center py-9 text-fg/70 text-sm">No feed inventory items found. add inventory first.</div>
               ) : (
                 <div className="space-y-2">
                   {inventory.map(item => (
                     <MutationBoundary key={item.id} active={savingReorderId === item.id} label="Saving threshold...">
-                    <div className="flex items-center gap-3 p-3 rounded-md bg-white/10 border border-white/10">
+                    <div className="flex items-center gap-3 p-3 rounded-md bg-fg/10 border border-fg/10">
                       <div className="flex-1">
-                        <p className="font-medium text-white text-sm">{item.itemName}</p>
-                        <p className="text-xs text-white/70">Current stock: {item.stockLevel} {item.unit}</p>
+                        <p className="font-medium text-fg text-sm">{item.itemName}</p>
+                        <p className="text-xs text-fg/70">Current stock: {item.stockLevel} {item.unit}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="relative">
@@ -577,11 +577,11 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
                             type="number"
                             value={reorderLevels[item.id] ?? 500}
                             onChange={e => setReorderLevels(prev => ({ ...prev, [item.id]: Number(e.target.value) }))}
-                            className="w-28 bg-black/60 border border-white/10 text-white rounded-md px-2 py-2 text-sm font-medium focus:outline-none focus:border-amber-400/60 focus:ring-1 focus:ring-white/10 text-right"
+                            className="w-28 bg-fg/[0.04] border border-fg/10 text-fg rounded-md px-2 py-2 text-sm font-medium focus:outline-none focus:border-amber-400/60 focus:ring-1 focus:ring-fg/10 text-right"
                             min={0}
                             step={10}
                           />
-                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-white/70 pointer-events-none">kg</span>
+                          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-fg/70 pointer-events-none">kg</span>
                         </div>
                         <Button aria-label="Save reorder level"
                           onClick={() => handleSaveReorderLevel(item.id)}
@@ -609,9 +609,9 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
               <CardTitle>Security</CardTitle>
             </CardHeader>
             <CardContent>
-               <div className="p-5 rounded-lg bg-white/[0.04] border border-white/[0.08] text-center space-y-3">
-                  <Shield className="w-12 h-12 text-[#85858b] mx-auto" />
-                  <p className="text-sm text-white/80">Security settings and password management are now handled through your <span className="text-[#ededed] font-medium">Personal profile</span>.</p>
+               <div className="p-5 rounded-lg bg-fg/[0.04] border border-fg/[0.08] text-center space-y-3">
+                  <Shield className="w-12 h-12 text-fg-3 mx-auto" />
+                  <p className="text-sm text-fg/80">Security settings and password management are now handled through your <span className="text-fg font-medium">Personal profile</span>.</p>
                   <Button onClick={() => router.push('/dashboard/profile')} className="rounded-md">Go to profile</Button>
                </div>
             </CardContent>

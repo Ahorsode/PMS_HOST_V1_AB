@@ -74,7 +74,7 @@ export function FlockLogsHistory({ data }: { data: any }) {
   return (
     <>
       <ActionButton onClick={() => setOpen(true)}>
-        <History className="h-4 w-4 text-[#a1a1a6]" strokeWidth={1.5} />
+        <History className="h-4 w-4 text-fg-2" strokeWidth={1.5} />
         Logs history
       </ActionButton>
 
@@ -111,22 +111,22 @@ export function FlockLogsHistory({ data }: { data: any }) {
         </div>
 
         {filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-white/[0.08] py-16 text-center">
+          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-fg/[0.08] py-16 text-center">
             <Activity className={cn('mb-3 h-6 w-6', tone.muted)} strokeWidth={1.5} />
             <p className={cn('text-[13px]', tone.text2)}>
               No {filter === 'ALL' ? '' : `${TYPE_META[filter].label.toLowerCase()} `}logs recorded yet
             </p>
           </div>
         ) : (
-          <ul className="custom-scrollbar max-h-[min(60vh,520px)] divide-y divide-white/[0.06] overflow-y-auto pr-1">
+          <ul className="custom-scrollbar max-h-[min(60vh,520px)] divide-y divide-fg/[0.06] overflow-y-auto pr-1">
             {filtered.map((entry) => {
               const meta = TYPE_META[entry.type]
               const Icon = meta.icon
               return (
                 <li key={entry.id} className="flex items-start justify-between gap-4 py-3">
                   <div className="flex min-w-0 flex-1 items-start gap-3">
-                    <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-[#232325]">
-                      <Icon className={cn('h-4 w-4', entry.type === 'MORTALITY' ? 'text-[#f2777b]' : tone.muted)} strokeWidth={1.5} />
+                    <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-fg/[0.08] bg-raised">
+                      <Icon className={cn('h-4 w-4', entry.type === 'MORTALITY' ? 'text-neg' : tone.muted)} strokeWidth={1.5} />
                     </span>
                     <div className="min-w-0">
                       <p className={cn('text-sm', tone.text)}>{entry.title}</p>

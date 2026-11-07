@@ -89,12 +89,12 @@ function paidEggsFromSale(row: EggSaleRow) {
   return Math.max(0, totalEggs - giveawayEggs);
 }
 
-const th = 'px-4 py-3 text-left text-xs font-normal text-[#85858b] whitespace-nowrap';
-const thNum = 'px-4 py-3 text-right text-xs font-normal text-[#85858b] whitespace-nowrap';
-const td = 'px-4 py-3 whitespace-nowrap text-sm text-[#a1a1a6]';
-const tdNum = 'px-4 py-3 whitespace-nowrap text-right text-sm tabular-nums text-[#ededed]';
-const tdEmpty = `${tdNum} text-[#85858b]`;
-const rowHover = 'transition-colors duration-150 hover:bg-white/[0.03]';
+const th = 'px-4 py-3 text-left text-xs font-normal text-fg-3 whitespace-nowrap';
+const thNum = 'px-4 py-3 text-right text-xs font-normal text-fg-3 whitespace-nowrap';
+const td = 'px-4 py-3 whitespace-nowrap text-sm text-fg-2';
+const tdNum = 'px-4 py-3 whitespace-nowrap text-right text-sm tabular-nums text-fg';
+const tdEmpty = `${tdNum} text-fg-3`;
+const rowHover = 'transition-colors duration-150 hover:bg-fg/[0.03]';
 
 const ghs = (value: number | string) => formatCurrency(Number(value), 'GHS');
 
@@ -290,9 +290,9 @@ export function EggProductionHistoryPanel({
 
                     if (!log.isSorted) {
                       return [
-                        <tr key={log.id} className={`${rowHover} border-b border-white/[0.06]`}>
+                        <tr key={log.id} className={`${rowHover} border-b border-fg/[0.06]`}>
                           <td className={`${td} font-mono text-xs tabular-nums`}>{formatDate(log.logDate)}</td>
-                          <td className={`${td} font-medium text-[#ededed]`}>{livestockLabel}</td>
+                          <td className={`${td} font-medium text-fg`}>{livestockLabel}</td>
                           <td className={td}>Not sorted</td>
                           <td className={td}>
                             <StockStatus remaining={remaining} />
@@ -324,10 +324,10 @@ export function EggProductionHistoryPanel({
                     return sizes.map((size, idx) => (
                       <tr
                         key={`${log.id}-${size.label}`}
-                        className={cn(rowHover, idx === sizes.length - 1 && 'border-b border-white/[0.06]')}
+                        className={cn(rowHover, idx === sizes.length - 1 && 'border-b border-fg/[0.06]')}
                       >
                         <td className={`${td} font-mono text-xs tabular-nums`}>{idx === 0 ? formatDate(log.logDate) : ''}</td>
-                        <td className={`${td} font-medium text-[#ededed]`}>{idx === 0 ? livestockLabel : ''}</td>
+                        <td className={`${td} font-medium text-fg`}>{idx === 0 ? livestockLabel : ''}</td>
                         <td className={td}>{size.label}</td>
                         <td className={td}>{idx === 0 ? <StockStatus remaining={remaining} /> : null}</td>
                         <td className={tdNum}>{idx === 0 ? formatCratesAndEggs(remaining, eggsPerCrate) : ''}</td>
@@ -402,9 +402,9 @@ export function EggProductionHistoryPanel({
                     const giveawayCrates = giveawayCratesFromSale(row, eggsPerCrate);
                     const paidEggs = paidEggsFromSale(row);
                     return (
-                      <tr key={row.id} className={`${rowHover} border-b border-white/[0.06]`}>
+                      <tr key={row.id} className={`${rowHover} border-b border-fg/[0.06]`}>
                         <td className={`${td} font-mono text-xs tabular-nums`}>{formatDate(row.order.orderDate)}</td>
-                        <td className={`${td} font-medium text-[#ededed]`}>{row.order.customer?.name || 'Walk-in customer'}</td>
+                        <td className={`${td} font-medium text-fg`}>{row.order.customer?.name || 'Walk-in customer'}</td>
                         <td className={td}>{row.inventory?.itemName || row.description}</td>
                         <td className={tdNum}>{formatCratesAndEggs(paidEggs, eggsPerCrate)}</td>
                         <td className={giveawayCrates > 0 ? tdNum : tdEmpty}>
@@ -428,7 +428,7 @@ export function EggProductionHistoryPanel({
 function StockStatus({ remaining }: { remaining: number }) {
   const inStock = remaining > 0;
   return (
-    <span className="inline-flex items-center gap-2 whitespace-nowrap text-xs text-[#a1a1a6]">
+    <span className="inline-flex items-center gap-2 whitespace-nowrap text-xs text-fg-2">
       <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: inStock ? ink.positive : ink.muted }} />
       {inStock ? 'In stock' : 'Sold out'}
     </span>
@@ -436,5 +436,5 @@ function StockStatus({ remaining }: { remaining: number }) {
 }
 
 function Unusable({ count }: { count: number }) {
-  return <span className={count > 0 ? 'text-[#e5484d]' : 'text-[#85858b]'}>{count}</span>;
+  return <span className={count > 0 ? 'text-neg-solid' : 'text-fg-3'}>{count}</span>;
 }

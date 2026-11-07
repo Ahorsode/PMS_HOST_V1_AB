@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { Sidebar } from './Sidebar';
@@ -8,6 +8,7 @@ import { ProfileMenu } from './ProfileMenu';
 import { BottomNav } from './BottomNav';
 import { cn } from '@/lib/utils';
 import { PageTransition } from './PageTransition';
+import { enterDashboardTheme } from './theme';
 
 function getMobileIndeptTitle(pathname: string): string {
   if (pathname.includes('/analytics')) return 'Analytics';
@@ -32,6 +33,9 @@ export const SidebarWrapper = ({
   const pathname = usePathname();
   const router = useRouter();
 
+  // Light or dark applies only while the dashboard is mounted.
+  useEffect(() => enterDashboardTheme(), []);
+
   // Detail and analytics pages hide the main navigation and show a back bar instead.
   // /dashboard/flocks -> [dashboard, flocks]; /dashboard/flocks/[id] -> [dashboard, flocks, id]
   const segments = pathname.split('/').filter(Boolean);
@@ -40,7 +44,7 @@ export const SidebarWrapper = ({
     (segments.length > 2 && (segments[1] === 'flocks' || segments[1] === 'sales' || segments[1] === 'feed'));
 
   return (
-    <div className="relative flex min-h-screen overflow-hidden bg-[#141415] selection:bg-[#34d399]/25">
+    <div className="relative flex min-h-screen overflow-hidden bg-page selection:bg-accent/25">
       {!isIndeptPage && (
         <>
           <Sidebar role={role} permissions={permissions} />
@@ -55,11 +59,11 @@ export const SidebarWrapper = ({
         )}
       >
         {!isIndeptPage && (
-          <header className="sticky top-0 z-30 flex shrink-0 items-center gap-3 border-b border-white/[0.08] bg-[#0f0f10] px-4 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] md:hidden">
+          <header className="sticky top-0 z-30 flex shrink-0 items-center gap-3 border-b border-fg/[0.08] bg-deep px-4 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] md:hidden">
             <img src="/logo.png" alt="" className="h-8 w-8 rounded-lg object-cover" />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-[#ededed]">{farmName || 'Farm'}</p>
-              <p className="text-xs text-[#85858b]">Operations</p>
+              <p className="truncate text-sm font-medium text-fg">{farmName || 'Farm'}</p>
+              <p className="text-xs text-fg-3">Operations</p>
             </div>
             <ProfileMenu role={role} permissions={permissions} />
           </header>
@@ -71,16 +75,16 @@ export const SidebarWrapper = ({
           )}
         >
           {isIndeptPage ? (
-            <header className="sticky top-0 z-30 -mx-3 mb-3 flex items-center gap-2 border-b border-white/[0.08] bg-[#0f0f10] px-3 py-2 md:hidden">
+            <header className="sticky top-0 z-30 -mx-3 mb-3 flex items-center gap-2 border-b border-fg/[0.08] bg-deep px-3 py-2 md:hidden">
               <button
                 type="button"
                 onClick={() => router.back()}
-                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-[#a1a1a6] transition-colors duration-150 hover:bg-white/[0.06] hover:text-[#ededed] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34d399]/60"
+                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-fg-2 transition-colors duration-150 hover:bg-fg/[0.06] hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
                 aria-label="Go back"
               >
                 <ArrowLeft className="h-5 w-5" strokeWidth={1.5} />
               </button>
-              <span className="truncate text-sm font-medium text-[#ededed]">{getMobileIndeptTitle(pathname)}</span>
+              <span className="truncate text-sm font-medium text-fg">{getMobileIndeptTitle(pathname)}</span>
             </header>
           ) : null}
           <PageTransition>{children}</PageTransition>

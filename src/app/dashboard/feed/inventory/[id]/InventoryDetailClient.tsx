@@ -85,29 +85,29 @@ export const InventoryDetailClient = ({ item }: InventoryDetailClientProps) => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-7">
         {/* Usage Breakdown & Trends */}
         <div className="lg:col-span-2 space-y-7">
-          <Card className="rounded-lg bg-white/10 border-white/10 overflow-hidden">
-              <CardHeader className="bg-white/10 border-b border-white/10 px-7 py-5">
-                <CardTitle className="text-white font-medium flex items-center gap-2">
-                   <TrendingDown className="w-5 h-5 text-[#85858b]" /> Recent usage timeline
+          <Card className="rounded-lg bg-fg/10 border-fg/10 overflow-hidden">
+              <CardHeader className="bg-fg/10 border-b border-fg/10 px-7 py-5">
+                <CardTitle className="text-fg font-medium flex items-center gap-2">
+                   <TrendingDown className="w-5 h-5 text-fg-3" /> Recent usage timeline
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-7">
                  <div className="relative space-y-0 translate-x-3">
-                    <div className="absolute left-0 top-0 bottom-0 w-px bg-white/10" />
+                    <div className="absolute left-0 top-0 bottom-0 w-px bg-fg/10" />
                     
                     {logs.length > 0 ? logs.slice(0, 10).map((log: any, idx: number) => (
                       <div key={idx} className="relative pb-7 pl-9 group">
-                         <div className="absolute left-0 top-0 w-2.5 h-2.5 -translate-x-1/2 rounded-full border-2 border-white/[0.08] bg-emerald-400 transition-transform" />
+                         <div className="absolute left-0 top-0 w-2.5 h-2.5 -translate-x-1/2 rounded-full border-2 border-fg/[0.08] bg-emerald-400 transition-transform" />
                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                             <div>
-                               <p className="text-white/70 text-xs font-medium mb-1">
+                               <p className="text-fg/70 text-xs font-medium mb-1">
                                   {formatDate(log.logDate)}
                                </p>
                                <div className="flex items-center gap-2">
-                                  <span className="text-white font-medium tracking-normal text-sm">
-                                     Consumed <span className="text-[#ededed]">{log.amountConsumed} {item.unit}</span>
+                                  <span className="text-fg font-medium tracking-normal text-sm">
+                                     Consumed <span className="text-fg">{log.amountConsumed} {item.unit}</span>
                                   </span>
-                                  <span className="text-white/70 text-xs font-medium bg-white/10 px-2 py-0.5 rounded-lg border border-white/10">
+                                  <span className="text-fg/70 text-xs font-medium bg-fg/10 px-2 py-0.5 rounded-lg border border-fg/10">
                                      {log.batch?.batchName || `Usage ${idx + 1}`}
                                   </span>
                                </div>
@@ -116,8 +116,8 @@ export const InventoryDetailClient = ({ item }: InventoryDetailClientProps) => {
                       </div>
                     )) : (
                       <div className="py-16 text-center">
-                         <History className="w-12 h-12 text-white/5 mx-auto mb-3" />
-                         <p className="text-white/70 font-medium text-xs">No usage records found.</p>
+                         <History className="w-12 h-12 text-fg/5 mx-auto mb-3" />
+                         <p className="text-fg/70 font-medium text-xs">No usage records found.</p>
                       </div>
                     )}
                  </div>
@@ -132,12 +132,12 @@ export const InventoryDetailClient = ({ item }: InventoryDetailClientProps) => {
                
                
              >
-                <Card className="rounded-lg bg-white/[0.04] border-white/[0.08] p-7">
+                <Card className="rounded-lg bg-fg/[0.04] border-fg/[0.08] p-7">
                    <div className="flex items-center gap-3 mb-3">
-                      <AlertTriangle className="w-6 h-6 text-[#f2777b]" />
-                      <h4 className="text-[#f2777b] font-medium text-xl">Stock alert</h4>
+                      <AlertTriangle className="w-6 h-6 text-neg" />
+                      <h4 className="text-neg font-medium text-xl">Stock alert</h4>
                    </div>
-                   <p className="text-white/80 text-xs font-medium leading-relaxed mb-5">
+                   <p className="text-fg/80 text-xs font-medium leading-relaxed mb-5">
                       Your {item.itemName} stock is below the {lowStockThreshold} {item.unit} safety threshold. Replenishment is recommended within {daysRemaining} days.
                    </p>
                    <Button className="w-full py-3 text-xs font-medium bg-red-500 hover:bg-red-600 text-white rounded-md">
@@ -147,8 +147,8 @@ export const InventoryDetailClient = ({ item }: InventoryDetailClientProps) => {
              </motion.div>
            )}
 
-           <Card className="rounded-lg bg-white/10 border-white/10 p-7 relative overflow-hidden">
-              <h4 className="text-white font-medium text-xl mb-5">Item attributes</h4>
+           <Card className="rounded-lg bg-fg/10 border-fg/10 p-7 relative overflow-hidden">
+              <h4 className="text-fg font-medium text-xl mb-5">Item attributes</h4>
               <div className="space-y-4">
                  <MetaItem label="Item name" value={item.itemName} />
                  <MetaItem label="Category" value={item.category || 'N/A'} />
@@ -164,23 +164,23 @@ export const InventoryDetailClient = ({ item }: InventoryDetailClientProps) => {
 
 const MetricCard = ({ title, value, icon: Icon, color, subtext }: any) => {
   const colors: any = {
-    emerald: "text-[#ededed] bg-white/[0.04] border-white/[0.08]",
-    amber: "text-[#ededed] bg-white/[0.04] border-white/[0.08]",
-    red: "text-[#f2777b] bg-white/[0.04] border-white/[0.08]",
-    blue: "text-[#a1a1a6] bg-white/[0.06] border-white/[0.08]",
+    emerald: "text-fg bg-fg/[0.04] border-fg/[0.08]",
+    amber: "text-fg bg-fg/[0.04] border-fg/[0.08]",
+    red: "text-neg bg-fg/[0.04] border-fg/[0.08]",
+    blue: "text-fg-2 bg-fg/[0.06] border-fg/[0.08]",
   };
 
   return (
-    <div className="p-5 rounded-lg bg-white/10 border-white/10 border flex flex-col justify-between h-40 hover:bg-white/[0.08] transition-colors duration-200 group">
+    <div className="p-5 rounded-lg bg-fg/10 border-fg/10 border flex flex-col justify-between h-40 hover:bg-fg/[0.08] transition-colors duration-200 group">
        <div className="flex justify-between items-start">
           <div className={`p-2 rounded-md border ${colors[color]}`}>
              <Icon className="w-5 h-5" />
           </div>
-          <ChevronRight className="w-4 h-4 text-white/10 group-hover:text-white/40 transition-colors" />
+          <ChevronRight className="w-4 h-4 text-fg/10 group-hover:text-fg/40 transition-colors" />
        </div>
        <div>
-          <h3 className="text-white font-medium text-2xl tracking-normal">{value}</h3>
-          <p className="text-white/70 font-medium text-xs mt-1 flex justify-between items-center">
+          <h3 className="text-fg font-medium text-2xl tracking-normal">{value}</h3>
+          <p className="text-fg/70 font-medium text-xs mt-1 flex justify-between items-center">
              {title} <span className="text-xs opacity-70">{subtext}</span>
           </p>
        </div>
@@ -190,7 +190,7 @@ const MetricCard = ({ title, value, icon: Icon, color, subtext }: any) => {
 
 const MetaItem = ({ label, value }: any) => (
   <div className="flex flex-col gap-1">
-     <span className="text-white/60 text-xs font-medium">{label}</span>
-     <span className="text-white font-medium text-sm tracking-normal">{value}</span>
+     <span className="text-fg/60 text-xs font-medium">{label}</span>
+     <span className="text-fg font-medium text-sm tracking-normal">{value}</span>
   </div>
 );

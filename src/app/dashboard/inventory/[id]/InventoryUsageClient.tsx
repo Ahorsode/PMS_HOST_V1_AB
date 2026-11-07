@@ -18,9 +18,9 @@ const KIND_META: Record<
   InventoryUsageEvent['kind'],
   { label: string; className: string; icon: React.ElementType }
 > = {
-  FEED: { label: 'Feed log', className: 'bg-white/[0.04] text-[#ededed]', icon: Wheat },
-  VACCINATION: { label: 'Vaccination', className: 'bg-white/[0.04] text-[#ededed]', icon: Syringe },
-  MEDICATION: { label: 'Medication', className: 'bg-white/[0.06] text-[#a1a1a6]', icon: Syringe },
+  FEED: { label: 'Feed log', className: 'bg-fg/[0.04] text-fg', icon: Wheat },
+  VACCINATION: { label: 'Vaccination', className: 'bg-fg/[0.04] text-fg', icon: Syringe },
+  MEDICATION: { label: 'Medication', className: 'bg-fg/[0.06] text-fg-2', icon: Syringe },
 }
 
 export function InventoryUsageClient({
@@ -38,56 +38,56 @@ export function InventoryUsageClient({
     <div className="space-y-7">
       <Link
         href="/dashboard/inventory"
-        className="inline-flex items-center gap-2 text-sm font-medium text-white/60 hover:text-white transition-colors"
+        className="inline-flex items-center gap-2 text-sm font-medium text-fg/60 hover:text-fg transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
         Back to inventory
       </Link>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="glass-pill rounded-lg border border-white/10 p-5">
-          <p className="text-xs font-medium text-white/45">Item</p>
-          <p className="mt-1 text-xl font-medium text-white">{item.itemName}</p>
-          <p className="mt-1 text-xs font-medium text-white/50">{item.category}</p>
+        <div className="glass-pill rounded-lg border border-fg/10 p-5">
+          <p className="text-xs font-medium text-fg/45">Item</p>
+          <p className="mt-1 text-xl font-medium text-fg">{item.itemName}</p>
+          <p className="mt-1 text-xs font-medium text-fg/50">{item.category}</p>
         </div>
-        <div className="glass-pill rounded-lg border border-white/10 p-5">
-          <p className="text-xs font-medium text-white/45">Stock left</p>
-          <p className={cn('mt-1 text-2xl font-medium', isUsedUp ? 'text-[#f2777b]' : 'text-emerald-400')}>
+        <div className="glass-pill rounded-lg border border-fg/10 p-5">
+          <p className="text-xs font-medium text-fg/45">Stock left</p>
+          <p className={cn('mt-1 text-2xl font-medium', isUsedUp ? 'text-neg' : 'text-emerald-400')}>
             {item.stockLevel.toLocaleString()} {item.unit}
           </p>
           {isUsedUp ? (
-            <p className="mt-1 text-xs font-medium text-[#f2777b]">Fully used up</p>
+            <p className="mt-1 text-xs font-medium text-neg">Fully used up</p>
           ) : null}
         </div>
-        <div className="glass-pill rounded-lg border border-white/10 p-5">
-          <p className="text-xs font-medium text-white/45">Recorded usage</p>
-          <p className="mt-1 text-2xl font-medium text-white">
+        <div className="glass-pill rounded-lg border border-fg/10 p-5">
+          <p className="text-xs font-medium text-fg/45">Recorded usage</p>
+          <p className="mt-1 text-2xl font-medium text-fg">
             {totalUsed.toLocaleString()} {item.unit}
           </p>
           {item.costPerUnit != null ? (
-            <p className="mt-1 text-xs font-medium text-[#ededed]">
+            <p className="mt-1 text-xs font-medium text-fg">
               {formatCurrency(Number(item.costPerUnit), 'GHS')} / {item.unit}
             </p>
           ) : null}
         </div>
       </div>
 
-      <div className="glass-morphism overflow-hidden rounded-lg border border-white/10">
-        <div className="flex items-center gap-2 border-b border-white/10 bg-white/[0.04] px-5 py-4">
-          <History className="h-4 w-4 text-[#a1a1a6]" />
-          <h3 className="text-sm font-medium tracking-normal text-white">Who used it & when</h3>
+      <div className="glass-morphism overflow-hidden rounded-lg border border-fg/10">
+        <div className="flex items-center gap-2 border-b border-fg/10 bg-fg/[0.04] px-5 py-4">
+          <History className="h-4 w-4 text-fg-2" />
+          <h3 className="text-sm font-medium tracking-normal text-fg">Who used it & when</h3>
         </div>
 
         {usageHistory.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
-            <Package className="h-10 w-10 text-white/10" />
-            <p className="text-sm font-medium text-white/50">No usage recorded yet.</p>
-            <p className="max-w-sm text-xs text-white/35">
+            <Package className="h-10 w-10 text-fg/10" />
+            <p className="text-sm font-medium text-fg/50">No usage recorded yet.</p>
+            <p className="max-w-sm text-xs text-fg/35">
               Feed usage appears from feeding logs. Medicine and vaccine usage appears from health schedules on batches.
             </p>
           </div>
         ) : (
-          <div className="max-h-[32rem] divide-y divide-white/5 overflow-y-auto custom-scrollbar">
+          <div className="max-h-[32rem] divide-y divide-fg/5 overflow-y-auto custom-scrollbar">
             {usageHistory.map((row) => {
               const meta = KIND_META[row.kind]
               const Icon = meta.icon
@@ -100,14 +100,14 @@ export function InventoryUsageClient({
                         {meta.label}
                       </span>
                       {row.status ? (
-                        <span className="rounded bg-white/10 px-2 py-0.5 text-xs font-medium text-white/60">
+                        <span className="rounded bg-fg/10 px-2 py-0.5 text-xs font-medium text-fg/60">
                           {row.status}
                         </span>
                       ) : null}
                     </div>
-                    <p className="text-sm font-medium text-white">
+                    <p className="text-sm font-medium text-fg">
                       Used{' '}
-                      <span className="text-[#ededed]">
+                      <span className="text-fg">
                         {row.quantity.toLocaleString()} {row.unit}
                       </span>
                       {row.batchName ? (
@@ -115,7 +115,7 @@ export function InventoryUsageClient({
                           {' '}
                           on{' '}
                           {row.batchId ? (
-                            <Link href={`/dashboard/flocks/${row.batchId}`} className="text-[#a1a1a6] hover:underline">
+                            <Link href={`/dashboard/flocks/${row.batchId}`} className="text-fg-2 hover:underline">
                               {row.batchName}
                             </Link>
                           ) : (
@@ -123,14 +123,14 @@ export function InventoryUsageClient({
                           )}
                         </>
                       ) : (
-                        <span className="text-white/40"> (batch not linked)</span>
+                        <span className="text-fg/40"> (batch not linked)</span>
                       )}
                     </p>
                     {row.recordedBy ? (
-                      <p className="text-xs text-white/45">Logged by {row.recordedBy}</p>
+                      <p className="text-xs text-fg/45">Logged by {row.recordedBy}</p>
                     ) : null}
                   </div>
-                  <p className="shrink-0 text-xs font-medium text-white/50">
+                  <p className="shrink-0 text-xs font-medium text-fg/50">
                     {new Date(row.date).toLocaleString(undefined, {
                       dateStyle: 'medium',
                       timeStyle: 'short',

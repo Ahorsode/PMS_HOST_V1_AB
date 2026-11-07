@@ -46,16 +46,16 @@ export default async function HealthPage() {
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 px-0 md:px-3 pt-2 pb-7 md:py-7">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-[#141415] p-6 rounded-xl border border-white/[0.08] gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-page p-6 rounded-xl border border-fg/[0.08] gap-4">
         <div>
-          <h1 className="text-3xl font-medium leading-tight text-[#ededed]">Vaccination and medication</h1>
-          <p className="mt-2 text-sm text-[#a1a1a6]">Plan and track vaccine and medication schedules across your active batches</p>
+          <h1 className="text-3xl font-medium leading-tight text-fg">Vaccination and medication</h1>
+          <p className="mt-2 text-sm text-fg-2">Plan and track vaccine and medication schedules across your active batches</p>
         </div>
-        <div className="bg-[#19191b] px-5 py-3 rounded-xl border border-white/[0.08] text-center">
-          <p className="text-xs font-medium text-[#ededed]">
+        <div className="bg-card px-5 py-3 rounded-xl border border-fg/[0.08] text-center">
+          <p className="text-xs font-medium text-fg">
             Pending
           </p>
-          <p className="text-3xl font-medium text-white">{pendingCount}</p>
+          <p className="text-3xl font-medium text-fg">{pendingCount}</p>
         </div>
       </div>
 

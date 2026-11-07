@@ -8,15 +8,15 @@ import { g } from '@/components/ui/graphite'
  * Graphite surfaces, three text roles and emerald as the one accent.
  */
 export const tone = {
-  panel: 'rounded-xl border border-white/[0.08] bg-[#19191b]',
-  raised: 'bg-[#232325]',
+  panel: 'rounded-xl border border-fg/[0.08] bg-card',
+  raised: 'bg-raised',
   hairline: g.hairline,
   text: g.text,
   text2: g.secondary,
   muted: g.muted,
-  accent: 'text-[#34d399]',
-  negative: 'text-[#f2777b]',
-  focus: 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34d399]/60',
+  accent: 'text-accent',
+  negative: 'text-neg',
+  focus: 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60',
   ease: 'duration-150 ease-[cubic-bezier(0.22,1,0.36,1)]',
 } as const
 
@@ -44,7 +44,7 @@ export function StatusText({ status, className }: { status: string | null | unde
   const isActive = String(status || '').toLowerCase() === 'active'
   return (
     <span className={cn('inline-flex items-center gap-2 text-[13px]', tone.text2, className)}>
-      <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', isActive ? 'bg-[#34d399]' : 'bg-[#5f5f65]')} />
+      <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', isActive ? 'bg-accent' : 'bg-fg-3')} />
       {statusLabel(status)}
     </span>
   )
@@ -68,11 +68,11 @@ export function HeadCountBar({
     <div
       role="img"
       aria-label={`${formatCount(alive)} alive, ${formatCount(isolated)} in isolation, ${formatCount(dead)} dead`}
-      className={cn('flex h-1 w-full gap-px overflow-hidden rounded-full bg-white/[0.06]', className)}
+      className={cn('flex h-1 w-full gap-px overflow-hidden rounded-full bg-fg/[0.06]', className)}
     >
-      {alive > 0 ? <span className="h-full bg-[#34d399]" style={{ width: pct(alive) }} /> : null}
-      {isolated > 0 ? <span className="h-full bg-[#d9a441]" style={{ width: pct(isolated) }} /> : null}
-      {dead > 0 ? <span className="h-full bg-[#e5484d]/80" style={{ width: pct(dead) }} /> : null}
+      {alive > 0 ? <span className="h-full bg-accent" style={{ width: pct(alive) }} /> : null}
+      {isolated > 0 ? <span className="h-full bg-yolk" style={{ width: pct(isolated) }} /> : null}
+      {dead > 0 ? <span className="h-full bg-neg-solid/80" style={{ width: pct(dead) }} /> : null}
     </div>
   )
 }
@@ -112,13 +112,13 @@ export function HeadCount({
         <p className={cn('mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs', tone.text2)}>
           {iso > 0 ? (
             <span className="inline-flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#d9a441]" />
+              <span className="h-1.5 w-1.5 rounded-full bg-yolk" />
               <span className="font-mono tabular-nums">{formatCount(iso)}</span> isolated
             </span>
           ) : null}
           {dead > 0 ? (
             <span className="inline-flex items-center gap-1.5">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#e5484d]" />
+              <span className="h-1.5 w-1.5 rounded-full bg-neg-solid" />
               <span className="font-mono tabular-nums">{formatCount(dead)}</span> dead
             </span>
           ) : null}
@@ -132,9 +132,9 @@ type ButtonVariant = 'primary' | 'secondary' | 'danger'
 type ButtonSize = 'sm' | 'md'
 
 const BUTTON_VARIANTS: Record<ButtonVariant, string> = {
-  primary: 'bg-[#ededed] text-[#141415] hover:bg-white',
-  secondary: 'border border-white/[0.08] bg-[#232325] text-[#ededed] hover:bg-[#2c2c2f]',
-  danger: 'border border-[#e5484d]/30 text-[#f2777b] hover:bg-[#e5484d]/10',
+  primary: 'bg-fg text-page hover:bg-fg/90',
+  secondary: 'border border-fg/[0.08] bg-raised text-fg hover:bg-raised-2',
+  danger: 'border border-neg-solid/30 text-neg hover:bg-neg-solid/10',
 }
 
 const BUTTON_SIZES: Record<ButtonSize, string> = {
@@ -201,7 +201,7 @@ export function iconButtonClass(intent: 'default' | 'danger' = 'default', classN
     tone.ease,
     tone.focus,
     tone.muted,
-    intent === 'danger' ? 'hover:bg-[#e5484d]/10 hover:text-[#f2777b]' : 'hover:bg-white/[0.06] hover:text-[#ededed]',
+    intent === 'danger' ? 'hover:bg-neg-solid/10 hover:text-neg' : 'hover:bg-fg/[0.06] hover:text-fg',
     className,
   )
 }
@@ -213,8 +213,8 @@ export function segmentClass(active: boolean) {
     tone.ease,
     tone.focus,
     active
-      ? 'bg-[#2c2c2f] text-[#ededed] shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]'
-      : 'text-[#a1a1a6] hover:bg-white/[0.04] hover:text-[#ededed]',
+      ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]'
+      : 'text-fg-2 hover:bg-fg/[0.04] hover:text-fg',
   )
 }
 

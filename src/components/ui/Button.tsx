@@ -15,14 +15,14 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 // Graphite ramp: an off-white primary, raised neutral secondary, and red only for destructive actions.
 const variants = {
-  primary: 'bg-[#ededed] text-[#141415] hover:bg-white font-medium',
+  primary: 'bg-fg text-page hover:bg-fg/90 font-medium',
   secondary:
-    'border border-white/[0.08] bg-[#232325] text-[#ededed] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] hover:bg-[#2c2c2f] font-medium',
-  outline: 'border border-white/[0.12] bg-transparent text-[#ededed] hover:bg-white/[0.04] font-medium',
-  danger: 'border border-[#e5484d]/30 bg-[#e5484d]/10 text-[#f2777b] hover:bg-[#e5484d]/20 font-medium',
-  ghost: 'bg-transparent text-[#a1a1a6] hover:bg-white/[0.06] hover:text-[#ededed]',
+    'border border-fg/[0.08] bg-raised text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] hover:bg-raised-2 font-medium',
+  outline: 'border border-fg/[0.12] bg-transparent text-fg hover:bg-fg/[0.04] font-medium',
+  danger: 'border border-neg-solid/30 bg-neg-solid/10 text-neg hover:bg-neg-solid/20 font-medium',
+  ghost: 'bg-transparent text-fg-2 hover:bg-fg/[0.06] hover:text-fg',
   glass:
-    'border border-white/[0.08] bg-[#232325] text-[#ededed] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] hover:bg-[#2c2c2f] font-medium',
+    'border border-fg/[0.08] bg-raised text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] hover:bg-raised-2 font-medium',
 };
 
 // Touch-sized on phones, a little denser from md up.
@@ -34,7 +34,7 @@ const sizes = {
 };
 
 const base =
-  'relative inline-flex items-center justify-center gap-2 whitespace-nowrap transition-[background-color,border-color,color,transform] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34d399]/60 disabled:pointer-events-none disabled:opacity-50';
+  'relative inline-flex items-center justify-center gap-2 whitespace-nowrap transition-[background-color,border-color,color,transform] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:pointer-events-none disabled:opacity-50';
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', size = 'md', isLoading, loadingText, children, disabled, onClick, asChild = false, ...props }, ref) => {

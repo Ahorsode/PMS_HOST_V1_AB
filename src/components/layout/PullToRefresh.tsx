@@ -77,7 +77,7 @@ export const PullToRefresh = ({ children }: { children: React.ReactNode }) => {
     >
       <div className="absolute w-full flex justify-center items-center z-0 top-0 left-0 pt-2 -mt-12">
         <div 
-          className="bg-white/10 rounded-full p-2 border border-white/20 shadow-lg flex items-center justify-center transition-opacity"
+          className="bg-fg/10 rounded-full p-2 border border-fg/20 shadow-lg flex items-center justify-center transition-opacity"
           style={{ opacity: Math.min(pullDistance / refreshThreshold, 1) }}
         >
           <RefreshCw 
@@ -88,7 +88,7 @@ export const PullToRefresh = ({ children }: { children: React.ReactNode }) => {
       </div>
       <motion.div 
         animate={controls}
-        className="relative z-10 h-full w-full bg-[#141415]"
+        className="relative z-10 h-full w-full bg-page"
       >
         {children}
       </motion.div>

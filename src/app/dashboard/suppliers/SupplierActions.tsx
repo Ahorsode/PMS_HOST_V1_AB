@@ -19,7 +19,7 @@ export function SupplierActionsHeader({ canEdit = true }: { canEdit?: boolean })
     <>
       <button 
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2 bg-emerald-500 text-[#064e3b] px-6 py-3 rounded-md font-medium text-xs transition-colors border border-white/[0.08]"
+        className="flex items-center gap-2 bg-emerald-500 text-accent-fg px-6 py-3 rounded-md font-medium text-xs transition-colors border border-fg/[0.08]"
       >
         <UserPlus className="w-5 h-5" />
         New profile
@@ -42,11 +42,11 @@ export function AddPartnerBox() {
 
   return (
     <>
-      <div onClick={() => setIsOpen(true)} className="border-2 border-dashed border-white/[0.08] rounded-lg flex flex-col items-center justify-center p-9 hover:bg-white/[0.04] transition-colors group cursor-pointer h-full min-h-[250px]">
-         <div className="w-16 h-16 rounded-[1.5rem] bg-white/[0.04] flex items-center justify-center mb-3 transition-colors duration-200">
-            <UserPlus className="w-8 h-8 text-[#85858b]" />
+      <div onClick={() => setIsOpen(true)} className="border-2 border-dashed border-fg/[0.08] rounded-lg flex flex-col items-center justify-center p-9 hover:bg-fg/[0.04] transition-colors group cursor-pointer h-full min-h-[250px]">
+         <div className="w-16 h-16 rounded-[1.5rem] bg-fg/[0.04] flex items-center justify-center mb-3 transition-colors duration-200">
+            <UserPlus className="w-8 h-8 text-fg-3" />
          </div>
-         <p className="text-white font-medium text-sm tracking-normal mb-1">Add new partner</p>
+         <p className="text-fg font-medium text-sm tracking-normal mb-1">Add new partner</p>
       </div>
 
       <Dialog 

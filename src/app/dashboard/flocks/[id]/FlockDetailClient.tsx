@@ -153,7 +153,7 @@ export const FlockDetailClient = ({ data, eggsPerCrate = 30 }: FlockDetailClient
 
           <Panel>
             <PanelHeader title="Batch details" />
-            <dl className="divide-y divide-white/[0.06]">
+            <dl className="divide-y divide-fg/[0.06]">
               <MetaItem label="Unit name" value={batch.batchName || 'Selected unit'} />
               <MetaItem label="Housing" value={batch.house?.name || 'House not named'} />
               <MetaItem label="Status" value={statusLabel(batch.status)} />
@@ -186,7 +186,7 @@ export const FlockDetailClient = ({ data, eggsPerCrate = 30 }: FlockDetailClient
 
 function StatStrip({ className, children }: { className?: string; children: React.ReactNode }) {
   return (
-    <div className={cn('grid gap-px overflow-hidden rounded-xl border border-white/[0.08] bg-[#29292c]', className)}>
+    <div className={cn('grid gap-px overflow-hidden rounded-xl border border-fg/[0.08] bg-raised-2', className)}>
       {children}
     </div>
   )
@@ -204,7 +204,7 @@ function Stat({
   valueClassName?: string
 }) {
   return (
-    <div className="min-w-0 bg-[#19191b] p-4 md:p-5">
+    <div className="min-w-0 bg-card p-4 md:p-5">
       <p className={cn('text-[13px]', tone.text2)}>{title}</p>
       <p className={cn('mt-2 text-2xl font-medium leading-none tabular-nums md:text-[28px]', tone.text, valueClassName)}>
         {value}
@@ -251,11 +251,11 @@ function ActivityTimeline({ logs, eggsPerCrate = 30 }: { logs: any; eggsPerCrate
           {items.map((item, idx) => (
             <li key={idx} className="relative flex gap-4 py-3">
               <div className="relative flex w-2 shrink-0 justify-center">
-                {idx < items.length - 1 ? <span className="absolute bottom-[-12px] top-5 w-px bg-white/[0.08]" /> : null}
+                {idx < items.length - 1 ? <span className="absolute bottom-[-12px] top-5 w-px bg-fg/[0.08]" /> : null}
                 <span
                   className={cn(
                     'mt-1.5 h-2 w-2 rounded-full',
-                    item._type === 'MORTALITY' ? 'bg-[#e5484d]' : item._type === 'EGGS' ? 'bg-[#34d399]' : 'bg-[#5f5f65]'
+                    item._type === 'MORTALITY' ? 'bg-neg-solid' : item._type === 'EGGS' ? 'bg-accent' : 'bg-fg-3'
                   )}
                 />
               </div>
@@ -318,7 +318,7 @@ function RevenueBreakdown({ items }: { items?: any[] }) {
       {rows.length === 0 ? (
         <p className={cn('px-5 py-8 text-center text-[13px]', tone.text2)}>No revenue recorded for this batch</p>
       ) : (
-        <div className="custom-scrollbar max-h-80 divide-y divide-white/[0.06] overflow-y-auto">
+        <div className="custom-scrollbar max-h-80 divide-y divide-fg/[0.06] overflow-y-auto">
           {rows.map((item) => (
             <BreakdownRow
               key={item.id}
@@ -358,7 +358,7 @@ function ExpenseBreakdown({ items }: { items?: any[] }) {
       {rows.length === 0 ? (
         <p className={cn('px-5 py-8 text-center text-[13px]', tone.text2)}>No expenses recorded for this batch</p>
       ) : (
-        <div className="custom-scrollbar max-h-80 divide-y divide-white/[0.06] overflow-y-auto">
+        <div className="custom-scrollbar max-h-80 divide-y divide-fg/[0.06] overflow-y-auto">
           {rows.map((item) => (
             <BreakdownRow
               key={item.id}

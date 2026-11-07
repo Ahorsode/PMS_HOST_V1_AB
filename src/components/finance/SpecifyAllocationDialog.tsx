@@ -183,9 +183,9 @@ export function SpecifyAllocationDialog({ isOpen, onOpenChange, totalAmount, onS
     >
       <div className="space-y-5 pt-2">
         {loading ? (
-          <p className="text-xs font-medium text-white/50">Loading active batches…</p>
+          <p className="text-xs font-medium text-fg/50">Loading active batches…</p>
         ) : batches.length === 0 ? (
-          <p className="text-xs font-medium text-[#ededed]">No active livestock batches found to allocate to.</p>
+          <p className="text-xs font-medium text-fg">No active livestock batches found to allocate to.</p>
         ) : (
           <>
             <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
@@ -212,7 +212,7 @@ export function SpecifyAllocationDialog({ isOpen, onOpenChange, totalAmount, onS
               />
             </div>
 
-            <div className="grid w-full grid-cols-2 gap-1 rounded-md border border-white/10 bg-black/30 p-1">
+            <div className="grid w-full grid-cols-2 gap-1 rounded-md border border-fg/10 bg-fg/[0.04] p-1">
               <ModeButton
                 active={allocationMode === 'AMOUNT'}
                 icon={Banknote}
@@ -236,7 +236,7 @@ export function SpecifyAllocationDialog({ isOpen, onOpenChange, totalAmount, onS
                       <select
                         value={row.batchId}
                         onChange={(e) => updateRow(row.key, { batchId: e.target.value })}
-                        className="h-10 rounded-md border border-white/10 bg-black/40 px-3 text-sm text-white"
+                        className="h-10 rounded-md border border-fg/10 bg-fg/[0.04] px-3 text-sm text-fg"
                       >
                         <option value="">Select batch #{index + 1}</option>
                         {batches.map((batch) => (
@@ -255,7 +255,7 @@ export function SpecifyAllocationDialog({ isOpen, onOpenChange, totalAmount, onS
                           if (value === '' || Number(value) >= 0) updateRow(row.key, { value })
                         }}
                         placeholder={allocationMode === 'PERCENTAGE' ? '0.00 %' : 'GH₵ 0.00'}
-                        className="bg-black/40 border-white/10 text-white"
+                        className="bg-fg/[0.04] border-fg/10 text-fg"
                       />
                       <Button aria-label="Remove row"
                         type="button"
@@ -263,7 +263,7 @@ export function SpecifyAllocationDialog({ isOpen, onOpenChange, totalAmount, onS
                         size="icon"
                         disabled={rows.length <= 1}
                         onClick={() => setRows((current) => current.filter((item) => item.key !== row.key))}
-                        className="border border-white/10 text-white/60"
+                        className="border border-fg/10 text-fg/60"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -274,23 +274,23 @@ export function SpecifyAllocationDialog({ isOpen, onOpenChange, totalAmount, onS
                   type="button"
                   variant="secondary"
                   onClick={() => setRows((current) => [...current, makeRow()])}
-                  className="w-full border border-white/10 bg-white/[0.06]"
+                  className="w-full border border-fg/10 bg-fg/[0.06]"
                 >
                   <ListPlus className="h-4 w-4" />
                   Add batch row
                 </Button>
               </div>
             ) : (
-              <div className="rounded-lg border border-white/10 bg-white/[0.03] p-3 space-y-2 max-h-48 overflow-y-auto">
+              <div className="rounded-lg border border-fg/10 bg-fg/[0.03] p-3 space-y-2 max-h-48 overflow-y-auto">
                 {buildPresetPreview(batches, totalAmount, preset, allocationMode).map((row) => (
                   <div key={row.batchId} className="flex items-center justify-between gap-3 text-xs">
-                    <span className="min-w-0 truncate text-white/70">{row.name}</span>
-                    <span className="shrink-0 text-right font-medium text-[#ededed]">
+                    <span className="min-w-0 truncate text-fg/70">{row.name}</span>
+                    <span className="shrink-0 text-right font-medium text-fg">
                       {row.amount != null && row.amount > 0 ? (
                         <>
                           GH₵ {formatMoney(row.amount)}
                           {row.percentage != null ? (
-                            <span className="ml-1.5 font-medium text-white/45">· {row.percentage.toFixed(2)}%</span>
+                            <span className="ml-1.5 font-medium text-fg/45">· {row.percentage.toFixed(2)}%</span>
                           ) : null}
                         </>
                       ) : (
@@ -306,21 +306,21 @@ export function SpecifyAllocationDialog({ isOpen, onOpenChange, totalAmount, onS
               className={cn(
                 'flex items-center gap-2 rounded-md border px-3 py-2 text-xs font-medium',
                 canSave
-                  ? 'border-white/[0.08] bg-white/[0.04] text-[#34d399]'
-                  : 'border-white/[0.08] bg-white/[0.04] text-[#d9a441]'
+                  ? 'border-fg/[0.08] bg-fg/[0.04] text-accent'
+                  : 'border-fg/[0.08] bg-fg/[0.04] text-yolk'
               )}
             >
               {canSave ? <CheckCircle2 className="h-4 w-4 shrink-0" /> : <AlertCircle className="h-4 w-4 shrink-0" />}
               {balanceLabel}
             </div>
 
-            {error ? <p className="text-xs font-medium text-[#f2777b]">{error}</p> : null}
+            {error ? <p className="text-xs font-medium text-neg">{error}</p> : null}
 
             <div className="flex gap-2 pt-1">
               <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="flex-1">
                 Cancel
               </Button>
-              <Button type="button" onClick={handleSave} disabled={!canSave} className="flex-[2] bg-[#232325] text-[#ededed] border border-white/[0.08] font-medium">
+              <Button type="button" onClick={handleSave} disabled={!canSave} className="flex-[2] bg-raised text-fg border border-fg/[0.08] font-medium">
                 Apply allocation
               </Button>
             </div>
@@ -372,13 +372,13 @@ function PresetButton({
       className={cn(
         'rounded-lg border p-3 text-left transition-colors',
         active
-          ? 'border-white/[0.08] bg-white/[0.04] text-white'
-          : 'border-white/10 bg-white/[0.03] text-white/70 hover:bg-white/[0.06]'
+          ? 'border-fg/[0.08] bg-fg/[0.04] text-fg'
+          : 'border-fg/10 bg-fg/[0.03] text-fg/70 hover:bg-fg/[0.06]'
       )}
     >
-      <Icon className={cn('mb-2 h-4 w-4', active ? 'text-emerald-400' : 'text-white/40')} />
+      <Icon className={cn('mb-2 h-4 w-4', active ? 'text-emerald-400' : 'text-fg/40')} />
       <p className="text-xs font-medium">{title}</p>
-      <p className="text-xs text-white/45">{subtitle}</p>
+      <p className="text-xs text-fg/45">{subtitle}</p>
     </button>
   )
 }
@@ -400,7 +400,7 @@ function ModeButton({
       onClick={onClick}
       className={cn(
         'inline-flex w-full items-center justify-center gap-1.5 rounded-md px-2 py-2.5 text-[11px] font-medium transition-colors sm:text-xs',
-        active ? 'bg-[#2c2c2f] text-[#ededed] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'text-white/60 hover:text-white'
+        active ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'text-fg/60 hover:text-fg'
       )}
     >
       <Icon className="h-3.5 w-3.5" />

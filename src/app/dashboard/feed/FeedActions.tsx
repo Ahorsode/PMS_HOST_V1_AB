@@ -18,9 +18,9 @@ export const FeedActionsHeader = ({ batches, inventory, formulations = [] }: { b
     <div className="flex gap-2">
       <Link 
         href="/dashboard/feed/analytics"
-        className="inline-flex h-10 items-center gap-2 rounded-lg border border-white/[0.08] bg-[#232325] px-4 text-sm font-medium text-[#ededed] transition-colors duration-150 hover:bg-[#2c2c2f] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34d399]/60"
+        className="inline-flex h-10 items-center gap-2 rounded-lg border border-fg/[0.08] bg-raised px-4 text-sm font-medium text-fg transition-colors duration-150 hover:bg-raised-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
       >
-        <BarChart3 className="h-4 w-4 text-[#a1a1a6]" strokeWidth={1.5} />
+        <BarChart3 className="h-4 w-4 text-fg-2" strokeWidth={1.5} />
         Feed analytics
       </Link>
       <Button variant="outline" onClick={() => setOpenItem(true)}>
@@ -70,10 +70,10 @@ export const FeedLogActions = ({ log, batches, inventory, formulations = [] }: {
 
   return (
     <div className="flex items-center gap-2">
-      <button aria-label="Edit feeding log" onClick={() => setMode('edit')} className="p-1 text-[#a1a1a6] hover:bg-white/[0.06] rounded transition-colors">
+      <button aria-label="Edit feeding log" onClick={() => setMode('edit')} className="p-1 text-fg-2 hover:bg-fg/[0.06] rounded transition-colors">
         <Edit2 className="h-4 w-4" />
       </button>
-      <button aria-label="Delete feeding log" onClick={() => setShowDeleteModal(true)} className="p-1 text-[#85858b] hover:bg-[#232325] rounded transition-colors">
+      <button aria-label="Delete feeding log" onClick={() => setShowDeleteModal(true)} className="p-1 text-fg-3 hover:bg-raised rounded transition-colors">
         <Trash2 className="h-4 w-4" />
       </button>
 
@@ -121,16 +121,16 @@ export const InventoryActions = ({ item }: { item: any }) => {
     <div className="flex items-center gap-2">
       <Link 
         href={`/dashboard/feed/inventory/${item.id}`}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[#85858b] transition-colors duration-150 hover:bg-white/[0.06] hover:text-[#ededed]"
+        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-fg-3 transition-colors duration-150 hover:bg-fg/[0.06] hover:text-fg"
         title="Open item"
         aria-label="Open item"
       >
         <ArrowUpRight className="h-4 w-4" strokeWidth={1.5} />
       </Link>
-      <button aria-label="Edit inventory item" onClick={() => setMode('edit')} className="p-1 text-[#a1a1a6] hover:bg-white/[0.06] rounded transition-colors">
+      <button aria-label="Edit inventory item" onClick={() => setMode('edit')} className="p-1 text-fg-2 hover:bg-fg/[0.06] rounded transition-colors">
         <Edit2 className="h-4 w-4" />
       </button>
-      <button aria-label="Delete inventory item" onClick={() => setShowDeleteModal(true)} className="p-1 text-[#85858b] hover:bg-[#232325] rounded transition-colors">
+      <button aria-label="Delete inventory item" onClick={() => setShowDeleteModal(true)} className="p-1 text-fg-3 hover:bg-raised rounded transition-colors">
         <Trash2 className="h-4 w-4" />
       </button>
 
