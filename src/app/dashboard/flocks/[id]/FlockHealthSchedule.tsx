@@ -123,7 +123,7 @@ export function FlockHealthSchedule({
         label: m.stockLevel > 0 ? `${m.itemName} — ${m.stockLevel} ${m.unit} in stock` : `${m.itemName} — out of stock`,
         value: m.itemName,
       })),
-      { label: '➕ Add new (type your own)', value: CUSTOM },
+      { label: '+ Add new (type your own)', value: CUSTOM },
     ],
     [inventory]
   )

@@ -38,11 +38,11 @@ export async function generateSocialPost() {
 
   const randomTip = tips[Math.floor(Math.random() * tips.length)]
 
-  let postText = `🚜 Weekly Farm Update from our Poultry Ledger! \n\n`
+  let postText = `Weekly Farm Update from our Poultry Ledger!\n\n`
   postText += `Production Highlights:\n`
-  postText += `🥚 ${totalEggs.toLocaleString()} Eggs Collected\n`
-  if (totalLoss > 0) postText += `📉 Mortality Kept at ${totalLoss} animals\n`
-  postText += `🌱 Managing ${batches.length} active flocks including ${batchTypes.join(', ')}\n\n`
+  postText += `- ${totalEggs.toLocaleString()} Eggs Collected\n`
+  if (totalLoss > 0) postText += `- Mortality Kept at ${totalLoss} animals\n`
+  postText += `- Managing ${batches.length} active flocks including ${batchTypes.join(', ')}\n\n`
   postText += `${randomTip}\n\n`
   postText += `#PoultryLedger #SustainableFarming #FarmManagement #Poultry`
 

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Home, Settings as SettingsIcon, Bell, Shield, Plus, Loader2, Save, CheckCircle2, Monitor, Trash2, Egg, ShoppingCart, SlidersHorizontal } from 'lucide-react';
+import { Home, Settings as SettingsIcon, Bell, Shield, Plus, Loader2, Save, CheckCircle2, Monitor, Trash2, Egg, ShoppingCart, SlidersHorizontal, Coins, ChartColumn, Wheat } from 'lucide-react';
 import { updateFarmInfo, createHouse } from '@/lib/actions/dashboard-actions';
 import { updateFarmSettings, getFarmSettings, getSalesSettings, updateSalesSettings } from '@/lib/actions/preference-actions';
 import { Input } from '@/components/ui/Input';
@@ -309,7 +309,7 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
                 ) : (
                   <div className="space-y-5">
                     <div className="p-4 rounded-md bg-purple-500/10 border border-purple-500/20 space-y-2">
-                      <p className="text-sm font-bold text-purple-400 uppercase tracking-widest">💰 Farm Currency</p>
+                      <p className="flex items-center gap-2 text-sm font-bold text-purple-400 uppercase tracking-widest"><Coins className="w-4 h-4" aria-hidden="true" /> Farm Currency</p>
                       <p className="text-xs text-white/70">Used for sales, orders, and financial reporting.</p>
                       <select
                         value={currency}
@@ -324,7 +324,7 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
                     </div>
 
                     <div className="p-4 rounded-md bg-amber-500/10 border border-amber-500/20 space-y-2">
-                      <p className="text-sm font-bold text-amber-400 uppercase tracking-widest">📊 Default Growth Target</p>
+                      <p className="flex items-center gap-2 text-sm font-bold text-amber-400 uppercase tracking-widest"><ChartColumn className="w-4 h-4" aria-hidden="true" /> Default Growth Target</p>
                       <p className="text-xs text-white/70">Benchmark flock performance against industry standards.</p>
                       <select
                         value={growthTarget || ''}
@@ -377,7 +377,7 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
               ) : (
                 <div className="space-y-5">
                   <div className="p-4 rounded-md bg-blue-500/10 border border-blue-500/20 space-y-2">
-                    <p className="text-sm font-bold text-blue-400 uppercase tracking-widest">🥚 Egg Collection Reminder</p>
+                    <p className="flex items-center gap-2 text-sm font-bold text-blue-400 uppercase tracking-widest"><Egg className="w-4 h-4" aria-hidden="true" /> Egg Collection Reminder</p>
                     <p className="text-xs text-white/70">Alert if no egg record is logged by this time each day.</p>
                     <input
                       type="time"
@@ -388,7 +388,7 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
                   </div>
 
                   <div className="p-4 rounded-md bg-orange-500/10 border border-orange-500/20 space-y-2">
-                    <p className="text-sm font-bold text-orange-400 uppercase tracking-widest">🌾 Feed Log Reminder</p>
+                    <p className="flex items-center gap-2 text-sm font-bold text-orange-400 uppercase tracking-widest"><Wheat className="w-4 h-4" aria-hidden="true" /> Feed Log Reminder</p>
                     <p className="text-xs text-white/70">Alert if no feeding record is logged by this time each day.</p>
                     <input
                       type="time"
