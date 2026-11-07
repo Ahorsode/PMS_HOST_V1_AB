@@ -10,36 +10,35 @@ import {
   Scale,
   ShoppingCart,
   Skull,
-  Syringe,
   Wheat,
 } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
 import { Dialog, DialogDescription, DialogTitle } from '@/components/ui/Dialog'
 import { WorkerStamp } from '@/components/ui/WorkerStamp'
 import { cn, formatCurrency } from '@/lib/utils'
+import { ActionButton, segmentClass, tone } from '../flock-ui'
 import { buildBatchLogEntries } from '@/lib/reports/batch-log-entries'
 
 type HistoryType = 'ALL' | 'FEED' | 'MORTALITY' | 'EGGS' | 'WEIGHT' | 'HEALTH' | 'SALES' | 'EXPENSE'
 
-const TYPE_FILTERS: { key: HistoryType; label: string; icon: React.ElementType }[] = [
-  { key: 'ALL', label: 'All', icon: History },
-  { key: 'FEED', label: 'Feed', icon: Wheat },
-  { key: 'MORTALITY', label: 'Mortality', icon: Skull },
-  { key: 'EGGS', label: 'Eggs', icon: Egg },
-  { key: 'WEIGHT', label: 'Weight', icon: Scale },
-  { key: 'HEALTH', label: 'Health', icon: Syringe },
-  { key: 'SALES', label: 'Sales', icon: ShoppingCart },
-  { key: 'EXPENSE', label: 'Expenses', icon: Banknote },
+const TYPE_FILTERS: { key: HistoryType; label: string }[] = [
+  { key: 'ALL', label: 'All' },
+  { key: 'FEED', label: 'Feed' },
+  { key: 'MORTALITY', label: 'Mortality' },
+  { key: 'EGGS', label: 'Eggs' },
+  { key: 'WEIGHT', label: 'Weight' },
+  { key: 'HEALTH', label: 'Health' },
+  { key: 'SALES', label: 'Sales' },
+  { key: 'EXPENSE', label: 'Expenses' },
 ]
 
-const TYPE_STYLES: Record<Exclude<HistoryType, 'ALL'>, { badge: string; icon: React.ElementType }> = {
-  FEED: { badge: 'border-amber-500/20 bg-amber-500/10 text-amber-400', icon: Wheat },
-  MORTALITY: { badge: 'border-red-500/20 bg-red-500/10 text-red-400', icon: Skull },
-  EGGS: { badge: 'border-blue-500/20 bg-blue-500/10 text-blue-400', icon: Egg },
-  WEIGHT: { badge: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400', icon: Scale },
-  HEALTH: { badge: 'border-violet-500/20 bg-violet-500/10 text-violet-300', icon: Pill },
-  SALES: { badge: 'border-sky-500/20 bg-sky-500/10 text-sky-400', icon: ShoppingCart },
-  EXPENSE: { badge: 'border-orange-500/20 bg-orange-500/10 text-orange-400', icon: Banknote },
+const TYPE_META: Record<Exclude<HistoryType, 'ALL'>, { label: string; icon: React.ElementType }> = {
+  FEED: { label: 'Feed', icon: Wheat },
+  MORTALITY: { label: 'Mortality', icon: Skull },
+  EGGS: { label: 'Eggs', icon: Egg },
+  WEIGHT: { label: 'Weight', icon: Scale },
+  HEALTH: { label: 'Health', icon: Pill },
+  SALES: { label: 'Sale', icon: ShoppingCart },
+  EXPENSE: { label: 'Expense', icon: Banknote },
 }
 
 export function FlockLogsHistory({ data }: { data: any }) {
@@ -74,10 +73,10 @@ export function FlockLogsHistory({ data }: { data: any }) {
 
   return (
     <>
-      <Button variant="glass" size="sm" onClick={() => setOpen(true)} className="shrink-0">
-        <History className="h-4 w-4" />
-        Logs History
-      </Button>
+      <ActionButton onClick={() => setOpen(true)}>
+        <History className="h-4 w-4 text-[#a1a1a6]" strokeWidth={1.5} />
+        Logs history
+      </ActionButton>
 
       <Dialog
         isOpen={open}
@@ -88,83 +87,79 @@ export function FlockLogsHistory({ data }: { data: any }) {
         <div className="mb-5">
           <DialogTitle>Batch logs history</DialogTitle>
           <DialogDescription>
-            {batch.batchName || 'This batch'} — feed, mortality, eggs, weight, health, sales, and expenses in one place.
+            {batch.batchName || 'This batch'}: feed, mortality, eggs, weight, health, sales and expenses in one place
           </DialogDescription>
         </div>
 
-        <div className="mb-4 flex flex-wrap gap-2">
+        <div className="mb-4 flex flex-wrap gap-1">
           {visibleFilters.map((row) => {
-            const Icon = row.icon
             const count = counts[row.key] ?? 0
             const active = filter === row.key
             return (
               <button
                 key={row.key}
                 type="button"
+                aria-pressed={active}
                 onClick={() => setFilter(row.key)}
-                className={cn(
-                  'inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider transition-colors',
-                  active
-                    ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-300'
-                    : 'border-white/10 bg-white/[0.03] text-white/55 hover:border-white/20 hover:text-white/80'
-                )}
+                className={segmentClass(active)}
               >
-                <Icon className="h-3 w-3" />
                 {row.label}
-                <span className={cn('rounded px-1.5 py-0.5 text-[9px]', active ? 'bg-black/20' : 'bg-white/5')}>
-                  {count}
-                </span>
+                <span className={cn('font-mono text-xs tabular-nums', active ? tone.text2 : tone.muted)}>{count}</span>
               </button>
             )
           })}
         </div>
 
         {filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-white/10 py-16 text-center">
-            <Activity className="mb-3 h-8 w-8 text-white/20" />
-            <p className="text-xs font-bold uppercase italic tracking-widest text-white/40">
-              No {filter === 'ALL' ? '' : `${filter.toLowerCase()} `}logs recorded yet.
+          <div className="flex flex-col items-center justify-center rounded-lg border border-dashed border-white/[0.08] py-16 text-center">
+            <Activity className={cn('mb-3 h-6 w-6', tone.muted)} strokeWidth={1.5} />
+            <p className={cn('text-[13px]', tone.text2)}>
+              No {filter === 'ALL' ? '' : `${TYPE_META[filter].label.toLowerCase()} `}logs recorded yet
             </p>
           </div>
         ) : (
-          <div className="max-h-[min(60vh,520px)] space-y-0 overflow-y-auto pr-1 custom-scrollbar">
+          <ul className="custom-scrollbar max-h-[min(60vh,520px)] divide-y divide-white/[0.06] overflow-y-auto pr-1">
             {filtered.map((entry) => {
-              const style = TYPE_STYLES[entry.type]
-              const Icon = style.icon
+              const meta = TYPE_META[entry.type]
+              const Icon = meta.icon
               return (
-                <div
-                  key={entry.id}
-                  className="flex items-start justify-between gap-4 border-b border-white/5 py-4 last:border-b-0"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="mb-1 text-[9px] font-bold uppercase italic tracking-widest text-white/45">
-                      {new Date(entry.date).toLocaleString()}
-                    </p>
-                    <div className="flex items-start gap-2">
-                      <span className={cn('mt-0.5 inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 text-[10px] font-bold uppercase', style.badge)}>
-                        <Icon className="h-3 w-3" />
-                        {entry.type}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold text-white">{entry.title}</p>
-                        <p className="mt-0.5 text-xs font-medium text-white/55">{entry.detail}</p>
-                      </div>
+                <li key={entry.id} className="flex items-start justify-between gap-4 py-3">
+                  <div className="flex min-w-0 flex-1 items-start gap-3">
+                    <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-[#232325]">
+                      <Icon className={cn('h-4 w-4', entry.type === 'MORTALITY' ? 'text-[#f2777b]' : tone.muted)} strokeWidth={1.5} />
+                    </span>
+                    <div className="min-w-0">
+                      <p className={cn('text-sm', tone.text)}>{entry.title}</p>
+                      <p className={cn('mt-0.5 text-[13px]', tone.text2)}>{entry.detail}</p>
+                      <p className={cn('mt-1 text-xs', tone.muted)}>
+                        {meta.label} ·{' '}
+                        <span className="font-mono tabular-nums">
+                          {new Date(entry.date).toLocaleString(undefined, {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                      </p>
                     </div>
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-2">
                     {entry.amount != null ? (
-                      <span className="text-sm font-bold text-white">{formatCurrency(entry.amount, 'GHS')}</span>
+                      <span className={cn('text-sm tabular-nums', tone.text)}>{formatCurrency(entry.amount, 'GHS')}</span>
                     ) : null}
                     {entry.user ? <WorkerStamp user={entry.user} /> : null}
                   </div>
-                </div>
+                </li>
               )
             })}
-          </div>
+          </ul>
         )}
 
-        <p className="mt-4 text-[10px] font-bold uppercase tracking-widest text-white/35">
-          Showing {filtered.length} of {allEntries.length} entries
+        <p className={cn('mt-4 text-xs', tone.muted)}>
+          Showing <span className="font-mono tabular-nums">{filtered.length}</span> of{' '}
+          <span className="font-mono tabular-nums">{allEntries.length}</span> entries
         </p>
       </Dialog>
     </>

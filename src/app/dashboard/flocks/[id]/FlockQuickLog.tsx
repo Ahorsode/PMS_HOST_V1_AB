@@ -6,8 +6,8 @@ import { Banknote, Egg, Scale, Skull, Truck, Wheat } from 'lucide-react'
 import { Dialog } from '@/components/ui/Dialog'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
-import { Button } from '@/components/ui/Button'
 import { cn, formatCurrency } from '@/lib/utils'
+import { ActionButton, buttonClass, segmentClass, tone } from '../flock-ui'
 import { logWeight } from '@/lib/actions/dashboard-actions'
 import { createFeedingLog } from '@/lib/actions/feed-actions'
 import { createEggProduction } from '@/lib/actions/egg-actions'
@@ -75,52 +75,38 @@ export function FlockQuickLog({
 }: Props) {
   const [active, setActive] = useState<LogKind | null>(null)
 
-  const buttons: { kind: LogKind; label: string; icon: React.ElementType; color: string; show: boolean }[] = [
-    { kind: 'weight', label: 'Log Weight', icon: Scale, color: 'emerald', show: true },
-    { kind: 'feed', label: 'Log Feed', icon: Wheat, color: 'amber', show: true },
-    { kind: 'eggs', label: 'Log Eggs', icon: Egg, color: 'orange', show: isLayer },
-    { kind: 'mortality', label: 'Log Mortality', icon: Skull, color: 'red', show: true },
-    { kind: 'sale', label: 'Record Sale', icon: Truck, color: 'sky', show: true },
-    { kind: 'expense', label: 'Add Expense', icon: Banknote, color: 'blue', show: canEditFinance },
+  const buttons: { kind: LogKind; label: string; icon: React.ElementType; show: boolean }[] = [
+    { kind: 'weight', label: 'Log weight', icon: Scale, show: true },
+    { kind: 'feed', label: 'Log feed', icon: Wheat, show: true },
+    { kind: 'eggs', label: 'Log eggs', icon: Egg, show: isLayer },
+    { kind: 'mortality', label: 'Log mortality', icon: Skull, show: true },
+    { kind: 'sale', label: 'Record sale', icon: Truck, show: true },
+    { kind: 'expense', label: 'Add expense', icon: Banknote, show: canEditFinance },
   ]
 
-  const colorMap: Record<string, string> = {
-    emerald: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20',
-    amber: 'border-amber-500/20 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20',
-    orange: 'border-orange-500/20 bg-orange-500/10 text-orange-300 hover:bg-orange-500/20',
-    red: 'border-red-500/20 bg-red-500/10 text-red-300 hover:bg-red-500/20',
-    sky: 'border-sky-500/20 bg-sky-500/10 text-sky-300 hover:bg-sky-500/20',
-    blue: 'border-blue-500/20 bg-blue-500/10 text-blue-300 hover:bg-blue-500/20',
-  }
-
   const titleMap: Record<LogKind, string> = {
-    weight: 'Log Average Weight',
-    feed: 'Log Feed Consumption',
-    eggs: 'Log Egg Production',
-    mortality: 'Log Mortality / Sickness',
-    sale: 'Record a Sale',
-    expense: 'Add an Expense',
+    weight: 'Log average weight',
+    feed: 'Log feed consumption',
+    eggs: 'Log egg production',
+    mortality: 'Log mortality or sickness',
+    sale: 'Record a sale',
+    expense: 'Add an expense',
   }
 
   return (
-    <div className="glass-morphism rounded-lg p-4 shadow-2xl">
-      <div className="mb-3 flex items-center gap-2">
-        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">Quick Log</span>
-        <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-400/70 italic">{batchName}</span>
-      </div>
-      <div className="flex flex-wrap gap-2">
+    <section className={cn(tone.panel, 'flex flex-col gap-3 p-3 md:flex-row md:items-center md:gap-4 md:pl-5')}>
+      <h2 className={cn('shrink-0 text-[13px]', tone.text2)}>Quick log</h2>
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
         {buttons
           .filter((b) => b.show)
           .map((b) => (
             <button
               key={b.kind}
+              type="button"
               onClick={() => setActive(b.kind)}
-              className={cn(
-                'flex items-center gap-2 rounded-lg border px-3.5 py-2.5 text-xs font-bold uppercase tracking-wider transition-all',
-                colorMap[b.color]
-              )}
+              className={buttonClass('secondary', 'sm', 'justify-start sm:justify-center')}
             >
-              <b.icon className="h-4 w-4" />
+              <b.icon className="h-4 w-4 text-[#a1a1a6]" strokeWidth={1.5} />
               {b.label}
             </button>
           ))}
@@ -136,7 +122,7 @@ export function FlockQuickLog({
           <ExpenseForm batchId={batchId} allocationBatches={allocationBatches} onDone={() => setActive(null)} />
         ) : null}
       </Dialog>
-    </div>
+    </section>
   )
 }
 
@@ -167,7 +153,7 @@ function useSubmit(onDone: () => void) {
 
 function FormError({ error }: { error: string | null }) {
   if (!error) return null
-  return <p className="text-xs font-bold uppercase tracking-wider text-red-400">{error}</p>
+  return <p className="text-[13px] text-[#f2777b]">{error}</p>
 }
 
 function WeightForm({ batchId, onDone }: { batchId: string; onDone: () => void }) {
@@ -185,13 +171,13 @@ function WeightForm({ batchId, onDone }: { batchId: string; onDone: () => void }
       className="space-y-4"
     >
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Input label="Average Weight (kg)" type="number" step="0.001" value={weight} onChange={(e) => setWeight(e.target.value)} required disabled={isPending} />
-        <Input label="Log Date" type="date" value={logDate} onChange={(e) => setLogDate(e.target.value)} required disabled={isPending} />
+        <Input label="Average weight (kg)" type="number" step="0.001" value={weight} onChange={(e) => setWeight(e.target.value)} required disabled={isPending} />
+        <Input label="Log date" type="date" value={logDate} onChange={(e) => setLogDate(e.target.value)} required disabled={isPending} />
       </div>
       <FormError error={error} />
-      <Button type="submit" className="w-full" isLoading={isPending} loadingText="Saving weight...">
-        Save Weight Record
-      </Button>
+      <ActionButton type="submit" variant="primary" className="w-full" isLoading={isPending} loadingText="Saving weight…">
+        Save weight
+      </ActionButton>
     </form>
   )
 }
@@ -204,8 +190,8 @@ function FeedForm({ batchId, feedInventory, onDone }: { batchId: string; feedInv
 
   if (feedInventory.length === 0) {
     return (
-      <p className="rounded-lg border border-dashed border-white/10 bg-white/[0.03] p-6 text-center text-sm italic text-white/60">
-        No feed stock found in inventory. Add feed under Inventory first, then log consumption here.
+      <p className="rounded-lg border border-dashed border-white/[0.08] p-6 text-center text-[13px] text-[#a1a1a6]">
+        No feed stock in inventory. Add feed under Inventory first, then log consumption here.
       </p>
     )
   }
@@ -220,19 +206,19 @@ function FeedForm({ batchId, feedInventory, onDone }: { batchId: string; feedInv
       className="space-y-4"
     >
       <Select
-        label="Feed Source"
+        label="Feed source"
         value={feedTypeId}
         onChange={(e) => setFeedTypeId(e.target.value)}
         options={feedInventory.map((f) => ({ label: `${f.itemName} (${f.stockLevel} ${f.unit} left)`, value: f.id }))}
       />
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <Input label="Amount (bags)" type="number" step="0.25" value={amount} onChange={(e) => setAmount(e.target.value)} required disabled={isPending} />
-        <Input label="Log Date" type="date" value={logDate} onChange={(e) => setLogDate(e.target.value)} required disabled={isPending} />
+        <Input label="Log date" type="date" value={logDate} onChange={(e) => setLogDate(e.target.value)} required disabled={isPending} />
       </div>
       <FormError error={error} />
-      <Button type="submit" className="w-full" isLoading={isPending} loadingText="Saving feed...">
-        Save Feeding Log
-      </Button>
+      <ActionButton type="submit" variant="primary" className="w-full" isLoading={isPending} loadingText="Saving feed…">
+        Save feeding log
+      </ActionButton>
     </form>
   )
 }
@@ -260,14 +246,14 @@ function EggsForm({ batchId, onDone }: { batchId: string; onDone: () => void }) 
       className="space-y-4"
     >
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Input label="Eggs Collected" type="number" value={eggs} onChange={(e) => setEggs(e.target.value)} required disabled={isPending} />
-        <Input label="Damaged / Unusable" type="number" value={unusable} onChange={(e) => setUnusable(e.target.value)} disabled={isPending} />
+        <Input label="Eggs collected" type="number" value={eggs} onChange={(e) => setEggs(e.target.value)} required disabled={isPending} />
+        <Input label="Damaged or unusable" type="number" value={unusable} onChange={(e) => setUnusable(e.target.value)} disabled={isPending} />
       </div>
-      <Input label="Log Date" type="date" value={logDate} onChange={(e) => setLogDate(e.target.value)} required disabled={isPending} />
+      <Input label="Log date" type="date" value={logDate} onChange={(e) => setLogDate(e.target.value)} required disabled={isPending} />
       <FormError error={error} />
-      <Button type="submit" className="w-full" isLoading={isPending} loadingText="Saving eggs...">
-        Save Egg Production
-      </Button>
+      <ActionButton type="submit" variant="primary" className="w-full" isLoading={isPending} loadingText="Saving eggs…">
+        Save egg production
+      </ActionButton>
     </form>
   )
 }
@@ -300,20 +286,14 @@ function MortalityForm({ batchId, onDone }: { batchId: string; onDone: () => voi
       }}
       className="space-y-4"
     >
-      <div className="flex gap-2">
+      <div className={cn(tone.panel, 'flex gap-1 p-1')}>
         {(['DEAD', 'SICK'] as const).map((t) => (
           <button
             key={t}
             type="button"
+            aria-pressed={type === t}
             onClick={() => setType(t)}
-            className={cn(
-              'flex-1 rounded-lg border px-3 py-2.5 text-xs font-bold uppercase tracking-widest transition-all',
-              type === t
-                ? t === 'DEAD'
-                  ? 'border-red-500/40 bg-red-500/20 text-red-300'
-                  : 'border-amber-500/40 bg-amber-500/20 text-amber-300'
-                : 'border-white/10 bg-white/5 text-white/60 hover:bg-white/10'
-            )}
+            className={cn(segmentClass(type === t), 'flex-1 justify-center')}
           >
             {t === 'DEAD' ? 'Mortality' : 'Sickness'}
           </button>
@@ -323,13 +303,13 @@ function MortalityForm({ batchId, onDone }: { batchId: string; onDone: () => voi
         <Input label="Count" type="number" value={count} onChange={(e) => setCount(e.target.value)} required disabled={isPending} />
         <Select label="Category" value={category} onChange={(e) => setCategory(e.target.value)} options={MORTALITY_CATEGORIES} />
       </div>
-      <Input label="Specific Cause (optional)" placeholder="e.g. Newcastle, heat stress" value={subCategory} onChange={(e) => setSubCategory(e.target.value)} disabled={isPending} />
+      <Input label="Specific cause (optional)" placeholder="e.g. Newcastle, heat stress" value={subCategory} onChange={(e) => setSubCategory(e.target.value)} disabled={isPending} />
       <Input label="Notes (optional)" value={reason} onChange={(e) => setReason(e.target.value)} disabled={isPending} />
-      <Input label="Log Date" type="date" value={logDate} onChange={(e) => setLogDate(e.target.value)} required disabled={isPending} />
+      <Input label="Log date" type="date" value={logDate} onChange={(e) => setLogDate(e.target.value)} required disabled={isPending} />
       <FormError error={error} />
-      <Button type="submit" className="w-full" isLoading={isPending} loadingText="Saving...">
-        Save Health Event
-      </Button>
+      <ActionButton type="submit" variant="primary" className="w-full" isLoading={isPending} loadingText="Saving…">
+        Save health event
+      </ActionButton>
     </form>
   )
 }
@@ -385,18 +365,18 @@ function SaleForm({
           disabled={isPending}
           max={currentCount}
         />
-        <Input label="Unit Price (GH₵)" type="number" step="0.01" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} required disabled={isPending} />
+        <Input label="Unit price (GH₵)" type="number" step="0.01" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} required disabled={isPending} />
       </div>
       <Input label="Customer (optional)" value={customer} onChange={(e) => setCustomer(e.target.value)} disabled={isPending} />
-      <Input label="Sale Date" type="datetime-local" value={orderDate} onChange={(e) => setOrderDate(e.target.value)} required disabled={isPending} />
-      <div className="flex items-center justify-between rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3">
-        <span className="text-xs font-bold uppercase tracking-widest text-white/60">Total</span>
-        <span className="text-lg font-bold text-emerald-400">{formatCurrency(total, 'GHS')}</span>
+      <Input label="Sale date" type="datetime-local" value={orderDate} onChange={(e) => setOrderDate(e.target.value)} required disabled={isPending} />
+      <div className="flex items-baseline justify-between rounded-lg border border-white/[0.08] bg-[#232325] px-4 py-3">
+        <span className="text-[13px] text-[#a1a1a6]">Total</span>
+        <span className="text-lg tabular-nums text-[#ededed]">{formatCurrency(total, 'GHS')}</span>
       </div>
       <FormError error={error} />
-      <Button type="submit" className="w-full" isLoading={isPending} loadingText="Recording sale...">
+      <ActionButton type="submit" variant="primary" className="w-full" isLoading={isPending} loadingText="Recording sale…">
         Record Sale
-      </Button>
+      </ActionButton>
     </form>
   )
 }
@@ -458,47 +438,43 @@ function ExpenseForm({
         <Select label="Category" value={category} onChange={(e) => setCategory(e.target.value)} options={EXPENSE_CATEGORIES} />
       </div>
       <Input label="Description (optional)" value={description} onChange={(e) => setDescription(e.target.value)} disabled={isPending} />
-      <Input label="Expense Date" type="datetime-local" value={expenseDate} onChange={(e) => setExpenseDate(e.target.value)} required disabled={isPending} />
+      <Input label="Expense date" type="datetime-local" value={expenseDate} onChange={(e) => setExpenseDate(e.target.value)} required disabled={isPending} />
 
       <div>
-        <label className="mb-2 block text-sm font-bold uppercase italic tracking-widest text-emerald-400">Allocation</label>
-        <div className="flex gap-2">
+        <p className="mb-2 text-[13px] text-[#a1a1a6]">Allocation</p>
+        <div className={cn(tone.panel, 'flex gap-1 p-1')}>
           <button
             type="button"
+            aria-pressed={mode === 'direct'}
             onClick={() => setMode('direct')}
-            className={cn(
-              'flex-1 rounded-lg border px-3 py-2.5 text-xs font-bold uppercase tracking-wider transition-all',
-              mode === 'direct' ? 'border-emerald-500/40 bg-emerald-500/20 text-emerald-300' : 'border-white/10 bg-white/5 text-white/60 hover:bg-white/10'
-            )}
+            className={cn(segmentClass(mode === 'direct'), 'flex-1 justify-center')}
           >
             Direct to this batch
           </button>
           <button
             type="button"
+            aria-pressed={mode === 'general'}
             onClick={() => setMode('general')}
-            className={cn(
-              'flex-1 rounded-lg border px-3 py-2.5 text-xs font-bold uppercase tracking-wider transition-all',
-              mode === 'general' ? 'border-sky-500/40 bg-sky-500/20 text-sky-300' : 'border-white/10 bg-white/5 text-white/60 hover:bg-white/10'
-            )}
+            className={cn(segmentClass(mode === 'general'), 'flex-1 justify-center')}
           >
             General (by headcount)
           </button>
         </div>
         {mode === 'general' ? (
-          <p className="mt-2 text-xs italic text-white/50">
+          <p className="mt-2 text-xs text-[#a1a1a6]">
             Split across {allocationBatches.length} active {allocationBatches.length === 1 ? 'batch' : 'batches'} by livestock count. This batch carries{' '}
-            <span className="font-bold text-sky-300">{thisShare.toFixed(1)}%</span>
-            {amount ? <> ≈ {formatCurrency((Number(amount) * thisShare) / 100, 'GHS')}</> : null}.
+            <span className="font-mono tabular-nums text-[#ededed]">{thisShare.toFixed(1)}%</span>
+            {amount ? <> {'\u2248'} <span className="tabular-nums text-[#ededed]">{formatCurrency((Number(amount) * thisShare) / 100, 'GHS')}</span></> : null}
           </p>
         ) : (
-          <p className="mt-2 text-xs italic text-white/50">The full amount is charged to this batch only.</p>
+          <p className="mt-2 text-xs text-[#a1a1a6]">The full amount is charged to this batch only</p>
         )}
       </div>
 
       <FormError error={error} />
-      <Button type="submit" className="w-full" isLoading={isPending} loadingText="Saving expense...">
-        Save Expense
-      </Button>
+      <ActionButton type="submit" variant="primary" className="w-full" isLoading={isPending} loadingText="Saving expense…">
+        Save expense
+      </ActionButton>
     </form>
   )
 }

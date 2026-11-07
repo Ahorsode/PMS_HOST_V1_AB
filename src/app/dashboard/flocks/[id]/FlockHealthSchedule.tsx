@@ -7,20 +7,17 @@ import {
   Pill,
   Plus,
   Trash2,
-  CalendarClock,
   CheckCircle2,
   Circle,
   XCircle,
   Loader2,
   Boxes,
   ListPlus,
-  Sparkles,
-  Zap,
 } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
-import { Button } from '@/components/ui/Button'
 import { cn, formatDate } from '@/lib/utils'
+import { ActionButton, Panel, PanelHeader, iconButtonClass, segmentClass, tone } from '../flock-ui'
 import {
   createHealthSchedulesBulk,
   registerHealthInventoryItem,
@@ -118,12 +115,12 @@ export function FlockHealthSchedule({
 
   const nameOptions = useMemo(
     () => [
-      { label: 'Select from inventory…', value: '' },
+      { label: 'Select from inventory', value: '' },
       ...inventory.map((m) => ({
         label: m.stockLevel > 0 ? `${m.itemName} — ${m.stockLevel} ${m.unit} in stock` : `${m.itemName} — out of stock`,
         value: m.itemName,
       })),
-      { label: '+ Add new (type your own)', value: CUSTOM },
+      { label: 'Add new (type your own)', value: CUSTOM },
     ],
     [inventory]
   )
@@ -209,7 +206,7 @@ export function FlockHealthSchedule({
     setError(null)
     const entry = buildCurrentEntry()
     if (!entry) {
-      setError('Fill in the name, date and quantity first.')
+      setError('Fill in the name, date and quantity first')
       return
     }
     setDrafts((prev) => [...prev, entry])
@@ -237,7 +234,7 @@ export function FlockHealthSchedule({
           return
         }
 
-        setSuccessMsg(result.message || `"${resolvedName}" saved to inventory.`)
+        setSuccessMsg(result.message || `"${resolvedName}" saved to inventory`)
         setPendingInventorySelection(result.itemName || resolvedName)
         router.refresh()
       } catch (err: any) {
@@ -258,7 +255,7 @@ export function FlockHealthSchedule({
     const current = buildCurrentEntry()
     if (current) all.push(current)
     if (all.length === 0) {
-      setError('Add at least one vaccine or medication.')
+      setError('Add at least one vaccine or medication')
       return
     }
 
@@ -315,66 +312,64 @@ export function FlockHealthSchedule({
   }
 
   return (
-    <div className="glass-morphism overflow-hidden rounded-lg shadow-2xl">
-      <div className="flex items-center justify-between border-b border-white/10 bg-white/[0.04] px-5 py-4">
-        <h3 className="flex items-center gap-2 text-sm font-bold uppercase italic tracking-normal text-white">
-          <Syringe className="h-4 w-4 text-amber-400" /> Health Schedule
-        </h3>
-        {canEdit ? (
-          <button
-            onClick={() => setShowForm((v) => !v)}
-            disabled={isPending}
-            className="rounded-md border border-amber-500/20 bg-amber-500/10 p-1.5 text-amber-400 transition-all hover:bg-amber-500/20 disabled:opacity-50"
-            aria-label="Add health schedule"
-          >
-            <Plus className="h-3.5 w-3.5" />
-          </button>
-        ) : null}
-      </div>
+    <Panel>
+      <PanelHeader
+        title="Health schedule"
+        right={
+          canEdit ? (
+            <button
+              type="button"
+              onClick={() => setShowForm((v) => !v)}
+              disabled={isPending}
+              aria-expanded={showForm}
+              className={iconButtonClass('default', 'border border-white/[0.08] bg-[#232325]')}
+              aria-label="Add health schedule"
+            >
+              <Plus className="h-4 w-4" strokeWidth={1.5} />
+            </button>
+          ) : null
+        }
+      />
 
-      <div className="space-y-4 p-5">
+      <div className="space-y-4 p-4">
         {showForm && canEdit ? (
-          <form onSubmit={handleSubmit} className="space-y-3 rounded-lg border border-white/10 bg-white/[0.03] p-4">
-            <div className="flex gap-2">
+          <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-white/[0.08] bg-[#141415] p-4">
+            <div className={cn(tone.panel, 'flex gap-1 p-1')}>
               <button
                 type="button"
+                aria-pressed={isVaccine}
                 onClick={() => switchType('VACCINATION')}
-                className={cn(
-                  'flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-xs font-bold uppercase tracking-widest transition-all',
-                  isVaccine ? 'border-amber-500/40 bg-amber-500/20 text-amber-300' : 'border-white/10 bg-white/5 text-white/60 hover:bg-white/10'
-                )}
+                className={cn(segmentClass(isVaccine), 'flex-1 justify-center')}
               >
-                <Syringe className="h-4 w-4" /> Vaccine
+                <Syringe className="h-4 w-4" strokeWidth={1.5} /> Vaccine
               </button>
               <button
                 type="button"
+                aria-pressed={!isVaccine}
                 onClick={() => switchType('MEDICATION')}
-                className={cn(
-                  'flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-xs font-bold uppercase tracking-widest transition-all',
-                  !isVaccine ? 'border-sky-500/40 bg-sky-500/20 text-sky-300' : 'border-white/10 bg-white/5 text-white/60 hover:bg-white/10'
-                )}
+                className={cn(segmentClass(!isVaccine), 'flex-1 justify-center')}
               >
-                <Pill className="h-4 w-4" /> Medication
+                <Pill className="h-4 w-4" strokeWidth={1.5} /> Medication
               </button>
             </div>
 
-            <Select
-              label={isVaccine ? 'Vaccine' : 'Medication'}
-              options={nameOptions}
-              value={namePreset}
-              onChange={(e) => handleNameChange(e.target.value)}
-            />
-
-            <p className="-mt-1 flex items-center gap-1.5 text-xs italic text-white/50">
-              <Boxes className="h-3.5 w-3.5 text-sky-400/70" />
-              {inventory.length > 0
-                ? 'Sourced from your inventory stock.'
-                : `No ${isVaccine ? 'vaccine' : 'medicine'} in stock — use "Add new".`}
-            </p>
+            <div className="space-y-2">
+              <Select
+                label={isVaccine ? 'Vaccine' : 'Medication'}
+                options={nameOptions}
+                value={namePreset}
+                onChange={(e) => handleNameChange(e.target.value)}
+              />
+              <p className={cn('text-xs', tone.muted)}>
+                {inventory.length > 0
+                  ? 'Sourced from your inventory stock'
+                  : `No ${isVaccine ? 'vaccine' : 'medicine'} in stock, use "Add new"`}
+              </p>
+            </div>
 
             {isAddingNew ? (
               <Input
-                label={isVaccine ? 'New Vaccine Name' : 'New Medication Name'}
+                label={isVaccine ? 'New vaccine name' : 'New medication name'}
                 placeholder={isVaccine ? 'e.g. Newcastle Lasota' : 'e.g. Florfenicol'}
                 value={customName}
                 onChange={(e) => setCustomName(e.target.value)}
@@ -384,25 +379,21 @@ export function FlockHealthSchedule({
 
             {isAddingNew ? (
               <div>
-                <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-white/70">Usage</label>
-                <div className="flex gap-2">
+                <p className={cn('mb-2 text-[13px]', tone.text2)}>Usage</p>
+                <div className={cn(tone.panel, 'flex gap-1 p-1')}>
                   <button
                     type="button"
+                    aria-pressed={newUsageType === 'ONE_TIME'}
                     onClick={() => setNewUsageType('ONE_TIME')}
-                    className={cn(
-                      'flex-1 rounded-lg border px-3 py-2 text-xs font-bold uppercase tracking-wider transition-all',
-                      newUsageType === 'ONE_TIME' ? 'border-emerald-500/40 bg-emerald-500/20 text-emerald-300' : 'border-white/10 bg-white/5 text-white/60'
-                    )}
+                    className={cn(segmentClass(newUsageType === 'ONE_TIME'), 'flex-1 justify-center')}
                   >
                     One-time
                   </button>
                   <button
                     type="button"
+                    aria-pressed={newUsageType === 'QUANTITY'}
                     onClick={() => setNewUsageType('QUANTITY')}
-                    className={cn(
-                      'flex-1 rounded-lg border px-3 py-2 text-xs font-bold uppercase tracking-wider transition-all',
-                      newUsageType === 'QUANTITY' ? 'border-emerald-500/40 bg-emerald-500/20 text-emerald-300' : 'border-white/10 bg-white/5 text-white/60'
-                    )}
+                    className={cn(segmentClass(newUsageType === 'QUANTITY'), 'flex-1 justify-center')}
                   >
                     Quantity
                   </button>
@@ -411,16 +402,14 @@ export function FlockHealthSchedule({
             ) : null}
 
             {isNewItem && resolvedName ? (
-              <p className="-mt-1 flex items-center gap-1.5 text-xs italic text-emerald-300/80">
-                <Sparkles className="h-3.5 w-3.5" />
-                Save to inventory first, then select it — or Add Schedule to save both together.
+              <p className={cn('text-xs', tone.text2)}>
+                Save to inventory first, then select it, or use Add schedule to save both together
               </p>
             ) : null}
 
             {!isAddingNew && selectedItem ? (
-              <p className="-mt-1 flex items-center gap-1.5 text-xs italic text-white/50">
-                <Zap className="h-3.5 w-3.5 text-emerald-400/70" />
-                {showQuantity ? `Quantity-tracked (in ${selectedItem.unit}).` : 'One-time use item.'}
+              <p className={cn('text-xs', tone.muted)}>
+                {showQuantity ? `Quantity-tracked, in ${selectedItem.unit}` : 'One-time use item'}
               </p>
             ) : null}
 
@@ -447,77 +436,77 @@ export function FlockHealthSchedule({
             ) : null}
 
             <div className="grid grid-cols-2 gap-3">
-              <Input label="Scheduled Date" type="date" value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} />
+              <Input label="Scheduled date" type="date" value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} />
               <Select label="Status" options={STATUS_OPTIONS} value={status} onChange={(e) => setStatus(e.target.value)} />
             </div>
 
             <Input label="Notes (optional)" placeholder="Dosage, route…" value={notes} onChange={(e) => setNotes(e.target.value)} />
 
             {drafts.length > 0 ? (
-              <div className="space-y-2 rounded-lg border border-white/10 bg-white/5 p-3">
-                <p className="text-xs font-bold uppercase tracking-widest text-white/60">Staged ({drafts.length})</p>
-                {drafts.map((d) => (
-                  <div key={d._key} className="flex items-center gap-2 rounded-md bg-black/20 px-3 py-2 text-xs">
-                    {d.type === 'VACCINATION' ? (
-                      <Syringe className="h-3.5 w-3.5 shrink-0 text-amber-400" />
-                    ) : (
-                      <Pill className="h-3.5 w-3.5 shrink-0 text-sky-400" />
-                    )}
-                    <span className="truncate font-bold text-white">{d.name}</span>
-                    <span className="text-white/40">·</span>
-                    <span className="text-white/60">{d.usageType === 'QUANTITY' ? `${d.quantity} ${d.unit}` : 'One-time'}</span>
-                    <button
-                      type="button"
-                      onClick={() => setDrafts((prev) => prev.filter((x) => x._key !== d._key))}
-                      className="ml-auto text-red-400/70 hover:text-red-400"
-                      aria-label="Remove staged item"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                ))}
+              <div className="space-y-2">
+                <p className={cn('text-[13px]', tone.text2)}>
+                  Staged <span className={cn('font-mono tabular-nums', tone.muted)}>{drafts.length}</span>
+                </p>
+                <ul className="divide-y divide-white/[0.06] rounded-lg border border-white/[0.08]">
+                  {drafts.map((d) => (
+                    <li key={d._key} className="flex items-center gap-2 py-1 pl-3 pr-1 text-[13px]">
+                      {d.type === 'VACCINATION' ? (
+                        <Syringe className={cn('h-4 w-4 shrink-0', tone.muted)} strokeWidth={1.5} />
+                      ) : (
+                        <Pill className={cn('h-4 w-4 shrink-0', tone.muted)} strokeWidth={1.5} />
+                      )}
+                      <span className={cn('truncate', tone.text)}>{d.name}</span>
+                      <span className={cn('shrink-0 font-mono text-xs', tone.muted)}>
+                        {d.usageType === 'QUANTITY' ? `${d.quantity} ${d.unit}` : 'One-time'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setDrafts((prev) => prev.filter((x) => x._key !== d._key))}
+                        className={iconButtonClass('danger', 'ml-auto')}
+                        aria-label="Remove staged item"
+                      >
+                        <Trash2 className="h-4 w-4" strokeWidth={1.5} />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
               </div>
             ) : null}
 
-            {error ? <p className="text-xs font-bold uppercase tracking-wider text-red-400">{error}</p> : null}
-            {successMsg ? <p className="text-xs font-bold uppercase tracking-wider text-emerald-400">{successMsg}</p> : null}
+            {error ? <p className="text-[13px] text-[#f2777b]">{error}</p> : null}
+            {successMsg ? <p className={cn('text-[13px]', tone.accent)}>{successMsg}</p> : null}
 
             {isAddingNew && resolvedName ? (
-              <Button
-                type="button"
-                variant="outline"
+              <ActionButton
                 size="sm"
                 onClick={handleSaveToInventory}
                 disabled={!canSaveToInventory}
                 isLoading={isSavingItem}
                 loadingText="Saving…"
-                className="w-full border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/20"
+                className="w-full"
               >
-                <Boxes className="h-4 w-4" />
-                Save “{resolvedName}” to inventory
-              </Button>
+                <Boxes className="h-4 w-4 text-[#a1a1a6]" strokeWidth={1.5} />
+                <span className="truncate">Save “{resolvedName}” to inventory</span>
+              </ActionButton>
             ) : null}
 
-            <p className="flex items-center gap-1.5 text-xs italic text-white/40">
-              <ListPlus className="h-3.5 w-3.5" /> Then pick it from the list and Add Schedule.
-            </p>
+            <p className={cn('text-xs', tone.muted)}>Then pick it from the list and add the schedule</p>
 
             <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-              <Button type="button" variant="outline" size="sm" onClick={handleAddToList} disabled={!currentEntryValid || isPending}>
-                <ListPlus className="h-4 w-4" /> Add another
-              </Button>
-              <Button type="submit" size="sm" isLoading={isPending} disabled={!canSave}>
-                <Plus className="h-4 w-4" />
-                {totalToSave > 1 ? `Save ${totalToSave}` : 'Add Schedule'}
-              </Button>
+              <ActionButton size="sm" onClick={handleAddToList} disabled={!currentEntryValid || isPending}>
+                <ListPlus className="h-4 w-4 text-[#a1a1a6]" strokeWidth={1.5} /> Add another
+              </ActionButton>
+              <ActionButton type="submit" variant="primary" size="sm" isLoading={isPending} disabled={!canSave}>
+                <Plus className="h-4 w-4" strokeWidth={1.5} />
+                {totalToSave > 1 ? `Save ${totalToSave}` : 'Add schedule'}
+              </ActionButton>
             </div>
           </form>
         ) : null}
 
         <ScheduleGroup
           title="Vaccinations"
-          icon={<Syringe className="h-3.5 w-3.5 text-amber-400" />}
-          accent="amber"
+          icon={Syringe}
           type="VACCINATION"
           records={vaccinations}
           canEdit={canEdit}
@@ -527,8 +516,7 @@ export function FlockHealthSchedule({
         />
         <ScheduleGroup
           title="Medications"
-          icon={<Pill className="h-3.5 w-3.5 text-sky-400" />}
-          accent="sky"
+          icon={Pill}
           type="MEDICATION"
           records={medications}
           canEdit={canEdit}
@@ -537,7 +525,7 @@ export function FlockHealthSchedule({
           onDelete={handleDelete}
         />
       </div>
-    </div>
+    </Panel>
   )
 }
 
@@ -550,8 +538,7 @@ function usageLabel(rec: ScheduleRecord): string | null {
 
 function ScheduleGroup({
   title,
-  icon,
-  accent,
+  icon: Icon,
   type,
   records,
   canEdit,
@@ -560,8 +547,7 @@ function ScheduleGroup({
   onDelete,
 }: {
   title: string
-  icon: React.ReactNode
-  accent: 'amber' | 'sky'
+  icon: React.ElementType
   type: HealthScheduleType
   records: ScheduleRecord[]
   canEdit: boolean
@@ -573,62 +559,59 @@ function ScheduleGroup({
   today.setHours(0, 0, 0, 0)
 
   return (
-    <div className="rounded-lg border border-white/10 bg-white/[0.02]">
-      <div className={cn('flex items-center gap-2 border-b border-white/10 px-4 py-2.5', accent === 'amber' ? 'bg-amber-950/20' : 'bg-sky-950/20')}>
-        {icon}
-        <h4 className={cn('text-xs font-bold uppercase tracking-wide', accent === 'amber' ? 'text-amber-400' : 'text-sky-400')}>{title}</h4>
-        <span className="ml-auto text-xs font-bold text-white/40">{records.length}</span>
+    <div className="rounded-lg border border-white/[0.08]">
+      <div className="flex h-10 items-center gap-2 border-b border-white/[0.08] px-3">
+        <Icon className={cn('h-4 w-4', tone.muted)} strokeWidth={1.5} />
+        <h3 className={cn('text-[13px] font-medium', tone.text)}>{title}</h3>
+        <span className={cn('ml-auto font-mono text-xs tabular-nums', tone.muted)}>{records.length}</span>
       </div>
 
       {records.length === 0 ? (
-        <div className="py-6 text-center text-xs italic text-white/40">Nothing scheduled.</div>
+        <p className={cn('py-6 text-center text-[13px]', tone.text2)}>Nothing scheduled</p>
       ) : (
-        <div className="divide-y divide-white/5">
+        <ul className="divide-y divide-white/[0.06]">
           {records.map((rec) => {
             const name = rec.vaccineName ?? rec.medicationName ?? '—'
             const date = new Date(rec.scheduledDate)
             const isPast = date < today
             const isDone = rec.status === 'COMPLETED'
             const isCancelled = rec.status === 'CANCELLED'
+            const isOverdue = isPast && !isDone && !isCancelled
             const usage = usageLabel(rec)
+            const statusText = STATUS_OPTIONS.find((o) => o.value === rec.status)?.label ?? rec.status
 
             return (
-              <div key={rec.id} className="flex items-center gap-2.5 px-4 py-2.5 transition-colors hover:bg-white/[0.03]">
+              <li key={rec.id} className="flex items-center gap-3 px-3 py-2">
                 {isDone ? (
-                  <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-emerald-400" />
+                  <CheckCircle2 className={cn('h-4 w-4 shrink-0', tone.accent)} strokeWidth={1.5} />
                 ) : isCancelled ? (
-                  <XCircle className="h-4 w-4 flex-shrink-0 text-gray-500" />
+                  <XCircle className={cn('h-4 w-4 shrink-0', tone.muted)} strokeWidth={1.5} />
                 ) : (
-                  <Circle className={cn('h-4 w-4 flex-shrink-0', isPast ? 'text-red-400' : accent === 'amber' ? 'text-amber-400' : 'text-sky-400')} />
+                  <Circle className={cn('h-4 w-4 shrink-0', isOverdue ? 'text-[#f2777b]' : tone.muted)} strokeWidth={1.5} />
                 )}
                 <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className={cn('truncate text-xs font-bold', isCancelled ? 'text-gray-500 line-through' : 'text-white')}>{name}</p>
-                    {usage ? (
-                      <span className="flex-shrink-0 rounded border border-white/10 bg-white/10 px-1.5 py-0.5 text-[10px] font-bold uppercase text-white/60">
-                        {usage}
-                      </span>
-                    ) : null}
-                  </div>
-                  <div className="mt-0.5 flex items-center gap-2 text-[11px] text-white/55">
-                    <span className="flex items-center gap-1">
-                      <CalendarClock className="h-3 w-3" />
-                      {formatDate(date)}
-                    </span>
-                    {isPast && !isDone && !isCancelled ? <span className="font-bold text-red-400">· Overdue</span> : null}
-                  </div>
+                  <p className={cn('truncate text-[13px]', isCancelled ? 'text-[#85858b] line-through' : tone.text)}>{name}</p>
+                  <p className={cn('mt-0.5 flex flex-wrap items-center gap-x-2 text-xs', tone.muted)}>
+                    <span className="font-mono tabular-nums">{formatDate(date)}</span>
+                    {usage ? <span>· {usage}</span> : null}
+                    {isOverdue ? <span className="text-[#f2777b]">· Overdue</span> : null}
+                  </p>
                 </div>
 
                 {canEdit ? (
-                  <div className="flex flex-shrink-0 items-center gap-1.5">
+                  <div className="flex shrink-0 items-center gap-1">
                     <select
                       value={rec.status}
                       disabled={isPending}
                       onChange={(e) => onStatusChange(type, rec.id, e.target.value)}
-                      className="h-8 cursor-pointer rounded-md border border-white/10 bg-white/10 px-1.5 text-[11px] font-bold text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 disabled:opacity-50"
+                      aria-label={`Status of ${name}`}
+                      className={cn(
+                        'h-8 cursor-pointer rounded-lg border border-white/[0.08] bg-[#232325] px-2 text-xs text-[#ededed] disabled:opacity-50',
+                        tone.focus
+                      )}
                     >
                       {STATUS_OPTIONS.map((o) => (
-                        <option key={o.value} value={o.value} className="bg-[#064e3b]">
+                        <option key={o.value} value={o.value} className="bg-[#232325]">
                           {o.label}
                         </option>
                       ))}
@@ -637,30 +620,19 @@ function ScheduleGroup({
                       type="button"
                       disabled={isPending}
                       onClick={() => onDelete(type, rec.id)}
-                      className="rounded-md border border-red-500/20 bg-red-500/10 p-1.5 text-red-400 transition-all hover:bg-red-500/20 disabled:opacity-50"
+                      className={iconButtonClass('danger')}
                       aria-label="Delete schedule"
                     >
-                      {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                      {isPending ? <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} /> : <Trash2 className="h-4 w-4" strokeWidth={1.5} />}
                     </button>
                   </div>
                 ) : (
-                  <span
-                    className={cn(
-                      'flex-shrink-0 rounded border px-2 py-1 text-[10px] font-bold uppercase',
-                      isDone
-                        ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400'
-                        : isCancelled
-                          ? 'border-gray-500/20 bg-gray-500/10 text-gray-400'
-                          : 'border-amber-500/20 bg-amber-500/10 text-amber-400'
-                    )}
-                  >
-                    {rec.status}
-                  </span>
+                  <span className={cn('shrink-0 text-xs', isDone ? tone.accent : tone.text2)}>{statusText}</span>
                 )}
-              </div>
+              </li>
             )
           })}
-        </div>
+        </ul>
       )}
     </div>
   )

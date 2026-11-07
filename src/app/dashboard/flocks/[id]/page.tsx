@@ -10,6 +10,7 @@ import { getFarmSettings } from '@/lib/actions/preference-actions';
 import { getAuthContext } from '@/lib/auth-utils';
 import { checkFeature } from '@/lib/subscription-utils';
 import { PlanFeatureLocked } from '@/components/billing/PlanFeatureLocked';
+import { HeadCount } from '../flock-ui';
 
 export default async function FlockDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -38,7 +39,7 @@ export default async function FlockDetailPage({ params }: { params: Promise<{ id
   const eggsPerCrate = farmSettings?.eggsPerCrate ?? 30;
 
   return (
-    <div className="max-w-7xl mx-auto px-0 md:px-3 pt-2 pb-7 md:py-7 relative">
+    <div className="mx-auto max-w-7xl px-0 pb-8 pt-2 md:px-4 md:py-8">
       <Breadcrumbs
         items={[
           { label: 'Livestock', href: '/dashboard/flocks' },
@@ -46,20 +47,27 @@ export default async function FlockDetailPage({ params }: { params: Promise<{ id
         ]}
       />
 
-      <div className="flex justify-between items-center mb-9 bg-white/10 backdrop-blur-md p-7 rounded-lg border border-white/10 relative overflow-hidden">
-        <div className="relative z-10">
-          <h2 className="text-4xl font-bold text-white tracking-normal">
-            Livestock <span className="text-emerald-400 italic">Management</span>
-          </h2>
-          <p className="text-white/70 font-bold uppercase tracking-widest text-xs mt-2 flex items-center gap-2 italic">
-             {getBreedDisplayName(batch.breedType)} • {batch.house?.name || 'House not named'}
+      <header className="mb-6 flex flex-col gap-5 px-1 md:flex-row md:items-end md:justify-between md:px-0">
+        <div className="min-w-0">
+          <h1 className="text-[28px] font-medium leading-tight text-[#ededed] md:text-[32px]">
+            {batch.batchName || 'Unit details'}
+          </h1>
+          <p className="mt-1 text-sm text-[#a1a1a6]">
+            {getBreedDisplayName(batch.breedType)} · {batch.house?.name || 'House not named'}
           </p>
+          <HeadCount
+            className="mt-4 max-w-xs"
+            current={batch.currentCount}
+            initial={batch.initialCount}
+            isolated={batch.isolationCount || 0}
+            active={String(batch.status || '').toLowerCase() === 'active'}
+          />
         </div>
-        <div className="relative z-10 flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <FlockLogsHistory data={data} />
           <FlockReportGenerator data={data} />
         </div>
-      </div>
+      </header>
 
       <FlockDetailClient data={data} eggsPerCrate={eggsPerCrate} />
     </div>
