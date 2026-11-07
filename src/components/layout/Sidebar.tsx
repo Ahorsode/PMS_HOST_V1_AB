@@ -5,10 +5,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { LogOut } from 'lucide-react';
+import { LogOut, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatRoleLabel } from '@/lib/navigation-permissions';
 import {
+  DASHBOARD_NAV_ITEM,
+  canShowDashboardNavItem,
   getActiveNavCategoryId,
   getVisibleNavCategories,
   isNavItemActive,
@@ -18,13 +20,14 @@ import { useNavGroupMenu } from './useNavGroupMenu';
 export const Sidebar = ({ role, permissions }: { role?: string, permissions?: any }) => {
   const pathname = usePathname();
   const roleLabel = formatRoleLabel(role);
-  const roleInitial = role?.charAt(0) ?? '?';
   const profileActive = pathname === '/dashboard/profile';
   const { openId, toggle, containerRef, registerTrigger } = useNavGroupMenu<HTMLElement>();
 
   const categories = useMemo(() => getVisibleNavCategories(role, permissions), [role, permissions]);
   const allItems = useMemo(() => categories.flatMap((category) => category.items), [categories]);
   const activeId = getActiveNavCategoryId(pathname, categories);
+  const showDashboard = canShowDashboardNavItem(role, permissions);
+  const dashboardActive = pathname === DASHBOARD_NAV_ITEM.href;
 
   return (
     <aside
@@ -46,8 +49,27 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
           />
         </Link>
 
-        {/* One icon per group; each opens a flyout with that group's pages */}
+        {/* Dashboard is a direct link; each group icon opens a flyout with that group's pages */}
         <nav aria-label="Main" className="flex flex-col items-center gap-4">
+          {/* Dashboard stands out from the groups: solid emerald tile, set apart by a divider */}
+          {showDashboard && (
+            <>
+              <Link
+                href={DASHBOARD_NAV_ITEM.href}
+                title={DASHBOARD_NAV_ITEM.name}
+                aria-current={dashboardActive ? 'page' : undefined}
+                className={cn(
+                  "flex w-16 flex-col items-center gap-1 rounded-lg py-2.5 border border-emerald-300/60 bg-gradient-to-b from-emerald-400 to-emerald-600 text-[#04120c] shadow-[0_6px_20px_rgba(16,185,129,0.35)] transition-all duration-300 group/item hover:from-emerald-300 hover:to-emerald-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-200",
+                  dashboardActive && "ring-2 ring-emerald-300/70 ring-offset-2 ring-offset-[#0a140f]"
+                )}
+              >
+                <DASHBOARD_NAV_ITEM.icon className="w-6 h-6 transition-transform duration-300 group-hover/item:scale-110" strokeWidth={2.4} />
+                <span className="text-[10px] font-bold leading-none">{DASHBOARD_NAV_ITEM.name}</span>
+              </Link>
+              <div aria-hidden="true" className="h-px w-10 bg-white/15" />
+            </>
+          )}
+
           {categories.map((category) => {
             const isOpen = openId === category.id;
             const isActive = activeId === category.id;
@@ -77,7 +99,7 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
                       isActive ? "text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]" : "text-white/70 group-hover/item:text-white"
                     )}
                   />
-                  <span className="text-[10px] font-bold uppercase tracking-wider">{category.name}</span>
+                  <span className="text-[10px] font-semibold leading-none">{category.name}</span>
                 </button>
 
                 <AnimatePresence>
@@ -118,7 +140,7 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
                         })}
                       </ul>
 
-                      {category.id === 'account' && (
+                      {category.id === 'governance' && (
                         <div className="mt-3 px-3 pt-3 border-t border-white/10 space-y-2">
                           <p className="px-3 text-xs text-white/50 font-bold uppercase tracking-wider">
                             Signed in as {roleLabel}
@@ -152,10 +174,10 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
               profileActive ? "bg-emerald-500/20 text-emerald-400" : "text-white/80 hover:bg-white/15 hover:text-white"
             )}
           >
-            <span className="w-8 h-8 rounded-md bg-emerald-400/10 flex items-center justify-center text-emerald-400 text-sm font-bold uppercase group-hover/profile:bg-emerald-400/20 transition-colors">
-              {roleInitial}
+            <span className="w-8 h-8 rounded-full bg-emerald-400/10 flex items-center justify-center text-emerald-400 group-hover/profile:bg-emerald-400/20 transition-colors">
+              <User className="w-[18px] h-[18px]" />
             </span>
-            <span className="text-[10px] font-bold uppercase tracking-wider">Profile</span>
+            <span className="text-[10px] font-semibold leading-none">Profile</span>
           </Link>
 
           <button
@@ -165,7 +187,7 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
             className="flex w-16 flex-col items-center gap-1 rounded-md py-2 text-white/70 transition-colors hover:bg-red-500/10 hover:text-red-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400/60"
           >
             <LogOut className="w-5 h-5" />
-            <span className="text-[10px] font-bold uppercase tracking-wider">Sign out</span>
+            <span className="text-[10px] font-semibold leading-none">Sign out</span>
           </button>
         </div>
       </div>

@@ -94,9 +94,9 @@ async function testIsolation() {
     const foundAInB = visibleBatchesForB.some((b: any) => b.id === batchA.id)
 
     if (foundAInB) {
-      console.error('❌ FAILURE: User B can see Farm A data via RLS!')
+      console.error('FAILURE: User B can see Farm A data via RLS!')
     } else {
-      console.log('✅ SUCCESS: User B cannot see Farm A data via RLS.')
+      console.log('SUCCESS: User B cannot see Farm A data via RLS.')
     }
 
     // 6. Cleanup

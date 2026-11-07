@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { Egg } from "lucide-react";
 
 export default function LoadingOverlay() {
   return (
@@ -18,20 +19,18 @@ export default function LoadingOverlay() {
           className="absolute h-32 w-32 rounded-full bg-blue-500/30 blur-2xl"
         />
         
-        {/* 3D Spinning Egg/Chick Placeholder */}
+        {/* Subtle Bounce */}
         <motion.div
-          animate={{ rotateY: 360 }}
-          transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
-          className="relative text-5xl select-none"
+          animate={{ y: [0, -10, 0] }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+          className="relative"
         >
-          🥚
-          {/* Subtle Bounce */}
+          {/* 3D Spinning Egg */}
           <motion.div
-            animate={{ y: [0, -10, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute inset-0 flex items-center justify-center"
+            animate={{ rotateY: 360 }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: "linear" }}
           >
-            🐣
+            <Egg aria-hidden="true" className="h-14 w-14 text-amber-100" strokeWidth={1.5} fill="currentColor" fillOpacity={0.15} />
           </motion.div>
         </motion.div>
       </div>

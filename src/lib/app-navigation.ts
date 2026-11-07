@@ -2,12 +2,14 @@ import {
   Activity,
   Banknote,
   BarChart3,
+  Bell,
   Briefcase,
   Crown,
   Egg,
   FileText,
   HeartPulse,
   LayoutDashboard,
+  MessageSquare,
   PawPrint,
   Settings,
   ShieldCheck,
@@ -31,7 +33,7 @@ export type AppNavItem = {
 };
 
 export type AppNavCategory = {
-  id: 'farm' | 'business' | 'account';
+  id: 'farm' | 'business' | 'governance';
   name: string;
   icon: LucideIcon;
   items: AppNavItem[];
@@ -39,14 +41,29 @@ export type AppNavCategory = {
 
 const ALL_ROLES = ['OWNER', 'MANAGER', 'WORKER', 'CASHIER', 'ACCOUNTANT', 'FINANCE_OFFICER'];
 
-/** The three top-level groups shown as icons in the sidebar rail and mobile tab bar. */
+/** Direct link shown as its own icon ahead of the groups in the rail and mobile tab bar. */
+export const DASHBOARD_NAV_ITEM: AppNavItem = {
+  name: 'Dashboard',
+  shortLabel: 'Home',
+  icon: LayoutDashboard,
+  href: '/dashboard',
+  roles: ['OWNER', 'MANAGER', 'WORKER', 'ACCOUNTANT', 'FINANCE_OFFICER'],
+};
+
+/** Personal pages: the mobile profile menu (plus Sign out) and the top of the Governance group. */
+export const PROFILE_MENU_ITEMS: AppNavItem[] = [
+  { name: 'My Profile', shortLabel: 'Profile', icon: User, href: '/dashboard/profile', roles: ALL_ROLES },
+  { name: 'Messages', shortLabel: 'Messages', icon: MessageSquare, href: '/dashboard/messages', roles: ALL_ROLES },
+  { name: 'Notifications', shortLabel: 'Alerts', icon: Bell, href: '/dashboard/notifications', roles: ALL_ROLES },
+];
+
+/** The three groups shown as icons (after Dashboard) in the sidebar rail and mobile tab bar. */
 export const APP_NAV_CATEGORIES: AppNavCategory[] = [
   {
     id: 'farm',
     name: 'Farm',
     icon: PawPrint,
     items: [
-      { name: 'Dashboard', shortLabel: 'Home', icon: LayoutDashboard, href: '/dashboard', roles: ['OWNER', 'MANAGER', 'WORKER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
       { name: 'Livestock', shortLabel: 'Flocks', icon: PawPrint, href: '/dashboard/flocks', roles: ['OWNER', 'MANAGER', 'WORKER'] },
       { name: 'Analytics', shortLabel: 'Stats', icon: BarChart3, href: '/dashboard/analytics/compare', roles: ['OWNER', 'MANAGER'] },
       { name: 'Houses', shortLabel: 'Houses', icon: ThermometerSun, href: '/dashboard/houses', roles: ['OWNER', 'MANAGER'] },
@@ -71,11 +88,11 @@ export const APP_NAV_CATEGORIES: AppNavCategory[] = [
     ],
   },
   {
-    id: 'account',
-    name: 'Account',
+    id: 'governance',
+    name: 'Governance',
     icon: ShieldCheck,
     items: [
-      { name: 'My Profile', shortLabel: 'Profile', icon: User, href: '/dashboard/profile', roles: ALL_ROLES },
+      ...PROFILE_MENU_ITEMS,
       { name: 'Team Management', shortLabel: 'Team', icon: Users, href: '/dashboard/team', roles: ['OWNER', 'MANAGER'] },
       { name: 'Audit Logs', shortLabel: 'Audit', icon: ShieldCheck, href: '/dashboard/admin/logs', roles: ['OWNER', 'MANAGER'] },
       { name: 'License Upgrade', shortLabel: 'License', icon: Crown, href: '/dashboard/license-upgrade', roles: ['OWNER', 'MANAGER'] },
@@ -83,6 +100,18 @@ export const APP_NAV_CATEGORIES: AppNavCategory[] = [
     ],
   },
 ];
+
+export function canShowDashboardNavItem(
+  role?: string,
+  permissions?: Record<string, boolean | null | undefined> | null,
+) {
+  return canShowNavigationItem({
+    name: DASHBOARD_NAV_ITEM.name,
+    role,
+    roles: DASHBOARD_NAV_ITEM.roles,
+    permissions,
+  });
+}
 
 /** Categories with only the items this role/permission set may see; empty groups are dropped. */
 export function getVisibleNavCategories(
