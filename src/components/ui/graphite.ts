@@ -19,7 +19,19 @@ export const ink = {
   negative: '#e5484d',
   /** Red for text and small marks on dark surfaces, where #e5484d reads too dim. */
   negativeText: '#f2777b',
+  /** Straw, for feed. */
+  straw: '#c9b37e',
 } as const
+
+/**
+ * One muted hue per navigation group. Used only on small marks: the group's
+ * icons, the active-page bar and status dots, never on surfaces.
+ */
+export const groupHue: Record<string, string> = {
+  farm: '#34d399',
+  business: '#d9a441',
+  governance: '#8fa8c8',
+}
 
 const focus = 'outline-none focus-visible:ring-2 focus-visible:ring-[#34d399]/60'
 
