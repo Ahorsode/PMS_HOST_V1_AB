@@ -1,12 +1,12 @@
 import prisma from '@/lib/db'
 
-export type DashboardMessage = { id: string; title: string; body: string; tone: 'info' | 'warning' | 'success' }
+export type DashboardMessage = { id: string; title: string; body: string; tone: 'info' | 'warning' | 'success'; createdAt: Date }
 
 /**
  * Admin messages for this farm (or every farm) that are still showing, for
  * this user: owner-only messages are skipped for staff. Newest first.
  */
-export async function getDashboardMessages(farmId: string, isOwner: boolean, now = new Date()): Promise<DashboardMessage[]> {
+export async function getDashboardMessages(farmId: string, isOwner: boolean, now = new Date(), take = 5): Promise<DashboardMessage[]> {
   const messages = await prisma.farmMessage
     .findMany({
       where: {
@@ -16,8 +16,8 @@ export async function getDashboardMessages(farmId: string, isOwner: boolean, now
         ...(isOwner ? {} : { audience: 'EVERYONE' }),
       },
       orderBy: { createdAt: 'desc' },
-      take: 5,
-      select: { id: true, title: true, body: true, tone: true },
+      take,
+      select: { id: true, title: true, body: true, tone: true, createdAt: true },
     })
     .catch(() => [])
 

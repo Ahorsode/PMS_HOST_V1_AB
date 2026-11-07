@@ -2,12 +2,14 @@ import {
   Activity,
   Banknote,
   BarChart3,
+  Bell,
   Briefcase,
   Crown,
   Egg,
   FileText,
   HeartPulse,
   LayoutDashboard,
+  MessageSquare,
   PawPrint,
   Settings,
   ShieldCheck,
@@ -48,6 +50,13 @@ export const DASHBOARD_NAV_ITEM: AppNavItem = {
   roles: ['OWNER', 'MANAGER', 'WORKER', 'ACCOUNTANT', 'FINANCE_OFFICER'],
 };
 
+/** Personal pages: the mobile profile menu (plus Sign out) and the top of the Governance group. */
+export const PROFILE_MENU_ITEMS: AppNavItem[] = [
+  { name: 'My Profile', shortLabel: 'Profile', icon: User, href: '/dashboard/profile', roles: ALL_ROLES },
+  { name: 'Messages', shortLabel: 'Messages', icon: MessageSquare, href: '/dashboard/messages', roles: ALL_ROLES },
+  { name: 'Notifications', shortLabel: 'Alerts', icon: Bell, href: '/dashboard/notifications', roles: ALL_ROLES },
+];
+
 /** The three groups shown as icons (after Dashboard) in the sidebar rail and mobile tab bar. */
 export const APP_NAV_CATEGORIES: AppNavCategory[] = [
   {
@@ -83,7 +92,7 @@ export const APP_NAV_CATEGORIES: AppNavCategory[] = [
     name: 'Governance',
     icon: ShieldCheck,
     items: [
-      { name: 'My Profile', shortLabel: 'Profile', icon: User, href: '/dashboard/profile', roles: ALL_ROLES },
+      ...PROFILE_MENU_ITEMS,
       { name: 'Team Management', shortLabel: 'Team', icon: Users, href: '/dashboard/team', roles: ['OWNER', 'MANAGER'] },
       { name: 'Audit Logs', shortLabel: 'Audit', icon: ShieldCheck, href: '/dashboard/admin/logs', roles: ['OWNER', 'MANAGER'] },
       { name: 'License Upgrade', shortLabel: 'License', icon: Crown, href: '/dashboard/license-upgrade', roles: ['OWNER', 'MANAGER'] },

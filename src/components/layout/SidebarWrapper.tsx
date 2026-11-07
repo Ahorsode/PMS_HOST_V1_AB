@@ -2,10 +2,9 @@
 
 import React from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { signOut } from 'next-auth/react';
-import { ArrowLeft, LogOut } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Sidebar } from './Sidebar';
+import { ProfileMenu } from './ProfileMenu';
 import { BottomNav } from './BottomNav';
 import { cn } from '@/lib/utils';
 import { PageTransition } from './PageTransition';
@@ -75,21 +74,7 @@ export const SidebarWrapper = ({
               </p>
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/40">Operations</p>
             </div>
-            <Link
-              href="/dashboard/profile"
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-400/15 text-sm font-bold uppercase text-emerald-300"
-              aria-label="Open profile"
-            >
-              {(role?.charAt(0) || '?').toUpperCase()}
-            </Link>
-            <button
-              type="button"
-              onClick={() => signOut({ callbackUrl: '/login' })}
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/70 transition-colors hover:bg-red-500/15 hover:text-red-300"
-              aria-label="Sign out"
-            >
-              <LogOut className="h-4 w-4" />
-            </button>
+            <ProfileMenu role={role} permissions={permissions} />
           </header>
         )}
         <div className={cn(

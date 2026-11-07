@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { LogOut } from 'lucide-react';
+import { LogOut, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatRoleLabel } from '@/lib/navigation-permissions';
 import {
@@ -20,7 +20,6 @@ import { useNavGroupMenu } from './useNavGroupMenu';
 export const Sidebar = ({ role, permissions }: { role?: string, permissions?: any }) => {
   const pathname = usePathname();
   const roleLabel = formatRoleLabel(role);
-  const roleInitial = role?.charAt(0) ?? '?';
   const profileActive = pathname === '/dashboard/profile';
   const { openId, toggle, containerRef, registerTrigger } = useNavGroupMenu<HTMLElement>();
 
@@ -175,8 +174,8 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
               profileActive ? "bg-emerald-500/20 text-emerald-400" : "text-white/80 hover:bg-white/15 hover:text-white"
             )}
           >
-            <span className="w-8 h-8 rounded-md bg-emerald-400/10 flex items-center justify-center text-emerald-400 text-sm font-bold uppercase group-hover/profile:bg-emerald-400/20 transition-colors">
-              {roleInitial}
+            <span className="w-8 h-8 rounded-full bg-emerald-400/10 flex items-center justify-center text-emerald-400 group-hover/profile:bg-emerald-400/20 transition-colors">
+              <User className="w-[18px] h-[18px]" />
             </span>
             <span className="text-[10px] font-semibold leading-none">Profile</span>
           </Link>
