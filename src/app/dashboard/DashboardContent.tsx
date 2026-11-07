@@ -107,10 +107,13 @@ function crates(eggs: number, perCrate: number) {
   return { whole, loose };
 }
 
-function Stat({ label, value, note, negative = false }: { label: string; value: React.ReactNode; note?: React.ReactNode; negative?: boolean }) {
+function Stat({ label, value, note, negative = false, hue }: { label: string; value: React.ReactNode; note?: React.ReactNode; negative?: boolean; hue?: string }) {
   return (
     <div className="min-w-0 rounded-xl border border-white/[0.08] bg-[#19191b] p-5">
-      <p className="text-sm text-[#a1a1a6]">{label}</p>
+      <p className="flex items-center gap-2 text-sm text-[#a1a1a6]">
+        {hue ? <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: hue }} /> : null}
+        {label}
+      </p>
       <p className={cn('mt-2 truncate text-3xl font-medium leading-none tabular-nums', negative ? 'text-[#f2777b]' : 'text-[#ededed]')}>
         {value}
       </p>
@@ -236,11 +239,12 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
         <>
           <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {can('canViewBatches') && (
-              <Stat label="Live animals" value={(stats?.totalBirds || 0).toLocaleString()} note={`${stats.activeBatches.length} active units`} />
+              <Stat label="Live animals" hue={ink.accent} value={(stats?.totalBirds || 0).toLocaleString()} note={`${stats.activeBatches.length} active units`} />
             )}
             {can('canViewEggs') && (
               <Stat
                 label="Collected today"
+                hue={ink.yolk}
                 value={`${today.whole} crates`}
                 note={`${today.loose > 0 ? `+ ${today.loose} loose · ` : ''}${(stats?.todayEggs || 0).toLocaleString()} eggs`}
               />
@@ -248,12 +252,13 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
             {can('canViewMortality') && (
               <Stat
                 label="Mortality rate"
+                hue={ink.negative}
                 value={`${stats.mortalityRate}%`}
                 note={`${stats.todayDead} today · ${stats.overallDead} overall`}
                 negative={stats.todayDead > 0}
               />
             )}
-            <Stat label="Feed used this week" value={`${feedWeek.toLocaleString()} bags`} note="Last 7 days" />
+            <Stat label="Feed used this week" hue={ink.straw} value={`${feedWeek.toLocaleString()} bags`} note="Last 7 days" />
           </div>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

@@ -16,6 +16,7 @@ import {
   isNavItemActive,
 } from '@/lib/app-navigation';
 import { useNavGroupMenu } from './useNavGroupMenu';
+import { groupHue } from '@/components/ui/graphite';
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -67,7 +68,10 @@ export const BottomNav = ({ role, permissions }: { role?: string; permissions?: 
           >
             <div className="flex items-center justify-between px-4 pb-3 pt-4">
               <div>
-                <p className="text-xs text-[#85858b]">Farm menu</p>
+                <p className="flex items-center gap-2 text-xs text-[#85858b]">
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: groupHue[openCategory.id] }} />
+                  Farm menu
+                </p>
                 <h2 className="text-lg font-medium text-[#ededed]">{openCategory.name}</h2>
               </div>
               <button
@@ -97,7 +101,8 @@ export const BottomNav = ({ role, permissions }: { role?: string; permissions?: 
                       )}
                     >
                       <item.icon
-                        className={cn('h-5 w-5 shrink-0', active ? 'text-[#34d399]' : 'text-[#85858b]')}
+                        className="h-5 w-5 shrink-0"
+                        style={{ color: active ? groupHue[openCategory.id] : '#85858b' }}
                         strokeWidth={1.5}
                       />
                       <span className="min-w-0 text-sm leading-tight">{item.name}</span>
@@ -174,7 +179,8 @@ export const BottomNav = ({ role, permissions }: { role?: string; permissions?: 
                   )}
                 >
                   <category.icon
-                    className={cn('h-5 w-5', highlighted ? 'text-[#34d399]' : undefined)}
+                    className={cn('h-5 w-5', highlighted ? 'opacity-100' : 'opacity-70')}
+                    style={{ color: groupHue[category.id] }}
                     strokeWidth={1.5}
                   />
                 </span>

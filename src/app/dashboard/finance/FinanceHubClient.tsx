@@ -301,12 +301,12 @@ export function FinanceHubClient({
       {/* Totals */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div className="min-w-0 rounded-xl border border-white/[0.08] bg-[#19191b] p-5">
-          <p className="text-sm text-[#a1a1a6]">Revenue</p>
+          <p className="flex items-center gap-2 text-sm text-[#a1a1a6]"><span className="h-1.5 w-1.5 rounded-full bg-[#34d399]" />Revenue</p>
           <p className="mt-2 truncate text-3xl font-medium leading-none tabular-nums text-[#ededed]">{formatGhs(totalRevenue)}</p>
           <p className="mt-2 font-mono text-xs text-[#85858b]">All income in the ledger</p>
         </div>
         <div className="min-w-0 rounded-xl border border-white/[0.08] bg-[#19191b] p-5">
-          <p className="text-sm text-[#a1a1a6]">Expenses</p>
+          <p className="flex items-center gap-2 text-sm text-[#a1a1a6]"><span className="h-1.5 w-1.5 rounded-full bg-[#b5735a]" />Expenses</p>
           <p className="mt-2 truncate text-3xl font-medium leading-none tabular-nums text-[#ededed]">{formatGhs(totalExpense)}</p>
           <p className="mt-2 font-mono text-xs text-[#85858b]">Operating and capital costs</p>
         </div>

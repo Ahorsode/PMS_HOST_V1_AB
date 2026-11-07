@@ -51,7 +51,7 @@ export const SidebarWrapper = ({
       <main
         className={cn(
           'relative z-20 flex h-[100dvh] flex-1 flex-col overflow-hidden',
-          isIndeptPage ? 'pl-0' : 'md:pl-[88px]'
+          isIndeptPage ? 'pl-0' : 'md:pl-[104px]'
         )}
       >
         {!isIndeptPage && (

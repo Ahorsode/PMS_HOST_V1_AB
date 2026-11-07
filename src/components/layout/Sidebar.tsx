@@ -16,6 +16,7 @@ import {
   isNavItemActive,
 } from '@/lib/app-navigation';
 import { useNavGroupMenu } from './useNavGroupMenu';
+import { groupHue } from '@/components/ui/graphite';
 
 const focus = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34d399]/60';
 const railItem = cn(
@@ -39,9 +40,9 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
   return (
     <aside
       ref={containerRef}
-      className="fixed inset-y-0 left-0 z-50 hidden w-[88px] md:block"
+      className="fixed bottom-4 left-4 top-4 z-50 hidden w-[84px] md:block"
     >
-      <div className="relative flex h-full flex-col items-center border-r border-white/[0.08] bg-[#0f0f10] pb-4 pt-5">
+      <div className="relative flex h-full flex-col items-center rounded-2xl border border-white/[0.08] bg-[#0f0f10] pb-4 pt-5 shadow-[0_8px_24px_rgba(0,0,0,0.35)]">
         {/* Logo doubles as the home link */}
         <Link
           href="/dashboard"
@@ -95,7 +96,8 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
                   )}
                 >
                   <category.icon
-                    className={cn('h-5 w-5', isActive ? 'text-[#34d399]' : undefined)}
+                    className={cn('h-5 w-5 transition-opacity duration-150', isActive || isOpen ? 'opacity-100' : 'opacity-70')}
+                    style={{ color: groupHue[category.id] }}
                     strokeWidth={1.5}
                   />
                   <span className={railLabel}>{category.name}</span>
@@ -111,9 +113,12 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -6 }}
                       transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-                      className="absolute inset-y-0 left-full flex w-64 flex-col border-r border-white/[0.08] bg-[#0f0f10] pb-3 pt-6 shadow-[8px_0_24px_rgba(0,0,0,0.35)]"
+                      className="absolute inset-y-0 left-full ml-3 flex w-64 flex-col rounded-2xl border border-white/[0.08] bg-[#0f0f10] pb-3 pt-6 shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
                     >
-                      <p className="mb-2 px-5 text-xs text-[#85858b]">{category.name}</p>
+                      <p className="mb-2 flex items-center gap-2 px-5 text-xs text-[#85858b]">
+                        <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: groupHue[category.id] }} />
+                        {category.name}
+                      </p>
                       <ul className="custom-scrollbar min-h-0 flex-1 space-y-0.5 overflow-y-auto px-3">
                         {category.items.map((item) => {
                           const itemActive = isNavItemActive(pathname, item.href, allItems);
@@ -123,15 +128,23 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
                                 href={item.href}
                                 aria-current={itemActive ? 'page' : undefined}
                                 className={cn(
-                                  'flex h-9 items-center gap-3 rounded-lg px-3 text-sm transition-colors duration-150',
+                                  'relative flex h-9 items-center gap-3 rounded-lg px-3 text-sm transition-colors duration-150',
                                   focus,
                                   itemActive
                                     ? 'bg-[#232325] font-medium text-[#ededed] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
                                     : 'text-[#a1a1a6] hover:bg-white/[0.04] hover:text-[#ededed]'
                                 )}
                               >
+                                {itemActive && (
+                                  <span
+                                    aria-hidden="true"
+                                    className="absolute inset-y-2 left-0 w-0.5 rounded-full"
+                                    style={{ backgroundColor: groupHue[category.id] }}
+                                  />
+                                )}
                                 <item.icon
-                                  className={cn('h-4 w-4 shrink-0', itemActive ? 'text-[#34d399]' : 'text-[#85858b]')}
+                                  className="h-4 w-4 shrink-0"
+                                  style={{ color: itemActive ? groupHue[category.id] : '#85858b' }}
                                   strokeWidth={1.5}
                                 />
                                 <span className="truncate">{item.name}</span>
