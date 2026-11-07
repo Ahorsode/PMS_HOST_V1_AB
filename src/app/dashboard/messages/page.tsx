@@ -1,8 +1,10 @@
 import React from 'react';
 import Link from 'next/link';
-import { ArrowLeft, CheckCircle2, Info, MessageSquare, TriangleAlert } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Info, Megaphone, MessageSquare, TriangleAlert } from 'lucide-react';
 import { getAuthContext } from '@/lib/auth-utils';
+import { getAppSettings } from '@/lib/settings/app-settings';
 import { getDashboardMessages } from '@/lib/settings/farm-messages';
+import { activeAnnouncement } from '@/lib/settings/schemas';
 import { cn } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
@@ -17,10 +19,18 @@ function formatDate(date: Date) {
   return new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(date);
 }
 
-/** Every in-app message the Poultry Ledger team has sent to this farm that is still showing. */
+/**
+ * Everything the Poultry Ledger team has written to this farm that is still
+ * showing: the current announcement for all farms, then messages sent from
+ * the console. Alerts the farm generates itself live on Notifications.
+ */
 export default async function MessagesPage() {
   const { activeFarmId, isFarmOwner } = await getAuthContext();
-  const messages = activeFarmId ? await getDashboardMessages(activeFarmId, isFarmOwner, new Date(), 50) : [];
+  const [messages, site] = await Promise.all([
+    activeFarmId ? getDashboardMessages(activeFarmId, isFarmOwner, new Date(), 50) : Promise.resolve([]),
+    getAppSettings('site'),
+  ]);
+  const announcement = activeAnnouncement(site, 'dashboard');
 
   return (
     <div className="max-w-3xl mx-auto space-y-7 px-0 md:px-5 pt-2 pb-9 md:py-9">
@@ -34,13 +44,23 @@ export default async function MessagesPage() {
         </div>
       </div>
 
-      {messages.length === 0 ? (
+      {announcement ? (
+        <section aria-label="Announcement" className={cn('flex items-start gap-3 rounded-lg border px-4 py-4', TONES[announcement.tone].className)}>
+          <Megaphone className="mt-0.5 h-5 w-5 shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="font-medium">Announcement</p>
+            <p className="mt-1 whitespace-pre-line break-words text-sm leading-6 opacity-90">{announcement.message}</p>
+          </div>
+        </section>
+      ) : null}
+
+      {messages.length === 0 && !announcement ? (
         <div className="flex flex-col items-center gap-3 rounded-lg border border-fg/10 bg-fg/5 px-6 py-12 text-center">
           <MessageSquare className="h-10 w-10 text-fg/30" />
           <p className="font-medium text-fg">No messages</p>
           <p className="text-sm text-fg/60">Messages sent to your farm will show up here.</p>
         </div>
-      ) : (
+      ) : messages.length === 0 ? null : (
         <ul className="space-y-3">
           {messages.map((message) => {
             const tone = TONES[message.tone];
