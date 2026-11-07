@@ -7,7 +7,7 @@ import { redirect } from 'next/navigation';
 const BatchComparison = dynamic(
   () => import('@/components/analytics/BatchComparison').then((mod) => mod.BatchComparison),
   {
-    loading: () => <div className="h-64 animate-pulse rounded-2xl bg-white/[0.04]" />,
+    loading: () => <div className="h-64 animate-pulse rounded-2xl bg-fg/[0.04]" />,
   }
 );
 

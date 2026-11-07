@@ -20,7 +20,7 @@ export function EditProfileButton({ initialData }: EditProfileButtonProps) {
     <>
       <Button 
         onClick={() => setIsOpen(true)}
-        className="bg-white/10 border border-white/10 hover:bg-white/10 text-white rounded-md h-12 px-5 transition-colors group/btn"
+        className="bg-fg/10 border border-fg/10 hover:bg-fg/10 text-fg rounded-md h-12 px-5 transition-colors group/btn"
       >
         <SettingsIcon className="w-4 h-4 mr-2 group-hover/btn:rotate-90 transition-transform" /> 
         Edit profile

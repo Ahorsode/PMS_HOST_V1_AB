@@ -76,34 +76,34 @@ export function MissingHealthCostPrompt({ items }: Props) {
               <div
                 key={i}
                 className={`h-1 flex-1 rounded-full ${
-                  i === index ? 'bg-emerald-500' : i < index ? 'bg-white/[0.04]' : 'bg-white/10'
+                  i === index ? 'bg-emerald-500' : i < index ? 'bg-fg/[0.04]' : 'bg-fg/10'
                 }`}
               />
             ))}
           </div>
         )}
 
-        <div className="flex items-center gap-3 p-3 rounded-md bg-white/5 border border-white/10">
+        <div className="flex items-center gap-3 p-3 rounded-md bg-fg/5 border border-fg/10">
           <div
             className={`w-9 h-9 rounded-lg flex items-center justify-center ${
-              isVaccine ? 'bg-white/[0.04] text-[#d9a441]' : 'bg-white/[0.06] text-[#a1a1a6]'
+              isVaccine ? 'bg-fg/[0.04] text-yolk' : 'bg-fg/[0.06] text-fg-2'
             }`}
           >
             {isVaccine ? <Syringe className="w-5 h-5" /> : <Pill className="w-5 h-5" />}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-medium text-white truncate">{current.itemName}</p>
-            <p className="text-xs text-white/50">
+            <p className="text-sm font-medium text-fg truncate">{current.itemName}</p>
+            <p className="text-xs text-fg/50">
               {isVaccine ? 'Vaccine' : 'Medication'} · {current.stockLevel} {current.unit} on hand
               {current.stockLevel <= 0 ? ' (doses may already be scheduled or applied — cost still logs)' : ''}
             </p>
           </div>
         </div>
 
-        <div className="p-3 rounded-md bg-white/[0.04] border border-white/[0.08] flex gap-2">
-          <AlertCircle className="w-5 h-5 text-[#85858b] shrink-0" />
-          <p className="text-xs text-[#ededed] leading-relaxed font-medium">
-            Recording health costs keeps your <span className="text-[#ededed] font-medium">profit &amp; loss</span> accurate.
+        <div className="p-3 rounded-md bg-fg/[0.04] border border-fg/[0.08] flex gap-2">
+          <AlertCircle className="w-5 h-5 text-fg-3 shrink-0" />
+          <p className="text-xs text-fg leading-relaxed font-medium">
+            Recording health costs keeps your <span className="text-fg font-medium">profit &amp; loss</span> accurate.
             You can skip for now, but we&apos;ll ask again next time you open Finance.
           </p>
         </div>
@@ -122,21 +122,21 @@ export function MissingHealthCostPrompt({ items }: Props) {
             }}
           />
           {total > 0 && (
-            <p className="text-xs font-medium text-[#ededed] px-1 text-right">
+            <p className="text-xs font-medium text-fg px-1 text-right">
               Total stock value: GH₵ {total.toFixed(2)}
             </p>
           )}
         </div>
 
         {error && (
-          <p className="text-xs text-[#f2777b] font-medium">{error}</p>
+          <p className="text-xs text-neg font-medium">{error}</p>
         )}
 
         <div className="flex gap-2 pt-1">
           <Button
             variant="ghost"
             onClick={() => setIsOpen(false)}
-            className="flex-1 rounded-md text-white/70 hover:text-white hover:bg-white/5"
+            className="flex-1 rounded-md text-fg/70 hover:text-fg hover:bg-fg/5"
           >
             Skip for now
           </Button>
@@ -144,7 +144,7 @@ export function MissingHealthCostPrompt({ items }: Props) {
             onClick={handleSave}
             isLoading={isSubmitting}
             disabled={!cost || numericCost < 0}
-            className="flex-[2] rounded-md bg-[#ededed] text-[#141415] font-medium hover:bg-white"
+            className="flex-[2] rounded-md bg-fg text-page font-medium hover:bg-fg/90"
           >
             Save{index < items.length - 1 ? ' & Next' : ''}
           </Button>

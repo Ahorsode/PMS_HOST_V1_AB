@@ -265,14 +265,14 @@ export default function TeamView({
 
   const getRoleBadge = (role: string) => {
     const configs: any = {
-      OWNER: { class: 'bg-white/[0.06] text-[#a1a1a6] border-white/[0.08]', icon: ShieldCheck },
-      MANAGER: { class: 'bg-white/[0.06] text-[#a1a1a6] border-white/[0.08]', icon: Shield },
+      OWNER: { class: 'bg-fg/[0.06] text-fg-2 border-fg/[0.08]', icon: ShieldCheck },
+      MANAGER: { class: 'bg-fg/[0.06] text-fg-2 border-fg/[0.08]', icon: Shield },
       WORKER: { class: 'bg-green-50 text-green-700 border-green-100', icon: UserCheck },
       ACCOUNTANT: { class: 'bg-emerald-50 text-emerald-700 border-emerald-100', icon: ShieldCheck },
-      FINANCE_OFFICER: { class: 'bg-white/[0.06] text-[#a1a1a6] border-white/[0.08]', icon: ShieldCheck },
+      FINANCE_OFFICER: { class: 'bg-fg/[0.06] text-fg-2 border-fg/[0.08]', icon: ShieldCheck },
       CASHIER: { class: 'bg-amber-50 text-amber-700 border-amber-100', icon: UserCheck }
     };
-    const config = configs[role] || { class: 'bg-[#141415] text-[#a1a1a6] border-white/[0.08]', icon: Users };
+    const config = configs[role] || { class: 'bg-page text-fg-2 border-fg/[0.08]', icon: Users };
     const Icon = config.icon;
     return (
       <span className={`px-2.5 py-1 rounded-full text-xs font-medium border flex items-center gap-1 ${config.class}`}>
@@ -285,10 +285,10 @@ export default function TeamView({
   return (
     <div className="max-w-7xl mx-auto space-y-7 px-0 md:px-3 pt-2 pb-7 md:py-7 relative">
       {issuedCode && <InviteCodePanel issued={issuedCode} onDismiss={() => setIssuedCode(null)} />}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white/10 p-7 rounded-lg border border-white/10 relative overflow-hidden gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-fg/10 p-7 rounded-lg border border-fg/10 relative overflow-hidden gap-4">
         <div className="relative z-10">
-          <h1 className="text-3xl font-medium leading-tight text-[#ededed]">Team</h1>
-          <p className="mt-2 text-sm text-[#a1a1a6]">
+          <h1 className="text-3xl font-medium leading-tight text-fg">Team</h1>
+          <p className="mt-2 text-sm text-fg-2">
              {currentUserRole === 'OWNER' ? 'You are the farm owner' : `Your role: ${currentUserRole.toLowerCase()}`}
           </p>
         </div>
@@ -296,26 +296,26 @@ export default function TeamView({
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-7">
         <div className="lg:col-span-2 space-y-7">
-          <Card className="rounded-lg border border-white/10 bg-white/10 overflow-hidden">
-            <CardHeader className="bg-white/10 rounded-t-[2.5rem] border-b border-white/10 px-7 py-5">
-              <CardTitle className="flex items-center text-white font-medium">
-                <Users className="w-5 h-5 mr-2 text-[#85858b]" />
+          <Card className="rounded-lg border border-fg/10 bg-fg/10 overflow-hidden">
+            <CardHeader className="bg-fg/10 rounded-t-[2.5rem] border-b border-fg/10 px-7 py-5">
+              <CardTitle className="flex items-center text-fg font-medium">
+                <Users className="w-5 h-5 mr-2 text-fg-3" />
                 Active members
               </CardTitle>
             </CardHeader>
             <CardContent className="p-7">
               {isLoading && members.length === 0 ? (
-                <div className="flex justify-center p-16 text-[#ededed]"><Loader2 className="animate-spin h-10 w-10" /></div>
+                <div className="flex justify-center p-16 text-fg"><Loader2 className="animate-spin h-10 w-10" /></div>
               ) : members.length === 0 ? (
-                <div className="text-center py-16 bg-white/10 rounded-lg border-2 border-dashed border-white/10">
-                  <Users className="w-12 h-12 text-white/10 mx-auto mb-3" />
-                  <p className="text-white/70 font-medium text-xs">No staff members found.</p>
+                <div className="text-center py-16 bg-fg/10 rounded-lg border-2 border-dashed border-fg/10">
+                  <Users className="w-12 h-12 text-fg/10 mx-auto mb-3" />
+                  <p className="text-fg/70 font-medium text-xs">No staff members found.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {staffPlan && currentUserRole === 'OWNER' && (staffPlan.overLimitCount > 0 || staffPlan.staffLimit === 0) && members.some((m) => m.role !== 'OWNER') && (
-                    <div className="flex items-start gap-3 rounded-lg border border-white/[0.08] bg-white/[0.04] p-4 text-sm text-amber-100">
-                      <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-[#85858b]" />
+                    <div className="flex items-start gap-3 rounded-lg border border-fg/[0.08] bg-fg/[0.04] p-4 text-sm text-amber-100">
+                      <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-fg-3" />
                       <div className="space-y-1">
                         {staffPlan.staffLimit === 0 ? (
                           <p className="font-medium">Solo plans are owner only, so your staff cannot sign in.</p>
@@ -339,23 +339,23 @@ export default function TeamView({
 
                     return (
                     <MutationBoundary key={member.id} active={isMutatingMember || isUpdatingRole} label={isUpdatingRole ? 'Updating role...' : 'Revoking access...'}>
-                    <div className="p-4 rounded-lg border border-white/5 bg-white/10 hover:border-white/[0.08] hover:bg-white/[0.08] transition-colors flex items-center justify-between group relative overflow-hidden">
+                    <div className="p-4 rounded-lg border border-fg/5 bg-fg/10 hover:border-fg/[0.08] hover:bg-fg/[0.08] transition-colors flex items-center justify-between group relative overflow-hidden">
                       <div className="flex items-center space-x-4">
-                        <div className="w-14 h-14 rounded-md bg-white/[0.04] flex items-center justify-center text-[#ededed] font-medium text-xl border border-white/[0.08]">
+                        <div className="w-14 h-14 rounded-md bg-fg/[0.04] flex items-center justify-center text-fg font-medium text-xl border border-fg/[0.08]">
                           {(member.user.firstname?.charAt(0) || member.user.surname?.charAt(0) || 'U').toUpperCase()}
                         </div>
                         <div>
-                          <p className="font-medium text-white text-lg tracking-normal">
+                          <p className="font-medium text-fg text-lg tracking-normal">
                             {member.user.firstname} {member.user.surname}
                           </p>
                           <div className="mt-1 flex flex-wrap items-center gap-2">
                             {member.user.phoneNumber && (
-                              <span className="inline-flex items-center gap-1 text-xs text-[#ededed] font-medium tracking-normal">
+                              <span className="inline-flex items-center gap-1 text-xs text-fg font-medium tracking-normal">
                                 <Phone className="w-3 h-3" />
                                 {member.user.phoneNumber}
                               </span>
                             )}
-                            <span className="text-xs text-white/70 font-medium tracking-normal">{member.user.email || 'No email on file'}</span>
+                            <span className="text-xs text-fg/70 font-medium tracking-normal">{member.user.email || 'No email on file'}</span>
                           </div>
                         </div>
                       </div>
@@ -369,7 +369,7 @@ export default function TeamView({
                             )}
                             disabled={issuingCodeFor !== null}
                             title="They haven't set a password yet. Issue a new one-time login code."
-                            className="inline-flex items-center gap-1.5 rounded-md border border-white/[0.08] bg-white/[0.04] px-2.5 py-1.5 text-xs font-medium text-[#ededed] transition hover:bg-white/[0.04] disabled:opacity-50"
+                            className="inline-flex items-center gap-1.5 rounded-md border border-fg/[0.08] bg-fg/[0.04] px-2.5 py-1.5 text-xs font-medium text-fg transition hover:bg-fg/[0.04] disabled:opacity-50"
                           >
                             {issuingCodeFor === member.userId ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <KeyRound className="h-3.5 w-3.5" />}
                             New code
@@ -381,7 +381,7 @@ export default function TeamView({
                               value={member.role}
                               onChange={(event) => handleRoleChange(member, event.target.value)}
                               disabled={!canEdit || isUpdatingRole}
-                              className="h-10 rounded-md border border-white/10 bg-[#19191b] px-3 pr-9 text-xs font-medium text-white outline-none transition-colors focus:border-emerald-400/60 disabled:cursor-not-allowed disabled:opacity-50"
+                              className="h-10 rounded-md border border-fg/10 bg-card px-3 pr-9 text-xs font-medium text-fg outline-none transition-colors focus:border-emerald-400/60 disabled:cursor-not-allowed disabled:opacity-50"
                               title="Update employee role"
                             >
                               <option value="WORKER">Worker</option>
@@ -390,13 +390,13 @@ export default function TeamView({
                               <option value="ACCOUNTANT">Accountant</option>
                               <option value="FINANCE_OFFICER">Finance officer</option>
                             </select>
-                            {isUpdatingRole && <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-[#85858b]" />}
+                            {isUpdatingRole && <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-fg-3" />}
                           </div>
                         ) : (
                           getRoleBadge(member.role)
                         )}
                         {member.accessStatus && member.accessStatus !== 'ACTIVE' && (
-                          <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2.5 py-1 text-xs font-medium text-[#ededed]">
+                          <span className="rounded-full border border-fg/[0.08] bg-fg/[0.04] px-2.5 py-1 text-xs font-medium text-fg">
                             {member.accessStatus === 'PAUSED' ? 'Paused' : 'Locked · over limit'}
                           </span>
                         )}
@@ -406,7 +406,7 @@ export default function TeamView({
                             onClick={() => handleAccessChange(member, member.accessStatus !== 'PAUSED')}
                             disabled={changingAccessUserId !== null}
                             title={member.accessStatus === 'PAUSED' ? 'Restore access' : 'Pause access'}
-                            className="p-2.5 text-[#ededed] hover:bg-white/[0.04] rounded-md transition-colors border border-transparent hover:border-white/[0.08] disabled:opacity-50"
+                            className="p-2.5 text-fg hover:bg-fg/[0.04] rounded-md transition-colors border border-transparent hover:border-fg/[0.08] disabled:opacity-50"
                           >
                             {changingAccessUserId === member.userId ? (
                               <Loader2 className="w-5 h-5 animate-spin" />
@@ -422,7 +422,7 @@ export default function TeamView({
                           <button aria-label="Edit granular permissions" 
                             onClick={() => setPermissionTarget(member)}
                             title="Edit granular permissions"
-                            className="p-2.5 text-[#a1a1a6] hover:bg-white/[0.06] rounded-md transition-colors border border-transparent hover:border-white/[0.08]"
+                            className="p-2.5 text-fg-2 hover:bg-fg/[0.06] rounded-md transition-colors border border-transparent hover:border-fg/[0.08]"
                           >
                             <Settings className="w-5 h-5" />
                           </button>
@@ -434,7 +434,7 @@ export default function TeamView({
                             )}
                             disabled={resettingPermissionsUserId === member.userId}
                             title="Reset to role default permissions"
-                            className="p-2.5 text-[#ededed] hover:bg-white/[0.04] rounded-md transition-colors border border-transparent hover:border-white/[0.08] disabled:opacity-50"
+                            className="p-2.5 text-fg hover:bg-fg/[0.04] rounded-md transition-colors border border-transparent hover:border-fg/[0.08] disabled:opacity-50"
                           >
                             {resettingPermissionsUserId === member.userId ? (
                               <Loader2 className="w-5 h-5 animate-spin" />
@@ -447,7 +447,7 @@ export default function TeamView({
                         {canEdit && (currentUserRole === 'OWNER' || currentUserRole === 'MANAGER') && (member.role !== 'OWNER') && (
                           <button aria-label="Remove team member" 
                             onClick={() => setDeleteTarget({ id: member.id, type: 'member' })}
-                            className="p-2.5 text-[#f2777b] hover:bg-white/[0.04] rounded-md transition-colors border border-transparent hover:border-white/[0.08]"
+                            className="p-2.5 text-neg hover:bg-fg/[0.04] rounded-md transition-colors border border-transparent hover:border-fg/[0.08]"
                           >
                             <Trash2 className="w-5 h-5" />
                           </button>
@@ -462,20 +462,20 @@ export default function TeamView({
             </CardContent>
           </Card>
 
-          <Card className="rounded-lg border border-white/10 bg-white/10 overflow-hidden">
-            <CardHeader className="bg-white/10 rounded-t-[2.5rem] border-b border-white/10 px-7 py-5">
-              <CardTitle className="flex items-center text-white font-medium">
-                <Mail className="w-5 h-5 mr-2 text-[#85858b]" />
+          <Card className="rounded-lg border border-fg/10 bg-fg/10 overflow-hidden">
+            <CardHeader className="bg-fg/10 rounded-t-[2.5rem] border-b border-fg/10 px-7 py-5">
+              <CardTitle className="flex items-center text-fg font-medium">
+                <Mail className="w-5 h-5 mr-2 text-fg-3" />
                 Pending invitations
               </CardTitle>
             </CardHeader>
             <CardContent className="p-7">
               {isLoading && invitations.length === 0 ? (
-                <div className="flex justify-center p-11 text-[#ededed]"><Loader2 className="animate-spin" /></div>
+                <div className="flex justify-center p-11 text-fg"><Loader2 className="animate-spin" /></div>
               ) : invitations.length === 0 ? (
-                <div className="text-center py-11 bg-white/10 rounded-lg border-2 border-dashed border-white/10">
-                  <Mail className="w-10 h-10 text-white/10 mx-auto mb-2" />
-                  <p className="text-white/70 font-medium text-xs">No pending invitations.</p>
+                <div className="text-center py-11 bg-fg/10 rounded-lg border-2 border-dashed border-fg/10">
+                  <Mail className="w-10 h-10 text-fg/10 mx-auto mb-2" />
+                  <p className="text-fg/70 font-medium text-xs">No pending invitations.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -484,26 +484,26 @@ export default function TeamView({
 
                     return (
                     <MutationBoundary key={invite.id} active={isMutatingInvite} label="Cancelling invite...">
-                    <div className="p-4 rounded-md border border-white/5 bg-white/10 flex items-center justify-between group hover:bg-white/[0.08] transition-colors">
+                    <div className="p-4 rounded-md border border-fg/5 bg-fg/10 flex items-center justify-between group hover:bg-fg/[0.08] transition-colors">
                       <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 rounded-md bg-white/[0.04] flex items-center justify-center text-[#85858b] border border-white/[0.08]">
+                        <div className="w-12 h-12 rounded-md bg-fg/[0.04] flex items-center justify-center text-fg-3 border border-fg/[0.08]">
                           <Mail className="w-6 h-6" />
                         </div>
                         <div>
-                          <p className="font-medium text-white tracking-normal">{invite.email || invite.phoneNumber}</p>
-                          <p className="text-xs text-white/70 font-medium mt-0.5">Sent {new Date(invite.createdAt).toLocaleDateString()}</p>
+                          <p className="font-medium text-fg tracking-normal">{invite.email || invite.phoneNumber}</p>
+                          <p className="text-xs text-fg/70 font-medium mt-0.5">Sent {new Date(invite.createdAt).toLocaleDateString()}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
                         {getRoleBadge(invite.role)}
-                        <span className="text-xs bg-white/[0.04] text-[#ededed] px-2 py-1 rounded-full font-medium border border-white/[0.08]">Pending</span>
+                        <span className="text-xs bg-fg/[0.04] text-fg px-2 py-1 rounded-full font-medium border border-fg/[0.08]">Pending</span>
                         {canEdit && (currentUserRole === 'OWNER' || currentUserRole === 'MANAGER') && (
                           <button
                             type="button"
                             onClick={() => handleNewCode({ invitationId: invite.id }, invite.email || invite.phoneNumber)}
                             disabled={issuingCodeFor !== null}
                             title="Issue a new one-time login code"
-                            className="inline-flex items-center gap-1.5 rounded-md border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs font-medium text-white/80 transition hover:bg-white/10 hover:text-white disabled:opacity-50"
+                            className="inline-flex items-center gap-1.5 rounded-md border border-fg/10 bg-fg/5 px-2.5 py-1.5 text-xs font-medium text-fg/80 transition hover:bg-fg/10 hover:text-fg disabled:opacity-50"
                           >
                             {issuingCodeFor === invite.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <KeyRound className="h-3.5 w-3.5" />}
                             New code
@@ -526,7 +526,7 @@ export default function TeamView({
                                 toast.error('Could not load pending invite permissions');
                               }
                             }}
-                            className="p-2 text-[#a1a1a6] hover:bg-white/[0.06] rounded-lg transition-colors"
+                            className="p-2 text-fg-2 hover:bg-fg/[0.06] rounded-lg transition-colors"
                             title="Edit access control"
                           >
                             <Settings className="w-4 h-4" />
@@ -545,7 +545,7 @@ export default function TeamView({
                               }
                             }}
                             disabled={resettingPermissionsUserId !== null}
-                            className="p-2 text-[#ededed] hover:bg-white/[0.04] rounded-lg transition-colors disabled:opacity-50"
+                            className="p-2 text-fg hover:bg-fg/[0.04] rounded-lg transition-colors disabled:opacity-50"
                             title="Reset to role default permissions"
                           >
                             <RotateCcw className="w-4 h-4" />
@@ -555,7 +555,7 @@ export default function TeamView({
                         {canEdit && (currentUserRole === 'OWNER' || currentUserRole === 'MANAGER') && (
                           <button aria-label="Cancel invitation" 
                             onClick={() => setDeleteTarget({ id: invite.id, type: 'invite' })}
-                            className="p-2 text-[#f2777b] hover:bg-white/[0.04] rounded-lg transition-colors"
+                            className="p-2 text-neg hover:bg-fg/[0.04] rounded-lg transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -573,34 +573,34 @@ export default function TeamView({
 
         <div className="space-y-7">
           {limitCheck && (currentUserRole === 'OWNER' || currentUserRole === 'MANAGER') && (
-            <Card className="rounded-lg border border-white/10 bg-white/10 overflow-hidden">
+            <Card className="rounded-lg border border-fg/10 bg-fg/10 overflow-hidden">
               <CardContent className="p-7">
                 <div className="flex justify-between items-end mb-3">
                   <div>
-                    <h3 className="text-white font-medium text-xl tracking-normal">Capacity gauge</h3>
-                    <p className="text-white/70 text-xs font-medium mt-1">Worker limit</p>
+                    <h3 className="text-fg font-medium text-xl tracking-normal">Capacity gauge</h3>
+                    <p className="text-fg/70 text-xs font-medium mt-1">Worker limit</p>
                   </div>
                   <div className="text-right">
-                    <span className="text-3xl font-medium text-[#ededed]">{limitCheck.current}</span>
-                    <span className="text-white/70 font-medium text-lg mx-1">/</span>
-                    <span className="text-white font-medium">{limitCheck.limit === null ? '∞' : limitCheck.limit}</span>
+                    <span className="text-3xl font-medium text-fg">{limitCheck.current}</span>
+                    <span className="text-fg/70 font-medium text-lg mx-1">/</span>
+                    <span className="text-fg font-medium">{limitCheck.limit === null ? '∞' : limitCheck.limit}</span>
                   </div>
                 </div>
                 
                 {/* Progress Bar */}
-                <div className="h-3 w-full bg-white/10 rounded-full overflow-hidden mb-3 relative shadow-inner">
+                <div className="h-3 w-full bg-fg/10 rounded-full overflow-hidden mb-3 relative shadow-inner">
                   <div 
-                    className={`h-full rounded-full transition-colors duration-200 ${limitCheck.canAdd ? 'bg-[#1e1e20]' : 'bg-[#1e1e20]'}`}
+                    className={`h-full rounded-full transition-colors duration-200 ${limitCheck.canAdd ? 'bg-tile' : 'bg-tile'}`}
                     style={{ width: `${limitCheck.limit === null ? Math.min(limitCheck.current * 5, 100) : limitCheck.limit === 0 ? 100 : Math.min((limitCheck.current / limitCheck.limit) * 100, 100)}%` }}
                   ></div>
                 </div>
 
                 {!limitCheck.canAdd && (
-                  <div className="bg-white/[0.04] border border-white/[0.08] p-3 rounded-md flex items-start gap-2 mt-5 animate-in fade-in slide-in-from-bottom-2">
-                    <AlertCircle className="w-5 h-5 text-[#f2777b] shrink-0 mt-0.5" />
+                  <div className="bg-fg/[0.04] border border-fg/[0.08] p-3 rounded-md flex items-start gap-2 mt-5 animate-in fade-in slide-in-from-bottom-2">
+                    <AlertCircle className="w-5 h-5 text-neg shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-[#f2777b] font-medium text-sm tracking-normal">Subscription limit reached</p>
-                      <p className="text-[#f2777b] text-xs mt-1 leading-relaxed">{limitCheck.limit === 0 ? 'Solo plans are owner only. Switch to a Team plan to invite staff.' : 'Upgrade to Business Plus for unlimited staff.'}</p>
+                      <p className="text-neg font-medium text-sm tracking-normal">Subscription limit reached</p>
+                      <p className="text-neg text-xs mt-1 leading-relaxed">{limitCheck.limit === 0 ? 'Solo plans are owner only. Switch to a Team plan to invite staff.' : 'Upgrade to Business Plus for unlimited staff.'}</p>
                     </div>
                   </div>
                 )}
@@ -609,7 +609,7 @@ export default function TeamView({
           )}
 
           {canEdit && (currentUserRole === 'OWNER' || currentUserRole === 'MANAGER') && (
-            <Card className="rounded-lg border border-white/10 bg-white/[0.04] text-white overflow-hidden relative border-dashed">
+            <Card className="rounded-lg border border-fg/10 bg-fg/[0.04] text-fg overflow-hidden relative border-dashed">
               <CardHeader className="relative z-10 p-7">
                 <CardTitle className="flex items-center">
                   Invite staff
@@ -621,7 +621,7 @@ export default function TeamView({
                   <fieldset disabled={isInviting} className="space-y-5 disabled:opacity-70">
                   {message && (
                     <div className={`p-3 rounded-md text-xs font-medium flex items-center gap-2 animate-in fade-in slide-in-from-top-2 ${
-                      message.type === 'success' ? 'bg-white/[0.04] text-emerald-400 border border-white/[0.08]' : 'bg-white/[0.04] text-[#f2777b] border border-white/[0.08]'
+                      message.type === 'success' ? 'bg-fg/[0.04] text-emerald-400 border border-fg/[0.08]' : 'bg-fg/[0.04] text-neg border border-fg/[0.08]'
                     }`}>
                       {message.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
                       {message.text}
@@ -650,24 +650,24 @@ export default function TeamView({
                       { label: 'Finance officer', value: 'FINANCE_OFFICER' }
                     ]}
                   />
-                  <div className="border border-white/10 rounded-lg overflow-hidden bg-white/[0.03]">
+                  <div className="border border-fg/10 rounded-lg overflow-hidden bg-fg/[0.03]">
                     <button
                       type="button"
                       aria-expanded={showPermissions}
                       aria-controls="invite-permission-toggles"
                       onClick={() => setShowPermissions((current) => !current)}
-                      className="w-full flex items-center justify-between gap-3 px-4 py-3 text-xs font-medium text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+                      className="w-full flex items-center justify-between gap-3 px-4 py-3 text-xs font-medium text-fg/70 hover:text-fg hover:bg-fg/5 transition-colors"
                     >
                       <span className="flex items-center gap-2">
-                        <Shield className="w-4 h-4 text-[#85858b]" />
+                        <Shield className="w-4 h-4 text-fg-3" />
                         Configure access control
                       </span>
                       <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${showPermissions ? 'rotate-180' : ''}`} />
                     </button>
 
                     {showPermissions && (
-                      <div id="invite-permission-toggles" className="px-4 pb-4 pt-2 space-y-2 border-t border-white/10">
-                        <p className="text-xs text-white/50 mb-3 leading-relaxed">
+                      <div id="invite-permission-toggles" className="px-4 pb-4 pt-2 space-y-2 border-t border-fg/10">
+                        <p className="text-xs text-fg/50 mb-3 leading-relaxed">
                           Default access based on role is pre-selected. Customise before sending the invitation.
                         </p>
                         <InlinePermissionToggles
@@ -680,7 +680,7 @@ export default function TeamView({
                           type="button"
                           variant="outline"
                           onClick={() => setPendingPermissions({})}
-                          className="w-full mt-3 border-white/[0.08] text-[#ededed] hover:bg-white/[0.04] text-[11px] font-medium"
+                          className="w-full mt-3 border-fg/[0.08] text-fg hover:bg-fg/[0.04] text-[11px] font-medium"
                         >
                           <RotateCcw className="w-4 h-4 mr-2 inline" />
                           Reset to {inviteRole} Defaults
@@ -704,25 +704,25 @@ export default function TeamView({
             </Card>
           )}
 
-          <Card className="rounded-lg border border-white/10 bg-white/10 p-7">
+          <Card className="rounded-lg border border-fg/10 bg-fg/10 p-7">
             <div className="flex items-center gap-3 mb-7">
-              <div className="p-2 bg-white/[0.06] rounded-md border border-white/[0.08]">
-                <Shield className="w-6 h-6 text-[#a1a1a6]" />
+              <div className="p-2 bg-fg/[0.06] rounded-md border border-fg/[0.08]">
+                <Shield className="w-6 h-6 text-fg-2" />
               </div>
-              <h4 className="font-medium text-white tracking-normal text-xl">Permissions</h4>
+              <h4 className="font-medium text-fg tracking-normal text-xl">Permissions</h4>
             </div>
             <div className="space-y-4">
-              <div className="p-4 bg-white/10 rounded-lg border border-white/5 group hover:bg-white/[0.08] transition-colors">
-                <p className="font-medium text-xs text-[#a1a1a6] mb-2">Manager</p>
-                <p className="text-xs text-white/70 leading-relaxed font-medium tracking-normal">Full visibility of all farm operations and logs. can manage staff, inventory, and sales.</p>
+              <div className="p-4 bg-fg/10 rounded-lg border border-fg/5 group hover:bg-fg/[0.08] transition-colors">
+                <p className="font-medium text-xs text-fg-2 mb-2">Manager</p>
+                <p className="text-xs text-fg/70 leading-relaxed font-medium tracking-normal">Full visibility of all farm operations and logs. can manage staff, inventory, and sales.</p>
               </div>
-              <div className="p-4 bg-white/10 rounded-lg border border-white/5 group hover:bg-white/[0.08] transition-colors">
-                <p className="font-medium text-xs text-[#ededed] mb-2">Worker</p>
-                <p className="text-xs text-white/70 leading-relaxed font-medium tracking-normal">Limited to data entry (feeding, mortality logs). can only view their own activity records.</p>
+              <div className="p-4 bg-fg/10 rounded-lg border border-fg/5 group hover:bg-fg/[0.08] transition-colors">
+                <p className="font-medium text-xs text-fg mb-2">Worker</p>
+                <p className="text-xs text-fg/70 leading-relaxed font-medium tracking-normal">Limited to data entry (feeding, mortality logs). can only view their own activity records.</p>
               </div>
-              <div className="p-4 bg-white/10 rounded-lg border border-white/5 group hover:bg-white/[0.08] transition-colors">
-                <p className="font-medium text-xs text-[#ededed] mb-2">Accountant</p>
-                <p className="text-xs text-white/70 leading-relaxed font-medium tracking-normal">Exclusive access to finance and sales modules. handles commercial initialization and P&L reporting.</p>
+              <div className="p-4 bg-fg/10 rounded-lg border border-fg/5 group hover:bg-fg/[0.08] transition-colors">
+                <p className="font-medium text-xs text-fg mb-2">Accountant</p>
+                <p className="text-xs text-fg/70 leading-relaxed font-medium tracking-normal">Exclusive access to finance and sales modules. handles commercial initialization and P&L reporting.</p>
               </div>
             </div>
           </Card>
@@ -735,11 +735,11 @@ export default function TeamView({
         title={`Revoke ${deleteTarget?.type === 'member' ? 'Access' : 'Invitation'}`}
       >
         <div className="space-y-5">
-          <p className="text-white/70 font-medium">
+          <p className="text-fg/70 font-medium">
             Are you sure you want to {deleteTarget?.type === 'member' ? 'remove this member from the farm' : 'cancel this invitation'}? 
             This action cannot be undone.
           </p>
-          <div className="flex justify-end gap-2 pt-5 border-t border-white/10">
+          <div className="flex justify-end gap-2 pt-5 border-t border-fg/10">
             <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={isDeleting}>Cancel</Button>
             <Button variant="danger" onClick={handleDelete} isLoading={isDeleting} loadingText="Revoking...">
               Confirm revoke
@@ -834,10 +834,10 @@ function InlinePermissionToggles({
   return (
     <div className="space-y-2">
       {PERMISSION_MODULES.map((module) => (
-        <div key={module.label} className="flex items-center justify-between gap-3 py-2 border-b border-white/5 last:border-0">
-          <span className="text-xs font-medium text-white/75 tracking-normal">{module.label}</span>
+        <div key={module.label} className="flex items-center justify-between gap-3 py-2 border-b border-fg/5 last:border-0">
+          <span className="text-xs font-medium text-fg/75 tracking-normal">{module.label}</span>
           <div className="flex items-center gap-3">
-            <label className="flex items-center gap-1.5 text-xs text-white/60 cursor-pointer">
+            <label className="flex items-center gap-1.5 text-xs text-fg/60 cursor-pointer">
               <input
                 type="checkbox"
                 className="accent-emerald-400"
@@ -846,7 +846,7 @@ function InlinePermissionToggles({
               />
               View
             </label>
-            <label className="flex items-center gap-1.5 text-xs text-white/60 cursor-pointer">
+            <label className="flex items-center gap-1.5 text-xs text-fg/60 cursor-pointer">
               <input
                 type="checkbox"
                 className="accent-emerald-400"

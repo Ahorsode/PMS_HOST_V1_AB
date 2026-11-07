@@ -48,20 +48,20 @@ export function DeleteConfirmationModal({
   return (
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4 pb-safe bg-black/60">
       <div 
-        className="bg-black border border-white/10 rounded-xl max-w-md w-full max-h-[90dvh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="bg-card border border-fg/10 rounded-xl max-w-md w-full max-h-[90dvh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
       >
         <div className="flex-1 min-h-0 overflow-y-auto p-6 custom-scrollbar">
           <div className="flex items-start gap-4 mb-4">
-            <div className="p-3 bg-white/[0.04] rounded-full shrink-0">
-              <AlertCircle className="w-6 h-6 text-[#f2777b]" />
+            <div className="p-3 bg-fg/[0.04] rounded-full shrink-0">
+              <AlertCircle className="w-6 h-6 text-neg" />
             </div>
             <div>
-              <h3 className="text-xl font-medium text-white mb-1">{title}</h3>
-              <p className="text-sm text-white/60 leading-relaxed">
+              <h3 className="text-xl font-medium text-fg mb-1">{title}</h3>
+              <p className="text-sm text-fg/60 leading-relaxed">
                 {description}
               </p>
               {itemName && (
-                <p className="text-sm font-medium text-white mt-2 p-2 bg-white/5 rounded-md border border-white/5">
+                <p className="text-sm font-medium text-fg mt-2 p-2 bg-fg/5 rounded-md border border-fg/5">
                   Item: {itemName}
                 </p>
               )}
@@ -69,8 +69,8 @@ export function DeleteConfirmationModal({
           </div>
 
           <div className="mt-6 space-y-3">
-            <label className="block text-sm font-medium text-white/80">
-              Reason for Deletion <span className="text-[#f2777b]">*</span>
+            <label className="block text-sm font-medium text-fg/80">
+              Reason for Deletion <span className="text-neg">*</span>
             </label>
             <textarea
               value={reason}
@@ -79,20 +79,20 @@ export function DeleteConfirmationModal({
                 if (error) setError("");
               }}
               placeholder="e.g. Duplicated entry, wrong calculation, customer cancelled..."
-              className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white placeholder-white/30 focus:border-white/[0.08] focus:ring-1 focus:ring-white/10 transition-colors resize-none h-24"
+              className="w-full bg-fg/5 border border-fg/10 rounded-lg p-3 text-fg placeholder-white/30 focus:border-fg/[0.08] focus:ring-1 focus:ring-fg/10 transition-colors resize-none h-24"
               disabled={isLoading}
             />
             {error && (
-              <p className="text-xs font-medium text-[#f2777b]">{error}</p>
+              <p className="text-xs font-medium text-neg">{error}</p>
             )}
           </div>
         </div>
 
-        <div className="p-4 border-t border-white/10 bg-white/5 flex justify-end gap-3 pb-safe shrink-0">
+        <div className="p-4 border-t border-fg/10 bg-fg/5 flex justify-end gap-3 pb-safe shrink-0">
           <button
             onClick={handleClose}
             disabled={isLoading}
-            className="px-4 py-2 text-sm font-medium text-white hover:bg-white/10 rounded-lg transition-colors disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-fg hover:bg-fg/10 rounded-lg transition-colors disabled:opacity-50"
           >
             Cancel
           </button>
@@ -102,7 +102,7 @@ export function DeleteConfirmationModal({
             className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? (
-              <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <span className="w-4 h-4 border-2 border-fg/30 border-t-white rounded-full animate-spin" />
             ) : (
               <Trash2 className="w-4 h-4" />
             )}

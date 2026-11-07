@@ -27,9 +27,9 @@ export default async function DashboardPage() {
 
   if (!activeFarmId) {
     return (
-      <div className="rounded-xl border border-white/[0.08] bg-[#19191b] px-6 py-12 text-center">
-        <h2 className="mb-2 text-xl font-medium text-[#ededed]">No active farm</h2>
-        <p className="text-sm text-[#a1a1a6]">
+      <div className="rounded-xl border border-fg/[0.08] bg-card px-6 py-12 text-center">
+        <h2 className="mb-2 text-xl font-medium text-fg">No active farm</h2>
+        <p className="text-sm text-fg-2">
           Your account is not linked to a farm yet. Create a farm or join one to see the dashboard.
         </p>
       </div>
@@ -84,9 +84,9 @@ export default async function DashboardPage() {
     );
   } catch (error) {
     return (
-      <div className="rounded-xl border border-white/[0.08] bg-[#19191b] px-6 py-12 text-center">
-        <h2 className="mb-2 text-xl font-medium text-[#ededed]">The dashboard could not load</h2>
-        <p className="text-sm text-[#a1a1a6]">
+      <div className="rounded-xl border border-fg/[0.08] bg-card px-6 py-12 text-center">
+        <h2 className="mb-2 text-xl font-medium text-fg">The dashboard could not load</h2>
+        <p className="text-sm text-fg-2">
           Farm data could not be read from the database. Check your connection and try again.
         </p>
       </div>

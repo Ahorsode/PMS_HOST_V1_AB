@@ -49,10 +49,10 @@ export default async function FlockDetailPage({ params }: { params: Promise<{ id
 
       <header className="mb-6 flex flex-col gap-5 px-1 md:flex-row md:items-end md:justify-between md:px-0">
         <div className="min-w-0">
-          <h1 className="text-[28px] font-medium leading-tight text-[#ededed] md:text-[32px]">
+          <h1 className="text-[28px] font-medium leading-tight text-fg md:text-[32px]">
             {batch.batchName || 'Unit details'}
           </h1>
-          <p className="mt-1 text-sm text-[#a1a1a6]">
+          <p className="mt-1 text-sm text-fg-2">
             {getBreedDisplayName(batch.breedType)} · {batch.house?.name || 'House not named'}
           </p>
           <HeadCount

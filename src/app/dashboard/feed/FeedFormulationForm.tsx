@@ -50,11 +50,11 @@ export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: Feed
 
   if (inventoryItems.length === 0) {
     return (
-      <div className="space-y-4 p-6 text-center max-w-md mx-auto bg-white/10 border border-white/20 rounded-lg">
-        <p className="text-[#ededed] font-medium text-lg">
+      <div className="space-y-4 p-6 text-center max-w-md mx-auto bg-fg/10 border border-fg/20 rounded-lg">
+        <p className="text-fg font-medium text-lg">
           No Inventory Items Available!
         </p>
-        <p className="text-white/70 text-sm">
+        <p className="text-fg/70 text-sm">
           To create a feed formulation, you must first add ingredient items to your inventory.
         </p>
         <div className="flex gap-2 pt-2">
@@ -62,7 +62,7 @@ export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: Feed
             <Button 
               variant="outline" 
               onClick={onClose}
-              className="flex-1 border-white/20 text-white hover:bg-white/10 font-medium bg-transparent"
+              className="flex-1 border-fg/20 text-fg hover:bg-fg/10 font-medium bg-transparent"
             >
               Cancel
             </Button>
@@ -72,7 +72,7 @@ export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: Feed
               if (onClose) onClose();
               router.push('/dashboard/inventory');
             }}
-            className="flex-1 bg-[#ededed] hover:bg-white text-[#141415] font-medium"
+            className="flex-1 bg-fg hover:bg-fg/90 text-page font-medium"
           >
             Go to inventory
           </Button>
@@ -173,10 +173,10 @@ export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: Feed
 
   return (
     <div className="max-w-4xl mx-auto">
-      <Card className="border-white/20 bg-white/10 rounded-md overflow-hidden">
-      <CardHeader className="bg-[#1e1e20] border-b border-white/10 flex flex-row justify-between items-center">
-        <CardTitle className="flex items-center gap-2 text-white font-medium">
-          <Beaker className="w-5 h-5 text-[#85858b]" />
+      <Card className="border-fg/20 bg-fg/10 rounded-md overflow-hidden">
+      <CardHeader className="bg-tile border-b border-fg/10 flex flex-row justify-between items-center">
+        <CardTitle className="flex items-center gap-2 text-fg font-medium">
+          <Beaker className="w-5 h-5 text-fg-3" />
           Create new formulation
         </CardTitle>
         {onClose && (
@@ -185,7 +185,7 @@ export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: Feed
             variant="ghost"
             size="sm"
             onClick={onClose}
-            className="h-8 w-8 p-0 text-white/70 hover:text-white hover:bg-white/10 rounded-full"
+            className="h-8 w-8 p-0 text-fg/70 hover:text-fg hover:bg-fg/10 rounded-full"
           >
             <X className="w-5 h-5" />
           </Button>
@@ -194,20 +194,20 @@ export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: Feed
       <CardContent className="p-5 space-y-5">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="space-y-2">
-            <div className="text-sm font-medium text-[#ededed]">Formulation name</div>
+            <div className="text-sm font-medium text-fg">Formulation name</div>
             <Input 
               value={name} 
               onChange={(e) => setName(e.target.value)} 
               placeholder="e.g. Broiler Power Starter"
-              className="bg-white/10 border-white/10 text-white placeholder:text-white/50 focus:ring-white/10 focus:border-white/[0.08] font-medium h-12"
+              className="bg-fg/10 border-fg/10 text-fg placeholder:text-fg/50 focus:ring-fg/10 focus:border-fg/[0.08] font-medium h-12"
             />
           </div>
           <div className="space-y-2">
-            <div className="text-sm font-medium text-[#ededed]">Feed type</div>
+            <div className="text-sm font-medium text-fg">Feed type</div>
             <select 
               value={type} 
               onChange={(e) => setType(e.target.value as FeedType)}
-              className="w-full h-12 px-3 rounded-md bg-white/10 border border-white/10 text-white focus:ring-white/10 focus:border-white/[0.08] font-medium [&>option]:bg-[#141415] [&>option]:text-white"
+              className="w-full h-12 px-3 rounded-md bg-fg/10 border border-fg/10 text-fg focus:ring-fg/10 focus:border-fg/[0.08] font-medium [&>option]:bg-page [&>option]:text-fg"
             >
               {FEED_TYPES.map(t => (
                 <option key={t} value={t}>{t.replace('_', ' ')}</option>
@@ -218,7 +218,7 @@ export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: Feed
 
         <div className="space-y-3">
           <div className="flex justify-between items-center">
-            <div className="text-lg font-medium flex items-center gap-2 text-white">
+            <div className="text-lg font-medium flex items-center gap-2 text-fg">
               <Scale className="w-5 h-5 text-emerald-600" />
               Ingredients breakdown
             </div>
@@ -227,7 +227,7 @@ export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: Feed
               size="sm" 
               variant="outline" 
               disabled={isSubmitting || ingredients.length >= inventoryItems.length}
-              className="gap-2 border-white/[0.08] text-[#ededed] bg-white/[0.04] font-medium text-xs h-10 px-4 disabled:opacity-50"
+              className="gap-2 border-fg/[0.08] text-fg bg-fg/[0.04] font-medium text-xs h-10 px-4 disabled:opacity-50"
             >
               <Plus className="w-4 h-4" /> Add item
             </Button>
@@ -235,13 +235,13 @@ export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: Feed
 
           <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
             {ingredients.map((ing, idx) => (
-              <div key={idx} className="flex items-end gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
+              <div key={idx} className="flex items-end gap-3 p-3 rounded-lg bg-fg/5 border border-fg/10">
                 <div className="flex-1 space-y-1">
-                  <div className="text-sm font-medium text-[#ededed] ml-1">Ingredient source</div>
+                  <div className="text-sm font-medium text-fg ml-1">Ingredient source</div>
                   <select
                     value={ing.inventoryId}
                     onChange={(e) => updateIngredient(idx, 'inventoryId', e.target.value)}
-                    className="w-full h-14 px-4 rounded-md bg-[#19191b] border-2 border-white/[0.08] text-[#064e3b] font-medium text-lg focus:border-white/[0.12] transition-colors shadow-inner"
+                    className="w-full h-14 px-4 rounded-md bg-card border-2 border-fg/[0.08] text-accent-fg font-medium text-lg focus:border-fg/[0.12] transition-colors shadow-inner"
                   >
                     {getAvailableInventoryItems(idx).map(item => (
                       <option key={item.id} value={item.id}>{item.itemName}</option>
@@ -249,9 +249,9 @@ export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: Feed
                   </select>
                 </div>
                 <div className="w-52 space-y-1">
-                   <div className="text-sm font-medium text-[#ededed] flex justify-between px-1">
+                   <div className="text-sm font-medium text-fg flex justify-between px-1">
                      <span>Bags</span>
-                     <span className="text-white/50">Max: {inventoryItems.find(i => i.id === ing.inventoryId)?.stockLevel || 0}</span>
+                     <span className="text-fg/50">Max: {inventoryItems.find(i => i.id === ing.inventoryId)?.stockLevel || 0}</span>
                    </div>
                   <Input 
                     type="number"
@@ -260,7 +260,7 @@ export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: Feed
                     value={ing.bags}
                     onChange={(e) => updateIngredient(idx, 'bags', e.target.value === '' ? '' : Number(e.target.value))}
                     placeholder="0"
-                    className="bg-[#19191b] text-[#064e3b] font-medium h-14 text-xl border-2 border-white/[0.08] shadow-inner"
+                    className="bg-card text-accent-fg font-medium h-14 text-xl border-2 border-fg/[0.08] shadow-inner"
                   />
                 </div>
                 <Button aria-label="Remove ingredient" 
@@ -268,26 +268,26 @@ export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: Feed
                   size="icon" 
                   onClick={() => removeIngredient(idx)}
                   disabled={isSubmitting}
-                  className="text-[#f2777b] hover:bg-white/[0.04] h-14 w-14 border border-white/[0.08]"
+                  className="text-neg hover:bg-fg/[0.04] h-14 w-14 border border-fg/[0.08]"
                 >
                   <Trash2 className="w-6 h-6" />
                 </Button>
               </div>
             ))}
             {ingredients.length === 0 && (
-              <div className="text-center py-10 bg-white/20 rounded-md border-2 border-dashed border-white/20 text-emerald-900/40 font-medium text-xs">
+              <div className="text-center py-10 bg-fg/20 rounded-md border-2 border-dashed border-fg/20 text-emerald-900/40 font-medium text-xs">
                 No ingredients added yet
               </div>
             )}
           </div>
 
-          <div className="p-5 rounded-md flex justify-between items-center bg-white/[0.04] border-2 border-white/[0.08]">
+          <div className="p-5 rounded-md flex justify-between items-center bg-fg/[0.04] border-2 border-fg/[0.08]">
             <div className="flex items-center gap-3">
-              <AlertCircle className="w-7 h-7 text-[#85858b]" />
-              <span className="font-medium text-white text-lg">Final batch size:</span>
+              <AlertCircle className="w-7 h-7 text-fg-3" />
+              <span className="font-medium text-fg text-lg">Final batch size:</span>
             </div>
-            <span className="text-5xl font-medium text-[#ededed] tabular-nums">
-              {totalBags.toLocaleString()} <span className="text-xl text-white/50 ml-1">bags</span>
+            <span className="text-5xl font-medium text-fg tabular-nums">
+              {totalBags.toLocaleString()} <span className="text-xl text-fg/50 ml-1">bags</span>
             </span>
           </div>
         </div>
@@ -296,7 +296,7 @@ export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: Feed
           onClick={handleSubmit} 
           isLoading={isSubmitting}
           loadingText="Saving formulation..."
-          className="w-full h-12 bg-[#ededed] hover:bg-white text-[#141415] font-medium rounded-md transition-colors"
+          className="w-full h-12 bg-fg hover:bg-fg/90 text-page font-medium rounded-md transition-colors"
         >
           Save formulation
         </Button>

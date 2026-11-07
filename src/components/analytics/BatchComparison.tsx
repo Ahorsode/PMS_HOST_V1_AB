@@ -47,23 +47,23 @@ interface BatchComparisonProps {
 
 // Graphite ramp, one accent. Surfaces stay neutral so the charts carry the color.
 const INK = {
-  card: '#19191b',
-  raised: '#232325',
-  text: '#ededed',
-  secondary: '#a1a1a6',
-  muted: '#85858b',
-  bar: '#4a4a4f',
-  accent: '#34d399',
-  yolk: '#d9a441',
-  negative: '#e5484d',
-  grid: 'rgba(237,237,237,0.06)',
+  card: 'var(--card)',
+  raised: 'var(--raised)',
+  text: 'var(--fg)',
+  secondary: 'var(--fg-2)',
+  muted: 'var(--fg-3)',
+  bar: 'var(--bar)',
+  accent: 'var(--accent)',
+  yolk: 'var(--yolk)',
+  negative: 'var(--neg-solid)',
+  grid: 'color-mix(in srgb, var(--fg) 6%, transparent)',
 }
 
 const MONO = 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace'
 const axisTick = { fill: INK.muted, fontSize: 12, fontFamily: MONO }
 
-const card = 'rounded-2xl border border-white/[0.08] bg-[#19191b]'
-const focusRing = 'outline-none focus-visible:ring-2 focus-visible:ring-[#34d399]/60'
+const card = 'rounded-2xl border border-fg/[0.08] bg-card'
+const focusRing = 'outline-none focus-visible:ring-2 focus-visible:ring-accent/60'
 
 const compactNumber = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 })
 const fullNumber = new Intl.NumberFormat('en-US')
@@ -133,9 +133,9 @@ const METRICS: Record<MetricKey, MetricDef> = {
 // Cost types each keep one muted hue from the farm, revenue leads in the accent.
 const FINANCE_SERIES = [
   { key: 'Initial', label: 'Initial cost', color: '#7d8491' },
-  { key: 'Operating', label: 'Operating', color: '#b5735a' },
-  { key: 'Consumption', label: 'Feed and medication', color: '#c9b37e' },
-  { key: 'General', label: 'General share', color: '#5f5f66' },
+  { key: 'Operating', label: 'Operating', color: 'var(--clay)' },
+  { key: 'Consumption', label: 'Feed and medication', color: 'var(--straw)' },
+  { key: 'General', label: 'General share', color: 'var(--fg-3)' },
 ] as const
 
 function shortName(name: string) {
@@ -150,7 +150,7 @@ function sentence(value: string) {
 /** The record-book line under every batch name: house and bird type. */
 function Ledger({ batch, className }: { batch: BatchReport; className?: string }) {
   return (
-    <span className={cn('block truncate font-mono text-xs text-[#85858b]', className)}>
+    <span className={cn('block truncate font-mono text-xs text-fg-3', className)}>
       {batch.houseName} · {sentence(batch.type)}
     </span>
   )
@@ -252,9 +252,9 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
       <div className="space-y-6">
         <PageHeader count={0} canViewFinance={canViewFinance} />
         <div className={cn(card, 'flex flex-col items-center justify-center px-6 py-16 text-center')}>
-          <Layers className="mb-4 h-6 w-6 text-[#85858b]" strokeWidth={1.5} />
-          <p className="text-lg font-medium text-[#ededed]">No batches yet</p>
-          <p className="mt-2 max-w-sm text-sm text-[#a1a1a6]">
+          <Layers className="mb-4 h-6 w-6 text-fg-3" strokeWidth={1.5} />
+          <p className="text-lg font-medium text-fg">No batches yet</p>
+          <p className="mt-2 max-w-sm text-sm text-fg-2">
             Add a batch and log its feed, eggs and sales to compare it here.
           </p>
         </div>
@@ -300,10 +300,10 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
       {leader ? (
         <div className={cn(card, 'flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between')}>
           <div className="min-w-0">
-            <p className="text-sm text-[#a1a1a6]">Leading batch</p>
-            <h2 className="mt-1 truncate text-3xl font-medium leading-tight text-[#ededed]">{leader.name}</h2>
+            <p className="text-sm text-fg-2">Leading batch</p>
+            <h2 className="mt-1 truncate text-3xl font-medium leading-tight text-fg">{leader.name}</h2>
             <Ledger batch={leader} className="mt-1" />
-            <p className="mt-3 text-sm text-[#a1a1a6]">
+            <p className="mt-3 text-sm text-fg-2">
               {shown === 1
                 ? 'The only batch shown'
                 : canViewFinance
@@ -311,7 +311,7 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
                   : `Most eggs of the ${shown} batches shown`}
             </p>
           </div>
-          <dl className="grid shrink-0 grid-cols-2 gap-x-8 gap-y-4 sm:flex sm:gap-0 sm:divide-x sm:divide-white/[0.08]">
+          <dl className="grid shrink-0 grid-cols-2 gap-x-8 gap-y-4 sm:flex sm:gap-0 sm:divide-x sm:divide-fg/[0.08]">
             {canViewFinance ? (
               <LeaderFigure
                 label="Net profit"
@@ -330,8 +330,8 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
         <div className={cn(card, 'flex flex-col p-4 lg:col-span-1')}>
           <div className="mb-2 flex items-baseline justify-between px-2">
-            <h3 className="text-sm font-medium text-[#ededed]">Batches</h3>
-            <span className="font-mono text-xs tabular-nums text-[#85858b]">
+            <h3 className="text-sm font-medium text-fg">Batches</h3>
+            <span className="font-mono text-xs tabular-nums text-fg-3">
               {selectedBatchIds.length} selected
             </span>
           </div>
@@ -345,8 +345,8 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
                   className={cn(
                     'flex items-center rounded-lg transition-colors duration-150',
                     isSelected
-                      ? 'bg-[#232325] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
-                      : 'hover:bg-white/[0.04]'
+                      ? 'bg-raised shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
+                      : 'hover:bg-fg/[0.04]'
                   )}
                 >
                   <button
@@ -356,13 +356,13 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
                     className={cn('flex min-w-0 flex-1 items-center gap-2 rounded-lg px-2 py-2 text-left', focusRing)}
                   >
                     <span className="flex h-4 w-4 shrink-0 items-center justify-center">
-                      {isSelected ? <Check className="h-4 w-4 text-[#a1a1a6]" strokeWidth={1.5} /> : null}
+                      {isSelected ? <Check className="h-4 w-4 text-fg-2" strokeWidth={1.5} /> : null}
                     </span>
                     <span className="min-w-0">
                       <span
                         className={cn(
                           'block truncate text-sm',
-                          isSelected && !isHidden ? 'font-medium text-[#ededed]' : 'text-[#a1a1a6]'
+                          isSelected && !isHidden ? 'font-medium text-fg' : 'text-fg-2'
                         )}
                       >
                         {batch.name}
@@ -376,7 +376,7 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
                       onClick={() => toggleVisibility(batch.id)}
                       aria-label={isHidden ? `Show ${batch.name} in charts` : `Hide ${batch.name} from charts`}
                       className={cn(
-                        'mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-[#85858b] transition-colors duration-150 hover:bg-white/[0.06] hover:text-[#ededed]',
+                        'mr-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-fg-3 transition-colors duration-150 hover:bg-fg/[0.06] hover:text-fg',
                         focusRing
                       )}
                     >
@@ -393,24 +393,24 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
           </ul>
 
           {metric.benchmark != null ? (
-            <div className="mt-4 border-t border-white/[0.08] px-2 pt-4">
+            <div className="mt-4 border-t border-fg/[0.08] px-2 pt-4">
               <button
                 type="button"
                 role="switch"
                 aria-checked={showBenchmark}
                 onClick={() => setShowBenchmark((v) => !v)}
-                className={cn('flex w-full items-center justify-between rounded-md text-sm text-[#a1a1a6]', focusRing)}
+                className={cn('flex w-full items-center justify-between rounded-md text-sm text-fg-2', focusRing)}
               >
                 Show benchmark
                 <span
                   className={cn(
                     'relative h-5 w-9 rounded-[10px] transition-colors duration-150',
-                    showBenchmark ? 'bg-[#34d399]' : 'bg-white/[0.12]'
+                    showBenchmark ? 'bg-accent' : 'bg-fg/[0.12]'
                   )}
                 >
                   <span
                     className={cn(
-                      'absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-[#ededed] transition-transform duration-150',
+                      'absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-fg transition-transform duration-150',
                       showBenchmark ? 'translate-x-4' : 'translate-x-0'
                     )}
                   />
@@ -421,10 +421,10 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
         </div>
 
         <div className={cn(card, 'lg:col-span-3')}>
-          <div className="flex flex-col gap-4 border-b border-white/[0.08] px-5 py-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col gap-4 border-b border-fg/[0.08] px-5 py-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <h3 className="text-lg font-medium text-[#ededed]">{metric.label}</h3>
-              <p className="mt-1 text-sm text-[#a1a1a6]">
+              <h3 className="text-lg font-medium text-fg">{metric.label}</h3>
+              <p className="mt-1 text-sm text-fg-2">
                 {plural(shown, 'batch')}
                 {metric.lowerIsBetter ? ' · lower is better' : ''}
               </p>
@@ -432,7 +432,7 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
             <div
               role="tablist"
               aria-label="Metric"
-              className="custom-scrollbar flex gap-1 overflow-x-auto rounded-[10px] border border-white/[0.08] bg-[#141415] p-1"
+              className="custom-scrollbar flex gap-1 overflow-x-auto rounded-[10px] border border-fg/[0.08] bg-page p-1"
             >
               {availableMetrics.map((key) => (
                 <button
@@ -445,8 +445,8 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
                     'h-8 whitespace-nowrap rounded-md px-3 text-sm transition-colors duration-150',
                     focusRing,
                     selectedMetric === key
-                      ? 'bg-[#2c2c2f] font-medium text-[#ededed] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
-                      : 'text-[#a1a1a6] hover:text-[#ededed]'
+                      ? 'bg-raised-2 font-medium text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
+                      : 'text-fg-2 hover:text-fg'
                   )}
                 >
                   {METRICS[key].short}
@@ -480,13 +480,13 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
                       }
                     />
                     <Tooltip
-                      cursor={{ fill: 'rgba(237,237,237,0.04)' }}
+                      cursor={{ fill: 'color-mix(in srgb, var(--fg) 4%, transparent)' }}
                       content={<MetricTooltip format={metric.format} label={metric.label} />}
                     />
                     {showBenchmark && metric.benchmark != null ? (
                       <ReferenceLine
                         y={metric.benchmark}
-                        stroke="rgba(237,237,237,0.4)"
+                        stroke="color-mix(in srgb, var(--fg) 40%, transparent)"
                         strokeDasharray="4 4"
                         strokeWidth={1}
                         label={{
@@ -523,16 +523,16 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
       <div className={cn('grid grid-cols-1 gap-6', canViewFinance && 'xl:grid-cols-3')}>
         {canViewFinance ? (
           <div className={cn(card, 'xl:col-span-2')}>
-            <div className="border-b border-white/[0.08] px-5 py-4">
-              <h3 className="text-lg font-medium text-[#ededed]">Revenue and costs</h3>
-              <p className="mt-1 text-sm text-[#a1a1a6]">
+            <div className="border-b border-fg/[0.08] px-5 py-4">
+              <h3 className="text-lg font-medium text-fg">Revenue and costs</h3>
+              <p className="mt-1 text-sm text-fg-2">
                 Initial cost stays on its batch, feed and medication split by usage, general costs by headcount
               </p>
             </div>
             <div className="p-5">
               {financeData.length > 0 ? (
                 <>
-                  <ul className="mb-4 flex flex-wrap gap-x-5 gap-y-2 text-xs text-[#a1a1a6]">
+                  <ul className="mb-4 flex flex-wrap gap-x-5 gap-y-2 text-xs text-fg-2">
                     {[{ key: 'Revenue', label: 'Revenue', color: INK.accent }, ...FINANCE_SERIES].map((s) => (
                       <li key={s.key} className="flex items-center gap-2">
                         <span className="h-2 w-2 rounded-sm" style={{ backgroundColor: s.color }} />
@@ -561,7 +561,7 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
                           width={60}
                           tickFormatter={(v) => `₵${compactNumber.format(Number(v))}`}
                         />
-                        <Tooltip cursor={{ fill: 'rgba(237,237,237,0.04)' }} content={<CurrencyTooltip />} />
+                        <Tooltip cursor={{ fill: 'color-mix(in srgb, var(--fg) 4%, transparent)' }} content={<CurrencyTooltip />} />
                         <Bar
                           dataKey="Revenue"
                           fill={INK.accent}
@@ -595,9 +595,9 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
         ) : null}
 
         <div className={card}>
-          <div className="border-b border-white/[0.08] px-5 py-4">
-            <h3 className="text-lg font-medium text-[#ededed]">Egg production</h3>
-            <p className="mt-1 text-sm tabular-nums text-[#a1a1a6]">
+          <div className="border-b border-fg/[0.08] px-5 py-4">
+            <h3 className="text-lg font-medium text-fg">Egg production</h3>
+            <p className="mt-1 text-sm tabular-nums text-fg-2">
               {fullNumber.format(totals.eggs)} eggs from {plural(shown, 'batch')}
             </p>
           </div>
@@ -610,12 +610,12 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
                   return (
                     <li key={batch.id}>
                       <div className="flex items-baseline justify-between gap-3">
-                        <span className="truncate text-sm text-[#ededed]">{batch.name}</span>
-                        <span className="shrink-0 font-mono text-sm tabular-nums text-[#a1a1a6]">
+                        <span className="truncate text-sm text-fg">{batch.name}</span>
+                        <span className="shrink-0 font-mono text-sm tabular-nums text-fg-2">
                           {fullNumber.format(batch.totalEggs)}
                         </span>
                       </div>
-                      <div className="mt-2 h-1 rounded-full bg-white/[0.06]">
+                      <div className="mt-2 h-1 rounded-full bg-fg/[0.06]">
                         <div
                           className="h-1 rounded-full"
                           style={{ width: `${share}%`, backgroundColor: index === 0 ? INK.yolk : INK.bar }}
@@ -626,7 +626,7 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
                 })}
               </ol>
             ) : (
-              <p className="py-12 text-center text-sm text-[#a1a1a6]">No eggs logged for the batches shown</p>
+              <p className="py-12 text-center text-sm text-fg-2">No eggs logged for the batches shown</p>
             )}
           </div>
         </div>
@@ -638,18 +638,18 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
           <div key={batch.id} className={cn(card, 'p-5')}>
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <h4 className="truncate text-base font-medium text-[#ededed]">{batch.name}</h4>
+                <h4 className="truncate text-base font-medium text-fg">{batch.name}</h4>
                 <Ledger batch={batch} className="mt-1" />
               </div>
-              <span className="flex shrink-0 items-center gap-2 text-xs text-[#a1a1a6]">
+              <span className="flex shrink-0 items-center gap-2 text-xs text-fg-2">
                 <span
                   className="h-1.5 w-1.5 rounded-full"
-                  style={{ backgroundColor: batch.status === 'active' ? '#4cc38a' : INK.muted }}
+                  style={{ backgroundColor: batch.status === 'active' ? 'var(--pos)' : INK.muted }}
                 />
                 {sentence(batch.status)}
               </span>
             </div>
-            <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-4 border-t border-white/[0.08] pt-4">
+            <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-4 border-t border-fg/[0.08] pt-4">
               <DetailStat label="FCR" value={formatFcr(batch.fcr)} />
               <DetailStat
                 label="Mortality"
@@ -681,21 +681,21 @@ function PageHeader({ count, canViewFinance }: { count: number; canViewFinance: 
         <Link
           href="/dashboard"
           className={cn(
-            'mb-4 inline-flex items-center gap-2 rounded-md text-sm text-[#a1a1a6] transition-colors duration-150 hover:text-[#ededed]',
+            'mb-4 inline-flex items-center gap-2 rounded-md text-sm text-fg-2 transition-colors duration-150 hover:text-fg',
             focusRing
           )}
         >
           <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
           Dashboard
         </Link>
-        <h1 className="text-3xl font-medium leading-tight text-[#ededed]">Batch comparison</h1>
-        <p className="mt-2 text-sm text-[#a1a1a6]">
+        <h1 className="text-3xl font-medium leading-tight text-fg">Batch comparison</h1>
+        <p className="mt-2 text-sm text-fg-2">
           {canViewFinance
             ? 'Profit, eggs, feed conversion and mortality, side by side'
             : 'Eggs, feed conversion and mortality, side by side'}
         </p>
       </div>
-      <span className="font-mono text-xs tabular-nums text-[#85858b]">{plural(count, 'batch')} on this farm</span>
+      <span className="font-mono text-xs tabular-nums text-fg-3">{plural(count, 'batch')} on this farm</span>
     </div>
   )
 }
@@ -713,11 +713,11 @@ function Stat({
 }) {
   return (
     <div className={cn(card, 'min-w-0 p-5', className)}>
-      <p className="text-sm text-[#a1a1a6]">{label}</p>
+      <p className="text-sm text-fg-2">{label}</p>
       <p
         className={cn(
           'mt-2 truncate text-2xl font-medium tabular-nums leading-none',
-          negative ? 'text-[#e5484d]' : 'text-[#ededed]'
+          negative ? 'text-neg-solid' : 'text-fg'
         )}
       >
         {value}
@@ -729,11 +729,11 @@ function Stat({
 function LeaderFigure({ label, value, negative = false }: { label: string; value: string; negative?: boolean }) {
   return (
     <div className="sm:px-6 sm:first:pl-0 sm:last:pr-0">
-      <dt className="text-sm text-[#a1a1a6]">{label}</dt>
+      <dt className="text-sm text-fg-2">{label}</dt>
       <dd
         className={cn(
           'mt-1 text-xl font-medium tabular-nums',
-          negative ? 'text-[#e5484d]' : 'text-[#ededed]'
+          negative ? 'text-neg-solid' : 'text-fg'
         )}
       >
         {value}
@@ -745,11 +745,11 @@ function LeaderFigure({ label, value, negative = false }: { label: string; value
 function DetailStat({ label, value, negative = false }: { label: string; value: string; negative?: boolean }) {
   return (
     <div className="min-w-0">
-      <dt className="text-xs text-[#a1a1a6]">{label}</dt>
+      <dt className="text-xs text-fg-2">{label}</dt>
       <dd
         className={cn(
           'mt-1 truncate text-base font-medium tabular-nums',
-          negative ? 'text-[#e5484d]' : 'text-[#ededed]'
+          negative ? 'text-neg-solid' : 'text-fg'
         )}
       >
         {value}
@@ -760,14 +760,14 @@ function DetailStat({ label, value, negative = false }: { label: string; value: 
 
 function EmptyState() {
   return (
-    <div className="flex h-[340px] flex-col items-center justify-center rounded-xl border border-dashed border-white/[0.08] px-6 text-center">
-      <p className="text-base font-medium text-[#ededed]">No batches shown</p>
-      <p className="mt-2 text-sm text-[#a1a1a6]">Select a batch from the list, or show one you hid</p>
+    <div className="flex h-[340px] flex-col items-center justify-center rounded-xl border border-dashed border-fg/[0.08] px-6 text-center">
+      <p className="text-base font-medium text-fg">No batches shown</p>
+      <p className="mt-2 text-sm text-fg-2">Select a batch from the list, or show one you hid</p>
     </div>
   )
 }
 
-const tooltipBox = 'rounded-lg border border-white/[0.08] bg-[#232325] px-3 py-2 text-xs shadow-[0_8px_24px_rgba(0,0,0,0.4)]'
+const tooltipBox = 'rounded-lg border border-fg/[0.08] bg-raised px-3 py-2 text-xs shadow-[0_8px_24px_rgba(0,0,0,0.4)]'
 
 function MetricTooltip({
   active,
@@ -783,8 +783,8 @@ function MetricTooltip({
   if (!active || !payload?.length) return null
   return (
     <div className={tooltipBox}>
-      <p className="text-[#a1a1a6]">{payload[0]?.payload?.name ?? label}</p>
-      <p className="mt-1 font-medium tabular-nums text-[#ededed]">{format(Number(payload[0]?.value || 0))}</p>
+      <p className="text-fg-2">{payload[0]?.payload?.name ?? label}</p>
+      <p className="mt-1 font-medium tabular-nums text-fg">{format(Number(payload[0]?.value || 0))}</p>
     </div>
   )
 }
@@ -793,11 +793,11 @@ function CurrencyTooltip({ active, payload, label }: { active?: boolean; payload
   if (!active || !payload?.length) return null
   return (
     <div className={tooltipBox}>
-      <p className="mb-2 text-[#a1a1a6]">{label}</p>
+      <p className="mb-2 text-fg-2">{label}</p>
       <div className="space-y-1">
         {payload.map((item: any) => (
-          <p key={item.dataKey} className="flex items-center justify-between gap-4 text-[#ededed]">
-            <span className="flex items-center gap-2 text-[#a1a1a6]">
+          <p key={item.dataKey} className="flex items-center justify-between gap-4 text-fg">
+            <span className="flex items-center gap-2 text-fg-2">
               <span className="h-2 w-2 rounded-sm" style={{ backgroundColor: item.color || item.fill }} />
               {item.name ?? item.dataKey}
             </span>

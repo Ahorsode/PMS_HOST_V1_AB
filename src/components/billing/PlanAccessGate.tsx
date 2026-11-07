@@ -41,7 +41,7 @@ function StatusBanner({ status }: { status: PlanStatus }) {
   if (!message) return null;
 
   return (
-    <div className="mb-4 flex flex-col gap-3 rounded-lg border border-white/[0.08] bg-white/[0.04] px-4 py-3 text-sm text-amber-100 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mb-4 flex flex-col gap-3 rounded-lg border border-fg/[0.08] bg-fg/[0.04] px-4 py-3 text-sm text-amber-100 sm:flex-row sm:items-center sm:justify-between">
       <span className="flex items-start gap-2 font-medium">
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
         {message}
@@ -68,18 +68,18 @@ export function PlanAccessGate({ status, children }: { status: PlanStatus; child
   if (status.state === 'LOCKED' && !isOpenPage) {
     return (
       <div className="mx-auto flex min-h-[60vh] max-w-lg flex-col items-center justify-center px-5 py-9 text-center">
-        <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.04]">
-          <Lock className="h-9 w-9 text-[#f2777b]" />
+        <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-lg border border-fg/[0.08] bg-fg/[0.04]">
+          <Lock className="h-9 w-9 text-neg" />
         </div>
-        <h1 className="mb-3 text-3xl font-medium text-white">
+        <h1 className="mb-3 text-3xl font-medium text-fg">
           {status.isTrial ? 'Your free trial has ended' : 'Your plan has ended'}
         </h1>
-        <p className="mb-7 leading-relaxed text-white/75">
+        <p className="mb-7 leading-relaxed text-fg/75">
           Your records are safe. Choose a plan to unlock your farm and keep working.
         </p>
         <Link
           href="/dashboard/license-upgrade"
-          className="rounded-md bg-[#19191b] px-9 py-4 text-[11px] font-medium text-black transition-colors"
+          className="rounded-md bg-card px-9 py-4 text-[11px] font-medium text-page transition-colors"
         >
           Choose a plan
         </Link>

@@ -395,11 +395,11 @@ export function HealthScheduleManager({
     <div className="space-y-6">
       {/* New schedule form */}
       {canEdit ? (
-        <Card className="border border-white/[0.08] bg-[#19191b]">
+        <Card className="border border-fg/[0.08] bg-card">
           <CardContent className="p-6">
             <div className="flex items-center gap-2 mb-5">
-              <Plus className="w-5 h-5 text-[#85858b]" />
-              <h3 className="text-lg font-medium text-white tracking-normal">
+              <Plus className="w-5 h-5 text-fg-3" />
+              <h3 className="text-lg font-medium text-fg tracking-normal">
                 New health schedule
               </h3>
             </div>
@@ -412,8 +412,8 @@ export function HealthScheduleManager({
                 className={cn(
                   "flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border text-sm font-medium transition-colors",
                   isVaccine
-                    ? "bg-white/[0.04] text-[#d9a441] border-white/[0.08]"
-                    : "bg-white/5 text-white/60 border-white/10 hover:bg-white/10"
+                    ? "bg-fg/[0.04] text-yolk border-fg/[0.08]"
+                    : "bg-fg/5 text-fg/60 border-fg/10 hover:bg-fg/10"
                 )}
               >
                 <Syringe className="w-4 h-4" /> Vaccination
@@ -424,8 +424,8 @@ export function HealthScheduleManager({
                 className={cn(
                   "flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border text-sm font-medium transition-colors",
                   !isVaccine
-                    ? "bg-white/[0.06] text-[#a1a1a6] border-white/[0.08]"
-                    : "bg-white/5 text-white/60 border-white/10 hover:bg-white/10"
+                    ? "bg-fg/[0.06] text-fg-2 border-fg/[0.08]"
+                    : "bg-fg/5 text-fg/60 border-fg/10 hover:bg-fg/10"
                 )}
               >
                 <Pill className="w-4 h-4" /> Medication
@@ -448,8 +448,8 @@ export function HealthScheduleManager({
                 />
               </div>
 
-              <p className="-mt-1 flex items-center gap-1.5 text-xs text-white/50">
-                <Boxes className="w-3.5 h-3.5 text-[#a1a1a6]" />
+              <p className="-mt-1 flex items-center gap-1.5 text-xs text-fg/50">
+                <Boxes className="w-3.5 h-3.5 text-fg-2" />
                 {inventory.length > 0
                   ? `${isVaccine ? "Vaccines" : "Medications"} are sourced from your Inventory stock.`
                   : `No ${isVaccine ? "vaccine" : "medicine"} in inventory yet — use “Add new”, or stock it under Inventory first.`}
@@ -468,7 +468,7 @@ export function HealthScheduleManager({
               {/* Usage type — ONLY shown when adding a brand-new item. */}
               {isAddingNew && (
                 <div>
-                  <label className="text-xs font-medium text-white/70 block mb-2">
+                  <label className="text-xs font-medium text-fg/70 block mb-2">
                     Usage (set once for this new item)
                   </label>
                   <div className="flex gap-2">
@@ -478,8 +478,8 @@ export function HealthScheduleManager({
                       className={cn(
                         "flex-1 px-3 py-2.5 rounded-lg border text-xs font-medium transition-colors",
                         newUsageType === "ONE_TIME"
-                          ? "bg-white/[0.04] text-[#34d399] border-white/[0.08]"
-                          : "bg-white/5 text-white/60 border-white/10 hover:bg-white/10"
+                          ? "bg-fg/[0.04] text-accent border-fg/[0.08]"
+                          : "bg-fg/5 text-fg/60 border-fg/10 hover:bg-fg/10"
                       )}
                     >
                       One-time use
@@ -490,8 +490,8 @@ export function HealthScheduleManager({
                       className={cn(
                         "flex-1 px-3 py-2.5 rounded-lg border text-xs font-medium transition-colors",
                         newUsageType === "QUANTITY"
-                          ? "bg-white/[0.04] text-[#34d399] border-white/[0.08]"
-                          : "bg-white/5 text-white/60 border-white/10 hover:bg-white/10"
+                          ? "bg-fg/[0.04] text-accent border-fg/[0.08]"
+                          : "bg-fg/5 text-fg/60 border-fg/10 hover:bg-fg/10"
                       )}
                     >
                       Set quantity
@@ -501,7 +501,7 @@ export function HealthScheduleManager({
               )}
 
               {isNewItem && resolvedName && (
-                <p className="-mt-1 flex items-center gap-1.5 text-xs text-[#ededed]">
+                <p className="-mt-1 flex items-center gap-1.5 text-xs text-fg">
                   <Sparkles className="w-3.5 h-3.5" />
                   Save “{resolvedName}” to inventory first, then select it here — or pick a batch
                   and use Add schedule to save the item and schedule together.
@@ -510,8 +510,8 @@ export function HealthScheduleManager({
 
               {/* For an EXISTING item, show its locked usage type (read-only). */}
               {!isAddingNew && selectedItem && (
-                <p className="-mt-1 flex items-center gap-1.5 text-xs text-white/50">
-                  <Zap className="w-3.5 h-3.5 text-[#85858b]" />
+                <p className="-mt-1 flex items-center gap-1.5 text-xs text-fg/50">
+                  <Zap className="w-3.5 h-3.5 text-fg-3" />
                   {showQuantity
                     ? `Quantity-tracked item (in ${selectedItem.unit}).`
                     : "One-time use item — no quantity needed."}
@@ -570,36 +570,36 @@ export function HealthScheduleManager({
 
               {/* Staged list for multi-add */}
               {drafts.length > 0 && (
-                <div className="rounded-lg border border-white/10 bg-white/5 p-3 space-y-2">
-                  <p className="text-xs font-medium text-white/60">
+                <div className="rounded-lg border border-fg/10 bg-fg/5 p-3 space-y-2">
+                  <p className="text-xs font-medium text-fg/60">
                     Staged to save ({drafts.length})
                   </p>
                   {drafts.map((d) => (
                     <div
                       key={d._key}
-                      className="flex items-center gap-2 text-xs bg-black/20 rounded-md px-3 py-2"
+                      className="flex items-center gap-2 text-xs bg-fg/[0.04] rounded-md px-3 py-2"
                     >
                       {d.type === "VACCINATION" ? (
-                        <Syringe className="w-3.5 h-3.5 text-[#85858b] shrink-0" />
+                        <Syringe className="w-3.5 h-3.5 text-fg-3 shrink-0" />
                       ) : (
-                        <Pill className="w-3.5 h-3.5 text-[#a1a1a6] shrink-0" />
+                        <Pill className="w-3.5 h-3.5 text-fg-2 shrink-0" />
                       )}
-                      <span className="font-medium text-white truncate">{d.name}</span>
-                      <span className="text-white/40">·</span>
-                      <span className="text-white/60 truncate">{d.batchLabel}</span>
-                      <span className="text-white/40">·</span>
-                      <span className="text-white/60">
+                      <span className="font-medium text-fg truncate">{d.name}</span>
+                      <span className="text-fg/40">·</span>
+                      <span className="text-fg/60 truncate">{d.batchLabel}</span>
+                      <span className="text-fg/40">·</span>
+                      <span className="text-fg/60">
                         {d.usageType === "QUANTITY"
                           ? `${d.quantity} ${d.unit}`
                           : "One-time"}
                       </span>
                       {d.isNewItem && (
-                        <span className="text-[#ededed]">· new</span>
+                        <span className="text-fg">· new</span>
                       )}
                       <button
                         type="button"
                         onClick={() => removeDraft(d._key)}
-                        className="ml-auto text-[#f2777b] hover:text-[#f2777b]"
+                        className="ml-auto text-neg hover:text-neg"
                         aria-label="Remove staged item"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -610,20 +610,20 @@ export function HealthScheduleManager({
               )}
 
               {error && (
-                <p className="text-xs text-[#f2777b] font-medium">
+                <p className="text-xs text-neg font-medium">
                   {error}
                 </p>
               )}
 
               {successMsg && (
-                <p className="text-xs text-[#ededed] font-medium">
+                <p className="text-xs text-fg font-medium">
                   {successMsg}
                 </p>
               )}
 
               {isAddingNew && resolvedName && (
-                <div className="rounded-lg border border-white/[0.08] bg-white/[0.04] p-3">
-                  <p className="text-xs font-medium text-[#ededed] mb-2">
+                <div className="rounded-lg border border-fg/[0.08] bg-fg/[0.04] p-3">
+                  <p className="text-xs font-medium text-fg mb-2">
                     Step 1 — stock this item
                   </p>
                   <Button
@@ -633,18 +633,18 @@ export function HealthScheduleManager({
                     disabled={!canSaveToInventory}
                     isLoading={isSavingItem}
                     loadingText="Saving…"
-                    className="w-full sm:w-auto border-white/[0.08] text-[#ededed] hover:bg-white/[0.04]"
+                    className="w-full sm:w-auto border-fg/[0.08] text-fg hover:bg-fg/[0.04]"
                   >
                     <Boxes className="w-4 h-4" />
                     Save “{resolvedName}” to inventory
                   </Button>
-                  <p className="mt-2 text-xs text-white/50">
+                  <p className="mt-2 text-xs text-fg/50">
                     No batch required. After saving, it appears in the {isVaccine ? "Vaccine" : "Medication"} dropdown above.
                   </p>
                 </div>
               )}
 
-              <p className="flex items-center gap-1.5 text-xs text-white/40">
+              <p className="flex items-center gap-1.5 text-xs text-fg/40">
                 <ListPlus className="w-3.5 h-3.5" />
                 Step 2 — Select a batch, then Add schedule (or stage several with “Add another”).
               </p>
@@ -667,7 +667,7 @@ export function HealthScheduleManager({
           </CardContent>
         </Card>
       ) : (
-        <div className="bg-[#19191b]/50 rounded-lg border border-dashed border-white/[0.08] p-5 text-center text-sm text-[#85858b]">
+        <div className="bg-card/50 rounded-lg border border-dashed border-fg/[0.08] p-5 text-center text-sm text-fg-3">
           You have read-only access to health schedules.
         </div>
       )}
@@ -676,7 +676,7 @@ export function HealthScheduleManager({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ScheduleList
           title="Vaccination schedule"
-          icon={<Syringe className="w-4 h-4 text-[#85858b]" />}
+          icon={<Syringe className="w-4 h-4 text-fg-3" />}
           accent="amber"
           type="VACCINATION"
           records={vaccinations}
@@ -687,7 +687,7 @@ export function HealthScheduleManager({
         />
         <ScheduleList
           title="Medication schedule"
-          icon={<Pill className="w-4 h-4 text-[#a1a1a6]" />}
+          icon={<Pill className="w-4 h-4 text-fg-2" />}
           accent="sky"
           type="MEDICATION"
           records={medications}
@@ -735,33 +735,33 @@ function ScheduleList({
   today.setHours(0, 0, 0, 0);
 
   return (
-    <div className="bg-[#19191b] rounded-xl border border-white/[0.08] overflow-hidden">
+    <div className="bg-card rounded-xl border border-fg/[0.08] overflow-hidden">
       <div
         className={cn(
-          "px-5 py-4 border-b border-white/[0.08] flex items-center gap-2",
-          accent === "amber" ? "bg-white/[0.04]" : "bg-white/[0.06]"
+          "px-5 py-4 border-b border-fg/[0.08] flex items-center gap-2",
+          accent === "amber" ? "bg-fg/[0.04]" : "bg-fg/[0.06]"
         )}
       >
         {icon}
         <h3
           className={cn(
             "font-medium text-sm",
-            "text-[#ededed]"
+            "text-fg"
           )}
         >
           {title}
         </h3>
-        <span className="ml-auto text-xs font-medium text-white/40">
+        <span className="ml-auto text-xs font-medium text-fg/40">
           {records.length}
         </span>
       </div>
 
       {records.length === 0 ? (
-        <div className="py-16 text-center text-white/50 text-sm">
+        <div className="py-16 text-center text-fg/50 text-sm">
           No {accent === "amber" ? "vaccinations" : "medications"} scheduled yet.
         </div>
       ) : (
-        <div className="divide-y divide-white/[0.06]">
+        <div className="divide-y divide-fg/[0.06]">
           {records.map((rec) => {
             const name = rec.vaccineName ?? rec.medicationName ?? "—";
             const date = new Date(rec.scheduledDate);
@@ -775,17 +775,17 @@ function ScheduleList({
                 key={rec.id}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="flex items-center gap-3 px-5 py-3 hover:bg-white/[0.03] transition-colors"
+                className="flex items-center gap-3 px-5 py-3 hover:bg-fg/[0.03] transition-colors"
               >
                 {isDone ? (
-                  <CheckCircle2 className="w-4 h-4 text-[#85858b] flex-shrink-0" />
+                  <CheckCircle2 className="w-4 h-4 text-fg-3 flex-shrink-0" />
                 ) : isCancelled ? (
-                  <XCircle className="w-4 h-4 text-[#85858b] flex-shrink-0" />
+                  <XCircle className="w-4 h-4 text-fg-3 flex-shrink-0" />
                 ) : (
                   <Circle
                     className={cn(
                       "w-4 h-4 flex-shrink-0",
-                      isPast ? "text-[#f2777b]" : accent === "amber" ? "text-[#d9a441]" : "text-[#a1a1a6]"
+                      isPast ? "text-neg" : accent === "amber" ? "text-yolk" : "text-fg-2"
                     )}
                   />
                 )}
@@ -795,32 +795,32 @@ function ScheduleList({
                     <p
                       className={cn(
                         "text-sm font-medium truncate",
-                        isCancelled ? "text-[#85858b] line-through" : "text-white"
+                        isCancelled ? "text-fg-3 line-through" : "text-fg"
                       )}
                     >
                       {name}
                     </p>
                     {usage && (
-                      <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-white/10 text-white/60 border border-white/10 flex-shrink-0">
+                      <span className="px-1.5 py-0.5 rounded text-xs font-medium bg-fg/10 text-fg/60 border border-fg/10 flex-shrink-0">
                         {usage}
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-white/60 mt-0.5">
+                  <div className="flex items-center gap-2 text-xs text-fg/60 mt-0.5">
                     <span className="font-medium truncate">
                       {rec.batch?.batchName || "Unknown batch"}
                     </span>
-                    <span className="text-white/20">·</span>
+                    <span className="text-fg/20">·</span>
                     <span className="flex items-center gap-1">
                       <CalendarClock className="w-3 h-3" />
                       {formatDate(date)}
                     </span>
                     {isPast && !isDone && !isCancelled && (
-                      <span className="text-[#f2777b] font-medium">· Overdue</span>
+                      <span className="text-neg font-medium">· Overdue</span>
                     )}
                   </div>
                   {rec.notes && (
-                    <p className="text-xs text-white/40 mt-1 truncate">
+                    <p className="text-xs text-fg/40 mt-1 truncate">
                       {rec.notes}
                     </p>
                   )}
@@ -832,10 +832,10 @@ function ScheduleList({
                       value={rec.status}
                       disabled={isPending}
                       onChange={(e) => onStatusChange(type, rec.id, e.target.value)}
-                      className="h-9 rounded-md border border-white/10 bg-white/10 px-2 text-xs text-white font-medium focus:outline-none focus:ring-2 focus:ring-white/10 cursor-pointer disabled:opacity-50"
+                      className="h-9 rounded-md border border-fg/10 bg-fg/10 px-2 text-xs text-fg font-medium focus:outline-none focus:ring-2 focus:ring-fg/10 cursor-pointer disabled:opacity-50"
                     >
                       {STATUS_OPTIONS.map((o) => (
-                        <option key={o.value} value={o.value} className="bg-[#19191b]">
+                        <option key={o.value} value={o.value} className="bg-card">
                           {o.label}
                         </option>
                       ))}
@@ -844,7 +844,7 @@ function ScheduleList({
                       type="button"
                       disabled={isPending}
                       onClick={() => onDelete(type, rec.id)}
-                      className="p-2 rounded-md bg-white/[0.04] text-[#f2777b] border border-white/[0.08] hover:bg-white/[0.04] transition-colors disabled:opacity-50"
+                      className="p-2 rounded-md bg-fg/[0.04] text-neg border border-fg/[0.08] hover:bg-fg/[0.04] transition-colors disabled:opacity-50"
                       aria-label="Delete schedule"
                     >
                       {isPending ? (
@@ -859,10 +859,10 @@ function ScheduleList({
                     className={cn(
                       "px-2 py-1 rounded text-xs font-medium border flex-shrink-0",
                       isDone
-                        ? "bg-white/[0.04] text-[#ededed] border-white/[0.08]"
+                        ? "bg-fg/[0.04] text-fg border-fg/[0.08]"
                         : isCancelled
-                        ? "bg-gray-500/10 text-[#85858b] border-white/[0.08]"
-                        : "bg-white/[0.04] text-[#d9a441] border-white/[0.08]"
+                        ? "bg-gray-500/10 text-fg-3 border-fg/[0.08]"
+                        : "bg-fg/[0.04] text-yolk border-fg/[0.08]"
                     )}
                   >
                     {rec.status}

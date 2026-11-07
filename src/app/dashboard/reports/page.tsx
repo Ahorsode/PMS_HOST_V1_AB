@@ -30,7 +30,7 @@ export default async function ReportsPage() {
 
   if (!report) {
     return (
-      <div className="rounded-lg border border-white/[0.08] bg-white/[0.04] p-8 text-center text-sm font-medium text-[#f2777b]">
+      <div className="rounded-lg border border-fg/[0.08] bg-fg/[0.04] p-8 text-center text-sm font-medium text-neg">
         Failed to fetch farm data. Please ensure the farm is correctly initialized.
       </div>
     )

@@ -70,7 +70,7 @@ function getAccessStatus(license: DesktopLicenseRow) {
     return {
       label: daysAgo === null ? "Expired" : daysAgo === 0 ? "Expired today" : `Expired ${daysAgo} days ago`,
       shortLabel: "Expired",
-      className: "border-red-300/35 bg-white/[0.04] text-red-100",
+      className: "border-red-300/35 bg-fg/[0.04] text-red-100",
     };
   }
 
@@ -78,7 +78,7 @@ function getAccessStatus(license: DesktopLicenseRow) {
     return {
       label: `Trial · ${daysBetween(now, expiryTime)} days left`,
       shortLabel: "Trial",
-      className: "border-amber-300/35 bg-white/[0.04] text-amber-100",
+      className: "border-amber-300/35 bg-fg/[0.04] text-amber-100",
     };
   }
 
@@ -86,7 +86,7 @@ function getAccessStatus(license: DesktopLicenseRow) {
     return {
       label: `Active · ends ${formatShortDate(license.licenseExpiresAt)}`,
       shortLabel: "Active",
-      className: "border-emerald-300/35 bg-white/[0.04] text-[#ededed]",
+      className: "border-emerald-300/35 bg-fg/[0.04] text-fg",
     };
   }
 
@@ -94,14 +94,14 @@ function getAccessStatus(license: DesktopLicenseRow) {
     return {
       label: "Active · no expiry recorded",
       shortLabel: "Active",
-      className: "border-emerald-300/35 bg-white/[0.04] text-[#ededed]",
+      className: "border-emerald-300/35 bg-fg/[0.04] text-fg",
     };
   }
 
   return {
     label: license.status || "Unknown",
     shortLabel: license.status || "Unknown",
-    className: "border-white/15 bg-white/10 text-white/75",
+    className: "border-fg/15 bg-fg/10 text-fg/75",
   };
 }
 
@@ -113,19 +113,19 @@ export default function ConnectedDevicesClient({ licenses }: ConnectedDevicesCli
   if (licenses.length === 0) {
     return (
       <div className="space-y-6">
-        <Card className="border border-white/15 bg-black/40">
+        <Card className="border border-fg/15 bg-fg/[0.04]">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-xl text-white">
-              <Monitor className="h-5 w-5 text-[#85858b]" />
+            <CardTitle className="flex items-center gap-2 text-xl text-fg">
+              <Monitor className="h-5 w-5 text-fg-3" />
               No connected devices
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="max-w-2xl text-sm leading-6 text-white/70">
+            <p className="max-w-2xl text-sm leading-6 text-fg/70">
               The desktop app automatically registers this farm on first login. Once a device signs in,
               it will appear here with its trial or subscription status.
             </p>
-            <div className="rounded-lg border border-white/[0.08] bg-white/[0.04] p-4 text-sm font-medium text-[#ededed]">
+            <div className="rounded-lg border border-fg/[0.08] bg-fg/[0.04] p-4 text-sm font-medium text-fg">
               No keys are needed. Devices receive access when your farm subscription is active.
             </div>
           </CardContent>
@@ -137,16 +137,16 @@ export default function ConnectedDevicesClient({ licenses }: ConnectedDevicesCli
 
   return (
     <div className="space-y-6">
-      <Card className="border border-white/15 bg-black/40">
+      <Card className="border border-fg/15 bg-fg/[0.04]">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-xl text-white">
-            <Monitor className="h-5 w-5 text-[#85858b]" />
+          <CardTitle className="flex items-center gap-2 text-xl text-fg">
+            <Monitor className="h-5 w-5 text-fg-3" />
             Connected devices
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-hidden rounded-lg border border-white/10">
-            <div className="grid grid-cols-[180px_minmax(0,1fr)_120px_130px_220px_160px] gap-4 border-b border-white/10 bg-white/5 px-4 py-3 text-xs font-medium text-white/50 max-xl:hidden">
+          <div className="overflow-hidden rounded-lg border border-fg/10">
+            <div className="grid grid-cols-[180px_minmax(0,1fr)_120px_130px_220px_160px] gap-4 border-b border-fg/10 bg-fg/5 px-4 py-3 text-xs font-medium text-fg/50 max-xl:hidden">
               <span>User</span>
               <span>Device name</span>
               <span>Type</span>
@@ -154,7 +154,7 @@ export default function ConnectedDevicesClient({ licenses }: ConnectedDevicesCli
               <span>Trial / expiry</span>
               <span>Last seen</span>
             </div>
-            <div className="divide-y divide-white/10">
+            <div className="divide-y divide-fg/10">
               {licenses.map((license) => {
                 const deviceKind = getDeviceKind(license.deviceType);
                 const DeviceIcon = deviceKind === "MOBILE" ? Smartphone : Monitor;
@@ -164,29 +164,29 @@ export default function ConnectedDevicesClient({ licenses }: ConnectedDevicesCli
                 return (
                   <div
                     key={license.id}
-                    className="grid grid-cols-1 gap-3 px-4 py-4 text-sm text-white/80 xl:grid-cols-[180px_minmax(0,1fr)_120px_130px_220px_160px] xl:items-center xl:gap-4"
+                    className="grid grid-cols-1 gap-3 px-4 py-4 text-sm text-fg/80 xl:grid-cols-[180px_minmax(0,1fr)_120px_130px_220px_160px] xl:items-center xl:gap-4"
                   >
                     <div className="min-w-0 text-sm">
-                      <p className="truncate font-medium text-white">{license.userName ?? "-"}</p>
+                      <p className="truncate font-medium text-fg">{license.userName ?? "-"}</p>
                       {license.userEmail ? (
-                        <p className="mt-0.5 truncate text-xs text-white/45">{license.userEmail}</p>
+                        <p className="mt-0.5 truncate text-xs text-fg/45">{license.userEmail}</p>
                       ) : null}
                     </div>
                     <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-white/10 bg-white/5 text-[#85858b]">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-fg/10 bg-fg/5 text-fg-3">
                         <DeviceIcon className="h-5 w-5" />
                       </div>
                       <div className="min-w-0">
-                        <p className="truncate font-medium text-white">{deviceName}</p>
+                        <p className="truncate font-medium text-fg">{deviceName}</p>
                         {license.hardwareId ? (
-                          <p className="mt-1 truncate font-[var(--font-payment-admin-mono)] text-xs text-white/45">
+                          <p className="mt-1 truncate font-[var(--font-payment-admin-mono)] text-xs text-fg/45">
                             {license.hardwareId}
                           </p>
                         ) : null}
                       </div>
                     </div>
                     <div>
-                      <span className="inline-flex rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-medium text-white/70">
+                      <span className="inline-flex rounded-full border border-fg/10 bg-fg/10 px-3 py-1 text-xs font-medium text-fg/70">
                         {deviceKind}
                       </span>
                     </div>
@@ -199,8 +199,8 @@ export default function ConnectedDevicesClient({ licenses }: ConnectedDevicesCli
                       <Clock3 className="h-3.5 w-3.5" />
                       {access.label}
                     </div>
-                    <div className="flex items-center gap-2 text-white/70">
-                      <RefreshCw className="h-4 w-4 text-white/40" />
+                    <div className="flex items-center gap-2 text-fg/70">
+                      <RefreshCw className="h-4 w-4 text-fg/40" />
                       <span>Last seen: {formatRelativeTime(license.lastSync)}</span>
                     </div>
                   </div>
@@ -217,9 +217,9 @@ export default function ConnectedDevicesClient({ licenses }: ConnectedDevicesCli
 
 function UpgradeLink() {
   return (
-    <p className="mt-8 text-sm text-white/50">
+    <p className="mt-8 text-sm text-fg/50">
       To extend access for all connected devices,{" "}
-      <Link href="/dashboard/license-upgrade" className="text-[#ededed] underline">
+      <Link href="/dashboard/license-upgrade" className="text-fg underline">
         upgrade your subscription
       </Link>
       .

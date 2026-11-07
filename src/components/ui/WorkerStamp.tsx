@@ -24,11 +24,11 @@ export function WorkerStamp({ user }: WorkerStampProps) {
       
       {/* Tooltip */}
       <div className="absolute bottom-full right-0 mb-2 hidden group-hover/worker:block z-50 animate-in fade-in zoom-in duration-150">
-        <div className="bg-[#19191b] text-white text-xs py-1.5 px-3 rounded-lg whitespace-nowrap border border-white/[0.08]">
+        <div className="bg-card text-fg text-xs py-1.5 px-3 rounded-lg whitespace-nowrap border border-fg/[0.08]">
           <p className="font-medium">{fullName}</p>
-          <p className="text-[#85858b] text-xs">{user.role}</p>
+          <p className="text-fg-3 text-xs">{user.role}</p>
         </div>
-        <div className="w-1.5 h-1.5 bg-[#19191b] rotate-45 absolute -bottom-0.5 right-2.5 border-r border-b border-white/[0.08]"></div>
+        <div className="w-1.5 h-1.5 bg-card rotate-45 absolute -bottom-0.5 right-2.5 border-r border-b border-fg/[0.08]"></div>
       </div>
     </div>
   );

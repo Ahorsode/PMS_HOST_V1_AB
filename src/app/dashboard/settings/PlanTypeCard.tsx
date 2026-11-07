@@ -50,7 +50,7 @@ export function PlanTypeCard({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5 text-[#85858b]" />
+          <Users className="h-5 w-5 text-fg-3" />
           Plan type
         </CardTitle>
       </CardHeader>
@@ -61,21 +61,21 @@ export function PlanTypeCard({
             const selected = option.value === planType;
             const content = (
               <>
-                <span className="flex items-center gap-2 text-base font-medium text-white">
-                  <Icon className="h-5 w-5 text-[#85858b]" />
+                <span className="flex items-center gap-2 text-base font-medium text-fg">
+                  <Icon className="h-5 w-5 text-fg-3" />
                   {option.label}
                   {selected ? (
-                    <span className="rounded-full bg-white/[0.04] px-2 py-0.5 text-xs font-medium text-[#ededed]">
+                    <span className="rounded-full bg-fg/[0.04] px-2 py-0.5 text-xs font-medium text-fg">
                       Current
                     </span>
                   ) : null}
                 </span>
-                <span className="text-xs leading-5 text-white/70">{option.audience} {priceSummaries[option.value]}.</span>
+                <span className="text-xs leading-5 text-fg/70">{option.audience} {priceSummaries[option.value]}.</span>
               </>
             );
             const className = cn(
               'flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-colors',
-              selected ? 'border-white/[0.12] bg-white/[0.04]' : 'border-white/10 bg-white/5 hover:border-white/30',
+              selected ? 'border-fg/[0.12] bg-fg/[0.04]' : 'border-fg/10 bg-fg/5 hover:border-fg/30',
             );
 
             if (!selected && onPaidPlan) {
@@ -100,7 +100,7 @@ export function PlanTypeCard({
             );
           })}
         </div>
-        <p className="text-xs leading-5 text-white/60">
+        <p className="text-xs leading-5 text-fg/60">
           {onPaidPlan
             ? 'You are on a paid plan. Choosing the other type takes you to the Plans page to buy a plan of that type.'
             : 'Switching changes which plans you see on the Plans page. Solo farms cannot have staff.'}

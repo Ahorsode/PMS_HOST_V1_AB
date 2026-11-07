@@ -16,19 +16,19 @@ export default async function FeedAnalyticsPage() {
       <Breadcrumbs items={[{ label: 'Feed & inventory', href: '/dashboard/feed' }, { label: 'Feed analytics' }]} />
       
       <header className="px-1">
-        <h1 className="text-3xl font-medium leading-tight text-[#ededed]">Feed analytics</h1>
-        <p className="mt-2 text-sm text-[#a1a1a6]">Stock levels and low-stock alerts for feed</p>
+        <h1 className="text-3xl font-medium leading-tight text-fg">Feed analytics</h1>
+        <p className="mt-2 text-sm text-fg-2">Stock levels and low-stock alerts for feed</p>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <MetricBox title="Inventory items" value={feedInventory.length.toString()} icon={Package} color="text-[#ededed]" bgColor="bg-white/[0.04]" />
-        <MetricBox title="Low stock alerts" value={lowStock.length.toString()} icon={AlertTriangle} color="text-[#f2777b]" bgColor="bg-white/[0.04]" />
+        <MetricBox title="Inventory items" value={feedInventory.length.toString()} icon={Package} color="text-fg" bgColor="bg-fg/[0.04]" />
+        <MetricBox title="Low stock alerts" value={lowStock.length.toString()} icon={AlertTriangle} color="text-neg" bgColor="bg-fg/[0.04]" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-         <div className="rounded-xl border border-white/[0.08] bg-[#19191b] overflow-hidden">
-            <div className="px-5 py-4 border-b border-white/[0.08]">
-               <h2 className="text-lg font-medium text-[#ededed]">Stock levels</h2>
+         <div className="rounded-xl border border-fg/[0.08] bg-card overflow-hidden">
+            <div className="px-5 py-4 border-b border-fg/[0.08]">
+               <h2 className="text-lg font-medium text-fg">Stock levels</h2>
             </div>
             <div className="p-5 space-y-5">
                {feedInventory.map((item: any) => {
@@ -37,14 +37,14 @@ export default async function FeedAnalyticsPage() {
                  return (
                  <div key={item.id} className="space-y-2">
                     <div className="flex justify-between items-center">
-                       <p className="text-white font-medium text-sm">{item.itemName}</p>
-                       <span className={`text-xs font-medium ${low ? 'text-[#f2777b]' : 'text-emerald-400'}`}>
+                       <p className="text-fg font-medium text-sm">{item.itemName}</p>
+                       <span className={`text-xs font-medium ${low ? 'text-neg' : 'text-emerald-400'}`}>
                           {item.stockLevel} {item.unit || 'bags'} left
                        </span>
                     </div>
-                    <div className="h-1.5 bg-white/[0.06] rounded-full overflow-hidden">
+                    <div className="h-1.5 bg-fg/[0.06] rounded-full overflow-hidden">
                        <div 
-                         className={`h-full rounded-full ${low ? 'bg-[#e5484d]' : 'bg-[#4a4a4f]'}`}
+                         className={`h-full rounded-full ${low ? 'bg-neg-solid' : 'bg-bar'}`}
                          style={{ width: `${Math.min(100, threshold > 0 ? (item.stockLevel / threshold) * 100 : 0)}%` }}
                        />
                     </div>
@@ -53,11 +53,11 @@ export default async function FeedAnalyticsPage() {
             </div>
          </div>
 
-         <div className="rounded-xl border border-white/[0.08] bg-[#19191b] overflow-hidden flex flex-col">
-            <div className="px-5 py-4 border-b border-white/[0.08]">
-               <h2 className="text-lg font-medium text-[#ededed]">Consumption insights (recent)</h2>
+         <div className="rounded-xl border border-fg/[0.08] bg-card overflow-hidden flex flex-col">
+            <div className="px-5 py-4 border-b border-fg/[0.08]">
+               <h2 className="text-lg font-medium text-fg">Consumption insights (recent)</h2>
             </div>
-            <div className="flex-1 overflow-y-auto max-h-[400px] divide-y divide-white/10">
+            <div className="flex-1 overflow-y-auto max-h-[400px] divide-y divide-fg/10">
                   {inventory
                     .flatMap((i: any) => i.feedingLogs)
                     .sort((a: any, b: any) =>
@@ -66,14 +66,14 @@ export default async function FeedAnalyticsPage() {
                     )
                     .slice(0, 10)
                     .map((log: any, idx: number) => (
-                    <div key={idx} className="hover:bg-white/[0.02] px-5 py-3 flex items-center justify-between">
+                    <div key={idx} className="hover:bg-fg/[0.02] px-5 py-3 flex items-center justify-between">
                        <div>
-                          <p className="text-white font-medium text-xs">{getBreedDisplayName(log.batch?.breedType)}</p>
-                          <p className="text-white/60 text-xs font-medium">{log.feedType}</p>
+                          <p className="text-fg font-medium text-xs">{getBreedDisplayName(log.batch?.breedType)}</p>
+                          <p className="text-fg/60 text-xs font-medium">{log.feedType}</p>
                        </div>
                        <div className="text-right">
-                          <p className="text-[#ededed] font-medium text-sm tracking-normal">{log.amountConsumed} bags</p>
-                          <p className="text-white/60 text-xs">Logged consumption</p>
+                          <p className="text-fg font-medium text-sm tracking-normal">{log.amountConsumed} bags</p>
+                          <p className="text-fg/60 text-xs">Logged consumption</p>
                        </div>
                     </div>
                   ))}
@@ -85,8 +85,8 @@ export default async function FeedAnalyticsPage() {
 }
 
 const MetricBox = ({ title, value }: any) => (
-  <div className="min-w-0 rounded-xl border border-white/[0.08] bg-[#19191b] p-5">
-    <p className="text-sm text-[#a1a1a6]">{title}</p>
-    <p className="mt-2 truncate text-2xl font-medium leading-none tabular-nums text-[#ededed]">{value}</p>
+  <div className="min-w-0 rounded-xl border border-fg/[0.08] bg-card p-5">
+    <p className="text-sm text-fg-2">{title}</p>
+    <p className="mt-2 truncate text-2xl font-medium leading-none tabular-nums text-fg">{value}</p>
   </div>
 );

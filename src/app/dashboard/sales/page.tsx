@@ -239,18 +239,18 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
     .slice(0, 5);
 
   const stats = [
-    { name: 'Total Revenue', value: formatCurrency(totalRevenue), icon: Banknote, color: 'text-[#ededed]', bg: 'bg-white/[0.04]' },
-    { name: 'Net Revenue', value: formatCurrency(netRevenue), icon: TrendingUp, color: 'text-[#a1a1a6]', bg: 'bg-white/[0.06]' },
-    { name: 'Active Orders', value: orders.length, icon: ShoppingCart, color: 'text-[#a1a1a6]', bg: 'bg-white/[0.06]' },
-    { name: 'Pending', value: pendingOrders, icon: Clock, color: 'text-[#ededed]', bg: 'bg-white/[0.04]' },
+    { name: 'Total Revenue', value: formatCurrency(totalRevenue), icon: Banknote, color: 'text-fg', bg: 'bg-fg/[0.04]' },
+    { name: 'Net Revenue', value: formatCurrency(netRevenue), icon: TrendingUp, color: 'text-fg-2', bg: 'bg-fg/[0.06]' },
+    { name: 'Active Orders', value: orders.length, icon: ShoppingCart, color: 'text-fg-2', bg: 'bg-fg/[0.06]' },
+    { name: 'Pending', value: pendingOrders, icon: Clock, color: 'text-fg', bg: 'bg-fg/[0.04]' },
   ];
 
   return (
     <div className="max-w-[1600px] mx-auto space-y-7 px-0 md:px-6 pt-2 pb-5 md:py-10 relative">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
         <div>
-          <h1 className="text-3xl font-medium leading-tight text-[#ededed]">Sales</h1>
-          <p className="mt-2 text-sm text-[#a1a1a6]">Orders, payments and what customers still owe</p>
+          <h1 className="text-3xl font-medium leading-tight text-fg">Sales</h1>
+          <p className="mt-2 text-sm text-fg-2">Orders, payments and what customers still owe</p>
         </div>
         <SalesActionsHeader 
           customers={customers} 
@@ -273,14 +273,14 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
       {/* Stats Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
         {stats.map((stat) => (
-          <Card key={stat.name} className={`${stat.bg} border-white/5 `}>
+          <Card key={stat.name} className={`${stat.bg} border-fg/5 `}>
             <CardContent className="pt-3 md:pt-6">
               <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="text-xs md:text-xs font-medium text-white/70 mb-1 break-words">{stat.name}</p>
-                  <p className="text-sm sm:text-lg md:text-2xl font-medium text-white tracking-tight break-words">{stat.value}</p>
+                  <p className="text-xs md:text-xs font-medium text-fg/70 mb-1 break-words">{stat.name}</p>
+                  <p className="text-sm sm:text-lg md:text-2xl font-medium text-fg tracking-tight break-words">{stat.value}</p>
                 </div>
-                <div className={`shrink-0 p-2 md:p-3 rounded-md ${stat.bg} border border-white/10`}>
+                <div className={`shrink-0 p-2 md:p-3 rounded-md ${stat.bg} border border-fg/10`}>
                   <stat.icon className={`w-4 h-4 md:w-6 md:h-6 ${stat.color}`} />
                 </div>
               </div>
@@ -291,12 +291,12 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-7">
         {/* Orders Table */}
-        <div className="lg:col-span-2 bg-white/10 rounded-[1.5rem] md:rounded-[2.5rem] border border-white/10 overflow-hidden">
-          <div className="p-3 md:p-8 border-b border-white/5 flex justify-between items-center">
-             <h3 className="text-lg md:text-xl font-medium text-white tracking-normal flex items-center gap-2">
-               <Clock className="w-5 h-5 text-[#85858b]" /> Recent orders
+        <div className="lg:col-span-2 bg-fg/10 rounded-[1.5rem] md:rounded-[2.5rem] border border-fg/10 overflow-hidden">
+          <div className="p-3 md:p-8 border-b border-fg/5 flex justify-between items-center">
+             <h3 className="text-lg md:text-xl font-medium text-fg tracking-normal flex items-center gap-2">
+               <Clock className="w-5 h-5 text-fg-3" /> Recent orders
              </h3>
-             <span className="text-xs font-medium bg-white/[0.04] text-[#ededed] px-2 py-1 rounded-full border border-white/[0.08]">
+             <span className="text-xs font-medium bg-fg/[0.04] text-fg px-2 py-1 rounded-full border border-fg/[0.08]">
                {orders.length} TOTAL
              </span>
           </div>
@@ -304,20 +304,20 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="bg-white/10">
-                  <th className="px-7 py-4 text-xs font-medium text-white/70">Order</th>
-                  <th className="px-7 py-4 text-xs font-medium text-white/70">Type</th>
-                  <th className="px-7 py-4 text-xs font-medium text-white/70">Customer</th>
-                  <th className="px-7 py-4 text-xs font-medium text-white/70">Amount</th>
-                  <th className="px-7 py-4 text-xs font-medium text-white/70">Status</th>
-                  <th className="px-7 py-4 text-right text-xs font-medium text-white/70">Action</th>
+                <tr className="bg-fg/10">
+                  <th className="px-7 py-4 text-xs font-medium text-fg/70">Order</th>
+                  <th className="px-7 py-4 text-xs font-medium text-fg/70">Type</th>
+                  <th className="px-7 py-4 text-xs font-medium text-fg/70">Customer</th>
+                  <th className="px-7 py-4 text-xs font-medium text-fg/70">Amount</th>
+                  <th className="px-7 py-4 text-xs font-medium text-fg/70">Status</th>
+                  <th className="px-7 py-4 text-right text-xs font-medium text-fg/70">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-fg/5">
                 {orders.map((order: SalesOrder, index: number) => (
-                  <tr key={order.id} className="hover:bg-white/5 transition-colors group">
+                  <tr key={order.id} className="hover:bg-fg/5 transition-colors group">
                     <td className="px-7 py-5">
-                      <span className="text-white font-medium text-sm tracking-normal tabular-nums">Order {index + 1}</span>
+                      <span className="text-fg font-medium text-sm tracking-normal tabular-nums">Order {index + 1}</span>
                     </td>
                     <td className="px-7 py-5">
                       <div className="flex flex-wrap gap-1">
@@ -326,10 +326,10 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                             key={label}
                             className={`px-2 py-0.5 rounded-full text-xs font-medium border ${
                               label === 'Eggs'
-                                ? 'bg-white/[0.04] text-[#d9a441] border-white/[0.08]'
+                                ? 'bg-fg/[0.04] text-yolk border-fg/[0.08]'
                                 : label === 'Birds'
-                                  ? 'bg-white/[0.06] text-[#a1a1a6] border-white/[0.08]'
-                                  : 'bg-white/10 text-white/60 border-white/10'
+                                  ? 'bg-fg/[0.06] text-fg-2 border-fg/[0.08]'
+                                  : 'bg-fg/10 text-fg/60 border-fg/10'
                             }`}
                           >
                             {label}
@@ -339,20 +339,20 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                     </td>
                     <td className="px-7 py-5">
                       <div className="flex flex-col">
-                        <span className="text-white/90 font-medium text-xs">{order.customer?.name || 'Walk-in Customer'}</span>
-                        <span className="text-xs text-white/70 font-medium mt-0.5">{order.customer?.phone || 'No Phone'}</span>
+                        <span className="text-fg/90 font-medium text-xs">{order.customer?.name || 'Walk-in Customer'}</span>
+                        <span className="text-xs text-fg/70 font-medium mt-0.5">{order.customer?.phone || 'No Phone'}</span>
                       </div>
                     </td>
                     <td className="px-7 py-5">
-                      <span className="text-[#ededed] font-medium text-sm">{formatCurrency(Number(order.totalAmount))}</span>
+                      <span className="text-fg font-medium text-sm">{formatCurrency(Number(order.totalAmount))}</span>
                     </td>
                     <td className="px-7 py-5">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium border ${
                         order.status === 'COMPLETED' || order.status === 'PAID'
-                          ? 'bg-white/[0.04] text-emerald-400 border-white/[0.08]'
+                          ? 'bg-fg/[0.04] text-emerald-400 border-fg/[0.08]'
                           : order.status === 'PENDING'
-                            ? 'bg-white/[0.04] text-[#d9a441] border-white/[0.08]'
-                            : 'bg-white/[0.04] text-[#f2777b] border-white/[0.08]'
+                            ? 'bg-fg/[0.04] text-yolk border-fg/[0.08]'
+                            : 'bg-fg/[0.04] text-neg border-fg/[0.08]'
                       }`}>
                         {order.status}
                       </span>
@@ -365,7 +365,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                 ))}
                 {orders.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="py-16 text-center text-white/70 font-medium tracking-normal">
+                    <td colSpan={6} className="py-16 text-center text-fg/70 font-medium tracking-normal">
                       No sales records found.
                     </td>
                   </tr>
@@ -376,15 +376,15 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
 
           <div className="block md:hidden p-3 space-y-3">
             {orders.map((order: SalesOrder, index: number) => (
-              <div key={order.id} className="bg-black/20 rounded-md p-3 border border-white/5 flex flex-col space-y-2">
+              <div key={order.id} className="bg-fg/[0.04] rounded-md p-3 border border-fg/5 flex flex-col space-y-2">
                  <div className="flex justify-between items-center">
-                   <span className="text-white font-medium text-sm tracking-normal tabular-nums">Order {index + 1}</span>
+                   <span className="text-fg font-medium text-sm tracking-normal tabular-nums">Order {index + 1}</span>
                    <span className={`px-2 py-1 rounded-full text-xs font-medium border ${
                         order.status === 'COMPLETED' || order.status === 'PAID'
-                          ? 'bg-white/[0.04] text-emerald-400 border-white/[0.08]'
+                          ? 'bg-fg/[0.04] text-emerald-400 border-fg/[0.08]'
                           : order.status === 'PENDING'
-                            ? 'bg-white/[0.04] text-[#d9a441] border-white/[0.08]'
-                            : 'bg-white/[0.04] text-[#f2777b] border-white/[0.08]'
+                            ? 'bg-fg/[0.04] text-yolk border-fg/[0.08]'
+                            : 'bg-fg/[0.04] text-neg border-fg/[0.08]'
                       }`}>
                      {order.status}
                    </span>
@@ -395,10 +395,10 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                        key={label}
                        className={`px-2 py-0.5 rounded-full text-xs font-medium border ${
                          label === 'Eggs'
-                           ? 'bg-white/[0.04] text-[#d9a441] border-white/[0.08]'
+                           ? 'bg-fg/[0.04] text-yolk border-fg/[0.08]'
                            : label === 'Birds'
-                             ? 'bg-white/[0.06] text-[#a1a1a6] border-white/[0.08]'
-                             : 'bg-white/10 text-white/60 border-white/10'
+                             ? 'bg-fg/[0.06] text-fg-2 border-fg/[0.08]'
+                             : 'bg-fg/10 text-fg/60 border-fg/10'
                        }`}
                      >
                        {label}
@@ -406,17 +406,17 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                    ))}
                  </div>
                  <div className="flex flex-col">
-                    <span className="text-white/90 font-medium text-xs">{order.customer?.name || 'Walk-in Customer'}</span>
-                    <span className="text-xs text-white/70 font-medium mt-0.5">{order.customer?.phone || 'No Phone'}</span>
+                    <span className="text-fg/90 font-medium text-xs">{order.customer?.name || 'Walk-in Customer'}</span>
+                    <span className="text-xs text-fg/70 font-medium mt-0.5">{order.customer?.phone || 'No Phone'}</span>
                  </div>
-                 <div className="flex justify-between items-center pt-2 border-t border-white/5">
-                    <span className="text-[#ededed] font-medium text-sm">{formatCurrency(Number(order.totalAmount))}</span>
+                 <div className="flex justify-between items-center pt-2 border-t border-fg/5">
+                    <span className="text-fg font-medium text-sm">{formatCurrency(Number(order.totalAmount))}</span>
                     <div className="flex items-center justify-end gap-2"><WorkerStamp user={order.user} /><SalesRowActions order={order} canEdit={canEdit} canRecordPayment={canRecordPayment} /></div>
                  </div>
               </div>
             ))}
             {orders.length === 0 && (
-              <div className="py-9 text-center text-white/70 font-medium tracking-normal">
+              <div className="py-9 text-center text-fg/70 font-medium tracking-normal">
                 No sales records found.
               </div>
             )}
@@ -425,26 +425,26 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
 
         {/* Top Customers Widget */}
         <div className="space-y-5">
-           <Card className="bg-[#1e1e20] border-white/[0.08]">
+           <Card className="bg-tile border-fg/[0.08]">
               <CardHeader>
-                <CardTitle className="text-[#ededed]">Sales velocity</CardTitle>
+                <CardTitle className="text-fg">Sales velocity</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center gap-3 mb-3">
-                   <div className="h-12 w-12 rounded-md bg-white/[0.04] flex items-center justify-center border border-white/[0.08]">
-                     <TrendingUp className="w-6 h-6 text-[#85858b]" />
+                   <div className="h-12 w-12 rounded-md bg-fg/[0.04] flex items-center justify-center border border-fg/[0.08]">
+                     <TrendingUp className="w-6 h-6 text-fg-3" />
                    </div>
                    <div>
-                     <p className="text-2xl font-medium text-white">{formatCurrency(avgDailyRevenue)}</p>
-                     <p className="text-xs font-medium text-white/70">Avg daily revenue</p>
+                     <p className="text-2xl font-medium text-fg">{formatCurrency(avgDailyRevenue)}</p>
+                     <p className="text-xs font-medium text-fg/70">Avg daily revenue</p>
                    </div>
                 </div>
-                <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden border border-white/5">
+                <div className="h-2 w-full bg-fg/10 rounded-full overflow-hidden border border-fg/5">
                    <div className="h-full bg-emerald-500 w-[65%]" />
                 </div>
                 {monthOverMonthChange !== null ? (
                   <p className={`text-xs font-medium mt-2 flex items-center gap-2 ${
-                    monthOverMonthChange >= 0 ? 'text-[#34d399]' : 'text-[#f2777b]'
+                    monthOverMonthChange >= 0 ? 'text-accent' : 'text-neg'
                   }`}>
                     {monthOverMonthChange >= 0 ? (
                       <CheckCircle2 className="w-3 h-3" />
@@ -454,33 +454,33 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                     {monthOverMonthChange >= 0 ? '+' : ''}{monthOverMonthChange.toFixed(1)}% vs last month
                   </p>
                 ) : (
-                  <p className="text-xs font-medium text-white/60 mt-2">
+                  <p className="text-xs font-medium text-fg/60 mt-2">
                     No prior month data
                   </p>
                 )}
               </CardContent>
            </Card>
 
-           <Card className="bg-white/10 border-white/10">
+           <Card className="bg-fg/10 border-fg/10">
               <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-white/80">Top customers</CardTitle>
-                <Users className="w-5 h-5 text-white/20" />
+                <CardTitle className="text-fg/80">Top customers</CardTitle>
+                <Users className="w-5 h-5 text-fg/20" />
               </CardHeader>
               <CardContent className="space-y-3">
                  {topCustomers.length === 0 ? (
-                   <p className="text-xs text-white/40 text-center py-4">No customer sales yet.</p>
+                   <p className="text-xs text-fg/40 text-center py-4">No customer sales yet.</p>
                  ) : topCustomers.map((cust: Customer, idx: number) => (
-                   <div key={cust.id} className="flex justify-between items-center gap-3 bg-black/20 p-2 rounded-md border border-white/5">
+                   <div key={cust.id} className="flex justify-between items-center gap-3 bg-fg/[0.04] p-2 rounded-md border border-fg/5">
                       <div className="flex items-center gap-2 min-w-0">
-                         <div className="w-8 h-8 rounded-md bg-white/10 flex items-center justify-center text-xs font-medium text-white/70 border border-white/10">
+                         <div className="w-8 h-8 rounded-md bg-fg/10 flex items-center justify-center text-xs font-medium text-fg/70 border border-fg/10">
                            {idx + 1}
                          </div>
-                         <span className="text-xs font-medium text-white/90 truncate">{cust.name}</span>
+                         <span className="text-xs font-medium text-fg/90 truncate">{cust.name}</span>
                       </div>
-                      <span className="text-xs font-medium text-[#ededed] tracking-normal shrink-0">{formatCurrency(customerRevenue[cust.id] ?? 0)}</span>
+                      <span className="text-xs font-medium text-fg tracking-normal shrink-0">{formatCurrency(customerRevenue[cust.id] ?? 0)}</span>
                    </div>
                  ))}
-                 <Link href="/dashboard/sales/customers" className="block text-center w-full py-2 rounded-md bg-white/10 border border-white/10 text-xs font-medium text-white/70 hover:bg-white/20 hover:text-white transition-colors mt-2">
+                 <Link href="/dashboard/sales/customers" className="block text-center w-full py-2 rounded-md bg-fg/10 border border-fg/10 text-xs font-medium text-fg/70 hover:bg-fg/20 hover:text-fg transition-colors mt-2">
                    View all CRM profiles
                  </Link>
               </CardContent>

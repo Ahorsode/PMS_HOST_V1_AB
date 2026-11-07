@@ -33,7 +33,7 @@ export const EggActionsHeader = ({
     <>
       <div className="flex flex-wrap items-center gap-2">
         <Link href="/dashboard/eggs/analytics" className={g.buttonSecondary}>
-          <BarChart3 className="h-4 w-4 text-[#a1a1a6]" strokeWidth={1.5} />
+          <BarChart3 className="h-4 w-4 text-fg-2" strokeWidth={1.5} />
           Egg analytics
         </Link>
         {canEdit && (
@@ -110,7 +110,7 @@ export const EggLogActions = ({
             aria-label="Delete egg record"
             title="Delete"
             onClick={() => setShowDeleteModal(true)}
-            className={`${g.iconButton} hover:text-[#e5484d]`}
+            className={`${g.iconButton} hover:text-neg-solid`}
           >
             <Trash2 className="h-4 w-4" strokeWidth={1.5} />
           </button>

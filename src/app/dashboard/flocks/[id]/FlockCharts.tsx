@@ -19,12 +19,12 @@ import { cn, formatCurrency } from '@/lib/utils'
 import { Panel, PanelHeader, tone } from '../flock-ui'
 
 const MONO = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace'
-const tick = { fill: '#85858b', fontSize: 11, fontFamily: MONO }
-const gridStroke = 'rgba(255,255,255,0.06)'
-const cursorFill = { fill: 'rgba(255,255,255,0.03)' }
-const cursorLine = { stroke: 'rgba(255,255,255,0.12)' }
-const ACCENT = '#34d399'
-const NEGATIVE = '#e5484d'
+const tick = { fill: 'var(--fg-3)', fontSize: 11, fontFamily: MONO }
+const gridStroke = 'color-mix(in srgb, var(--fg) 6%, transparent)'
+const cursorFill = { fill: 'color-mix(in srgb, var(--fg) 3%, transparent)' }
+const cursorLine = { stroke: 'color-mix(in srgb, var(--fg) 12%, transparent)' }
+const ACCENT = 'var(--accent)'
+const NEGATIVE = 'var(--neg-solid)'
 const compact = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 })
 const fullNumber = new Intl.NumberFormat('en-US')
 const cedi = (v: number) => `₵${compact.format(Number(v))}`
@@ -80,7 +80,7 @@ function HeaderMeta({ children, className }: { children: React.ReactNode; classN
 
 function ChartEmpty({ label }: { label: string }) {
   return (
-    <div className="flex h-60 items-center justify-center rounded-lg border border-dashed border-white/[0.08] px-6 text-center">
+    <div className="flex h-60 items-center justify-center rounded-lg border border-dashed border-fg/[0.08] px-6 text-center">
       <p className={cn('text-[13px]', tone.text2)}>{label}</p>
     </div>
   )
@@ -88,7 +88,7 @@ function ChartEmpty({ label }: { label: string }) {
 
 function TooltipBox({ label, rows }: { label: React.ReactNode; rows: { key: string; name: string; value: string; color?: string }[] }) {
   return (
-    <div className="rounded-lg border border-white/[0.08] bg-[#232325] px-3 py-2 text-xs">
+    <div className="rounded-lg border border-fg/[0.08] bg-raised px-3 py-2 text-xs">
       <p className={cn('mb-1 font-medium', tone.text)}>{label}</p>
       {rows.map((row) => (
         <p key={row.key} className={cn('flex items-center gap-2', tone.text2)}>
@@ -125,7 +125,7 @@ function summaryAmount(summary: FinanceSummaryPoint[], key: string) {
  * Revenue leads in the accent; the cost types are graded neutrals.
  */
 const LIFETIME_CATEGORIES = [
-  { key: 'initial', shortLabel: 'Initial', fill: '#a1a1a6', name: 'Initial (batch only)' },
+  { key: 'initial', shortLabel: 'Initial', fill: 'var(--fg-2)', name: 'Initial (batch only)' },
   { key: 'consumption', shortLabel: 'Feed & med', fill: '#7c7c82', name: 'Feed & med (by usage)' },
   { key: 'operating', shortLabel: 'Operating', fill: '#606066', name: 'Operating' },
   { key: 'general', shortLabel: 'General', fill: '#48484d', name: 'General share' },
@@ -298,7 +298,7 @@ export function FinanceTrendPanel({
                       iconType="square"
                       iconSize={8}
                       wrapperStyle={{ fontSize: 12, paddingTop: 12 }}
-                      formatter={(value) => <span style={{ color: '#a1a1a6' }}>{value}</span>}
+                      formatter={(value) => <span style={{ color: 'var(--fg-2)' }}>{value}</span>}
                     />
                     <Bar dataKey="revenue" fill={ACCENT} name="Revenue" radius={[4, 4, 0, 0]} maxBarSize={20} isAnimationActive={false} />
                     <Bar dataKey="initial" stackId="monthlyExp" fill={categoryFill('initial')} name="Initial" maxBarSize={20} isAnimationActive={false} />
@@ -360,7 +360,7 @@ export function EggTrendPanel({ data, eggsPerCrate = 30 }: { data: EggPoint[]; e
                 stroke={ACCENT}
                 strokeWidth={2}
                 dot={false}
-                activeDot={{ r: 4, fill: ACCENT, stroke: '#19191b', strokeWidth: 2 }}
+                activeDot={{ r: 4, fill: ACCENT, stroke: 'var(--card)', strokeWidth: 2 }}
                 isAnimationActive={false}
               />
             </LineChart>
@@ -383,7 +383,7 @@ export function MortalityTrendPanel({ data }: { data: MortalityPoint[] }) {
             <span className="h-2 w-2 rounded-sm" style={{ backgroundColor: NEGATIVE }} /> Deaths
           </span>
           <span className={cn('flex items-center gap-1.5', tone.text2)}>
-            <span className="h-px w-3 bg-[#a1a1a6]" /> Cumulative %
+            <span className="h-px w-3 bg-fg-2" /> Cumulative %
           </span>
         </span>
       }
@@ -414,7 +414,7 @@ export function MortalityTrendPanel({ data }: { data: MortalityPoint[] }) {
                         key: String(item.dataKey),
                         name: item.name,
                         value: item.dataKey === 'rate' ? `${Number(item.value).toFixed(2)}%` : fullNumber.format(Number(item.value)),
-                        color: item.dataKey === 'rate' ? '#a1a1a6' : NEGATIVE,
+                        color: item.dataKey === 'rate' ? 'var(--fg-2)' : NEGATIVE,
                       }))}
                     />
                   ) : null
@@ -426,10 +426,10 @@ export function MortalityTrendPanel({ data }: { data: MortalityPoint[] }) {
                 type="monotone"
                 dataKey="rate"
                 name="Cumulative %"
-                stroke="#a1a1a6"
+                stroke="var(--fg-2)"
                 strokeWidth={1.5}
                 dot={false}
-                activeDot={{ r: 3, fill: '#a1a1a6', stroke: '#19191b', strokeWidth: 2 }}
+                activeDot={{ r: 3, fill: 'var(--fg-2)', stroke: 'var(--card)', strokeWidth: 2 }}
                 isAnimationActive={false}
               />
             </ComposedChart>
@@ -461,7 +461,7 @@ export function SalesTrendPanel({ data }: { data: SalesPoint[] }) {
                 stroke={ACCENT}
                 strokeWidth={2}
                 dot={false}
-                activeDot={{ r: 4, fill: ACCENT, stroke: '#19191b', strokeWidth: 2 }}
+                activeDot={{ r: 4, fill: ACCENT, stroke: 'var(--card)', strokeWidth: 2 }}
                 isAnimationActive={false}
               />
             </LineChart>

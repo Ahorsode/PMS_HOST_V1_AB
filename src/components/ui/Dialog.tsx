@@ -16,13 +16,13 @@ interface DialogProps {
 }
 
 export const DialogTitle = ({ children, className, id }: { children: React.ReactNode, className?: string, id?: string }) => (
-  <h3 id={id} className={cn("text-lg font-medium text-[#ededed]", className)}>
+  <h3 id={id} className={cn("text-lg font-medium text-fg", className)}>
     {children}
   </h3>
 );
 
 export const DialogDescription = ({ children, className, id }: { children: React.ReactNode, className?: string, id?: string }) => (
-  <p id={id} className={cn("mt-1 text-sm text-[#a1a1a6]", className)}>
+  <p id={id} className={cn("mt-1 text-sm text-fg-2", className)}>
     {children}
   </p>
 );
@@ -82,13 +82,13 @@ export const Dialog = ({
             aria-labelledby={title ? dialogId : undefined}
             aria-describedby={description ? descriptionId : undefined}
             className={cn(
-              "relative w-full max-w-xl max-h-[calc(90dvh-5.5rem)] md:max-h-[90dvh] flex flex-col overflow-hidden rounded-xl border border-white/[0.08] bg-[#19191b] shadow-[0_8px_24px_rgba(0,0,0,0.4)]",
+              "relative w-full max-w-xl max-h-[calc(90dvh-5.5rem)] md:max-h-[90dvh] flex flex-col overflow-hidden rounded-xl border border-fg/[0.08] bg-card shadow-[0_8px_24px_rgba(0,0,0,0.4)]",
               className
             )}
           >
             {/* Header */}
             {(title || description) && (
-              <div className="flex items-center justify-between gap-4 border-b border-white/[0.08] px-5 py-4">
+              <div className="flex items-center justify-between gap-4 border-b border-fg/[0.08] px-5 py-4">
                 <div>
                   {title && (
                     <DialogTitle id={dialogId}>
@@ -103,7 +103,7 @@ export const Dialog = ({
                 </div>
                 <button
                   onClick={() => onOpenChange(false)}
-                  className="flex min-h-[40px] min-w-[40px] shrink-0 items-center justify-center rounded-lg text-[#85858b] transition-colors duration-150 hover:bg-white/[0.06] hover:text-[#ededed] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34d399]/60"
+                  className="flex min-h-[40px] min-w-[40px] shrink-0 items-center justify-center rounded-lg text-fg-3 transition-colors duration-150 hover:bg-fg/[0.06] hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
                   aria-label="Close dialog"
                 >
                   <X className="h-5 w-5" strokeWidth={1.5} />
@@ -115,7 +115,7 @@ export const Dialog = ({
             {!title && !description && (
               <button
                 onClick={() => onOpenChange(false)}
-                className="absolute right-4 top-4 z-10 flex min-h-[40px] min-w-[40px] items-center justify-center rounded-lg text-[#85858b] transition-colors duration-150 hover:bg-white/[0.06] hover:text-[#ededed] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#34d399]/60"
+                className="absolute right-4 top-4 z-10 flex min-h-[40px] min-w-[40px] items-center justify-center rounded-lg text-fg-3 transition-colors duration-150 hover:bg-fg/[0.06] hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
                 aria-label="Close dialog"
               >
                 <X className="h-5 w-5" strokeWidth={1.5} />

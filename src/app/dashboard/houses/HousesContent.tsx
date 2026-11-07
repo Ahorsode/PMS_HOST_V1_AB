@@ -91,10 +91,10 @@ export default function HousesPage({ houses, canEdit = true, openAddOnLoad = fal
 
   return (
     <div className="max-w-7xl mx-auto space-y-5 px-0 md:px-3 pt-2 pb-7 md:py-7">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-[#19191b] p-5 rounded-md shadow-sm border border-white/[0.08] gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-card p-5 rounded-md shadow-sm border border-fg/[0.08] gap-4">
         <div>
-          <h1 className="text-3xl font-medium leading-tight text-[#ededed]">Houses</h1>
-          <p className="mt-2 text-sm text-[#a1a1a6]">The houses your units live in</p>
+          <h1 className="text-3xl font-medium leading-tight text-fg">Houses</h1>
+          <p className="mt-2 text-sm text-fg-2">The houses your units live in</p>
         </div>
         {canEdit && (
           <Button onClick={() => setIsAdding(!isAdding)}>
@@ -105,9 +105,9 @@ export default function HousesPage({ houses, canEdit = true, openAddOnLoad = fal
       </div>
 
       {isAdding && (
-        <Card className="animate-in fade-in slide-in-from-top-4 duration-300 border-white/[0.08]">
+        <Card className="animate-in fade-in slide-in-from-top-4 duration-300 border-fg/[0.08]">
           <CardHeader>
-            <CardTitle className="text-[#ededed]">Register new house</CardTitle>
+            <CardTitle className="text-fg">Register new house</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-3">
@@ -117,7 +117,7 @@ export default function HousesPage({ houses, canEdit = true, openAddOnLoad = fal
               </div>
               <div className="flex justify-end gap-2 pt-3">
                 <Button type="button" variant="outline" onClick={() => setIsAdding(false)} disabled={isSaving}>Cancel</Button>
-                <Button type="submit" isLoading={isSaving} loadingText="Saving..." className="bg-[#ededed] hover:bg-white">Save house</Button>
+                <Button type="submit" isLoading={isSaving} loadingText="Saving..." className="bg-fg hover:bg-fg/90">Save house</Button>
               </div>
             </form>
           </CardContent>
@@ -125,9 +125,9 @@ export default function HousesPage({ houses, canEdit = true, openAddOnLoad = fal
       )}
 
       {editingHouse && (
-        <Card className="animate-in fade-in slide-in-from-top-4 duration-300 border-white/[0.08]">
+        <Card className="animate-in fade-in slide-in-from-top-4 duration-300 border-fg/[0.08]">
           <CardHeader>
-            <CardTitle className="text-[#a1a1a6]">Edit house: {editingHouse.name}</CardTitle>
+            <CardTitle className="text-fg-2">Edit house: {editingHouse.name}</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleUpdate} className="space-y-3">
@@ -137,7 +137,7 @@ export default function HousesPage({ houses, canEdit = true, openAddOnLoad = fal
               </div>
               <div className="flex justify-end gap-2 pt-3">
                 <Button type="button" variant="outline" onClick={() => setEditingHouse(null)} disabled={isSaving}>Cancel</Button>
-                <Button type="submit" isLoading={isSaving} loadingText="Updating..." className="bg-[#232325] hover:bg-[#232325]">Update house</Button>
+                <Button type="submit" isLoading={isSaving} loadingText="Updating..." className="bg-raised hover:bg-raised">Update house</Button>
               </div>
             </form>
           </CardContent>
@@ -147,10 +147,10 @@ export default function HousesPage({ houses, canEdit = true, openAddOnLoad = fal
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {houses.map((house) => (
           <MutationBoundary key={house.id} active={deletingHouseId === house.id} label="Deleting house...">
-          <Card className="group hover:border-white/[0.12] transition-colors border-dashed bg-[#19191b] shadow-sm hover:shadow-md">
+          <Card className="group hover:border-fg/[0.12] transition-colors border-dashed bg-card shadow-sm hover:shadow-md">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-lg font-medium flex items-center gap-2 text-white">
-                <Home className="w-4 h-4 text-[#85858b]" />
+              <CardTitle className="text-lg font-medium flex items-center gap-2 text-fg">
+                <Home className="w-4 h-4 text-fg-3" />
                 {house.name}
               </CardTitle>
               {canEdit && (
@@ -158,7 +158,7 @@ export default function HousesPage({ houses, canEdit = true, openAddOnLoad = fal
                   <button aria-label="Edit house" 
                     onClick={() => setEditingHouse(house)}
                     disabled={deletingHouseId === house.id}
-                    className="p-1.5 hover:bg-white/[0.06] rounded-md text-[#a1a1a6] transition-colors"
+                    className="p-1.5 hover:bg-fg/[0.06] rounded-md text-fg-2 transition-colors"
                     title="Edit house"
                   >
                     <Edit2 className="w-4 h-4" />
@@ -177,8 +177,8 @@ export default function HousesPage({ houses, canEdit = true, openAddOnLoad = fal
             <CardContent>
               <div className="space-y-2">
                 <div className="flex justify-between text-sm">
-                  <span className="text-[#85858b] font-medium">Capacity</span>
-                  <span className="font-medium text-white">{(house.capacity || 0).toLocaleString()} livestock</span>
+                  <span className="text-fg-3 font-medium">Capacity</span>
+                  <span className="font-medium text-fg">{(house.capacity || 0).toLocaleString()} livestock</span>
                 </div>
               </div>
             </CardContent>
@@ -187,8 +187,8 @@ export default function HousesPage({ houses, canEdit = true, openAddOnLoad = fal
         ))}
         
         {houses.length === 0 && (
-          <div className="col-span-full py-16 text-center border-2 border-dashed border-white/[0.08] rounded-lg">
-            <p className="text-[#85858b] font-medium">No houses configured yet. add your first house to manage flocks.</p>
+          <div className="col-span-full py-16 text-center border-2 border-dashed border-fg/[0.08] rounded-lg">
+            <p className="text-fg-3 font-medium">No houses configured yet. add your first house to manage flocks.</p>
           </div>
         )}
       </div>

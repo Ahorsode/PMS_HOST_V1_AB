@@ -35,7 +35,7 @@ export const SaleDetailClient = ({ sale }: SaleDetailClientProps) => {
             items={sale.items ?? []}
             getKey={(_item: any, idx: number) => idx}
             title={(item: any) => item.description}
-            badge={(item: any) => <span className="text-sm font-medium tabular-nums text-[#ededed]">{formatCurrency(item.totalPrice)}</span>}
+            badge={(item: any) => <span className="text-sm font-medium tabular-nums text-fg">{formatCurrency(item.totalPrice)}</span>}
             fields={(item: any) => [
               { label: 'Quantity', value: item.quantity },
               { label: 'Unit price', value: formatCurrency(item.unitPrice) },
@@ -44,19 +44,19 @@ export const SaleDetailClient = ({ sale }: SaleDetailClientProps) => {
           <table className="hidden w-full text-left md:table">
             <thead className={`border-b ${g.hairline}`}>
               <tr>
-                <th className="px-5 py-3 text-xs font-normal text-[#85858b]">Description</th>
-                <th className="px-5 py-3 text-right text-xs font-normal text-[#85858b]">Quantity</th>
-                <th className="px-5 py-3 text-right text-xs font-normal text-[#85858b]">Unit price</th>
-                <th className="px-5 py-3 text-right text-xs font-normal text-[#85858b]">Total</th>
+                <th className="px-5 py-3 text-xs font-normal text-fg-3">Description</th>
+                <th className="px-5 py-3 text-right text-xs font-normal text-fg-3">Quantity</th>
+                <th className="px-5 py-3 text-right text-xs font-normal text-fg-3">Unit price</th>
+                <th className="px-5 py-3 text-right text-xs font-normal text-fg-3">Total</th>
               </tr>
             </thead>
             <tbody>
               {sale.items?.map((item: any, idx: number) => (
-                <tr key={idx} className="border-b border-white/[0.06] transition-colors duration-150 hover:bg-white/[0.03]">
-                  <td className="px-5 py-3 text-sm text-[#ededed]">{item.description}</td>
-                  <td className="px-5 py-3 text-right text-sm tabular-nums text-[#ededed]">{item.quantity}</td>
-                  <td className="px-5 py-3 text-right text-sm tabular-nums text-[#a1a1a6]">{formatCurrency(item.unitPrice)}</td>
-                  <td className="px-5 py-3 text-right text-sm font-medium tabular-nums text-[#ededed]">{formatCurrency(item.totalPrice)}</td>
+                <tr key={idx} className="border-b border-fg/[0.06] transition-colors duration-150 hover:bg-fg/[0.03]">
+                  <td className="px-5 py-3 text-sm text-fg">{item.description}</td>
+                  <td className="px-5 py-3 text-right text-sm tabular-nums text-fg">{item.quantity}</td>
+                  <td className="px-5 py-3 text-right text-sm tabular-nums text-fg-2">{formatCurrency(item.unitPrice)}</td>
+                  <td className="px-5 py-3 text-right text-sm font-medium tabular-nums text-fg">{formatCurrency(item.totalPrice)}</td>
                 </tr>
               ))}
             </tbody>
@@ -68,18 +68,18 @@ export const SaleDetailClient = ({ sale }: SaleDetailClientProps) => {
             <h2 className={g.sectionTitle}>Customer</h2>
             <dl className="mt-4 space-y-4">
               <div>
-                <dt className="text-xs text-[#a1a1a6]">Name</dt>
-                <dd className="mt-1 text-sm text-[#ededed]">{sale.customerName || 'Walk-in customer'}</dd>
+                <dt className="text-xs text-fg-2">Name</dt>
+                <dd className="mt-1 text-sm text-fg">{sale.customerName || 'Walk-in customer'}</dd>
               </div>
               <div>
-                <dt className="text-xs text-[#a1a1a6]">Status</dt>
-                <dd className="mt-1 text-sm text-[#ededed]">{statusLabel(sale.status)}</dd>
+                <dt className="text-xs text-fg-2">Status</dt>
+                <dd className="mt-1 text-sm text-fg">{statusLabel(sale.status)}</dd>
               </div>
             </dl>
           </section>
 
           <Link href="/dashboard/sales" className={`${g.buttonSecondary} w-full`}>
-            <ArrowLeft className="h-4 w-4 text-[#a1a1a6]" strokeWidth={1.5} />
+            <ArrowLeft className="h-4 w-4 text-fg-2" strokeWidth={1.5} />
             Back to sales
           </Link>
         </div>
@@ -89,8 +89,8 @@ export const SaleDetailClient = ({ sale }: SaleDetailClientProps) => {
 };
 
 const Stat = ({ label, value }: { label: string; value: string }) => (
-  <div className="min-w-0 rounded-xl border border-white/[0.08] bg-[#19191b] p-5">
-    <p className="text-sm text-[#a1a1a6]">{label}</p>
-    <p className="mt-2 truncate text-2xl font-medium leading-none tabular-nums text-[#ededed]">{value}</p>
+  <div className="min-w-0 rounded-xl border border-fg/[0.08] bg-card p-5">
+    <p className="text-sm text-fg-2">{label}</p>
+    <p className="mt-2 truncate text-2xl font-medium leading-none tabular-nums text-fg">{value}</p>
   </div>
 );

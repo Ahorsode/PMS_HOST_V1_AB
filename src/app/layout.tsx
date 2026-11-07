@@ -3,6 +3,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Toaster } from "sonner";
 import { validateEnv } from "@/lib/env-check";
 import "./globals.css";
+import { NO_FLASH_SCRIPT } from "@/components/layout/theme-script";
 
 // Fail fast on missing runtime config unless CI explicitly skips validation.
 validateEnv();
@@ -33,8 +34,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-      <html lang="en">
-        <body className="antialiased bg-[#141415] min-h-screen text-[#ededed] font-sans">
+      <html lang="en" suppressHydrationWarning>
+        <head>
+          <script dangerouslySetInnerHTML={{ __html: NO_FLASH_SCRIPT }} />
+        </head>
+        <body className="antialiased bg-page min-h-screen text-fg font-sans">
           <AuthProvider>
           {children}
           <Toaster richColors position="top-right" theme="dark" />

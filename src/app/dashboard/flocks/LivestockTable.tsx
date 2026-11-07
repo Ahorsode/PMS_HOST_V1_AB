@@ -182,9 +182,9 @@ export function LivestockTable({ initialBatches, houses, isolationRooms, canEdit
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/[0.06]">
+              <tbody className="divide-y divide-fg/[0.06]">
                 {filteredBatches.map((batch: any, index: number) => (
-                  <tr key={batch.id} className={cn('transition-colors hover:bg-white/[0.02]', tone.ease)}>
+                  <tr key={batch.id} className={cn('transition-colors hover:bg-fg/[0.02]', tone.ease)}>
                     <td className="max-w-[220px] px-5 py-4 align-top">
                       <UnitName batch={batch} index={index} />
                     </td>

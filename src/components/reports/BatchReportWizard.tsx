@@ -82,10 +82,10 @@ function StepIndicator({ step }: { step: WizardStep }) {
           className={cn(
             'rounded-lg border px-3 py-1 text-xs font-medium',
             idx === currentIndex
-              ? 'border-white/[0.08] bg-white/[0.04] text-[#ededed]'
+              ? 'border-fg/[0.08] bg-fg/[0.04] text-fg'
               : idx < currentIndex
-                ? 'border-white/15 bg-white/[0.04] text-white/60'
-                : 'border-white/10 bg-white/[0.02] text-white/35'
+                ? 'border-fg/15 bg-fg/[0.04] text-fg/60'
+                : 'border-fg/10 bg-fg/[0.02] text-fg/35'
           )}
         >
           {idx + 1}. {s.label}
@@ -210,7 +210,7 @@ export function BatchReportWizard({ dataSources }: { dataSources: any[] }) {
 
       {step === 'duration' ? (
         <div className="space-y-4">
-          <p className="text-xs font-medium text-white/45">1. Report duration</p>
+          <p className="text-xs font-medium text-fg/45">1. Report duration</p>
           <div className="grid gap-2 sm:grid-cols-2">
             {DURATION_OPTIONS.map((option) => (
               <button
@@ -220,40 +220,40 @@ export function BatchReportWizard({ dataSources }: { dataSources: any[] }) {
                 className={cn(
                   'rounded-lg border px-4 py-3 text-left transition-colors',
                   duration === option.key
-                    ? 'border-white/[0.08] bg-white/[0.04]'
-                    : 'border-white/10 bg-white/[0.03] hover:border-white/20'
+                    ? 'border-fg/[0.08] bg-fg/[0.04]'
+                    : 'border-fg/10 bg-fg/[0.03] hover:border-fg/20'
                 )}
               >
-                <p className="text-sm font-medium text-white">{option.label}</p>
-                <p className="mt-0.5 text-xs font-medium text-white/45">{option.hint}</p>
+                <p className="text-sm font-medium text-fg">{option.label}</p>
+                <p className="mt-0.5 text-xs font-medium text-fg/45">{option.hint}</p>
               </button>
             ))}
           </div>
 
           {duration === 'custom' ? (
-            <div className="grid gap-3 rounded-lg border border-white/10 bg-white/[0.03] p-4 sm:grid-cols-2">
+            <div className="grid gap-3 rounded-lg border border-fg/10 bg-fg/[0.03] p-4 sm:grid-cols-2">
               <label className="space-y-1">
-                <span className="text-xs font-medium text-white/45">Start date</span>
+                <span className="text-xs font-medium text-fg/45">Start date</span>
                 <input
                   type="date"
                   value={customStart}
                   onChange={(e) => setCustomStart(e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm font-medium text-white"
+                  className="w-full rounded-lg border border-fg/10 bg-fg/[0.04] px-3 py-2 text-sm font-medium text-fg"
                 />
               </label>
               <label className="space-y-1">
-                <span className="text-xs font-medium text-white/45">End date</span>
+                <span className="text-xs font-medium text-fg/45">End date</span>
                 <input
                   type="date"
                   value={customEnd}
                   onChange={(e) => setCustomEnd(e.target.value)}
-                  className="w-full rounded-lg border border-white/10 bg-black/30 px-3 py-2 text-sm font-medium text-white"
+                  className="w-full rounded-lg border border-fg/10 bg-fg/[0.04] px-3 py-2 text-sm font-medium text-fg"
                 />
               </label>
             </div>
           ) : (
-            <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-xs font-medium text-white/60">
-              <Calendar className="h-4 w-4 text-[#85858b]" />
+            <div className="flex items-center gap-2 rounded-lg border border-fg/10 bg-fg/[0.03] px-4 py-3 text-xs font-medium text-fg/60">
+              <Calendar className="h-4 w-4 text-fg-3" />
               Selected period: {dateRange.label}
             </div>
           )}
@@ -269,9 +269,9 @@ export function BatchReportWizard({ dataSources }: { dataSources: any[] }) {
 
       {step === 'data' ? (
         <div className="space-y-4">
-          <p className="text-xs font-medium text-white/45">2. Report data</p>
+          <p className="text-xs font-medium text-fg/45">2. Report data</p>
 
-          <label className="flex items-center gap-3 rounded-lg border border-white/[0.08] bg-white/[0.04] px-4 py-3">
+          <label className="flex items-center gap-3 rounded-lg border border-fg/[0.08] bg-fg/[0.04] px-4 py-3">
             <input
               type="checkbox"
               checked={allData}
@@ -279,8 +279,8 @@ export function BatchReportWizard({ dataSources }: { dataSources: any[] }) {
               className="h-4 w-4 accent-emerald-500"
             />
             <div>
-              <p className="text-sm font-medium text-white">All data</p>
-              <p className="text-xs text-white/50">Include every section available for this report</p>
+              <p className="text-sm font-medium text-fg">All data</p>
+              <p className="text-xs text-fg/50">Include every section available for this report</p>
             </div>
           </label>
 
@@ -288,7 +288,7 @@ export function BatchReportWizard({ dataSources }: { dataSources: any[] }) {
             {DATA_GROUPS.filter((g) => g.key !== 'finance' || canViewFinance).map((group) => (
               <label
                 key={group.key}
-                className="flex items-start gap-3 rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3"
+                className="flex items-start gap-3 rounded-lg border border-fg/10 bg-fg/[0.03] px-4 py-3"
               >
                 <input
                   type="checkbox"
@@ -298,20 +298,20 @@ export function BatchReportWizard({ dataSources }: { dataSources: any[] }) {
                   className="mt-0.5 h-4 w-4 accent-emerald-500"
                 />
                 <div>
-                  <p className="text-sm font-medium text-white">{group.label}</p>
-                  <p className="text-xs text-white/50">{group.hint}</p>
+                  <p className="text-sm font-medium text-fg">{group.label}</p>
+                  <p className="text-xs text-fg/50">{group.hint}</p>
                 </div>
               </label>
             ))}
           </div>
 
-          <div className="rounded-lg border border-white/10 bg-white/[0.02] p-4">
-            <p className="mb-3 text-xs font-medium text-white/45">Or pick specific sections</p>
+          <div className="rounded-lg border border-fg/10 bg-fg/[0.02] p-4">
+            <p className="mb-3 text-xs font-medium text-fg/45">Or pick specific sections</p>
             <div className="grid gap-2 sm:grid-cols-2">
               {INDIVIDUAL_SECTIONS.filter(
                 (s) => canViewFinance || !['finance', 'sales', 'expenses'].includes(s.key)
               ).map((section) => (
-                <label key={section.key} className="flex items-center gap-2 text-xs font-medium text-white/75">
+                <label key={section.key} className="flex items-center gap-2 text-xs font-medium text-fg/75">
                   <input
                     type="checkbox"
                     checked={allData || effectiveSections.includes(section.key)}
@@ -340,7 +340,7 @@ export function BatchReportWizard({ dataSources }: { dataSources: any[] }) {
 
       {step === 'format' ? (
         <div className="space-y-4">
-          <p className="text-xs font-medium text-white/45">3. Export format</p>
+          <p className="text-xs font-medium text-fg/45">3. Export format</p>
 
           <div className="grid gap-2 sm:grid-cols-2">
             {(['pdf', 'word'] as ReportFormat[]).map((option) => (
@@ -351,12 +351,12 @@ export function BatchReportWizard({ dataSources }: { dataSources: any[] }) {
                 className={cn(
                   'rounded-lg border px-4 py-4 text-left transition-colors',
                   format === option
-                    ? 'border-white/[0.08] bg-white/[0.06]'
-                    : 'border-white/10 bg-white/[0.03] hover:border-white/20'
+                    ? 'border-fg/[0.08] bg-fg/[0.06]'
+                    : 'border-fg/10 bg-fg/[0.03] hover:border-fg/20'
                 )}
               >
-                <p className="text-sm font-medium text-white">{option === 'pdf' ? 'PDF' : 'Word (.doc)'}</p>
-                <p className="mt-0.5 text-xs text-white/45">
+                <p className="text-sm font-medium text-fg">{option === 'pdf' ? 'PDF' : 'Word (.doc)'}</p>
+                <p className="mt-0.5 text-xs text-fg/45">
                   {option === 'pdf' ? 'Best for sharing and printing' : 'Editable document format'}
                 </p>
               </button>
@@ -364,9 +364,9 @@ export function BatchReportWizard({ dataSources }: { dataSources: any[] }) {
           </div>
 
           {builtReport?.finance ? (
-            <div className="rounded-lg border border-white/10 bg-white/[0.03] px-4 py-3 text-xs text-white/60">
+            <div className="rounded-lg border border-fg/10 bg-fg/[0.03] px-4 py-3 text-xs text-fg/60">
               Preview will include net position of{' '}
-              <span className={cn('font-medium', builtReport.finance.netProfit >= 0 ? 'text-emerald-400' : 'text-[#f2777b]')}>
+              <span className={cn('font-medium', builtReport.finance.netProfit >= 0 ? 'text-emerald-400' : 'text-neg')}>
                 {formatCurrency(builtReport.finance.netProfit, 'GHS')}
               </span>{' '}
               for {dateRange.label.toLowerCase()}.
@@ -394,9 +394,9 @@ export function BatchReportWizard({ dataSources }: { dataSources: any[] }) {
 
       {step === 'preview' && previewReport ? (
         <div className="space-y-4">
-          <p className="text-xs font-medium text-white/45">4. Preview before download</p>
+          <p className="text-xs font-medium text-fg/45">4. Preview before download</p>
 
-          <div className="overflow-hidden rounded-lg border border-white/10 bg-[#19191b]">
+          <div className="overflow-hidden rounded-lg border border-fg/10 bg-card">
             <div
               className="max-h-[min(50vh,420px)] overflow-y-auto custom-scrollbar"
               dangerouslySetInnerHTML={{ __html: previewHtml }}

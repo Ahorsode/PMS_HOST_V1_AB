@@ -20,7 +20,7 @@ export const FlockActionsHeader = ({ houses, canEdit = true }: { houses: any[], 
     <>
       <div className="flex w-full items-center gap-2 md:w-auto">
         <Link href="/dashboard/flocks/analytics" className={buttonClass('secondary', 'md', 'flex-1 md:flex-none')}>
-          <BarChart3 className="h-4 w-4 text-[#a1a1a6]" strokeWidth={1.5} />
+          <BarChart3 className="h-4 w-4 text-fg-2" strokeWidth={1.5} />
           Batch reports
         </Link>
         {canEdit && (

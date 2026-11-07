@@ -12,7 +12,7 @@ const BatchPerformanceReportsPanel = dynamic(
       (mod) => mod.BatchPerformanceReportsPanel
     ),
   {
-    loading: () => <div className="h-64 animate-pulse rounded-lg bg-white/5" />,
+    loading: () => <div className="h-64 animate-pulse rounded-lg bg-fg/5" />,
   }
 )
 

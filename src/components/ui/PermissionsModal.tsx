@@ -89,23 +89,23 @@ export function PermissionsModal({
   };
 
   const PermissionRow = ({ title, viewKey, editKey, icon: Icon, description }: { title: string, viewKey: keyof typeof permissions, editKey: keyof typeof permissions, icon: any, description?: string }) => (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 bg-white/10 border border-white/10 rounded-md mb-2 gap-3 sm:gap-0">
+    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 bg-fg/10 border border-fg/10 rounded-md mb-2 gap-3 sm:gap-0">
       <div className="flex items-center gap-2">
-        <div className="p-2 bg-white/10 rounded-md">
-          <Icon className="w-5 h-5 text-[#85858b]" />
+        <div className="p-2 bg-fg/10 rounded-md">
+          <Icon className="w-5 h-5 text-fg-3" />
         </div>
         <div>
-          <h4 className="text-white font-medium">{title}</h4>
-          <p className="text-white/70 text-xs font-medium">{description ?? 'Module Access'}</p>
+          <h4 className="text-fg font-medium">{title}</h4>
+          <p className="text-fg/70 text-xs font-medium">{description ?? 'Module Access'}</p>
         </div>
       </div>
-      <div className="flex items-center gap-5 sm:gap-4 w-full sm:w-auto justify-around sm:justify-end border-t border-white/5 pt-2 sm:pt-0 sm:border-0 mt-1 sm:mt-0">
+      <div className="flex items-center gap-5 sm:gap-4 w-full sm:w-auto justify-around sm:justify-end border-t border-fg/5 pt-2 sm:pt-0 sm:border-0 mt-1 sm:mt-0">
         <div className="flex flex-col items-center">
-          <span className="text-xs text-white/70 mb-1 font-medium">View</span>
+          <span className="text-xs text-fg/70 mb-1 font-medium">View</span>
           <ToggleSwitch checked={permissions[viewKey]} onChange={() => handleToggle(viewKey)} disabled={isLoading} />
         </div>
         <div className="flex flex-col items-center">
-          <span className="text-xs text-white/70 mb-1 font-medium">Edit</span>
+          <span className="text-xs text-fg/70 mb-1 font-medium">Edit</span>
           <ToggleSwitch checked={permissions[editKey]} onChange={() => handleToggle(editKey)} disabled={isLoading} />
         </div>
       </div>
@@ -130,22 +130,22 @@ export function PermissionsModal({
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="w-full max-w-lg overflow-hidden flex flex-col"
             >
-              <div className="bg-[#141415] border border-white/10 rounded-lg flex flex-col max-h-[90vh] glass-morphism">
+              <div className="bg-page border border-fg/10 rounded-lg flex flex-col max-h-[90vh] glass-morphism">
                 {/* Header - Sticky */}
-                <div className="p-4 sm:p-8 border-b border-white/10 flex items-center justify-between bg-white/10 flex-shrink-0">
+                <div className="p-4 sm:p-8 border-b border-fg/10 flex items-center justify-between bg-fg/10 flex-shrink-0">
                   <div className="flex items-center gap-2">
-                    <div className="p-2 sm:p-2.5 bg-white/[0.06] rounded-md border border-white/[0.08]">
-                      <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-[#a1a1a6]" />
+                    <div className="p-2 sm:p-2.5 bg-fg/[0.06] rounded-md border border-fg/[0.08]">
+                      <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-fg-2" />
                     </div>
                     <div>
-                      <h3 className="text-lg sm:text-xl font-medium text-white tracking-normal">Access control</h3>
-                      <p className="text-[#a1a1a6] text-xs sm:text-xs font-medium">{staffName}</p>
+                      <h3 className="text-lg sm:text-xl font-medium text-fg tracking-normal">Access control</h3>
+                      <p className="text-fg-2 text-xs sm:text-xs font-medium">{staffName}</p>
                     </div>
                   </div>
                   <button aria-label="Close" 
                     onClick={onClose}
                     disabled={isLoading}
-                    className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+                    className="p-2 text-fg/70 hover:text-fg hover:bg-fg/10 rounded-full transition-colors"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -154,18 +154,18 @@ export function PermissionsModal({
                 {/* Scrollable Content */}
                 <div className="p-4 sm:p-8 overflow-y-auto scrollbar-hide flex-grow custom-scrollbar">
                   <div className="space-y-1 mb-5">
-                    <p className="text-white/70 text-[11px] sm:text-xs font-medium leading-relaxed">
+                    <p className="text-fg/70 text-[11px] sm:text-xs font-medium leading-relaxed">
                       Configure individual access rights for this staff member. 
                       Changes are logged for security auditing.
                     </p>
-                    <p className="text-white/50 text-[11px] font-medium">
+                    <p className="text-fg/50 text-[11px] font-medium">
                       Role: {role}
                     </p>
                   </div>
                   
                   <div className="space-y-5">
                     <div>
-                      <p className="px-1 text-xs font-medium text-white/70 mb-2 ml-2">Commercial hub</p>
+                      <p className="px-1 text-xs font-medium text-fg/70 mb-2 ml-2">Commercial hub</p>
                       <div className="space-y-2 sm:space-y-4">
                         <PermissionRow title="Finance" viewKey="canViewFinance" editKey="canEditFinance" icon={Database} />
                         <PermissionRow title="Sales" viewKey="canViewSales" editKey="canEditSales" icon={Banknote} />
@@ -175,7 +175,7 @@ export function PermissionsModal({
                     </div>
 
                     <div>
-                      <p className="px-1 text-xs font-medium text-white/70 mb-2 ml-2 mt-3">Operations</p>
+                      <p className="px-1 text-xs font-medium text-fg/70 mb-2 ml-2 mt-3">Operations</p>
                       <div className="space-y-2 sm:space-y-4">
                         <PermissionRow title="Livestock units" viewKey="canViewBatches" editKey="canEditBatches" icon={Settings} />
                         <PermissionRow title="Houses" viewKey="canViewHouses" editKey="canEditHouses" icon={ThermometerSun} />
@@ -187,7 +187,7 @@ export function PermissionsModal({
                     </div>
 
                     <div>
-                      <p className="px-1 text-xs font-medium text-white/70 mb-2 ml-2 mt-3">Governance</p>
+                      <p className="px-1 text-xs font-medium text-fg/70 mb-2 ml-2 mt-3">Governance</p>
                       <div className="space-y-2 sm:space-y-4">
                         <PermissionRow title="Team management" viewKey="canViewTeam" editKey="canEditTeam" icon={Shield} />
                       </div>
@@ -195,22 +195,22 @@ export function PermissionsModal({
                   </div>
 
                   {/* Warning Note for small screens */}
-                  <div className="mt-5 p-3 bg-white/[0.04] border border-white/[0.08] rounded-md">
-                     <p className="text-xs text-[#ededed] font-medium mb-1"> Security policy </p>
-                     <p className="text-white/80 text-[11px] leading-relaxed font-medium">
+                  <div className="mt-5 p-3 bg-fg/[0.04] border border-fg/[0.08] rounded-md">
+                     <p className="text-xs text-fg font-medium mb-1"> Security policy </p>
+                     <p className="text-fg/80 text-[11px] leading-relaxed font-medium">
                         Owners bypass all checks. Managers are unrestricted by default unless limited here.
                      </p>
                   </div>
                 </div>
 
                 {/* Footer - Sticky */}
-                <div className="p-4 sm:p-8 border-t border-white/10 flex flex-col gap-2 bg-white/10 flex-shrink-0">
+                <div className="p-4 sm:p-8 border-t border-fg/10 flex flex-col gap-2 bg-fg/10 flex-shrink-0">
                   {onResetToDefaults ? (
                     <Button
                       variant="outline"
                       onClick={() => onResetToDefaults()}
                       disabled={isLoading}
-                      className="w-full rounded-md border-white/[0.08] text-[#ededed] hover:bg-white/[0.04] text-[11px] font-medium"
+                      className="w-full rounded-md border-fg/[0.08] text-fg hover:bg-fg/[0.04] text-[11px] font-medium"
                     >
                       <RotateCcw className="w-4 h-4 mr-2 inline" />
                       Reset to {role} Defaults
@@ -220,7 +220,7 @@ export function PermissionsModal({
                       variant="outline"
                       onClick={() => setPermissions(defaultPermissions)}
                       disabled={isLoading}
-                      className="w-full rounded-md border-white/[0.08] text-[#ededed] hover:bg-white/[0.04] text-[11px] font-medium"
+                      className="w-full rounded-md border-fg/[0.08] text-fg hover:bg-fg/[0.04] text-[11px] font-medium"
                     >
                       <RotateCcw className="w-4 h-4 mr-2 inline" />
                       Reset to {role} Defaults
@@ -231,14 +231,14 @@ export function PermissionsModal({
                     variant="outline" 
                     onClick={onClose} 
                     disabled={isLoading}
-                    className="w-full sm:w-auto rounded-md border-white/10 hover:bg-white/5 text-[11px] font-medium"
+                    className="w-full sm:w-auto rounded-md border-fg/10 hover:bg-fg/5 text-[11px] font-medium"
                   >
                     Discard
                   </Button>
                   <Button 
                     onClick={() => onSave(permissions)} 
                     isLoading={isLoading}
-                    className="w-full sm:w-auto rounded-md bg-[#232325] hover:bg-[#232325] text-white"
+                    className="w-full sm:w-auto rounded-md bg-raised hover:bg-raised text-fg"
                   >
                     Save & apply
                   </Button>
@@ -261,12 +261,12 @@ function ToggleSwitch({ checked, onChange, disabled }: { checked: boolean, onCha
       aria-checked={checked}
       disabled={disabled}
       onClick={onChange}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ring-offset-black focus:ring-2 focus:ring-emerald-500 ring-offset-2 ${checked ? 'bg-emerald-500' : 'bg-white/10'}`}
+      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ring-offset-black focus:ring-2 focus:ring-emerald-500 ring-offset-2 ${checked ? 'bg-emerald-500' : 'bg-fg/10'}`}
     >
       <motion.span
         layout
         transition={{ type: "spring", stiffness: 500, damping: 30 }}
-        className={`inline-block h-4 w-4 transform rounded-full bg-[#ededed] ${checked ? 'translate-x-6' : 'translate-x-1'}`}
+        className={`inline-block h-4 w-4 transform rounded-full bg-fg ${checked ? 'translate-x-6' : 'translate-x-1'}`}
       />
     </button>
   );

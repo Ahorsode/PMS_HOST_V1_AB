@@ -124,14 +124,14 @@ export const EggForm = ({
       <div className="space-y-4">
         {allowEggUnitChange ? (
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-white/70">Logging mode</label>
+            <label className="text-xs font-medium text-fg/70">Logging mode</label>
             <div className="grid grid-cols-2 gap-2">
               {['individual', 'crates'].map(modeOpt => (
                 <button
                   key={modeOpt}
                   type="button"
                   onClick={() => setLoggingMode(modeOpt as 'individual' | 'crates')}
-                  className={`py-2 rounded-md text-xs font-medium transition-colors ${loggingMode === modeOpt ? 'bg-[#2c2c2f] text-[#ededed] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'bg-white/10 text-white/70 hover:bg-white/10'}`}
+                  className={`py-2 rounded-md text-xs font-medium transition-colors ${loggingMode === modeOpt ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'bg-fg/10 text-fg/70 hover:bg-fg/10'}`}
                 >
                   {modeOpt === 'individual' ? 'Individual Eggs' : `Crates (${eggsPerCrate}/ea)`}
                 </button>
@@ -142,7 +142,7 @@ export const EggForm = ({
 
         {allowEggSortModeChange ? (
           <div className="space-y-1.5">
-            <label className="text-xs font-medium text-white/70">Sorting status</label>
+            <label className="text-xs font-medium text-fg/70">Sorting status</label>
             <div className="grid grid-cols-2 gap-2">
               {[false, true].map(isSorted => (
                 <button
@@ -153,7 +153,7 @@ export const EggForm = ({
                     isSorted,
                     ...(isSorted ? {} : { smallCount: 0, mediumCount: 0, largeCount: 0 })
                   })}
-                  className={`py-2 rounded-md text-xs font-medium transition-colors ${formData.isSorted === isSorted ? 'bg-[#2c2c2f] text-[#ededed] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'bg-white/10 text-white/70 hover:bg-white/10'}`}
+                  className={`py-2 rounded-md text-xs font-medium transition-colors ${formData.isSorted === isSorted ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'bg-fg/10 text-fg/70 hover:bg-fg/10'}`}
                 >
                   {isSorted ? 'Sorted' : 'Unsorted'}
                 </button>
@@ -240,10 +240,10 @@ export const EggForm = ({
       </div>
 
       {formData.isSorted && (
-        <div className="p-4 bg-white/[0.04] border border-white/[0.08] rounded-xl space-y-3">
+        <div className="p-4 bg-fg/[0.04] border border-fg/[0.08] rounded-xl space-y-3">
           <div className="flex justify-between items-center mb-1">
-            <label className="text-xs font-medium text-[#ededed]">Size distribution</label>
-            <span className={`text-xs font-medium ${isOverTotal ? 'text-[#f2777b]' : 'text-[#34d399]'}`}>
+            <label className="text-xs font-medium text-fg">Size distribution</label>
+            <span className={`text-xs font-medium ${isOverTotal ? 'text-neg' : 'text-accent'}`}>
               Allocated: {sortedTotal} / {formData.eggsCollected}
             </span>
           </div>
@@ -267,7 +267,7 @@ export const EggForm = ({
                 setFormData({ ...formData, smallCount: val });
               }}
               onFocus={(e) => e.target.select()}
-              className="bg-white/[0.04] border-white/[0.08]"
+              className="bg-fg/[0.04] border-fg/[0.08]"
             />
             <Input
               label="Medium"
@@ -288,7 +288,7 @@ export const EggForm = ({
                 setFormData({ ...formData, mediumCount: val });
               }}
               onFocus={(e) => e.target.select()}
-              className="bg-white/[0.04] border-white/[0.08]"
+              className="bg-fg/[0.04] border-fg/[0.08]"
             />
             <Input
               label="Large"
@@ -309,11 +309,11 @@ export const EggForm = ({
                 setFormData({ ...formData, largeCount: val });
               }}
               onFocus={(e) => e.target.select()}
-              className="bg-white/[0.04] border-white/[0.08]"
+              className="bg-fg/[0.04] border-fg/[0.08]"
             />
           </div>
           {isOverTotal && (
-            <p className="text-xs text-[#f2777b] font-medium">
+            <p className="text-xs text-neg font-medium">
               Warning: Sum of sizes exceeds total eggs collected!
             </p>
           )}

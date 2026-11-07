@@ -95,14 +95,14 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
         {/* Progress Indicator */}
         <div className="flex gap-1 mb-3">
            {batches.map((_, i) => (
-             <div key={i} className={`h-1 flex-1 rounded-full ${i === currentIndex ? 'bg-emerald-500' : i < currentIndex ? 'bg-white/[0.04]' : 'bg-white/10'}`} />
+             <div key={i} className={`h-1 flex-1 rounded-full ${i === currentIndex ? 'bg-emerald-500' : i < currentIndex ? 'bg-fg/[0.04]' : 'bg-fg/10'}`} />
            ))}
         </div>
 
-        <div className="p-3 rounded-md bg-white/[0.04] border border-white/[0.08] flex gap-2">
-           <AlertCircle className="w-5 h-5 text-[#85858b] shrink-0" />
-           <p className="text-xs text-[#ededed] leading-relaxed font-medium">
-             Financial accuracy depends on recording the initial investment. This ensures your <span className="text-[#ededed] font-medium">Return on investment (ROI)</span> calculations are correct.
+        <div className="p-3 rounded-md bg-fg/[0.04] border border-fg/[0.08] flex gap-2">
+           <AlertCircle className="w-5 h-5 text-fg-3 shrink-0" />
+           <p className="text-xs text-fg leading-relaxed font-medium">
+             Financial accuracy depends on recording the initial investment. This ensures your <span className="text-fg font-medium">Return on investment (ROI)</span> calculations are correct.
            </p>
         </div>
 
@@ -122,7 +122,7 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
               }}
             />
             {costPerUnit && Number(costPerUnit) > 0 && (
-              <p className="text-xs font-medium text-[#ededed] px-1 text-right">
+              <p className="text-xs font-medium text-fg px-1 text-right">
                 Total Purchase Cost: GH₵ {(Number(costPerUnit) * currentBatch.initialCount).toFixed(2)}
               </p>
             )}
@@ -143,11 +143,11 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
           />
 
           <div className="space-y-2">
-             <label className="text-xs font-medium text-white/70 block">Additional expenses</label>
+             <label className="text-xs font-medium text-fg/70 block">Additional expenses</label>
              <div className="grid grid-cols-5 gap-2">
                 <input 
                   placeholder="Label (e.g. loading)"
-                  className="col-span-3 bg-white/10 border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-white/[0.08]"
+                  className="col-span-3 bg-fg/10 border border-fg/10 rounded-md px-3 py-2 text-sm text-fg focus:outline-none focus:border-fg/[0.08]"
                   value={newExpenseLabel}
                   onChange={e => setNewExpenseLabel(e.target.value)}
                 />
@@ -155,7 +155,7 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
                   placeholder="0.00"
                   type="number"
                   min="0"
-                  className="col-span-1 bg-white/10 border border-white/10 rounded-md px-3 py-2 text-sm text-white focus:outline-none focus:border-white/[0.08]"
+                  className="col-span-1 bg-fg/10 border border-fg/10 rounded-md px-3 py-2 text-sm text-fg focus:outline-none focus:border-fg/[0.08]"
                   value={newExpenseAmount}
                   onChange={e => {
                     const val = e.target.value;
@@ -168,7 +168,7 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
                   type="button" 
                   variant="outline" 
                    onClick={handleAddOther}
-                  className="col-span-1 rounded-md h-10 border-white/[0.08] text-[#85858b] hover:bg-white/[0.04]"
+                  className="col-span-1 rounded-md h-10 border-fg/[0.08] text-fg-3 hover:bg-fg/[0.04]"
                 >
                    <Plus className="w-4 h-4" />
                 </Button>
@@ -177,11 +177,11 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
              {otherExpenses.length > 0 && (
                <div className="space-y-2 max-h-32 overflow-y-auto pr-2 custom-scrollbar">
                   {otherExpenses.map((exp, i) => (
-                    <div key={i} className="flex items-center justify-between p-2 rounded-md bg-white/10 border border-white/5">
-                       <span className="text-xs font-medium text-white/80">{exp.label}</span>
+                    <div key={i} className="flex items-center justify-between p-2 rounded-md bg-fg/10 border border-fg/5">
+                       <span className="text-xs font-medium text-fg/80">{exp.label}</span>
                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium text-[#ededed]">GH₵ {exp.amount}</span>
-                          <button aria-label="Remove cost" onClick={() => removeOther(i)} className="text-[#f2777b] hover:text-[#f2777b] transition-colors">
+                          <span className="text-xs font-medium text-fg">GH₵ {exp.amount}</span>
+                          <button aria-label="Remove cost" onClick={() => removeOther(i)} className="text-neg hover:text-neg transition-colors">
                              <Trash2 className="w-3.5 h-3.5" />
                           </button>
                        </div>
@@ -196,7 +196,7 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
            <Button 
              variant="ghost" 
              onClick={handleSkip}
-             className="flex-1 rounded-md text-white/70 hover:text-[#f2777b] hover:bg-white/[0.04]"
+             className="flex-1 rounded-md text-fg/70 hover:text-neg hover:bg-fg/[0.04]"
            >
               Confirm zero cost
            </Button>
@@ -204,7 +204,7 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
              onClick={() => handleSubmit(false)}
              isLoading={isSubmitting}
              disabled={!costPerUnit || Number(costPerUnit) <= 0}
-             className="flex-[2] rounded-md bg-[#ededed] text-[#141415] font-medium hover:bg-white"
+             className="flex-[2] rounded-md bg-fg text-page font-medium hover:bg-fg/90"
            >
               Save & {currentIndex < batches.length - 1 ? 'Next unit' : 'Finish'}
            </Button>

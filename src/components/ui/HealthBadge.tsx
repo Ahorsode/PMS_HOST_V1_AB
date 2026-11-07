@@ -10,13 +10,13 @@ export const HealthBadge: React.FC<HealthBadgeProps> = ({ status }) => {
   const getBadgeStyles = () => {
     switch (status) {
       case 'Healthy':
-        return 'bg-white/[0.04] text-[#ededed] border-white/[0.08]';
+        return 'bg-fg/[0.04] text-fg border-fg/[0.08]';
       case 'Warning':
-        return 'bg-white/[0.04] text-[#ededed] border-white/[0.08]';
+        return 'bg-fg/[0.04] text-fg border-fg/[0.08]';
       case 'Critical':
-        return 'bg-white/[0.04] text-[#f2777b] border-white/[0.08]';
+        return 'bg-fg/[0.04] text-neg border-fg/[0.08]';
       default:
-        return 'bg-white/10 text-white/80 border-white/10';
+        return 'bg-fg/10 text-fg/80 border-fg/10';
     }
   };
 

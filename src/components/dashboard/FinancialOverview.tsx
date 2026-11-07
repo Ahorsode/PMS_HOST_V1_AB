@@ -20,28 +20,28 @@ export function FinancialOverview({ data, currency = 'GHS', className }: Financi
   const isProfitable = profit >= 0
 
   return (
-    <section className={cn('rounded-xl border border-white/[0.08] bg-[#19191b] p-5', className)}>
-      <h2 className="text-sm text-[#a1a1a6]">{isProfitable ? 'Net profit this month' : 'Net loss this month'}</h2>
+    <section className={cn('rounded-xl border border-fg/[0.08] bg-card p-5', className)}>
+      <h2 className="text-sm text-fg-2">{isProfitable ? 'Net profit this month' : 'Net loss this month'}</h2>
       <p
         className={cn(
           'mt-2 truncate text-3xl font-medium leading-none tabular-nums',
-          isProfitable ? 'text-[#ededed]' : 'text-[#f2777b]'
+          isProfitable ? 'text-fg' : 'text-neg'
         )}
       >
         {formatCurrency(profit, currency)}
       </p>
-      <dl className="mt-5 grid grid-cols-3 gap-4 border-t border-white/[0.08] pt-4">
+      <dl className="mt-5 grid grid-cols-3 gap-4 border-t border-fg/[0.08] pt-4">
         <div className="min-w-0">
-          <dt className="text-xs text-[#a1a1a6]">Revenue</dt>
-          <dd className="mt-1 truncate text-sm font-medium tabular-nums text-[#ededed]">{formatCurrency(data.revenue, currency)}</dd>
+          <dt className="text-xs text-fg-2">Revenue</dt>
+          <dd className="mt-1 truncate text-sm font-medium tabular-nums text-fg">{formatCurrency(data.revenue, currency)}</dd>
         </div>
         <div className="min-w-0">
-          <dt className="text-xs text-[#a1a1a6]">Expenses</dt>
-          <dd className="mt-1 truncate text-sm font-medium tabular-nums text-[#ededed]">{formatCurrency(data.expenses, currency)}</dd>
+          <dt className="text-xs text-fg-2">Expenses</dt>
+          <dd className="mt-1 truncate text-sm font-medium tabular-nums text-fg">{formatCurrency(data.expenses, currency)}</dd>
         </div>
         <div className="min-w-0">
-          <dt className="text-xs text-[#a1a1a6]">Eggs</dt>
-          <dd className="mt-1 truncate text-sm font-medium tabular-nums text-[#ededed]">{data.eggs.toLocaleString()}</dd>
+          <dt className="text-xs text-fg-2">Eggs</dt>
+          <dd className="mt-1 truncate text-sm font-medium tabular-nums text-fg">{data.eggs.toLocaleString()}</dd>
         </div>
       </dl>
     </section>

@@ -123,9 +123,9 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
   if (houses.length === 0) {
     return (
       <div className="p-5 text-center space-y-3">
-        <p className="text-[#85858b]">You don't have any active farm houses yet.</p>
-        <p className="text-sm text-[#85858b]">A farm house is required before you can register a new livestock unit.</p>
-        <Button asChild className="w-full bg-amber-500 hover:bg-amber-600 text-black font-medium">
+        <p className="text-fg-3">You don't have any active farm houses yet.</p>
+        <p className="text-sm text-fg-3">A farm house is required before you can register a new livestock unit.</p>
+        <Button asChild className="w-full">
           <Link href="/dashboard/houses">Add new house first</Link>
         </Button>
       </div>
@@ -232,8 +232,8 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
             error={errors.hatchDate?.message}
           />
 
-          <div className="border-t border-white/10 pt-3 mt-2">
-            <h3 className="text-sm font-medium text-[#ededed] mb-3 text-xs">Optional initial schedule</h3>
+          <div className="border-t border-fg/10 pt-3 mt-2">
+            <h3 className="text-sm font-medium text-fg mb-3 text-xs">Optional initial schedule</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <Input
                 label="1st vaccination date"
@@ -253,7 +253,7 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
               type="submit"
               isLoading={isSubmitting}
               loadingText="Registering unit..."
-              className="w-full bg-[#ededed] hover:bg-white text-[#141415] font-medium h-14 rounded-lg transition-colors"
+              className="w-full bg-fg hover:bg-fg/90 text-page font-medium h-14 rounded-lg transition-colors"
             >
               Register unit & continue
             </Button>
@@ -302,7 +302,7 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
                onClick={handleCreateHouse} 
                isLoading={isCreatingHouse}
                loadingText="Creating..."
-               className="flex-1 bg-[#ededed] hover:bg-white text-[#141415] font-medium"
+               className="flex-1 bg-fg hover:bg-fg/90 text-page font-medium"
              >
                Create house
              </Button>

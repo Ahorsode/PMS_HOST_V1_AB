@@ -41,10 +41,10 @@ export function WorkerDashboard({ stats, houses, permissions }: WorkerDashboardP
             <li key={label}>
               <Link
                 href={href}
-                className={`${g.tile} flex h-24 flex-col items-center justify-center gap-2 px-2 text-center transition-colors duration-150 hover:bg-[#232325] ${g.focus}`}
+                className={`${g.tile} flex h-24 flex-col items-center justify-center gap-2 px-2 text-center transition-colors duration-150 hover:bg-raised ${g.focus}`}
               >
-                <Icon className="h-5 w-5 text-[#a1a1a6]" strokeWidth={1.5} />
-                <span className="text-sm text-[#ededed]">{label}</span>
+                <Icon className="h-5 w-5 text-fg-2" strokeWidth={1.5} />
+                <span className="text-sm text-fg">{label}</span>
               </Link>
             </li>
           ))}
@@ -53,7 +53,7 @@ export function WorkerDashboard({ stats, houses, permissions }: WorkerDashboardP
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <section className={g.card}>
-          <div className="flex items-baseline justify-between gap-3 border-b border-white/[0.08] px-5 py-4">
+          <div className="flex items-baseline justify-between gap-3 border-b border-fg/[0.08] px-5 py-4">
             <h2 className={g.sectionTitle}>Due tasks and alerts</h2>
             <span className={`${g.ledger} tabular-nums`}>{taskCount}</span>
           </div>
@@ -64,25 +64,25 @@ export function WorkerDashboard({ stats, houses, permissions }: WorkerDashboardP
               <>
                 {alerts.map((alert: any, idx: number) => (
                   <li key={idx} className="flex items-start gap-3 rounded-lg px-3 py-2">
-                    <Activity className="mt-0.5 h-4 w-4 shrink-0 text-[#85858b]" strokeWidth={1.5} />
+                    <Activity className="mt-0.5 h-4 w-4 shrink-0 text-fg-3" strokeWidth={1.5} />
                     <div className="min-w-0">
-                      <p className="flex items-center gap-2 text-sm text-[#ededed]">
+                      <p className="flex items-center gap-2 text-sm text-fg">
                         <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: ink.warning }} />
                         <span className="truncate">{alert.title}</span>
                       </p>
-                      <p className="mt-0.5 text-xs text-[#a1a1a6]">{alert.message}</p>
+                      <p className="mt-0.5 text-xs text-fg-2">{alert.message}</p>
                     </div>
                   </li>
                 ))}
                 {lowFeed.map((item: any, idx: number) => (
                   <li key={`feed-${idx}`} className="flex items-start gap-3 rounded-lg px-3 py-2">
-                    <Wheat className="mt-0.5 h-4 w-4 shrink-0 text-[#85858b]" strokeWidth={1.5} />
+                    <Wheat className="mt-0.5 h-4 w-4 shrink-0 text-fg-3" strokeWidth={1.5} />
                     <div className="min-w-0">
-                      <p className="flex items-center gap-2 text-sm text-[#ededed]">
+                      <p className="flex items-center gap-2 text-sm text-fg">
                         <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: ink.negative }} />
                         <span className="truncate">Low stock: {item.name}</span>
                       </p>
-                      <p className="mt-0.5 font-mono text-xs tabular-nums text-[#a1a1a6]">{item.stockLevel} bags left</p>
+                      <p className="mt-0.5 font-mono text-xs tabular-nums text-fg-2">{item.stockLevel} bags left</p>
                     </div>
                   </li>
                 ))}
@@ -92,7 +92,7 @@ export function WorkerDashboard({ stats, houses, permissions }: WorkerDashboardP
         </section>
 
         <section className={g.card}>
-          <div className="flex items-baseline justify-between gap-3 border-b border-white/[0.08] px-5 py-4">
+          <div className="flex items-baseline justify-between gap-3 border-b border-fg/[0.08] px-5 py-4">
             <h2 className={g.sectionTitle}>Active units</h2>
             <span className={`${g.ledger} tabular-nums`}>{stats.activeBatches.length}</span>
           </div>
@@ -100,10 +100,10 @@ export function WorkerDashboard({ stats, houses, permissions }: WorkerDashboardP
             {stats.activeBatches.map((batch: any, index: number) => (
               <li key={batch.numericId} className={`${g.tile} flex items-center justify-between gap-4 px-4 py-3`}>
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-[#ededed]">{batch.batchName || `Unit ${index + 1}`}</p>
+                  <p className="truncate text-sm font-medium text-fg">{batch.batchName || `Unit ${index + 1}`}</p>
                   <p className={`truncate ${g.ledger}`}>House {batch.houseNumber} · {getBreedDisplayName(batch.breed)}</p>
                 </div>
-                <span className="shrink-0 text-base font-medium tabular-nums text-[#ededed]">{batch.quantity.toLocaleString()}</span>
+                <span className="shrink-0 text-base font-medium tabular-nums text-fg">{batch.quantity.toLocaleString()}</span>
               </li>
             ))}
           </ul>

@@ -30,24 +30,24 @@ export function AccountantDashboard({ summary, stats, currency = 'GHS' }: Accoun
         <FinancialOverview data={summary} currency={currency} />
 
         <section className={g.card}>
-          <div className="border-b border-white/[0.08] px-5 py-4">
+          <div className="border-b border-fg/[0.08] px-5 py-4">
             <h2 className={g.sectionTitle}>Recent sales and orders</h2>
           </div>
           {events.length === 0 ? (
             <p className={`px-5 py-12 text-center text-sm ${g.secondary}`}>No sales or orders yet</p>
           ) : (
-            <ul className="divide-y divide-white/[0.06]">
+            <ul className="divide-y divide-fg/[0.06]">
               {events.map((item: any, i: number) => (
                 <li key={i} className="flex items-center justify-between gap-4 px-5 py-3">
                   <div className="min-w-0">
-                    <p className="truncate text-sm text-[#ededed]">
+                    <p className="truncate text-sm text-fg">
                       {item.type === 'ORDER' ? 'Order' : 'Sale'} · {item.customerName || 'Walk-in customer'}
                     </p>
                     <p className={`${g.ledger} tabular-nums`}>
                       {item.date.toLocaleDateString('en-GB')}{item.status ? ` · ${String(item.status).toLowerCase()}` : ''}
                     </p>
                   </div>
-                  <p className="shrink-0 text-sm font-medium tabular-nums text-[#ededed]">{formatCurrency(item.totalAmount, currency)}</p>
+                  <p className="shrink-0 text-sm font-medium tabular-nums text-fg">{formatCurrency(item.totalAmount, currency)}</p>
                 </li>
               ))}
             </ul>

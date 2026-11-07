@@ -106,7 +106,7 @@ export function FlockQuickLog({
               onClick={() => setActive(b.kind)}
               className={buttonClass('secondary', 'sm', 'justify-start sm:justify-center')}
             >
-              <b.icon className="h-4 w-4 text-[#a1a1a6]" strokeWidth={1.5} />
+              <b.icon className="h-4 w-4 text-fg-2" strokeWidth={1.5} />
               {b.label}
             </button>
           ))}
@@ -153,7 +153,7 @@ function useSubmit(onDone: () => void) {
 
 function FormError({ error }: { error: string | null }) {
   if (!error) return null
-  return <p className="text-[13px] text-[#f2777b]">{error}</p>
+  return <p className="text-[13px] text-neg">{error}</p>
 }
 
 function WeightForm({ batchId, onDone }: { batchId: string; onDone: () => void }) {
@@ -190,7 +190,7 @@ function FeedForm({ batchId, feedInventory, onDone }: { batchId: string; feedInv
 
   if (feedInventory.length === 0) {
     return (
-      <p className="rounded-lg border border-dashed border-white/[0.08] p-6 text-center text-[13px] text-[#a1a1a6]">
+      <p className="rounded-lg border border-dashed border-fg/[0.08] p-6 text-center text-[13px] text-fg-2">
         No feed stock in inventory. Add feed under Inventory first, then log consumption here.
       </p>
     )
@@ -369,9 +369,9 @@ function SaleForm({
       </div>
       <Input label="Customer (optional)" value={customer} onChange={(e) => setCustomer(e.target.value)} disabled={isPending} />
       <Input label="Sale date" type="datetime-local" value={orderDate} onChange={(e) => setOrderDate(e.target.value)} required disabled={isPending} />
-      <div className="flex items-baseline justify-between rounded-lg border border-white/[0.08] bg-[#232325] px-4 py-3">
-        <span className="text-[13px] text-[#a1a1a6]">Total</span>
-        <span className="text-lg tabular-nums text-[#ededed]">{formatCurrency(total, 'GHS')}</span>
+      <div className="flex items-baseline justify-between rounded-lg border border-fg/[0.08] bg-raised px-4 py-3">
+        <span className="text-[13px] text-fg-2">Total</span>
+        <span className="text-lg tabular-nums text-fg">{formatCurrency(total, 'GHS')}</span>
       </div>
       <FormError error={error} />
       <ActionButton type="submit" variant="primary" className="w-full" isLoading={isPending} loadingText="Recording sale…">
@@ -441,7 +441,7 @@ function ExpenseForm({
       <Input label="Expense date" type="datetime-local" value={expenseDate} onChange={(e) => setExpenseDate(e.target.value)} required disabled={isPending} />
 
       <div>
-        <p className="mb-2 text-[13px] text-[#a1a1a6]">Allocation</p>
+        <p className="mb-2 text-[13px] text-fg-2">Allocation</p>
         <div className={cn(tone.panel, 'flex gap-1 p-1')}>
           <button
             type="button"
@@ -461,13 +461,13 @@ function ExpenseForm({
           </button>
         </div>
         {mode === 'general' ? (
-          <p className="mt-2 text-xs text-[#a1a1a6]">
+          <p className="mt-2 text-xs text-fg-2">
             Split across {allocationBatches.length} active {allocationBatches.length === 1 ? 'batch' : 'batches'} by livestock count. This batch carries{' '}
-            <span className="font-mono tabular-nums text-[#ededed]">{thisShare.toFixed(1)}%</span>
-            {amount ? <> {'\u2248'} <span className="tabular-nums text-[#ededed]">{formatCurrency((Number(amount) * thisShare) / 100, 'GHS')}</span></> : null}
+            <span className="font-mono tabular-nums text-fg">{thisShare.toFixed(1)}%</span>
+            {amount ? <> {'\u2248'} <span className="tabular-nums text-fg">{formatCurrency((Number(amount) * thisShare) / 100, 'GHS')}</span></> : null}
           </p>
         ) : (
-          <p className="mt-2 text-xs text-[#a1a1a6]">The full amount is charged to this batch only</p>
+          <p className="mt-2 text-xs text-fg-2">The full amount is charged to this batch only</p>
         )}
       </div>
 

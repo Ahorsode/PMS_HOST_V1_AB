@@ -83,11 +83,11 @@ function getDeviceAccessLabel(device: DesktopLicenseRow) {
 }
 
 function getTimerTone(expiry: Date | null, now: Date) {
-  if (!expiry) return "border-white/15 bg-white/10 text-white/75";
+  if (!expiry) return "border-fg/15 bg-fg/10 text-fg/75";
   const remainingDays = (expiry.getTime() - now.getTime()) / DAY_MS;
-  if (remainingDays < 3) return "border-white/[0.08] bg-white/[0.04] text-red-100";
-  if (remainingDays < 7) return "border-white/[0.08] bg-white/[0.04] text-amber-100";
-  return "border-white/[0.08] bg-white/[0.04] text-[#ededed]";
+  if (remainingDays < 3) return "border-fg/[0.08] bg-fg/[0.04] text-red-100";
+  if (remainingDays < 7) return "border-fg/[0.08] bg-fg/[0.04] text-amber-100";
+  return "border-fg/[0.08] bg-fg/[0.04] text-fg";
 }
 
 function formatRemaining(expiry: Date | null, now: Date) {
@@ -269,11 +269,11 @@ export default function LicenseUpgradeClient({
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 px-0 md:px-3 pt-2 pb-7 md:py-10">
-      <section className="rounded-lg border border-white/10 bg-[#19191b]/80 p-6 shadow-black/25">
-        <p className="text-xs font-medium text-[#ededed]">Your current plan</p>
+      <section className="rounded-lg border border-fg/10 bg-card/80 p-6 shadow-black/25">
+        <p className="text-xs font-medium text-fg">Your current plan</p>
         <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <div>
-            <span className="inline-flex rounded-full border border-white/[0.08] bg-white/[0.04] px-4 py-2 text-sm font-medium text-[#ededed]">
+            <span className="inline-flex rounded-full border border-fg/[0.08] bg-fg/[0.04] px-4 py-2 text-sm font-medium text-fg">
               {current.label}
             </span>
             {current.timerLabel ? (
@@ -286,28 +286,28 @@ export default function LicenseUpgradeClient({
               </div>
             ) : null}
             {current.note ? (
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-white/70">{current.note}</p>
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-fg/70">{current.note}</p>
             ) : null}
           </div>
         </div>
 
-        <div className="mt-6 border-t border-white/10 pt-5">
-          <p className="text-xs font-medium text-white/40">Connected desktop devices</p>
+        <div className="mt-6 border-t border-fg/10 pt-5">
+          <p className="text-xs font-medium text-fg/40">Connected desktop devices</p>
           {devices.length === 0 ? (
-            <p className="mt-3 rounded-lg border border-white/10 bg-white/5 p-4 text-sm text-white/70">
+            <p className="mt-3 rounded-lg border border-fg/10 bg-fg/5 p-4 text-sm text-fg/70">
               No desktop connected yet.
             </p>
           ) : (
             <div className="mt-3 grid gap-3">
               {devices.map((device) => (
-                <div key={device.id} className="flex flex-col gap-2 rounded-lg border border-white/10 bg-white/5 p-4 text-sm text-white/75 sm:flex-row sm:items-center sm:justify-between">
+                <div key={device.id} className="flex flex-col gap-2 rounded-lg border border-fg/10 bg-fg/5 p-4 text-sm text-fg/75 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex min-w-0 items-center gap-3">
-                    <Monitor className="h-5 w-5 shrink-0 text-[#85858b]" />
-                    <span className="truncate font-medium text-white">
+                    <Monitor className="h-5 w-5 shrink-0 text-fg-3" />
+                    <span className="truncate font-medium text-fg">
                       {device.deviceName || device.hardwareId || "Unnamed desktop"}
                     </span>
                   </div>
-                  <span className="font-medium text-white/65">{getDeviceAccessLabel(device)}</span>
+                  <span className="font-medium text-fg/65">{getDeviceAccessLabel(device)}</span>
                 </div>
               ))}
             </div>
@@ -315,8 +315,8 @@ export default function LicenseUpgradeClient({
         </div>
       </section>
 
-      <section className="space-y-4 rounded-lg border border-white/10 bg-[#19191b]/70 p-5">
-        <div className="grid grid-cols-2 gap-2 rounded-lg border border-white/10 bg-black/25 p-1 sm:w-fit">
+      <section className="space-y-4 rounded-lg border border-fg/10 bg-card/70 p-5">
+        <div className="grid grid-cols-2 gap-2 rounded-lg border border-fg/10 bg-fg/[0.04] p-1 sm:w-fit">
           {(["SOLO", "TEAM"] as const).map((type) => {
             const Icon = type === "SOLO" ? User : Users;
             const selected = selectedType === type;
@@ -328,7 +328,7 @@ export default function LicenseUpgradeClient({
                 aria-pressed={selected}
                 className={cn(
                   "flex items-center justify-center gap-2 rounded-md px-5 py-2.5 text-sm font-medium transition",
-                  selected ? "bg-white/[0.04] text-[#ededed]" : "text-white/60 hover:text-white",
+                  selected ? "bg-fg/[0.04] text-fg" : "text-fg/60 hover:text-fg",
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -338,7 +338,7 @@ export default function LicenseUpgradeClient({
           })}
         </div>
         {selectedType !== planType ? (
-          <p className="text-sm text-[#ededed]">
+          <p className="text-sm text-fg">
             You are on {planType === "SOLO" ? "Solo" : "Team"}. Buying a {selectedType === "SOLO" ? "Solo" : "Team"} plan switches your farm to {selectedType === "SOLO" ? "Solo (owner only)" : "Team"}.
           </p>
         ) : null}
@@ -354,8 +354,8 @@ export default function LicenseUpgradeClient({
                 className={cn(
                   "rounded-full border px-4 py-2 text-sm font-medium transition",
                   selected
-                    ? "border-emerald-300 bg-white/[0.04] text-[#ededed]"
-                    : "border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:text-white",
+                    ? "border-emerald-300 bg-fg/[0.04] text-fg"
+                    : "border-fg/10 bg-fg/5 text-fg/70 hover:border-fg/20 hover:text-fg",
                 )}
               >
                 {option.months} {option.months === 1 ? "Month" : "Months"}
@@ -365,9 +365,9 @@ export default function LicenseUpgradeClient({
           })}
         </div>
 
-        <div className="flex flex-col gap-3 border-t border-white/10 pt-4 sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-3 border-t border-fg/10 pt-4 sm:flex-row sm:items-center">
           <label className="relative flex-1 sm:max-w-xs">
-            <Tag className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/40" />
+            <Tag className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg/40" />
             <span className="sr-only">Promo code</span>
             <input
               value={promoInput}
@@ -382,18 +382,18 @@ export default function LicenseUpgradeClient({
                 }
               }}
               placeholder="Promo code"
-              className="h-10 w-full rounded-full border border-white/10 bg-white/5 pl-9 pr-4 text-sm font-medium text-white outline-none placeholder:normal-case placeholder:text-white/40 focus:border-white/[0.08]"
+              className="h-10 w-full rounded-full border border-fg/10 bg-fg/5 pl-9 pr-4 text-sm font-medium text-fg outline-none placeholder:normal-case placeholder:text-fg/40 focus:border-fg/[0.08]"
             />
           </label>
           <button
             type="button"
             onClick={applyPromo}
             disabled={!promoInput.trim() || isCheckingPromo}
-            className="h-10 rounded-full border border-white/15 px-5 text-sm font-medium text-white/80 transition hover:border-white/30 hover:text-white disabled:opacity-50"
+            className="h-10 rounded-full border border-fg/15 px-5 text-sm font-medium text-fg/80 transition hover:border-fg/30 hover:text-fg disabled:opacity-50"
           >
             {isCheckingPromo ? "Checking..." : "Apply"}
           </button>
-          <div className="text-sm text-[#ededed]">
+          <div className="text-sm text-fg">
             {appliedPromo ? <p>{appliedPromo.code}: {appliedPromo.percentOff}% off</p> : null}
             {farmDiscountPercent > 0 ? <p>Your farm has a {farmDiscountPercent}% discount.</p> : null}
           </div>
@@ -401,22 +401,22 @@ export default function LicenseUpgradeClient({
       </section>
 
       {manualRequest ? (
-        <section className="rounded-lg border border-white/[0.08] bg-white/[0.04] p-5 text-sm text-amber-50">
-          <p className="flex items-center gap-2 text-xs font-medium text-[#ededed]">
+        <section className="rounded-lg border border-fg/[0.08] bg-fg/[0.04] p-5 text-sm text-amber-50">
+          <p className="flex items-center gap-2 text-xs font-medium text-fg">
             <Smartphone className="h-4 w-4" /> Pay by Mobile Money
           </p>
-          <p className="mt-3 text-base font-medium text-white">
+          <p className="mt-3 text-base font-medium text-fg">
             Send {formatCurrency(manualRequest.amount)} for {manualRequest.planName}
           </p>
           <dl className="mt-3 grid gap-2 sm:grid-cols-3">
             {billing.manualPayment.network ? (
-              <div><dt className="text-xs text-[#ededed]">Network</dt><dd className="font-medium">{billing.manualPayment.network}</dd></div>
+              <div><dt className="text-xs text-fg">Network</dt><dd className="font-medium">{billing.manualPayment.network}</dd></div>
             ) : null}
             {billing.manualPayment.momoNumber ? (
-              <div><dt className="text-xs text-[#ededed]">Number</dt><dd className="font-medium">{billing.manualPayment.momoNumber}</dd></div>
+              <div><dt className="text-xs text-fg">Number</dt><dd className="font-medium">{billing.manualPayment.momoNumber}</dd></div>
             ) : null}
             {billing.manualPayment.accountName ? (
-              <div><dt className="text-xs text-[#ededed]">Account name</dt><dd className="font-medium">{billing.manualPayment.accountName}</dd></div>
+              <div><dt className="text-xs text-fg">Account name</dt><dd className="font-medium">{billing.manualPayment.accountName}</dd></div>
             ) : null}
           </dl>
           {billing.manualPayment.instructions ? <p className="mt-3 leading-6 text-amber-50/90">{billing.manualPayment.instructions}</p> : null}
@@ -438,44 +438,44 @@ export default function LicenseUpgradeClient({
           return (
             <div key={plan.tier} className="relative h-full">
               {plan.popular ? (
-                <div className="absolute -top-4 left-1/2 z-10 -translate-x-1/2 rounded-full bg-amber-500 px-5 py-1.5 text-xs font-medium text-black">
+                <div className="absolute -top-4 left-1/2 z-10 -translate-x-1/2 rounded-full bg-amber-500 px-5 py-1.5 text-xs font-medium text-[#451a03]">
                   All features
                 </div>
               ) : null}
 
-              <Card className="relative h-full overflow-hidden rounded-lg border-white/10 bg-[#19191b]/75 p-7">
+              <Card className="relative h-full overflow-hidden rounded-lg border-fg/10 bg-card/75 p-7">
                 <CardContent className="flex h-full flex-col gap-7 p-0">
                   <div className="space-y-3">
-                    <div className={cn("h-16 w-16 rounded-md bg-[#1e1e20] p-0.5", plan.color, plan.shadow)}>
-                      <div className="flex h-full w-full items-center justify-center rounded-md bg-[#19191b]">
-                        <Icon className="h-8 w-8 text-white" />
+                    <div className={cn("h-16 w-16 rounded-md bg-tile p-0.5", plan.color, plan.shadow)}>
+                      <div className="flex h-full w-full items-center justify-center rounded-md bg-card">
+                        <Icon className="h-8 w-8 text-fg" />
                       </div>
                     </div>
                     <div>
-                      <h3 className="text-2xl font-medium text-white">
+                      <h3 className="text-2xl font-medium text-fg">
                         {planConfig.name}
                         {isCurrent ? (
-                          <span className="ml-3 align-middle rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-medium text-[#ededed]">
+                          <span className="ml-3 align-middle rounded-full border border-fg/[0.08] bg-fg/[0.04] px-3 py-1 text-xs font-medium text-fg">
                             Current
                           </span>
                         ) : null}
                       </h3>
-                      <p className="mt-2 text-sm font-medium leading-6 text-white/70">
+                      <p className="mt-2 text-sm font-medium leading-6 text-fg/70">
                         {staffLimitLabel(selectedType, planConfig.staffLimit)}
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-medium text-white">GHS {monthly}</span>
-                    <span className="text-sm font-medium text-white/60">/ month</span>
+                    <span className="text-4xl font-medium text-fg">GHS {monthly}</span>
+                    <span className="text-sm font-medium text-fg/60">/ month</span>
                   </div>
 
                   <ul className="flex-1 space-y-2">
                     {CORE_FEATURES.map((feature) => (
-                      <li key={feature} className="flex items-center gap-2 text-sm font-medium text-white/75">
-                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/[0.04]">
-                          <Check className="h-3 w-3 text-[#85858b]" />
+                      <li key={feature} className="flex items-center gap-2 text-sm font-medium text-fg/75">
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-fg/[0.04]">
+                          <Check className="h-3 w-3 text-fg-3" />
                         </span>
                         {feature}
                       </li>
@@ -486,10 +486,10 @@ export default function LicenseUpgradeClient({
                       return (
                         <li
                           key={key}
-                          className={cn("flex items-center gap-2 text-sm font-medium", included ? "text-white/75" : "text-white/35 line-through")}
+                          className={cn("flex items-center gap-2 text-sm font-medium", included ? "text-fg/75" : "text-fg/35 line-through")}
                         >
-                          <span className={cn("flex h-5 w-5 shrink-0 items-center justify-center rounded-full", included ? "bg-white/[0.04]" : "bg-white/5")}>
-                            {included ? <Check className="h-3 w-3 text-[#85858b]" /> : <X className="h-3 w-3 text-white/40" />}
+                          <span className={cn("flex h-5 w-5 shrink-0 items-center justify-center rounded-full", included ? "bg-fg/[0.04]" : "bg-fg/5")}>
+                            {included ? <Check className="h-3 w-3 text-fg-3" /> : <X className="h-3 w-3 text-fg/40" />}
                           </span>
                           {feature}
                         </li>
@@ -497,13 +497,13 @@ export default function LicenseUpgradeClient({
                     })}
                   </ul>
 
-                  <div className="rounded-lg border border-white/10 bg-white/5 p-4">
-                    <p className="text-xs font-medium text-white/40">Selected term total</p>
-                    <p className="mt-2 text-xl font-medium text-white">
+                  <div className="rounded-lg border border-fg/10 bg-fg/5 p-4">
+                    <p className="text-xs font-medium text-fg/40">Selected term total</p>
+                    <p className="mt-2 text-xl font-medium text-fg">
                       {selectedMonths} {selectedMonths === 1 ? "Month" : "Months"} - {formatCurrency(pricing.total)}
                     </p>
                     {pricing.savings > 0 ? (
-                      <p className="mt-1 text-sm font-medium text-[#ededed]">
+                      <p className="mt-1 text-sm font-medium text-fg">
                         {[
                           pricing.discount > 0 ? `${Math.round(pricing.discount * 100)}% term discount` : null,
                           farmDiscountPercent > 0 ? `${farmDiscountPercent}% farm discount` : null,
@@ -527,20 +527,20 @@ export default function LicenseUpgradeClient({
                       className={cn(
                         "h-14 w-full rounded-lg font-medium",
                         plan.tier === "STANDARD"
-                          ? "bg-[#ededed] text-[#141415] hover:bg-white"
+                          ? "bg-fg text-page hover:bg-fg/90"
                           : "bg-amber-500 text-[#451a03] hover:bg-amber-400",
                       )}
                     >
                       {isCurrent ? "Renew" : "Pay"} {formatCurrency(pricing.total)} with Paystack
                     </Button>
-                    <p className="text-center text-xs text-white/50">
+                    <p className="text-center text-xs text-fg/50">
                       Mobile Money (MTN, Telecel, AirtelTigo), card or bank transfer.{" "}
                       {billing.manualPayment.enabled ? (
                         <button
                           type="button"
                           onClick={() => handleUpgrade(plan.tier)}
                           disabled={isUpgrading}
-                          className="font-medium text-white/70 underline underline-offset-2 hover:text-white disabled:opacity-50"
+                          className="font-medium text-fg/70 underline underline-offset-2 hover:text-fg disabled:opacity-50"
                         >
                           Pay manually instead
                         </button>
@@ -556,22 +556,22 @@ export default function LicenseUpgradeClient({
                         className={cn(
                           "h-14 w-full rounded-lg font-medium",
                           plan.tier === "STANDARD"
-                            ? "bg-[#ededed] text-[#141415] hover:bg-white"
+                            ? "bg-fg text-page hover:bg-fg/90"
                             : "bg-amber-500 text-[#451a03] hover:bg-amber-400",
                         )}
                       >
                         Pay {formatCurrency(pricing.total)} by Mobile Money
                       </Button>
                     ) : (
-                      <p className="rounded-lg border border-white/10 bg-white/5 p-3 text-center text-sm text-white/70">
+                      <p className="rounded-lg border border-fg/10 bg-fg/5 p-3 text-center text-sm text-fg/70">
                         Payments are paused right now. Please contact us to subscribe.
                       </p>
                     )}
-                    <p className="text-center text-xs leading-5 text-white/60">
+                    <p className="text-center text-xs leading-5 text-fg/60">
                       One-time payment of {formatCurrency(pricing.total)} for {selectedMonths}{" "}
                       {selectedMonths === 1 ? "month" : "months"}. It does not renew automatically. When the term ends you have{" "}
                       {billing.trial.graceDays} {billing.trial.graceDays === 1 ? "day" : "days"} to renew before paid features lock, and your records are kept.{" "}
-                      <Link href="/refunds" className="font-medium text-white/80 underline underline-offset-2 hover:text-white">
+                      <Link href="/refunds" className="font-medium text-fg/80 underline underline-offset-2 hover:text-fg">
                         Refund policy
                       </Link>
                     </p>
