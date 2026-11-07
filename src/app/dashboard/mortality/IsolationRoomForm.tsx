@@ -2,11 +2,11 @@
 
 import React, { useState } from 'react';
 import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
 import { createIsolationRoom } from '@/lib/actions/dashboard-actions';
-import { Plus } from 'lucide-react';
+import { Loader2, Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { MutationBoundary } from '@/components/ui/MutationFeedback';
+import { g } from '@/components/ui/graphite';
 
 export const IsolationRoomForm = () => {
   const router = useRouter();
@@ -25,7 +25,7 @@ export const IsolationRoomForm = () => {
     const capacityVal = parseInt(capacity);
 
     if (isNaN(capacityVal) || capacityVal < 0) {
-      setError('Capacity must be a non-negative number');
+      setError('Capacity must be zero or more');
       setIsLoading(false);
       return;
     }
@@ -38,61 +38,65 @@ export const IsolationRoomForm = () => {
         setCapacity('');
         router.refresh();
       } else {
-        setError(result.error || 'Failed to create isolation room');
+        setError(result.error || 'Could not create the isolation room');
       }
     } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred');
+      setError(err.message || 'Something went wrong, try again');
     } finally {
       setIsLoading(false);
     }
   }
 
   return (
-    <div className="p-5 bg-[#1F2937] rounded-xl border border-gray-700 h-fit">
-      <h3 className="font-bold text-amber-400 mb-4 flex items-center gap-2">
-        <Plus className="w-4 h-4" /> Create New Room
-      </h3>
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <div className={`${g.tile} h-fit p-4`}>
+      <h3 className={`mb-4 text-sm font-medium ${g.text}`}>New room</h3>
+      <form onSubmit={handleSubmit}>
         <MutationBoundary active={isLoading} label="Creating isolation room...">
-        <fieldset disabled={isLoading} className="space-y-4 disabled:opacity-70">
-        <Input 
-          name="name" 
-          label="Room Name" 
-          placeholder="e.g. Infirmary A" 
-          required 
-          disabled={isLoading}
-          className="bg-[#374151] border-gray-600 text-white placeholder-gray-400" 
-        />
-        <Input 
-          name="capacity" 
-          type="number" 
-          label="Capacity (Birds)" 
-          placeholder="e.g. 50" 
-          required 
-          value={capacity}
-          disabled={isLoading}
-          onChange={(e) => {
-            const val = e.target.value;
-            if (val === '' || parseInt(val) >= 0) {
-              setCapacity(val);
-            }
-          }}
-          className="bg-[#374151] border-gray-600 text-white placeholder-gray-400" 
-        />
-        {error && (
-          <p className="text-xs font-bold text-red-400 bg-red-400/10 p-2 rounded border border-red-400/20">
-            {error}
-          </p>
-        )}
-        <Button 
-          type="submit" 
-          className="w-full bg-amber-600 hover:bg-amber-700 text-white"
-          isLoading={isLoading}
-          loadingText="Creating room..."
-        >
-          Add Room
-        </Button>
-        </fieldset>
+          <fieldset disabled={isLoading} className="space-y-4 disabled:opacity-70">
+            <div>
+              <label htmlFor="isolation-room-name" className={g.label}>Name</label>
+              <Input
+                id="isolation-room-name"
+                name="name"
+                placeholder="Infirmary A"
+                required
+                disabled={isLoading}
+                className={g.input}
+              />
+            </div>
+            <div>
+              <label htmlFor="isolation-room-capacity" className={g.label}>Capacity in birds</label>
+              <Input
+                id="isolation-room-capacity"
+                name="capacity"
+                type="number"
+                placeholder="50"
+                required
+                value={capacity}
+                disabled={isLoading}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  if (val === '' || parseInt(val) >= 0) {
+                    setCapacity(val);
+                  }
+                }}
+                className={g.input}
+              />
+            </div>
+            {error && (
+              <p role="alert" className="text-sm text-[#e5484d]">
+                {error}
+              </p>
+            )}
+            <button type="submit" disabled={isLoading} aria-busy={isLoading || undefined} className={`${g.buttonPrimary} w-full`}>
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} />
+              ) : (
+                <Plus className="h-4 w-4" strokeWidth={1.5} />
+              )}
+              {isLoading ? 'Adding room' : 'Add room'}
+            </button>
+          </fieldset>
         </MutationBoundary>
       </form>
     </div>
