@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
+import { QRCodeSVG } from 'qrcode.react'
 import { toast } from 'sonner'
 import { KeyRound, Laptop, ShieldAlert, ShieldCheck } from 'lucide-react'
 import {
@@ -112,11 +113,16 @@ export default function AccountPanel({
             <div className="space-y-3 text-sm">
               <ol className="list-decimal space-y-1 pl-5 text-zinc-300">
                 <li>Install an authenticator app (Google Authenticator, Microsoft Authenticator or Authy).</li>
-                <li>
-                  Add an account and type this key, or{' '}
-                  <a href={setup.uri} className="text-emerald-300 underline">open it in the app</a> on this phone:
-                </li>
+                <li>In the app, add an account and scan this QR code.</li>
               </ol>
+              {/* White quiet zone around dark modules so phone cameras read it on the dark page. */}
+              <div className="mx-auto w-fit rounded-lg bg-white p-3">
+                <QRCodeSVG value={setup.uri} size={192} level="M" title="Two-step sign-in QR code" />
+              </div>
+              <p className="text-zinc-400">
+                Can&apos;t scan? Type this key instead, or{' '}
+                <a href={setup.uri} className="text-emerald-300 underline">open it in the app</a> on this phone:
+              </p>
               <p className="rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-center font-mono text-lg tracking-wider text-white">{setup.formatted}</p>
               <form className="flex flex-col gap-2 sm:flex-row" onSubmit={(event) => {
                 event.preventDefault()

@@ -37,6 +37,7 @@
     "next-auth": "5.0.0-beta.32",
     "pdfkit": "^0.18.0",
     "postcss": "^8.5.14",
+    "qrcode.react": "4.2.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-hook-form": "^7.71.2",
