@@ -17,7 +17,7 @@ import {
   initializePaystackTransaction,
   isPaystackConfigured,
 } from '@/lib/billing/paystack'
-import { PAYSTACK_INITIATED_EVENT } from '@/lib/billing/paystack-fulfillment'
+import { fulfillPaystackPayment, PAYSTACK_INITIATED_EVENT } from '@/lib/billing/paystack-fulfillment'
 import { getFarmAccess } from '@/lib/subscription-utils'
 import { getBillingConfig } from '@/lib/billing/billing-config'
 import { checkPromoCode, getFarmDiscountPercent, type AppliedPromo } from '@/lib/billing/checkout-discounts'
@@ -215,10 +215,53 @@ export async function startPaystackCheckout(planType: PlanType, tier: Subscripti
       },
     })
 
-    return { success: true, authorizationUrl: checkout.authorization_url, reference }
+    return {
+      success: true,
+      authorizationUrl: checkout.authorization_url,
+      accessCode: checkout.access_code,
+      reference,
+    }
   } catch (error) {
     console.error('Paystack checkout error:', error)
     return { success: false, error: 'Could not start the payment. Please try again.' }
+  }
+}
+
+/**
+ * Activates the plan once the Paystack popup reports a successful payment.
+ * The payment is re-verified with Paystack and applied at most once, so the
+ * webhook arriving as well is harmless.
+ */
+export async function confirmPaystackPayment(reference: string) {
+  const { activeFarmId } = await getAuthContext()
+
+  if (!activeFarmId) {
+    return { success: false, status: 'failed' as const, error: 'No active farm selected' }
+  }
+
+  if (typeof reference !== 'string' || !/^[A-Z0-9-]{1,100}$/i.test(reference)) {
+    return { success: false, status: 'failed' as const, error: 'Unknown payment reference' }
+  }
+
+  const initiated = await prisma.subscriptionEvent.findFirst({
+    where: { farmId: activeFarmId, eventType: PAYSTACK_INITIATED_EVENT, metadata: { path: ['reference'], equals: reference } },
+    select: { id: true },
+  })
+  if (!initiated) {
+    return { success: false, status: 'failed' as const, error: 'Unknown payment reference' }
+  }
+
+  try {
+    const result = await fulfillPaystackPayment(reference)
+    if (!result.ok) {
+      return { success: false, status: 'failed' as const, error: result.message }
+    }
+    revalidatePath('/dashboard', 'layout')
+    return { success: true, status: 'success' as const }
+  } catch (error) {
+    // Paystack may not have settled the payment yet; the webhook will finish it.
+    console.error('Paystack confirmation error:', { reference, error })
+    return { success: false, status: 'pending' as const, error: 'We are still confirming your payment.' }
   }
 }
 

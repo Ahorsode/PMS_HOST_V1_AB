@@ -7,7 +7,8 @@ import { toast } from "sonner";
 import { Check, Clock3, Crown, Monitor, Shield, Smartphone, Tag, User, Users, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
-import { previewPromoCode, requestSubscriptionUpgrade, startPaystackCheckout } from "@/lib/actions/subscription-actions";
+import { confirmPaystackPayment, previewPromoCode, requestSubscriptionUpgrade, startPaystackCheckout } from "@/lib/actions/subscription-actions";
+import { openPaystackPopup, type PopupResult } from "@/lib/billing/paystack-popup";
 import { type DesktopLicenseRow } from "@/lib/actions/licenses";
 import {
   PLAN_FEATURE_DETAILS,
@@ -219,7 +220,33 @@ export default function LicenseUpgradeClient({
         return;
       }
 
-      window.location.assign(result.authorizationUrl);
+      let popup: PopupResult;
+      try {
+        popup = await openPaystackPopup(result.accessCode);
+      } catch {
+        // Popup script blocked or offline: use Paystack's own checkout page instead.
+        window.location.assign(result.authorizationUrl);
+        return;
+      }
+
+      if (popup.outcome === "cancelled") {
+        toast.info("Payment cancelled. You have not been charged.");
+        return;
+      }
+      if (popup.outcome === "error") {
+        toast.error(popup.message);
+        return;
+      }
+
+      const confirmed = await confirmPaystackPayment(popup.reference);
+      if (confirmed.success) {
+        toast.success("Payment received. Your plan is now active.");
+      } else if (confirmed.status === "pending") {
+        toast.info("We're confirming your payment. Your plan will update shortly.");
+      } else {
+        toast.error(confirmed.error || "We could not confirm this payment. Contact support if you were charged.");
+      }
+      router.refresh();
     });
   }
 
