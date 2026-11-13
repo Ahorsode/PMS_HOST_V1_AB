@@ -213,7 +213,7 @@ export function segmentClass(active: boolean) {
     tone.ease,
     tone.focus,
     active
-      ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]'
+      ? 'bg-accent font-semibold text-accent-fg shadow-sm'
       : 'text-fg-2 hover:bg-fg/[0.04] hover:text-fg',
   )
 }

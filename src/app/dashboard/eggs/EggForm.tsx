@@ -131,7 +131,7 @@ export const EggForm = ({
                   key={modeOpt}
                   type="button"
                   onClick={() => setLoggingMode(modeOpt as 'individual' | 'crates')}
-                  className={`py-2 rounded-md text-xs font-medium transition-colors ${loggingMode === modeOpt ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'bg-fg/10 text-fg/70 hover:bg-fg/10'}`}
+                  className={`py-2 rounded-md text-xs font-medium transition-colors ${loggingMode === modeOpt ? 'bg-accent font-semibold text-accent-fg shadow-sm' : 'bg-fg/10 text-fg/70 hover:bg-fg/10'}`}
                 >
                   {modeOpt === 'individual' ? 'Individual Eggs' : `Crates (${eggsPerCrate}/ea)`}
                 </button>
@@ -153,7 +153,7 @@ export const EggForm = ({
                     isSorted,
                     ...(isSorted ? {} : { smallCount: 0, mediumCount: 0, largeCount: 0 })
                   })}
-                  className={`py-2 rounded-md text-xs font-medium transition-colors ${formData.isSorted === isSorted ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'bg-fg/10 text-fg/70 hover:bg-fg/10'}`}
+                  className={`py-2 rounded-md text-xs font-medium transition-colors ${formData.isSorted === isSorted ? 'bg-accent font-semibold text-accent-fg shadow-sm' : 'bg-fg/10 text-fg/70 hover:bg-fg/10'}`}
                 >
                   {isSorted ? 'Sorted' : 'Unsorted'}
                 </button>

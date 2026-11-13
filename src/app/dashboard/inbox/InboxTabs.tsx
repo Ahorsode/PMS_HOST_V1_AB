@@ -35,7 +35,7 @@ export function InboxTabs({
             aria-current={active === tab.id ? 'page' : undefined}
             className={cn(
               'flex shrink-0 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium transition-colors sm:flex-none',
-              active === tab.id ? 'bg-fg/10 text-fg' : 'text-fg/60 hover:text-fg',
+              active === tab.id ? 'bg-accent font-semibold text-accent-fg shadow-sm' : 'text-fg-2 hover:text-fg',
             )}
           >
             {tab.label}

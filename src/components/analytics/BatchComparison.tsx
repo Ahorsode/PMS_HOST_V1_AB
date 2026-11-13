@@ -347,7 +347,7 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
                   className={cn(
                     'flex items-center rounded-lg transition-colors duration-150',
                     isSelected
-                      ? 'bg-raised shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
+                      ? 'bg-accent/10 ring-1 ring-inset ring-accent/40'
                       : 'hover:bg-fg/[0.04]'
                   )}
                 >
@@ -447,7 +447,7 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
                     'h-8 whitespace-nowrap rounded-md px-3 text-sm transition-colors duration-150',
                     focusRing,
                     selectedMetric === key
-                      ? 'bg-raised-2 font-medium text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
+                      ? 'bg-accent font-semibold text-accent-fg shadow-sm'
                       : 'text-fg-2 hover:text-fg'
                   )}
                 >

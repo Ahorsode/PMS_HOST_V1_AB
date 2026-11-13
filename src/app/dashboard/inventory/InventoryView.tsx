@@ -272,7 +272,7 @@ export default function InventoryView({
           onClick={() => setShowUsedUp(false)}
           className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
             !showUsedUp
-              ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
+              ? 'bg-accent font-semibold text-accent-fg shadow-sm'
               : 'bg-fg/10 text-fg/70 hover:bg-fg/15 hover:text-fg'
           }`}
         >
@@ -284,7 +284,7 @@ export default function InventoryView({
           onClick={() => setShowUsedUp(true)}
           className={`flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
             showUsedUp
-              ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
+              ? 'bg-accent font-semibold text-accent-fg shadow-sm'
               : 'bg-fg/10 text-fg/70 hover:bg-fg/15 hover:text-fg'
           }`}
         >
@@ -556,7 +556,7 @@ export default function InventoryView({
                         category: cat,
                         unit: cat === 'FEED' ? 'bags' : cat === 'VACCINE' ? 'doses' : 'units',
                       }))}
-                      className={`py-2 rounded-md text-xs font-medium transition-colors ${form.category === cat ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'bg-fg/10 text-fg/70 hover:bg-fg/10'}`}
+                      className={`py-2 rounded-md text-xs font-medium transition-colors ${form.category === cat ? 'bg-accent font-semibold text-accent-fg shadow-sm' : 'bg-fg/10 text-fg/70 hover:bg-fg/10'}`}
                     >
                       {cat}
                     </button>
@@ -572,14 +572,14 @@ export default function InventoryView({
                     <button
                       type="button"
                       onClick={() => setForm(p => ({ ...p, usageType: 'ONE_TIME', stockLevel: '1' }))}
-                      className={`py-2 rounded-md text-xs font-medium transition-colors ${form.usageType === 'ONE_TIME' ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'bg-fg/10 text-fg/70 hover:bg-fg/10'}`}
+                      className={`py-2 rounded-md text-xs font-medium transition-colors ${form.usageType === 'ONE_TIME' ? 'bg-accent font-semibold text-accent-fg shadow-sm' : 'bg-fg/10 text-fg/70 hover:bg-fg/10'}`}
                     >
                       One-time use
                     </button>
                     <button
                       type="button"
                       onClick={() => setForm(p => ({ ...p, usageType: 'QUANTITY' }))}
-                      className={`py-2 rounded-md text-xs font-medium transition-colors ${form.usageType === 'QUANTITY' ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'bg-fg/10 text-fg/70 hover:bg-fg/10'}`}
+                      className={`py-2 rounded-md text-xs font-medium transition-colors ${form.usageType === 'QUANTITY' ? 'bg-accent font-semibold text-accent-fg shadow-sm' : 'bg-fg/10 text-fg/70 hover:bg-fg/10'}`}
                     >
                       Quantity-tracked
                     </button>
@@ -793,7 +793,7 @@ export default function InventoryView({
           <motion.div
             initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
             className={`fixed bottom-24 right-4 md:bottom-6 md:right-6 z-[99] flex items-center gap-2 px-4 py-2 rounded-md font-medium text-sm 
-              ${toast.ok ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'bg-red-500/90 text-fg'}`}
+              ${toast.ok ? 'bg-accent font-semibold text-accent-fg shadow-sm' : 'bg-red-500/90 text-fg'}`}
           >
             {toast.ok ? <CheckCircle2 className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
             {toast.msg}

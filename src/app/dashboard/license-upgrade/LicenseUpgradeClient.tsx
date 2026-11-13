@@ -338,7 +338,7 @@ export default function LicenseUpgradeClient({
                 aria-pressed={selected}
                 className={cn(
                   "flex items-center justify-center gap-2 rounded-md px-5 py-2.5 text-sm font-medium transition",
-                  selected ? "bg-fg/[0.04] text-fg" : "text-fg/60 hover:text-fg",
+                  selected ? "bg-accent font-semibold text-accent-fg shadow-sm" : "text-fg-2 hover:text-fg",
                 )}
               >
                 <Icon className="h-4 w-4" />

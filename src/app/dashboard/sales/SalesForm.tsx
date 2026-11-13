@@ -602,12 +602,12 @@ export function SalesForm({
         ].map((wizardStep) => (
           <div
             key={wizardStep.key}
-            className={`rounded-lg border px-3 py-1 text-xs font-medium ${
+            className={`rounded-lg border px-3 py-1 text-xs ${
               step === wizardStep.key
-                ? 'border-fg/[0.08] bg-fg/[0.04] text-accent'
+                ? 'border-accent bg-accent font-semibold text-accent-fg'
                 : step > wizardStep.key
-                  ? 'border-fg/15 bg-fg/[0.04] text-fg/60'
-                  : 'border-fg/10 bg-fg/[0.02] text-fg/35'
+                  ? 'border-accent/40 bg-accent/10 font-medium text-accent'
+                  : 'border-fg/10 bg-fg/[0.02] font-medium text-fg-3'
             }`}
           >
             {wizardStep.key}. {wizardStep.label}

@@ -129,10 +129,10 @@ export function ReportGeneratorLauncher({
                 type="button"
                 onClick={() => setScopeMode('all')}
                 className={cn(
-                  'rounded-lg border px-4 py-4 text-left transition-colors',
+                  'rounded-lg px-4 py-4 text-left transition-colors',
                   scopeMode === 'all'
-                    ? 'border-fg/[0.08] bg-fg/[0.04]'
-                    : 'border-fg/10 bg-fg/[0.03] hover:border-fg/20'
+                    ? 'border-2 border-accent bg-accent/10 shadow-sm'
+                    : 'border-2 border-fg/10 bg-fg/[0.03] hover:border-fg/25'
                 )}
               >
                 <p className="text-sm font-medium text-fg">All batches</p>
@@ -142,10 +142,10 @@ export function ReportGeneratorLauncher({
                 type="button"
                 onClick={() => setScopeMode('single')}
                 className={cn(
-                  'rounded-lg border px-4 py-4 text-left transition-colors',
+                  'rounded-lg px-4 py-4 text-left transition-colors',
                   scopeMode === 'single'
-                    ? 'border-fg/[0.08] bg-fg/[0.04]'
-                    : 'border-fg/10 bg-fg/[0.03] hover:border-fg/20'
+                    ? 'border-2 border-accent bg-accent/10 shadow-sm'
+                    : 'border-2 border-fg/10 bg-fg/[0.03] hover:border-fg/25'
                 )}
               >
                 <p className="text-sm font-medium text-fg">One batch</p>

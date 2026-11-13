@@ -511,7 +511,7 @@ function ModeButton({
       onClick={onClick}
       className={cn(
         'flex h-9 items-center justify-center gap-2 rounded px-3 text-xs font-medium transition-colors',
-        active ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'text-fg/60 hover:text-fg'
+        active ? 'bg-accent font-semibold text-accent-fg shadow-sm' : 'text-fg/60 hover:text-fg'
       )}
     >
       <Icon className="h-3.5 w-3.5" />

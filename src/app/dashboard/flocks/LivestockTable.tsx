@@ -52,7 +52,7 @@ function Segment({
     <button type="button" aria-pressed={active} onClick={onClick} className={segmentClass(active)}>
       {label}
       {count != null ? (
-        <span className={cn('font-mono text-xs tabular-nums', active ? tone.text2 : tone.muted)}>{count}</span>
+        <span className={cn('font-mono text-xs tabular-nums', active ? 'text-accent-fg/80' : tone.muted)}>{count}</span>
       ) : null}
     </button>
   )

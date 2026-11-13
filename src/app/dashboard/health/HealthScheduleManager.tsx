@@ -479,10 +479,10 @@ export function HealthScheduleManager({
                       type="button"
                       onClick={() => setNewUsageType("ONE_TIME")}
                       className={cn(
-                        "flex-1 px-3 py-2.5 rounded-lg border text-xs font-medium transition-colors",
+                        "flex-1 px-3 py-2.5 rounded-lg border-2 text-xs transition-colors",
                         newUsageType === "ONE_TIME"
-                          ? "bg-fg/[0.04] text-accent border-fg/[0.08]"
-                          : "bg-fg/5 text-fg/60 border-fg/10 hover:bg-fg/10"
+                          ? "bg-accent/15 text-accent border-accent font-semibold shadow-sm"
+                          : "bg-fg/5 text-fg-2 border-fg/10 font-medium hover:bg-fg/10 hover:text-fg"
                       )}
                     >
                       One-time use
@@ -491,10 +491,10 @@ export function HealthScheduleManager({
                       type="button"
                       onClick={() => setNewUsageType("QUANTITY")}
                       className={cn(
-                        "flex-1 px-3 py-2.5 rounded-lg border text-xs font-medium transition-colors",
+                        "flex-1 px-3 py-2.5 rounded-lg border-2 text-xs transition-colors",
                         newUsageType === "QUANTITY"
-                          ? "bg-fg/[0.04] text-accent border-fg/[0.08]"
-                          : "bg-fg/5 text-fg/60 border-fg/10 hover:bg-fg/10"
+                          ? "bg-accent/15 text-accent border-accent font-semibold shadow-sm"
+                          : "bg-fg/5 text-fg-2 border-fg/10 font-medium hover:bg-fg/10 hover:text-fg"
                       )}
                     >
                       Set quantity

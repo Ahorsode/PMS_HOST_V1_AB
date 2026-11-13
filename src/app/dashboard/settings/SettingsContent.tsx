@@ -248,7 +248,7 @@ export function SettingsContent({ farm, inventory = [], isFarmOwner = false }: S
             onClick={() => navigateToTab(tab)}
             className={`w-full text-left px-3 py-2 rounded-md flex items-center transition-colors duration-300 ${
               activeTab === tab.id
-                ? 'bg-fg/[0.04] text-accent shadow-[inset_0_0_20px_rgba(16,185,129,0.1)] border border-fg/[0.08]'
+                ? 'bg-accent/10 font-semibold text-accent border border-accent/50'
                 : 'text-fg/80 hover:bg-fg/5 hover:text-fg'
             }`}
           >
@@ -464,7 +464,7 @@ export function SettingsContent({ farm, inventory = [], isFarmOwner = false }: S
                           onClick={() => setDefaultEggUnit(unit)}
                           className={`py-2 rounded-md text-xs font-medium transition-colors ${
                             defaultEggUnit === unit
-                              ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
+                              ? 'bg-accent font-semibold text-accent-fg shadow-sm'
                               : 'bg-fg/10 text-fg/70 hover:bg-fg/10'
                           }`}
                         >
@@ -492,7 +492,7 @@ export function SettingsContent({ farm, inventory = [], isFarmOwner = false }: S
                           onClick={() => setDefaultEggSortMode(mode)}
                           className={`py-2 rounded-md text-xs font-medium transition-colors ${
                             defaultEggSortMode === mode
-                              ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
+                              ? 'bg-accent font-semibold text-accent-fg shadow-sm'
                               : 'bg-fg/10 text-fg/70 hover:bg-fg/10'
                           }`}
                         >

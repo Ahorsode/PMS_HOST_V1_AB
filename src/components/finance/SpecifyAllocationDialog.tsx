@@ -368,10 +368,10 @@ function PresetButton({
       type="button"
       onClick={onClick}
       className={cn(
-        'rounded-lg border p-3 text-left transition-colors',
+        'rounded-lg border-2 p-3 text-left transition-colors',
         active
-          ? 'border-fg/[0.08] bg-fg/[0.04] text-fg'
-          : 'border-fg/10 bg-fg/[0.03] text-fg/70 hover:bg-fg/[0.06]'
+          ? 'border-accent bg-accent/10 text-fg shadow-sm'
+          : 'border-fg/10 bg-fg/[0.03] text-fg-2 hover:bg-fg/[0.06]'
       )}
     >
       <Icon className={cn('mb-2 h-4 w-4', active ? 'text-accent' : 'text-fg/40')} />
@@ -398,7 +398,7 @@ function ModeButton({
       onClick={onClick}
       className={cn(
         'inline-flex w-full items-center justify-center gap-1.5 rounded-md px-2 py-2.5 text-[11px] font-medium transition-colors sm:text-xs',
-        active ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'text-fg/60 hover:text-fg'
+        active ? 'bg-accent font-semibold text-accent-fg shadow-sm' : 'text-fg/60 hover:text-fg'
       )}
     >
       <Icon className="h-3.5 w-3.5" />

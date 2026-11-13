@@ -126,7 +126,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
             onClick={() => setActiveTab('edits')}
             className={`px-6 py-2 rounded-lg text-xs font-medium transition-colors ${
               activeTab === 'edits' 
-                ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' 
+                ? 'bg-accent font-semibold text-accent-fg shadow-sm' 
                 : 'text-fg/60 hover:text-fg'
             }`}
           >
@@ -146,7 +146,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
             onClick={() => setActiveTab('recovery')}
             className={`relative px-6 py-2 rounded-lg text-xs font-medium transition-colors ${
               activeTab === 'recovery' 
-                ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' 
+                ? 'bg-accent font-semibold text-accent-fg shadow-sm' 
                 : 'text-fg/60 hover:text-fg'
             }`}
           >
