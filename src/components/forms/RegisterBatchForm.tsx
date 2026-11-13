@@ -10,7 +10,6 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { BreedSelect } from '@/components/ui/BreedSelect';
 import { Button } from '@/components/ui/Button';
-import Link from 'next/link';
 import { getBreedOptionsForCategory, LIVESTOCK_CATEGORY_OPTIONS, normalizeBreedValue } from '@/lib/livestock-breed-options';
 
 import { FinancialInitializationModal } from '@/components/modals/FinancialInitializationModal';
@@ -43,6 +42,12 @@ interface RegisterBatchFormProps {
 
 export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps) {
   const router = useRouter();
+  // Houses made from this form show up straight away, before router.refresh() lands.
+  const [createdHouses, setCreatedHouses] = React.useState<Array<{ id: string; name: string }>>([]);
+  const allHouses = React.useMemo(() => {
+    const known = new Set(houses.map((h) => h.id.toString()));
+    return [...houses, ...createdHouses.filter((h) => !known.has(h.id))];
+  }, [houses, createdHouses]);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [showFinModal, setShowFinModal] = React.useState(false);
   const [createdBatchId, setCreatedBatchId] = React.useState<string | null>(null);
@@ -103,13 +108,15 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
         houseNumber: newHouseData.name,
         capacity: parseInt(newHouseData.capacity)
       });
-      if (res.success) {
-        toast.success("House created successfully");
+      if (res.success && res.house) {
+        const created = { id: String(res.house.id), name: String(res.house.name ?? newHouseData.name) };
+        setCreatedHouses((prev) => [...prev, created]);
+        toast.success("House created. Now register your livestock.");
         setShowHouseModal(false);
         setNewHouseData({ name: '', capacity: '' });
+        // Wait a tick so the new option exists before selecting it.
+        setTimeout(() => setValue("houseId", created.id, { shouldValidate: true }), 0);
         router.refresh();
-        // After refresh, the new house will be in the props
-        // We'll let the user select it from the updated list
       } else {
         toast.error(res.error || "Failed to create house");
       }
@@ -120,19 +127,55 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
     }
   };
 
-  if (houses.length === 0) {
+  const houseFields = (
+    <>
+      <Input
+        label="House name / number"
+        placeholder="e.g. House Alpha, Pen 1"
+        value={newHouseData.name}
+        onChange={e => setNewHouseData(p => ({ ...p, name: e.target.value }))}
+        disabled={isCreatingHouse}
+      />
+      <Input
+        label="Total capacity (birds/heads)"
+        type="number"
+        min="1"
+        placeholder="e.g. 500"
+        value={newHouseData.capacity}
+        onChange={e => setNewHouseData(p => ({ ...p, capacity: e.target.value }))}
+        disabled={isCreatingHouse}
+      />
+    </>
+  );
+
+  // First house: collect it right here, then this same pop-up moves on to
+  // the livestock form, instead of sending a new farm off to the Houses page.
+  if (allHouses.length === 0) {
     return (
-      <div className="p-5 text-center space-y-3">
-        <p className="text-fg-3">You don't have any active farm houses yet.</p>
-        <p className="text-sm text-fg-3">A farm house is required before you can register a new livestock unit.</p>
-        <Button asChild className="w-full">
-          <Link href="/dashboard/houses">Add new house first</Link>
-        </Button>
+      <div className="w-full max-w-lg">
+        <MutationBoundary active={isCreatingHouse} label="Creating house...">
+          <div className="space-y-4">
+            <div>
+              <p className="text-xs font-medium text-fg-3">Step 1 of 2</p>
+              <h3 className="mt-1 text-base font-medium text-fg">Add your first house</h3>
+              <p className="mt-1 text-sm text-fg-3">Livestock needs a house. Add one now and you'll go straight on to registering the birds.</p>
+            </div>
+            {houseFields}
+            <Button
+              onClick={handleCreateHouse}
+              isLoading={isCreatingHouse}
+              loadingText="Creating..."
+              className="w-full bg-fg hover:bg-fg/90 text-page font-medium h-12 rounded-lg"
+            >
+              Save house & continue
+            </Button>
+          </div>
+        </MutationBoundary>
       </div>
     );
   }
 
-  const houseOptions = houses.map(h => ({ label: h.name, value: h.id.toString() }));
+  const houseOptions = allHouses.map(h => ({ label: h.name, value: h.id.toString() }));
   
   const onSubmit = async (data: FormValues) => {
     if (isSubmitting) return;
@@ -280,22 +323,7 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
       >
         <MutationBoundary active={isCreatingHouse} label="Creating house...">
         <div className="space-y-4 pt-3">
-          <Input 
-            label="House name / number"
-            placeholder="e.g. House Alpha, Pen 1"
-            value={newHouseData.name}
-            onChange={e => setNewHouseData(p => ({ ...p, name: e.target.value }))}
-            disabled={isCreatingHouse}
-          />
-          <Input 
-            label="Total capacity (birds/heads)"
-            type="number"
-            min="1"
-            placeholder="e.g. 500"
-            value={newHouseData.capacity}
-            onChange={e => setNewHouseData(p => ({ ...p, capacity: e.target.value }))}
-            disabled={isCreatingHouse}
-          />
+          {houseFields}
           <div className="flex gap-2 pt-2">
              <Button variant="secondary" onClick={() => setShowHouseModal(false)} disabled={isCreatingHouse} className="flex-1">Cancel</Button>
              <Button 
