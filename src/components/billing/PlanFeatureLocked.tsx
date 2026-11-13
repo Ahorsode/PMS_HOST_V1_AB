@@ -54,7 +54,7 @@ export async function PlanFeatureLocked({
         <Link href="/dashboard" className="bg-fg/5 border border-fg/10 text-fg/80 px-9 py-4 rounded-md font-medium text-[11px] hover:bg-fg/10 hover:text-fg transition-colors text-center">
           Go back
         </Link>
-        <Link href="/dashboard/license-upgrade" className="bg-card text-page px-9 py-4 rounded-md font-medium text-[11px] transition-colors text-center">
+        <Link href="/dashboard/license-upgrade" className="bg-accent text-accent-fg px-9 py-4 rounded-md font-semibold text-[11px] hover:bg-accent/90 transition-colors text-center shadow-sm">
           Upgrade plan
         </Link>
       </div>
