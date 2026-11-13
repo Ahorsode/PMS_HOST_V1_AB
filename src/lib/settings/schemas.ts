@@ -73,7 +73,7 @@ export const DEFAULT_SITE_SETTINGS: SiteSettings = {
     whatsappEnabled: true,
   },
   landing: {
-    heroBadge: 'Built for layer and broiler farms',
+    heroBadge: '',
     heroTitle: 'Run your poultry farm',
     heroTitleAccent: 'from one screen.',
     heroSubtitle: `${BRAND_NAME} records eggs, feed, mortality, health and sales for every flock, then turns it into the numbers an owner needs: stock on hand, cost per bird, and profit this month.`,
