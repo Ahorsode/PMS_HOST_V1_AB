@@ -443,7 +443,7 @@ export default async function LandingPage() {
 
         {/* Pricing */}
         <section id="pricing" className="scroll-mt-20 py-16 sm:py-24">
-          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="mx-auto max-w-[1440px] px-4 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
               <p className="text-lg font-extrabold uppercase tracking-[0.2em] text-emerald-300 sm:text-xl">Pricing</p>
               <h2 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">Try everything free for 30 days.</h2>

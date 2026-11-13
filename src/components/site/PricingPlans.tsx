@@ -52,13 +52,13 @@ export function PricingPlans({ plans, yearlySavePercent }: { plans: PricingPlan[
         </div>
       )}
 
-      <div className="mx-auto mt-10 grid max-w-6xl gap-5 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mx-auto mt-10 grid max-w-[1440px] gap-6 md:grid-cols-2 xl:grid-cols-4">
         {plans.map((plan) => {
           const yearly = showYearly ? plan.yearly : null;
           return (
             <div
               key={plan.name}
-              className={`relative flex flex-col rounded-3xl border p-7 ${
+              className={`relative flex flex-col rounded-3xl border p-8 ${
                 plan.highlight
                   ? 'border-emerald-400/40 bg-gradient-to-b from-emerald-500/15 to-[#0a1510]/80 shadow-[0_0_60px_rgba(52,211,153,0.15)]'
                   : 'border-white/10 bg-[#0a1510]/70'
@@ -74,7 +74,7 @@ export function PricingPlans({ plans, yearlySavePercent }: { plans: PricingPlan[
 
               <div className="mt-6">
                 <p className="flex flex-wrap items-baseline gap-x-2">
-                  <span className="text-5xl font-extrabold tracking-tight">{yearly ? yearly.ghs : plan.monthly.ghs}</span>
+                  <span className="text-3xl font-extrabold tracking-tight">{yearly ? yearly.ghs : plan.monthly.ghs}</span>
                   <span className="text-base font-semibold text-white/60">{yearly ? '/ year' : '/ month'}</span>
                 </p>
                 <p className="mt-1 text-sm text-white/60">in Ghana</p>
