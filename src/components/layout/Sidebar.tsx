@@ -21,10 +21,10 @@ import { useTheme } from './theme';
 
 const focus = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60';
 const railItem = cn(
-  'flex w-16 flex-col items-center gap-1.5 rounded-lg py-2 transition-colors duration-150',
+  'flex w-[72px] flex-col items-center gap-1.5 rounded-lg py-2.5 transition-colors duration-150',
   focus
 );
-const railLabel = 'text-[11px] font-medium leading-none';
+const railLabel = 'text-xs font-medium leading-none';
 
 export const Sidebar = ({ role, permissions }: { role?: string, permissions?: any }) => {
   const pathname = usePathname();
@@ -69,7 +69,7 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
                   dashboardActive && 'ring-1 ring-accent/60 ring-offset-2 ring-offset-deep'
                 )}
               >
-                <DASHBOARD_NAV_ITEM.icon className="h-5 w-5" strokeWidth={1.75} />
+                <DASHBOARD_NAV_ITEM.icon className="h-6 w-6" strokeWidth={1.75} />
                 <span className={railLabel}>{DASHBOARD_NAV_ITEM.name}</span>
               </Link>
               <div aria-hidden="true" className="my-3 h-px w-10 bg-fg/[0.08]" />
@@ -98,7 +98,7 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
                   )}
                 >
                   <category.icon
-                    className={cn('h-5 w-5 transition-opacity duration-150', isActive || isOpen ? 'opacity-100' : 'opacity-70')}
+                    className={cn('h-6 w-6 transition-opacity duration-150', isActive || isOpen ? 'opacity-100' : 'opacity-70')}
                     style={{ color: groupHue[category.id] }}
                     strokeWidth={1.5}
                   />
@@ -115,7 +115,7 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: -6 }}
                       transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-                      className="absolute inset-y-0 left-full ml-3 flex w-64 flex-col rounded-2xl border border-fg/[0.08] bg-deep pb-3 pt-6 shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
+                      className="absolute inset-y-0 left-full ml-3 flex w-72 flex-col rounded-2xl border border-fg/[0.08] bg-deep pb-3 pt-6 shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
                     >
                       <p className="mb-2 flex items-center gap-2 px-5 text-xs text-fg-3">
                         <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: groupHue[category.id] }} />
@@ -130,7 +130,7 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
                                 href={item.href}
                                 aria-current={itemActive ? 'page' : undefined}
                                 className={cn(
-                                  'relative flex h-9 items-center gap-3 rounded-lg px-3 text-sm transition-colors duration-150',
+                                  'relative flex h-11 items-center gap-3 rounded-lg px-3 text-[15px] transition-colors duration-150',
                                   focus,
                                   itemActive
                                     ? 'bg-raised font-medium text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
@@ -145,7 +145,7 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
                                   />
                                 )}
                                 <item.icon
-                                  className="h-4 w-4 shrink-0"
+                                  className="h-5 w-5 shrink-0"
                                   style={{ color: itemActive ? groupHue[category.id] : 'var(--fg-3)' }}
                                   strokeWidth={1.5}
                                 />
@@ -181,7 +181,7 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
         </nav>
 
         {/* Footer actions: always on the rail, below the groups */}
-        <div className="mt-auto flex w-16 flex-col items-center gap-1 border-t border-fg/[0.08] pt-3">
+        <div className="mt-auto flex w-[72px] flex-col items-center gap-1 border-t border-fg/[0.08] pt-3">
           <button
             type="button"
             onClick={toggleTheme}
@@ -189,7 +189,7 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
             aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
             className={cn(railItem, 'text-fg-2 hover:bg-fg/[0.04] hover:text-fg')}
           >
-            {theme === 'light' ? <Moon className="h-5 w-5" strokeWidth={1.5} /> : <Sun className="h-5 w-5" strokeWidth={1.5} />}
+            {theme === 'light' ? <Moon className="h-6 w-6" strokeWidth={1.5} /> : <Sun className="h-6 w-6" strokeWidth={1.5} />}
             <span className={railLabel}>{theme === 'light' ? 'Dark' : 'Light'}</span>
           </button>
           <Link
@@ -203,7 +203,7 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
                 : 'text-fg-2 hover:bg-fg/[0.04] hover:text-fg'
             )}
           >
-            <span className="flex h-7 w-7 items-center justify-center rounded-full border border-fg/[0.08] bg-raised">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full border border-fg/[0.08] bg-raised">
               <User className="h-4 w-4" strokeWidth={1.5} />
             </span>
             <span className={railLabel}>Profile</span>
@@ -215,7 +215,7 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
             title="Sign out"
             className={cn(railItem, 'text-fg-3 hover:bg-fg/[0.04] hover:text-neg')}
           >
-            <LogOut className="h-5 w-5" strokeWidth={1.5} />
+            <LogOut className="h-6 w-6" strokeWidth={1.5} />
             <span className={railLabel}>Sign out</span>
           </button>
         </div>
