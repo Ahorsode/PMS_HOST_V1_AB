@@ -45,7 +45,7 @@ export default async function MortalityPage() {
           <p className="text-neg text-xs mt-3 font-medium">Across all active &amp; archived batches</p>
         </div>
 
-        <div className="bg-card p-6 rounded-xl border-l-4 border-l-amber-500 border border-fg/[0.08]">
+        <div className="bg-card p-6 rounded-xl border border-fg/[0.08]">
           <div className="flex items-center gap-2 mb-2">
             <AlertTriangle className="w-5 h-5 text-fg-3" />
             <p className="text-fg-2 text-xs font-medium">Health tip</p>
