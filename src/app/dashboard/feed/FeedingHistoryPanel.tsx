@@ -122,13 +122,13 @@ export function FeedingHistoryPanel({
               <table className="min-w-full divide-y divide-fg/10">
                 <thead className="bg-fg/5">
                   <tr>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-fg/50">Date</th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-fg/50">Batch</th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-fg/50">Feed</th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-fg/50">Amount</th>
-                    <th className="px-5 py-3 text-left text-xs font-semibold text-fg/50">Logged by</th>
+                    <th className="h-11 px-5 text-left text-sm font-semibold text-fg-3">Date</th>
+                    <th className="h-11 px-5 text-left text-sm font-semibold text-fg-3">Batch</th>
+                    <th className="h-11 px-5 text-left text-sm font-semibold text-fg-3">Feed</th>
+                    <th className="h-11 px-5 text-left text-sm font-semibold text-fg-3">Amount</th>
+                    <th className="h-11 px-5 text-left text-sm font-semibold text-fg-3">Logged by</th>
                     {canEdit && (
-                      <th className="px-5 py-3 text-right text-xs font-semibold text-fg/50">Actions</th>
+                      <th className="h-11 px-5 text-right text-sm font-semibold text-fg-3"><span className="sr-only">Actions</span></th>
                     )}
                   </tr>
                 </thead>
@@ -139,22 +139,22 @@ export function FeedingHistoryPanel({
                     const loggedBy = [log.user?.firstname, log.user?.surname].filter(Boolean).join(' ') || '—'
                     return (
                       <tr key={log.id} className="hover:bg-fg/[0.03] transition-colors">
-                        <td className="px-5 py-3 text-sm text-fg/80">{formatDate(log.logDate)}</td>
-                        <td className="px-5 py-3 text-sm font-medium text-fg">
+                        <td className="whitespace-nowrap px-5 py-4 font-mono text-[15px] font-semibold tabular-nums text-fg-2">{formatDate(log.logDate)}</td>
+                        <td className="px-5 py-4 text-base font-semibold text-fg">
                           {batchLabel}
                           {log.batch?.breedType ? (
-                            <span className="block text-xs font-medium text-fg/50">
+                            <span className="mt-0.5 block text-sm font-medium text-fg-3">
                               {getBreedDisplayName(log.batch.breedType)}
                             </span>
                           ) : null}
                         </td>
-                        <td className="px-5 py-3 text-sm text-fg">{feedLabel(log)}</td>
-                        <td className="px-5 py-3 text-sm font-medium text-fg">
+                        <td className="px-5 py-4 text-[15px] font-medium text-fg">{feedLabel(log)}</td>
+                        <td className="whitespace-nowrap px-5 py-4 text-base font-semibold text-fg">
                           {Number(log.amountConsumed).toLocaleString()} bags
                         </td>
-                        <td className="px-5 py-3 text-sm text-fg/60">{loggedBy}</td>
+                        <td className="px-5 py-4 text-[15px] font-medium text-fg-2">{loggedBy}</td>
                         {canEdit && (
-                          <td className="px-5 py-3 text-right">
+                          <td className="whitespace-nowrap px-5 py-3 text-right">
                             <FeedLogActions
                               log={log}
                               batches={batches}

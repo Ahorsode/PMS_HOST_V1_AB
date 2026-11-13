@@ -7,6 +7,7 @@ import { Dialog } from '@/components/ui/Dialog';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { DeleteConfirmationModal } from '@/components/modals/DeleteConfirmationModal';
+import { QUICK_ICON, quickButtonClass } from '@/components/ui/quick-action';
 import { FeedForm } from './FeedForm';
 import { InventoryForm } from './InventoryForm';
 
@@ -69,12 +70,12 @@ export const FeedLogActions = ({ log, batches, inventory, formulations = [] }: {
   };
 
   return (
-    <div className="flex items-center gap-2">
-      <button aria-label="Edit feeding log" onClick={() => setMode('edit')} className="p-1 text-fg-2 hover:bg-fg/[0.06] rounded transition-colors">
-        <Edit2 className="h-4 w-4" />
+    <div className="flex items-center justify-end gap-2">
+      <button type="button" aria-label="Edit feeding log" title="Edit" onClick={() => setMode('edit')} className={quickButtonClass('edit')}>
+        <Edit2 {...QUICK_ICON} />
       </button>
-      <button aria-label="Delete feeding log" onClick={() => setShowDeleteModal(true)} className="p-1 text-fg-3 hover:bg-raised rounded transition-colors">
-        <Trash2 className="h-4 w-4" />
+      <button type="button" aria-label="Delete feeding log" title="Delete" onClick={() => setShowDeleteModal(true)} className={quickButtonClass('delete')}>
+        <Trash2 {...QUICK_ICON} />
       </button>
 
       <Dialog isOpen={mode !== null} onOpenChange={(open) => !open && setMode(null)} title="Edit feeding log">

@@ -9,22 +9,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { DeleteConfirmationModal } from '@/components/modals/DeleteConfirmationModal';
 import { MutationBoundary } from '@/components/ui/MutationFeedback';
+import { QUICK_ICON, quickButtonClass } from '@/components/ui/quick-action';
 import { ActionButton, buttonClass } from './flock-ui';
 
 const ICON = { className: 'h-4 w-4', strokeWidth: 1.5 } as const;
-const ROW_ICON = { className: 'h-5 w-5', strokeWidth: 1.75 } as const;
-
-// Row quick actions: bigger targets, each tinted by what it does.
-const QUICK_TONES = {
-  mortality: 'text-clay bg-clay/10 border-clay/30 hover:bg-clay/20',
-  sell: 'text-accent bg-accent/10 border-accent/30 hover:bg-accent/20',
-  edit: 'text-steel bg-steel/10 border-steel/30 hover:bg-steel/20',
-  delete: 'text-neg bg-neg/10 border-neg/30 hover:bg-neg/20',
-} as const;
-
-function quickButtonClass(tone: keyof typeof QUICK_TONES) {
-  return `inline-flex h-10 w-10 items-center justify-center rounded-lg border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-fg/30 ${QUICK_TONES[tone]}`;
-}
+const ROW_ICON = QUICK_ICON;
 
 export const FlockActionsHeader = ({ houses, canEdit = true }: { houses: any[], canEdit?: boolean }) => {
   const [isOpen, setIsOpen] = useState(false);
