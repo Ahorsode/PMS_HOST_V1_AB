@@ -44,8 +44,12 @@ export async function createEggProduction(data: {
     })
     const eggsPerCrate = settings?.eggsPerCrate ?? 30
 
-    // Calculate total eggs from crates if needed
-    const calculatedEggs = data.eggsCollected ?? (data.cratesCollected ? Math.round(data.cratesCollected * eggsPerCrate) : 0)
+    // What the farmer enters is the good eggs. Unusable eggs are recorded on
+    // top of that, never taken out of it. The stored eggsCollected is every egg
+    // laid (good + unusable), so reports keep computing good = total - unusable.
+    const goodEggs = Math.max(0, data.eggsCollected ?? (data.cratesCollected ? Math.round(data.cratesCollected * eggsPerCrate) : 0))
+    const unusableEggs = Math.max(0, data.unusableCount || 0)
+    const calculatedEggs = goodEggs + unusableEggs
     
     // Ensure "Unsorted" default if no categoryId provided
     let finalCategoryId = data.categoryId
@@ -73,8 +77,8 @@ export async function createEggProduction(data: {
         eggsCollected: calculatedEggs,
         cratesCollected: data.cratesCollected,
         categoryId: finalCategoryId,
-        unusableCount: data.unusableCount || 0,
-        eggsRemaining: calculatedEggs - (data.unusableCount || 0),
+        unusableCount: unusableEggs,
+        eggsRemaining: goodEggs,
         qualityGrade: data.qualityGrade,
         isSorted: data.isSorted || false,
         smallCount: data.smallCount || 0,
@@ -86,7 +90,7 @@ export async function createEggProduction(data: {
     })
 
     // Auto-sync usable eggs into Inventory based on Category
-    const usableEggs = calculatedEggs - (data.unusableCount || 0)
+    const usableEggs = goodEggs
     if (usableEggs > 0) {
       const category = await tx.eggCategory.findUnique({ where: { id: finalCategoryId } })
 
@@ -157,10 +161,26 @@ export async function updateEggProduction(id: string, data: {
   }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    // eggsCollected from the form is the good eggs; store good + unusable as the
+    // total laid, the same way createEggProduction does.
+    let eggsCollected: number | undefined
+    if (data.eggsCollected !== undefined) {
+      let unusable = data.unusableCount
+      if (unusable === undefined) {
+        const existing = await tx.eggProduction.findUnique({
+          where: { id, farmId: activeFarmId },
+          select: { unusableCount: true },
+        })
+        unusable = existing?.unusableCount ?? 0
+      }
+      eggsCollected = Math.max(0, data.eggsCollected) + Math.max(0, unusable ?? 0)
+    }
+
     const log = await tx.eggProduction.update({
       where: { id, farmId: activeFarmId },
       data: {
         ...data,
+        ...(eggsCollected !== undefined ? { eggsCollected } : {}),
         logDate: data.logDate ? new Date(data.logDate) : undefined,
       }
     })

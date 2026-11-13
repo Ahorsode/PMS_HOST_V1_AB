@@ -42,16 +42,18 @@ export const EggForm = ({
     ? (log.cratesCollected != null ? 'crates' : 'individual')
     : unitToLoggingMode(defaultEggUnit);
   const [loggingMode, setLoggingMode] = useState<'individual' | 'crates'>(initialLoggingMode);
+  // A saved log's eggsCollected is every egg laid; the form edits the good eggs.
+  const initialGoodEggs = log ? Math.max(0, (log.eggsCollected || 0) - (log.unusableCount || 0)) : 0;
   const [crates, setCrates] = useState(
-    log?.eggsCollected ? Math.floor(log.eggsCollected / eggsPerCrate) : 0,
+    initialGoodEggs ? Math.floor(initialGoodEggs / eggsPerCrate) : 0,
   );
   const [remainder, setRemainder] = useState(
-    log?.eggsCollected ? log.eggsCollected % eggsPerCrate : 0,
+    initialGoodEggs ? initialGoodEggs % eggsPerCrate : 0,
   );
 
   const [formData, setFormData] = useState({
     batchId: log?.batchId || defaultBatchId || (batches[0]?.id || ''),
-    eggsCollected: log?.eggsCollected || 0,
+    eggsCollected: initialGoodEggs,
     unusableCount: log?.unusableCount || 0,
     qualityGrade: log?.qualityGrade || 'MEDIUM',
     isSorted: log?.isSorted ?? (defaultEggSortMode === 'sorted'),
@@ -333,13 +335,16 @@ export const EggForm = ({
               e.target.value = valStr;
             }
             const val = valStr === '' ? 0 : Number(valStr);
-            if (val > formData.eggsCollected) {
-              return;
-            }
             setFormData({ ...formData, unusableCount: val });
           }}
           onFocus={(e) => e.target.select()}
         />
+        <p className="-mt-2 text-xs text-fg-3">
+          Recorded on its own. It is not taken out of the eggs collected above
+          {formData.unusableCount > 0
+            ? ` (${(formData.eggsCollected + formData.unusableCount).toLocaleString()} eggs laid in total).`
+            : '.'}
+        </p>
         <Input
           label="Log date"
           type="date"

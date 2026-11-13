@@ -788,7 +788,8 @@ export async function logProduction(data: {
         data: {
           batchId: data.batchId,
           farmId: activeFarmId,
-          eggsCollected: data.eggsCollected,
+          // Damaged eggs are recorded on top of the good ones, not taken out.
+          eggsCollected: data.eggsCollected + data.damagedEggs,
           unusableCount: data.damagedEggs,
           logDate: new Date(),
           userId: userId
