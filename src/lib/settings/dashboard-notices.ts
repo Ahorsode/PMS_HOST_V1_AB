@@ -8,6 +8,17 @@ import { pickMessageNotice } from '@/lib/settings/notices'
 /** Events that mean a plan was just paid for or granted. */
 const PAYMENT_EVENTS = ['PAYSTACK_PAYMENT_COMPLETED', 'TIER_UPGRADED']
 
+/** When the farm last paid for or was granted a plan; null when never (or the lookup fails). */
+export function loadLastPlanPayment(farmId: string): Promise<{ createdAt: Date } | null> {
+  return prisma.subscriptionEvent
+    .findFirst({
+      where: { farmId, eventType: { in: PAYMENT_EVENTS } },
+      orderBy: { createdAt: 'desc' },
+      select: { createdAt: true },
+    })
+    .catch(() => null)
+}
+
 /**
  * The admin-controlled notices a farm user should see now: maintenance mode,
  * the dashboard announcement and (for the owner) the plan message template.
@@ -17,10 +28,13 @@ export async function getDashboardNotices({
   farm,
   access,
   isOwner,
+  lastPlanPayment,
 }: {
   farm: { id: string; name: string; createdAt: Date } | null
   access: FarmAccess | null
   isOwner: boolean
+  /** A loadLastPlanPayment() the caller already started, so it is not waited for twice. */
+  lastPlanPayment?: Promise<{ createdAt: Date } | null>
 }) {
   const [site, system, messages, billing] = await Promise.all([
     getAppSettings('site'),
@@ -33,13 +47,7 @@ export async function getDashboardNotices({
 
   let notice = null
   if (isOwner && farm && access) {
-    const lastPayment = await prisma.subscriptionEvent
-      .findFirst({
-        where: { farmId: farm.id, eventType: { in: PAYMENT_EVENTS } },
-        orderBy: { createdAt: 'desc' },
-        select: { createdAt: true },
-      })
-      .catch(() => null)
+    const lastPayment = await (lastPlanPayment ?? loadLastPlanPayment(farm.id))
     notice = pickMessageNotice({ messages, billing, access, farm, lastPaymentAt: lastPayment?.createdAt ?? null })
   }
 

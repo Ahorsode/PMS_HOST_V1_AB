@@ -1,5 +1,4 @@
 import React from 'react';
-import { auth } from '@/auth';
 import prisma from '@/lib/db';
 import { redirect } from 'next/navigation';
 import { SidebarWrapper } from '@/components/layout/SidebarWrapper';
@@ -14,20 +13,61 @@ import { AccessBlocked } from '@/components/billing/AccessBlocked';
 import { DashboardNotices } from '@/components/site/DashboardNotices';
 import { MaintenanceProvider } from '@/components/site/MaintenanceContext';
 import { getAppSettings } from '@/lib/settings/app-settings';
-import { getAuthContext } from '@/lib/auth-utils';
+import { loadLastPlanPayment } from '@/lib/settings/dashboard-notices';
+import { getDashboardMessages } from '@/lib/settings/farm-messages';
+import { getAuthContext, getSession } from '@/lib/auth-utils';
 import { getFarmMoney } from '@/lib/farm-currency';
 import { CurrencyProvider } from '@/components/providers/CurrencyProvider';
+
+/** Marks a lookup that is awaited later, so a failure before then is not reported as unhandled. */
+function started<T>(lookup: Promise<T>) {
+  lookup.catch(() => {});
+  return lookup;
+}
+
+/** The user's permission row and role on the farm; a failed lookup leaves both empty. */
+async function loadNavigationAccess(farmId: string, userId: string) {
+  try {
+    const [permissions, membership] = await Promise.all([
+      (prisma as any).userPermission.findUnique({
+        where: {
+          userId_farmId: {
+            userId,
+            farmId,
+          },
+        },
+      }),
+      prisma.farmMember.findUnique({
+        where: {
+          farmId_userId: {
+            farmId,
+            userId,
+          },
+        },
+        select: { role: true },
+      }),
+    ]);
+    return { userPermissions: permissions, membershipRole: (membership?.role ?? null) as string | null };
+  } catch (error) {
+    console.error('[DashboardLayout] Permission lookup failed:', error);
+    return { userPermissions: null, membershipRole: null };
+  }
+}
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
+  const session = await getSession();
   
   if (!session?.user?.id) {
     redirect('/login');
   }
+
+  // The active farm comes from its own lookup, which does not depend on the
+  // ones below, so it runs alongside them instead of after them.
+  const activeFarmIdLookup = getAuthContext().then((context) => context.activeFarmId, () => undefined);
 
   let dbUser: Awaited<ReturnType<typeof prisma.user.findUnique>>;
   let farm: Awaited<ReturnType<typeof prisma.farm.findFirst>>;
@@ -118,51 +158,30 @@ export default async function DashboardLayout({
     redirect('/onboarding/profile');
   }
 
-  let userPermissions = null;
-  let membershipRole: string | null = null;
-  if (farm && dbUser.id) {
-    try {
-      const [permissions, membership] = await Promise.all([
-        (prisma as any).userPermission.findUnique({
-          where: {
-            userId_farmId: {
-              userId: dbUser.id,
-              farmId: farm.id,
-            },
-          },
-        }),
-        prisma.farmMember.findUnique({
-          where: {
-            farmId_userId: {
-              farmId: farm.id,
-              userId: dbUser.id,
-            },
-          },
-          select: { role: true },
-        }),
-      ]);
-      userPermissions = permissions;
-      membershipRole = membership?.role ?? null;
-    } catch (error) {
-      console.error('[DashboardLayout] Permission lookup failed:', error);
-      userPermissions = null;
-    }
-  }
-
   // Plan access: owners are steered to the payment page once locked; staff
   // are blocked when the farm is locked or their seat is paused/over limit.
   const isOwner = !!farm && farm.userId === dbUser.id;
+
+  // The remaining lookups do not depend on each other, so they all start now.
+  // They are read below in the same order as before, so the same check wins.
+  const farmId = farm?.id;
+  const navigationAccessLookup = farmId ? loadNavigationAccess(farmId, dbUser.id) : null;
+  const moneyLookup = started(activeFarmIdLookup.then((activeFarmId) => getFarmMoney(activeFarmId ?? farmId)));
+  const staffAccessLookup = farmId ? started(getFarmStaffAccess(farmId)) : null;
+  const messagesLookup = farmId ? getDashboardMessages(farmId, isOwner) : undefined;
+  const lastPlanPaymentLookup = farmId && isOwner ? loadLastPlanPayment(farmId) : undefined;
+
+  const { userPermissions, membershipRole } = (await navigationAccessLookup) ?? { userPermissions: null, membershipRole: null };
 
   // Every farm has a country; it sets the currency money is shown in and the
   // plan price. Owners of farms made before countries existed pick one once.
   // Checked on the active farm, the same one the country page saves, so an
   // owner with several farms is not sent back for a farm they are not using.
-  const activeFarmId = await getAuthContext().then((context) => context.activeFarmId, () => undefined);
-  const money = await getFarmMoney(activeFarmId ?? farm?.id);
+  const money = await moneyLookup;
   if (money.ownerId === dbUser.id && !money.country) {
     redirect('/onboarding/country');
   }
-  const staffAccess = farm ? await getFarmStaffAccess(farm.id) : null;
+  const staffAccess = await staffAccessLookup;
 
   if (farm && staffAccess && !isOwner) {
     if (staffAccess.access.state === 'LOCKED') {
@@ -215,6 +234,8 @@ export default async function DashboardLayout({
         farm={farm ? { id: farm.id, name: farm.name, createdAt: farm.createdAt } : null}
         access={staffAccess?.access ?? null}
         isOwner={isOwner}
+        messages={messagesLookup}
+        lastPlanPayment={lastPlanPaymentLookup}
       />
       <MaintenanceProvider message={maintenance.enabled ? maintenance.message : null}>
         <CurrencyProvider currency={currency}>

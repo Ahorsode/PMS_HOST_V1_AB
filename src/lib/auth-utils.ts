@@ -97,8 +97,15 @@ export async function completeGoogleSignIn(userId: string) {
   return acceptedFarmId
 }
 
+/**
+ * The signed-in session, resolved once per request. Every auth() call re-runs
+ * the JWT callback (a session-version check), so callers in the same request
+ * share one.
+ */
+export const getSession = cache(() => auth())
+
 export const getAuthContext = cache(async () => {
-  const session = await auth()
+  const session = await getSession()
   if (!session?.user?.id) {
     throw new Error('Unauthorized')
   }
