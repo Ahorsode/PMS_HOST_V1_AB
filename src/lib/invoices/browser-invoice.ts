@@ -21,18 +21,42 @@ export interface BrowserInvoiceOrder {
     quantity: number;
     unitPrice: number;
     totalPrice: number;
+    /** Set on egg lines; their quantity and unit price are stored per egg. */
+    inventoryId?: string | null;
   }>;
 }
 
+// jsPDF's built-in Helvetica has no cedi sign (₵), so Intl's "GH₵" renders as
+// garbage. Spell the currency code out instead.
 function money(value: number) {
-  return new Intl.NumberFormat('en-GH', {
-    style: 'currency',
-    currency: 'GHS'
-  }).format(Number(value || 0));
+  return `GHS ${Number(value || 0).toLocaleString('en-GH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-function compactMoney(value: number) {
-  return `GHS ${Number(value || 0).toLocaleString('en-GH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+const compactMoney = money;
+
+function plural(count: number, one: string, many: string) {
+  return `${count} ${count === 1 ? one : many}`;
+}
+
+/** Egg lines are stored per egg but sold by the crate; show them that way. */
+function invoiceLine(item: BrowserInvoiceOrder['items'][number], eggsPerCrate: number) {
+  const quantity = Number(item.quantity || 0);
+  const unitPrice = Number(item.unitPrice || 0);
+
+  if (!item.inventoryId || eggsPerCrate <= 0) {
+    return { qty: String(quantity), unit: money(unitPrice) };
+  }
+
+  const crates = Math.floor(quantity / eggsPerCrate);
+  const loose = quantity % eggsPerCrate;
+  const parts: string[] = [];
+  if (crates > 0) parts.push(plural(crates, 'crate', 'crates'));
+  if (loose > 0) parts.push(plural(loose, 'egg', 'eggs'));
+
+  return {
+    qty: parts.join(' + ') || '0 crates',
+    unit: `${money(unitPrice * eggsPerCrate)} / crate`,
+  };
 }
 
 function invoiceDate(order: BrowserInvoiceOrder) {
@@ -74,7 +98,7 @@ async function loadLogoDataUrl() {
   }
 }
 
-export async function downloadSalesInvoicePdf(order: BrowserInvoiceOrder) {
+export async function downloadSalesInvoicePdf(order: BrowserInvoiceOrder, eggsPerCrate = 30) {
   // Load jsPDF only when the user requests a browser-side invoice download.
   const { jsPDF } = await import('jspdf');
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
@@ -148,8 +172,8 @@ export async function downloadSalesInvoicePdf(order: BrowserInvoiceOrder) {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9);
   doc.text('Description', 62, tableTop - 5);
-  doc.text('Qty', 326, tableTop - 5, { align: 'right' });
-  doc.text('Unit', 424, tableTop - 5, { align: 'right' });
+  doc.text('Qty', 352, tableTop - 5, { align: 'right' });
+  doc.text('Unit price', 452, tableTop - 5, { align: 'right' });
   doc.text('Total', pageWidth - 62, tableTop - 5, { align: 'right' });
 
   doc.setFont('helvetica', 'normal');
@@ -168,9 +192,10 @@ export async function downloadSalesInvoicePdf(order: BrowserInvoiceOrder) {
       doc.rect(48, y - 14, pageWidth - 96, 28, 'F');
     }
 
-    doc.text(item.description || 'Sale Item', 62, y, { maxWidth: 230 });
-    doc.text(String(item.quantity || 0), 326, y, { align: 'right' });
-    doc.text(money(Number(item.unitPrice || 0)), 424, y, { align: 'right' });
+    const line = invoiceLine(item, eggsPerCrate);
+    doc.text(item.description || 'Sale Item', 62, y, { maxWidth: 200 });
+    doc.text(line.qty, 352, y, { align: 'right' });
+    doc.text(line.unit, 452, y, { align: 'right' });
     doc.text(money(Number(item.totalPrice || 0)), pageWidth - 62, y, { align: 'right' });
     y += 30;
   });

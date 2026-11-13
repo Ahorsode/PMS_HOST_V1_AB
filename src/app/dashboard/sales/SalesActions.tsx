@@ -73,7 +73,7 @@ export function SalesActionsHeader({ customers, inventory, eggInventory, eggBatc
   );
 }
 
-export function SalesRowActions({ order, canEdit = true, canRecordPayment = false }: { order: any, canEdit?: boolean, canRecordPayment?: boolean }) {
+export function SalesRowActions({ order, canEdit = true, canRecordPayment = false, eggsPerCrate = 30 }: { order: any, canEdit?: boolean, canRecordPayment?: boolean, eggsPerCrate?: number }) {
   const router = useRouter();
   const [updatingAction, setUpdatingAction] = useState<'completed' | 'cancelled' | 'payment' | 'whatsapp' | null>(null);
   const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false);
@@ -103,7 +103,7 @@ export function SalesRowActions({ order, canEdit = true, canRecordPayment = fals
     setIsDownloadingInvoice(true);
     toast.info('Generating invoice PDF...');
     try {
-      await downloadSalesInvoicePdf(order);
+      await downloadSalesInvoicePdf(order, eggsPerCrate);
       toast.success('Invoice downloaded');
     } catch (e: any) {
       toast.error(e?.message || 'Unexpected error generating PDF');
@@ -116,7 +116,7 @@ export function SalesRowActions({ order, canEdit = true, canRecordPayment = fals
     if (updatingAction || isDownloadingInvoice) return;
     setUpdatingAction('whatsapp');
     try {
-      await downloadSalesInvoicePdf(order);
+      await downloadSalesInvoicePdf(order, eggsPerCrate);
       window.open(buildWhatsAppInvoiceUrl(order), '_blank', 'noopener,noreferrer');
       toast.success('Invoice downloaded. WhatsApp Web is opening.');
     } catch (e: any) {

@@ -359,7 +359,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                     </td>
                     <td className="px-7 py-5 text-right flex items-center justify-end gap-2">
                        <WorkerStamp user={order.user} />
-                       <SalesRowActions order={order} canEdit={canEdit} canRecordPayment={canRecordPayment} />
+                       <SalesRowActions order={order} canEdit={canEdit} canRecordPayment={canRecordPayment} eggsPerCrate={eggsPerCrate} />
                     </td>
                   </tr>
                 ))}
@@ -411,7 +411,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                  </div>
                  <div className="flex justify-between items-center pt-2 border-t border-fg/5">
                     <span className="text-fg font-medium text-sm">{formatCurrency(Number(order.totalAmount))}</span>
-                    <div className="flex items-center justify-end gap-2"><WorkerStamp user={order.user} /><SalesRowActions order={order} canEdit={canEdit} canRecordPayment={canRecordPayment} /></div>
+                    <div className="flex items-center justify-end gap-2"><WorkerStamp user={order.user} /><SalesRowActions order={order} canEdit={canEdit} canRecordPayment={canRecordPayment} eggsPerCrate={eggsPerCrate} /></div>
                  </div>
               </div>
             ))}
