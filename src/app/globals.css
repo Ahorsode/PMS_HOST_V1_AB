@@ -108,6 +108,17 @@ body {
   min-height: 100vh;
 }
 
+/*
+ * Native <select> popups draw their own list. Selects use translucent
+ * backgrounds (bg-fg/[0.04]) that the popup can't inherit, so options fell
+ * back to a white list with the theme's light text. Paint them explicitly.
+ */
+select option,
+select optgroup {
+  background-color: var(--raised);
+  color: var(--fg);
+}
+
 /* Kept for existing markup: both are now plain graphite surfaces with a
    hairline, no blur, tint or shadow. */
 .glass-morphism {
