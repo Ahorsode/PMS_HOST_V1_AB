@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Bird } from 'lucide-react';
 import { FlockRowActions } from './FlockActions';
 import { formatLivestockType } from '@/lib/utils/growth-utils';
@@ -60,8 +61,8 @@ function Segment({
 function UnitName({ batch, index }: { batch: any; index: number }) {
   return (
     <div className="min-w-0">
-      <p className={cn('truncate text-sm font-medium', tone.text)}>{batch.batchName || `Unit ${index + 1}`}</p>
-      <p className={cn('mt-0.5 truncate text-xs', tone.muted)}>{batch.house?.name || 'No house assigned'}</p>
+      <p className={cn('truncate text-base font-semibold', tone.text)}>{batch.batchName || `Unit ${index + 1}`}</p>
+      <p className={cn('mt-0.5 truncate text-sm font-medium', tone.muted)}>{batch.house?.name || 'No house assigned'}</p>
     </div>
   )
 }
@@ -69,6 +70,16 @@ function UnitName({ batch, index }: { batch: any; index: number }) {
 export function LivestockTable({ initialBatches, houses, isolationRooms, canEdit = true }: LivestockTableProps) {
   const [speciesFilter, setSpeciesFilter] = useState<SpeciesFilter>('ALL')
   const [lifecycleFilter, setLifecycleFilter] = useState<LifecycleFilter>('ACTIVE')
+  const router = useRouter()
+
+  // Double-clicking a unit opens its Manage page, unless the click was on a
+  // button, link or one of the row's pop-ups.
+  const openOnDoubleClick = (batchId: string) => (e: React.MouseEvent<HTMLElement>) => {
+    const target = e.target as HTMLElement
+    if (!e.currentTarget.contains(target)) return
+    if (target.closest('button, a, input, select, textarea, [role="dialog"]')) return
+    router.push(`/dashboard/flocks/${batchId}`)
+  }
 
   const counts = useMemo(() => {
     const active = initialBatches.filter(isActiveBatch).length
@@ -140,12 +151,12 @@ export function LivestockTable({ initialBatches, houses, isolationRooms, canEdit
           {/* Phone: one card per unit */}
           <ul className="flex flex-col gap-3 md:hidden">
             {filteredBatches.map((batch: any, index: number) => (
-              <li key={batch.id} className={cn(tone.panel, 'p-4')}>
+              <li key={batch.id} onDoubleClick={openOnDoubleClick(batch.id)} title="Double-click to manage" className={cn(tone.panel, 'cursor-pointer select-none p-4')}>
                 <div className="flex items-start justify-between gap-3">
                   <UnitName batch={batch} index={index} />
                   <StatusText status={batch.status} className="shrink-0" />
                 </div>
-                <p className={cn('mt-3 text-[13px]', tone.text2)}>
+                <p className={cn('mt-3 text-[15px] font-medium', tone.text2)}>
                   {formatLivestockType(batch.type)}
                   <span className={tone.muted}> · {getBreedDisplayName(batch.breedType)}</span>
                 </p>
@@ -156,7 +167,7 @@ export function LivestockTable({ initialBatches, houses, isolationRooms, canEdit
                   isolated={batch.isolationCount || 0}
                   active={isActiveBatch(batch)}
                 />
-                <p className={cn('mt-3 text-xs', tone.muted)}>
+                <p className={cn('mt-3 text-sm font-medium', tone.muted)}>
                   Arrived <span className="font-mono tabular-nums">{formatShortDate(batch.arrivalDate)}</span>
                 </p>
                 <div className={cn('mt-4 flex items-center justify-between gap-2 border-t pt-3', tone.hairline)}>
@@ -171,26 +182,31 @@ export function LivestockTable({ initialBatches, houses, isolationRooms, canEdit
           <div className={cn(tone.panel, 'hidden overflow-x-auto md:block')}>
             <table className="min-w-full">
               <thead>
-                <tr className={cn('border-b text-left text-xs', tone.hairline, tone.muted)}>
-                  <th scope="col" className="h-10 px-5 font-normal">Unit</th>
-                  <th scope="col" className="h-10 px-5 font-normal">Type and breed</th>
-                  <th scope="col" className="h-10 px-5 font-normal">Head count</th>
-                  <th scope="col" className="h-10 px-5 font-normal">Arrived</th>
-                  <th scope="col" className="h-10 px-5 font-normal">Status</th>
-                  <th scope="col" className="h-10 px-5 text-right font-normal">
+                <tr className={cn('border-b text-left text-sm', tone.hairline, tone.muted)}>
+                  <th scope="col" className="h-11 px-5 font-semibold">Unit</th>
+                  <th scope="col" className="h-11 px-5 font-semibold">Type and breed</th>
+                  <th scope="col" className="h-11 px-5 font-semibold">Head count</th>
+                  <th scope="col" className="h-11 px-5 font-semibold">Arrived</th>
+                  <th scope="col" className="h-11 px-5 font-semibold">Status</th>
+                  <th scope="col" className="h-11 px-5 text-right font-semibold">
                     <span className="sr-only">Actions</span>
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-fg/[0.06]">
                 {filteredBatches.map((batch: any, index: number) => (
-                  <tr key={batch.id} className={cn('transition-colors hover:bg-fg/[0.02]', tone.ease)}>
+                  <tr
+                    key={batch.id}
+                    onDoubleClick={openOnDoubleClick(batch.id)}
+                    title="Double-click to manage"
+                    className={cn('cursor-pointer select-none transition-colors hover:bg-fg/[0.04]', tone.ease)}
+                  >
                     <td className="max-w-[220px] px-5 py-4 align-top">
                       <UnitName batch={batch} index={index} />
                     </td>
                     <td className="whitespace-nowrap px-5 py-4 align-top">
-                      <p className={cn('text-sm', tone.text)}>{formatLivestockType(batch.type)}</p>
-                      <p className={cn('mt-0.5 text-xs', tone.muted)}>{getBreedDisplayName(batch.breedType)}</p>
+                      <p className={cn('text-base font-semibold', tone.text)}>{formatLivestockType(batch.type)}</p>
+                      <p className={cn('mt-0.5 text-sm font-medium', tone.muted)}>{getBreedDisplayName(batch.breedType)}</p>
                     </td>
                     <td className="w-56 min-w-48 px-5 py-4 align-top">
                       <HeadCount
@@ -200,7 +216,7 @@ export function LivestockTable({ initialBatches, houses, isolationRooms, canEdit
                         active={isActiveBatch(batch)}
                       />
                     </td>
-                    <td className={cn('whitespace-nowrap px-5 py-4 align-top font-mono text-[13px] tabular-nums', tone.text2)}>
+                    <td className={cn('whitespace-nowrap px-5 py-4 align-top font-mono text-[15px] font-semibold tabular-nums', tone.text2)}>
                       {formatShortDate(batch.arrivalDate)}
                     </td>
                     <td className="whitespace-nowrap px-5 py-4 align-top">

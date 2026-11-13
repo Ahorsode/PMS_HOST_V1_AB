@@ -43,7 +43,7 @@ export function statusLabel(status: string | null | undefined) {
 export function StatusText({ status, className }: { status: string | null | undefined; className?: string }) {
   const isActive = String(status || '').toLowerCase() === 'active'
   return (
-    <span className={cn('inline-flex items-center gap-2 text-[13px]', tone.text2, className)}>
+    <span className={cn('inline-flex items-center gap-2 text-[15px] font-semibold', tone.text2, className)}>
       <span className={cn('h-1.5 w-1.5 shrink-0 rounded-full', isActive ? 'bg-accent' : 'bg-fg-3')} />
       {statusLabel(status)}
     </span>
@@ -68,7 +68,7 @@ export function HeadCountBar({
     <div
       role="img"
       aria-label={`${formatCount(alive)} alive, ${formatCount(isolated)} in isolation, ${formatCount(dead)} dead`}
-      className={cn('flex h-1 w-full gap-px overflow-hidden rounded-full bg-fg/[0.06]', className)}
+      className={cn('flex h-1.5 w-full gap-px overflow-hidden rounded-full bg-fg/[0.06]', className)}
     >
       {alive > 0 ? <span className="h-full bg-accent" style={{ width: pct(alive) }} /> : null}
       {isolated > 0 ? <span className="h-full bg-yolk" style={{ width: pct(isolated) }} /> : null}
@@ -99,17 +99,17 @@ export function HeadCount({
   return (
     <div className={cn('min-w-0', className)}>
       <div className="flex items-baseline justify-between gap-3">
-        <span className="text-sm">
-          <span className={cn('font-mono tabular-nums', tone.text)}>{formatCount(alive)}</span>{' '}
-          <span className={cn('text-xs', tone.muted)}>{active ? 'alive' : 'final'}</span>
+        <span className="text-base">
+          <span className={cn('font-mono font-semibold tabular-nums', tone.text)}>{formatCount(alive)}</span>{' '}
+          <span className={cn('text-sm font-medium', tone.muted)}>{active ? 'alive' : 'final'}</span>
         </span>
-        <span className={cn('text-xs', tone.muted)}>
+        <span className={cn('text-sm font-medium', tone.muted)}>
           of <span className="font-mono tabular-nums">{formatCount(start)}</span>
         </span>
       </div>
       <HeadCountBar className="mt-2" alive={alive} isolated={iso} dead={dead} />
       {iso > 0 || dead > 0 ? (
-        <p className={cn('mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs', tone.text2)}>
+        <p className={cn('mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm font-medium', tone.text2)}>
           {iso > 0 ? (
             <span className="inline-flex items-center gap-1.5">
               <span className="h-1.5 w-1.5 rounded-full bg-yolk" />
