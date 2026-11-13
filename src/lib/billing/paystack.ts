@@ -20,6 +20,20 @@ type PaystackResponse<T> = {
 
 export class PaystackError extends Error {}
 
+/**
+ * A message the customer can act on for a failed checkout. Paystack rejects
+ * a currency the merchant account has not enabled (e.g. USD on a GHS-only
+ * account) with "Currency not supported by merchant".
+ */
+export function checkoutErrorMessage(error: unknown, currency: string) {
+  if (error instanceof PaystackError && /currency not supported/i.test(error.message)) {
+    return currency === 'USD'
+      ? 'Online payment in US dollars is not available yet. Please contact us to pay for your plan.'
+      : `Online payment in ${currency} is not available yet. Please contact us to pay for your plan.`
+  }
+  return 'Could not start the payment. Please try again.'
+}
+
 function getSecretKey() {
   const key = process.env.PAYSTACK_SECRET_KEY
   if (!key) throw new PaystackError('Missing PAYSTACK_SECRET_KEY')

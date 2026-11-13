@@ -14,6 +14,7 @@ import {
 } from '@/lib/billing/pricing'
 import { getFarmMoney } from '@/lib/farm-currency'
 import {
+  checkoutErrorMessage,
   createPaystackReference,
   initializePaystackTransaction,
   isPaystackConfigured,
@@ -225,7 +226,7 @@ export async function startPaystackCheckout(planType: PlanType, tier: Subscripti
     return { success: true, authorizationUrl: checkout.authorization_url, reference }
   } catch (error) {
     console.error('Paystack checkout error:', error)
-    return { success: false, error: 'Could not start the payment. Please try again.' }
+    return { success: false, error: checkoutErrorMessage(error, currency) }
   }
 }
 

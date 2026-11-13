@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/lib/db', () => ({ default: {} }))
 
-import { isValidPaystackSignature } from './paystack'
+import { checkoutErrorMessage, isValidPaystackSignature, PaystackError } from './paystack'
 import { checkTransactionMatches, type PaystackCheckoutRecord } from './paystack-fulfillment'
 import { computePaidPeriodEnd } from './apply-paid-upgrade'
 import { calculateUpgradeTotal, DEFAULT_BILLING_CONFIG, normalizeTermMonths, toPesewas } from './pricing'
@@ -33,6 +33,18 @@ describe('isValidPaystackSignature', () => {
     expect(isValidPaystackSignature(body, null, SECRET)).toBe(false)
     expect(isValidPaystackSignature(body, sign(body), undefined)).toBe(false)
     expect(isValidPaystackSignature(body, 'not-hex', SECRET)).toBe(false)
+  })
+})
+
+describe('checkoutErrorMessage', () => {
+  it('explains a currency the Paystack account has not enabled', () => {
+    const error = new PaystackError('Currency not supported by merchant')
+    expect(checkoutErrorMessage(error, 'USD')).toMatch(/US dollars is not available yet/)
+  })
+
+  it('keeps the generic message for other failures', () => {
+    expect(checkoutErrorMessage(new PaystackError('Invalid key'), 'USD')).toBe('Could not start the payment. Please try again.')
+    expect(checkoutErrorMessage(new Error('network'), 'GHS')).toBe('Could not start the payment. Please try again.')
   })
 })
 
