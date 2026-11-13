@@ -11,8 +11,23 @@ const nextAuthMiddleware = NextAuth(authConfig).auth as unknown as (
   event: NextFetchEvent,
 ) => Response | Promise<Response>;
 
+// Google's OAuth callback reaches us via my-pfms.vercel.app, which Vercel
+// redirects to www.poultryledger.com. Sign-in started on the bare apex domain
+// sets its state/PKCE cookies on poultryledger.com, which www can't read, so the
+// callback fails with error=Configuration. Keep every visitor on one host.
+const CANONICAL_HOST = 'www.poultryledger.com';
+const APEX_HOST = CANONICAL_HOST.replace(/^www\./, '');
+
 export default function middleware(request: NextRequest, event: NextFetchEvent) {
   const { pathname } = request.nextUrl;
+
+  if (request.headers.get('host')?.toLowerCase() === APEX_HOST) {
+    const url = request.nextUrl.clone();
+    url.protocol = 'https:';
+    url.host = CANONICAL_HOST;
+    url.port = '';
+    return NextResponse.redirect(url, 308);
+  }
 
   // Admin routes use a separate HMAC cookie session (not NextAuth).
   // Handle them here and bypass NextAuth entirely so admin pages are not
