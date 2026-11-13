@@ -8,7 +8,8 @@ import { useRouter } from 'next/navigation';
 import { MutationBoundary } from '@/components/ui/MutationFeedback';
 import { g } from '@/components/ui/graphite';
 
-export const IsolationRoomForm = () => {
+/** `bare` drops the tile chrome (for use inside a pop-up); `onCreated` runs after a save. */
+export const IsolationRoomForm = ({ bare = false, onCreated }: { bare?: boolean; onCreated?: () => void } = {}) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,6 +38,7 @@ export const IsolationRoomForm = () => {
         (e.target as HTMLFormElement).reset();
         setCapacity('');
         router.refresh();
+        onCreated?.();
       } else {
         setError(result.error || 'Could not create the isolation room');
       }
@@ -48,8 +50,8 @@ export const IsolationRoomForm = () => {
   }
 
   return (
-    <div className={`${g.tile} h-fit p-4`}>
-      <h3 className={`mb-4 text-sm font-medium ${g.text}`}>New room</h3>
+    <div className={bare ? '' : `${g.tile} h-fit p-4`}>
+      {!bare && <h3 className={`mb-4 text-sm font-medium ${g.text}`}>New room</h3>}
       <form onSubmit={handleSubmit}>
         <MutationBoundary active={isLoading} label="Creating isolation room...">
           <fieldset disabled={isLoading} className="space-y-4 disabled:opacity-70">

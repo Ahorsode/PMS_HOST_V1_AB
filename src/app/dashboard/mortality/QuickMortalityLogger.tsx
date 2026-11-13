@@ -16,9 +16,11 @@ interface QuickMortalityLoggerProps {
   activeBatches: any[];
   isolationRooms?: any[];
   defaultType?: 'DEAD' | 'SICK';
+  /** Shown at the top right of the card, beside the title. */
+  headerAside?: React.ReactNode;
 }
 
-export function QuickMortalityLogger({ activeBatches, isolationRooms = [], defaultType = 'DEAD' }: QuickMortalityLoggerProps) {
+export function QuickMortalityLogger({ activeBatches, isolationRooms = [], defaultType = 'DEAD', headerAside }: QuickMortalityLoggerProps) {
   const [selectedBatch, setSelectedBatch] = useState<any>(null);
 
   const isDead = defaultType === 'DEAD';
@@ -29,11 +31,14 @@ export function QuickMortalityLogger({ activeBatches, isolationRooms = [], defau
 
   return (
     <div>
-      <div className="mb-4">
-        <h2 className={g.sectionTitle}>{isDead ? 'Log deaths' : 'Isolate birds'}</h2>
-        <p className={`mt-1 text-sm ${g.secondary}`}>
-          {isDead ? 'Pick a batch to record birds that died' : 'Pick a batch to move sick birds into isolation'}
-        </p>
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h2 className={g.sectionTitle}>{isDead ? 'Log deaths' : 'Isolate birds'}</h2>
+          <p className={`mt-1 text-sm ${g.secondary}`}>
+            {isDead ? 'Pick a batch to record birds that died' : 'Pick a batch to move sick birds into isolation'}
+          </p>
+        </div>
+        {headerAside}
       </div>
 
       {activeBatches.length > 0 ? (
