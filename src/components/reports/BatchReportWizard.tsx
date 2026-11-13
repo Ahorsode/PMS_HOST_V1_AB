@@ -81,12 +81,12 @@ function StepIndicator({ step }: { step: WizardStep }) {
         <div
           key={s.key}
           className={cn(
-            'rounded-lg border px-3 py-1 text-xs font-medium',
+            'rounded-lg border px-3 py-1 text-xs',
             idx === currentIndex
-              ? 'border-fg/[0.08] bg-fg/[0.04] text-fg'
+              ? 'border-accent bg-accent font-semibold text-accent-fg'
               : idx < currentIndex
-                ? 'border-fg/15 bg-fg/[0.04] text-fg/60'
-                : 'border-fg/10 bg-fg/[0.02] text-fg/35'
+                ? 'border-accent/40 bg-accent/10 font-medium text-accent'
+                : 'border-fg/10 bg-fg/[0.02] font-medium text-fg-3'
           )}
         >
           {idx + 1}. {s.label}
@@ -219,14 +219,15 @@ export function BatchReportWizard({ dataSources }: { dataSources: any[] }) {
                 key={option.key}
                 type="button"
                 onClick={() => setDuration(option.key)}
+                aria-pressed={duration === option.key}
                 className={cn(
-                  'rounded-lg border px-4 py-3 text-left transition-colors',
+                  'rounded-lg px-4 py-3 text-left transition-colors',
                   duration === option.key
-                    ? 'border-fg/[0.08] bg-fg/[0.04]'
-                    : 'border-fg/10 bg-fg/[0.03] hover:border-fg/20'
+                    ? 'border-2 border-accent bg-accent/10 shadow-sm'
+                    : 'border-2 border-fg/10 bg-fg/[0.03] hover:border-fg/25'
                 )}
               >
-                <p className="text-sm font-medium text-fg">{option.label}</p>
+                <p className={cn('text-sm', duration === option.key ? 'font-semibold text-accent' : 'font-medium text-fg')}>{option.label}</p>
                 <p className="mt-0.5 text-xs font-medium text-fg/45">{option.hint}</p>
               </button>
             ))}
@@ -273,7 +274,7 @@ export function BatchReportWizard({ dataSources }: { dataSources: any[] }) {
         <div className="space-y-4">
           <p className="text-xs font-medium text-fg/45">2. Report data</p>
 
-          <label className="flex items-center gap-3 rounded-lg border border-fg/[0.08] bg-fg/[0.04] px-4 py-3">
+          <label className={cn('flex cursor-pointer items-center gap-3 rounded-lg px-4 py-3 transition-colors', allData ? 'border-2 border-accent bg-accent/10' : 'border-2 border-fg/10 bg-fg/[0.03]')}>
             <input
               type="checkbox"
               checked={allData}
@@ -281,7 +282,7 @@ export function BatchReportWizard({ dataSources }: { dataSources: any[] }) {
               className="h-4 w-4 accent-emerald-500"
             />
             <div>
-              <p className="text-sm font-medium text-fg">All data</p>
+              <p className={cn('text-sm', allData ? 'font-semibold text-accent' : 'font-medium text-fg')}>All data</p>
               <p className="text-xs text-fg/50">Include every section available for this report</p>
             </div>
           </label>
@@ -290,7 +291,10 @@ export function BatchReportWizard({ dataSources }: { dataSources: any[] }) {
             {DATA_GROUPS.filter((g) => g.key !== 'finance' || canViewFinance).map((group) => (
               <label
                 key={group.key}
-                className="flex items-start gap-3 rounded-lg border border-fg/10 bg-fg/[0.03] px-4 py-3"
+                className={cn(
+                  'flex cursor-pointer items-start gap-3 rounded-lg px-4 py-3 transition-colors',
+                  allData || isGroupChecked(group.sections) ? 'border-2 border-accent/60 bg-accent/10' : 'border-2 border-fg/10 bg-fg/[0.03]'
+                )}
               >
                 <input
                   type="checkbox"
@@ -350,14 +354,15 @@ export function BatchReportWizard({ dataSources }: { dataSources: any[] }) {
                 key={option}
                 type="button"
                 onClick={() => setFormat(option)}
+                aria-pressed={format === option}
                 className={cn(
-                  'rounded-lg border px-4 py-4 text-left transition-colors',
+                  'rounded-lg px-4 py-4 text-left transition-colors',
                   format === option
-                    ? 'border-fg/[0.08] bg-fg/[0.06]'
-                    : 'border-fg/10 bg-fg/[0.03] hover:border-fg/20'
+                    ? 'border-2 border-accent bg-accent/10 shadow-sm'
+                    : 'border-2 border-fg/10 bg-fg/[0.03] hover:border-fg/25'
                 )}
               >
-                <p className="text-sm font-medium text-fg">{option === 'pdf' ? 'PDF' : 'Word (.doc)'}</p>
+                <p className={cn('text-sm', format === option ? 'font-semibold text-accent' : 'font-medium text-fg')}>{option === 'pdf' ? 'PDF' : 'Word (.doc)'}</p>
                 <p className="mt-0.5 text-xs text-fg/45">
                   {option === 'pdf' ? 'Best for sharing and printing' : 'Editable document format'}
                 </p>
