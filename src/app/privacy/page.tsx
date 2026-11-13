@@ -25,7 +25,7 @@ export default function PrivacyPolicyPage() {
             picture from Google.
           </li>
           <li>
-            <strong>Farm records:</strong> everything you or your team enter, such as farm name, location and capacity,
+            <strong>Farm records:</strong> everything you or your team enter, such as farm name, country, location and capacity,
             flocks, houses, egg production, feed, health and mortality logs, inventory, expenses, sales, orders, and the
             names and phone numbers of your customers and suppliers.
           </li>
@@ -35,7 +35,7 @@ export default function PrivacyPolicyPage() {
             permissions.
           </li>
           <li>
-            <strong>Payments:</strong> the plan, amount, date and Paystack reference of each payment. Card and mobile money
+            <strong>Payments:</strong> the plan, amount, currency, date and Paystack reference of each payment. Card and mobile money
             details are handled by Paystack. We never receive or store them.
           </li>
           <li>
@@ -52,6 +52,11 @@ export default function PrivacyPolicyPage() {
         <ul>
           <li>To run the service: store your records, calculate reports, and let your team work together.</li>
           <li>To take payments and apply the plan you paid for.</li>
+          <li>
+            To show your money in your farm&apos;s currency, and to price your plan: farms in Ghana pay in Ghana cedis,
+            farms in other countries pay in US dollars. We only use the country you choose for your farm. We do not look
+            up your location from your phone or internet connection.
+          </li>
           <li>To keep accounts secure, for example by limiting repeated sign-in attempts.</li>
           <li>To find and fix errors and keep the app fast.</li>
           <li>To reply when you contact us.</li>

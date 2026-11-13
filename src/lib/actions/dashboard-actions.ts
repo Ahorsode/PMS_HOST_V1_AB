@@ -868,13 +868,23 @@ export async function setFarmCountry(country: string) {
 
   const currency = currencyForCountry(country)
   try {
+    // The owner's other farms that have no country yet get the same answer,
+    // so someone with several farms is asked once, not once per farm.
+    const unset = await prisma.farm.findMany({
+      where: { userId, country: null, id: { not: activeFarmId } },
+      select: { id: true },
+    })
+    const farmIds = [activeFarmId, ...unset.map((item) => item.id)]
     await prisma.$transaction([
       prisma.farm.update({ where: { id: activeFarmId }, data: { country } }),
-      prisma.farmSettings.upsert({
-        where: { farmId: activeFarmId },
-        update: { currency },
-        create: { farmId: activeFarmId, currency },
-      }),
+      prisma.farm.updateMany({ where: { id: { in: farmIds.slice(1) }, country: null }, data: { country } }),
+      ...farmIds.map((farmId) =>
+        prisma.farmSettings.upsert({
+          where: { farmId },
+          update: { currency },
+          create: { farmId, currency },
+        }),
+      ),
     ])
     revalidatePath('/dashboard', 'layout')
     return { success: true as const, country, currency }

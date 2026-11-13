@@ -41,9 +41,9 @@ export function ChooseCountryForm({ farmName }: { farmName: string }) {
     <div className="relative min-h-screen flex items-center justify-center p-4">
       <Card className="glass-morphism w-full max-w-md border-none shadow-2xl rounded-lg p-3">
         <CardHeader>
-          <CardTitle className="text-2xl tracking-normal">Where is {farmName}?</CardTitle>
+          <CardTitle className="text-2xl tracking-normal">Where is your farm?</CardTitle>
           <p className="text-sm leading-6 text-white/75">
-            Choose your farm&apos;s country once. Poultry Ledger shows your sales, expenses and reports in its currency.
+            Choose the country for <span className="font-semibold text-white">{farmName}</span> once. Poultry Ledger shows your sales, expenses and reports in its currency.
           </p>
         </CardHeader>
         <CardContent>

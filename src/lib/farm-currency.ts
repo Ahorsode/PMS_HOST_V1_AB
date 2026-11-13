@@ -4,6 +4,8 @@ import prisma from '@/lib/db'
 import { billingCurrencyForCountry, currencyForCountry, DEFAULT_FARM_CURRENCY, type BillingCurrency } from '@/lib/countries'
 
 export type FarmMoney = {
+  /** The farm's owner, who is the only one allowed to set its country. */
+  ownerId: string | null
   /** ISO country code, or null for a farm whose owner has not picked one yet. */
   country: string | null
   /** Currency the farm's records (sales, expenses, reports) are shown in. */
@@ -14,13 +16,14 @@ export type FarmMoney = {
 
 /** A farm's country and currencies, read once per request. */
 export const getFarmMoney = cache(async (farmId: string | null | undefined): Promise<FarmMoney> => {
-  if (!farmId) return { country: null, currency: DEFAULT_FARM_CURRENCY, billingCurrency: 'GHS' }
+  if (!farmId) return { ownerId: null, country: null, currency: DEFAULT_FARM_CURRENCY, billingCurrency: 'GHS' }
   const farm = await prisma.farm.findUnique({
     where: { id: farmId },
-    select: { country: true, settings: { select: { currency: true } } },
+    select: { userId: true, country: true, settings: { select: { currency: true } } },
   })
   const country = farm?.country ?? null
   return {
+    ownerId: farm?.userId ?? null,
     country,
     currency: country ? currencyForCountry(country) : farm?.settings?.currency || DEFAULT_FARM_CURRENCY,
     billingCurrency: billingCurrencyForCountry(country),

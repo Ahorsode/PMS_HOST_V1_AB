@@ -15,7 +15,7 @@ import { DashboardNotices } from '@/components/site/DashboardNotices';
 import { MaintenanceProvider } from '@/components/site/MaintenanceContext';
 import { getAppSettings } from '@/lib/settings/app-settings';
 import { getAuthContext } from '@/lib/auth-utils';
-import { getFarmCurrency } from '@/lib/farm-currency';
+import { getFarmMoney } from '@/lib/farm-currency';
 import { CurrencyProvider } from '@/components/providers/CurrencyProvider';
 
 export default async function DashboardLayout({
@@ -155,7 +155,11 @@ export default async function DashboardLayout({
 
   // Every farm has a country; it sets the currency money is shown in and the
   // plan price. Owners of farms made before countries existed pick one once.
-  if (farm && isOwner && !farm.country) {
+  // Checked on the active farm, the same one the country page saves, so an
+  // owner with several farms is not sent back for a farm they are not using.
+  const activeFarmId = await getAuthContext().then((context) => context.activeFarmId, () => undefined);
+  const money = await getFarmMoney(activeFarmId ?? farm?.id);
+  if (money.ownerId === dbUser.id && !money.country) {
     redirect('/onboarding/country');
   }
   const staffAccess = farm ? await getFarmStaffAccess(farm.id) : null;
@@ -197,11 +201,8 @@ export default async function DashboardLayout({
       })
     : dbUser.role;
 
-  const [{ maintenance }, activeFarmId] = await Promise.all([
-    getAppSettings('system'),
-    getAuthContext().then((context) => context.activeFarmId, () => undefined),
-  ]);
-  const currency = await getFarmCurrency(activeFarmId ?? farm?.id);
+  const { maintenance } = await getAppSettings('system');
+  const { currency } = money;
 
   const rawFarmName = (farm?.name || 'My').trim();
   const mobileFarmTitle = /\bfarms?\s*$/i.test(rawFarmName)
