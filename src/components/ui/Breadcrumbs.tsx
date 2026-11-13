@@ -13,16 +13,16 @@ interface BreadcrumbsProps {
 
 export const Breadcrumbs = ({ items }: BreadcrumbsProps) => {
   return (
-    <nav className="flex items-center space-x-2 text-xs font-medium text-fg/70 mb-5">
+    <nav aria-label="Breadcrumb" className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-1 text-lg font-medium text-fg-2">
       <Link 
         href="/dashboard" 
         className="hover:text-fg transition-colors flex items-center gap-1 group"
       >
-        <Home className="w-3 h-3 transition-transform" />
+        <Home className="h-5 w-5 transition-transform" aria-label="Dashboard" />
       </Link>
       {items.map((item, index) => (
         <React.Fragment key={index}>
-          <ChevronRight className="w-3 h-3 opacity-20" />
+          <ChevronRight className="h-5 w-5 text-fg-3" aria-hidden="true" />
           {item.href ? (
             <Link 
               href={item.href} 
@@ -31,7 +31,7 @@ export const Breadcrumbs = ({ items }: BreadcrumbsProps) => {
               {item.label}
             </Link>
           ) : (
-            <span className="text-fg">{item.label}</span>
+            <span aria-current="page" className="font-semibold text-fg">{item.label}</span>
           )}
         </React.Fragment>
       ))}
