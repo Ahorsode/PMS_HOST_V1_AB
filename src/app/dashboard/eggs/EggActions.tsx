@@ -50,6 +50,18 @@ export const EggActionsHeader = ({
   );
 };
 
+// Row quick actions, matching the livestock rows: 40px tiles tinted by what they do.
+const QUICK_TONES = {
+  open: 'text-accent bg-accent/10 border-accent/30 hover:bg-accent/20',
+  edit: 'text-steel bg-steel/10 border-steel/30 hover:bg-steel/20',
+  delete: 'text-neg bg-neg/10 border-neg/30 hover:bg-neg/20',
+} as const;
+const ROW_ICON = { className: 'h-5 w-5', strokeWidth: 1.75 } as const;
+
+function quickButtonClass(tone: keyof typeof QUICK_TONES) {
+  return `inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-fg/30 ${QUICK_TONES[tone]}`;
+}
+
 export const EggLogActions = ({
   log,
   batches,
@@ -85,14 +97,14 @@ export const EggLogActions = ({
   };
 
   return (
-    <div className="flex items-center justify-end gap-1">
+    <div className="flex items-center justify-end gap-2">
       <Link
         href={`/dashboard/flocks/${log.batchId}`}
-        className={g.iconButton}
+        className={quickButtonClass('open')}
         title="Open batch"
         aria-label="Open batch"
       >
-        <ArrowUpRight className="h-4 w-4" strokeWidth={1.5} />
+        <ArrowUpRight {...ROW_ICON} />
       </Link>
       {canEdit && (
         <>
@@ -101,18 +113,18 @@ export const EggLogActions = ({
             aria-label="Edit egg record"
             title="Edit"
             onClick={() => setMode('edit')}
-            className={g.iconButton}
+            className={quickButtonClass('edit')}
           >
-            <Pencil className="h-4 w-4" strokeWidth={1.5} />
+            <Pencil {...ROW_ICON} />
           </button>
           <button
             type="button"
             aria-label="Delete egg record"
             title="Delete"
             onClick={() => setShowDeleteModal(true)}
-            className={`${g.iconButton} hover:text-neg-solid`}
+            className={quickButtonClass('delete')}
           >
-            <Trash2 className="h-4 w-4" strokeWidth={1.5} />
+            <Trash2 {...ROW_ICON} />
           </button>
         </>
       )}
