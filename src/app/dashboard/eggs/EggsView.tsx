@@ -46,7 +46,9 @@ export function EggsView({
         <EggActionsHeader batches={layerBatches} canEdit={canEdit} initialOpen={openLogOnLoad} {...eggLoggingSettings} />
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 items-start shrink-0">
+      {/* No items-start: both cards stretch to the taller one, and Collected today is kept
+          compact so Layer flocks is the card that sets the height. */}
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 shrink-0">
         <section className={`${g.card} xl:col-span-3`}>
           <div className={`flex items-baseline justify-between border-b ${g.hairline} px-5 py-4`}>
             <h2 className={g.sectionTitle}>Layer flocks</h2>
@@ -79,18 +81,25 @@ export function EggsView({
           </div>
         </section>
 
-        <section className={`${g.card} p-5`}>
-          <h2 className={`text-sm ${g.secondary}`}>Collected today</h2>
-          <p className={`mt-2 text-3xl font-medium leading-none tabular-nums ${g.text}`}>
-            {todayCrates} {todayCrates === 1 ? 'crate' : 'crates'}
-          </p>
-          <p className={`mt-2 ${g.ledger} tabular-nums`}>
-            {todayLoose > 0 ? `+ ${todayLoose} loose · ` : ''}{todayTotal.toLocaleString()} eggs
-          </p>
+        <section className={`${g.card} flex flex-col p-5`}>
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <h2 className={`text-sm ${g.secondary}`}>Collected today</h2>
+              <p className={`mt-2 text-3xl font-medium leading-none tabular-nums ${g.text}`}>
+                {todayCrates} {todayCrates === 1 ? 'crate' : 'crates'}
+              </p>
+              <p className={`mt-2 ${g.ledger} tabular-nums`}>
+                {todayLoose > 0 ? `+ ${todayLoose} loose · ` : ''}{todayTotal.toLocaleString()} eggs
+              </p>
+              <p className={`mt-1 ${g.ledger} tabular-nums`}>
+                Open crate · {Math.min(todayLoose, eggsPerCrate)} of {eggsPerCrate}
+              </p>
+            </div>
 
-          <EggTray filled={todayLoose} size={eggsPerCrate} />
+            <EggTray filled={todayLoose} size={eggsPerCrate} />
+          </div>
 
-          <div className={`mt-5 flex items-baseline justify-between border-t ${g.hairline} pt-4`}>
+          <div className={`mt-auto flex items-baseline justify-between border-t ${g.hairline} pt-3`}>
             <span className={`text-sm ${g.secondary}`}>Last 7 days</span>
             <span className={`text-sm font-medium tabular-nums ${g.text}`}>
               {weekCrates} {weekCrates === 1 ? 'crate' : 'crates'}
@@ -117,26 +126,21 @@ function EggTray({ filled, size }: { filled: number; size: number }) {
   const slots = Math.min(Math.max(size, 1), 60);
   const columns = slots === 30 ? 6 : Math.ceil(Math.sqrt(slots));
   return (
-    <figure className="mt-5">
-      <div
-        className="grid w-fit gap-1.5 rounded-xl border border-fg/[0.06] bg-page p-3"
-        style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
-        aria-hidden="true"
-      >
-        {Array.from({ length: slots }, (_, i) => (
-          <span
-            key={i}
-            className={
-              i < filled
-                ? 'h-3.5 w-3 rounded-[50%] bg-yolk shadow-[inset_0_-2px_0_rgba(0,0,0,0.18)]'
-                : 'h-3.5 w-3 rounded-[50%] border border-fg/[0.1]'
-            }
-          />
-        ))}
-      </div>
-      <figcaption className={`mt-2 ${g.ledger} tabular-nums`}>
-        Open crate · {Math.min(filled, slots)} of {size}
-      </figcaption>
-    </figure>
+    <div
+      className="mb-4 grid w-fit shrink-0 gap-1 rounded-lg border border-fg/[0.06] bg-page p-2"
+      style={{ gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` }}
+      aria-hidden="true"
+    >
+      {Array.from({ length: slots }, (_, i) => (
+        <span
+          key={i}
+          className={
+            i < filled
+              ? 'h-2.5 w-2 rounded-[50%] bg-yolk shadow-[inset_0_-1px_0_rgba(0,0,0,0.18)]'
+              : 'h-2.5 w-2 rounded-[50%] border border-fg/[0.1]'
+          }
+        />
+      ))}
+    </div>
   );
 }
