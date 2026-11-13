@@ -1,5 +1,5 @@
 import React from 'react';
-import { getAllOrders } from '@/lib/actions/order-actions';
+import { getAllOrders, getOrderCount } from '@/lib/actions/order-actions';
 import { getAllCustomers } from '@/lib/actions/customer-actions';
 import { getAllInventory, getSellableEggInventory, getActiveBatchEggStock, getEggFifoAvailabilityMap } from '@/lib/actions/inventory-actions';
 import { getAllBatches } from '@/lib/actions/dashboard-actions';
@@ -120,8 +120,9 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
   const sellBatchId = resolvedParams.sellBatchId;
   const openSellOnLoad = resolvedParams.quick === 'sell';
 
-  const [ordersRaw, customersRaw, inventoryRaw, eggInventoryRaw, eggBatchStockRaw, fifoEggAvailabilityRaw, livestockRaw, farmSettings, salesSettings] = await Promise.all([
+  const [ordersRaw, orderCount, customersRaw, inventoryRaw, eggInventoryRaw, eggBatchStockRaw, fifoEggAvailabilityRaw, livestockRaw, farmSettings, salesSettings] = await Promise.all([
     getAllOrders(),
+    getOrderCount(),
     getAllCustomers(),
     getAllInventory(),
     getSellableEggInventory(),
@@ -297,7 +298,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                <Clock className="w-5 h-5 text-fg-3" /> Recent orders
              </h3>
              <span className="text-xs font-medium bg-fg/[0.04] text-fg px-2 py-1 rounded-full border border-fg/[0.08]">
-               {orders.length} TOTAL
+               {orderCount} TOTAL
              </span>
           </div>
           
@@ -317,7 +318,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                 {orders.map((order: SalesOrder, index: number) => (
                   <tr key={order.id} className="hover:bg-fg/5 transition-colors group">
                     <td className="px-7 py-5">
-                      <span className="text-fg font-medium text-sm tracking-normal tabular-nums">Order {index + 1}</span>
+                      <span className="text-fg font-medium text-sm tracking-normal tabular-nums">Order {orderCount - index}</span>
                     </td>
                     <td className="px-7 py-5">
                       <div className="flex flex-wrap gap-1">
@@ -378,7 +379,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
             {orders.map((order: SalesOrder, index: number) => (
               <div key={order.id} className="bg-fg/[0.04] rounded-md p-3 border border-fg/5 flex flex-col space-y-2">
                  <div className="flex justify-between items-center">
-                   <span className="text-fg font-medium text-sm tracking-normal tabular-nums">Order {index + 1}</span>
+                   <span className="text-fg font-medium text-sm tracking-normal tabular-nums">Order {orderCount - index}</span>
                    <span className={`px-2 py-1 rounded-full text-xs font-medium border ${
                         order.status === 'COMPLETED' || order.status === 'PAID'
                           ? 'bg-fg/[0.04] text-emerald-400 border-fg/[0.08]'

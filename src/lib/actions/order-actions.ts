@@ -528,6 +528,13 @@ export async function createOrder(data: {
 }
 
 
+/** Every live order on the farm, so list numbering survives getAllOrders' 50-row limit. */
+export async function getOrderCount() {
+  const { activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return 0
+  return prisma.order.count({ where: { farmId: activeFarmId, isDeleted: false } })
+}
+
 export async function getAllOrders() {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return []
