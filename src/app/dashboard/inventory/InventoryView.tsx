@@ -20,6 +20,7 @@ import { DeleteConfirmationModal } from '@/components/modals/DeleteConfirmationM
 import { SkeletonLine } from '@/components/ui/MutationFeedback';
 import { MobileCardList } from '@/components/ui/MobileCardList';
 import { useMoney } from '@/components/providers/CurrencyProvider'
+import { QUICK_ICON, quickButtonClass } from '@/components/ui/quick-action';
 
 
 /* ───────────────────── helpers ───────────────────── */
@@ -438,11 +439,11 @@ export default function InventoryView({
                     <WorkerStamp user={item.user} />
                     {canEdit && !showUsedUp && (
                       <>
-                        <button onClick={() => openEdit(item)} aria-label="Edit item" className="p-2 rounded-md hover:bg-fg/10 text-fg/70 hover:text-fg transition-colors">
-                          <Pencil className="w-4 h-4" />
+                        <button type="button" onClick={() => openEdit(item)} aria-label="Edit item" title="Edit" className={quickButtonClass('edit')}>
+                          <Pencil {...QUICK_ICON} />
                         </button>
-                        <button onClick={() => confirmDelete(item)} aria-label="Delete item" className="p-2 rounded-md hover:bg-fg/[0.04] text-fg/70 hover:text-neg transition-colors">
-                          <Trash2 className="w-4 h-4" />
+                        <button type="button" onClick={() => confirmDelete(item)} aria-label="Delete item" title="Delete" className={quickButtonClass('delete')}>
+                          <Trash2 {...QUICK_ICON} />
                         </button>
                       </>
                     )}
@@ -505,11 +506,11 @@ export default function InventoryView({
                            <WorkerStamp user={item.user} />
                            {canEdit && !showUsedUp && (
                              <>
-                               <button aria-label="Edit item" onClick={() => openEdit(item)} className="p-1.5 rounded-md hover:bg-fg/10 text-fg/70 hover:text-fg transition-colors">
-                                 <Pencil className="w-4 h-4" />
+                               <button type="button" aria-label="Edit item" title="Edit" onClick={() => openEdit(item)} className={quickButtonClass('edit')}>
+                                 <Pencil {...QUICK_ICON} />
                                </button>
-                               <button aria-label="Delete item" onClick={() => confirmDelete(item)} className="p-1.5 rounded-md hover:bg-fg/[0.04] text-fg/70 hover:text-neg transition-colors">
-                                 <Trash2 className="w-4 h-4" />
+                               <button type="button" aria-label="Delete item" title="Delete" onClick={() => confirmDelete(item)} className={quickButtonClass('delete')}>
+                                 <Trash2 {...QUICK_ICON} />
                                </button>
                              </>
                            )}

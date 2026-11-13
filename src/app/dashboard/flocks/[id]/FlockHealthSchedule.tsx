@@ -27,6 +27,7 @@ import {
   type HealthUsageType,
   type HealthScheduleInput,
 } from '@/lib/actions/health-actions'
+import { QUICK_ICON, quickButtonClass } from '@/components/ui/quick-action';
 
 const CUSTOM = '__custom__'
 
@@ -620,10 +621,11 @@ function ScheduleGroup({
                       type="button"
                       disabled={isPending}
                       onClick={() => onDelete(type, rec.id)}
-                      className={iconButtonClass('danger')}
+                      className={quickButtonClass('delete')}
                       aria-label="Delete schedule"
+                      title="Delete"
                     >
-                      {isPending ? <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} /> : <Trash2 className="h-4 w-4" strokeWidth={1.5} />}
+                      {isPending ? <Loader2 className="h-5 w-5 animate-spin" strokeWidth={1.5} /> : <Trash2 {...QUICK_ICON} />}
                     </button>
                   </div>
                 ) : (

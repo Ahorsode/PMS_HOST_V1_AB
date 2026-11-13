@@ -8,6 +8,7 @@ import { EggForm } from './EggForm';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { DeleteConfirmationModal } from '@/components/modals/DeleteConfirmationModal';
+import { QUICK_ICON, quickButtonClass } from '@/components/ui/quick-action';
 
 type EggLoggingSettings = {
   defaultEggUnit?: 'crate' | 'individual';
@@ -50,17 +51,7 @@ export const EggActionsHeader = ({
   );
 };
 
-// Row quick actions, matching the livestock rows: 40px tiles tinted by what they do.
-const QUICK_TONES = {
-  open: 'text-accent bg-accent/10 border-accent/30 hover:bg-accent/20',
-  edit: 'text-steel bg-steel/10 border-steel/30 hover:bg-steel/20',
-  delete: 'text-neg bg-neg/10 border-neg/30 hover:bg-neg/20',
-} as const;
-const ROW_ICON = { className: 'h-5 w-5', strokeWidth: 1.75 } as const;
-
-function quickButtonClass(tone: keyof typeof QUICK_TONES) {
-  return `inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-fg/30 ${QUICK_TONES[tone]}`;
-}
+const ROW_ICON = QUICK_ICON;
 
 export const EggLogActions = ({
   log,

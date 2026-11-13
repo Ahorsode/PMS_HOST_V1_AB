@@ -34,6 +34,7 @@ import {
   type SavedAllocation,
 } from '@/components/finance/SpecifyAllocationDialog'
 import { useMoney } from '@/components/providers/CurrencyProvider'
+import { QUICK_ICON, quickButtonClass } from '@/components/ui/quick-action';
 
 interface Transaction {
   id: string
@@ -598,10 +599,11 @@ export function FinanceHubClient({
                           setSelectedTx(tx)
                           setIsDeleteOpen(true)
                         }}
-                        className="bg-fg/[0.04] text-neg hover:bg-rose-500 hover:text-white p-2 rounded transition-colors border border-fg/[0.08]"
+                        className={quickButtonClass('delete')}
                         aria-label="Delete transaction"
+                        title="Delete"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 {...QUICK_ICON} />
                       </button>
                     </>
                   )
@@ -694,10 +696,10 @@ export function FinanceHubClient({
                                   setSelectedTx(tx)
                                   setIsDeleteOpen(true)
                                 }}
-                                className="bg-fg/[0.04] text-neg hover:bg-rose-500 hover:text-white p-1 rounded transition-colors border border-fg/[0.08]"
+                                className={quickButtonClass('delete')}
                                 title="Delete transaction (soft)"
                               >
-                                <Trash2 className="w-3.5 h-3.5" />
+                                <Trash2 {...QUICK_ICON} />
                               </button>
                             </div>
                           )}

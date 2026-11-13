@@ -10,6 +10,7 @@ import { updateHouse, deleteHouse } from '@/lib/actions/house-actions';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { MutationBoundary } from '@/components/ui/MutationFeedback';
+import { QUICK_ICON, quickButtonClass } from '@/components/ui/quick-action';
 
 export default function HousesPage({ houses, canEdit = true, openAddOnLoad = false }: { houses: any[], canEdit?: boolean, openAddOnLoad?: boolean }) {
   const [isAdding, setIsAdding] = useState(false);
@@ -154,22 +155,23 @@ export default function HousesPage({ houses, canEdit = true, openAddOnLoad = fal
                 {house.name}
               </CardTitle>
               {canEdit && (
-                <div className="flex items-center gap-1 transition-opacity">
+                <div className="flex items-center gap-2 transition-opacity">
                   <button aria-label="Edit house" 
                     onClick={() => setEditingHouse(house)}
                     disabled={deletingHouseId === house.id}
-                    className="p-1.5 hover:bg-fg/[0.06] rounded-md text-fg-2 transition-colors"
+                    className={quickButtonClass('edit')}
                     title="Edit house"
                   >
-                    <Edit2 className="w-4 h-4" />
+                    <Edit2 {...QUICK_ICON} />
                   </button>
                   <button 
                     onClick={() => handleDelete(house.id)}
                     disabled={deletingHouseId === house.id}
-                    className="p-1.5 hover:bg-red-50 rounded-md text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className={quickButtonClass('delete')}
                     title="Delete house"
+                    aria-label="Delete house"
                   >
-                    {deletingHouseId === house.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                    {deletingHouseId === house.id ? <Loader2 className="h-5 w-5 animate-spin" /> : <Trash2 {...QUICK_ICON} />}
                   </button>
                 </div>
               )}

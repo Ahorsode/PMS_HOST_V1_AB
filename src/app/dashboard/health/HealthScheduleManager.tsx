@@ -33,6 +33,7 @@ import {
   type HealthUsageType,
   type HealthScheduleInput,
 } from "@/lib/actions/health-actions";
+import { QUICK_ICON, quickButtonClass } from '@/components/ui/quick-action';
 
 const CUSTOM = "__custom__";
 
@@ -409,11 +410,12 @@ export function HealthScheduleManager({
               <button
                 type="button"
                 onClick={() => switchType("VACCINATION")}
+                aria-pressed={isVaccine}
                 className={cn(
-                  "flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border text-sm font-medium transition-colors",
+                  "flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 text-sm transition-colors",
                   isVaccine
-                    ? "bg-fg/[0.04] text-yolk border-fg/[0.08]"
-                    : "bg-fg/5 text-fg/60 border-fg/10 hover:bg-fg/10"
+                    ? "bg-yolk/15 text-yolk border-yolk font-semibold shadow-sm"
+                    : "bg-fg/5 text-fg-2 border-fg/10 font-medium hover:bg-fg/10 hover:text-fg"
                 )}
               >
                 <Syringe className="w-4 h-4" /> Vaccination
@@ -421,11 +423,12 @@ export function HealthScheduleManager({
               <button
                 type="button"
                 onClick={() => switchType("MEDICATION")}
+                aria-pressed={!isVaccine}
                 className={cn(
-                  "flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border text-sm font-medium transition-colors",
+                  "flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 text-sm transition-colors",
                   !isVaccine
-                    ? "bg-fg/[0.06] text-fg-2 border-fg/[0.08]"
-                    : "bg-fg/5 text-fg/60 border-fg/10 hover:bg-fg/10"
+                    ? "bg-steel/15 text-steel border-steel font-semibold shadow-sm"
+                    : "bg-fg/5 text-fg-2 border-fg/10 font-medium hover:bg-fg/10 hover:text-fg"
                 )}
               >
                 <Pill className="w-4 h-4" /> Medication
@@ -844,13 +847,14 @@ function ScheduleList({
                       type="button"
                       disabled={isPending}
                       onClick={() => onDelete(type, rec.id)}
-                      className="p-2 rounded-md bg-fg/[0.04] text-neg border border-fg/[0.08] hover:bg-fg/[0.04] transition-colors disabled:opacity-50"
+                      className={quickButtonClass('delete')}
                       aria-label="Delete schedule"
+                      title="Delete"
                     >
                       {isPending ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <Loader2 className="h-5 w-5 animate-spin" />
                       ) : (
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 {...QUICK_ICON} />
                       )}
                     </button>
                   </div>

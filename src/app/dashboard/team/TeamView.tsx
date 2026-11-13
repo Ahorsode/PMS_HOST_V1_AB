@@ -15,6 +15,7 @@ import { PermissionsModal } from '@/components/ui/PermissionsModal';
 import { useRouter } from 'next/navigation';
 import { MutationBoundary } from '@/components/ui/MutationFeedback';
 import { toast } from 'sonner';
+import { QUICK_ICON, quickButtonClass } from '@/components/ui/quick-action';
 
 export default function TeamView({
   canEdit = true,
@@ -434,12 +435,12 @@ export default function TeamView({
                             )}
                             disabled={resettingPermissionsUserId === member.userId}
                             title="Reset to role default permissions"
-                            className="p-2.5 text-fg hover:bg-fg/[0.04] rounded-md transition-colors border border-transparent hover:border-fg/[0.08] disabled:opacity-50"
+                            className={quickButtonClass('restore')}
                           >
                             {resettingPermissionsUserId === member.userId ? (
                               <Loader2 className="w-5 h-5 animate-spin" />
                             ) : (
-                              <RotateCcw className="w-5 h-5" />
+                              <RotateCcw {...QUICK_ICON} />
                             )}
                           </button>
                           </>
@@ -447,9 +448,10 @@ export default function TeamView({
                         {canEdit && (currentUserRole === 'OWNER' || currentUserRole === 'MANAGER') && (member.role !== 'OWNER') && (
                           <button aria-label="Remove team member" 
                             onClick={() => setDeleteTarget({ id: member.id, type: 'member' })}
-                            className="p-2.5 text-neg hover:bg-fg/[0.04] rounded-md transition-colors border border-transparent hover:border-fg/[0.08]"
+                            className={quickButtonClass('delete')}
+                            title="Remove team member"
                           >
-                            <Trash2 className="w-5 h-5" />
+                            <Trash2 {...QUICK_ICON} />
                           </button>
                         )}
                       </div>
@@ -545,19 +547,20 @@ export default function TeamView({
                               }
                             }}
                             disabled={resettingPermissionsUserId !== null}
-                            className="p-2 text-fg hover:bg-fg/[0.04] rounded-lg transition-colors disabled:opacity-50"
+                            className={quickButtonClass('restore')}
                             title="Reset to role default permissions"
                           >
-                            <RotateCcw className="w-4 h-4" />
+                            <RotateCcw {...QUICK_ICON} />
                           </button>
                           </>
                         )}
                         {canEdit && (currentUserRole === 'OWNER' || currentUserRole === 'MANAGER') && (
                           <button aria-label="Cancel invitation" 
                             onClick={() => setDeleteTarget({ id: invite.id, type: 'invite' })}
-                            className="p-2 text-neg hover:bg-fg/[0.04] rounded-lg transition-colors"
+                            className={quickButtonClass('delete')}
+                            title="Cancel invitation"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 {...QUICK_ICON} />
                           </button>
                         )}
                       </div>
