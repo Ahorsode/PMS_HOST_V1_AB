@@ -93,7 +93,7 @@ export default function FeedDashboard({
     <div className="px-0 pt-2 pb-7 md:p-5 space-y-7 animate-in fade-in duration-200">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
         <div>
-          <h1 className="text-3xl font-medium leading-tight text-fg">Feed</h1>
+          <h1 className="text-3xl font-semibold leading-tight text-fg">Feed</h1>
           <p className="mt-2 text-sm text-fg-2">Feed formulations, stock and daily feeding</p>
         </div>
         {canEdit && (
@@ -238,7 +238,7 @@ export default function FeedDashboard({
                        {feedInventory.slice(0, 4).map(item => (
                          <div key={item.id} className="flex justify-between items-center bg-fg/5 p-2 rounded-md border border-fg/10">
                            <span className="text-lg font-medium text-fg">{item.itemName}</span>
-                           <span className={`text-sm font-medium px-3 py-1.5 rounded-md border ${isLowStock(item) ? 'bg-fg/[0.04] border-fg/[0.08] text-neg' : 'bg-fg/[0.04] border-fg/[0.08] text-emerald-400'}`}>
+                           <span className={`text-sm font-medium px-3 py-1.5 rounded-md border ${isLowStock(item) ? 'bg-fg/[0.04] border-fg/[0.08] text-neg' : 'bg-fg/[0.04] border-fg/[0.08] text-accent'}`}>
                               {Number(item.stockLevel).toLocaleString()} {item.unit}
                            </span>
                          </div>

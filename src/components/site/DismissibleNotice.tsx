@@ -8,9 +8,9 @@ import { cn } from '@/lib/utils'
 const UPGRADE_KINDS = new Set(['trialEnding', 'planExpired'])
 
 const TONES = {
-  info: 'border-fg/[0.08] bg-fg/[0.04] text-emerald-50',
-  warning: 'border-amber-400/35 bg-fg/[0.04] text-amber-50',
-  success: 'border-fg/[0.08] bg-fg/[0.04] text-emerald-50',
+  info: 'border-fg/[0.08] bg-fg/[0.04] text-fg',
+  warning: 'border-amber-400/35 bg-fg/[0.04] text-yolk',
+  success: 'border-fg/[0.08] bg-fg/[0.04] text-fg',
 } as const
 
 /**

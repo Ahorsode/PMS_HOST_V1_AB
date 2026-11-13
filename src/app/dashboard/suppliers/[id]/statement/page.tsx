@@ -50,7 +50,7 @@ export default async function SupplierStatementPage({ params }: { params: Promis
             <ArrowLeft className="w-6 h-6 text-fg-3" />
           </Link>
           <div>
-            <h1 className="text-3xl font-medium leading-tight text-fg">Statement</h1>
+            <h1 className="text-3xl font-semibold leading-tight text-fg">Statement</h1>
             <p className="mt-2 text-sm text-fg-2">{statement.name}</p>
           </div>
         </div>
@@ -102,7 +102,7 @@ export default async function SupplierStatementPage({ params }: { params: Promis
 
          {/* Transaction Timeline */}
          <div className="lg:col-span-2 space-y-4">
-            <h2 className="text-lg font-medium text-fg px-2 mb-4">Transaction history</h2>
+            <h2 className="text-lg font-semibold text-fg px-2 mb-4">Transaction history</h2>
             {transactions.length === 0 ? (
                <div className="flex flex-col items-center justify-center py-20 bg-fg/5 border border-dashed border-fg/10 rounded-lg text-fg/60">
                   No transactions recorded yet.
@@ -117,7 +117,7 @@ export default async function SupplierStatementPage({ params }: { params: Promis
                         <div>
                            <p className="text-fg font-medium text-lg leading-tight">{tx.name}</p>
                            <div className="flex items-center gap-3 mt-1">
-                              <span className={`text-xs font-medium px-2 py-0.5 rounded ${tx.type === 'Inventory' ? 'bg-fg/[0.04] text-emerald-400' : 'bg-fg/[0.06] text-fg-2'}`}>
+                              <span className={`text-xs font-medium px-2 py-0.5 rounded ${tx.type === 'Inventory' ? 'bg-fg/[0.04] text-accent' : 'bg-fg/[0.06] text-fg-2'}`}>
                                  {tx.type}
                               </span>
                               <div className="flex items-center gap-1.5 text-fg/60 text-xs font-medium">

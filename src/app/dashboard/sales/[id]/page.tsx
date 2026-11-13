@@ -23,7 +23,7 @@ export default async function SaleDetailPage({ params }: { params: Promise<{ id:
       
       <div className="flex justify-between items-center mb-9 bg-fg/10 p-7 rounded-lg border border-fg/10 relative overflow-hidden">
         <div className="relative z-10">
-          <h1 className="text-3xl font-medium leading-tight text-fg">Sale details</h1>
+          <h1 className="text-3xl font-semibold leading-tight text-fg">Sale details</h1>
           <p className="mt-2 text-sm text-fg-2">
              {sale.customerName || 'Walk-in customer'} · payments
           </p>

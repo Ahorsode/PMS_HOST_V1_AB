@@ -122,13 +122,13 @@ export function FeedingHistoryPanel({
               <table className="min-w-full divide-y divide-fg/10">
                 <thead className="bg-fg/5">
                   <tr>
-                    <th className="px-5 py-3 text-left text-xs font-medium text-fg/50">Date</th>
-                    <th className="px-5 py-3 text-left text-xs font-medium text-fg/50">Batch</th>
-                    <th className="px-5 py-3 text-left text-xs font-medium text-fg/50">Feed</th>
-                    <th className="px-5 py-3 text-left text-xs font-medium text-fg/50">Amount</th>
-                    <th className="px-5 py-3 text-left text-xs font-medium text-fg/50">Logged by</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-fg/50">Date</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-fg/50">Batch</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-fg/50">Feed</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-fg/50">Amount</th>
+                    <th className="px-5 py-3 text-left text-xs font-semibold text-fg/50">Logged by</th>
                     {canEdit && (
-                      <th className="px-5 py-3 text-right text-xs font-medium text-fg/50">Actions</th>
+                      <th className="px-5 py-3 text-right text-xs font-semibold text-fg/50">Actions</th>
                     )}
                   </tr>
                 </thead>

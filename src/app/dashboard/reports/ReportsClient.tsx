@@ -138,7 +138,7 @@ export function ReportsClient({
     <div className="space-y-7">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-3xl font-medium leading-tight text-fg">Reports</h1>
+          <h1 className="text-3xl font-semibold leading-tight text-fg">Reports</h1>
           <p className="mt-2 text-sm text-fg-2">
             Farm-wide figures and batch report exports
           </p>
@@ -149,7 +149,7 @@ export function ReportsClient({
       <section className="glass-morphism overflow-hidden rounded-lg border border-fg/[0.08]">
         <div className="border-b border-fg/10 bg-emerald-500/[0.06] px-6 py-5">
           <div>
-            <h2 className="flex items-center gap-2 text-sm font-medium text-fg">
+            <h2 className="flex items-center gap-2 text-sm font-semibold text-fg">
               <FileText className="h-4 w-4 text-fg-3" />
               Batch reports
             </h2>
@@ -434,7 +434,7 @@ function SplitRow({ label, value, tone }: { label: string; value: string; tone: 
   return (
     <div className="flex items-center justify-between gap-3 text-xs">
       <span className="min-w-0 truncate font-medium text-fg/70">{label}</span>
-      <span className={cn('shrink-0 font-medium', tone === 'emerald' ? 'text-emerald-400' : 'text-neg')}>{value}</span>
+      <span className={cn('shrink-0 font-medium', tone === 'emerald' ? 'text-accent' : 'text-neg')}>{value}</span>
     </div>
   )
 }

@@ -48,7 +48,7 @@ export default async function HealthPage() {
     <div className="max-w-7xl mx-auto space-y-6 px-0 md:px-3 pt-2 pb-7 md:py-7">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-page p-6 rounded-xl border border-fg/[0.08] gap-4">
         <div>
-          <h1 className="text-3xl font-medium leading-tight text-fg">Vaccination and medication</h1>
+          <h1 className="text-3xl font-semibold leading-tight text-fg">Vaccination and medication</h1>
           <p className="mt-2 text-sm text-fg-2">Plan and track vaccine and medication schedules across your active batches</p>
         </div>
         <div className="bg-card px-5 py-3 rounded-xl border border-fg/[0.08] text-center">

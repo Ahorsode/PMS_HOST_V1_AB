@@ -41,7 +41,7 @@ function StatusBanner({ status }: { status: PlanStatus }) {
   if (!message) return null;
 
   return (
-    <div className="mb-4 flex flex-col gap-3 rounded-lg border border-fg/[0.08] bg-fg/[0.04] px-4 py-3 text-sm text-amber-100 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mb-4 flex flex-col gap-3 rounded-lg border border-fg/[0.08] bg-fg/[0.04] px-4 py-3 text-sm text-yolk sm:flex-row sm:items-center sm:justify-between">
       <span className="flex items-start gap-2 font-medium">
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
         {message}
@@ -71,7 +71,7 @@ export function PlanAccessGate({ status, children }: { status: PlanStatus; child
         <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-lg border border-fg/[0.08] bg-fg/[0.04]">
           <Lock className="h-9 w-9 text-neg" />
         </div>
-        <h1 className="mb-3 text-3xl font-medium text-fg">
+        <h1 className="mb-3 text-3xl font-semibold text-fg">
           {status.isTrial ? 'Your free trial has ended' : 'Your plan has ended'}
         </h1>
         <p className="mb-7 leading-relaxed text-fg/75">

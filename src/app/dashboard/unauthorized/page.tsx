@@ -13,7 +13,7 @@ export default function UnauthorizedPage() {
           </div>
           
           <div className="space-y-2">
-            <h1 className="text-3xl font-medium text-fg tracking-normal">Access denied</h1>
+            <h1 className="text-3xl font-semibold text-fg tracking-normal">Access denied</h1>
             <p className="text-fg/80 text-sm font-medium w-full max-w-[280px] mx-auto">
               You do not have the required permissions to view this module. Please contact your Farm Owner or Manager.
             </p>

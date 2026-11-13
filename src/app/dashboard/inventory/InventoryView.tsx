@@ -251,7 +251,7 @@ export default function InventoryView({
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-medium leading-tight text-fg">Inventory</h1>
+          <h1 className="text-3xl font-semibold leading-tight text-fg">Inventory</h1>
           <p className="mt-2 text-sm text-fg-2">Feed, medicine and egg stock</p>
         </div>
         {canEdit && (
@@ -337,8 +337,8 @@ export default function InventoryView({
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-fg/10">
-                    <th className="text-left px-4 py-2 text-fg/70 font-medium text-xs">Batch</th>
-                    <th className="text-right px-4 py-2 text-fg/70 font-medium text-xs">Stock</th>
+                    <th className="text-left px-4 py-2 text-fg/70 font-semibold text-xs">Batch</th>
+                    <th className="text-right px-4 py-2 text-fg/70 font-semibold text-xs">Stock</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -413,7 +413,7 @@ export default function InventoryView({
                   </span>
                 )}
                 badge={(item) => (
-                  <span className={`font-medium text-lg ${showUsedUp ? 'text-neg' : item.stockLevel <= 5 ? 'text-neg' : 'text-emerald-400'}`}>
+                  <span className={`font-medium text-lg ${showUsedUp ? 'text-neg' : item.stockLevel <= 5 ? 'text-neg' : 'text-accent'}`}>
                     {showUsedUp ? (
                       <span className="text-sm font-medium">Used up</span>
                     ) : item.unit === 'bags' ? (
@@ -453,10 +453,10 @@ export default function InventoryView({
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-fg/10">
-                        <th className="text-left px-4 py-3 text-fg/80 font-medium text-sm">Item</th>
-                        <th className="text-right px-4 py-3 text-fg/80 font-medium text-sm">Stock</th>
-                        <th className="text-right px-4 py-3 text-fg/80 font-medium text-sm">Cost/unit</th>
-                        <th className="text-right px-4 py-3 text-fg/80 font-medium text-sm">Unit</th>
+                        <th className="text-left px-4 py-3 text-fg/80 font-semibold text-sm">Item</th>
+                        <th className="text-right px-4 py-3 text-fg/80 font-semibold text-sm">Stock</th>
+                        <th className="text-right px-4 py-3 text-fg/80 font-semibold text-sm">Cost/unit</th>
+                        <th className="text-right px-4 py-3 text-fg/80 font-semibold text-sm">Unit</th>
                         <th className="px-4 py-2" />
                       </tr>
 
@@ -479,7 +479,7 @@ export default function InventoryView({
                             ) : null}
                           </div>
                         </td>
-                        <td className={`px-4 py-3 text-right font-medium text-lg ${showUsedUp ? 'text-neg' : item.stockLevel <= 5 ? 'text-neg' : 'text-emerald-400'}`}>
+                        <td className={`px-4 py-3 text-right font-medium text-lg ${showUsedUp ? 'text-neg' : item.stockLevel <= 5 ? 'text-neg' : 'text-accent'}`}>
                           {isMutatingItem ? (
                             <SkeletonLine className="ml-auto h-4 w-16" />
                           ) : showUsedUp ? (
@@ -537,7 +537,7 @@ export default function InventoryView({
               className="glass-pill rounded-lg p-5 w-full max-w-md max-h-[90dvh] overflow-y-auto custom-scrollbar pb-safe space-y-4 border border-fg/10"
             >
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-medium text-fg">{editing ? 'Edit item' : 'Add inventory item'}</h2>
+                <h2 className="text-lg font-semibold text-fg">{editing ? 'Edit item' : 'Add inventory item'}</h2>
                 <button aria-label="Close form" onClick={() => setShowForm(false)} className="p-2 rounded-md hover:bg-fg/10 text-fg/70 hover:text-fg">
                   <X className="w-5 h-5" />
                 </button>

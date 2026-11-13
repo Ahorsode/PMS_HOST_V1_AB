@@ -22,7 +22,7 @@ export default async function SalesAnalyticsPage() {
       <Breadcrumbs items={[{ label: 'Sales', href: '/dashboard/sales' }, { label: 'Sales analytics' }]} />
       
       <header className="px-1">
-        <h1 className="text-3xl font-medium leading-tight text-fg">Sales analytics</h1>
+        <h1 className="text-3xl font-semibold leading-tight text-fg">Sales analytics</h1>
         <p className="mt-2 text-sm text-fg-2">Revenue, order value and the latest sales</p>
       </header>
 
@@ -34,7 +34,7 @@ export default async function SalesAnalyticsPage() {
 
       <div className="rounded-xl border border-fg/[0.08] bg-card overflow-hidden">
          <div className="px-5 py-4 border-b border-fg/[0.08] flex items-center justify-between">
-            <h2 className="text-lg font-medium text-fg">Recent financial flows</h2>
+            <h2 className="text-lg font-semibold text-fg">Recent financial flows</h2>
          </div>
          <MobileCardList
             items={sales}
@@ -58,11 +58,11 @@ export default async function SalesAnalyticsPage() {
             <table className="w-full text-left">
                <thead>
                   <tr className="border-b border-fg/[0.08]">
-                     <th className="px-5 py-3 text-xs font-medium text-fg/70">Date</th>
-                     <th className="px-5 py-3 text-xs font-medium text-fg/70 text-left">Customer</th>
-                     <th className="px-5 py-3 text-xs font-medium text-fg/70 text-center">Items</th>
-                     <th className="px-5 py-3 text-xs font-medium text-fg/70 text-right">Amount</th>
-                     <th className="px-5 py-3 text-xs font-medium text-fg/70 text-right">View</th>
+                     <th className="px-5 py-3 text-xs font-semibold text-fg/70">Date</th>
+                     <th className="px-5 py-3 text-xs font-semibold text-fg/70 text-left">Customer</th>
+                     <th className="px-5 py-3 text-xs font-semibold text-fg/70 text-center">Items</th>
+                     <th className="px-5 py-3 text-xs font-semibold text-fg/70 text-right">Amount</th>
+                     <th className="px-5 py-3 text-xs font-semibold text-fg/70 text-right">View</th>
                   </tr>
                </thead>
                <tbody className="divide-y divide-fg/10">

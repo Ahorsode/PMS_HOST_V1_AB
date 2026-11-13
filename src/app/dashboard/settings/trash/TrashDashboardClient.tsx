@@ -294,7 +294,7 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
             <div className="w-10 h-10 rounded-xl bg-fg/[0.04] border border-fg/[0.08] flex items-center justify-center">
               <Trash2 className="w-5 h-5 text-neg" />
             </div>
-            <h1 className="text-3xl font-medium leading-tight text-fg">Deleted records</h1>
+            <h1 className="text-3xl font-semibold leading-tight text-fg">Deleted records</h1>
           </div>
           <p className="text-fg/40 text-sm ml-13 pl-0.5">
             Restore records that were deleted. The data is kept until you restore it.

@@ -31,7 +31,7 @@ export default async function EggsAnalyticsPage() {
       <Breadcrumbs items={[{ label: 'Eggs', href: '/dashboard/eggs' }, { label: 'Egg analytics' }]} />
       
       <header className="px-1">
-        <h1 className="text-3xl font-medium leading-tight text-fg">Egg analytics</h1>
+        <h1 className="text-3xl font-semibold leading-tight text-fg">Egg analytics</h1>
         <p className="mt-2 text-sm text-fg-2">Totals and the latest collections across your layer flocks</p>
       </header>
 
@@ -43,7 +43,7 @@ export default async function EggsAnalyticsPage() {
 
       <div className="rounded-xl border border-fg/[0.08] bg-card overflow-hidden">
          <div className="px-5 py-4 border-b border-fg/[0.08] flex items-center justify-between">
-            <h2 className="text-lg font-medium text-fg">Historical yield record</h2>
+            <h2 className="text-lg font-semibold text-fg">Historical yield record</h2>
          </div>
          <MobileCardList
             items={logs.slice(0, 15)}
@@ -59,10 +59,10 @@ export default async function EggsAnalyticsPage() {
             <table className="w-full text-left">
                <thead>
                   <tr className="border-b border-fg/[0.08]">
-                     <th className="px-5 py-3 text-xs font-medium text-fg/70">Date</th>
-                     <th className="px-5 py-3 text-xs font-medium text-fg/70">Batch</th>
-                     <th className="px-5 py-3 text-xs font-medium text-fg/70 text-center">Cracked</th>
-                     <th className="px-5 py-3 text-xs font-medium text-fg/70 text-right">Quantity</th>
+                     <th className="px-5 py-3 text-xs font-semibold text-fg/70">Date</th>
+                     <th className="px-5 py-3 text-xs font-semibold text-fg/70">Batch</th>
+                     <th className="px-5 py-3 text-xs font-semibold text-fg/70 text-center">Cracked</th>
+                     <th className="px-5 py-3 text-xs font-semibold text-fg/70 text-right">Quantity</th>
                   </tr>
                </thead>
                <tbody className="divide-y divide-fg/10">

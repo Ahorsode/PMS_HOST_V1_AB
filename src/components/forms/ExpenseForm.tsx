@@ -347,7 +347,7 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
                             className={cn(
                               'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium',
                               balanceBadge.tone === 'success'
-                                ? 'border-fg/[0.08] bg-fg/[0.04] text-emerald-400'
+                                ? 'border-fg/[0.08] bg-fg/[0.04] text-accent'
                                 : 'border-fg/[0.08] bg-fg/[0.04] text-yolk'
                             )}
                           >

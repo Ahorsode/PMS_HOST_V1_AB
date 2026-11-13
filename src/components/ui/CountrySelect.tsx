@@ -18,7 +18,7 @@ type CountrySelectProps = Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'o
 export function CountrySelect({ id = 'country', label = 'Country', hint, value, onChange, className, ...props }: CountrySelectProps) {
   return (
     <div className="w-full space-y-2">
-      <label htmlFor={id} className="block text-sm text-fg-2">
+      <label htmlFor={id} className="block text-sm font-medium text-fg-2">
         {label}
       </label>
       <select

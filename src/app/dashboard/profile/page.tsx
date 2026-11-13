@@ -35,7 +35,7 @@ export default async function ProfilePage() {
             
             <div className="flex-1 text-center md:text-left space-y-2">
                <div className="flex flex-col md:flex-row md:items-center gap-2 justify-center md:justify-start">
-                  <h1 className="text-3xl font-medium leading-tight text-fg">{user?.name || 'Farm user'}</h1>
+                  <h1 className="text-3xl font-semibold leading-tight text-fg">{user?.name || 'Farm user'}</h1>
                   <span className="self-center text-sm text-fg-2">{formatRoleLabel(role)}</span>
                </div>
                <p className="flex items-center justify-center gap-2 text-sm text-fg-2 md:justify-start">

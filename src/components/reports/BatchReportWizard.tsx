@@ -368,7 +368,7 @@ export function BatchReportWizard({ dataSources }: { dataSources: any[] }) {
           {builtReport?.finance ? (
             <div className="rounded-lg border border-fg/10 bg-fg/[0.03] px-4 py-3 text-xs text-fg/60">
               Preview will include net position of{' '}
-              <span className={cn('font-medium', builtReport.finance.netProfit >= 0 ? 'text-emerald-400' : 'text-neg')}>
+              <span className={cn('font-medium', builtReport.finance.netProfit >= 0 ? 'text-accent' : 'text-neg')}>
                 {formatCurrency(builtReport.finance.netProfit, currency)}
               </span>{' '}
               for {dateRange.label.toLowerCase()}.

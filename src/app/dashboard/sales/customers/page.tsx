@@ -66,7 +66,7 @@ export default async function CustomersPage() {
             <ArrowLeft className="w-6 h-6 text-fg-3" />
           </Link>
           <div>
-            <h1 className="text-3xl font-medium leading-tight text-fg">Customers</h1>
+            <h1 className="text-3xl font-semibold leading-tight text-fg">Customers</h1>
             <p className="mt-2 text-sm text-fg-2">The people and businesses who buy from you, and what they owe</p>
           </div>
         </div>

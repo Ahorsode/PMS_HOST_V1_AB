@@ -54,7 +54,7 @@ export function InventoryUsageClient({
         </div>
         <div className="glass-pill rounded-lg border border-fg/10 p-5">
           <p className="text-xs font-medium text-fg/45">Stock left</p>
-          <p className={cn('mt-1 text-2xl font-medium', isUsedUp ? 'text-neg' : 'text-emerald-400')}>
+          <p className={cn('mt-1 text-2xl font-medium', isUsedUp ? 'text-neg' : 'text-accent')}>
             {item.stockLevel.toLocaleString()} {item.unit}
           </p>
           {isUsedUp ? (

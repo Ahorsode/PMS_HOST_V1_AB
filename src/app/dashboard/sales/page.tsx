@@ -252,7 +252,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
     <div className="max-w-[1600px] mx-auto space-y-7 px-0 md:px-6 pt-2 pb-5 md:py-10 relative">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
         <div>
-          <h1 className="text-3xl font-medium leading-tight text-fg">Sales</h1>
+          <h1 className="text-3xl font-semibold leading-tight text-fg">Sales</h1>
           <p className="mt-2 text-sm text-fg-2">Orders, payments and what customers still owe</p>
         </div>
         <SalesActionsHeader 
@@ -308,12 +308,12 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-fg/10">
-                  <th className="px-7 py-4 text-xs font-medium text-fg/70">Order</th>
-                  <th className="px-7 py-4 text-xs font-medium text-fg/70">Type</th>
-                  <th className="px-7 py-4 text-xs font-medium text-fg/70">Customer</th>
-                  <th className="px-7 py-4 text-xs font-medium text-fg/70">Amount</th>
-                  <th className="px-7 py-4 text-xs font-medium text-fg/70">Status</th>
-                  <th className="px-7 py-4 text-right text-xs font-medium text-fg/70">Action</th>
+                  <th className="px-7 py-4 text-xs font-semibold text-fg/70">Order</th>
+                  <th className="px-7 py-4 text-xs font-semibold text-fg/70">Type</th>
+                  <th className="px-7 py-4 text-xs font-semibold text-fg/70">Customer</th>
+                  <th className="px-7 py-4 text-xs font-semibold text-fg/70">Amount</th>
+                  <th className="px-7 py-4 text-xs font-semibold text-fg/70">Status</th>
+                  <th className="px-7 py-4 text-right text-xs font-semibold text-fg/70">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-fg/5">
@@ -352,7 +352,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                     <td className="px-7 py-5">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium border ${
                         order.status === 'COMPLETED' || order.status === 'PAID'
-                          ? 'bg-fg/[0.04] text-emerald-400 border-fg/[0.08]'
+                          ? 'bg-fg/[0.04] text-accent border-fg/[0.08]'
                           : order.status === 'PENDING'
                             ? 'bg-fg/[0.04] text-yolk border-fg/[0.08]'
                             : 'bg-fg/[0.04] text-neg border-fg/[0.08]'
@@ -384,7 +384,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                    <span className="text-fg font-medium text-sm tracking-normal tabular-nums">Order {orderCount - index}</span>
                    <span className={`px-2 py-1 rounded-full text-xs font-medium border ${
                         order.status === 'COMPLETED' || order.status === 'PAID'
-                          ? 'bg-fg/[0.04] text-emerald-400 border-fg/[0.08]'
+                          ? 'bg-fg/[0.04] text-accent border-fg/[0.08]'
                           : order.status === 'PENDING'
                             ? 'bg-fg/[0.04] text-yolk border-fg/[0.08]'
                             : 'bg-fg/[0.04] text-neg border-fg/[0.08]'

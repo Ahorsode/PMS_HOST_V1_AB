@@ -43,13 +43,13 @@ export const PartnerCard = ({ partner, type }: PartnerCardProps) => {
         <Link href={statementPath} className="block">
           <CardContent className="pt-7">
             <div className="flex flex-col items-center text-center">
-              <div className={`w-20 h-20 rounded-lg bg-tile border border-fg/10 flex items-center justify-center text-3xl font-medium ${isSupplier ? 'text-emerald-400' : 'text-fg-2'} mb-3 transition-colors duration-200`}>
+              <div className={`w-20 h-20 rounded-lg bg-tile border border-fg/10 flex items-center justify-center text-3xl font-medium ${isSupplier ? 'text-accent' : 'text-fg-2'} mb-3 transition-colors duration-200`}>
                 {partner.name.charAt(0)}
               </div>
               <h3 className="text-xl font-medium text-fg tracking-normal mb-1 line-clamp-1">{partner.name}</h3>
               
               <div className="flex items-center gap-2 mb-5">
-                <span className={`text-xs font-medium ${isSupplier ? 'bg-fg/[0.04] text-emerald-400 border-fg/[0.08]' : 'bg-fg/[0.06] text-fg-2 border-fg/[0.08]'} px-3 py-1.5 rounded-full border `}>
+                <span className={`text-xs font-medium ${isSupplier ? 'bg-fg/[0.04] text-accent border-fg/[0.08]' : 'bg-fg/[0.06] text-fg-2 border-fg/[0.08]'} px-3 py-1.5 rounded-full border `}>
                   {partner.orderCount} {isSupplier ? 'Orders' : 'Sales'}
                 </span>
                 {partner.balanceOwed > 0 && (
@@ -77,7 +77,7 @@ export const PartnerCard = ({ partner, type }: PartnerCardProps) => {
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowCall(true); }}
                   className="flex-1 py-2 rounded-md bg-fg/10 hover:bg-fg/15 border border-fg/10 transition-colors"
                 >
-                  <Phone className={`w-4 h-4 ${isSupplier ? 'text-emerald-400' : 'text-fg-2'} mx-auto`} />
+                  <Phone className={`w-4 h-4 ${isSupplier ? 'text-accent' : 'text-fg-2'} mx-auto`} />
                 </button>
                 <button 
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowProfile(true); }}
@@ -99,7 +99,7 @@ export const PartnerCard = ({ partner, type }: PartnerCardProps) => {
       >
         <div className="flex flex-col items-center py-5">
           <div className={`p-5 rounded-full ${isSupplier ? 'bg-fg/[0.04]' : 'bg-fg/[0.06]'} mb-4`}>
-             <Phone className={`w-10 h-10 ${isSupplier ? 'text-emerald-400' : 'text-fg-2'}`} />
+             <Phone className={`w-10 h-10 ${isSupplier ? 'text-accent' : 'text-fg-2'}`} />
           </div>
           <p className="text-3xl font-medium text-fg">{partner.phone || 'No Number Saved'}</p>
           <p className="text-fg/40 font-medium text-xs mt-2">Partner: {partner.name}</p>
@@ -122,7 +122,7 @@ export const PartnerCard = ({ partner, type }: PartnerCardProps) => {
       >
         <div className="space-y-6 py-4">
            <div className="flex items-center gap-5 p-5 bg-fg/5 rounded-lg border border-fg/10">
-              <div className={`w-16 h-16 rounded-lg ${isSupplier ? 'bg-fg/[0.04] text-emerald-400' : 'bg-fg/[0.06] text-fg-2'} flex items-center justify-center text-2xl font-medium`}>
+              <div className={`w-16 h-16 rounded-lg ${isSupplier ? 'bg-fg/[0.04] text-accent' : 'bg-fg/[0.06] text-fg-2'} flex items-center justify-center text-2xl font-medium`}>
                 {partner.name.charAt(0)}
               </div>
               <div>

@@ -94,7 +94,7 @@ export function BatchPerformanceReportsPanel({ reports }: { reports: ReportsPayl
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-3xl md:text-4xl font-medium tracking-normal text-fg">
+          <h1 className="text-3xl md:text-4xl font-semibold tracking-normal text-fg">
             Batch performance
           </h1>
           <p className="mt-1 text-xs font-medium text-fg/50">

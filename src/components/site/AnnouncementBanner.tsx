@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 
 const TONES = {
   info: { icon: Info, className: 'border-fg/[0.08] bg-fg/[0.06] text-fg' },
-  warning: { icon: TriangleAlert, className: 'border-fg/[0.08] bg-fg/[0.04] text-amber-100' },
+  warning: { icon: TriangleAlert, className: 'border-fg/[0.08] bg-fg/[0.04] text-yolk' },
   success: { icon: CheckCircle2, className: 'border-fg/[0.08] bg-fg/[0.04] text-fg' },
 } as const
 

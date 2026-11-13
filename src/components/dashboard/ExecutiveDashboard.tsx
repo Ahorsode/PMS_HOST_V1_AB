@@ -60,7 +60,7 @@ export function ExecutiveDashboard({
   return (
     <div className="space-y-6 pb-12">
       <header className="px-1">
-        <h1 className="text-3xl font-medium leading-tight text-fg">Farm summary</h1>
+        <h1 className="text-3xl font-semibold leading-tight text-fg">Farm summary</h1>
         <p className="mt-2 text-sm text-fg-2">Profit, feed conversion, debts and head count across the farm</p>
       </header>
 

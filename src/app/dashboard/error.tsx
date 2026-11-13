@@ -37,7 +37,7 @@ export default function DashboardError({
       <div className="min-h-[60vh] flex items-center justify-center px-6 py-12 text-fg">
         <div className="max-w-md space-y-4 text-center">
           <p className="text-sm text-fg">Maintenance</p>
-          <h2 className="text-2xl font-medium">Changes are paused right now.</h2>
+          <h2 className="text-2xl font-semibold">Changes are paused right now.</h2>
           <p className="text-sm text-fg/65">{maintenanceMessage}</p>
           <button
             type="button"
@@ -55,7 +55,7 @@ export default function DashboardError({
     <div className="min-h-[60vh] flex items-center justify-center px-6 py-12 text-fg">
       <div className="max-w-md space-y-4 text-center">
         <p className="text-sm text-fg">Dashboard error</p>
-        <h2 className="text-2xl font-medium">This dashboard view could not load.</h2>
+        <h2 className="text-2xl font-semibold">This dashboard view could not load.</h2>
         <p className="text-sm text-fg/65">Please retry the request.</p>
         <button
           type="button"

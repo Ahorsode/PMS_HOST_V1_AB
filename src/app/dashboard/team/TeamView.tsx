@@ -287,7 +287,7 @@ export default function TeamView({
       {issuedCode && <InviteCodePanel issued={issuedCode} onDismiss={() => setIssuedCode(null)} />}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-fg/10 p-7 rounded-lg border border-fg/10 relative overflow-hidden gap-4">
         <div className="relative z-10">
-          <h1 className="text-3xl font-medium leading-tight text-fg">Team</h1>
+          <h1 className="text-3xl font-semibold leading-tight text-fg">Team</h1>
           <p className="mt-2 text-sm text-fg-2">
              {currentUserRole === 'OWNER' ? 'You are the farm owner' : `Your role: ${currentUserRole.toLowerCase()}`}
           </p>
@@ -314,7 +314,7 @@ export default function TeamView({
               ) : (
                 <div className="space-y-3">
                   {staffPlan && currentUserRole === 'OWNER' && (staffPlan.overLimitCount > 0 || staffPlan.staffLimit === 0) && members.some((m) => m.role !== 'OWNER') && (
-                    <div className="flex items-start gap-3 rounded-lg border border-fg/[0.08] bg-fg/[0.04] p-4 text-sm text-amber-100">
+                    <div className="flex items-start gap-3 rounded-lg border border-fg/[0.08] bg-fg/[0.04] p-4 text-sm text-yolk">
                       <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-fg-3" />
                       <div className="space-y-1">
                         {staffPlan.staffLimit === 0 ? (
@@ -324,7 +324,7 @@ export default function TeamView({
                             Your plan allows {staffPlan.staffLimit} staff, so {staffPlan.overLimitCount} {staffPlan.overLimitCount === 1 ? 'person is' : 'people are'} locked out.
                           </p>
                         )}
-                        <p className="text-amber-100/80">
+                        <p className="text-yolk/80">
                           {staffPlan.staffLimit === 0
                             ? 'Switch to a Team plan to give them access again.'
                             : 'The most recently added staff are locked unless you choose. Pause someone with the pause button to give their seat to a locked person.'}{' '}
@@ -621,7 +621,7 @@ export default function TeamView({
                   <fieldset disabled={isInviting} className="space-y-5 disabled:opacity-70">
                   {message && (
                     <div className={`p-3 rounded-md text-xs font-medium flex items-center gap-2 animate-in fade-in slide-in-from-top-2 ${
-                      message.type === 'success' ? 'bg-fg/[0.04] text-emerald-400 border border-fg/[0.08]' : 'bg-fg/[0.04] text-neg border border-fg/[0.08]'
+                      message.type === 'success' ? 'bg-fg/[0.04] text-accent border border-fg/[0.08]' : 'bg-fg/[0.04] text-neg border border-fg/[0.08]'
                     }`}>
                       {message.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
                       {message.text}

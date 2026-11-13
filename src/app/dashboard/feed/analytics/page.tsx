@@ -16,7 +16,7 @@ export default async function FeedAnalyticsPage() {
       <Breadcrumbs items={[{ label: 'Feed & inventory', href: '/dashboard/feed' }, { label: 'Feed analytics' }]} />
       
       <header className="px-1">
-        <h1 className="text-3xl font-medium leading-tight text-fg">Feed analytics</h1>
+        <h1 className="text-3xl font-semibold leading-tight text-fg">Feed analytics</h1>
         <p className="mt-2 text-sm text-fg-2">Stock levels and low-stock alerts for feed</p>
       </header>
 
@@ -28,7 +28,7 @@ export default async function FeedAnalyticsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
          <div className="rounded-xl border border-fg/[0.08] bg-card overflow-hidden">
             <div className="px-5 py-4 border-b border-fg/[0.08]">
-               <h2 className="text-lg font-medium text-fg">Stock levels</h2>
+               <h2 className="text-lg font-semibold text-fg">Stock levels</h2>
             </div>
             <div className="p-5 space-y-5">
                {feedInventory.map((item: any) => {
@@ -38,7 +38,7 @@ export default async function FeedAnalyticsPage() {
                  <div key={item.id} className="space-y-2">
                     <div className="flex justify-between items-center">
                        <p className="text-fg font-medium text-sm">{item.itemName}</p>
-                       <span className={`text-xs font-medium ${low ? 'text-neg' : 'text-emerald-400'}`}>
+                       <span className={`text-xs font-medium ${low ? 'text-neg' : 'text-accent'}`}>
                           {item.stockLevel} {item.unit || 'bags'} left
                        </span>
                     </div>
@@ -55,7 +55,7 @@ export default async function FeedAnalyticsPage() {
 
          <div className="rounded-xl border border-fg/[0.08] bg-card overflow-hidden flex flex-col">
             <div className="px-5 py-4 border-b border-fg/[0.08]">
-               <h2 className="text-lg font-medium text-fg">Consumption insights (recent)</h2>
+               <h2 className="text-lg font-semibold text-fg">Consumption insights (recent)</h2>
             </div>
             <div className="flex-1 overflow-y-auto max-h-[400px] divide-y divide-fg/10">
                   {inventory

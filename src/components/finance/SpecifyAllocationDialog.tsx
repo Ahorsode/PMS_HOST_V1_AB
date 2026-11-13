@@ -374,7 +374,7 @@ function PresetButton({
           : 'border-fg/10 bg-fg/[0.03] text-fg/70 hover:bg-fg/[0.06]'
       )}
     >
-      <Icon className={cn('mb-2 h-4 w-4', active ? 'text-emerald-400' : 'text-fg/40')} />
+      <Icon className={cn('mb-2 h-4 w-4', active ? 'text-accent' : 'text-fg/40')} />
       <p className="text-xs font-medium">{title}</p>
       <p className="text-xs text-fg/45">{subtitle}</p>
     </button>

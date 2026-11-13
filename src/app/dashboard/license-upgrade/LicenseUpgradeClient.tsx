@@ -90,8 +90,8 @@ function getDeviceAccessLabel(device: DesktopLicenseRow) {
 function getTimerTone(expiry: Date | null, now: Date) {
   if (!expiry) return "border-fg/15 bg-fg/10 text-fg/75";
   const remainingDays = (expiry.getTime() - now.getTime()) / DAY_MS;
-  if (remainingDays < 3) return "border-fg/[0.08] bg-fg/[0.04] text-red-100";
-  if (remainingDays < 7) return "border-fg/[0.08] bg-fg/[0.04] text-amber-100";
+  if (remainingDays < 3) return "border-fg/[0.08] bg-fg/[0.04] text-neg";
+  if (remainingDays < 7) return "border-fg/[0.08] bg-fg/[0.04] text-yolk";
   return "border-fg/[0.08] bg-fg/[0.04] text-fg";
 }
 
@@ -411,7 +411,7 @@ export default function LicenseUpgradeClient({
       </section>
 
       {manualRequest ? (
-        <section className="rounded-lg border border-fg/[0.08] bg-fg/[0.04] p-5 text-sm text-amber-50">
+        <section className="rounded-lg border border-fg/[0.08] bg-fg/[0.04] p-5 text-sm text-yolk">
           <p className="flex items-center gap-2 text-xs font-medium text-fg">
             <Smartphone className="h-4 w-4" /> Pay by Mobile Money
           </p>
@@ -429,7 +429,7 @@ export default function LicenseUpgradeClient({
               <div><dt className="text-xs text-fg">Account name</dt><dd className="font-medium">{billing.manualPayment.accountName}</dd></div>
             ) : null}
           </dl>
-          {billing.manualPayment.instructions ? <p className="mt-3 leading-6 text-amber-50/90">{billing.manualPayment.instructions}</p> : null}
+          {billing.manualPayment.instructions ? <p className="mt-3 leading-6 text-yolk/90">{billing.manualPayment.instructions}</p> : null}
         </section>
       ) : null}
 

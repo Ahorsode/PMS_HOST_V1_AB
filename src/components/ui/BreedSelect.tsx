@@ -117,7 +117,7 @@ export function BreedSelect({
                 }}
                 className={cn(
                   'flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm font-medium text-fg transition-colors hover:bg-fg/10',
-                  option.value === value && 'bg-fg/[0.04] text-emerald-50',
+                  option.value === value && 'bg-fg/[0.04] text-fg',
                 )}
               >
                 <BreedBadgeSwatch badge={option.badge} />

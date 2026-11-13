@@ -16,7 +16,7 @@ export default async function ConnectedDevicesPage() {
         Back to settings
       </Link>
       <div className="mb-8">
-        <h1 className="text-3xl font-medium leading-tight text-fg">Connected devices</h1>
+        <h1 className="text-3xl font-semibold leading-tight text-fg">Connected devices</h1>
         <p className="mt-2 text-sm text-fg-2">
           Desktop and mobile devices linked to this farm. They get access while your farm plan is active.
         </p>

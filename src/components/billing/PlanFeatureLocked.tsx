@@ -28,7 +28,7 @@ export async function PlanFeatureLocked({
       <div className="w-24 h-24 bg-fg/[0.04] border border-fg/[0.08] rounded-lg flex items-center justify-center mb-5">
         <Lock className="w-10 h-10 text-neg" />
       </div>
-      <h1 className="text-4xl sm:text-5xl font-medium text-fg mb-3 tracking-normal text-center">
+      <h1 className="text-4xl sm:text-5xl font-semibold text-fg mb-3 tracking-normal text-center">
         {title}{accent ? ` ${accent.toLowerCase()}` : ''}
       </h1>
       <p className="text-fg/80 mb-7 max-w-lg text-center leading-relaxed">

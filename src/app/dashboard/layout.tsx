@@ -96,7 +96,7 @@ export default async function DashboardLayout({
            <div className="w-20 h-20 bg-fg/[0.04] rounded-full flex items-center justify-center mx-auto mb-6 border border-fg/[0.08]">
               <XCircle className="w-10 h-10 text-neg" />
            </div>
-           <h2 className="text-2xl font-medium mb-3 text-neg">Access restricted</h2>
+           <h2 className="text-2xl font-semibold mb-3 text-neg">Access restricted</h2>
            <p className="opacity-70 leading-relaxed font-medium mb-6">
              You are not currently linked to any farm. We checked for invitations sent to <span className="text-fg font-medium underline">{identifier}</span>.
            </p>

@@ -72,7 +72,7 @@ export const BottomNav = ({ role, permissions }: { role?: string; permissions?: 
                   <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: groupHue[openCategory.id] }} />
                   Farm menu
                 </p>
-                <h2 className="text-lg font-medium text-fg">{openCategory.name}</h2>
+                <h2 className="text-lg font-semibold text-fg">{openCategory.name}</h2>
               </div>
               <button
                 type="button"

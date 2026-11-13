@@ -226,7 +226,7 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
 
       {stats.activeBatches.length === 0 ? (
         <section className={`${g.card} flex flex-col items-center px-6 py-16 text-center`}>
-          <h2 className="text-xl font-medium text-fg">No units yet</h2>
+          <h2 className="text-xl font-semibold text-fg">No units yet</h2>
           <p className={`mt-2 max-w-md text-sm ${g.secondary}`}>
             Register your first unit of poultry, cattle or pigs to start tracking eggs, feed, health and sales here.
           </p>

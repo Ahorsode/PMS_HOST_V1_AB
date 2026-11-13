@@ -17,8 +17,8 @@
   --raised: #232325;
   --raised-2: #2c2c2f;
   --fg: #ededed;
-  --fg-2: #a1a1a6;
-  --fg-3: #85858b;
+  --fg-2: #b8b8bd;
+  --fg-3: #9b9ba1;
   --bar: #4a4a4f;
   --accent: #34d399;
   --accent-fg: #062016;
@@ -44,8 +44,8 @@
   --raised: #f0f0f2;
   --raised-2: #e6e6e9;
   --fg: #18181b;
-  --fg-2: #52525b;
-  --fg-3: #71717a;
+  --fg-2: #3f3f46;
+  --fg-3: #5b5b63;
   --bar: #c8c8cd;
   --accent: #059669;
   --accent-fg: #ffffff;
@@ -171,5 +171,20 @@ select optgroup {
 
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+/*
+ * Readability floor. Many labels use faded text (text-fg/40 .. text-fg/70),
+ * which washed out, especially on the light theme's pale surfaces. Map them
+ * onto the solid secondary/tertiary text colors. Kept inside the utilities
+ * layer so hover:/focus: variants (higher specificity) still win.
+ */
+@layer utilities {
+  .text-fg\/35, .text-fg\/40, .text-fg\/45, .text-fg\/50, .text-fg\/55 {
+    color: var(--fg-3);
+  }
+  .text-fg\/60, .text-fg\/65, .text-fg\/70, .text-fg\/75 {
+    color: var(--fg-2);
   }
 }

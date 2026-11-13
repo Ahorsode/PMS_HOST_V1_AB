@@ -25,7 +25,7 @@ export const CardHeader = ({ children, className = '' }: { children: React.React
 );
 
 export const CardTitle = ({ children, className = '' }: { children: React.ReactNode, className?: string }) => (
-  <h3 className={cn('text-base font-medium text-fg', className)}>
+  <h3 className={cn('text-base font-semibold text-fg', className)}>
     {children}
   </h3>
 );

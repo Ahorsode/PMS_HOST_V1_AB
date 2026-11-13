@@ -115,7 +115,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-medium leading-tight text-fg">Audit log</h1>
+          <h1 className="text-3xl font-semibold leading-tight text-fg">Audit log</h1>
           <p className="mt-2 text-sm text-fg-2">
             Who changed what, and records you can restore
           </p>
@@ -195,10 +195,10 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                 <table className="w-full text-left">
                   <thead>
                     <tr className="bg-fg/5">
-                      <th className="px-6 py-3 text-xs font-medium text-fg/50">Timestamp</th>
-                      <th className="px-6 py-3 text-xs font-medium text-fg/50">Worker</th>
-                      <th className="px-6 py-3 text-xs font-medium text-fg/50">Table / entity</th>
-                      <th className="px-6 py-3 text-xs font-medium text-fg/50">Changes</th>
+                      <th className="px-6 py-3 text-xs font-semibold text-fg/50">Timestamp</th>
+                      <th className="px-6 py-3 text-xs font-semibold text-fg/50">Worker</th>
+                      <th className="px-6 py-3 text-xs font-semibold text-fg/50">Table / entity</th>
+                      <th className="px-6 py-3 text-xs font-semibold text-fg/50">Changes</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-fg/5">
@@ -303,11 +303,11 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                 <table className="w-full text-left">
                   <thead>
                     <tr className="bg-fg/5">
-                      <th className="px-6 py-3 text-xs font-medium text-fg/50">Deleted at</th>
-                      <th className="px-6 py-3 text-xs font-medium text-fg/50">By whom</th>
-                      <th className="px-6 py-3 text-xs font-medium text-fg/50">Entity & reason</th>
-                      <th className="px-6 py-3 text-xs font-medium text-fg/50">Data summary</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-fg/50">Action</th>
+                      <th className="px-6 py-3 text-xs font-semibold text-fg/50">Deleted at</th>
+                      <th className="px-6 py-3 text-xs font-semibold text-fg/50">By whom</th>
+                      <th className="px-6 py-3 text-xs font-semibold text-fg/50">Entity & reason</th>
+                      <th className="px-6 py-3 text-xs font-semibold text-fg/50">Data summary</th>
+                      <th className="px-6 py-3 text-right text-xs font-semibold text-fg/50">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-fg/5">

@@ -248,7 +248,7 @@ export function SettingsContent({ farm, inventory = [], isFarmOwner = false }: S
             onClick={() => navigateToTab(tab)}
             className={`w-full text-left px-3 py-2 rounded-md flex items-center transition-colors duration-300 ${
               activeTab === tab.id
-                ? 'bg-fg/[0.04] text-emerald-400 shadow-[inset_0_0_20px_rgba(16,185,129,0.1)] border border-fg/[0.08]'
+                ? 'bg-fg/[0.04] text-accent shadow-[inset_0_0_20px_rgba(16,185,129,0.1)] border border-fg/[0.08]'
                 : 'text-fg/80 hover:bg-fg/5 hover:text-fg'
             }`}
           >
@@ -260,7 +260,7 @@ export function SettingsContent({ farm, inventory = [], isFarmOwner = false }: S
       <div className="md:col-span-3 space-y-5">
         {message && (
           <div className={`p-3 rounded-md text-sm font-medium border flex items-center gap-2 ${
-            message.type === 'success' ? 'bg-fg/[0.04] border-fg/[0.08] text-emerald-400' : 'bg-fg/[0.04] border-fg/[0.08] text-neg'
+            message.type === 'success' ? 'bg-fg/[0.04] border-fg/[0.08] text-accent' : 'bg-fg/[0.04] border-fg/[0.08] text-neg'
           }`}>
             <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
             {message.text}

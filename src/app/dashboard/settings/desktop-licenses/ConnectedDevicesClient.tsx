@@ -70,7 +70,7 @@ function getAccessStatus(license: DesktopLicenseRow) {
     return {
       label: daysAgo === null ? "Expired" : daysAgo === 0 ? "Expired today" : `Expired ${daysAgo} days ago`,
       shortLabel: "Expired",
-      className: "border-red-300/35 bg-fg/[0.04] text-red-100",
+      className: "border-red-300/35 bg-fg/[0.04] text-neg",
     };
   }
 
@@ -78,7 +78,7 @@ function getAccessStatus(license: DesktopLicenseRow) {
     return {
       label: `Trial · ${daysBetween(now, expiryTime)} days left`,
       shortLabel: "Trial",
-      className: "border-amber-300/35 bg-fg/[0.04] text-amber-100",
+      className: "border-amber-300/35 bg-fg/[0.04] text-yolk",
     };
   }
 

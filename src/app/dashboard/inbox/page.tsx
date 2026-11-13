@@ -158,7 +158,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
             <ArrowLeft className="w-6 h-6 text-fg-3" />
           </Link>
           <div>
-            <h1 className="text-3xl font-medium leading-tight text-fg">Inbox</h1>
+            <h1 className="text-3xl font-semibold leading-tight text-fg">Inbox</h1>
             <p className="text-fg/70 font-medium text-xs md:text-sm mt-2">Farm notifications, team chat and messages from Poultry Ledger</p>
           </div>
         </div>

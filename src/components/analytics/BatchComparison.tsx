@@ -303,7 +303,7 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
         <div className={cn(card, 'flex flex-col gap-6 p-6 md:flex-row md:items-center md:justify-between')}>
           <div className="min-w-0">
             <p className="text-sm text-fg-2">Leading batch</p>
-            <h2 className="mt-1 truncate text-3xl font-medium leading-tight text-fg">{leader.name}</h2>
+            <h2 className="mt-1 truncate text-3xl font-semibold leading-tight text-fg">{leader.name}</h2>
             <Ledger batch={leader} className="mt-1" />
             <p className="mt-3 text-sm text-fg-2">
               {shown === 1
@@ -690,7 +690,7 @@ function PageHeader({ count, canViewFinance }: { count: number; canViewFinance: 
           <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
           Dashboard
         </Link>
-        <h1 className="text-3xl font-medium leading-tight text-fg">Batch comparison</h1>
+        <h1 className="text-3xl font-semibold leading-tight text-fg">Batch comparison</h1>
         <p className="mt-2 text-sm text-fg-2">
           {canViewFinance
             ? 'Profit, eggs, feed conversion and mortality, side by side'

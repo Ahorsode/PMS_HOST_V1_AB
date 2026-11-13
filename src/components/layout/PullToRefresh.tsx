@@ -81,7 +81,7 @@ export const PullToRefresh = ({ children }: { children: React.ReactNode }) => {
           style={{ opacity: Math.min(pullDistance / refreshThreshold, 1) }}
         >
           <RefreshCw 
-            className={`w-5 h-5 text-emerald-400 ${pullDistance > refreshThreshold && !isPulling ? 'animate-spin' : ''}`} 
+            className={`w-5 h-5 text-accent ${pullDistance > refreshThreshold && !isPulling ? 'animate-spin' : ''}`} 
             style={{ transform: `rotate(${pullDistance * 2}deg)` }}
           />
         </div>

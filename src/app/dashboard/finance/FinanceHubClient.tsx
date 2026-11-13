@@ -285,7 +285,7 @@ export function FinanceHubClient({
       {/* Page header */}
       <div className="flex flex-col justify-between gap-4 px-1 md:flex-row md:items-end">
         <div>
-          <h1 className="text-3xl font-medium leading-tight text-fg">Finance</h1>
+          <h1 className="text-3xl font-semibold leading-tight text-fg">Finance</h1>
           <p className="mt-2 text-sm text-fg-2">Every sale, expense and balance owed, in one ledger</p>
         </div>
         {canEdit && (
@@ -548,7 +548,7 @@ export function FinanceHubClient({
                 badge={(tx) => (
                   <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-medium text-xs border ${
                     tx.paymentStatus === 'PAID'
-                      ? 'bg-fg/[0.04] text-emerald-400 border-fg/[0.08]'
+                      ? 'bg-fg/[0.04] text-accent border-fg/[0.08]'
                       : tx.paymentStatus === 'UNPAID'
                       ? 'bg-fg/[0.04] text-neg border-fg/[0.08]'
                       : 'bg-fg/[0.04] text-yolk border-fg/[0.08]'
@@ -562,11 +562,11 @@ export function FinanceHubClient({
                 fields={(tx) => [
                   {
                     label: 'Amount',
-                    value: <span className={`font-medium ${tx.type === 'REVENUE' ? 'text-emerald-400' : 'text-neg'}`}>{`${tx.type === 'REVENUE' ? '+' : '-'}${money.format(tx.amount)}`}</span>,
+                    value: <span className={`font-medium ${tx.type === 'REVENUE' ? 'text-accent' : 'text-neg'}`}>{`${tx.type === 'REVENUE' ? '+' : '-'}${money.format(tx.amount)}`}</span>,
                   },
                   {
                     label: 'Type',
-                    value: <span className={`text-xs font-medium ${tx.type === 'REVENUE' ? 'text-emerald-400' : 'text-neg'}`}>{tx.type === 'REVENUE' ? 'Revenue' : 'Expense'}</span>,
+                    value: <span className={`text-xs font-medium ${tx.type === 'REVENUE' ? 'text-accent' : 'text-neg'}`}>{tx.type === 'REVENUE' ? 'Revenue' : 'Expense'}</span>,
                   },
                   { label: 'Method', value: <span className="text-xs font-medium text-fg-2">{tx.paymentMethod}</span> },
                   { label: 'Reference', value: <span className="font-mono text-xs text-fg-3">{tx.referenceNum || '—'}</span> },
@@ -630,7 +630,7 @@ export function FinanceHubClient({
                         {isMutatingTx ? <SkeletonLine className="h-3 w-24" /> : new Date(tx.transactionDate).toLocaleDateString(undefined, { dateStyle: 'medium' })}
                       </td>
                       <td className="py-4 px-4 text-xs font-medium">
-                        {isMutatingTx ? <SkeletonLine className="h-3 w-20" /> : <span className={`inline-flex items-center gap-1 ${tx.type === 'REVENUE' ? 'text-emerald-400' : 'text-neg'}`}>
+                        {isMutatingTx ? <SkeletonLine className="h-3 w-20" /> : <span className={`inline-flex items-center gap-1 ${tx.type === 'REVENUE' ? 'text-accent' : 'text-neg'}`}>
                           {tx.type === 'REVENUE' ? (
                             <ArrowUpRight className="w-4 h-4" />
                           ) : (
@@ -651,7 +651,7 @@ export function FinanceHubClient({
                       <td className="py-4 px-4 text-xs">
                         {isMutatingTx ? <SkeletonLine className="h-5 w-20" /> : <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-medium text-xs border ${
                           tx.paymentStatus === 'PAID' 
-                            ? 'bg-fg/[0.04] text-emerald-400 border-fg/[0.08]' 
+                            ? 'bg-fg/[0.04] text-accent border-fg/[0.08]' 
                             : tx.paymentStatus === 'UNPAID'
                             ? 'bg-fg/[0.04] text-neg border-fg/[0.08]'
                             : 'bg-fg/[0.04] text-yolk border-fg/[0.08]'
@@ -662,7 +662,7 @@ export function FinanceHubClient({
                           {statusLabel(tx.paymentStatus)}
                         </span>}
                       </td>
-                      <td className={`py-4 px-6 text-right text-sm font-medium ${tx.type === 'REVENUE' ? 'text-emerald-400' : 'text-neg'}`}>
+                      <td className={`py-4 px-6 text-right text-sm font-medium ${tx.type === 'REVENUE' ? 'text-accent' : 'text-neg'}`}>
                         {isMutatingTx ? <SkeletonLine className="ml-auto h-3 w-20" /> : `${tx.type === 'REVENUE' ? '+' : '-'}${money.format(tx.amount)}`}
                       </td>
                       {canEdit && (
