@@ -9,9 +9,22 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { DeleteConfirmationModal } from '@/components/modals/DeleteConfirmationModal';
 import { MutationBoundary } from '@/components/ui/MutationFeedback';
-import { ActionButton, buttonClass, iconButtonClass } from './flock-ui';
+import { ActionButton, buttonClass } from './flock-ui';
 
 const ICON = { className: 'h-4 w-4', strokeWidth: 1.5 } as const;
+const ROW_ICON = { className: 'h-5 w-5', strokeWidth: 1.75 } as const;
+
+// Row quick actions: bigger targets, each tinted by what it does.
+const QUICK_TONES = {
+  mortality: 'text-clay bg-clay/10 border-clay/30 hover:bg-clay/20',
+  sell: 'text-accent bg-accent/10 border-accent/30 hover:bg-accent/20',
+  edit: 'text-steel bg-steel/10 border-steel/30 hover:bg-steel/20',
+  delete: 'text-neg bg-neg/10 border-neg/30 hover:bg-neg/20',
+} as const;
+
+function quickButtonClass(tone: keyof typeof QUICK_TONES) {
+  return `inline-flex h-10 w-10 items-center justify-center rounded-lg border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-fg/30 ${QUICK_TONES[tone]}`;
+}
 
 export const FlockActionsHeader = ({ houses, canEdit = true }: { houses: any[], canEdit?: boolean }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -65,10 +78,10 @@ export const FlockRowActions = ({ batch, houses, isolationRooms, canEdit = true 
 
   return (
     <MutationBoundary active={isDeleting} label="Deleting unit…" className="rounded-lg">
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-2">
       <Link
         href={`/dashboard/flocks/${batch.id}`}
-        className={buttonClass('secondary', 'sm', 'mr-1 h-10 md:h-8')}
+        className={buttonClass('secondary', 'sm', 'mr-1 h-10')}
       >
         Manage
       </Link>
@@ -79,36 +92,36 @@ export const FlockRowActions = ({ batch, houses, isolationRooms, canEdit = true 
             aria-label="Log mortality"
             title="Log mortality"
             onClick={() => setMode('mortality')}
-            className={iconButtonClass()}
+            className={quickButtonClass('mortality')}
           >
-            <Skull {...ICON} />
+            <Skull {...ROW_ICON} />
           </button>
           <button
             type="button"
             aria-label="Quick sell"
             title="Quick sell"
             onClick={() => router.push(`/dashboard/sales?sellBatchId=${batch.id}`)}
-            className={iconButtonClass()}
+            className={quickButtonClass('sell')}
           >
-            <ShoppingCart {...ICON} />
+            <ShoppingCart {...ROW_ICON} />
           </button>
           <button
             type="button"
             aria-label="Edit unit"
             title="Edit unit"
             onClick={() => setMode('edit')}
-            className={iconButtonClass()}
+            className={quickButtonClass('edit')}
           >
-            <Pencil {...ICON} />
+            <Pencil {...ROW_ICON} />
           </button>
           <button
             type="button"
             aria-label="Delete unit"
             title="Delete unit"
             onClick={() => setShowDeleteModal(true)}
-            className={iconButtonClass('danger')}
+            className={quickButtonClass('delete')}
           >
-            <Trash2 {...ICON} />
+            <Trash2 {...ROW_ICON} />
           </button>
         </>
       )}
