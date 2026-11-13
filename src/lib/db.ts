@@ -40,6 +40,10 @@ const prismaClientSingleton = () => {
           await tx.$executeRaw`SELECT set_config('app.current_farm_id', ${String(farmId)}, true)`;
           return await callback(tx);
         }, {
+          // Pages run many of these in parallel (Sales starts 9). Prisma's default
+          // maxWait of 2s for a pooled connection made them fail at random under
+          // load or on cold starts, showing "This dashboard view could not load".
+          maxWait: 10000,
           timeout: 15000
         });
       },
@@ -50,6 +54,10 @@ const prismaClientSingleton = () => {
           await tx.$executeRaw`SELECT set_config('app.current_farm_id', ${''}, true)`;
           return await callback(tx);
         }, {
+          // Pages run many of these in parallel (Sales starts 9). Prisma's default
+          // maxWait of 2s for a pooled connection made them fail at random under
+          // load or on cold starts, showing "This dashboard view could not load".
+          maxWait: 10000,
           timeout: 15000
         });
       }

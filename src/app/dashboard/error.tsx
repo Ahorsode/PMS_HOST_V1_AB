@@ -14,6 +14,21 @@ export default function DashboardError({
 
   useEffect(() => {
     console.error('[dashboard-error]', error)
+
+    // After a new deploy, an open tab asks for code files that no longer exist.
+    // A full reload fetches the new version; guard it so we never loop.
+    const message = `${error?.name ?? ''} ${error?.message ?? ''}`
+    const isStaleDeploy = /ChunkLoadError|Loading chunk|Failed to fetch dynamically imported module|Failed to find Server Action/i.test(message)
+    if (!isStaleDeploy) return
+    try {
+      const key = 'dashboard-stale-reload'
+      const last = Number(sessionStorage.getItem(key) || 0)
+      if (Date.now() - last < 30_000) return
+      sessionStorage.setItem(key, String(Date.now()))
+    } catch {
+      // Storage blocked: still reload once; the error page shows if it recurs.
+    }
+    window.location.reload()
   }, [error])
 
   // While maintenance mode is on, saves are refused on purpose; say so plainly.
