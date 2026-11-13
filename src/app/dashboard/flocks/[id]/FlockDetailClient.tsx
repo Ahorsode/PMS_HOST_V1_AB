@@ -134,12 +134,11 @@ export const FlockDetailClient = ({ data, eggsPerCrate = 30 }: FlockDetailClient
           {showEggs ? <EggTrendPanel data={series.eggDaily} eggsPerCrate={eggsPerCrate} /> : null}
           <MortalityTrendPanel data={series.mortalityDaily} />
           {showSales ? <SalesTrendPanel data={series.salesDaily} /> : null}
-
-          <ActivityTimeline logs={logs} eggsPerCrate={eggsPerCrate} />
         </div>
 
-        {/* Sidebar column */}
-        <div className="min-w-0 space-y-6">
+        {/* Sidebar column: on wide screens it stretches to the charts column's height,
+            so Recent activity can fill the space left and end level with the last chart. */}
+        <div className="min-w-0 space-y-6 lg:flex lg:flex-col">
           <FlockHealthSchedule
             batchId={batch.id}
             vaccinations={logs.vaccinations}
@@ -180,6 +179,16 @@ export const FlockDetailClient = ({ data, eggsPerCrate = 30 }: FlockDetailClient
               </div>
             </Panel>
           ) : null}
+
+          {/* Absolutely positioned on wide screens so the list never makes the row taller;
+              it scrolls inside the space that is left instead. */}
+          <div className="lg:relative lg:min-h-[320px] lg:flex-1">
+            <ActivityTimeline
+              logs={logs}
+              eggsPerCrate={eggsPerCrate}
+              className="lg:absolute lg:inset-0 lg:flex lg:flex-col"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -223,7 +232,7 @@ const TIMELINE_LABELS: Record<string, string> = {
   WEIGHT: 'Weight',
 }
 
-function ActivityTimeline({ logs, eggsPerCrate = 30 }: { logs: any; eggsPerCrate?: number }) {
+function ActivityTimeline({ logs, eggsPerCrate = 30, className }: { logs: any; eggsPerCrate?: number; className?: string }) {
   const epc = eggsPerCrate > 0 ? eggsPerCrate : 30
   const items = [
     ...logs.feedingLogs.map((l: any) => ({ ...l, _type: 'FEED' })),
@@ -244,12 +253,12 @@ function ActivityTimeline({ logs, eggsPerCrate = 30 }: { logs: any; eggsPerCrate
   }
 
   return (
-    <Panel>
-      <PanelHeader title="Recent activity" />
+    <Panel className={className}>
+      <PanelHeader title="Recent activity" className="shrink-0" />
       {items.length === 0 ? (
         <p className={cn('px-5 py-10 text-center text-[13px]', tone.text2)}>No activity logged yet</p>
       ) : (
-        <ol className="px-5 py-2">
+        <ol className="px-5 py-2 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
           {items.map((item, idx) => (
             <li key={idx} className="relative flex gap-4 py-3">
               <div className="relative flex w-2 shrink-0 justify-center">
