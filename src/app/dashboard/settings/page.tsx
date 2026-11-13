@@ -8,6 +8,7 @@ import { feedCategoryFilter } from '@/lib/inventory/feed-categories';
 import { getFarmAccess } from '@/lib/subscription-utils';
 import { getBillingConfig } from '@/lib/billing/billing-config';
 import { planTypePriceSummary } from '@/lib/billing/pricing';
+import { getFarmMoney } from '@/lib/farm-currency';
 import { PlanTypeCard } from './PlanTypeCard';
 
 export default async function SettingsPage() {
@@ -34,7 +35,7 @@ export default async function SettingsPage() {
     : [];
 
   const access = activeFarmId && isFarmOwner ? await getFarmAccess(activeFarmId) : null;
-  const billing = await getBillingConfig();
+  const [billing, { billingCurrency }] = await Promise.all([getBillingConfig(), getFarmMoney(activeFarmId)]);
 
   const serializedInventory = inventory.map((item: any) => ({
     ...item,
@@ -59,14 +60,14 @@ export default async function SettingsPage() {
           planType={access.planType}
           onPaidPlan={access.state === 'PAID'}
           priceSummaries={{
-            SOLO: planTypePriceSummary(billing, 'SOLO'),
-            TEAM: planTypePriceSummary(billing, 'TEAM'),
+            SOLO: planTypePriceSummary(billing, 'SOLO', billingCurrency),
+            TEAM: planTypePriceSummary(billing, 'TEAM', billingCurrency),
           }}
         />
       ) : null}
 
       <Suspense fallback={<div className="text-fg/70 text-sm animate-pulse py-8">Loading settings…</div>}>
-        <SettingsContent farm={farm} inventory={serializedInventory} />
+        <SettingsContent farm={farm} inventory={serializedInventory} isFarmOwner={isFarmOwner} />
       </Suspense>
     </div>
   );

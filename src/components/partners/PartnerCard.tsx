@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/Card';
 import { formatCurrency } from '@/lib/utils';
+import { useCurrency } from '@/components/providers/CurrencyProvider'
 import { Phone, Star, TrendingUp, AlertCircle, Truck, User, Mail, MapPin, Calendar, ExternalLink } from 'lucide-react';
 import { Dialog } from '@/components/ui/Dialog';
 import Link from 'next/link';
@@ -23,6 +24,7 @@ interface PartnerCardProps {
 }
 
 export const PartnerCard = ({ partner, type }: PartnerCardProps) => {
+  const currency = useCurrency()
   const [showCall, setShowCall] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
 
@@ -60,12 +62,12 @@ export const PartnerCard = ({ partner, type }: PartnerCardProps) => {
               <div className="w-full grid grid-cols-2 gap-2 mb-5">
                 <div className="p-3 rounded-md bg-fg/[0.04] border border-fg/5 text-center">
                   <p className="text-xs font-medium text-fg/60 mb-1">{isSupplier ? 'Total paid' : 'Total spent'}</p>
-                  <p className="text-sm font-medium text-fg">{formatCurrency(partner.totalSpent)}</p>
+                  <p className="text-sm font-medium text-fg">{formatCurrency(partner.totalSpent, currency)}</p>
                 </div>
                 <div className="p-3 rounded-md bg-fg/[0.04] border border-fg/5 text-center">
                   <p className="text-xs font-medium text-fg/60 mb-1">Total owed</p>
                   <p className={`text-sm font-medium ${partner.balanceOwed > 0 ? 'text-neg' : 'text-fg/60'}`}>
-                    {formatCurrency(partner.balanceOwed)}
+                    {formatCurrency(partner.balanceOwed, currency)}
                   </p>
                 </div>
               </div>

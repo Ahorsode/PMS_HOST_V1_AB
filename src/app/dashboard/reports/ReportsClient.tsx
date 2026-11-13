@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/Button'
 import { ReportGeneratorLauncher } from '@/components/reports/ReportGeneratorLauncher'
 import { ComprehensiveReport } from '@/lib/actions/reports'
 import { cn, formatCurrency } from '@/lib/utils'
+import { useCurrency } from '@/components/providers/CurrencyProvider'
 import { MobileCardList } from '@/components/ui/MobileCardList'
 
 type BatchRow = {
@@ -39,6 +40,7 @@ export function ReportsClient({
   eggsPerCrate?: number
   onDateChange: (start: string, end: string) => Promise<ComprehensiveReport | null>
 }) {
+  const currency = useCurrency()
   const [report, setReport] = useState<ComprehensiveReport>(initialReport)
   const [loading, setLoading] = useState(false)
   const [startDate, setStartDate] = useState(new Date(initialReport.startDate).toISOString().split('T')[0])
@@ -209,13 +211,13 @@ export function ReportsClient({
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           title="Net income"
-          value={formatCurrency(report.kpis.netIncome, 'GHS')}
+          value={formatCurrency(report.kpis.netIncome, currency)}
           sub="Consolidated ledger"
           icon={report.kpis.netIncome >= 0 ? TrendingUp : TrendingDown}
           tone={report.kpis.netIncome >= 0 ? 'emerald' : 'red'}
         />
-        <MetricCard title="Revenue" value={formatCurrency(report.kpis.totalRevenue, 'GHS')} sub="Period total" icon={TrendingUp} tone="sky" />
-        <MetricCard title="Expenses" value={formatCurrency(report.kpis.totalExpense, 'GHS')} sub="Period total" icon={TrendingDown} tone="orange" />
+        <MetricCard title="Revenue" value={formatCurrency(report.kpis.totalRevenue, currency)} sub="Period total" icon={TrendingUp} tone="sky" />
+        <MetricCard title="Expenses" value={formatCurrency(report.kpis.totalExpense, currency)} sub="Period total" icon={TrendingDown} tone="orange" />
         <MetricCard title="Feed conversion" value={report.kpis.averageFcr.toFixed(2)} sub="Average FCR" icon={Wheat} tone="amber" />
         <MetricCard title="Eggs collected" value={eggsCollectedLabel} sub={`${eggsCollected.toLocaleString()} eggs`} icon={Egg} tone="blue" />
         <MetricCard
@@ -247,10 +249,10 @@ export function ReportsClient({
             ) : (
               <>
                 {Object.entries(report.revenueByCategory).map(([cat, val]) => (
-                  <SplitRow key={`rev-${cat}`} label={cat} value={formatCurrency(val, 'GHS')} tone="emerald" />
+                  <SplitRow key={`rev-${cat}`} label={cat} value={formatCurrency(val, currency)} tone="emerald" />
                 ))}
                 {Object.entries(report.expenseByCategory).map(([cat, val]) => (
-                  <SplitRow key={`exp-${cat}`} label={cat} value={formatCurrency(val, 'GHS')} tone="rose" />
+                  <SplitRow key={`exp-${cat}`} label={cat} value={formatCurrency(val, currency)} tone="rose" />
                 ))}
               </>
             )}

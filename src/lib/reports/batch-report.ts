@@ -1,4 +1,4 @@
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatMoneyCode } from '@/lib/utils'
 import {
   BatchExpenseBreakdownRow,
   BatchLogEntry,
@@ -74,6 +74,8 @@ export type BatchReportDocument = {
   periodLabel: string
   generatedAt: string
   sections: ReportSectionKey[]
+  /** Currency the farm's money is shown in, e.g. "GHS". */
+  currency: string
   metrics: {
     currentCount: number
     initialCount: number
@@ -153,11 +155,12 @@ function inRange(date: string | Date, range: DateRange) {
 export function buildBatchReport(
   data: BatchReportSource,
   range: DateRange,
-  sections: ReportSectionKey[]
+  sections: ReportSectionKey[],
+  currency: string
 ): BatchReportDocument {
   const { batch, logs, metrics, finance } = data
   const canViewFinance = finance?.canViewFinance ?? false
-  const allEntries = buildBatchLogEntries(logs, finance?.expenseBreakdown ?? [], canViewFinance)
+  const allEntries = buildBatchLogEntries(logs, finance?.expenseBreakdown ?? [], canViewFinance, currency)
 
   const includedTypes = new Set<LogEntryType>()
   if (sections.includes('feed')) includedTypes.add('FEED')
@@ -204,6 +207,7 @@ export function buildBatchReport(
     periodLabel: range.label,
     generatedAt: new Date().toLocaleString(),
     sections,
+    currency,
     metrics: {
       currentCount: batch.currentCount,
       initialCount: batch.initialCount,
@@ -239,9 +243,10 @@ export function earliestBatchArrivalDate(payloads: BatchReportSource[]) {
 export function buildCombinedBatchReport(
   payloads: BatchReportSource[],
   range: DateRange,
-  sections: ReportSectionKey[]
+  sections: ReportSectionKey[],
+  currency: string
 ): BatchReportDocument {
-  const singleReports = payloads.map((payload) => buildBatchReport(payload, range, sections))
+  const singleReports = payloads.map((payload) => buildBatchReport(payload, range, sections, currency))
   const canViewFinance = payloads.some((payload) => payload.finance?.canViewFinance)
 
   const entries = singleReports.flatMap((report) =>
@@ -274,6 +279,7 @@ export function buildCombinedBatchReport(
     periodLabel: range.label,
     generatedAt: new Date().toLocaleString(),
     sections,
+    currency,
     metrics,
     entries: entries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
   }
@@ -296,10 +302,11 @@ export function buildCombinedBatchReport(
 export function buildReportFromSources(
   payloads: BatchReportSource[],
   range: DateRange,
-  sections: ReportSectionKey[]
+  sections: ReportSectionKey[],
+  currency: string
 ) {
-  if (payloads.length === 1) return buildBatchReport(payloads[0], range, sections)
-  return buildCombinedBatchReport(payloads, range, sections)
+  if (payloads.length === 1) return buildBatchReport(payloads[0], range, sections, currency)
+  return buildCombinedBatchReport(payloads, range, sections, currency)
 }
 
 function escapeHtml(value: string) {
@@ -342,10 +349,10 @@ export function buildBatchReportHtml(report: BatchReportDocument, forPreview = f
         return `
           <h2 style="margin-top:24px;border-bottom:2px solid #e2e8f0;padding-bottom:6px;">${sectionTitle(section)}</h2>
           <table style="width:100%;border-collapse:collapse;margin-top:8px;">
-            <tr><td style="padding:6px 0;">Total revenue</td><td style="text-align:right;font-weight:bold;">${formatCurrency(f.totalRevenue, 'GHS')}</td></tr>
-            <tr><td style="padding:6px 0;">Total expenses</td><td style="text-align:right;font-weight:bold;">${formatCurrency(f.totalExpenses, 'GHS')}</td></tr>
-            ${f.initialInvestment > 0 ? `<tr><td style="padding:6px 0;">Initial investment</td><td style="text-align:right;">${formatCurrency(f.initialInvestment, 'GHS')}</td></tr>` : ''}
-            <tr><td style="padding:6px 0;font-weight:bold;">Net position</td><td style="text-align:right;font-weight:bold;color:${f.netProfit >= 0 ? '#059669' : '#dc2626'};">${formatCurrency(f.netProfit, 'GHS')}</td></tr>
+            <tr><td style="padding:6px 0;">Total revenue</td><td style="text-align:right;font-weight:bold;">${formatCurrency(f.totalRevenue, report.currency)}</td></tr>
+            <tr><td style="padding:6px 0;">Total expenses</td><td style="text-align:right;font-weight:bold;">${formatCurrency(f.totalExpenses, report.currency)}</td></tr>
+            ${f.initialInvestment > 0 ? `<tr><td style="padding:6px 0;">Initial investment</td><td style="text-align:right;">${formatCurrency(f.initialInvestment, report.currency)}</td></tr>` : ''}
+            <tr><td style="padding:6px 0;font-weight:bold;">Net position</td><td style="text-align:right;font-weight:bold;color:${f.netProfit >= 0 ? '#059669' : '#dc2626'};">${formatCurrency(f.netProfit, report.currency)}</td></tr>
           </table>`
       }
 
@@ -363,7 +370,7 @@ export function buildBatchReportHtml(report: BatchReportDocument, forPreview = f
               <td style="padding:8px;border:1px solid #e2e8f0;">${formatDate(entry.date)}</td>
               <td style="padding:8px;border:1px solid #e2e8f0;">${escapeHtml(entry.title)}</td>
               <td style="padding:8px;border:1px solid #e2e8f0;">${escapeHtml(entry.detail)}</td>
-              <td style="padding:8px;border:1px solid #e2e8f0;text-align:right;">${entry.amount != null ? formatCurrency(entry.amount, 'GHS') : '—'}</td>
+              <td style="padding:8px;border:1px solid #e2e8f0;text-align:right;">${entry.amount != null ? formatCurrency(entry.amount, report.currency) : '—'}</td>
             </tr>`
         )
         .join('')
@@ -418,9 +425,9 @@ export function buildWhatsAppSummary(report: BatchReportDocument) {
   if (report.finance) {
     lines.push(
       '',
-      `Revenue: ${formatCurrency(report.finance.totalRevenue, 'GHS')}`,
-      `Expenses: ${formatCurrency(report.finance.totalExpenses, 'GHS')}`,
-      `Net: ${formatCurrency(report.finance.netProfit, 'GHS')}`
+      `Revenue: ${formatCurrency(report.finance.totalRevenue, report.currency)}`,
+      `Expenses: ${formatCurrency(report.finance.totalExpenses, report.currency)}`,
+      `Net: ${formatCurrency(report.finance.netProfit, report.currency)}`
     )
   }
 
@@ -481,12 +488,12 @@ export async function downloadBatchReportPdf(report: BatchReportDocument) {
 
   if (report.finance) {
     addText('Finance summary', 13, true, 18)
-    addText(`Revenue: ${formatCurrency(report.finance.totalRevenue, 'GHS')}`, 10)
-    addText(`Expenses: ${formatCurrency(report.finance.totalExpenses, 'GHS')}`, 10)
+    addText(`Revenue: ${formatMoneyCode(report.finance.totalRevenue, report.currency)}`, 10)
+    addText(`Expenses: ${formatMoneyCode(report.finance.totalExpenses, report.currency)}`, 10)
     if (report.finance.initialInvestment > 0) {
-      addText(`Initial investment: ${formatCurrency(report.finance.initialInvestment, 'GHS')}`, 10)
+      addText(`Initial investment: ${formatMoneyCode(report.finance.initialInvestment, report.currency)}`, 10)
     }
-    addText(`Net position: ${formatCurrency(report.finance.netProfit, 'GHS')}`, 10, true, 18)
+    addText(`Net position: ${formatMoneyCode(report.finance.netProfit, report.currency)}`, 10, true, 18)
   }
 
   for (const section of report.sections) {
@@ -499,7 +506,7 @@ export async function downloadBatchReportPdf(report: BatchReportDocument) {
     }
     for (const entry of rows) {
       const line = `${formatDate(entry.date)} — ${entry.title}: ${entry.detail}${
-        entry.amount != null ? ` (${formatCurrency(entry.amount, 'GHS')})` : ''
+        entry.amount != null ? ` (${formatMoneyCode(entry.amount, report.currency)})` : ''
       }`
       addText(line, 9, false, 12)
     }

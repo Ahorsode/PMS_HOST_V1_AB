@@ -31,6 +31,7 @@ import { restoreSale } from '@/lib/actions/sale-actions';
 import { restoreOrder } from '@/lib/actions/order-actions';
 import { restoreInventory } from '@/lib/actions/inventory-actions';
 import { useRouter } from 'next/navigation';
+import { useMoney } from '@/components/providers/CurrencyProvider'
 
 interface AuditLogViewProps {
   initialEditLogs: any[];
@@ -39,6 +40,7 @@ interface AuditLogViewProps {
 }
 
 export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trashItems }: AuditLogViewProps) {
+  const money = useMoney()
   const [activeTab, setActiveTab] = useState<'edits' | 'deletes' | 'recovery'>('edits');
   const [, startTransition] = useTransition();
   const [restoringKeys, setRestoringKeys] = useState<Set<string>>(() => new Set());
@@ -410,7 +412,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                           <div key={e.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-fg/5 border border-fg/10">
                             <div>
                               <p className="text-xs font-medium text-fg">{e.description || e.category}</p>
-                              <p className="text-xs text-fg/40">{e.category} · GHS {e.amount.toFixed(2)}</p>
+                              <p className="text-xs text-fg/40">{e.category} · {money.format(e.amount)}</p>
                             </div>
                             <button onClick={() => handleSoftRestore(restoreExpense, e.id, 'Expense')} disabled={isRestoring(`Expense:${e.id}`)} className="text-xs font-medium px-3 py-1.5 rounded-lg bg-fg/[0.06] hover:bg-fg/[0.06] text-fg-2 border border-fg/[0.08] transition-colors flex items-center gap-1 disabled:opacity-50">
                               {isRestoring(`Expense:${e.id}`) ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />} {isRestoring(`Expense:${e.id}`) ? 'Restoring...' : 'Restore'}
@@ -429,7 +431,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                           <div key={s.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-fg/5 border border-fg/10">
                             <div>
                               <p className="text-xs font-medium text-fg">{s.customerName || 'Walk-in'}</p>
-                              <p className="text-xs text-fg/40">GHS {s.totalAmount.toFixed(2)} · {s.status}</p>
+                              <p className="text-xs text-fg/40">{money.format(s.totalAmount)} · {s.status}</p>
                             </div>
                             <button onClick={() => handleSoftRestore(restoreSale, s.id, 'Sale')} disabled={isRestoring(`Sale:${s.id}`)} className="text-xs font-medium px-3 py-1.5 rounded-lg bg-fg/[0.06] hover:bg-fg/[0.06] text-fg-2 border border-fg/[0.08] transition-colors flex items-center gap-1 disabled:opacity-50">
                               {isRestoring(`Sale:${s.id}`) ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />} {isRestoring(`Sale:${s.id}`) ? 'Restoring...' : 'Restore'}
@@ -448,7 +450,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
                           <div key={o.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-fg/5 border border-fg/10">
                             <div>
                               <p className="text-xs font-medium text-fg">{o.customer?.name || 'No customer'}</p>
-                              <p className="text-xs text-fg/40">GHS {o.totalAmount.toFixed(2)} · {o.status}</p>
+                              <p className="text-xs text-fg/40">{money.format(o.totalAmount)} · {o.status}</p>
                             </div>
                             <button onClick={() => handleSoftRestore(restoreOrder, o.id, 'Order')} disabled={isRestoring(`Order:${o.id}`)} className="text-xs font-medium px-3 py-1.5 rounded-lg bg-fg/[0.06] hover:bg-fg/[0.06] text-fg-2 border border-fg/[0.08] transition-colors flex items-center gap-1 disabled:opacity-50">
                               {isRestoring(`Order:${o.id}`) ? <Loader2 className="w-3 h-3 animate-spin" /> : <RotateCcw className="w-3 h-3" />} {isRestoring(`Order:${o.id}`) ? 'Restoring...' : 'Restore'}

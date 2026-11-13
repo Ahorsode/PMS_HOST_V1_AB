@@ -4,6 +4,7 @@ import { getFarmAccess } from '@/lib/subscription-utils'
 import { getBillingConfig } from '@/lib/billing/billing-config'
 import { isPaystackConfigured } from '@/lib/billing/paystack'
 import { getFarmDiscountPercent } from '@/lib/billing/checkout-discounts'
+import { getFarmMoney } from '@/lib/farm-currency'
 import LicenseUpgradeClient from './LicenseUpgradeClient'
 
 export default async function LicenseUpgradePage({
@@ -14,11 +15,12 @@ export default async function LicenseUpgradePage({
   const { activeFarmId } = await getAuthContext()
   const { type } = await searchParams
 
-  const [access, deviceData, billing, farmDiscountPercent] = await Promise.all([
+  const [access, deviceData, billing, farmDiscountPercent, { billingCurrency }] = await Promise.all([
     getFarmAccess(activeFarmId!),
     getDesktopLicenses(),
     getBillingConfig(),
     getFarmDiscountPercent(activeFarmId!),
+    getFarmMoney(activeFarmId),
   ])
 
   const initialType = type === 'SOLO' || type === 'TEAM' ? type : access.planType
@@ -37,6 +39,7 @@ export default async function LicenseUpgradePage({
       devices={deviceData.licenses}
       billing={billing}
       paystackAvailable={isPaystackConfigured() && billing.paystackEnabled}
+      billingCurrency={billingCurrency}
       farmDiscountPercent={farmDiscountPercent}
     />
   )

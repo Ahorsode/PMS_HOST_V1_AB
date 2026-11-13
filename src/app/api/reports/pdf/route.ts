@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext } from '@/lib/auth-utils'
 import { generateComprehensiveFarmReport } from '@/lib/actions/reports'
 import PDFDocument from 'pdfkit/js/pdfkit.standalone.js'
+import { getFarmCurrency } from '@/lib/farm-currency'
+import { formatMoneyCode } from '@/lib/utils'
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,7 +20,10 @@ export async function GET(request: NextRequest) {
       return new NextResponse('Missing query parameters: startDate and endDate are required', { status: 400 })
     }
 
-    const report = await generateComprehensiveFarmReport(activeFarmId, new Date(startDateStr), new Date(endDateStr))
+    const [report, currency] = await Promise.all([
+      generateComprehensiveFarmReport(activeFarmId, new Date(startDateStr), new Date(endDateStr)),
+      getFarmCurrency(activeFarmId),
+    ])
     if (!report) {
       return new NextResponse('Failed to generate report or user unauthorized', { status: 500 })
     }
@@ -49,10 +54,10 @@ export async function GET(request: NextRequest) {
 
     doc.fontSize(9).fillColor('#475569')
     doc.font('Helvetica-Bold').text('Financials', col1, 185)
-    doc.font('Helvetica').text(`Total Revenue: GH₵ ${report.kpis.totalRevenue.toFixed(2)}`, col1, 198)
-    doc.text(`Total Expense: GH₵ ${report.kpis.totalExpense.toFixed(2)}`, col1, 210)
+    doc.font('Helvetica').text(`Total Revenue: ${formatMoneyCode(report.kpis.totalRevenue, currency)}`, col1, 198)
+    doc.text(`Total Expense: ${formatMoneyCode(report.kpis.totalExpense, currency)}`, col1, 210)
     doc.fillColor(report.kpis.netIncome >= 0 ? '#16a34a' : '#dc2626')
-    doc.font('Helvetica-Bold').text(`Net Income: GH₵ ${report.kpis.netIncome.toFixed(2)}`, col1, 222)
+    doc.font('Helvetica-Bold').text(`Net Income: ${formatMoneyCode(report.kpis.netIncome, currency)}`, col1, 222)
 
     doc.font('Helvetica-Bold').fillColor('#475569').text('Production Metrics', col2, 185)
     doc.font('Helvetica').text(`Eggs Collected: ${report.kpis.totalEggsCollected.toLocaleString()} pcs`, col2, 198)
@@ -116,7 +121,7 @@ export async function GET(request: NextRequest) {
       doc.text((t.referenceNum || 'N/A').substring(0, 15), 410, y)
 
       doc.fillColor('#0f172a')
-      doc.text(`GH₵ ${t.amount.toFixed(2)}`, 490, y, { width: 60, align: 'right' })
+      doc.text(formatMoneyCode(t.amount, currency), 490, y, { width: 60, align: 'right' })
       
       y += 15
     })

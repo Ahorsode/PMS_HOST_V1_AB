@@ -173,6 +173,12 @@ export default async function AdminHomePage() {
                       <dd className={cn('tabular-nums', (amount as number) < 0 ? 'text-red-300' : 'text-zinc-100')}>{ghs(amount as number)}</dd>
                     </div>
                   ))}
+                  <div className="flex justify-between gap-3 border-t border-zinc-800 pt-1.5">
+                    <dt className="text-zinc-400">Paystack in US dollars (outside Ghana)</dt>
+                    <dd className={cn('tabular-nums', revenue.usdThisMonth < 0 ? 'text-red-300' : 'text-zinc-100')}>
+                      ${revenue.usdThisMonth.toLocaleString('en-US', { maximumFractionDigits: 2 })}
+                    </dd>
+                  </div>
                 </dl>
               </div>
             </div>

@@ -7,6 +7,7 @@ import { effectiveFarmTier } from '@/lib/subscription-utils';
 import { getMonthlyProductionSummary } from '@/lib/actions/preference-actions';
 import { PullToRefresh } from '@/components/layout/PullToRefresh';
 import { redirect } from 'next/navigation';
+import { getFarmCurrency } from '@/lib/farm-currency';
 
 export default async function DashboardPage() {
   let userId: string;
@@ -58,7 +59,7 @@ export default async function DashboardPage() {
     ]);
 
     const role = userId === farm?.userId ? 'OWNER' : membership?.role || 'WORKER';
-    const currency = farmSettings?.currency || 'GHS';
+    const currency = await getFarmCurrency(activeFarmId);
     const eggsPerCrate = farmSettings?.eggsPerCrate ?? 30;
     
     // Serialize Decimal objects to numbers for Client Components

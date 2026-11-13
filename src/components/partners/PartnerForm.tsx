@@ -5,6 +5,7 @@ import { Truck, Users } from 'lucide-react';
 import { createCustomer } from '@/lib/actions/customer-actions';
 import { createSupplier } from '@/lib/actions/supplier-actions';
 import { toast } from 'sonner';
+import { useMoney } from '@/components/providers/CurrencyProvider'
 
 interface PartnerFormProps {
   setIsOpen: (val: boolean) => void;
@@ -13,6 +14,7 @@ interface PartnerFormProps {
 }
 
 export function PartnerForm({ setIsOpen, defaultType = 'supplier', onSuccess }: PartnerFormProps) {
+  const money = useMoney()
   const [isSubmitting, setIsSubmitting] = useState(false);
   const partnerType = defaultType;
 
@@ -105,7 +107,7 @@ export function PartnerForm({ setIsOpen, defaultType = 'supplier', onSuccess }: 
           </div>
 
           <div className="space-y-1">
-             <label className="text-sm font-medium text-fg px-1">Old debt / amount owing (GHS)</label>
+             <label className="text-sm font-medium text-fg px-1">Old debt / amount owing ({money.currency})</label>
              <input 
                name="balanceOwed"
                type="number"

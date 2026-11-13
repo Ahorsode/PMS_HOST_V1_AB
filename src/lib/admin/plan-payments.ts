@@ -98,6 +98,10 @@ export async function listMomoRequests(limit = 300): Promise<MomoRequestRow[]> {
 
 export type OnlinePaymentStatus = 'PAID' | 'PENDING' | 'NOT_COMPLETED'
 
+/** Plans are paid in cedis by farms in Ghana and in US dollars elsewhere. */
+export type PaymentCurrency = 'GHS' | 'USD'
+const paymentCurrency = (value: unknown): PaymentCurrency => (value === 'USD' ? 'USD' : 'GHS')
+
 export type OnlinePaymentRow = {
   reference: string
   farmId: string
@@ -106,6 +110,7 @@ export type OnlinePaymentRow = {
   tier: string
   months: number
   amount: number
+  currency: PaymentCurrency
   promoCode: string | null
   status: OnlinePaymentStatus
   startedAt: string
@@ -150,6 +155,7 @@ export async function listOnlinePayments(limit = 300, now = new Date()): Promise
       tier: str(m.tier) ?? 'STANDARD',
       months: num(m.months) || 1,
       amount: num(doneMeta?.amountPesewas ?? m.amountPesewas) / 100,
+      currency: paymentCurrency(doneMeta?.currency ?? m.currency),
       promoCode: str(m.promoCode),
       status,
       startedAt: event.createdAt.toISOString(),
@@ -160,9 +166,9 @@ export async function listOnlinePayments(limit = 300, now = new Date()): Promise
   })
 }
 
-export type RevenueEntry = { at: Date; amount: number; source: 'paystack' | 'mobile_money' | 'desktop' | 'refund' }
+export type RevenueEntry = { at: Date; amount: number; currency: PaymentCurrency; source: 'paystack' | 'mobile_money' | 'desktop' | 'refund' }
 
-/** Every GHS amount received (or refunded, as a negative) across plans and desktop licenses. */
+/** Every amount received (or refunded, as a negative) across plans and desktop licenses, with its currency. */
 export async function listRevenue(since: Date): Promise<RevenueEntry[]> {
   const [paystack, momo, refunds, desktop] = await Promise.all([
     prisma.subscriptionEvent.findMany({ where: { eventType: PAYSTACK_COMPLETED_EVENT, createdAt: { gte: since } }, select: { createdAt: true, metadata: true } }),
@@ -172,15 +178,15 @@ export async function listRevenue(since: Date): Promise<RevenueEntry[]> {
   ])
 
   return [
-    ...paystack.map((e) => ({ at: e.createdAt, amount: num(meta(e.metadata).amountPesewas) / 100, source: 'paystack' as const })),
-    ...momo.map((e) => ({ at: e.createdAt, amount: num(meta(e.metadata).amount), source: 'mobile_money' as const })),
-    ...desktop.map((p) => ({ at: p.createdAt, amount: Number(p.amount), source: 'desktop' as const })),
-    ...refunds.map((e) => ({ at: e.createdAt, amount: -num(meta(e.metadata).amount), source: 'refund' as const })),
+    ...paystack.map((e) => ({ at: e.createdAt, amount: num(meta(e.metadata).amountPesewas) / 100, currency: paymentCurrency(meta(e.metadata).currency), source: 'paystack' as const })),
+    ...momo.map((e) => ({ at: e.createdAt, amount: num(meta(e.metadata).amount), currency: 'GHS' as const, source: 'mobile_money' as const })),
+    ...desktop.map((p) => ({ at: p.createdAt, amount: Number(p.amount), currency: 'GHS' as const, source: 'desktop' as const })),
+    ...refunds.map((e) => ({ at: e.createdAt, amount: -num(meta(e.metadata).amount), currency: paymentCurrency(meta(e.metadata).currency), source: 'refund' as const })),
   ]
 }
 
 /** Totals per calendar month (UTC), oldest first, including empty months. */
-export function revenueByMonth(entries: RevenueEntry[], months: number, now = new Date()) {
+export function revenueByMonth(entries: Omit<RevenueEntry, 'currency'>[], months: number, now = new Date()) {
   const buckets = Array.from({ length: months }, (_, index) => {
     const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - (months - 1 - index), 1))
     return { key: start.toISOString().slice(0, 7), start, total: 0 }

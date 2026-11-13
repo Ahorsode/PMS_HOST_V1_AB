@@ -18,6 +18,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { MutationBoundary } from '@/components/ui/MutationFeedback'
 import { getBreedDisplayName } from '@/lib/livestock-breed-options'
+import { useMoney } from '@/components/providers/CurrencyProvider'
 
 type TrashItems = {
   batches: any[]
@@ -55,10 +56,6 @@ const COLOR_MAP: Record<string, { tab: string; badge: string; btn: string; glow:
 function fmt(date: string | Date) {
   return new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
 }
-function currency(n: number) {
-  return new Intl.NumberFormat('en-GH', { style: 'currency', currency: 'GHS', maximumFractionDigits: 2 }).format(n)
-}
-
 type RestoreFn = (id: string) => Promise<{ success: boolean; error?: string }>
 
 function RestoreButton({ id, onRestore, color }: { id: string; onRestore: RestoreFn; color: string }) {
@@ -126,6 +123,7 @@ function Row({ children, isMutating = false }: { children: React.ReactNode; isMu
 }
 
 export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems }) {
+  const money = useMoney()
   const [activeTab, setActiveTab] = useState('batches')
   const [search, setSearch] = useState('')
 
@@ -221,7 +219,7 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
             <p className="font-medium text-sm text-fg">{e.description || e.category}</p>
             <p className="text-xs text-fg/50">{e.category} &bull; {fmt(e.expenseDate)}</p>
           </div>
-          <span className="text-sm font-medium text-fg/80">{currency(e.amount)}</span>
+          <span className="text-sm font-medium text-fg/80">{money.format(e.amount)}</span>
           <RestoreButton id={e.id} onRestore={restoreExpense} color={activeTabConfig.color} />
         </Row>
       ))
@@ -238,7 +236,7 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
             <p className="font-medium text-sm text-fg">{s.customerName || 'Walk-in Customer'}</p>
             <p className="text-xs text-fg/50">{s.items.length} item(s) &bull; {s.status} &bull; {fmt(s.saleDate)}</p>
           </div>
-          <span className="text-sm font-medium text-fg/80">{currency(s.totalAmount)}</span>
+          <span className="text-sm font-medium text-fg/80">{money.format(s.totalAmount)}</span>
           <RestoreButton id={s.id} onRestore={restoreSale} color={activeTabConfig.color} />
         </Row>
       ))
@@ -255,7 +253,7 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
             <p className="font-medium text-sm text-fg">{o.customer?.name || 'No Customer'}</p>
             <p className="text-xs text-fg/50">{o.items.length} item(s) &bull; {o.status} &bull; {fmt(o.orderDate)}</p>
           </div>
-          <span className="text-sm font-medium text-fg/80">{currency(o.totalAmount)}</span>
+          <span className="text-sm font-medium text-fg/80">{money.format(o.totalAmount)}</span>
           <RestoreButton id={o.id} onRestore={restoreOrder} color={activeTabConfig.color} />
         </Row>
       ))

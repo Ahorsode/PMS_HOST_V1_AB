@@ -14,6 +14,9 @@ import { AccessBlocked } from '@/components/billing/AccessBlocked';
 import { DashboardNotices } from '@/components/site/DashboardNotices';
 import { MaintenanceProvider } from '@/components/site/MaintenanceContext';
 import { getAppSettings } from '@/lib/settings/app-settings';
+import { getAuthContext } from '@/lib/auth-utils';
+import { getFarmCurrency } from '@/lib/farm-currency';
+import { CurrencyProvider } from '@/components/providers/CurrencyProvider';
 
 export default async function DashboardLayout({
   children,
@@ -149,6 +152,12 @@ export default async function DashboardLayout({
   // Plan access: owners are steered to the payment page once locked; staff
   // are blocked when the farm is locked or their seat is paused/over limit.
   const isOwner = !!farm && farm.userId === dbUser.id;
+
+  // Every farm has a country; it sets the currency money is shown in and the
+  // plan price. Owners of farms made before countries existed pick one once.
+  if (farm && isOwner && !farm.country) {
+    redirect('/onboarding/country');
+  }
   const staffAccess = farm ? await getFarmStaffAccess(farm.id) : null;
 
   if (farm && staffAccess && !isOwner) {
@@ -188,7 +197,11 @@ export default async function DashboardLayout({
       })
     : dbUser.role;
 
-  const { maintenance } = await getAppSettings('system');
+  const [{ maintenance }, activeFarmId] = await Promise.all([
+    getAppSettings('system'),
+    getAuthContext().then((context) => context.activeFarmId, () => undefined),
+  ]);
+  const currency = await getFarmCurrency(activeFarmId ?? farm?.id);
 
   const rawFarmName = (farm?.name || 'My').trim();
   const mobileFarmTitle = /\bfarms?\s*$/i.test(rawFarmName)
@@ -203,7 +216,9 @@ export default async function DashboardLayout({
         isOwner={isOwner}
       />
       <MaintenanceProvider message={maintenance.enabled ? maintenance.message : null}>
-        {isOwner && planStatus ? <PlanAccessGate status={planStatus}>{children}</PlanAccessGate> : children}
+        <CurrencyProvider currency={currency}>
+          {isOwner && planStatus ? <PlanAccessGate status={planStatus}>{children}</PlanAccessGate> : children}
+        </CurrencyProvider>
       </MaintenanceProvider>
     </SidebarWrapper>
   );

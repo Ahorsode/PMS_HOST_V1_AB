@@ -231,6 +231,8 @@ export async function adminRecordRefund(input: z.input<typeof refundSchema>): Pr
   let farmId: string
   let userId: string
   let paid: number
+  // Mobile Money is always cedis; Paystack payments are cedis in Ghana and dollars elsewhere.
+  let currency: 'GHS' | 'USD' = 'GHS'
   if (kind === 'paystack') {
     const [initiated, completed] = await Promise.all([
       prisma.subscriptionEvent.findFirst({ where: { eventType: PAYSTACK_INITIATED_EVENT, metadata: { path: ['reference'], equals: id } }, select: { farmId: true, userId: true } }),
@@ -240,6 +242,7 @@ export async function adminRecordRefund(input: z.input<typeof refundSchema>): Pr
     farmId = initiated.farmId
     userId = initiated.userId
     paid = Number((completed.metadata as Record<string, unknown>).amountPesewas ?? 0) / 100
+    if ((completed.metadata as Record<string, unknown>).currency === 'USD') currency = 'USD'
   } else {
     const request = await prisma.subscriptionEvent.findUnique({ where: { id }, select: { eventType: true, farmId: true, userId: true, metadata: true } })
     const meta = (request?.metadata ?? {}) as Record<string, unknown>
@@ -255,17 +258,17 @@ export async function adminRecordRefund(input: z.input<typeof refundSchema>): Pr
   const earlier = await prisma.subscriptionEvent.findMany({ where: { eventType: REFUND_EVENT, metadata: { path: ['paymentKey'], equals: paymentKey } }, select: { metadata: true } })
   const alreadyRefunded = earlier.reduce((sum, event) => sum + Number((event.metadata as Record<string, unknown>).amount ?? 0), 0)
   if (alreadyRefunded + amount > paid + 0.001) {
-    return { success: false, error: `That is more than was paid (GHS ${paid}, already refunded GHS ${alreadyRefunded}).` }
+    return { success: false, error: `That is more than was paid (${currency} ${paid}, already refunded ${currency} ${alreadyRefunded}).` }
   }
 
   await prisma.subscriptionEvent.create({
-    data: { farmId, userId, eventType: REFUND_EVENT, metadata: { paymentKey, amount, currency: 'GHS', reason, adminUsername: admin.username } },
+    data: { farmId, userId, eventType: REFUND_EVENT, metadata: { paymentKey, amount, currency, reason, adminUsername: admin.username } },
   })
   await logAdminAction(admin, {
     action: 'payment.refund',
     targetType: 'farm',
     targetId: farmId,
-    summary: `Recorded a GHS ${amount} refund (${kind === 'paystack' ? `Paystack ${id}` : 'Mobile Money'}): ${reason}`,
+    summary: `Recorded a ${currency} ${amount} refund (${kind === 'paystack' ? `Paystack ${id}` : 'Mobile Money'}): ${reason}`,
     details: { paymentKey, amount },
   })
   revalidatePayments(farmId)

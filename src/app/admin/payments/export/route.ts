@@ -18,8 +18,8 @@ export async function GET(request: Request) {
   const csv =
     type === 'online'
       ? toCsv(
-          ['Reference', 'Farm', 'Plan type', 'Tier', 'Months', 'Amount (GHS)', 'Promo', 'Status', 'Started', 'Paid', 'Channel', 'Refunded (GHS)'],
-          (await listOnlinePayments(5000)).map((p) => [p.reference, p.farmName, p.planType, p.tier, p.months, p.amount, p.promoCode, p.status, p.startedAt, p.paidAt, p.channel, p.refunded]),
+          ['Reference', 'Farm', 'Plan type', 'Tier', 'Months', 'Amount', 'Currency', 'Promo', 'Status', 'Started', 'Paid', 'Channel', 'Refunded'],
+          (await listOnlinePayments(5000)).map((p) => [p.reference, p.farmName, p.planType, p.tier, p.months, p.amount, p.currency, p.promoCode, p.status, p.startedAt, p.paidAt, p.channel, p.refunded]),
         )
       : toCsv(
           ['Requested', 'Farm', 'Contact', 'Plan', 'Months', 'Amount asked (GHS)', 'Promo', 'Status', 'Handled by', 'Handled at', 'MoMo reference', 'Received (GHS)', 'Refunded (GHS)', 'Close reason'],

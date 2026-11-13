@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ArrowLeft, History, Package, Syringe, Wheat } from 'lucide-react'
 import type { InventoryUsageEvent } from '@/lib/actions/inventory-actions'
 import { cn, formatCurrency } from '@/lib/utils'
+import { useCurrency } from '@/components/providers/CurrencyProvider'
 
 type Item = {
   id: string
@@ -32,6 +33,7 @@ export function InventoryUsageClient({
   usageHistory: InventoryUsageEvent[]
   isUsedUp: boolean
 }) {
+  const currency = useCurrency()
   const totalUsed = usageHistory.reduce((sum, row) => sum + row.quantity, 0)
 
   return (
@@ -66,7 +68,7 @@ export function InventoryUsageClient({
           </p>
           {item.costPerUnit != null ? (
             <p className="mt-1 text-xs font-medium text-fg">
-              {formatCurrency(Number(item.costPerUnit), 'GHS')} / {item.unit}
+              {formatCurrency(Number(item.costPerUnit), currency)} / {item.unit}
             </p>
           ) : null}
         </div>

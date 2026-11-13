@@ -3,7 +3,8 @@
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
-import { cn, formatCurrency, formatDate } from '@/lib/utils';
+import { cn, formatDate } from '@/lib/utils';
+import { useMoney } from '@/components/providers/CurrencyProvider';
 import { g, ink } from '@/components/ui/graphite';
 import { EggLogActions } from './EggActions';
 import { MobileCardList } from '@/components/ui/MobileCardList';
@@ -96,8 +97,6 @@ const tdNum = 'px-4 py-3 whitespace-nowrap text-right text-sm tabular-nums text-
 const tdEmpty = `${tdNum} text-fg-3`;
 const rowHover = 'transition-colors duration-150 hover:bg-fg/[0.03]';
 
-const ghs = (value: number | string) => formatCurrency(Number(value), 'GHS');
-
 export function EggProductionHistoryPanel({
   productionHistory,
   eggSalesHistory,
@@ -119,6 +118,7 @@ export function EggProductionHistoryPanel({
     eggsPerCrate?: number;
   };
 }) {
+  const { format: ghs } = useMoney();
   const [stockFilter, setStockFilter] = useState<StockFilter>('active');
   const [tab, setTab] = useState<PanelTab>('production');
   const eggsPerCrate = eggLoggingSettings?.eggsPerCrate ?? 30;

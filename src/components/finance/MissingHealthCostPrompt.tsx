@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Syringe, Pill, AlertCircle } from 'lucide-react';
 import { setHealthItemCost, type MissingCostHealthItem } from '@/lib/actions/health-actions';
 import { useRouter } from 'next/navigation';
+import { useMoney } from '@/components/providers/CurrencyProvider'
 
 interface Props {
   items: MissingCostHealthItem[];
@@ -18,6 +19,7 @@ interface Props {
  * so it shows again every time finance is opened until the cost is recorded.
  */
 export function MissingHealthCostPrompt({ items }: Props) {
+  const money = useMoney()
   const router = useRouter();
   const [index, setIndex] = useState(0);
   const [isOpen, setIsOpen] = useState(items.length > 0);
@@ -123,7 +125,7 @@ export function MissingHealthCostPrompt({ items }: Props) {
           />
           {total > 0 && (
             <p className="text-xs font-medium text-fg px-1 text-right">
-              Total stock value: GH₵ {total.toFixed(2)}
+              Total stock value: {money.format(total)}
             </p>
           )}
         </div>

@@ -75,10 +75,14 @@ export async function getAdminOverview(now = new Date()): Promise<AdminOverview>
   }
 }
 
-/** Revenue for the last six months, by source, net of refunds. */
+/**
+ * Cedi revenue for the last six months, by source, net of refunds. Dollar
+ * payments from farms outside Ghana are totalled separately, never mixed in.
+ */
 export async function getRevenueSummary(now = new Date()) {
   const since = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 5, 1))
-  const entries = await listRevenue(since)
+  const all = await listRevenue(since)
+  const entries = all.filter((entry) => entry.currency === 'GHS')
   const months = revenueByMonth(entries, 6, now)
   const thisMonth = months[months.length - 1]?.total ?? 0
   const lastMonth = months[months.length - 2]?.total ?? 0
@@ -91,5 +95,8 @@ export async function getRevenueSummary(now = new Date()) {
     thisMonth,
     lastMonth,
     thisMonthBySource: { paystack: bySource('paystack'), mobileMoney: bySource('mobile_money'), desktop: bySource('desktop'), refunds: bySource('refund') },
+    /** Net US dollar revenue this month (Paystack card payments less refunds). */
+    usdThisMonth:
+      Math.round(all.filter((e) => e.currency === 'USD' && e.at.toISOString().slice(0, 7) === monthKey).reduce((sum, e) => sum + e.amount, 0) * 100) / 100,
   }
 }

@@ -13,11 +13,14 @@ import {
   PLAN_FEATURE_DETAILS,
   PLAN_FEATURE_KEYS,
   staffLimitLabel,
+  formatPlanPrice,
+  planMonthlyPrice,
   termDiscount,
   type BillingConfig,
   type PaidTier,
 } from "@/lib/billing/pricing";
 import { cn } from "@/lib/utils";
+import type { BillingCurrency } from "@/lib/countries";
 
 type PlanTypeValue = "SOLO" | "TEAM";
 
@@ -40,11 +43,13 @@ const CORE_FEATURES = [
   "Reports and analytics",
 ];
 
-function formatCurrency(value: number) {
-  return `GHS ${new Intl.NumberFormat("en-GH", {
+/** "GHS 1,000.00" in Ghana, "$1,000.00" elsewhere. */
+function formatCurrency(value: number, currency: BillingCurrency) {
+  const amount = new Intl.NumberFormat(currency === "USD" ? "en-US" : "en-GH", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(value)}`;
+  }).format(value);
+  return currency === "USD" ? `$${amount}` : `GHS ${amount}`;
 }
 
 function formatDate(value: string | null) {
@@ -161,6 +166,7 @@ export default function LicenseUpgradeClient({
   billing,
   paystackAvailable,
   farmDiscountPercent,
+  billingCurrency,
 }: {
   /** The farm's current plan type. */
   planType: PlanTypeValue;
@@ -174,7 +180,11 @@ export default function LicenseUpgradeClient({
   paystackAvailable: boolean;
   /** Admin-set custom discount for this farm (0 when none). */
   farmDiscountPercent: number;
+  /** Plans are paid in cedis in Ghana and in US dollars everywhere else. */
+  billingCurrency: BillingCurrency;
 }) {
+  // Mobile Money is a cedi payment, so it is only offered to farms in Ghana.
+  const manualPaymentEnabled = billing.manualPayment.enabled && billingCurrency === "GHS";
   const router = useRouter();
   const [selectedType, setSelectedType] = useState<PlanTypeValue>(initialType);
   const [selectedMonths, setSelectedMonths] = useState<number>(billing.offeredTerms[0] ?? 1);
@@ -406,7 +416,7 @@ export default function LicenseUpgradeClient({
             <Smartphone className="h-4 w-4" /> Pay by Mobile Money
           </p>
           <p className="mt-3 text-base font-medium text-fg">
-            Send {formatCurrency(manualRequest.amount)} for {manualRequest.planName}
+            Send {formatCurrency(manualRequest.amount, billingCurrency)} for {manualRequest.planName}
           </p>
           <dl className="mt-3 grid gap-2 sm:grid-cols-3">
             {billing.manualPayment.network ? (
@@ -426,7 +436,7 @@ export default function LicenseUpgradeClient({
       <section className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {tiers.map((plan) => {
           const planConfig = billing.plans[selectedType][plan.tier];
-          const monthly = planConfig.monthlyPrice;
+          const monthly = planMonthlyPrice(planConfig, billingCurrency);
           const pricing = getTermPricing(selectedMonths, monthly, termDiscount(billing, selectedMonths), extraDiscounts);
           const Icon = plan.icon;
           const isCurrent =
@@ -467,7 +477,7 @@ export default function LicenseUpgradeClient({
                   </div>
 
                   <div className="flex items-baseline gap-2">
-                    <span className="text-4xl font-medium text-fg">GHS {monthly}</span>
+                    <span className="text-4xl font-medium text-fg">{formatPlanPrice(monthly, billingCurrency)}</span>
                     <span className="text-sm font-medium text-fg/60">/ month</span>
                   </div>
 
@@ -500,7 +510,7 @@ export default function LicenseUpgradeClient({
                   <div className="rounded-lg border border-fg/10 bg-fg/5 p-4">
                     <p className="text-xs font-medium text-fg/40">Selected term total</p>
                     <p className="mt-2 text-xl font-medium text-fg">
-                      {selectedMonths} {selectedMonths === 1 ? "Month" : "Months"} - {formatCurrency(pricing.total)}
+                      {selectedMonths} {selectedMonths === 1 ? "Month" : "Months"} - {formatCurrency(pricing.total, billingCurrency)}
                     </p>
                     {pricing.savings > 0 ? (
                       <p className="mt-1 text-sm font-medium text-fg">
@@ -511,7 +521,7 @@ export default function LicenseUpgradeClient({
                         ]
                           .filter(Boolean)
                           .join(" + ")}{" "}
-                        · save {formatCurrency(pricing.savings)}
+                        · save {formatCurrency(pricing.savings, billingCurrency)}
                       </p>
                     ) : null}
                   </div>
@@ -531,11 +541,13 @@ export default function LicenseUpgradeClient({
                           : "bg-amber-500 text-[#451a03] hover:bg-amber-400",
                       )}
                     >
-                      {isCurrent ? "Renew" : "Pay"} {formatCurrency(pricing.total)} with Paystack
+                      {isCurrent ? "Renew" : "Pay"} {formatCurrency(pricing.total, billingCurrency)} with Paystack
                     </Button>
                     <p className="text-center text-xs text-fg/50">
-                      Mobile Money (MTN, Telecel, AirtelTigo), card or bank transfer.{" "}
-                      {billing.manualPayment.enabled ? (
+                      {billingCurrency === "GHS"
+                        ? "Mobile Money (MTN, Telecel, AirtelTigo), card or bank transfer."
+                        : "Pay by card in US dollars."}{" "}
+                      {manualPaymentEnabled ? (
                         <button
                           type="button"
                           onClick={() => handleUpgrade(plan.tier)}
@@ -547,7 +559,7 @@ export default function LicenseUpgradeClient({
                       ) : null}
                     </p>
                     </>
-                    ) : billing.manualPayment.enabled ? (
+                    ) : manualPaymentEnabled ? (
                       <Button
                         onClick={() => handleUpgrade(plan.tier)}
                         isLoading={isUpgrading}
@@ -560,7 +572,7 @@ export default function LicenseUpgradeClient({
                             : "bg-amber-500 text-[#451a03] hover:bg-amber-400",
                         )}
                       >
-                        Pay {formatCurrency(pricing.total)} by Mobile Money
+                        Pay {formatCurrency(pricing.total, billingCurrency)} by Mobile Money
                       </Button>
                     ) : (
                       <p className="rounded-lg border border-fg/10 bg-fg/5 p-3 text-center text-sm text-fg/70">
@@ -568,7 +580,7 @@ export default function LicenseUpgradeClient({
                       </p>
                     )}
                     <p className="text-center text-xs leading-5 text-fg/60">
-                      One-time payment of {formatCurrency(pricing.total)} for {selectedMonths}{" "}
+                      One-time payment of {formatCurrency(pricing.total, billingCurrency)} for {selectedMonths}{" "}
                       {selectedMonths === 1 ? "month" : "months"}. It does not renew automatically. When the term ends you have{" "}
                       {billing.trial.graceDays} {billing.trial.graceDays === 1 ? "day" : "days"} to renew before paid features lock, and your records are kept.{" "}
                       <Link href="/refunds" className="font-medium text-fg/80 underline underline-offset-2 hover:text-fg">

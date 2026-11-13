@@ -6,7 +6,7 @@ import { Banknote, Egg, Scale, Skull, Truck, Wheat } from 'lucide-react'
 import { Dialog } from '@/components/ui/Dialog'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
-import { cn, formatCurrency } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import { ActionButton, buttonClass, segmentClass, tone } from '../flock-ui'
 import { logWeight } from '@/lib/actions/dashboard-actions'
 import { createFeedingLog } from '@/lib/actions/feed-actions'
@@ -14,6 +14,7 @@ import { createEggProduction } from '@/lib/actions/egg-actions'
 import { logHealthEvent } from '@/lib/actions/batch-actions'
 import { createOrder } from '@/lib/actions/order-actions'
 import { createExpense } from '@/lib/actions/expense-actions'
+import { useMoney } from '@/components/providers/CurrencyProvider'
 
 type LogKind = 'weight' | 'feed' | 'eggs' | 'mortality' | 'sale' | 'expense'
 
@@ -325,6 +326,7 @@ function SaleForm({
   currentCount: number
   onDone: () => void
 }) {
+  const money = useMoney()
   const { isPending, error, run } = useSubmit(onDone)
   const [quantity, setQuantity] = useState('')
   const [unitPrice, setUnitPrice] = useState('')
@@ -365,13 +367,13 @@ function SaleForm({
           disabled={isPending}
           max={currentCount}
         />
-        <Input label="Unit price (GH₵)" type="number" step="0.01" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} required disabled={isPending} />
+        <Input label={`Unit price (${money.currency})`} type="number" step="0.01" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} required disabled={isPending} />
       </div>
       <Input label="Customer (optional)" value={customer} onChange={(e) => setCustomer(e.target.value)} disabled={isPending} />
       <Input label="Sale date" type="datetime-local" value={orderDate} onChange={(e) => setOrderDate(e.target.value)} required disabled={isPending} />
       <div className="flex items-baseline justify-between rounded-lg border border-fg/[0.08] bg-raised px-4 py-3">
         <span className="text-[13px] text-fg-2">Total</span>
-        <span className="text-lg tabular-nums text-fg">{formatCurrency(total, 'GHS')}</span>
+        <span className="text-lg tabular-nums text-fg">{money.format(total)}</span>
       </div>
       <FormError error={error} />
       <ActionButton type="submit" variant="primary" className="w-full" isLoading={isPending} loadingText="Recording sale…">
@@ -390,6 +392,7 @@ function ExpenseForm({
   allocationBatches: AllocationBatch[]
   onDone: () => void
 }) {
+  const money = useMoney()
   const { isPending, error, run } = useSubmit(onDone)
   const [amount, setAmount] = useState('')
   const [category, setCategory] = useState(EXPENSE_CATEGORIES[0].value)
@@ -434,7 +437,7 @@ function ExpenseForm({
       className="space-y-4"
     >
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Input label="Amount (GH₵)" type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} required disabled={isPending} />
+        <Input label={`Amount (${money.currency})`} type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} required disabled={isPending} />
         <Select label="Category" value={category} onChange={(e) => setCategory(e.target.value)} options={EXPENSE_CATEGORIES} />
       </div>
       <Input label="Description (optional)" value={description} onChange={(e) => setDescription(e.target.value)} disabled={isPending} />
@@ -464,7 +467,7 @@ function ExpenseForm({
           <p className="mt-2 text-xs text-fg-2">
             Split across {allocationBatches.length} active {allocationBatches.length === 1 ? 'batch' : 'batches'} by livestock count. This batch carries{' '}
             <span className="font-mono tabular-nums text-fg">{thisShare.toFixed(1)}%</span>
-            {amount ? <> {'\u2248'} <span className="tabular-nums text-fg">{formatCurrency((Number(amount) * thisShare) / 100, 'GHS')}</span></> : null}
+            {amount ? <> {'\u2248'} <span className="tabular-nums text-fg">{money.format((Number(amount) * thisShare) / 100)}</span></> : null}
           </p>
         ) : (
           <p className="mt-2 text-xs text-fg-2">The full amount is charged to this batch only</p>

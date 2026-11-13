@@ -1,3 +1,4 @@
+import { formatMoneyCode } from '@/lib/utils';
 const configuredTaxRate = Number(process.env.NEXT_PUBLIC_INVOICE_TAX_RATE ?? '0.15');
 const DEFAULT_TAX_RATE = Number.isFinite(configuredTaxRate) && configuredTaxRate >= 0 ? configuredTaxRate : 0.15;
 
@@ -26,25 +27,23 @@ export interface BrowserInvoiceOrder {
   }>;
 }
 
-// jsPDF's built-in Helvetica has no cedi sign (₵), so Intl's "GH₵" renders as
-// garbage. Spell the currency code out instead.
-function money(value: number) {
-  return `GHS ${Number(value || 0).toLocaleString('en-GH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+// jsPDF's built-in Helvetica has no cedi or naira sign, so Intl's "GH₵" renders
+// as garbage. Spell the currency code out instead, e.g. "GHS 1,200.00".
+function money(value: number, currency: string) {
+  return formatMoneyCode(value, currency);
 }
-
-const compactMoney = money;
 
 function plural(count: number, one: string, many: string) {
   return `${count} ${count === 1 ? one : many}`;
 }
 
 /** Egg lines are stored per egg but sold by the crate; show them that way. */
-function invoiceLine(item: BrowserInvoiceOrder['items'][number], eggsPerCrate: number) {
+function invoiceLine(item: BrowserInvoiceOrder['items'][number], eggsPerCrate: number, currency: string) {
   const quantity = Number(item.quantity || 0);
   const unitPrice = Number(item.unitPrice || 0);
 
   if (!item.inventoryId || eggsPerCrate <= 0) {
-    return { qty: String(quantity), unit: money(unitPrice) };
+    return { qty: String(quantity), unit: money(unitPrice, currency) };
   }
 
   const crates = Math.floor(quantity / eggsPerCrate);
@@ -55,7 +54,7 @@ function invoiceLine(item: BrowserInvoiceOrder['items'][number], eggsPerCrate: n
 
   return {
     qty: parts.join(' + ') || '0 crates',
-    unit: `${money(unitPrice * eggsPerCrate)} / crate`,
+    unit: `${money(unitPrice * eggsPerCrate, currency)} / crate`,
   };
 }
 
@@ -98,7 +97,7 @@ async function loadLogoDataUrl() {
   }
 }
 
-export async function downloadSalesInvoicePdf(order: BrowserInvoiceOrder, eggsPerCrate = 30) {
+export async function downloadSalesInvoicePdf(order: BrowserInvoiceOrder, eggsPerCrate: number, currency: string) {
   // Load jsPDF only when the user requests a browser-side invoice download.
   const { jsPDF } = await import('jspdf');
   const doc = new jsPDF({ unit: 'pt', format: 'a4' });
@@ -163,7 +162,7 @@ export async function downloadSalesInvoicePdf(order: BrowserInvoiceOrder, eggsPe
   doc.setFontSize(9);
   doc.text('TOTAL RECEIPT', pageWidth - 132, 176, { align: 'center' });
   doc.setFontSize(18);
-  doc.text(compactMoney(grossTotal), pageWidth - 132, 200, { align: 'center' });
+  doc.text(money(grossTotal, currency), pageWidth - 132, 200, { align: 'center' });
 
   const tableTop = 266;
   doc.setFillColor(15, 23, 42);
@@ -192,11 +191,11 @@ export async function downloadSalesInvoicePdf(order: BrowserInvoiceOrder, eggsPe
       doc.rect(48, y - 14, pageWidth - 96, 28, 'F');
     }
 
-    const line = invoiceLine(item, eggsPerCrate);
+    const line = invoiceLine(item, eggsPerCrate, currency);
     doc.text(item.description || 'Sale Item', 62, y, { maxWidth: 200 });
     doc.text(line.qty, 352, y, { align: 'right' });
     doc.text(line.unit, 452, y, { align: 'right' });
-    doc.text(money(Number(item.totalPrice || 0)), pageWidth - 62, y, { align: 'right' });
+    doc.text(money(Number(item.totalPrice || 0), currency), pageWidth - 62, y, { align: 'right' });
     y += 30;
   });
 
@@ -212,11 +211,11 @@ export async function downloadSalesInvoicePdf(order: BrowserInvoiceOrder, eggsPe
 
   doc.setDrawColor(226, 232, 240);
   doc.line(labelX, totalsTop - 18, valueX, totalsTop - 18);
-  row('Line Subtotal', money(subtotal), 0);
-  row('Discount', `-${money(discount)}`, 22);
-  row(`Tax (${Math.round(DEFAULT_TAX_RATE * 100)}% incl.)`, money(taxAmount), 44);
-  row('Taxable Base', money(taxableBase), 66);
-  row('Amount Paid', money(grossTotal), 94, true);
+  row('Line Subtotal', money(subtotal, currency), 0);
+  row('Discount', `-${money(discount, currency)}`, 22);
+  row(`Tax (${Math.round(DEFAULT_TAX_RATE * 100)}% incl.)`, money(taxAmount, currency), 44);
+  row('Taxable Base', money(taxableBase, currency), 66);
+  row('Amount Paid', money(grossTotal, currency), 94, true);
 
   doc.setFillColor(15, 23, 42);
   doc.rect(0, 776, pageWidth, 66, 'F');
@@ -237,12 +236,12 @@ export function normalizeWhatsAppPhone(phone?: string | null) {
   return digits;
 }
 
-export function buildWhatsAppInvoiceUrl(order: BrowserInvoiceOrder) {
+export function buildWhatsAppInvoiceUrl(order: BrowserInvoiceOrder, currency: string) {
   const invoiceNumber = formatInvoiceNumber(order);
   const message = [
     `Poultry Ledger invoice ${invoiceNumber}`,
     `Customer: ${order.customer?.name || 'Walk-in Customer'}`,
-    `Amount: ${compactMoney(Number(order.totalAmount || 0))}`,
+    `Amount: ${money(Number(order.totalAmount || 0), currency)}`,
     `Status: ${String(order.status || 'PENDING').toUpperCase()}`,
     'The PDF invoice has been downloaded on this computer and is ready to attach.'
   ].join('\n');

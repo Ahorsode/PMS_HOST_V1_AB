@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Banknote, Truck, Plus, Trash2, AlertCircle } from 'lucide-react';
 import { updateBatchFinancials } from '@/lib/actions/dashboard-actions';
 import { useRouter } from 'next/navigation';
+import { useMoney } from '@/components/providers/CurrencyProvider'
 
 interface Batch {
   id: string;
@@ -20,6 +21,7 @@ interface MissingCostPromptProps {
 }
 
 export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
+  const money = useMoney()
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -123,7 +125,7 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
             />
             {costPerUnit && Number(costPerUnit) > 0 && (
               <p className="text-xs font-medium text-fg px-1 text-right">
-                Total Purchase Cost: GH₵ {(Number(costPerUnit) * currentBatch.initialCount).toFixed(2)}
+                Total Purchase Cost: {money.format((Number(costPerUnit) * currentBatch.initialCount))}
               </p>
             )}
           </div>
@@ -180,7 +182,7 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
                     <div key={i} className="flex items-center justify-between p-2 rounded-md bg-fg/10 border border-fg/5">
                        <span className="text-xs font-medium text-fg/80">{exp.label}</span>
                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium text-fg">GH₵ {exp.amount}</span>
+                          <span className="text-xs font-medium text-fg">{money.format(exp.amount)}</span>
                           <button aria-label="Remove cost" onClick={() => removeOther(i)} className="text-neg hover:text-neg transition-colors">
                              <Trash2 className="w-3.5 h-3.5" />
                           </button>

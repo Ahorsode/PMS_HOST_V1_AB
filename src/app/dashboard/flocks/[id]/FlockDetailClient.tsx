@@ -3,6 +3,7 @@
 import React, { useMemo } from 'react'
 import dynamic from 'next/dynamic'
 import { cn, formatCurrency } from '@/lib/utils'
+import { useCurrency } from '@/components/providers/CurrencyProvider'
 import { compareNewestFirst } from '@/lib/utils/chronological-sort'
 import { WorkerStamp } from '@/components/ui/WorkerStamp'
 import { Panel, PanelHeader, formatCount, formatShortDate, statusLabel, tone } from '../flock-ui'
@@ -49,6 +50,7 @@ function kindLabel(kind: string | null | undefined, percentage?: number | null) 
 }
 
 export const FlockDetailClient = ({ data, eggsPerCrate = 30 }: FlockDetailClientProps) => {
+  const currency = useCurrency()
   const { batch, logs, metrics, finance, series, forms } = data
   const showEggs = metrics.isLayer || metrics.totalEggs > 0
   const showSales = finance.canViewFinance && (series.salesDaily.length > 0 || finance.totalRevenue > 0)
@@ -96,15 +98,15 @@ export const FlockDetailClient = ({ data, eggsPerCrate = 30 }: FlockDetailClient
       {/* Finance metrics */}
       {finance.canViewFinance ? (
         <StatStrip className="grid-cols-1 sm:grid-cols-3">
-          <Stat title="Total revenue" value={formatCurrency(finance.totalRevenue, 'GHS')} subtext="From sales" />
+          <Stat title="Total revenue" value={formatCurrency(finance.totalRevenue, currency)} subtext="From sales" />
           <Stat
             title="Total expenses"
-            value={formatCurrency(finance.totalExpenses, 'GHS')}
+            value={formatCurrency(finance.totalExpenses, currency)}
             subtext={
               [
-                finance.initialInvestment > 0 ? `${formatCurrency(finance.initialInvestment, 'GHS')} initial` : null,
+                finance.initialInvestment > 0 ? `${formatCurrency(finance.initialInvestment, currency)} initial` : null,
                 finance.consumptionAllocatedTotal > 0
-                  ? `${formatCurrency(finance.consumptionAllocatedTotal, 'GHS')} feed & med`
+                  ? `${formatCurrency(finance.consumptionAllocatedTotal, currency)} feed & med`
                   : null,
                 finance.generalAllocatedTotal > 0 ? `${finance.headcountSharePct}% general` : null,
               ]
@@ -114,7 +116,7 @@ export const FlockDetailClient = ({ data, eggsPerCrate = 30 }: FlockDetailClient
           />
           <Stat
             title="Net profit"
-            value={formatCurrency(finance.netProfit, 'GHS')}
+            value={formatCurrency(finance.netProfit, currency)}
             valueClassName={finance.netProfit >= 0 ? tone.accent : tone.negative}
             subtext={finance.netProfit >= 0 ? 'In profit' : 'In loss'}
           />
@@ -173,7 +175,7 @@ export const FlockDetailClient = ({ data, eggsPerCrate = 30 }: FlockDetailClient
               <div className={cn('flex items-baseline justify-between gap-3 border-t px-5 py-4', tone.hairline)}>
                 <span className={cn('text-[13px]', tone.text2)}>Total</span>
                 <span className={cn('text-base font-medium tabular-nums', tone.text)}>
-                  {formatCurrency(initialInvestment, 'GHS')}
+                  {formatCurrency(initialInvestment, currency)}
                 </span>
               </div>
             </Panel>
@@ -298,18 +300,20 @@ function BreakdownRow({
   meta: React.ReactNode
   amount: number
 }) {
+  const currency = useCurrency()
   return (
     <div className="flex items-start justify-between gap-3 px-5 py-3">
       <div className="min-w-0">
         <p className={cn('truncate text-sm', tone.text)}>{title}</p>
         <p className={cn('mt-0.5 text-xs', tone.muted)}>{meta}</p>
       </div>
-      <span className={cn('shrink-0 text-sm tabular-nums', tone.text)}>{formatCurrency(amount, 'GHS')}</span>
+      <span className={cn('shrink-0 text-sm tabular-nums', tone.text)}>{formatCurrency(amount, currency)}</span>
     </div>
   )
 }
 
 function RevenueBreakdown({ items }: { items?: any[] }) {
+  const currency = useCurrency()
   const rows = Array.isArray(items) ? items : []
   const total = rows.reduce((sum, item) => sum + Number(item.amount || 0), 0)
   return (
@@ -339,7 +343,7 @@ function RevenueBreakdown({ items }: { items?: any[] }) {
         <span className={cn('text-xs', tone.muted)}>
           <span className="font-mono tabular-nums">{rows.length}</span> entr{rows.length === 1 ? 'y' : 'ies'}
         </span>
-        <span className={cn('text-sm font-medium tabular-nums', tone.text)}>{formatCurrency(total, 'GHS')}</span>
+        <span className={cn('text-sm font-medium tabular-nums', tone.text)}>{formatCurrency(total, currency)}</span>
       </div>
     </Panel>
   )
@@ -389,10 +393,11 @@ function MetaItem({ label, value }: { label: string; value: string }) {
 }
 
 function InvestmentRow({ label, value }: { label: string; value: number }) {
+  const currency = useCurrency()
   return (
     <div className="flex items-baseline justify-between gap-4">
       <dt className={cn('text-[13px]', tone.text2)}>{label}</dt>
-      <dd className={cn('text-sm tabular-nums', tone.text)}>{formatCurrency(value, 'GHS')}</dd>
+      <dd className={cn('text-sm tabular-nums', tone.text)}>{formatCurrency(value, currency)}</dd>
     </div>
   )
 }

@@ -296,6 +296,8 @@ model Farm {
   id                    String                 @id @default(cuid())
   name                  String
   location              String?
+  /// ISO 3166-1 alpha-2 code picked at onboarding; sets the farm's currency and plan pricing.
+  country               String?
   capacity              Int
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt

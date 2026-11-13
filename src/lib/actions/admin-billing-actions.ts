@@ -57,7 +57,8 @@ export async function adminGetBillingSettings(): Promise<AdminBillingSettings> {
 
 const PLAN_FIELD_LABELS: Record<string, string> = {
   name: 'name',
-  monthlyPrice: 'monthly price',
+  monthlyPrice: 'monthly price (GHS)',
+  monthlyPriceUsd: 'monthly price (USD)',
   features: 'features',
   staffLimit: 'staff limit',
 }
@@ -86,11 +87,13 @@ export async function adminSaveBillingConfig(input: unknown): Promise<SaveBillin
     return { success: false, error: 'Your admin session has expired. Sign in again.' }
   }
 
-  const parsed = billingConfigSchema.safeParse(input)
-  if (!parsed.success) {
-    const issue = parsed.error.issues[0]
+  const checked = billingConfigSchema.safeParse(input)
+  if (!checked.success) {
+    const issue = checked.error.issues[0]
     return { success: false, error: issue ? describeIssue(issue) : 'Check the plan settings and try again' }
   }
+  // Same rules, with any missing USD price filled from the defaults.
+  const parsed = { data: parseBillingConfig(input)! }
 
   try {
     const row = await prisma.billingSettings.upsert({

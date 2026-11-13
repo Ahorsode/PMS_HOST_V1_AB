@@ -8,7 +8,6 @@ import { getAuthContext } from "@/lib/auth-utils";
 export async function updateFarmSettings(data: {
   eggRecordReminderTime?: string;
   feedRecordReminderTime?: string;
-  currency?: string;
   growthTargetStandard?: number;
   defaultEggUnit?: string;
   allowEggUnitChange?: boolean;
@@ -17,6 +16,9 @@ export async function updateFarmSettings(data: {
 }) {
   const { activeFarmId } = await getAuthContext();
   if (!activeFarmId) throw new Error("No active farm found");
+
+  // The currency follows the farm's country (setFarmCountry), never this form.
+  delete (data as { currency?: unknown }).currency;
 
   const settings = await prisma.farmSettings.upsert({
     where: { farmId: activeFarmId },

@@ -14,7 +14,8 @@ import {
   YAxis,
 } from 'recharts'
 import { ArrowLeft, Check, Eye, EyeOff, Layers } from 'lucide-react'
-import { cn, formatCurrency } from '@/lib/utils'
+import { cn, formatCompactMoney, formatCurrency } from '@/lib/utils'
+import { useCurrency } from '@/components/providers/CurrencyProvider'
 
 type BatchReport = {
   id: string
@@ -74,7 +75,7 @@ type MetricDef = {
   label: string
   short: string
   accessor: (b: BatchReport) => number
-  format: (v: number) => string
+  format: (v: number, currency: string) => string
   benchmark?: number
   lowerIsBetter?: boolean
   finance?: boolean
@@ -88,21 +89,21 @@ const METRICS: Record<MetricKey, MetricDef> = {
     label: 'Net profit',
     short: 'Profit',
     accessor: (b) => b.netProfitability,
-    format: (v) => formatCurrency(v, 'GHS'),
+    format: (v, currency) => formatCurrency(v, currency),
     finance: true,
   },
   revenue: {
     label: 'Revenue',
     short: 'Revenue',
     accessor: (b) => b.totalRevenue,
-    format: (v) => formatCurrency(v, 'GHS'),
+    format: (v, currency) => formatCurrency(v, currency),
     finance: true,
   },
   expenses: {
     label: 'Expenses',
     short: 'Expenses',
     accessor: (b) => b.totalExpenses,
-    format: (v) => formatCurrency(v, 'GHS'),
+    format: (v, currency) => formatCurrency(v, currency),
     lowerIsBetter: true,
     finance: true,
   },
@@ -161,6 +162,7 @@ function plural(count: number, word: string) {
 }
 
 export function BatchComparison({ batches, canViewFinance }: BatchComparisonProps) {
+  const currency = useCurrency()
   const availableMetrics = useMemo<MetricKey[]>(() => {
     const keys = Object.keys(METRICS) as MetricKey[]
     return keys.filter((key) => canViewFinance || !METRICS[key].finance)
@@ -282,11 +284,11 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
         <Stat label="Eggs collected" value={fullNumber.format(totals.eggs)} className={canViewFinance ? 'md:col-span-2 2xl:col-span-1' : undefined} />
         {canViewFinance ? (
           <>
-            <Stat label="Revenue" value={formatCurrency(totals.revenue, 'GHS')} className="col-span-2 md:col-span-2 2xl:col-span-1" />
-            <Stat label="Expenses" value={formatCurrency(totals.expenses, 'GHS')} className="col-span-2 md:col-span-3 2xl:col-span-1" />
+            <Stat label="Revenue" value={formatCurrency(totals.revenue, currency)} className="col-span-2 md:col-span-2 2xl:col-span-1" />
+            <Stat label="Expenses" value={formatCurrency(totals.expenses, currency)} className="col-span-2 md:col-span-3 2xl:col-span-1" />
             <Stat
               label="Net profit"
-              value={formatCurrency(totals.profit, 'GHS')}
+              value={formatCurrency(totals.profit, currency)}
               negative={totals.profit < 0}
               className="col-span-2 md:col-span-3 2xl:col-span-1"
             />
@@ -315,7 +317,7 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
             {canViewFinance ? (
               <LeaderFigure
                 label="Net profit"
-                value={formatCurrency(leader.netProfitability, 'GHS')}
+                value={formatCurrency(leader.netProfitability, currency)}
                 negative={leader.netProfitability < 0}
               />
             ) : null}
@@ -476,12 +478,12 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
                       tick={axisTick}
                       width={56}
                       tickFormatter={(v) =>
-                        metric.finance ? `₵${compactNumber.format(Number(v))}` : compactNumber.format(Number(v))
+                        metric.finance ? formatCompactMoney(v, currency) : compactNumber.format(Number(v))
                       }
                     />
                     <Tooltip
                       cursor={{ fill: 'color-mix(in srgb, var(--fg) 4%, transparent)' }}
-                      content={<MetricTooltip format={metric.format} label={metric.label} />}
+                      content={<MetricTooltip format={(v) => metric.format(v, currency)} label={metric.label} />}
                     />
                     {showBenchmark && metric.benchmark != null ? (
                       <ReferenceLine
@@ -490,7 +492,7 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
                         strokeDasharray="4 4"
                         strokeWidth={1}
                         label={{
-                          value: `Benchmark ${metric.format(metric.benchmark)}`,
+                          value: `Benchmark ${metric.format(metric.benchmark, currency)}`,
                           position: 'insideTopRight',
                           fill: INK.secondary,
                           fontSize: 12,
@@ -559,7 +561,7 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
                           tickLine={false}
                           tick={axisTick}
                           width={60}
-                          tickFormatter={(v) => `₵${compactNumber.format(Number(v))}`}
+                          tickFormatter={(v) => formatCompactMoney(v, currency)}
                         />
                         <Tooltip cursor={{ fill: 'color-mix(in srgb, var(--fg) 4%, transparent)' }} content={<CurrencyTooltip />} />
                         <Bar
@@ -660,7 +662,7 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
               {canViewFinance ? (
                 <DetailStat
                   label="Net profit"
-                  value={formatCurrency(batch.netProfitability, 'GHS')}
+                  value={formatCurrency(batch.netProfitability, currency)}
                   negative={batch.netProfitability < 0}
                 />
               ) : (
@@ -790,6 +792,7 @@ function MetricTooltip({
 }
 
 function CurrencyTooltip({ active, payload, label }: { active?: boolean; payload?: any[]; label?: string }) {
+  const currency = useCurrency()
   if (!active || !payload?.length) return null
   return (
     <div className={tooltipBox}>
@@ -801,7 +804,7 @@ function CurrencyTooltip({ active, payload, label }: { active?: boolean; payload
               <span className="h-2 w-2 rounded-sm" style={{ backgroundColor: item.color || item.fill }} />
               {item.name ?? item.dataKey}
             </span>
-            <span className="font-mono tabular-nums">{formatCurrency(Number(item.value || 0), 'GHS')}</span>
+            <span className="font-mono tabular-nums">{formatCurrency(Number(item.value || 0), currency)}</span>
           </p>
         ))}
       </div>

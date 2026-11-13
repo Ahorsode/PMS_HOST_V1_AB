@@ -1,6 +1,8 @@
 'use server'
 
 import prisma from '@/lib/db'
+import { getFarmCurrency } from '@/lib/farm-currency'
+import { formatMoneyCode } from '@/lib/utils'
 import { revalidatePath } from 'next/cache'
 import { getAuthContext, hasPermission } from '@/lib/auth-utils'
 import { revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
@@ -163,6 +165,7 @@ export async function createOrder(data: {
 }) {
   const { userId, role, activeFarmId, permissions } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
+  const currency = await getFarmCurrency(activeFarmId)
 
   const canRecordLockedSale = role === 'WORKER'
   if (!hasPermission(role, permissions, 'EDIT_SALES') && !canRecordLockedSale) {
@@ -336,11 +339,11 @@ export async function createOrder(data: {
       }
 
       if (isWalkIn && !moneyBalances(totalAmount, cashReceived)) {
-        throw new Error(`Walk-in sales must be paid in full: GHS ${totalAmount.toFixed(2)}`)
+        throw new Error(`Walk-in sales must be paid in full: ${formatMoneyCode(totalAmount, currency)}`)
       }
 
       if (!isCreditSale && !canOverridePrice && !isWalkIn && !isBalanced(totalAmount, cashReceived)) {
-        throw new Error(`Cash received must match the locked sale total of GHS ${totalAmount.toFixed(2)}`)
+        throw new Error(`Cash received must match the locked sale total of ${formatMoneyCode(totalAmount, currency)}`)
       }
 
       const isPaid = cashReceived + MONEY_EPSILON >= totalAmount
@@ -358,7 +361,7 @@ export async function createOrder(data: {
           totalAmount,
           discountAmount: discount,
           cashReceived,
-          currency: 'GHS',
+          currency,
           status: isPaid ? 'PAID' : 'PENDING',
           paymentMethod,
           paymentReference: data.paymentReference?.trim() || null,

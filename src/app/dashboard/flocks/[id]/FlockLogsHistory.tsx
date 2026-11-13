@@ -15,6 +15,7 @@ import {
 import { Dialog, DialogDescription, DialogTitle } from '@/components/ui/Dialog'
 import { WorkerStamp } from '@/components/ui/WorkerStamp'
 import { cn, formatCurrency } from '@/lib/utils'
+import { useCurrency } from '@/components/providers/CurrencyProvider'
 import { ActionButton, segmentClass, tone } from '../flock-ui'
 import { buildBatchLogEntries } from '@/lib/reports/batch-log-entries'
 
@@ -42,6 +43,7 @@ const TYPE_META: Record<Exclude<HistoryType, 'ALL'>, { label: string; icon: Reac
 }
 
 export function FlockLogsHistory({ data }: { data: any }) {
+  const currency = useCurrency()
   const [open, setOpen] = useState(false)
   const [filter, setFilter] = useState<HistoryType>('ALL')
 
@@ -49,8 +51,8 @@ export function FlockLogsHistory({ data }: { data: any }) {
   const canViewFinance = finance?.canViewFinance ?? false
 
   const allEntries = useMemo(
-    () => buildBatchLogEntries(logs, finance?.expenseBreakdown ?? [], canViewFinance),
-    [logs, finance?.expenseBreakdown, canViewFinance]
+    () => buildBatchLogEntries(logs, finance?.expenseBreakdown ?? [], canViewFinance, currency),
+    [logs, finance?.expenseBreakdown, canViewFinance, currency]
   )
 
   const visibleFilters = TYPE_FILTERS.filter(
@@ -147,7 +149,7 @@ export function FlockLogsHistory({ data }: { data: any }) {
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-2">
                     {entry.amount != null ? (
-                      <span className={cn('text-sm tabular-nums', tone.text)}>{formatCurrency(entry.amount, 'GHS')}</span>
+                      <span className={cn('text-sm tabular-nums', tone.text)}>{formatCurrency(entry.amount, currency)}</span>
                     ) : null}
                     {entry.user ? <WorkerStamp user={entry.user} /> : null}
                   </div>

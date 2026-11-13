@@ -1,5 +1,6 @@
 import type { PlanType, SubscriptionTier } from '@prisma/client'
 import { z } from 'zod'
+import type { BillingCurrency } from '@/lib/countries'
 
 export type PaidTier = 'STANDARD' | 'PREMIUM'
 
@@ -34,8 +35,10 @@ export const PLAN_FEATURE_DETAILS: Record<PlanFeature, { label: string; descript
 
 export type PlanConfig = {
   name: string
-  /** Price per month in GHS. */
+  /** Price per month in GHS, paid by farms in Ghana. */
   monthlyPrice: number
+  /** Price per month in USD, paid by farms outside Ghana. */
+  monthlyPriceUsd: number
   features: PlanFeature[]
   /** Staff (non-owner members) allowed; null means unlimited. */
   staffLimit: number | null
@@ -65,12 +68,12 @@ const ALL_FEATURES: PlanFeature[] = [...PLAN_FEATURE_KEYS]
 export const DEFAULT_BILLING_CONFIG: BillingConfig = {
   plans: {
     SOLO: {
-      STANDARD: { name: 'Solo Basic', monthlyPrice: 200, features: ['PDF_INVOICES'], staffLimit: 0 },
-      PREMIUM: { name: 'Solo Plus', monthlyPrice: 330, features: ALL_FEATURES, staffLimit: 0 },
+      STANDARD: { name: 'Solo Basic', monthlyPrice: 200, monthlyPriceUsd: 15, features: ['PDF_INVOICES'], staffLimit: 0 },
+      PREMIUM: { name: 'Solo Plus', monthlyPrice: 330, monthlyPriceUsd: 25, features: ALL_FEATURES, staffLimit: 0 },
     },
     TEAM: {
-      STANDARD: { name: 'Business', monthlyPrice: 350, features: ['PDF_INVOICES'], staffLimit: 4 },
-      PREMIUM: { name: 'Business Plus', monthlyPrice: 470, features: ALL_FEATURES, staffLimit: null },
+      STANDARD: { name: 'Business', monthlyPrice: 350, monthlyPriceUsd: 26, features: ['PDF_INVOICES'], staffLimit: 4 },
+      PREMIUM: { name: 'Business Plus', monthlyPrice: 470, monthlyPriceUsd: 35, features: ALL_FEATURES, staffLimit: null },
     },
   },
   termDiscounts: { '1': 0, '3': 0.05, '6': 0.1, '12': 0.15 },
@@ -91,7 +94,7 @@ export const DEFAULT_BILLING_CONFIG: BillingConfig = {
 const money = z
   .number()
   .refine(Number.isFinite, 'Enter a valid amount')
-  .min(1, 'Prices must be at least GHS 1')
+  .min(1, 'Prices must be at least 1')
   .max(1_000_000, 'Price is too large')
   .transform((value) => Math.round(value * 100) / 100)
 
@@ -104,6 +107,8 @@ const discount = z
 const planConfigSchema = z.object({
   name: z.string().trim().min(1, 'Every plan needs a name').max(40, 'Plan names must be 40 characters or fewer'),
   monthlyPrice: money,
+  // Configs saved before USD pricing existed get the default USD price (see parseBillingConfig).
+  monthlyPriceUsd: money.optional(),
   features: z.array(z.enum(PLAN_FEATURE_KEYS)).transform((features) => PLAN_FEATURE_KEYS.filter((key) => features.includes(key))),
   staffLimit: z.number().int('Staff limits must be whole numbers').min(0).max(1000).nullable(),
 })
@@ -154,7 +159,15 @@ export const billingConfigSchema = z.object({
 /** Validates a stored or submitted config; null when it does not match the schema. */
 export function parseBillingConfig(value: unknown): BillingConfig | null {
   const parsed = billingConfigSchema.safeParse(value)
-  return parsed.success ? parsed.data : null
+  if (!parsed.success) return null
+  const withUsd = (planType: PlanType) =>
+    Object.fromEntries(
+      PAID_TIERS.map((tier) => {
+        const plan = parsed.data.plans[planType][tier]
+        return [tier, { ...plan, monthlyPriceUsd: plan.monthlyPriceUsd ?? DEFAULT_BILLING_CONFIG.plans[planType][tier].monthlyPriceUsd }]
+      }),
+    ) as Record<PaidTier, PlanConfig>
+  return { ...parsed.data, plans: { SOLO: withUsd('SOLO'), TEAM: withUsd('TEAM') } }
 }
 
 export const DAYS_PER_BILLING_MONTH = 30
@@ -196,15 +209,20 @@ export function staffLimitLabel(planType: PlanType, staffLimit: number | null) {
   return `Up to ${staffLimit} staff`
 }
 
+/** A plan's monthly price in the currency the farm pays in: GHS in Ghana, USD elsewhere. */
+export function planMonthlyPrice(plan: PlanConfig, currency: BillingCurrency) {
+  return currency === 'USD' ? plan.monthlyPriceUsd : plan.monthlyPrice
+}
+
 /** "Solo Basic GHS 200 or Solo Plus GHS 330 a month" for a plan type. */
-export function planTypePriceSummary(config: BillingConfig, planType: PlanType) {
+export function planTypePriceSummary(config: BillingConfig, planType: PlanType, currency: BillingCurrency) {
   const [standard, premium] = PAID_TIERS.map((tier) => config.plans[planType][tier])
-  return `${standard.name} ${formatGhs(standard.monthlyPrice)} or ${premium.name} ${formatGhs(premium.monthlyPrice)} a month`
+  return `${standard.name} ${formatPlanPrice(planMonthlyPrice(standard, currency), currency)} or ${premium.name} ${formatPlanPrice(planMonthlyPrice(premium, currency), currency)} a month`
 }
 
 /** Cheapest monthly price for a plan type, for "From GHS …" copy. */
-export function lowestMonthlyPrice(config: BillingConfig, planType: PlanType) {
-  return Math.min(...PAID_TIERS.map((tier) => config.plans[planType][tier].monthlyPrice))
+export function lowestMonthlyPrice(config: BillingConfig, planType: PlanType, currency: BillingCurrency) {
+  return Math.min(...PAID_TIERS.map((tier) => planMonthlyPrice(config.plans[planType][tier], currency)))
 }
 
 export function termDiscount(config: BillingConfig, months: number) {
@@ -216,9 +234,10 @@ export function normalizeTermMonths(months: number): TermMonths {
 }
 
 /**
- * Checkout total for a plan and term. `extraDiscountPercents` are applied after
- * the term discount, one after another (e.g. a farm's custom discount, then a
- * promo code), and the result is rounded to the pesewa.
+ * Checkout total for a plan and term in the farm's billing currency.
+ * `extraDiscountPercents` are applied after the term discount, one after
+ * another (e.g. a farm's custom discount, then a promo code), and the result
+ * is rounded to the pesewa or cent.
  */
 export function calculateUpgradeTotal(
   config: BillingConfig,
@@ -226,8 +245,9 @@ export function calculateUpgradeTotal(
   tier: PaidTier,
   months: number,
   extraDiscountPercents: number[] = [],
+  currency: BillingCurrency = 'GHS',
 ) {
-  const monthly = config.plans[planType][tier].monthlyPrice
+  const monthly = planMonthlyPrice(config.plans[planType][tier], currency)
   const discount = termDiscount(config, months)
   const subtotal = monthly * months
   const afterTerm = subtotal * (1 - discount)
@@ -239,12 +259,20 @@ export function isOfferedTerm(config: BillingConfig, months: number) {
   return (config.offeredTerms as number[]).includes(months)
 }
 
-/** Formats a GHS amount without trailing zeros, e.g. "GHS 1,000" or "GHS 997.50". */
-export function formatGhs(amount: number) {
-  return `GHS ${amount.toLocaleString('en-GH', { minimumFractionDigits: Number.isInteger(amount) ? 0 : 2, maximumFractionDigits: 2 })}`
+/** Formats a plan price without trailing zeros, e.g. "GHS 1,000", "GHS 997.50" or "$26". */
+export function formatPlanPrice(amount: number, currency: BillingCurrency) {
+  const digits = { minimumFractionDigits: Number.isInteger(amount) ? 0 : 2, maximumFractionDigits: 2 }
+  return currency === 'USD' ? `$${amount.toLocaleString('en-US', digits)}` : `GHS ${amount.toLocaleString('en-GH', digits)}`
 }
 
-/** Paystack amounts are in the currency's subunit (pesewas for GHS). */
-export function toPesewas(amountGhs: number) {
-  return Math.round(amountGhs * 100)
+/** Formats a GHS amount without trailing zeros, e.g. "GHS 1,000" or "GHS 997.50". */
+export function formatGhs(amount: number) {
+  return formatPlanPrice(amount, 'GHS')
 }
+
+/** Paystack amounts are in the currency's subunit (pesewas for GHS, cents for USD). */
+export function toMinorUnits(amount: number) {
+  return Math.round(amount * 100)
+}
+
+export const toPesewas = toMinorUnits

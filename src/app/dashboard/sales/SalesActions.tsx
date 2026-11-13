@@ -11,6 +11,7 @@ import { MutationBoundary } from '@/components/ui/MutationFeedback';
 import { buildWhatsAppInvoiceUrl, downloadSalesInvoicePdf } from '@/lib/invoices/browser-invoice';
 import { useRouter } from 'next/navigation';
 import { toLocalDateTimeInputValue } from '@/lib/financial-dates';
+import { useMoney } from '@/components/providers/CurrencyProvider'
 
 export function SalesActionsHeader({ customers, inventory, eggInventory, eggBatchStock = [], fifoEggAvailability = { totalEggs: 0, byCategoryId: {} }, livestock, eggsPerCrate = 30, initialLivestockId, initialOpen = false, canEdit = true, canOverridePrice = false, allowBatchOverride = false, allowWorkerDiscounts = false, defaultDiscountType = 'item' }: { 
   customers: any[], 
@@ -74,6 +75,7 @@ export function SalesActionsHeader({ customers, inventory, eggInventory, eggBatc
 }
 
 export function SalesRowActions({ order, canEdit = true, canRecordPayment = false, eggsPerCrate = 30 }: { order: any, canEdit?: boolean, canRecordPayment?: boolean, eggsPerCrate?: number }) {
+  const money = useMoney()
   const router = useRouter();
   const [updatingAction, setUpdatingAction] = useState<'completed' | 'cancelled' | 'payment' | 'whatsapp' | null>(null);
   const [isDownloadingInvoice, setIsDownloadingInvoice] = useState(false);
@@ -103,7 +105,7 @@ export function SalesRowActions({ order, canEdit = true, canRecordPayment = fals
     setIsDownloadingInvoice(true);
     toast.info('Generating invoice PDF...');
     try {
-      await downloadSalesInvoicePdf(order, eggsPerCrate);
+      await downloadSalesInvoicePdf(order, eggsPerCrate, money.currency);
       toast.success('Invoice downloaded');
     } catch (e: any) {
       toast.error(e?.message || 'Unexpected error generating PDF');
@@ -116,8 +118,8 @@ export function SalesRowActions({ order, canEdit = true, canRecordPayment = fals
     if (updatingAction || isDownloadingInvoice) return;
     setUpdatingAction('whatsapp');
     try {
-      await downloadSalesInvoicePdf(order, eggsPerCrate);
-      window.open(buildWhatsAppInvoiceUrl(order), '_blank', 'noopener,noreferrer');
+      await downloadSalesInvoicePdf(order, eggsPerCrate, money.currency);
+      window.open(buildWhatsAppInvoiceUrl(order, money.currency), '_blank', 'noopener,noreferrer');
       toast.success('Invoice downloaded. WhatsApp Web is opening.');
     } catch (e: any) {
       toast.error(e?.message || 'Failed to prepare WhatsApp invoice');
@@ -218,11 +220,11 @@ export function SalesRowActions({ order, canEdit = true, canRecordPayment = fals
         <form onSubmit={handleRecordPayment} className="space-y-5">
            <div className="p-5 bg-fg/[0.04] rounded-md border border-fg/[0.08] mb-3">
               <p className="text-xs font-medium text-fg mb-1">Customer owed balance</p>
-              <p className="text-2xl font-medium text-fg tracking-normal">GHS {Number(order.customer?.balanceOwed || 0).toLocaleString()}</p>
+              <p className="text-2xl font-medium text-fg tracking-normal">{money.format(Number(order.customer?.balanceOwed || 0))}</p>
            </div>
 
            <div className="space-y-2">
-              <label className="text-xs font-medium text-fg/70 px-1">Payment amount (GHS)</label>
+              <label className="text-xs font-medium text-fg/70 px-1">Payment amount ({money.currency})</label>
               <input 
                 type="number"
                 step="0.01"

@@ -1,6 +1,8 @@
 'use server'
 
 import prisma from '@/lib/db'
+import { getFarmCurrency } from '@/lib/farm-currency'
+import { formatMoneyCode } from '@/lib/utils'
 import { revalidatePath } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
@@ -252,7 +254,7 @@ async function insertFinancialTransactionRecord(data: {
         attributeName: 'all',
         newValue: JSON.stringify(transaction),
         actionType: 'FINANCIAL_TRANSACTION_CREATED',
-        description: `Logged ${data.type.toLowerCase()} of GH₵ ${data.amount} under ${data.category}`,
+        description: `Logged ${data.type.toLowerCase()} of ${formatMoneyCode(data.amount, await getFarmCurrency(activeFarmId))} under ${data.category}`,
         userId: userId,
         farmId: activeFarmId
       }
@@ -321,7 +323,7 @@ export async function settleTransaction(id: string, referenceNum?: string) {
         oldValue: existing.paymentStatus,
         newValue: 'PAID',
         actionType: 'FINANCIAL_TRANSACTION_SETTLED',
-        description: `Settled outstanding transaction #${id} of GH₵ ${existing.amount}`,
+        description: `Settled outstanding transaction #${id} of ${formatMoneyCode(Number(existing.amount), await getFarmCurrency(activeFarmId))}`,
         userId: userId,
         farmId: activeFarmId
       }

@@ -21,7 +21,8 @@ function formatDateTime(value: string | null) {
   return new Intl.DateTimeFormat('en-GH', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(value))
 }
 
-const ghs = (amount: number) => `GHS ${amount.toLocaleString('en-GH', { maximumFractionDigits: 2 })}`
+const money = (amount: number, currency: 'GHS' | 'USD') =>
+  currency === 'USD' ? `$${amount.toLocaleString('en-US', { maximumFractionDigits: 2 })}` : `GHS ${amount.toLocaleString('en-GH', { maximumFractionDigits: 2 })}`
 
 /** Paystack checkouts: paid, in progress or never completed, with re-check and refunds. */
 export default function OnlinePaymentsPanel({ payments, paystackConfigured }: { payments: OnlinePaymentRow[]; paystackConfigured: boolean }) {
@@ -81,11 +82,11 @@ export default function OnlinePaymentsPanel({ payments, paystackConfigured }: { 
                   <p className="flex flex-wrap items-center gap-2">
                     <Link href={`/admin/farms/${payment.farmId}`} className="font-semibold text-white hover:underline">{payment.farmName}</Link>
                     <span className={cn('rounded-full border px-2 py-0.5 text-[11px] font-semibold', STATUS[payment.status].className)}>{STATUS[payment.status].label}</span>
-                    {payment.refunded > 0 ? <span className="text-xs text-red-300">Refunded {ghs(payment.refunded)}</span> : null}
+                    {payment.refunded > 0 ? <span className="text-xs text-red-300">Refunded {money(payment.refunded, payment.currency)}</span> : null}
                   </p>
                   <p className="text-sm text-zinc-300">
                     {payment.planType === 'SOLO' ? 'Solo' : 'Team'} {payment.tier.toLowerCase()} · {payment.months} {payment.months === 1 ? 'month' : 'months'} ·{' '}
-                    <span className="font-semibold">{ghs(payment.amount)}</span>
+                    <span className="font-semibold">{money(payment.amount, payment.currency)}</span>
                     {payment.promoCode ? <span className="text-emerald-300"> · promo {payment.promoCode}</span> : null}
                   </p>
                   <p className="font-mono text-[11px] text-zinc-500">
@@ -112,6 +113,7 @@ export default function OnlinePaymentsPanel({ payments, paystackConfigured }: { 
               {refundFor === payment.reference ? (
                 <RefundForm
                   maxAmount={payment.amount - payment.refunded}
+                  currency={payment.currency}
                   disabled={isPending}
                   onCancel={() => setRefundFor(null)}
                   onSubmit={(amount, reason) => run(() => adminRecordRefund({ kind: 'paystack', id: payment.reference, amount, reason }), 'Refund recorded')}

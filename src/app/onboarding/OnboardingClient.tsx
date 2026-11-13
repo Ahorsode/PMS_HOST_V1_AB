@@ -8,6 +8,8 @@ import { ArrowRight, User, Users } from 'lucide-react';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
+import { CountrySelect } from '@/components/ui/CountrySelect';
+import { billingCurrencyForCountry, countryName, currencyForCountry } from '@/lib/countries';
 
 const planTypes = [
   {
@@ -27,17 +29,22 @@ const planTypes = [
 export default function OnboardingClient({
   priceLabels,
 }: {
-  /** "From GHS 200 / month" per plan type, from the admin-set prices. */
-  priceLabels: Record<'SOLO' | 'TEAM', string>;
+  /** "From GHS 200 / month" per plan type, in cedis (Ghana) and dollars (elsewhere). */
+  priceLabels: Record<'GHS' | 'USD', Record<'SOLO' | 'TEAM', string>>;
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [planType, setPlanType] = useState<'SOLO' | 'TEAM' | null>(null);
+  const [country, setCountry] = useState('');
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (isLoading) return;
+    if (!country) {
+      setError('Select the country your farm is in.');
+      return;
+    }
     if (!planType) {
       setError('Choose whether you will use Poultry Ledger alone or with a team.');
       return;
@@ -51,7 +58,7 @@ export default function OnboardingClient({
     const capacity = parseInt(formData.get('capacity') as string);
 
     try {
-      const result = await onboardFarmer({ name, location, capacity, planType });
+      const result = await onboardFarmer({ name, location, capacity, country, planType });
       if (result.success) {
         router.push('/dashboard');
       } else {
@@ -94,11 +101,25 @@ export default function OnboardingClient({
                   placeholder="e.g. Green Valley Farm"
                   disabled={isLoading}
                 />
+                <CountrySelect
+                  value={country}
+                  onChange={(code) => {
+                    setCountry(code);
+                    setError(null);
+                  }}
+                  required
+                  disabled={isLoading}
+                  hint={
+                    country
+                      ? `Sales, expenses and reports will be shown in ${currencyForCountry(country)}.`
+                      : 'Sets the currency your sales, expenses and reports are shown in.'
+                  }
+                />
                 <Input 
-                  label="Location"
+                  label="Town or city"
                   name="location"
                   required
-                  placeholder="e.g. Kumasi, Ghana"
+                  placeholder={country ? `e.g. a town in ${countryName(country)}` : 'e.g. Kumasi'}
                   disabled={isLoading}
                 />
                 <Input 
@@ -137,7 +158,10 @@ export default function OnboardingClient({
                           {option.label}
                         </span>
                         <span className="text-xs leading-5 text-white/70">{option.description}</span>
-                        <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-300/90">{priceLabels[option.value]}</span>
+                        {/* Plans cost cedis in Ghana and dollars elsewhere, so the price waits for the country. */}
+                        {country ? (
+                          <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-300/90">{priceLabels[billingCurrencyForCountry(country)][option.value]}</span>
+                        ) : null}
                       </button>
                     );
                   })}

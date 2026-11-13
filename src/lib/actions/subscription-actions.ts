@@ -10,8 +10,9 @@ import {
   isPlanType,
   planName,
   PLAN_TYPE_LABELS,
-  toPesewas,
+  toMinorUnits,
 } from '@/lib/billing/pricing'
+import { getFarmMoney } from '@/lib/farm-currency'
 import {
   createPaystackReference,
   initializePaystackTransaction,
@@ -27,10 +28,11 @@ import { PlanType, SubscriptionTier } from '@prisma/client'
 
 /**
  * Works out the price a farm pays: plan price, term discount, the farm's custom
- * discount, then a promo code if one was entered.
+ * discount, then a promo code if one was entered. Farms in Ghana pay in cedis;
+ * everyone else pays in US dollars.
  */
 async function priceCheckout(farmId: string, planType: PlanType, tier: 'STANDARD' | 'PREMIUM', months: number, promoCode?: string) {
-  const config = await getBillingConfig()
+  const [config, { billingCurrency: currency }] = await Promise.all([getBillingConfig(), getFarmMoney(farmId)])
   if (!isOfferedTerm(config, months)) {
     return { ok: false as const, error: 'That payment term is not offered. Choose another term.' }
   }
@@ -43,8 +45,8 @@ async function priceCheckout(farmId: string, planType: PlanType, tier: 'STANDARD
   }
 
   const farmDiscountPercent = await getFarmDiscountPercent(farmId)
-  const pricing = calculateUpgradeTotal(config, planType, tier, months, [farmDiscountPercent, promo?.percentOff ?? 0])
-  return { ok: true as const, config, pricing, promo, farmDiscountPercent }
+  const pricing = calculateUpgradeTotal(config, planType, tier, months, [farmDiscountPercent, promo?.percentOff ?? 0], currency)
+  return { ok: true as const, config, pricing, promo, farmDiscountPercent, currency }
 }
 
 /** Checks a promo code for the upgrade page before checkout; the checkout re-checks it. */
@@ -76,9 +78,13 @@ export async function requestSubscriptionUpgrade(planType: PlanType, tier: Subsc
 
   const priced = await priceCheckout(activeFarmId, planType, tier, months, promoCode)
   if (!priced.ok) return { success: false, error: priced.error }
-  const { config, pricing, promo, farmDiscountPercent } = priced
+  const { config, pricing, promo, farmDiscountPercent, currency } = priced
   if (!config.manualPayment.enabled) {
     return { success: false, error: 'Mobile Money payment is not available right now. Please pay online.' }
+  }
+  // Mobile Money is paid in cedis, so it is only offered to farms in Ghana.
+  if (currency !== 'GHS') {
+    return { success: false, error: 'Mobile Money is only available for farms in Ghana. Please pay online by card.' }
   }
   const normalizedMonths = months
 
@@ -160,9 +166,9 @@ export async function startPaystackCheckout(planType: PlanType, tier: Subscripti
 
   const priced = await priceCheckout(activeFarmId, planType, tier, months, promoCode)
   if (!priced.ok) return { success: false, error: priced.error }
-  const { pricing, promo, farmDiscountPercent } = priced
+  const { pricing, promo, farmDiscountPercent, currency } = priced
   const normalizedMonths = months
-  const amountPesewas = toPesewas(pricing.total)
+  const amountPesewas = toMinorUnits(pricing.total)
   const reference = createPaystackReference()
 
   try {
@@ -190,7 +196,7 @@ export async function startPaystackCheckout(planType: PlanType, tier: Subscripti
           planType,
           months: normalizedMonths,
           amountPesewas,
-          currency: 'GHS',
+          currency,
           monthlyPrice: pricing.monthly,
           discount: pricing.discount,
           farmDiscountPercent,
@@ -204,6 +210,7 @@ export async function startPaystackCheckout(planType: PlanType, tier: Subscripti
     const checkout = await initializePaystackTransaction({
       email,
       amountPesewas,
+      currency,
       reference,
       callbackUrl: `${appUrl}/api/payments/paystack/callback`,
       metadata: {

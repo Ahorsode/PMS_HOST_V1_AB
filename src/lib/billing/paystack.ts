@@ -54,7 +54,9 @@ export function createPaystackReference() {
 
 export async function initializePaystackTransaction(input: {
   email: string
+  /** Amount in the currency's subunit: pesewas for GHS, cents for USD. */
   amountPesewas: number
+  currency: 'GHS' | 'USD'
   reference: string
   callbackUrl: string
   metadata: Record<string, unknown>
@@ -66,10 +68,11 @@ export async function initializePaystackTransaction(input: {
       body: JSON.stringify({
         email: input.email,
         amount: input.amountPesewas,
-        currency: 'GHS',
+        currency: input.currency,
         reference: input.reference,
         callback_url: input.callbackUrl,
-        channels: ['mobile_money', 'card', 'bank_transfer'],
+        // Mobile Money and bank transfer are cedi-only; dollar checkouts are by card.
+        channels: input.currency === 'GHS' ? ['mobile_money', 'card', 'bank_transfer'] : ['card'],
         metadata: input.metadata,
       }),
     },

@@ -3,7 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Home, Settings as SettingsIcon, Bell, Shield, Plus, Loader2, Save, CheckCircle2, Monitor, Trash2, Egg, ShoppingCart, SlidersHorizontal, Coins, ChartColumn, Wheat } from 'lucide-react';
-import { updateFarmInfo, createHouse } from '@/lib/actions/dashboard-actions';
+import { updateFarmInfo, createHouse, setFarmCountry } from '@/lib/actions/dashboard-actions';
+import { CountrySelect } from '@/components/ui/CountrySelect';
+import { countryName, currencyForCountry } from '@/lib/countries';
 import { updateFarmSettings, getFarmSettings, getSalesSettings, updateSalesSettings } from '@/lib/actions/preference-actions';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -26,9 +28,10 @@ interface InventoryItem {
 interface SettingsContentProps {
   farm: any;
   inventory?: InventoryItem[];
+  isFarmOwner?: boolean;
 }
 
-export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) {
+export function SettingsContent({ farm, inventory = [], isFarmOwner = false }: SettingsContentProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const activeTabFromUrl = searchParams.get('tab') || 'farm';
@@ -54,7 +57,8 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
   // Preference states
   const [eggReminderTime, setEggReminderTime] = useState('18:00');
   const [feedReminderTime, setFeedReminderTime] = useState('18:00');
-  const [currency, setCurrency] = useState('GHS');
+  const savedCountry: string = farm?.country ?? '';
+  const [country, setCountry] = useState<string>(savedCountry);
   const [growthTarget, setGrowthTarget] = useState<number | undefined>();
   const [defaultEggUnit, setDefaultEggUnit] = useState<'crate' | 'individual'>('crate');
   const [allowEggUnitChange, setAllowEggUnitChange] = useState(false);
@@ -90,7 +94,6 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
       if (settings) {
         setEggReminderTime(settings.eggRecordReminderTime || '18:00');
         setFeedReminderTime(settings.feedRecordReminderTime || '18:00');
-        setCurrency(settings.currency || 'GHS');
         setGrowthTarget(settings.growthTargetStandard ?? undefined);
         setDefaultEggUnit(settings.defaultEggUnit === 'individual' ? 'individual' : 'crate');
         setAllowEggUnitChange(settings.allowEggUnitChange ?? false);
@@ -158,8 +161,15 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
 
   const handleSaveFarmDefaults = () =>
     saveSection('farm-defaults', 'Farm defaults', () =>
-      updateFarmSettings({ currency, growthTargetStandard: growthTarget }),
+      updateFarmSettings({ growthTargetStandard: growthTarget }),
     );
+
+  const handleSaveCountry = () =>
+    saveSection('country', 'Country', async () => {
+      const result = await setFarmCountry(country);
+      if (!result.success) throw new Error(result.error);
+      router.refresh();
+    });
 
   const handleSaveReminders = () =>
     saveSection('reminders', 'Reminder times', () =>
@@ -308,19 +318,40 @@ export function SettingsContent({ farm, inventory = [] }: SettingsContentProps) 
                   <div className="flex items-center gap-2 text-fg/70"><Loader2 className="animate-spin w-4 h-4" /> Loading…</div>
                 ) : (
                   <div className="space-y-5">
-                    <div className="p-4 rounded-md bg-fg/[0.06] border border-fg/[0.08] space-y-2">
-                      <p className="flex items-center gap-2 text-sm font-medium text-fg-2"><Coins className="w-4 h-4" aria-hidden="true" /> Farm currency</p>
-                      <p className="text-xs text-fg/70">Used for sales, orders, and financial reporting.</p>
-                      <select
-                        value={currency}
-                        onChange={e => setCurrency(e.target.value)}
-                        className="bg-fg/[0.04] border border-fg/10 text-fg rounded-md px-3 py-2 text-sm font-medium focus:outline-none focus:border-fg/[0.08] focus:ring-1 focus:ring-fg/10"
-                      >
-                        <option value="GHS">Ghanaian cedi (GHS)</option>
-                        <option value="USD">US dollar (USD)</option>
-                        <option value="NGN">Nigerian naira (NGN)</option>
-                        <option value="KES">Kenyan shilling (KES)</option>
-                      </select>
+                    <div className="p-4 rounded-md bg-fg/[0.06] border border-fg/[0.08] space-y-3">
+                      <p className="flex items-center gap-2 text-sm font-medium text-fg-2"><Coins className="w-4 h-4" aria-hidden="true" /> Country and currency</p>
+                      <p className="text-xs text-fg/70">
+                        Money across the app (sales, expenses, reports and invoices) is shown in your country&apos;s currency.
+                        Plans are priced in Ghana cedis in Ghana and in US dollars elsewhere.
+                      </p>
+                      {isFarmOwner ? (
+                        <>
+                          <CountrySelect
+                            id="farm-country"
+                            label="Farm country"
+                            value={country}
+                            onChange={setCountry}
+                            hint={
+                              country && country !== savedCountry
+                                ? `Money will be shown in ${currencyForCountry(country)}. Amounts already recorded keep their numbers; they are not converted.`
+                                : undefined
+                            }
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleSaveCountry}
+                            isLoading={savingSection === 'country'}
+                            disabled={!country || country === savedCountry}
+                          >
+                            Save country
+                          </Button>
+                        </>
+                      ) : (
+                        <p className="text-sm font-medium text-fg">
+                          {savedCountry ? `${countryName(savedCountry)} · ${currencyForCountry(savedCountry)}` : 'Not set'}
+                        </p>
+                      )}
                     </div>
 
                     <div className="p-4 rounded-md bg-fg/[0.04] border border-fg/[0.08] space-y-2">

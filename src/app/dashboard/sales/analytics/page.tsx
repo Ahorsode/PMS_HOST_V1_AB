@@ -6,9 +6,14 @@ import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { formatDate, formatCurrency } from '@/lib/utils';
 import Link from 'next/link';
 import { MobileCardList } from '@/components/ui/MobileCardList';
+import { getFarmCurrency } from '@/lib/farm-currency';
+import { getAuthContext } from '@/lib/auth-utils';
 
 export default async function SalesAnalyticsPage() {
-  const sales = await getGlobalSalesStats();
+  const [sales, currency] = await Promise.all([
+    getGlobalSalesStats(),
+    getAuthContext().then((context) => getFarmCurrency(context.activeFarmId)),
+  ]);
   const totalRevenue = sales.reduce((acc: number, s: any) => acc + s.totalAmount, 0);
   const avgOrderValue = sales.length > 0 ? (totalRevenue / sales.length) : 0;
 
@@ -22,8 +27,8 @@ export default async function SalesAnalyticsPage() {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <MetricBox title="Total revenue" value={formatCurrency(totalRevenue)} icon={Banknote} color="text-fg" bgColor="bg-fg/[0.04]" />
-        <MetricBox title="Avg. order value" value={formatCurrency(avgOrderValue)} icon={TrendingUp} color="text-fg" bgColor="bg-fg/[0.04]" />
+        <MetricBox title="Total revenue" value={formatCurrency(totalRevenue, currency)} icon={Banknote} color="text-fg" bgColor="bg-fg/[0.04]" />
+        <MetricBox title="Avg. order value" value={formatCurrency(avgOrderValue, currency)} icon={TrendingUp} color="text-fg" bgColor="bg-fg/[0.04]" />
         <MetricBox title="Total transactions" value={sales.length.toString()} icon={ShoppingBag} color="text-fg" bgColor="bg-fg/[0.04]" />
       </div>
 
@@ -36,7 +41,7 @@ export default async function SalesAnalyticsPage() {
             getKey={(sale: any) => sale.id}
             title={(sale: any) => sale.customerName || 'Walk-in Customer'}
             subtitle={(sale: any, index: number) => `${formatDate(sale.saleDate)} · Order ${index + 1}`}
-            badge={(sale: any) => <span className="text-fg font-medium text-sm">{formatCurrency(sale.totalAmount)}</span>}
+            badge={(sale: any) => <span className="text-fg font-medium text-sm">{formatCurrency(sale.totalAmount, currency)}</span>}
             fields={(sale: any) => [
               { label: 'Items', value: sale.items?.length || 0 },
             ]}
@@ -74,7 +79,7 @@ export default async function SalesAnalyticsPage() {
                          <span className="text-fg/70 font-medium text-sm tracking-normal">{sale.items?.length || 0}</span>
                       </td>
                       <td className="px-7 py-5 text-right">
-                         <span className="text-fg font-medium text-lg tracking-normal">{formatCurrency(sale.totalAmount)}</span>
+                         <span className="text-fg font-medium text-lg tracking-normal">{formatCurrency(sale.totalAmount, currency)}</span>
                       </td>
                       <td className="px-7 py-5 text-right">
                          <Link 

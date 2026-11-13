@@ -12,8 +12,9 @@ export type PaystackCheckoutRecord = {
   planType: PlanType
   tier: PaidTier
   months: number
+  /** Amount in the currency's subunit (pesewas or cents). */
   amountPesewas: number
-  currency: 'GHS'
+  currency: 'GHS' | 'USD'
 }
 
 export type FulfillmentResult =
@@ -28,7 +29,7 @@ function readCheckoutRecord(metadata: unknown): PaystackCheckoutRecord | null {
     !isPaidTier(record.tier) ||
     typeof record.months !== 'number' ||
     typeof record.amountPesewas !== 'number' ||
-    record.currency !== 'GHS'
+    (record.currency !== 'GHS' && record.currency !== 'USD')
   ) {
     return null
   }
@@ -39,7 +40,7 @@ function readCheckoutRecord(metadata: unknown): PaystackCheckoutRecord | null {
     tier: record.tier,
     months: record.months,
     amountPesewas: record.amountPesewas,
-    currency: 'GHS',
+    currency: record.currency,
   }
 }
 

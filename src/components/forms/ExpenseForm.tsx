@@ -27,6 +27,7 @@ import {
 } from '@/lib/actions/expense-actions'
 import { toLocalDateTimeInputValue } from '@/lib/financial-dates'
 import { cn } from '@/lib/utils'
+import { useMoney } from '@/components/providers/CurrencyProvider'
 
 const CATEGORIES = [
   'FEED',
@@ -75,14 +76,8 @@ function toNumber(value: string) {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
-function formatMoney(value: number) {
-  return value.toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
-}
-
 export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
+  const money = useMoney()
   const [loading, setLoading] = useState(false)
   const [batchesLoading, setBatchesLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -144,8 +139,8 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
     }
 
     const delta = baseAmount - allocationTotal
-    if (amountBalanced) return { tone: 'success', label: `Balanced at GH₵ ${formatMoney(baseAmount)}` }
-    return { tone: 'error', label: `GH₵ ${formatMoney(Math.abs(delta))} ${delta > 0 ? 'remaining' : 'over'}` }
+    if (amountBalanced) return { tone: 'success', label: `Balanced at ${money.format(baseAmount)}` }
+    return { tone: 'error', label: `${money.format(Math.abs(delta))} ${delta > 0 ? 'remaining' : 'over'}` }
   }, [
     allocateAcrossBatches,
     allocationMode,
@@ -239,7 +234,7 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
                 </div>
 
                 <div className="space-y-2">
-                  <FieldLabel icon={CircleDollarSign} label="Amount (GHS)" />
+                  <FieldLabel icon={CircleDollarSign} label={`Amount (${money.currency})`} />
                   <Input
                     name="amount"
                     type="number"
@@ -412,7 +407,7 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
                                   className="bg-fg/[0.04] border-fg/10 rounded-md text-fg pr-10 placeholder:text-fg/50"
                                 />
                                 <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-fg/40">
-                                  {allocationMode === 'PERCENTAGE' ? '%' : '₵'}
+                                  {allocationMode === 'PERCENTAGE' ? '%' : money.symbol}
                                 </span>
                               </div>
 

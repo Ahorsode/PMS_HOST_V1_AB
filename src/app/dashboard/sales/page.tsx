@@ -5,6 +5,7 @@ import { getAllInventory, getSellableEggInventory, getActiveBatchEggStock, getEg
 import { getAllBatches } from '@/lib/actions/dashboard-actions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { formatCurrency } from '@/lib/utils';
+import { getFarmCurrency } from '@/lib/farm-currency';
 import { Banknote, ShoppingCart, Users, TrendingUp, Clock, CheckCircle2, XCircle } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { SalesRowActions, SalesActionsHeader } from './SalesActions';
@@ -107,7 +108,8 @@ type SalesOrder = ReturnType<typeof normalizeOrder>;
 export default async function SalesPage({ searchParams }: { searchParams: Promise<{ sellBatchId?: string; quick?: string }> }) {
   const hasAccess = await checkWorkerPermissions('sales', 'view');
   const canEdit = await checkWorkerPermissions('sales', 'edit');
-  const { role } = await getAuthContext();
+  const { role, activeFarmId } = await getAuthContext();
+  const currency = await getFarmCurrency(activeFarmId);
   const canOverridePrice = role === 'OWNER' || role === 'MANAGER';
   const canCreateSale = canEdit;
   const canRecordPayment = role === 'OWNER' || role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER' || role === 'CASHIER';
@@ -240,8 +242,8 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
     .slice(0, 5);
 
   const stats = [
-    { name: 'Total Revenue', value: formatCurrency(totalRevenue), icon: Banknote, color: 'text-fg', bg: 'bg-fg/[0.04]' },
-    { name: 'Net Revenue', value: formatCurrency(netRevenue), icon: TrendingUp, color: 'text-fg-2', bg: 'bg-fg/[0.06]' },
+    { name: 'Total Revenue', value: formatCurrency(totalRevenue, currency), icon: Banknote, color: 'text-fg', bg: 'bg-fg/[0.04]' },
+    { name: 'Net Revenue', value: formatCurrency(netRevenue, currency), icon: TrendingUp, color: 'text-fg-2', bg: 'bg-fg/[0.06]' },
     { name: 'Active Orders', value: orders.length, icon: ShoppingCart, color: 'text-fg-2', bg: 'bg-fg/[0.06]' },
     { name: 'Pending', value: pendingOrders, icon: Clock, color: 'text-fg', bg: 'bg-fg/[0.04]' },
   ];
@@ -345,7 +347,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                       </div>
                     </td>
                     <td className="px-7 py-5">
-                      <span className="text-fg font-medium text-sm">{formatCurrency(Number(order.totalAmount))}</span>
+                      <span className="text-fg font-medium text-sm">{formatCurrency(Number(order.totalAmount), currency)}</span>
                     </td>
                     <td className="px-7 py-5">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium border ${
@@ -411,7 +413,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                     <span className="text-xs text-fg/70 font-medium mt-0.5">{order.customer?.phone || 'No Phone'}</span>
                  </div>
                  <div className="flex justify-between items-center pt-2 border-t border-fg/5">
-                    <span className="text-fg font-medium text-sm">{formatCurrency(Number(order.totalAmount))}</span>
+                    <span className="text-fg font-medium text-sm">{formatCurrency(Number(order.totalAmount), currency)}</span>
                     <div className="flex items-center justify-end gap-2"><WorkerStamp user={order.user} /><SalesRowActions order={order} canEdit={canEdit} canRecordPayment={canRecordPayment} eggsPerCrate={eggsPerCrate} /></div>
                  </div>
               </div>
@@ -436,7 +438,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                      <TrendingUp className="w-6 h-6 text-fg-3" />
                    </div>
                    <div>
-                     <p className="text-2xl font-medium text-fg">{formatCurrency(avgDailyRevenue)}</p>
+                     <p className="text-2xl font-medium text-fg">{formatCurrency(avgDailyRevenue, currency)}</p>
                      <p className="text-xs font-medium text-fg/70">Avg daily revenue</p>
                    </div>
                 </div>
@@ -478,7 +480,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                          </div>
                          <span className="text-xs font-medium text-fg/90 truncate">{cust.name}</span>
                       </div>
-                      <span className="text-xs font-medium text-fg tracking-normal shrink-0">{formatCurrency(customerRevenue[cust.id] ?? 0)}</span>
+                      <span className="text-xs font-medium text-fg tracking-normal shrink-0">{formatCurrency(customerRevenue[cust.id] ?? 0, currency)}</span>
                    </div>
                  ))}
                  <Link href="/dashboard/sales/customers" className="block text-center w-full py-2 rounded-md bg-fg/10 border border-fg/10 text-xs font-medium text-fg/70 hover:bg-fg/20 hover:text-fg transition-colors mt-2">

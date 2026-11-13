@@ -14,6 +14,7 @@ import {
   type LedgerAllocationInput,
 } from '@/lib/finance/ledger-allocation'
 import { cn } from '@/lib/utils'
+import { useMoney } from '@/components/providers/CurrencyProvider'
 
 type Preset = 'EVEN' | 'HEADCOUNT' | 'MANUAL'
 
@@ -40,10 +41,6 @@ function toNumber(value: string) {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
-function formatMoney(value: number) {
-  return value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-}
-
 interface Props {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
@@ -53,6 +50,7 @@ interface Props {
 }
 
 export function SpecifyAllocationDialog({ isOpen, onOpenChange, totalAmount, onSave, initial }: Props) {
+  const money = useMoney()
   const [batches, setBatches] = useState<AllocationBatch[]>([])
   const [loading, setLoading] = useState(true)
   const [preset, setPreset] = useState<Preset>('EVEN')
@@ -136,8 +134,8 @@ export function SpecifyAllocationDialog({ isOpen, onOpenChange, totalAmount, onS
       return `${delta > 0 ? '+' : ''}${delta.toFixed(2)}% remaining`
     }
     const delta = totalAmount - allocationTotal
-    if (amountBalanced) return `Balanced at GH₵ ${formatMoney(totalAmount)}`
-    return `GH₵ ${formatMoney(Math.abs(delta))} ${delta > 0 ? 'remaining' : 'over'}`
+    if (amountBalanced) return `Balanced at ${money.format(totalAmount)}`
+    return `${money.format(Math.abs(delta))} ${delta > 0 ? 'remaining' : 'over'}`
   }, [
     allocationMode,
     allocationTotal,
@@ -178,7 +176,7 @@ export function SpecifyAllocationDialog({ isOpen, onOpenChange, totalAmount, onS
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       title="Specify allocation"
-      description={`Divide GH₵ ${formatMoney(totalAmount)} across your active livestock units.`}
+      description={`Divide ${money.format(totalAmount)} across your active livestock units.`}
       className="max-w-2xl"
     >
       <div className="space-y-5 pt-2">
@@ -216,7 +214,7 @@ export function SpecifyAllocationDialog({ isOpen, onOpenChange, totalAmount, onS
               <ModeButton
                 active={allocationMode === 'AMOUNT'}
                 icon={Banknote}
-                label="Amount (GHS)"
+                label={`Amount (${money.currency})`}
                 onClick={() => setAllocationMode('AMOUNT')}
               />
               <ModeButton
@@ -254,7 +252,7 @@ export function SpecifyAllocationDialog({ isOpen, onOpenChange, totalAmount, onS
                           const value = e.target.value
                           if (value === '' || Number(value) >= 0) updateRow(row.key, { value })
                         }}
-                        placeholder={allocationMode === 'PERCENTAGE' ? '0.00 %' : 'GH₵ 0.00'}
+                        placeholder={allocationMode === 'PERCENTAGE' ? '0.00 %' : `${money.symbol} 0.00`}
                         className="bg-fg/[0.04] border-fg/10 text-fg"
                       />
                       <Button aria-label="Remove row"
@@ -288,7 +286,7 @@ export function SpecifyAllocationDialog({ isOpen, onOpenChange, totalAmount, onS
                     <span className="shrink-0 text-right font-medium text-fg">
                       {row.amount != null && row.amount > 0 ? (
                         <>
-                          GH₵ {formatMoney(row.amount)}
+                          {money.format(row.amount)}
                           {row.percentage != null ? (
                             <span className="ml-1.5 font-medium text-fg/45">· {row.percentage.toFixed(2)}%</span>
                           ) : null}

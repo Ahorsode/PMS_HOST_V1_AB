@@ -3,6 +3,7 @@
 import React from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { formatDate, formatCurrency } from '@/lib/utils';
+import { useCurrency } from '@/components/providers/CurrencyProvider'
 import Link from 'next/link';
 import { MobileCardList } from '@/components/ui/MobileCardList';
 import { g } from '@/components/ui/graphite';
@@ -17,11 +18,12 @@ function statusLabel(status: string | null | undefined) {
 }
 
 export const SaleDetailClient = ({ sale }: SaleDetailClientProps) => {
+  const currency = useCurrency()
   const itemCount = sale.items?.length || 0;
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Stat label="Total" value={formatCurrency(sale.totalAmount)} />
+        <Stat label="Total" value={formatCurrency(sale.totalAmount, currency)} />
         <Stat label="Items" value={`${itemCount} ${itemCount === 1 ? 'item' : 'items'}`} />
         <Stat label="Sale date" value={formatDate(sale.saleDate)} />
       </div>
@@ -35,10 +37,10 @@ export const SaleDetailClient = ({ sale }: SaleDetailClientProps) => {
             items={sale.items ?? []}
             getKey={(_item: any, idx: number) => idx}
             title={(item: any) => item.description}
-            badge={(item: any) => <span className="text-sm font-medium tabular-nums text-fg">{formatCurrency(item.totalPrice)}</span>}
+            badge={(item: any) => <span className="text-sm font-medium tabular-nums text-fg">{formatCurrency(item.totalPrice, currency)}</span>}
             fields={(item: any) => [
               { label: 'Quantity', value: item.quantity },
-              { label: 'Unit price', value: formatCurrency(item.unitPrice) },
+              { label: 'Unit price', value: formatCurrency(item.unitPrice, currency) },
             ]}
           />
           <table className="hidden w-full text-left md:table">
@@ -55,8 +57,8 @@ export const SaleDetailClient = ({ sale }: SaleDetailClientProps) => {
                 <tr key={idx} className="border-b border-fg/[0.06] transition-colors duration-150 hover:bg-fg/[0.03]">
                   <td className="px-5 py-3 text-sm text-fg">{item.description}</td>
                   <td className="px-5 py-3 text-right text-sm tabular-nums text-fg">{item.quantity}</td>
-                  <td className="px-5 py-3 text-right text-sm tabular-nums text-fg-2">{formatCurrency(item.unitPrice)}</td>
-                  <td className="px-5 py-3 text-right text-sm font-medium tabular-nums text-fg">{formatCurrency(item.totalPrice)}</td>
+                  <td className="px-5 py-3 text-right text-sm tabular-nums text-fg-2">{formatCurrency(item.unitPrice, currency)}</td>
+                  <td className="px-5 py-3 text-right text-sm font-medium tabular-nums text-fg">{formatCurrency(item.totalPrice, currency)}</td>
                 </tr>
               ))}
             </tbody>

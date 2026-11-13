@@ -33,6 +33,7 @@ import {
   SpecifyAllocationDialog,
   type SavedAllocation,
 } from '@/components/finance/SpecifyAllocationDialog'
+import { useMoney } from '@/components/providers/CurrencyProvider'
 
 interface Transaction {
   id: string
@@ -92,10 +93,6 @@ function statusLabel(status: string) {
   return text.charAt(0).toUpperCase() + text.slice(1)
 }
 
-function formatGhs(value: number) {
-  return `GH₵ ${value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-}
-
 export function FinanceHubClient({
   initialTransactions,
   canEdit = true
@@ -103,6 +100,7 @@ export function FinanceHubClient({
   initialTransactions: Transaction[]
   canEdit?: boolean
 }) {
+  const money = useMoney()
   const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions)
   
   // Modals & form state
@@ -302,17 +300,17 @@ export function FinanceHubClient({
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <div className="min-w-0 rounded-xl border border-fg/[0.08] bg-card p-5">
           <p className="flex items-center gap-2 text-sm text-fg-2"><span className="h-1.5 w-1.5 rounded-full bg-accent" />Revenue</p>
-          <p className="mt-2 truncate text-3xl font-medium leading-none tabular-nums text-fg">{formatGhs(totalRevenue)}</p>
+          <p className="mt-2 truncate text-3xl font-medium leading-none tabular-nums text-fg">{money.format(totalRevenue)}</p>
           <p className="mt-2 font-mono text-xs text-fg-3">All income in the ledger</p>
         </div>
         <div className="min-w-0 rounded-xl border border-fg/[0.08] bg-card p-5">
           <p className="flex items-center gap-2 text-sm text-fg-2"><span className="h-1.5 w-1.5 rounded-full bg-clay" />Expenses</p>
-          <p className="mt-2 truncate text-3xl font-medium leading-none tabular-nums text-fg">{formatGhs(totalExpense)}</p>
+          <p className="mt-2 truncate text-3xl font-medium leading-none tabular-nums text-fg">{money.format(totalExpense)}</p>
           <p className="mt-2 font-mono text-xs text-fg-3">Operating and capital costs</p>
         </div>
         <div className="min-w-0 rounded-xl border border-fg/[0.08] bg-card p-5">
           <p className="text-sm text-fg-2">{netPosition >= 0 ? 'Net profit' : 'Net deficit'}</p>
-          <p className={`mt-2 truncate text-3xl font-medium leading-none tabular-nums ${netPosition >= 0 ? 'text-accent' : 'text-neg'}`}>{formatGhs(netPosition)}</p>
+          <p className={`mt-2 truncate text-3xl font-medium leading-none tabular-nums ${netPosition >= 0 ? 'text-accent' : 'text-neg'}`}>{money.format(netPosition)}</p>
           <p className="mt-2 font-mono text-xs text-fg-3">Revenue minus expenses</p>
         </div>
       </div>
@@ -416,7 +414,7 @@ export function FinanceHubClient({
                 fields={(tx) => [
                   {
                     label: 'Amount',
-                    value: <span className={`font-medium ${tx.type === 'REVENUE' ? 'text-fg' : 'text-yolk'}`}>{`GH₵ ${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</span>,
+                    value: <span className={`font-medium ${tx.type === 'REVENUE' ? 'text-fg' : 'text-yolk'}`}>{`${money.format(tx.amount)}`}</span>,
                   },
                   {
                     label: 'Type',
@@ -502,7 +500,7 @@ export function FinanceHubClient({
                           </span>}
                         </td>
                         <td className={`py-4 px-6 text-right text-sm font-medium ${tx.type === 'REVENUE' ? 'text-fg' : 'text-yolk'}`}>
-                          {isMutatingTx ? <SkeletonLine className="ml-auto h-3 w-20" /> : `GH₵ ${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                          {isMutatingTx ? <SkeletonLine className="ml-auto h-3 w-20" /> : `${money.format(tx.amount)}`}
                         </td>
                         {canEdit && (
                           <td className="py-4 px-6 text-center">
@@ -564,7 +562,7 @@ export function FinanceHubClient({
                 fields={(tx) => [
                   {
                     label: 'Amount',
-                    value: <span className={`font-medium ${tx.type === 'REVENUE' ? 'text-emerald-400' : 'text-neg'}`}>{`${tx.type === 'REVENUE' ? '+' : '-'}GH₵ ${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}</span>,
+                    value: <span className={`font-medium ${tx.type === 'REVENUE' ? 'text-emerald-400' : 'text-neg'}`}>{`${tx.type === 'REVENUE' ? '+' : '-'}${money.format(tx.amount)}`}</span>,
                   },
                   {
                     label: 'Type',
@@ -665,7 +663,7 @@ export function FinanceHubClient({
                         </span>}
                       </td>
                       <td className={`py-4 px-6 text-right text-sm font-medium ${tx.type === 'REVENUE' ? 'text-emerald-400' : 'text-neg'}`}>
-                        {isMutatingTx ? <SkeletonLine className="ml-auto h-3 w-20" /> : `${tx.type === 'REVENUE' ? '+' : '-'}GH₵ ${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                        {isMutatingTx ? <SkeletonLine className="ml-auto h-3 w-20" /> : `${tx.type === 'REVENUE' ? '+' : '-'}${money.format(tx.amount)}`}
                       </td>
                       {canEdit && (
                         <td className="py-4 px-6 text-center">
@@ -785,7 +783,7 @@ export function FinanceHubClient({
                   </div>
 
                   <div>
-                    <label className="block text-fg-3 text-xs font-medium mb-1.5">Amount (GHS)</label>
+                    <label className="block text-fg-3 text-xs font-medium mb-1.5">Amount ({money.currency})</label>
                     <input
                       type="number"
                       step="0.01"
@@ -936,7 +934,7 @@ export function FinanceHubClient({
             <CardHeader className="pb-2">
               <CardTitle className="text-fg text-xl font-medium">Record settle payment</CardTitle>
               <p className="text-xs text-fg-3 font-medium mt-1">
-                Settling {selectedTx.type === 'REVENUE' ? 'Receivable' : 'Payable'} invoice {selectedTx.referenceNum ? `#${selectedTx.referenceNum}` : 'for this transaction'} generated on {new Date(selectedTx.transactionDate).toLocaleDateString()} for GH₵ {selectedTx.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                Settling {selectedTx.type === 'REVENUE' ? 'Receivable' : 'Payable'} invoice {selectedTx.referenceNum ? `#${selectedTx.referenceNum}` : 'for this transaction'} generated on {new Date(selectedTx.transactionDate).toLocaleDateString()} for {money.format(selectedTx.amount)}
               </p>
             </CardHeader>
             <CardContent>
@@ -952,7 +950,7 @@ export function FinanceHubClient({
                   <p className="text-fg-3 text-xs font-medium">Unpaid transaction info</p>
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium text-fg">{selectedTx.category}</span>
-                    <span className="font-medium text-fg">GH₵ {selectedTx.amount.toFixed(2)}</span>
+                    <span className="font-medium text-fg">{money.format(selectedTx.amount)}</span>
                   </div>
                   {selectedTx.description && (
                     <p className="text-xs text-fg-3 truncate">{selectedTx.description}</p>
@@ -1023,7 +1021,7 @@ export function FinanceHubClient({
                     <AlertTriangle className="w-4 h-4" />
                     Destructive ledger action
                   </p>
-                  <p>You are soft-deleting ledger item for <b>{selectedTx.category}</b> (GH₵ {selectedTx.amount.toFixed(2)}). An audit record will be logged with the reason.</p>
+                  <p>You are soft-deleting ledger item for <b>{selectedTx.category}</b> ({money.format(selectedTx.amount)}). An audit record will be logged with the reason.</p>
                 </div>
 
                 <div>

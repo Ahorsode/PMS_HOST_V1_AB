@@ -67,7 +67,8 @@ export type BatchExpenseBreakdownRow = {
 export function buildBatchLogEntries(
   logs: BatchLogSources,
   expenseBreakdown: BatchExpenseBreakdownRow[],
-  canViewFinance: boolean
+  canViewFinance: boolean,
+  currency: string
 ): BatchLogEntry[] {
   const entries: BatchLogEntry[] = []
 
@@ -154,7 +155,7 @@ export function buildBatchLogEntries(
         type: 'SALES',
         date: sale.logDate,
         title: sale.description || 'Sale',
-        detail: `${Number(sale.quantity).toLocaleString()} units @ ${formatCurrency(sale.unitPrice, 'GHS')}`,
+        detail: `${Number(sale.quantity).toLocaleString()} units @ ${formatCurrency(sale.unitPrice, currency)}`,
         amount: sale.totalPrice,
       })
     }

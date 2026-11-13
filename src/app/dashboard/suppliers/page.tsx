@@ -2,6 +2,7 @@ import React from 'react';
 import { getSupplierStats } from '@/lib/actions/supplier-actions';
 import { Card, CardContent } from '@/components/ui/Card';
 import { formatCurrency } from '@/lib/utils';
+import { getFarmCurrency } from '@/lib/farm-currency';
 import { Users, UserPlus, Phone, TrendingUp, Star, AlertCircle, ArrowLeft, Truck } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
@@ -35,6 +36,7 @@ export default async function SuppliersPage() {
     const { getAuthContext } = await import('@/lib/auth-utils');
     return await getAuthContext();
   })();
+  const currency = await getFarmCurrency(activeFarmId);
 
   const hasSuppliers = await checkFeature(activeFarmId ?? '', 'SUPPLIERS');
 
@@ -108,7 +110,7 @@ export default async function SuppliersPage() {
                      <TrendingUp className="w-4 h-4 md:w-6 md:h-6 text-fg-2" />
                    </div>
                    <div>
-                     <p className="text-2xl md:text-3xl font-medium text-fg">{formatCurrency(totalValue)}</p>
+                     <p className="text-2xl md:text-3xl font-medium text-fg">{formatCurrency(totalValue, currency)}</p>
                      <p className="text-xs md:text-sm font-medium text-fg-2 mt-1">Total purchased</p>
                    </div>
                 </div>
@@ -122,7 +124,7 @@ export default async function SuppliersPage() {
                      <AlertCircle className="w-4 h-4 md:w-6 md:h-6 text-neg" />
                    </div>
                    <div>
-                     <p className="text-2xl md:text-3xl font-medium text-neg">{formatCurrency(totalOwed)}</p>
+                     <p className="text-2xl md:text-3xl font-medium text-neg">{formatCurrency(totalOwed, currency)}</p>
                      <p className="text-xs md:text-sm font-medium text-neg mt-1">Total outstanding</p>
                    </div>
                 </div>

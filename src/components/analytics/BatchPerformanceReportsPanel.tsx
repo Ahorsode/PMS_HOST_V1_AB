@@ -18,7 +18,8 @@ import {
 } from 'recharts'
 import { Activity, Banknote, Bird, ChevronDown, Skull, TrendingUp } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { cn, formatCurrency } from '@/lib/utils'
+import { cn, currencySymbol, formatCurrency } from '@/lib/utils'
+import { useCurrency } from '@/components/providers/CurrencyProvider'
 
 type FcrPoint = {
   week: string
@@ -62,6 +63,7 @@ const chartText = '#cbd5e1'
 const gridStroke = 'color-mix(in srgb, var(--fg) 8%, transparent)'
 
 export function BatchPerformanceReportsPanel({ reports }: { reports: ReportsPayload }) {
+  const currency = useCurrency()
   const [selectedBatchId, setSelectedBatchId] = useState(reports.selectedBatchId || reports.batches[0]?.id || '')
 
   const selectedBatch = reports.batches.find((batch) => batch.id === selectedBatchId) || reports.batches[0]
@@ -119,7 +121,7 @@ export function BatchPerformanceReportsPanel({ reports }: { reports: ReportsPayl
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
         <MetricTile icon={Activity} label="FCR" value={selectedBatch.fcr ? selectedBatch.fcr.toFixed(2) : '0.00'} tone="emerald" />
         <MetricTile icon={Skull} label="Mortality" value={`${selectedBatch.mortalityRate.toFixed(2)}%`} tone={selectedBatch.mortalityRate > 5 ? 'amber' : 'emerald'} />
-        <MetricTile icon={Banknote} label="Net profit" value={formatCurrency(selectedBatch.netProfitability, 'GHS')} tone={selectedBatch.netProfitability >= 0 ? 'blue' : 'amber'} />
+        <MetricTile icon={Banknote} label="Net profit" value={formatCurrency(selectedBatch.netProfitability, currency)} tone={selectedBatch.netProfitability >= 0 ? 'blue' : 'amber'} />
         <MetricTile icon={Bird} label="Current birds" value={selectedBatch.currentCount.toLocaleString()} tone="slate" />
       </div>
 
@@ -214,7 +216,7 @@ export function BatchPerformanceReportsPanel({ reports }: { reports: ReportsPayl
                   tick={{ fill: chartText, fontSize: 12 }}
                   axisLine={false}
                   tickLine={false}
-                  tickFormatter={(value) => `₵${Number(value).toLocaleString()}`}
+                  tickFormatter={(value) => `${currencySymbol(currency)}${Number(value).toLocaleString()}`}
                 />
                 <Tooltip content={<CurrencyTooltip />} />
                 <Legend wrapperStyle={{ color: chartText, fontSize: 12 }} />
@@ -291,6 +293,7 @@ function ChartTooltip({ active, payload, label }: any) {
 }
 
 function CurrencyTooltip({ active, payload, label }: any) {
+  const currency = useCurrency()
   if (!active || !payload?.length) return null
 
   return (
@@ -298,7 +301,7 @@ function CurrencyTooltip({ active, payload, label }: any) {
       <p className="mb-1 font-medium text-fg">{label}</p>
       {payload.map((item: any) => (
         <p key={item.dataKey} style={{ color: item.color }}>
-          {item.dataKey}: {formatCurrency(item.value, 'GHS')}
+          {item.dataKey}: {formatCurrency(item.value, currency)}
         </p>
       ))}
     </div>

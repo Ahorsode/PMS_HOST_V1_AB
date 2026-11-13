@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/Button'
 import { DialogDescription, DialogTitle } from '@/components/ui/Dialog'
 import { cn, formatCurrency } from '@/lib/utils'
+import { useCurrency } from '@/components/providers/CurrencyProvider'
 import {
   ALL_REPORT_SECTIONS,
   BatchReportDocument,
@@ -96,6 +97,7 @@ function StepIndicator({ step }: { step: WizardStep }) {
 }
 
 export function BatchReportWizard({ dataSources }: { dataSources: any[] }) {
+  const currency = useCurrency()
   const isCombined = dataSources.length > 1
   const scopeLabel = isCombined
     ? `All batches (${dataSources.length})`
@@ -131,8 +133,8 @@ export function BatchReportWizard({ dataSources }: { dataSources: any[] }) {
 
   const builtReport = useMemo(() => {
     if (effectiveSections.length === 0 || dataSources.length === 0) return null
-    return buildReportFromSources(dataSources, dateRange, effectiveSections)
-  }, [dataSources, dateRange, effectiveSections])
+    return buildReportFromSources(dataSources, dateRange, effectiveSections, currency)
+  }, [dataSources, dateRange, effectiveSections, currency])
 
   const previewHtml = previewReport ? buildBatchReportHtml(previewReport, true) : ''
 
@@ -367,7 +369,7 @@ export function BatchReportWizard({ dataSources }: { dataSources: any[] }) {
             <div className="rounded-lg border border-fg/10 bg-fg/[0.03] px-4 py-3 text-xs text-fg/60">
               Preview will include net position of{' '}
               <span className={cn('font-medium', builtReport.finance.netProfit >= 0 ? 'text-emerald-400' : 'text-neg')}>
-                {formatCurrency(builtReport.finance.netProfit, 'GHS')}
+                {formatCurrency(builtReport.finance.netProfit, currency)}
               </span>{' '}
               for {dateRange.label.toLowerCase()}.
             </div>

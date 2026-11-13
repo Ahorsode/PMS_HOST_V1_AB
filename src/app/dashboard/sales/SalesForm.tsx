@@ -29,6 +29,7 @@ import {
   validateSalePaymentFields,
   type SalePaymentMethod,
 } from '@/lib/sale-payment-utils';
+import { useMoney } from '@/components/providers/CurrencyProvider'
 
 type ProductType = 'inventory' | 'livestock' | 'custom';
 
@@ -239,6 +240,7 @@ export function SalesForm({
   allowWorkerDiscounts = false,
   defaultDiscountType = 'item',
 }: SalesFormProps) {
+  const money = useMoney()
   const [items, setItems] = useState<SaleItemState[]>(() => [
     getInitialItem(livestock, eggInventory, initialLivestockId, eggsPerCrate),
   ]);
@@ -665,7 +667,7 @@ export function SalesForm({
             {canOverridePrice ? <ShieldCheck className="h-4 w-4 shrink-0" /> : <Lock className="h-4 w-4 shrink-0" />}
             {canOverridePrice ? 'Manager controls' : 'Locked pricing'}
           </div>
-          <p className="text-2xl font-medium text-fg">GHS {total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+          <p className="text-2xl font-medium text-fg">{money.format(total)}</p>
         </div>
       </div>
       ) : null}
@@ -826,7 +828,7 @@ export function SalesForm({
                         {item.productType === 'inventory' ? 'Price / Crate' : 'Unit Price'}
                       </label>
                       <div className="relative min-w-0">
-                        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs font-medium text-fg">GHS</span>
+                        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs font-medium text-fg">{money.symbol}</span>
                         <input
                           type="number"
                           min="0"
@@ -884,7 +886,7 @@ export function SalesForm({
                             onChange={(event) => updateItem(index, { lineDiscountType: event.target.value as LineDiscountType })}
                             className="h-11 w-full min-w-0 rounded-md border border-fg/10 bg-card px-3 text-sm font-medium text-fg outline-none focus:border-fg/[0.08]"
                           >
-                            <option value="flat" className="bg-card">GHS</option>
+                            <option value="flat" className="bg-card">{money.currency}</option>
                             <option value="percent" className="bg-card">%</option>
                             <option value="item" className="bg-card">Giveaway</option>
                           </select>
@@ -918,7 +920,7 @@ export function SalesForm({
                       </div>
                     ) : (
                       <div className="space-y-1 min-w-0 sm:col-span-2">
-                        <label className="text-xs font-medium text-fg/50">Line discount (GHS)</label>
+                        <label className="text-xs font-medium text-fg/50">Line discount ({money.currency})</label>
                         <input
                           type="number"
                           min="0"
@@ -934,7 +936,7 @@ export function SalesForm({
 
                 <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-fg/10 pt-3">
                   <span className="text-xs font-medium text-fg/50">
-                    Base: GHS {basePrice.toFixed(2)} | Subtotal: GHS {lineSubtotal.toFixed(2)}
+                    Base: {money.format(basePrice)} | Subtotal: {money.format(lineSubtotal)}
                     {giveawayQty > 0
                       ? ` | +${giveawayQty} free ${giveawayQty === 1 ? 'crate' : 'crates'}`
                       : ''}
@@ -949,7 +951,7 @@ export function SalesForm({
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
-                    <span className="text-sm font-medium text-fg">Line total: GHS {lineTotal.toFixed(2)}</span>
+                    <span className="text-sm font-medium text-fg">Line total: {money.format(lineTotal)}</span>
                   </div>
                 </div>
               </div>
@@ -967,7 +969,7 @@ export function SalesForm({
       <div className="flex flex-col gap-3 rounded-md border border-fg/10 bg-fg/5 p-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-xs font-medium text-fg/50">Line subtotal</p>
-          <p className="text-lg font-medium text-fg">GHS {subtotal.toFixed(2)}</p>
+          <p className="text-lg font-medium text-fg">{money.format(subtotal)}</p>
         </div>
         <button
           type="button"
@@ -992,7 +994,7 @@ export function SalesForm({
                 onClick={() => setDiscountType('flat')}
                 className={`shrink-0 border-r border-fg/10 px-4 py-3 text-xs font-medium transition-colors ${discountType === 'flat' ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'text-fg/60'}`}
               >
-                GHS
+                {money.currency}
               </button>
               <button aria-label="Percentage discount"
                 type="button"
@@ -1013,7 +1015,7 @@ export function SalesForm({
           </div>
           <div className="rounded-md border border-fg/10 bg-fg/5 p-3 text-right">
             <p className="text-xs font-medium text-fg/50">Discount</p>
-            <p className="text-xl font-medium text-fg">GHS {calculatedDiscount.toFixed(2)}</p>
+            <p className="text-xl font-medium text-fg">{money.format(calculatedDiscount)}</p>
           </div>
         </div>
       )}
@@ -1071,7 +1073,7 @@ export function SalesForm({
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_240px]">
         <div className="space-y-2 min-w-0">
-          <label className="px-1 text-xs font-medium text-fg/90">Total cash received (GHS)</label>
+          <label className="px-1 text-xs font-medium text-fg/90">Total cash received ({money.currency})</label>
           <div className="relative min-w-0">
             <Banknote className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-fg-3" />
             <input
@@ -1119,21 +1121,21 @@ export function SalesForm({
         <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
           <div>
             <p className="text-xs font-medium text-fg/50">Subtotal</p>
-            <p className="font-medium text-fg">GHS {subtotal.toFixed(2)}</p>
+            <p className="font-medium text-fg">{money.format(subtotal)}</p>
           </div>
           {calculatedDiscount > 0 ? (
             <div>
               <p className="text-xs font-medium text-fg/50">Discount</p>
-              <p className="font-medium text-fg">- GHS {calculatedDiscount.toFixed(2)}</p>
+              <p className="font-medium text-fg">- {money.format(calculatedDiscount)}</p>
             </div>
           ) : null}
           <div>
             <p className="text-xs font-medium text-fg/50">Total</p>
-            <p className="font-medium text-fg">GHS {total.toFixed(2)}</p>
+            <p className="font-medium text-fg">{money.format(total)}</p>
           </div>
           <div>
             <p className="text-xs font-medium text-fg/50">Outstanding</p>
-            <p className="font-medium text-fg">GHS {Math.max(total - (Number.isFinite(cashValue) ? cashValue : 0), 0).toFixed(2)}</p>
+            <p className="font-medium text-fg">{money.format(Math.max(total - (Number.isFinite(cashValue) ? cashValue : 0), 0))}</p>
           </div>
         </div>
       </div>

@@ -6,6 +6,7 @@ import { activeAnnouncement, type SiteSettings } from '@/lib/settings/schemas';
 import { AnnouncementBanner } from '@/components/site/AnnouncementBanner';
 import {
   formatGhs,
+  formatPlanPrice,
   PAID_TIERS,
   PLAN_FEATURE_DETAILS,
   PLAN_TYPES,
@@ -145,7 +146,8 @@ function buildPlans(billing: BillingConfig, landing: SiteSettings['landing']) {
       return {
         name: plan.name,
         price: formatGhs(plan.monthlyPrice),
-        cadence: 'per month',
+        // Farms in Ghana pay in cedis; everyone else pays in US dollars.
+        cadence: `per month in Ghana · ${formatPlanPrice(plan.monthlyPriceUsd, 'USD')} elsewhere`,
         description: landing.planDescriptions[planType][tier],
         highlight: landing.highlightedPlan?.planType === planType && landing.highlightedPlan.tier === tier,
         features: [
@@ -327,7 +329,7 @@ export default async function LandingPage() {
               </div>
               <div>
                 <dt className="text-white/50">Priced in</dt>
-                <dd className="mt-1 font-bold text-white">Ghana cedis</dd>
+                <dd className="mt-1 font-bold text-white">Cedis in Ghana, US dollars elsewhere</dd>
               </div>
             </dl>
           </div>
@@ -457,7 +459,7 @@ export default async function LandingPage() {
                   )}
                   <h3 className="text-xl font-bold">{plan.name}</h3>
                   <p className="mt-2 text-sm text-white/65">{plan.description}</p>
-                  <p className="mt-6 flex items-baseline gap-2">
+                  <p className="mt-6 flex flex-wrap items-baseline gap-x-2 gap-y-1">
                     <span className="text-4xl font-extrabold">{plan.price}</span>
                     <span className="text-sm text-white/50">{plan.cadence}</span>
                   </p>

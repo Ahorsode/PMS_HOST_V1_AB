@@ -7,6 +7,7 @@ import { Banknote, Truck, Plus, Trash2, Save, X, Loader2 } from 'lucide-react';
 import { updateBatchFinancials } from '@/lib/actions/dashboard-actions';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
+import { useCurrency } from '@/components/providers/CurrencyProvider'
 import { MutationBoundary } from '@/components/ui/MutationFeedback';
 
 interface FinancialInitializationModalProps {
@@ -18,6 +19,7 @@ interface FinancialInitializationModalProps {
 }
 
 export function FinancialInitializationModal({ isOpen, onClose, batchId, batchName, quantity }: FinancialInitializationModalProps) {
+  const currency = useCurrency()
   const [costPerUnit, setCostPerUnit] = useState<number | ''>(0);
   const [carriageCost, setCarriageCost] = useState<number | ''>(0);
   const [otherExpenses, setOtherExpenses] = useState<{ label: string; amount: number | '' }[]>([]);
@@ -82,7 +84,7 @@ export function FinancialInitializationModal({ isOpen, onClose, batchId, batchNa
            </div>
            <div className="text-right">
               <p className="text-xs font-medium text-fg">Total actual cost</p>
-              <p className="text-xl font-medium text-fg">{formatCurrency(totalActualCost)}</p>
+              <p className="text-xl font-medium text-fg">{formatCurrency(totalActualCost, currency)}</p>
            </div>
         </div>
 

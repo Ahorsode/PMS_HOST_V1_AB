@@ -44,8 +44,9 @@ export default function TermsOfServicePage() {
         <ul>
           <li>Every new farm gets a 30-day free trial with all features. After the trial, a paid plan is needed to keep using the app.</li>
           <li>
-            Paid plans are paid in advance for the term you choose (1, 3, 6 or 12 months). The full price in Ghana cedis is
-            shown before you pay. Payments are processed by Paystack or made by Mobile Money.
+            Paid plans are paid in advance for the term you choose (1, 3, 6 or 12 months). The full price is shown before you pay:
+            in Ghana cedis for farms in Ghana, and in US dollars for farms in other countries. Payments are processed by
+            Paystack, or made by Mobile Money in Ghana.
           </li>
           <li>
             Paid plans do <strong>not</strong> renew automatically. When the term ends you have 3 days to renew. After that,

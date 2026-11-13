@@ -13,6 +13,8 @@ import {
   DEFAULT_BILLING_CONFIG,
   DESKTOP_LICENSE_DAYS,
   formatGhs,
+  formatPlanPrice,
+  parseBillingConfig,
   PAID_TIERS,
   PLAN_FEATURE_DETAILS,
   PLAN_FEATURE_KEYS,
@@ -32,6 +34,7 @@ import { cn } from '@/lib/utils'
 type PlanForm = {
   name: string
   monthlyPrice: string
+  monthlyPriceUsd: string
   features: PlanFeature[]
   /** Empty means unlimited (Team plans only). */
   staffLimit: string
@@ -64,6 +67,7 @@ function toForm(config: BillingConfig): FormState {
     return {
       name: value.name,
       monthlyPrice: String(value.monthlyPrice),
+      monthlyPriceUsd: String(value.monthlyPriceUsd),
       features: [...value.features],
       staffLimit: value.staffLimit === null ? '' : String(value.staffLimit),
     }
@@ -105,6 +109,7 @@ function fromForm(form: FormState) {
     return {
       name: value.name,
       monthlyPrice: toNumber(value.monthlyPrice),
+      monthlyPriceUsd: toNumber(value.monthlyPriceUsd),
       features: value.features,
       // Solo plans are owner-only.
       staffLimit: planType === 'SOLO' ? 0 : value.staffLimit.trim() === '' ? null : toNumber(value.staffLimit),
@@ -146,7 +151,7 @@ function validate(form: FormState) {
       errors[key] ??= issue.message.includes('expected number') ? 'Enter a number' : issue.message
     }
   }
-  return { config: parsed.success ? parsed.data : null, errors }
+  return { config: parsed.success ? parseBillingConfig(parsed.data) : null, errors }
 }
 
 function formatDateTime(value: string | null) {
@@ -363,7 +368,7 @@ export default function PlanPricingEditor({ initialSettings }: { initialSettings
                         <FieldError message={errorKey('name')} />
                       </label>
                       <label className="block">
-                        <span className="text-xs font-semibold text-zinc-300">Monthly price (GHS)</span>
+                        <span className="text-xs font-semibold text-zinc-300">Monthly price in Ghana (GHS)</span>
                         <input
                           type="number"
                           inputMode="decimal"
@@ -375,6 +380,20 @@ export default function PlanPricingEditor({ initialSettings }: { initialSettings
                           className={cn(inputClass, 'mt-1')}
                         />
                         <FieldError message={errorKey('monthlyPrice')} />
+                      </label>
+                      <label className="block sm:col-span-2">
+                        <span className="text-xs font-semibold text-zinc-300">Monthly price outside Ghana (USD)</span>
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          min={1}
+                          step="0.01"
+                          value={plan.monthlyPriceUsd}
+                          onChange={(event) => updatePlan(planType, tier, { monthlyPriceUsd: event.target.value })}
+                          disabled={isSaving}
+                          className={cn(inputClass, 'mt-1')}
+                        />
+                        <FieldError message={errorKey('monthlyPriceUsd')} />
                       </label>
                     </div>
 
@@ -479,7 +498,12 @@ export default function PlanPricingEditor({ initialSettings }: { initialSettings
                 Example: 12 months of {validConfig.plans.TEAM.STANDARD.name} costs{' '}
                 <span className="font-semibold text-zinc-300">
                   {formatGhs(calculateUpgradeTotal(validConfig, 'TEAM', 'STANDARD', 12).total)}
-                </span>
+                </span>{' '}
+                in Ghana, or{' '}
+                <span className="font-semibold text-zinc-300">
+                  {formatPlanPrice(calculateUpgradeTotal(validConfig, 'TEAM', 'STANDARD', 12, [], 'USD').total, 'USD')}
+                </span>{' '}
+                elsewhere
                 .
               </p>
             ) : null}

@@ -1,5 +1,6 @@
 import { getBillingConfig } from '@/lib/billing/billing-config';
-import { formatGhs, lowestMonthlyPrice } from '@/lib/billing/pricing';
+import { formatPlanPrice, lowestMonthlyPrice } from '@/lib/billing/pricing';
+import type { BillingCurrency } from '@/lib/countries';
 import OnboardingClient from './OnboardingClient';
 
 // Prices come from the admin Plans & Pricing page. Saving there revalidates this
@@ -8,13 +9,10 @@ export const revalidate = 3600;
 
 export default async function OnboardingPage() {
   const billing = await getBillingConfig();
+  const labels = (currency: BillingCurrency) => ({
+    SOLO: `From ${formatPlanPrice(lowestMonthlyPrice(billing, 'SOLO', currency), currency)} / month`,
+    TEAM: `From ${formatPlanPrice(lowestMonthlyPrice(billing, 'TEAM', currency), currency)} / month`,
+  });
 
-  return (
-    <OnboardingClient
-      priceLabels={{
-        SOLO: `From ${formatGhs(lowestMonthlyPrice(billing, 'SOLO'))} / month`,
-        TEAM: `From ${formatGhs(lowestMonthlyPrice(billing, 'TEAM'))} / month`,
-      }}
-    />
-  );
+  return <OnboardingClient priceLabels={{ GHS: labels('GHS'), USD: labels('USD') }} />;
 }

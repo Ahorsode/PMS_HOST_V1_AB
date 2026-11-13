@@ -5,6 +5,8 @@ import { formatCurrency } from '@/lib/utils';
 import { ArrowLeft, User, Calendar, ShoppingCart, Receipt, MapPin, Phone, Mail, Download, Tag } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { getFarmCurrency } from '@/lib/farm-currency';
+import { getAuthContext } from '@/lib/auth-utils';
 
 export default async function CustomerStatementPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -15,6 +17,7 @@ export default async function CustomerStatementPage({ params }: { params: Promis
   }
 
   const statement = await getCustomerStatement(customerId);
+  const currency = await getFarmCurrency((await getAuthContext()).activeFarmId);
 
   if (!statement) {
     redirect('/dashboard/sales/customers');
@@ -73,7 +76,7 @@ export default async function CustomerStatementPage({ params }: { params: Promis
                   <div className="pt-6 border-t border-fg/5 space-y-4">
                      <div className="p-4 rounded-md bg-fg/[0.04] border border-fg/[0.08]">
                         <p className="text-xs font-medium text-neg mb-1">Balance owed (by customer)</p>
-                        <p className="text-2xl font-medium text-neg">{formatCurrency(statement.balanceOwed)}</p>
+                        <p className="text-2xl font-medium text-neg">{formatCurrency(statement.balanceOwed, currency)}</p>
                      </div>
                   </div>
                </CardContent>
@@ -109,11 +112,11 @@ export default async function CustomerStatementPage({ params }: { params: Promis
                            </div>
                         </div>
                         <div className="sm:text-right shrink-0">
-                           <p className="text-xl font-medium text-fg">{formatCurrency(order.totalAmount)}</p>
+                           <p className="text-xl font-medium text-fg">{formatCurrency(order.totalAmount, currency)}</p>
                            {Number(order.discountAmount) > 0 && (
                              <p className="text-xs font-medium text-fg flex items-center justify-end gap-1">
                                 <Tag className="w-3 h-3" />
-                                -{formatCurrency(order.discountAmount)} Off
+                                -{formatCurrency(order.discountAmount, currency)} Off
                              </p>
                            )}
                         </div>
@@ -125,7 +128,7 @@ export default async function CustomerStatementPage({ params }: { params: Promis
                              <span className="text-fg/60 truncate max-w-[70%]">
                                {item.description} <span className="text-fg/60 font-normal">x{item.quantity}</span>
                              </span>
-                             <span className="text-fg shrink-0">{formatCurrency(item.totalPrice)}</span>
+                             <span className="text-fg shrink-0">{formatCurrency(item.totalPrice, currency)}</span>
                           </div>
                         ))}
                      </div>

@@ -4,6 +4,8 @@ import prisma from '@/lib/db'
 import PDFDocument from 'pdfkit'
 import { getAuthContext } from '@/lib/auth-utils'
 import { checkFeature } from '@/lib/subscription-utils'
+import { getFarmCurrency } from '@/lib/farm-currency'
+import { formatMoneyCode } from '@/lib/utils'
 
 export async function generateInvoicePDF(orderId: string) {
   const { userId, activeFarmId } = await getAuthContext()
@@ -31,6 +33,8 @@ export async function generateInvoicePDF(orderId: string) {
     if (order.farmId !== activeFarmId) {
       return { success: false, error: 'Unauthorized' }
     }
+
+    const currency = await getFarmCurrency(activeFarmId)
 
     const pdfBuffer = await new Promise<Buffer>((resolve, reject) => {
       try {
@@ -77,8 +81,8 @@ export async function generateInvoicePDF(orderId: string) {
           const y = tableTop + 25 + (i * 25)
           doc.fillColor('#000000').text(item.description || 'Product Item', 50, y)
           doc.text((item.quantity || 0).toString(), 250, y, { width: 90, align: 'right' })
-          doc.text(`GH₵${Number(item.unitPrice || 0).toFixed(2)}`, 340, y, { width: 90, align: 'right' })
-          doc.text(`GH₵${Number(item.totalPrice || 0).toFixed(2)}`, 430, y, { width: 90, align: 'right' })
+          doc.text(formatMoneyCode(Number(item.unitPrice || 0), currency), 340, y, { width: 90, align: 'right' })
+          doc.text(formatMoneyCode(Number(item.totalPrice || 0), currency), 430, y, { width: 90, align: 'right' })
           i++
         })
 
@@ -89,15 +93,15 @@ export async function generateInvoicePDF(orderId: string) {
         doc.moveTo(350, footerTop).lineTo(550, footerTop).strokeColor('#aaaaaa').stroke()
 
         doc.fontSize(10).text('Subtotal:', 350, footerTop + 15)
-        doc.text(`GH₵${subtotal.toFixed(2)}`, 430, footerTop + 15, { width: 90, align: 'right' })
+        doc.text(formatMoneyCode(subtotal, currency), 430, footerTop + 15, { width: 90, align: 'right' })
 
         if (Number(order.discountAmount || 0) > 0) {
           doc.text(`Discount:`, 350, footerTop + 30)
-          doc.text(`-GH₵${Number(order.discountAmount).toFixed(2)}`, 430, footerTop + 30, { width: 90, align: 'right' })
+          doc.text(`-${formatMoneyCode(Number(order.discountAmount), currency)}`, 430, footerTop + 30, { width: 90, align: 'right' })
         }
 
         doc.fontSize(12).fillColor('#10b981').text('NET TOTAL:', 350, footerTop + 50)
-        doc.text(`GH₵${Number(order.totalAmount || 0).toFixed(2)}`, 430, footerTop + 50, { width: 90, align: 'right' })
+        doc.text(formatMoneyCode(Number(order.totalAmount || 0), currency), 430, footerTop + 50, { width: 90, align: 'right' })
 
         doc.fontSize(10).fillColor('#444444').text(`Status: ${(order.status || 'PENDING').toUpperCase()}`, 50, footerTop + 50)
 

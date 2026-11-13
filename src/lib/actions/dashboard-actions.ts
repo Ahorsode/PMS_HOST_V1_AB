@@ -14,6 +14,7 @@ import { freeTrialFields } from '@/lib/billing/trial'
 import { getBillingConfig } from '@/lib/billing/billing-config'
 import { getAppSettings } from '@/lib/settings/app-settings'
 import type { PlanType } from '@prisma/client'
+import { currencyForCountry, isSupportedCountry } from '@/lib/countries'
 import {
   buildRevenueVelocitySeries,
   buildStrategicPriorities,
@@ -852,6 +853,37 @@ export async function updateFarmInfo(data: { name: string, location?: string, ca
   })
 }
 
+/**
+ * Sets the farm's country, which sets the currency money is shown in and
+ * whether plans are priced in cedis (Ghana) or US dollars. Amounts already
+ * recorded are not converted. Owner only.
+ */
+export async function setFarmCountry(country: string) {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return { success: false as const, error: 'No active farm selected' }
+  if (!isSupportedCountry(country)) return { success: false as const, error: 'Select the country your farm is in.' }
+
+  const farm = await prisma.farm.findUnique({ where: { id: activeFarmId }, select: { userId: true } })
+  if (farm?.userId !== userId) return { success: false as const, error: 'Only the farm owner can change the country' }
+
+  const currency = currencyForCountry(country)
+  try {
+    await prisma.$transaction([
+      prisma.farm.update({ where: { id: activeFarmId }, data: { country } }),
+      prisma.farmSettings.upsert({
+        where: { farmId: activeFarmId },
+        update: { currency },
+        create: { farmId: activeFarmId, currency },
+      }),
+    ])
+    revalidatePath('/dashboard', 'layout')
+    return { success: true as const, country, currency }
+  } catch (error) {
+    console.error('Error setting farm country:', error)
+    return { success: false as const, error: 'Could not save the country. Please try again.' }
+  }
+}
+
 export async function createHouse(data: { houseNumber: string, capacity: number } | FormData) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
@@ -896,8 +928,13 @@ export async function createHouse(data: { houseNumber: string, capacity: number 
   })
 }
 
-export async function onboardFarmer(data: { name: string, location: string, capacity: number, planType?: PlanType }) {
+export async function onboardFarmer(data: { name: string, location: string, capacity: number, country: string, planType?: PlanType }) {
   const { userId } = await getAuthContext()
+  if (!isSupportedCountry(data.country)) {
+    return { success: false, error: 'Select the country your farm is in.' }
+  }
+  const country = data.country
+  const currency = currencyForCountry(country)
   const planType: PlanType = data.planType === 'SOLO' ? 'SOLO' : 'TEAM'
   const [trialDays, farmDefaults] = await Promise.all([
     getBillingConfig().then((config) => config.trial.days),
@@ -923,6 +960,7 @@ export async function onboardFarmer(data: { name: string, location: string, capa
             name: data.name,
             location: data.location,
             capacity: data.capacity,
+            country,
             planType
           }
         })
@@ -933,6 +971,7 @@ export async function onboardFarmer(data: { name: string, location: string, capa
             name: data.name,
             location: data.location,
             capacity: data.capacity,
+            country,
             planType,
             userId: userId
           }
@@ -988,20 +1027,12 @@ export async function onboardFarmer(data: { name: string, location: string, capa
         data: { role: 'OWNER' }
       })
 
-      // Ensure default FarmSettings exist for this farm
-      const existingSettings = await tx.farmSettings.findUnique({
-        where: { farmId: farm.id }
+      // Default FarmSettings, with money shown in the country's currency.
+      await tx.farmSettings.upsert({
+        where: { farmId: farm.id },
+        update: { currency },
+        create: { farmId: farm.id, currency, eggsPerCrate: 30 }
       })
-
-      if (!existingSettings) {
-        await tx.farmSettings.create({
-          data: {
-            farmId: farm.id,
-            currency: 'GHS',
-            eggsPerCrate: 30
-          }
-        })
-      }
 
       // Admin Farm defaults: starting egg categories and sales settings.
       if (farmDefaults.eggCategories.length > 0) {

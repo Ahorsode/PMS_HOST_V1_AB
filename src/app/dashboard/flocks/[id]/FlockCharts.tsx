@@ -15,7 +15,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { cn, formatCurrency } from '@/lib/utils'
+import { cn, formatCompactMoney, formatCurrency } from '@/lib/utils'
+import { useCurrency } from '@/components/providers/CurrencyProvider'
 import { Panel, PanelHeader, tone } from '../flock-ui'
 
 const MONO = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace'
@@ -27,7 +28,6 @@ const ACCENT = 'var(--accent)'
 const NEGATIVE = 'var(--neg-solid)'
 const compact = new Intl.NumberFormat('en-US', { notation: 'compact', maximumFractionDigits: 1 })
 const fullNumber = new Intl.NumberFormat('en-US')
-const cedi = (v: number) => `₵${compact.format(Number(v))}`
 
 /** True below the sm breakpoint, so category labels can tilt instead of overlapping. */
 function useIsNarrow() {
@@ -102,6 +102,7 @@ function TooltipBox({ label, rows }: { label: React.ReactNode; rows: { key: stri
 }
 
 function MoneyTooltip({ active, payload, label }: any) {
+  const currency = useCurrency()
   if (!active || !payload?.length) return null
   return (
     <TooltipBox
@@ -109,7 +110,7 @@ function MoneyTooltip({ active, payload, label }: any) {
       rows={payload.map((item: any) => ({
         key: String(item.dataKey),
         name: item.payload?.name && payload.length === 1 ? item.payload.name : item.name,
-        value: formatCurrency(Number(item.value || 0), 'GHS'),
+        value: formatCurrency(Number(item.value || 0), currency),
         color: item.color || item.payload?.fill || item.stroke,
       }))}
     />
@@ -153,6 +154,7 @@ function buildLifetimeBars(summary: FinanceSummaryPoint[]) {
 
 /** Totals per category; doubles as the legend for both finance charts. */
 function CategoryTotals({ summary }: { summary: FinanceSummaryPoint[] }) {
+  const currency = useCurrency()
   return (
     <dl className="grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-3 lg:grid-cols-5">
       {LIFETIME_CATEGORIES.map((category) => {
@@ -169,7 +171,7 @@ function CategoryTotals({ summary }: { summary: FinanceSummaryPoint[] }) {
                 category.key === 'revenue' ? tone.accent : tone.text
               )}
             >
-              {formatCurrency(amount, 'GHS')}
+              {formatCurrency(amount, currency)}
             </dd>
           </div>
         )
@@ -191,6 +193,7 @@ export function FinanceTrendPanel({
   monthly: FinancePoint[]
   locked?: boolean
 }) {
+  const currency = useCurrency()
   const netProfit = summary.reduce((sum, row) => {
     if (row.key === 'revenue') return sum + row.amount
     return sum - row.amount
@@ -243,7 +246,7 @@ export function FinanceTrendPanel({
                     axisLine={false}
                     tickLine={false}
                     width={48}
-                    tickFormatter={cedi}
+                    tickFormatter={(v) => formatCompactMoney(v, currency)}
                     allowDataOverflow
                   />
                   <Tooltip
@@ -253,7 +256,7 @@ export function FinanceTrendPanel({
                       return (
                         <TooltipBox
                           label={label}
-                          rows={[{ key: row.key, name: row.name, value: formatCurrency(row.amount, 'GHS'), color: row.fill }]}
+                          rows={[{ key: row.key, name: row.name, value: formatCurrency(row.amount, currency), color: row.fill }]}
                         />
                       )
                     }}
@@ -278,7 +281,7 @@ export function FinanceTrendPanel({
           <div className={cn('flex flex-wrap items-baseline justify-between gap-2 border-t pt-5', tone.hairline)}>
             <SubLabel>Net position</SubLabel>
             <span className={cn('text-xl tabular-nums', netProfit >= 0 ? tone.accent : tone.negative)}>
-              {formatCurrency(netProfit, 'GHS')}
+              {formatCurrency(netProfit, currency)}
             </span>
           </div>
 
@@ -292,7 +295,7 @@ export function FinanceTrendPanel({
                   <BarChart data={monthly} margin={{ top: 8, right: 4, left: 0, bottom: 0 }} barGap={4}>
                     <CartesianGrid stroke={gridStroke} vertical={false} />
                     <XAxis dataKey="label" tick={tick} axisLine={false} tickLine={false} tickMargin={8} />
-                    <YAxis tick={tick} axisLine={false} tickLine={false} width={48} tickFormatter={cedi} />
+                    <YAxis tick={tick} axisLine={false} tickLine={false} width={48} tickFormatter={(v) => formatCompactMoney(v, currency)} />
                     <Tooltip content={<MoneyTooltip />} cursor={cursorFill} />
                     <Legend
                       iconType="square"
@@ -443,16 +446,17 @@ export function MortalityTrendPanel({ data }: { data: MortalityPoint[] }) {
 }
 
 export function SalesTrendPanel({ data }: { data: SalesPoint[] }) {
+  const currency = useCurrency()
   const total = data.reduce((s, d) => s + d.revenue, 0)
   return (
-    <ChartCard title="Sales" right={<HeaderMeta className="tabular-nums">{formatCurrency(total, 'GHS')}</HeaderMeta>}>
+    <ChartCard title="Sales" right={<HeaderMeta className="tabular-nums">{formatCurrency(total, currency)}</HeaderMeta>}>
       {data.length > 0 ? (
         <div className="h-[260px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
               <CartesianGrid stroke={gridStroke} vertical={false} />
               <XAxis dataKey="label" tick={tick} axisLine={false} tickLine={false} tickMargin={8} minTickGap={16} />
-              <YAxis tick={tick} axisLine={false} tickLine={false} width={48} tickFormatter={cedi} />
+              <YAxis tick={tick} axisLine={false} tickLine={false} width={48} tickFormatter={(v) => formatCompactMoney(v, currency)} />
               <Tooltip content={<MoneyTooltip />} cursor={cursorLine} />
               <Line
                 type="monotone"

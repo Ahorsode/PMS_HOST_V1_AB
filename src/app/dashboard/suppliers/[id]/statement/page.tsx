@@ -5,6 +5,8 @@ import { formatCurrency } from '@/lib/utils';
 import { ArrowLeft, Truck, Calendar, ShoppingBag, Receipt, MapPin, Phone, Mail, Download } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { getFarmCurrency } from '@/lib/farm-currency';
+import { getAuthContext } from '@/lib/auth-utils';
 
 export default async function SupplierStatementPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -15,6 +17,7 @@ export default async function SupplierStatementPage({ params }: { params: Promis
   }
 
   const statement = await getSupplierStatement(supplierId);
+  const currency = await getFarmCurrency((await getAuthContext()).activeFarmId);
 
   if (!statement) {
     redirect('/dashboard/suppliers');
@@ -27,7 +30,7 @@ export default async function SupplierStatementPage({ params }: { params: Promis
       name: item.itemName,
       date: item.createdAt,
       amount: Number(item.stockLevel) * Number(item.costPerUnit || 0),
-      details: `${item.stockLevel} ${item.unit} @ ${formatCurrency(item.costPerUnit)}/unit`
+      details: `${item.stockLevel} ${item.unit} @ ${formatCurrency(item.costPerUnit, currency)}/unit`
     })),
     ...statement.expenses.map((e: any) => ({
       id: `exp-${e.id}`,
@@ -90,7 +93,7 @@ export default async function SupplierStatementPage({ params }: { params: Promis
                   <div className="pt-6 border-t border-fg/5 space-y-4">
                      <div className="p-4 rounded-md bg-fg/[0.04] border border-fg/[0.08]">
                         <p className="text-xs font-medium text-neg mb-1">Balance owed (to vendor)</p>
-                        <p className="text-2xl font-medium text-neg">{formatCurrency(statement.balanceOwed)}</p>
+                        <p className="text-2xl font-medium text-neg">{formatCurrency(statement.balanceOwed, currency)}</p>
                      </div>
                   </div>
                </CardContent>
@@ -126,7 +129,7 @@ export default async function SupplierStatementPage({ params }: { params: Promis
                         </div>
                      </div>
                      <div className="sm:text-right border-t sm:border-t-0 border-fg/5 pt-3 sm:pt-0">
-                        <p className="text-xl font-medium text-fg">{formatCurrency(tx.amount)}</p>
+                        <p className="text-xl font-medium text-fg">{formatCurrency(tx.amount, currency)}</p>
                         <p className="text-xs font-medium text-fg/60">Amount paid/cost</p>
                      </div>
                   </div>

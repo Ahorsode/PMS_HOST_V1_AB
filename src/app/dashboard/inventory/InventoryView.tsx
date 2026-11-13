@@ -19,6 +19,7 @@ import { PartnerForm } from '@/components/partners/PartnerForm';
 import { DeleteConfirmationModal } from '@/components/modals/DeleteConfirmationModal';
 import { SkeletonLine } from '@/components/ui/MutationFeedback';
 import { MobileCardList } from '@/components/ui/MobileCardList';
+import { useMoney } from '@/components/providers/CurrencyProvider'
 
 
 /* ───────────────────── helpers ───────────────────── */
@@ -89,6 +90,7 @@ export default function InventoryView({
   initialData: InventoryPageData
   eggsPerCrate?: number
 }) {
+  const money = useMoney()
   const router = useRouter();
   const [items, setItems] = useState<InventoryItem[]>(initialData.items);
   const [eggStock, setEggStock] = useState<{ totalEggs: number; batches: Array<{ batchId: string; batchName: string; eggsRemaining: number }> }>(
@@ -426,7 +428,7 @@ export default function InventoryView({
                   {
                     label: 'Cost/unit',
                     value: item.costPerUnit != null
-                      ? <span className="text-fg font-medium">GHS {Number(item.costPerUnit).toFixed(2)}</span>
+                      ? <span className="text-fg font-medium">{money.format(Number(item.costPerUnit))}</span>
                       : <span className="text-fg/60">—</span>,
                   },
                   { label: 'Unit', value: item.unit },
@@ -493,7 +495,7 @@ export default function InventoryView({
                           {isMutatingItem ? (
                             <SkeletonLine className="ml-auto h-4 w-20" />
                           ) : item.costPerUnit != null ? (
-                            <span className="text-fg font-medium text-base">GHS {Number(item.costPerUnit).toFixed(2)}</span>
+                            <span className="text-fg font-medium text-base">{money.format(Number(item.costPerUnit))}</span>
                           ) : <span className="text-fg/60">—</span>}
                         </td>
                         <td className="px-4 py-2 text-right text-fg/70">
@@ -665,7 +667,7 @@ export default function InventoryView({
 
               {/* Cost per unit */}
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-fg/70">Cost per unit (GHS)</label>
+                <label className="text-xs font-medium text-fg/70">Cost per unit ({money.currency})</label>
                 <input
                   type="number"
                   step="0.01"
