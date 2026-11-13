@@ -10,7 +10,10 @@ export default function SalesLoading() {
           <div className="h-10 w-64 bg-fg/10 rounded-md" />
           <div className="h-3 w-40 bg-fg/10 rounded-full" />
         </div>
-        <div className="h-12 w-48 bg-fg/[0.04] rounded-md border border-fg/5" />
+        <div className="flex gap-2">
+          <div className="h-10 w-28 bg-fg/[0.04] rounded-md border border-fg/5" />
+          <div className="h-10 w-40 bg-fg/[0.04] rounded-md border border-fg/5" />
+        </div>
       </div>
 
       {/* Stats Grid */}
@@ -51,11 +54,6 @@ export default function SalesLoading() {
 
         {/* Sidebar Widgets */}
         <div className="space-y-5">
-           <div className="bg-fg/[0.04] rounded-lg border border-fg/[0.08] h-[220px] p-7 space-y-3">
-              <div className="h-5 w-32 bg-fg/[0.04] rounded-lg" />
-              <div className="h-10 w-48 bg-fg/[0.04] rounded-md" />
-              <div className="h-2 w-full bg-fg/10 rounded-full" />
-           </div>
            <div className="bg-fg/10 rounded-lg border border-fg/10 h-[380px] p-7 space-y-5">
               <div className="h-5 w-32 bg-fg/10 rounded-lg" />
               <div className="space-y-3">

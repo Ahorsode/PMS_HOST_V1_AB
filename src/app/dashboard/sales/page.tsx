@@ -6,7 +6,7 @@ import { getAllBatches } from '@/lib/actions/dashboard-actions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { formatCurrency } from '@/lib/utils';
 import { getFarmCurrency } from '@/lib/farm-currency';
-import { Banknote, ShoppingCart, Users, TrendingUp, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { Banknote, ShoppingCart, Users, TrendingUp, Clock } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { SalesRowActions, SalesActionsHeader } from './SalesActions';
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
@@ -108,6 +108,7 @@ type SalesOrder = ReturnType<typeof normalizeOrder>;
 export default async function SalesPage({ searchParams }: { searchParams: Promise<{ sellBatchId?: string; quick?: string }> }) {
   const hasAccess = await checkWorkerPermissions('sales', 'view');
   const canEdit = await checkWorkerPermissions('sales', 'edit');
+  const canViewCustomers = await checkWorkerPermissions('customers', 'view');
   const { role, activeFarmId } = await getAuthContext();
   const currency = await getFarmCurrency(activeFarmId);
   const canOverridePrice = role === 'OWNER' || role === 'MANAGER';
@@ -241,11 +242,19 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
     .sort((a: Customer, b: Customer) => (customerRevenue[b.id] ?? 0) - (customerRevenue[a.id] ?? 0))
     .slice(0, 5);
 
+  const monthChangeLabel = monthOverMonthChange === null
+    ? 'No sales last month to compare'
+    : `${monthOverMonthChange >= 0 ? '+' : ''}${monthOverMonthChange.toFixed(1)}% vs last month`;
+  const monthChangeTone = monthOverMonthChange === null
+    ? 'text-fg/60'
+    : monthOverMonthChange >= 0 ? 'text-accent' : 'text-neg';
+
+  // Ordered by what a farm owner checks first: this month, what needs action, then the long view.
   const stats = [
-    { name: 'Total Revenue', value: formatCurrency(totalRevenue, currency), icon: Banknote, color: 'text-fg', bg: 'bg-fg/[0.04]' },
-    { name: 'Net Revenue', value: formatCurrency(netRevenue, currency), icon: TrendingUp, color: 'text-fg-2', bg: 'bg-fg/[0.06]' },
-    { name: 'Active Orders', value: orders.length, icon: ShoppingCart, color: 'text-fg-2', bg: 'bg-fg/[0.06]' },
-    { name: 'Pending', value: pendingOrders, icon: Clock, color: 'text-fg', bg: 'bg-fg/[0.04]' },
+    { name: 'This month', value: formatCurrency(thisMonthRevenue, currency), note: monthChangeLabel, noteTone: monthChangeTone, icon: Banknote },
+    { name: 'Pending orders', value: pendingOrders, note: pendingOrders === 1 ? 'Needs payment or completion' : 'Need payment or completion', noteTone: pendingOrders > 0 ? 'text-yolk' : 'text-fg/60', icon: Clock },
+    { name: 'Total revenue', value: formatCurrency(totalRevenue, currency), note: `${formatCurrency(netRevenue, currency)} net after discounts`, noteTone: 'text-fg/60', icon: ShoppingCart },
+    { name: 'Avg daily revenue', value: formatCurrency(avgDailyRevenue, currency), note: `Across ${orders.length} ${orders.length === 1 ? 'order' : 'orders'}`, noteTone: 'text-fg/60', icon: TrendingUp },
   ];
 
   return (
@@ -255,7 +264,17 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
           <h1 className="text-3xl font-semibold leading-tight text-fg">Sales</h1>
           <p className="mt-2 text-sm text-fg-2">Orders, payments and what customers still owe</p>
         </div>
-        <SalesActionsHeader 
+        <div className="flex items-center gap-2">
+          {canViewCustomers && (
+          <Link
+            href="/dashboard/sales/customers"
+            className="flex items-center gap-2 px-4 py-2 rounded-md border border-fg/10 bg-fg/[0.04] text-[11px] font-medium text-fg-2 hover:bg-fg/10 hover:text-fg transition-colors"
+          >
+            <Users className="w-4 h-4" />
+            Customers
+          </Link>
+          )}
+          <SalesActionsHeader 
           customers={customers} 
           inventory={inventory}
           eggInventory={eggInventory}
@@ -270,21 +289,23 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
           allowBatchOverride={allowBatchOverride}
           allowWorkerDiscounts={allowWorkerDiscounts}
           defaultDiscountType={defaultDiscountType}
-        />
+          />
+        </div>
       </div>
 
       {/* Stats Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
         {stats.map((stat) => (
-          <Card key={stat.name} className={`${stat.bg} border-fg/5 `}>
+          <Card key={stat.name} className="bg-fg/[0.04] border-fg/5">
             <CardContent className="pt-3 md:pt-6">
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="text-xs md:text-xs font-medium text-fg/70 mb-1 break-words">{stat.name}</p>
+                  <p className="text-xs font-medium text-fg/70 mb-1 break-words">{stat.name}</p>
                   <p className="text-sm sm:text-lg md:text-2xl font-medium text-fg tracking-tight break-words">{stat.value}</p>
+                  <p className={`mt-1 text-[11px] md:text-xs font-medium break-words ${stat.noteTone}`}>{stat.note}</p>
                 </div>
-                <div className={`shrink-0 p-2 md:p-3 rounded-md ${stat.bg} border border-fg/10`}>
-                  <stat.icon className={`w-4 h-4 md:w-6 md:h-6 ${stat.color}`} />
+                <div className="shrink-0 p-2 md:p-3 rounded-md bg-fg/[0.04] border border-fg/10">
+                  <stat.icon className="w-4 h-4 md:w-6 md:h-6 text-fg-2" />
                 </div>
               </div>
             </CardContent>
@@ -426,44 +447,8 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
           </div>
         </div>
 
-        {/* Top Customers Widget */}
-        <div className="space-y-5">
-           <Card className="bg-tile border-fg/[0.08]">
-              <CardHeader>
-                <CardTitle className="text-fg">Sales velocity</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center gap-3 mb-3">
-                   <div className="h-12 w-12 rounded-md bg-fg/[0.04] flex items-center justify-center border border-fg/[0.08]">
-                     <TrendingUp className="w-6 h-6 text-fg-3" />
-                   </div>
-                   <div>
-                     <p className="text-2xl font-medium text-fg">{formatCurrency(avgDailyRevenue, currency)}</p>
-                     <p className="text-xs font-medium text-fg/70">Avg daily revenue</p>
-                   </div>
-                </div>
-                <div className="h-2 w-full bg-fg/10 rounded-full overflow-hidden border border-fg/5">
-                   <div className="h-full bg-emerald-500 w-[65%]" />
-                </div>
-                {monthOverMonthChange !== null ? (
-                  <p className={`text-xs font-medium mt-2 flex items-center gap-2 ${
-                    monthOverMonthChange >= 0 ? 'text-accent' : 'text-neg'
-                  }`}>
-                    {monthOverMonthChange >= 0 ? (
-                      <CheckCircle2 className="w-3 h-3" />
-                    ) : (
-                      <XCircle className="w-3 h-3" />
-                    )}
-                    {monthOverMonthChange >= 0 ? '+' : ''}{monthOverMonthChange.toFixed(1)}% vs last month
-                  </p>
-                ) : (
-                  <p className="text-xs font-medium text-fg/60 mt-2">
-                    No prior month data
-                  </p>
-                )}
-              </CardContent>
-           </Card>
-
+        {/* Top customers */}
+        <div className="space-y-5 lg:sticky lg:top-6 self-start">
            <Card className="bg-fg/10 border-fg/10">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle className="text-fg/80">Top customers</CardTitle>
@@ -483,9 +468,9 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
                       <span className="text-xs font-medium text-fg tracking-normal shrink-0">{formatCurrency(customerRevenue[cust.id] ?? 0, currency)}</span>
                    </div>
                  ))}
-                 <Link href="/dashboard/sales/customers" className="block text-center w-full py-2 rounded-md bg-fg/10 border border-fg/10 text-xs font-medium text-fg/70 hover:bg-fg/20 hover:text-fg transition-colors mt-2">
-                   View all CRM profiles
-                 </Link>
+                 {canViewCustomers && <Link href="/dashboard/sales/customers" className="block text-center w-full py-2 rounded-md bg-fg/10 border border-fg/10 text-xs font-medium text-fg/70 hover:bg-fg/20 hover:text-fg transition-colors mt-2">
+                   View all customers
+                 </Link>}
               </CardContent>
            </Card>
         </div>
