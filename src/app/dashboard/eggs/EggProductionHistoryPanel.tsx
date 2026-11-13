@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ArrowUpRight, Download } from 'lucide-react';
 import { cn, formatDate } from '@/lib/utils';
 import { useMoney } from '@/components/providers/CurrencyProvider';
@@ -11,6 +12,7 @@ import { MobileCardList } from '@/components/ui/MobileCardList';
 
 type EggLog = {
   id: string;
+  batchId?: string | null;
   logDate: string | Date;
   eggsCollected: number;
   eggsRemaining: number;
@@ -415,17 +417,47 @@ export function EggProductionHistoryPanel({
           {filteredLogs.length === 0 ? (
             <p className={`px-5 py-12 text-center text-sm ${g.secondary}`}>No collections match this filter</p>
           ) : (
-            <ul className="grid gap-3 p-4 md:p-5 sm:grid-cols-2 xl:grid-cols-3">
-              {filteredLogs.map((log, logIndex) => (
-                <EggLogCard
-                  key={log.id}
-                  log={log}
-                  label={log.batch?.batchName || `Livestock ${logIndex + 1}`}
-                  eggsPerCrate={eggsPerCrate}
-                  actions={<EggLogActions log={log} batches={layerBatches} canEdit={canEdit} {...eggLoggingSettings} />}
-                />
-              ))}
-            </ul>
+            <>
+              {/* Phone: one card per collection */}
+              <ul className="grid gap-3 p-4 sm:grid-cols-2 md:hidden">
+                {filteredLogs.map((log, logIndex) => (
+                  <EggLogCard
+                    key={log.id}
+                    log={log}
+                    label={log.batch?.batchName || `Livestock ${logIndex + 1}`}
+                    eggsPerCrate={eggsPerCrate}
+                    actions={<EggLogActions log={log} batches={layerBatches} canEdit={canEdit} {...eggLoggingSettings} />}
+                  />
+                ))}
+              </ul>
+
+              {/* Wider screens: a list like the livestock register, few grouped columns so it fits */}
+              <table className="hidden w-full md:table">
+                <thead>
+                  <tr className={`border-b ${g.hairline} text-left text-sm ${g.muted}`}>
+                    <th scope="col" className="h-11 px-5 font-semibold">Collection</th>
+                    <th scope="col" className="h-11 px-5 font-semibold">Remaining</th>
+                    <th scope="col" className="h-11 px-5 font-semibold">Sold</th>
+                    <th scope="col" className="hidden h-11 px-5 font-semibold lg:table-cell">Sizes</th>
+                    <th scope="col" className="h-11 px-5 font-semibold">Status</th>
+                    <th scope="col" className="h-11 px-5 text-right font-semibold">
+                      <span className="sr-only">Actions</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-fg/[0.06]">
+                  {filteredLogs.map((log, logIndex) => (
+                    <EggLogRow
+                      key={log.id}
+                      log={log}
+                      label={log.batch?.batchName || `Livestock ${logIndex + 1}`}
+                      eggsPerCrate={eggsPerCrate}
+                      actions={<EggLogActions log={log} batches={layerBatches} canEdit={canEdit} {...eggLoggingSettings} />}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </>
           )}
         </div>
       ) : (
@@ -499,7 +531,77 @@ export function EggProductionHistoryPanel({
   );
 }
 
-/** One collection as a card: everything fits without sideways scrolling, actions always in view. */
+/** One collection as a list row, laid out like the livestock register. Double-click opens its batch. */
+function EggLogRow({
+  log,
+  label,
+  eggsPerCrate,
+  actions,
+}: {
+  log: EggLog;
+  label: string;
+  eggsPerCrate: number;
+  actions: React.ReactNode;
+}) {
+  const router = useRouter();
+  const remaining = Number(log.eggsRemaining || 0);
+  const sold = soldPercent(log);
+  const unusable = Number(log.unusableCount || 0);
+
+  const openOnDoubleClick = (e: React.MouseEvent<HTMLElement>) => {
+    const target = e.target as HTMLElement;
+    if (!log.batchId || !e.currentTarget.contains(target)) return;
+    if (target.closest('button, a, input, select, textarea, [role="dialog"]')) return;
+    router.push(`/dashboard/flocks/${log.batchId}`);
+  };
+
+  return (
+    <tr
+      onDoubleClick={openOnDoubleClick}
+      title={log.batchId ? 'Double-click to open the batch' : undefined}
+      className="cursor-pointer select-none transition-colors duration-150 hover:bg-fg/[0.04]"
+    >
+      <td className="max-w-[240px] px-5 py-4 align-top">
+        <p className={`truncate text-base font-semibold ${g.text}`}>{label}</p>
+        <p className={`mt-0.5 font-mono text-sm font-medium tabular-nums ${g.muted}`}>{formatDate(log.logDate)}</p>
+      </td>
+      <td className="whitespace-nowrap px-5 py-4 align-top">
+        <p className={`text-base font-semibold tabular-nums ${g.text}`}>{formatCratesAndEggs(remaining, eggsPerCrate)}</p>
+        <p className={`mt-0.5 text-sm font-medium ${g.muted}`}>
+          of <span className="tabular-nums">{formatCratesAndEggs(log.eggsCollected, eggsPerCrate)}</span> collected
+        </p>
+      </td>
+      <td className="w-56 min-w-44 px-5 py-4 align-top">
+        <div className="flex items-baseline justify-between gap-3">
+          <span className={`text-base font-semibold tabular-nums ${g.text}`}>{formatCratesAndEggs(soldEggs(log), eggsPerCrate)}</span>
+          <span className={`text-sm font-medium tabular-nums ${g.muted}`}>{sold}%</span>
+        </div>
+        <div
+          className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-fg/[0.06]"
+          role="img"
+          aria-label={`${sold}% sold, ${activePercent(log)}% in stock`}
+        >
+          <div className="h-full rounded-full bg-accent" style={{ width: `${sold}%` }} />
+        </div>
+      </td>
+      <td className="hidden whitespace-nowrap px-5 py-4 align-top lg:table-cell">
+        <p className={`text-base font-semibold tabular-nums ${log.isSorted ? g.text : g.muted}`}>
+          {log.isSorted ? `${log.smallCount || 0} / ${log.mediumCount || 0} / ${log.largeCount || 0}` : 'Not sorted'}
+        </p>
+        <p className={`mt-0.5 text-sm font-medium ${unusable > 0 ? 'text-neg-solid' : g.muted}`}>
+          {log.isSorted ? 'S / M / L · ' : ''}
+          <span className="tabular-nums">{unusable}</span> unusable
+        </p>
+      </td>
+      <td className="whitespace-nowrap px-5 py-4 align-top">
+        <StockStatus remaining={remaining} />
+      </td>
+      <td className="whitespace-nowrap px-5 py-3 align-top">{actions}</td>
+    </tr>
+  );
+}
+
+/** One collection as a card (phones): everything fits without sideways scrolling, actions always in view. */
 function EggLogCard({
   log,
   label,
