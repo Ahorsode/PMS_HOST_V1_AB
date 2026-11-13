@@ -4,6 +4,7 @@ import { getBillingConfig } from '@/lib/billing/billing-config';
 import { getAppSettings } from '@/lib/settings/app-settings';
 import { activeAnnouncement, type SiteSettings } from '@/lib/settings/schemas';
 import { AnnouncementBanner } from '@/components/site/AnnouncementBanner';
+import { PricingPlans, type PricingPlan } from '@/components/site/PricingPlans';
 import {
   formatGhs,
   formatPlanPrice,
@@ -18,7 +19,6 @@ import {
   Banknote,
   BarChart3,
   Bird,
-  Check,
   ClipboardList,
   Egg,
   FileText,
@@ -139,15 +139,25 @@ const coreFeatures = [
 ];
 
 /** Plan cards from the admin-set names, prices, staff limits and features. */
-function buildPlans(billing: BillingConfig, landing: SiteSettings['landing']) {
+function buildPlans(billing: BillingConfig, landing: SiteSettings['landing']): PricingPlan[] {
+  // Yearly uses the admin-set 12-month term discount, when that term is offered.
+  const offersYearly = billing.offeredTerms.includes(12);
+  const yearlyFactor = 12 * (1 - (billing.termDiscounts['12'] ?? 0));
+  const round = (n: number) => Math.round(n * 100) / 100;
   return PLAN_TYPES.flatMap((planType) =>
     PAID_TIERS.map((tier) => {
       const plan = billing.plans[planType][tier];
       return {
         name: plan.name,
-        price: formatGhs(plan.monthlyPrice),
         // Farms in Ghana pay in cedis; everyone else pays in US dollars.
-        cadence: `per month in Ghana · ${formatPlanPrice(plan.monthlyPriceUsd, 'USD')} elsewhere`,
+        monthly: { ghs: formatGhs(plan.monthlyPrice), usd: formatPlanPrice(plan.monthlyPriceUsd, 'USD') },
+        yearly: offersYearly
+          ? {
+              ghs: formatGhs(round(plan.monthlyPrice * yearlyFactor)),
+              usd: formatPlanPrice(round(plan.monthlyPriceUsd * yearlyFactor), 'USD'),
+              ghsPerMonth: formatGhs(round((plan.monthlyPrice * yearlyFactor) / 12)),
+            }
+          : null,
         description: landing.planDescriptions[planType][tier],
         highlight: landing.highlightedPlan?.planType === planType && landing.highlightedPlan.tier === tier,
         features: [
@@ -435,55 +445,17 @@ export default async function LandingPage() {
         <section id="pricing" className="scroll-mt-20 py-16 sm:py-24">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
-              <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-300">Pricing</p>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Try everything free for 30 days.</h2>
+              <p className="text-lg font-extrabold uppercase tracking-[0.2em] text-emerald-300 sm:text-xl">Pricing</p>
+              <h2 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">Try everything free for 30 days.</h2>
               <p className="mt-4 text-base text-white/65 sm:text-lg">
                 {landing.pricingIntro.replaceAll('{trialDays}', String(billing.trial.days))}{maxDiscountPercent > 0 ? ` Pay for ${termList} months to save up to ${maxDiscountPercent}%.` : ''}
               </p>
             </div>
 
-            <div className="mx-auto mt-12 grid max-w-6xl gap-5 md:grid-cols-2 xl:grid-cols-4">
-              {plans.map((plan) => (
-                <div
-                  key={plan.name}
-                  className={`relative flex flex-col rounded-3xl border p-7 ${
-                    plan.highlight
-                      ? 'border-emerald-400/40 bg-gradient-to-b from-emerald-500/15 to-[#0a1510]/80 shadow-[0_0_60px_rgba(52,211,153,0.15)]'
-                      : 'border-white/10 bg-[#0a1510]/70'
-                  }`}
-                >
-                  {plan.highlight && (
-                    <span className="absolute -top-3 left-7 rounded-full bg-emerald-400 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-[#04150e]">
-                      Most popular
-                    </span>
-                  )}
-                  <h3 className="text-xl font-bold">{plan.name}</h3>
-                  <p className="mt-2 text-sm text-white/65">{plan.description}</p>
-                  <p className="mt-6 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                    <span className="text-4xl font-extrabold">{plan.price}</span>
-                    <span className="text-sm text-white/50">{plan.cadence}</span>
-                  </p>
-                  <ul className="mt-6 space-y-3 text-sm">
-                    {plan.features.map((item) => (
-                      <li key={item} className="flex items-start gap-2.5 text-white/80">
-                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                  <Link
-                    href="/signup"
-                    className={`mt-8 inline-flex items-center justify-center rounded-full px-5 py-3 text-sm font-bold transition-colors ${
-                      plan.highlight
-                        ? 'bg-emerald-400 text-[#04150e] hover:bg-emerald-300'
-                        : 'border border-white/15 bg-white/5 text-white hover:bg-white/10'
-                    }`}
-                  >
-                    Get started
-                  </Link>
-                </div>
-              ))}
-            </div>
+            <PricingPlans
+              plans={plans}
+              yearlySavePercent={Math.round((billing.termDiscounts['12'] ?? 0) * 100)}
+            />
           </div>
         </section>
 
