@@ -4,7 +4,6 @@ import { EggsView } from './EggsView';
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
 import { redirect } from 'next/navigation';
 import { getFarmSettings } from '@/lib/actions/preference-actions';
-import { readFarmTogether } from '@/lib/farm-read';
 
 export default async function EggsPage({ searchParams }: { searchParams: Promise<{ quick?: string }> }) {
   const hasAccess = await checkWorkerPermissions('eggs', 'view');
@@ -16,12 +15,12 @@ export default async function EggsPage({ searchParams }: { searchParams: Promise
 
   const resolvedParams = await searchParams;
 
-  const [batches, productionHistory, eggSalesHistory, farmSettings] = await readFarmTogether(() => Promise.all([
+  const [batches, productionHistory, eggSalesHistory, farmSettings] = await Promise.all([
     getAllBatches(),
     getAllEggProduction(),
     getEggSalesHistory(),
     getFarmSettings(),
-  ]));
+  ]);
 
   const eggsPerCrate = farmSettings?.eggsPerCrate ?? 30;
   const eggLoggingSettings = {

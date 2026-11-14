@@ -1,6 +1,6 @@
 "use server";
 
-import prisma, { readForFarm } from "@/lib/db";
+import prisma from "@/lib/db";
 import { getFarmRecord } from "@/lib/farm-record";
 import { getAppSettings } from "@/lib/settings/app-settings";
 import { revalidatePath } from "next/cache";
@@ -112,7 +112,7 @@ export async function getSalesSettings() {
 
   // Every farm has a row after its first visit, so read it first and only
   // create one (with the admin defaults) when it is missing.
-  const existing = await readForFarm(activeFarmId, (db) => db.salesSettings.findUnique({ where: { farmId: activeFarmId } }));
+  const existing = await prisma.salesSettings.findUnique({ where: { farmId: activeFarmId } });
   if (existing) return existing;
 
   const { salesSettings } = await getAppSettings('farm-defaults');
@@ -156,24 +156,24 @@ export async function getMonthlyProductionSummary() {
 
   const thirtyDaysAgo = new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  const [eggs, expenses, orders, sales] = await readForFarm(activeFarmId, (db) => Promise.all([
-    db.eggProduction.aggregate({
+  const [eggs, expenses, orders, sales] = await Promise.all([
+    prisma.eggProduction.aggregate({
       where: { farmId: activeFarmId, logDate: { gte: thirtyDaysAgo } },
       _sum: { eggsCollected: true }
     }),
-    db.expense.aggregate({
+    prisma.expense.aggregate({
       where: { farmId: activeFarmId, expenseDate: { gte: thirtyDaysAgo } },
       _sum: { amount: true }
     }),
-    db.order.aggregate({
+    prisma.order.aggregate({
       where: { farmId: activeFarmId, orderDate: { gte: thirtyDaysAgo } },
       _sum: { totalAmount: true }
     }),
-    db.sale.aggregate({
+    prisma.sale.aggregate({
       where: { farmId: activeFarmId, saleDate: { gte: thirtyDaysAgo } },
       _sum: { totalAmount: true }
     })
-  ]));
+  ]);
 
   const totalRevenue = (Number(orders._sum.totalAmount) || 0) + (Number(sales._sum.totalAmount) || 0);
 

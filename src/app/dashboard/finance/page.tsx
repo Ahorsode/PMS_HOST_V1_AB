@@ -2,7 +2,7 @@ import React from 'react';
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
 import { redirect } from 'next/navigation';
 import { getAuthContext } from '@/lib/auth-utils';
-import { readForFarm } from '@/lib/db';
+import prisma from '@/lib/db';
 import { getFinancialTransactions } from '@/lib/actions/financial-transaction-actions';
 import { FinanceHubClient } from './FinanceHubClient';
 import { MissingCostPrompt } from '@/components/finance/MissingCostPrompt';
@@ -10,7 +10,6 @@ import { MissingHealthCostPrompt } from '@/components/finance/MissingHealthCostP
 import { getHealthItemsMissingCost, repairMissingHealthStockExpenses } from '@/lib/actions/health-actions';
 import { checkFeature } from '@/lib/subscription-utils';
 import { PlanFeatureLocked } from '@/components/billing/PlanFeatureLocked';
-import { readFarmTogether } from '@/lib/farm-read';
 
 export default async function FinancePage() {
   const { activeFarmId } = await getAuthContext();
@@ -37,11 +36,11 @@ export default async function FinancePage() {
     );
   }
 
-  // Two independent checks, read together: active batches with missing costs,
-  // and health stock (vaccines/medications) a worker added without a cost.
+  // Two independent checks, run side by side: active batches with missing
+  // costs, and health stock (vaccines/medications) a worker added without a cost.
   const [missingCostBatches, missingHealthCosts] = canEdit
-    ? await readFarmTogether(() => Promise.all([
-        readForFarm(activeFarmId, (db) => db.livestock.findMany({
+    ? await Promise.all([
+        (prisma.livestock as any).findMany({
           where: {
             farmId: activeFarmId,
             status: 'active',
@@ -57,9 +56,9 @@ export default async function FinancePage() {
             initialCount: true,
             type: true
           }
-        })),
+        }),
         getHealthItemsMissingCost(),
-      ]))
+      ])
     : [[], []];
 
   if (canEdit) {

@@ -3,7 +3,6 @@ import { getDashboardStats } from '@/lib/actions/dashboard-actions';
 import { DashboardContent } from './DashboardContent';
 import prisma from '@/lib/db';
 import { getFarmRecord } from '@/lib/farm-record';
-import { readFarmTogether } from '@/lib/farm-read';
 import { getFarmSettings } from '@/lib/actions/preference-actions';
 import { getAuthContext } from '@/lib/auth-utils';
 import { effectiveFarmTier } from '@/lib/subscription-utils';
@@ -42,19 +41,16 @@ export default async function DashboardPage() {
   }
 
   try {
-    // The houses and the 30-day summary share one farm-context transaction.
     // The farm, its settings, and the user's role and permission row are
     // already loaded for this request (farm record and auth context).
-    const [stats, [housesRaw, summary], farm, farmSettings] = await Promise.all([
+    const [stats, housesRaw, summary, farm, farmSettings] = await Promise.all([
       getDashboardStats(),
-      readFarmTogether(() => Promise.all([
-        (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-          return await tx.house.findMany({
-            where: { farmId: activeFarmId }
-          });
-        }),
-        getMonthlyProductionSummary(),
-      ])),
+      (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+        return await tx.house.findMany({
+          where: { farmId: activeFarmId }
+        });
+      }),
+      getMonthlyProductionSummary(),
       getFarmRecord(activeFarmId),
       getFarmSettings(),
     ]);

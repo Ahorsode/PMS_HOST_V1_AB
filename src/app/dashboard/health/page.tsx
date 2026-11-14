@@ -8,7 +8,6 @@ import { HealthScheduleManager } from "./HealthScheduleManager";
 import { getAuthContext } from "@/lib/auth-utils";
 import { checkFeature } from "@/lib/subscription-utils";
 import { PlanFeatureLocked } from "@/components/billing/PlanFeatureLocked";
-import { readFarmTogether } from "@/lib/farm-read";
 
 export default async function HealthPage() {
   const hasAccess = await checkWorkerPermissions("health", "view");
@@ -31,11 +30,11 @@ export default async function HealthPage() {
   }
 
   const [{ vaccinations, medications }, batches, { vaccine, medicine }] =
-    await readFarmTogether(() => Promise.all([
+    await Promise.all([
       getHealthSchedules(),
       getAllBatches(),
       getHealthInventory(),
-    ]));
+    ]);
 
   const activeBatches = JSON.parse(
     JSON.stringify(batches.filter((b: any) => b.status === "active"))

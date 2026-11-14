@@ -1,6 +1,6 @@
 'use server'
 
-import prisma, { readForFarm } from '@/lib/db'
+import prisma from '@/lib/db'
 import { getFarmCurrency } from '@/lib/farm-currency'
 import { formatMoneyCode } from '@/lib/utils'
 import { revalidatePath } from 'next/cache'
@@ -535,14 +535,14 @@ export async function createOrder(data: {
 export async function getOrderCount() {
   const { activeFarmId } = await getAuthContext()
   if (!activeFarmId) return 0
-  return readForFarm(activeFarmId, (db) => db.order.count({ where: { farmId: activeFarmId, isDeleted: false } }))
+  return prisma.order.count({ where: { farmId: activeFarmId, isDeleted: false } })
 }
 
 export async function getAllOrders() {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return []
 
-  const orders = await readForFarm(activeFarmId, (db) => db.order.findMany({
+  const orders = await prisma.order.findMany({
     where: { farmId: activeFarmId, isDeleted: false },
     include: {
       customer: true,
@@ -557,7 +557,7 @@ export async function getAllOrders() {
     },
     orderBy: { orderDate: 'desc' },
     take: 50 // Limit to avoid massive payloads
-  }))
+  })
 
   return orders.map(order => ({
     ...order,
