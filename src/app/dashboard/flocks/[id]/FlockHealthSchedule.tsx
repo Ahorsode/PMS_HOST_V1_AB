@@ -14,10 +14,22 @@ import {
   Boxes,
   ListPlus,
 } from 'lucide-react'
-import { Input } from '@/components/ui/Input'
-import { Select } from '@/components/ui/Select'
+import {
+  Button,
+  DateInput,
+  Form,
+  FormActions,
+  FormError,
+  FormNote,
+  FormRow,
+  FormSection,
+  Input,
+  Segmented,
+  Select,
+  fieldStyles,
+} from '@/components/ui/form'
 import { cn, formatDate } from '@/lib/utils'
-import { ActionButton, Panel, PanelHeader, iconButtonClass, segmentClass, tone } from '../flock-ui'
+import { Panel, PanelHeader, iconButtonClass, tone } from '../flock-ui'
 import {
   createHealthSchedulesBulk,
   registerHealthInventoryItem,
@@ -33,7 +45,7 @@ const CUSTOM = '__custom__'
 
 const STATUS_OPTIONS = [
   { label: 'Pending', value: 'PENDING' },
-  { label: 'Completed', value: 'COMPLETED' },
+  { label: 'Done', value: 'COMPLETED' },
   { label: 'Cancelled', value: 'CANCELLED' },
 ]
 
@@ -334,175 +346,152 @@ export function FlockHealthSchedule({
 
       <div className="space-y-4 p-4">
         {showForm && canEdit ? (
-          <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-fg/[0.08] bg-page p-4">
-            <div className={cn(tone.panel, 'flex gap-1 p-1')}>
-              <button
-                type="button"
-                aria-pressed={isVaccine}
-                onClick={() => switchType('VACCINATION')}
-                className={cn(segmentClass(isVaccine), 'flex-1 justify-center')}
-              >
-                <Syringe className="h-4 w-4" strokeWidth={1.5} /> Vaccine
-              </button>
-              <button
-                type="button"
-                aria-pressed={!isVaccine}
-                onClick={() => switchType('MEDICATION')}
-                className={cn(segmentClass(!isVaccine), 'flex-1 justify-center')}
-              >
-                <Pill className="h-4 w-4" strokeWidth={1.5} /> Medication
-              </button>
-            </div>
+          <Form onSubmit={handleSubmit} className="rounded-xl border border-fg/[0.08] bg-tile p-4">
+            <Segmented
+              label="What are you scheduling"
+              value={type}
+              onChange={switchType}
+              options={[
+                { value: 'VACCINATION', label: 'Vaccine', icon: <Syringe className="h-4 w-4" strokeWidth={1.75} /> },
+                { value: 'MEDICATION', label: 'Medicine', icon: <Pill className="h-4 w-4" strokeWidth={1.75} /> },
+              ]}
+            />
 
-            <div className="space-y-2">
+            <FormSection title={isVaccine ? 'Which vaccine' : 'Which medicine'}>
               <Select
-                label={isVaccine ? 'Vaccine' : 'Medication'}
+                label={isVaccine ? 'Vaccine' : 'Medicine'}
                 options={nameOptions}
                 value={namePreset}
                 onChange={(e) => handleNameChange(e.target.value)}
+                hint={
+                  !isAddingNew && selectedItem
+                    ? showQuantity
+                      ? `Measured in ${selectedItem.unit} each time it is used.`
+                      : 'Used once, with no amount to measure.'
+                    : inventory.length > 0
+                      ? 'These come from your stock.'
+                      : `No ${isVaccine ? 'vaccine' : 'medicine'} in stock yet. Choose "Add new".`
+                }
               />
-              <p className={cn('text-xs', tone.muted)}>
-                {inventory.length > 0
-                  ? 'Sourced from your inventory stock'
-                  : `No ${isVaccine ? 'vaccine' : 'medicine'} in stock, use "Add new"`}
-              </p>
-            </div>
 
-            {isAddingNew ? (
-              <Input
-                label={isVaccine ? 'New vaccine name' : 'New medication name'}
-                placeholder={isVaccine ? 'e.g. Newcastle Lasota' : 'e.g. Florfenicol'}
-                value={customName}
-                onChange={(e) => setCustomName(e.target.value)}
-                autoFocus
-              />
-            ) : null}
+              {isAddingNew ? (
+                <>
+                  <Input
+                    label={isVaccine ? 'Name of the new vaccine' : 'Name of the new medicine'}
+                    placeholder={isVaccine ? 'e.g. Newcastle Lasota' : 'e.g. Florfenicol'}
+                    value={customName}
+                    onChange={(e) => setCustomName(e.target.value)}
+                    autoFocus
+                  />
+                  <Segmented
+                    label="How is it used"
+                    value={newUsageType}
+                    onChange={setNewUsageType}
+                    options={[
+                      { value: 'ONE_TIME', label: 'Used once' },
+                      { value: 'QUANTITY', label: 'Measured amount' },
+                    ]}
+                  />
+                </>
+              ) : null}
 
-            {isAddingNew ? (
-              <div>
-                <p className={cn('mb-2 text-[13px]', tone.text2)}>Usage</p>
-                <div className={cn(tone.panel, 'flex gap-1 p-1')}>
-                  <button
+              {isAddingNew && resolvedName ? (
+                <div className="space-y-1.5">
+                  <Button
                     type="button"
-                    aria-pressed={newUsageType === 'ONE_TIME'}
-                    onClick={() => setNewUsageType('ONE_TIME')}
-                    className={cn(segmentClass(newUsageType === 'ONE_TIME'), 'flex-1 justify-center')}
+                    variant="outline"
+                    onClick={handleSaveToInventory}
+                    disabled={!canSaveToInventory}
+                    isLoading={isSavingItem}
+                    loadingText="Saving"
+                    className="w-full"
                   >
-                    One-time
-                  </button>
-                  <button
-                    type="button"
-                    aria-pressed={newUsageType === 'QUANTITY'}
-                    onClick={() => setNewUsageType('QUANTITY')}
-                    className={cn(segmentClass(newUsageType === 'QUANTITY'), 'flex-1 justify-center')}
-                  >
-                    Quantity
-                  </button>
+                    <Boxes className="h-4 w-4 shrink-0 text-fg-2" strokeWidth={1.75} />
+                    <span className="truncate">Save “{resolvedName}” to stock</span>
+                  </Button>
+                  <p className={fieldStyles.hint}>
+                    Save it to stock and pick it from the list, or just add the schedule and both are saved together.
+                  </p>
                 </div>
-              </div>
-            ) : null}
-
-            {isNewItem && resolvedName ? (
-              <p className={cn('text-xs', tone.text2)}>
-                Save to inventory first, then select it, or use add schedule to save both together
-              </p>
-            ) : null}
-
-            {!isAddingNew && selectedItem ? (
-              <p className={cn('text-xs', tone.muted)}>
-                {showQuantity ? `Quantity-tracked, in ${selectedItem.unit}` : 'One-time use item'}
-              </p>
-            ) : null}
+              ) : null}
+            </FormSection>
 
             {showQuantity ? (
-              <div className="grid grid-cols-2 gap-3">
-                <Input
-                  label="Quantity"
-                  type="number"
-                  min="0"
-                  step="any"
-                  placeholder="e.g. 250"
-                  value={quantity}
-                  onChange={(e) => {
-                    const v = e.target.value
-                    if (v === '' || Number(v) >= 0) setQuantity(v)
-                  }}
-                />
-                {isAddingNew ? (
-                  <Select label="Unit" options={UNIT_OPTIONS} value={unit} onChange={(e) => setUnit(e.target.value)} />
-                ) : (
-                  <Input label="Unit" value={selectedItem?.unit || unit} disabled />
-                )}
-              </div>
+              <FormSection title="How much">
+                <FormRow alwaysInline>
+                  <Input
+                    label="Amount"
+                    type="number"
+                    min="0"
+                    step="any"
+                    placeholder="e.g. 250"
+                    value={quantity}
+                    onChange={(e) => {
+                      const v = e.target.value
+                      if (v === '' || Number(v) >= 0) setQuantity(v)
+                    }}
+                  />
+                  {isAddingNew ? (
+                    <Select label="Measured in" options={UNIT_OPTIONS} value={unit} onChange={(e) => setUnit(e.target.value)} />
+                  ) : (
+                    <Input label="Measured in" value={selectedItem?.unit || unit} disabled />
+                  )}
+                </FormRow>
+              </FormSection>
             ) : null}
 
-            <div className="grid grid-cols-2 gap-3">
-              <Input label="Scheduled date" type="date" value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} />
-              <Select label="Status" options={STATUS_OPTIONS} value={status} onChange={(e) => setStatus(e.target.value)} />
-            </div>
-
-            <Input label="Notes (optional)" placeholder="Dosage, route…" value={notes} onChange={(e) => setNotes(e.target.value)} />
+            <FormSection title="When">
+              <DateInput label="Date" value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} />
+              <Segmented label="Status" value={status} onChange={setStatus} options={STATUS_OPTIONS} />
+              <Input
+                label="Notes"
+                optional
+                placeholder="e.g. In drinking water, 1 ml per bird"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+              />
+            </FormSection>
 
             {drafts.length > 0 ? (
-              <div className="space-y-2">
-                <p className={cn('text-[13px]', tone.text2)}>
-                  Staged <span className={cn('font-mono tabular-nums', tone.muted)}>{drafts.length}</span>
-                </p>
-                <ul className="divide-y divide-fg/[0.06] rounded-lg border border-fg/[0.08]">
+              <FormSection title="Ready to save" aside={<span className="tabular-nums">{drafts.length}</span>}>
+                <ul className="divide-y divide-fg/[0.06] rounded-xl border border-fg/[0.08] bg-card">
                   {drafts.map((d) => (
-                    <li key={d._key} className="flex items-center gap-2 py-1 pl-3 pr-1 text-[13px]">
+                    <li key={d._key} className="flex min-h-12 items-center gap-2.5 py-1 pl-3.5 pr-1 text-sm">
                       {d.type === 'VACCINATION' ? (
                         <Syringe className={cn('h-4 w-4 shrink-0', tone.muted)} strokeWidth={1.5} />
                       ) : (
                         <Pill className={cn('h-4 w-4 shrink-0', tone.muted)} strokeWidth={1.5} />
                       )}
-                      <span className={cn('truncate', tone.text)}>{d.name}</span>
-                      <span className={cn('shrink-0 font-mono text-xs', tone.muted)}>
-                        {d.usageType === 'QUANTITY' ? `${d.quantity} ${d.unit}` : 'One-time'}
+                      <span className={cn('min-w-0 truncate font-medium', tone.text)}>{d.name}</span>
+                      <span className={cn('shrink-0 text-[13px] tabular-nums', tone.muted)}>
+                        {d.usageType === 'QUANTITY' ? `${d.quantity} ${d.unit}` : 'Used once'}
                       </span>
                       <button
                         type="button"
                         onClick={() => setDrafts((prev) => prev.filter((x) => x._key !== d._key))}
-                        className={iconButtonClass('danger', 'ml-auto')}
-                        aria-label="Remove staged item"
+                        className={iconButtonClass('danger', 'ml-auto h-11 w-11 md:h-10 md:w-10')}
+                        aria-label={`Remove ${d.name}`}
                       >
                         <Trash2 className="h-4 w-4" strokeWidth={1.5} />
                       </button>
                     </li>
                   ))}
                 </ul>
-              </div>
+              </FormSection>
             ) : null}
 
-            {error ? <p className="text-[13px] text-neg">{error}</p> : null}
-            {successMsg ? <p className={cn('text-[13px]', tone.accent)}>{successMsg}</p> : null}
+            <FormError>{error}</FormError>
+            {successMsg ? <FormNote tone="success">{successMsg}</FormNote> : null}
 
-            {isAddingNew && resolvedName ? (
-              <ActionButton
-                size="sm"
-                onClick={handleSaveToInventory}
-                disabled={!canSaveToInventory}
-                isLoading={isSavingItem}
-                loadingText="Saving…"
-                className="w-full"
-              >
-                <Boxes className="h-4 w-4 text-fg-2" strokeWidth={1.5} />
-                <span className="truncate">Save “{resolvedName}” to inventory</span>
-              </ActionButton>
-            ) : null}
-
-            <p className={cn('text-xs', tone.muted)}>Then pick it from the list and add the schedule</p>
-
-            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-              <ActionButton size="sm" onClick={handleAddToList} disabled={!currentEntryValid || isPending}>
-                <ListPlus className="h-4 w-4 text-fg-2" strokeWidth={1.5} /> Add another
-              </ActionButton>
-              <ActionButton type="submit" variant="primary" size="sm" isLoading={isPending} disabled={!canSave}>
-                <Plus className="h-4 w-4" strokeWidth={1.5} />
-                {totalToSave > 1 ? `Save ${totalToSave}` : 'Add schedule'}
-              </ActionButton>
-            </div>
-          </form>
+            <FormActions>
+              <Button type="button" variant="outline" onClick={handleAddToList} disabled={!currentEntryValid || isPending}>
+                <ListPlus className="h-4 w-4 text-fg-2" strokeWidth={1.75} /> Add another
+              </Button>
+              <Button type="submit" variant="accent" isLoading={isPending} loadingText="Saving" disabled={!canSave}>
+                {totalToSave > 1 ? `Save ${totalToSave} schedules` : 'Add schedule'}
+              </Button>
+            </FormActions>
+          </Form>
         ) : null}
 
         <ScheduleGroup
@@ -607,7 +596,7 @@ function ScheduleGroup({
                       onChange={(e) => onStatusChange(type, rec.id, e.target.value)}
                       aria-label={`Status of ${name}`}
                       className={cn(
-                        'h-8 cursor-pointer rounded-lg border border-fg/[0.08] bg-raised px-2 text-xs text-fg disabled:opacity-50',
+                        'h-11 cursor-pointer rounded-lg border border-fg/[0.14] bg-page px-2.5 text-sm text-fg disabled:opacity-50 md:h-10',
                         tone.focus
                       )}
                     >

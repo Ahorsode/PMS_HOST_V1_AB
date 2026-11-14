@@ -1,11 +1,10 @@
 'use client'
 
 import React, { useState } from 'react';
-import { Input } from '@/components/ui/Input';
 import { createIsolationRoom } from '@/lib/actions/dashboard-actions';
-import { Loader2, Plus } from 'lucide-react';
+import { Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { MutationBoundary } from '@/components/ui/MutationFeedback';
+import { Button, Form, FormActions, FormError, Input } from '@/components/ui/form';
 import { g } from '@/components/ui/graphite';
 
 /** `bare` drops the tile chrome (for use inside a pop-up); `onCreated` runs after a save. */
@@ -26,7 +25,7 @@ export const IsolationRoomForm = ({ bare = false, onCreated }: { bare?: boolean;
     const capacityVal = parseInt(capacity);
 
     if (isNaN(capacityVal) || capacityVal < 0) {
-      setError('Capacity must be zero or more');
+      setError('Enter how many birds the room can hold. It cannot be less than zero.');
       setIsLoading(false);
       return;
     }
@@ -40,10 +39,10 @@ export const IsolationRoomForm = ({ bare = false, onCreated }: { bare?: boolean;
         router.refresh();
         onCreated?.();
       } else {
-        setError(result.error || 'Could not create the isolation room');
+        setError(result.error || 'The room could not be added. Try again.');
       }
     } catch (err: any) {
-      setError(err.message || 'Something went wrong, try again');
+      setError(err.message || 'Something went wrong. Try again.');
     } finally {
       setIsLoading(false);
     }
@@ -51,56 +50,41 @@ export const IsolationRoomForm = ({ bare = false, onCreated }: { bare?: boolean;
 
   return (
     <div className={bare ? '' : `${g.tile} h-fit p-4`}>
-      {!bare && <h3 className={`mb-4 text-sm font-medium ${g.text}`}>New room</h3>}
-      <form onSubmit={handleSubmit}>
-        <MutationBoundary active={isLoading} label="Creating isolation room...">
-          <fieldset disabled={isLoading} className="space-y-4 disabled:opacity-70">
-            <div>
-              <label htmlFor="isolation-room-name" className={g.label}>Name</label>
-              <Input
-                id="isolation-room-name"
-                name="name"
-                placeholder="Infirmary A"
-                required
-                disabled={isLoading}
-                className={g.input}
-              />
-            </div>
-            <div>
-              <label htmlFor="isolation-room-capacity" className={g.label}>Capacity in birds</label>
-              <Input
-                id="isolation-room-capacity"
-                name="capacity"
-                type="number"
-                placeholder="50"
-                required
-                value={capacity}
-                disabled={isLoading}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === '' || parseInt(val) >= 0) {
-                    setCapacity(val);
-                  }
-                }}
-                className={g.input}
-              />
-            </div>
-            {error && (
-              <p role="alert" className="text-sm text-neg-solid">
-                {error}
-              </p>
-            )}
-            <button type="submit" disabled={isLoading} aria-busy={isLoading || undefined} className={`${g.buttonPrimary} w-full`}>
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} />
-              ) : (
-                <Plus className="h-4 w-4" strokeWidth={1.5} />
-              )}
-              {isLoading ? 'Adding room' : 'Add room'}
-            </button>
-          </fieldset>
-        </MutationBoundary>
-      </form>
+      {!bare && <h3 className="mb-4 text-base font-semibold text-fg">New room</h3>}
+      <Form onSubmit={handleSubmit} className="space-y-4">
+        <Input
+          id="isolation-room-name"
+          name="name"
+          label="Room name"
+          placeholder="e.g. Sick bay A"
+          required
+          disabled={isLoading}
+        />
+        <Input
+          id="isolation-room-capacity"
+          name="capacity"
+          type="number"
+          label="How many birds it holds"
+          unit="birds"
+          placeholder="e.g. 50"
+          required
+          value={capacity}
+          disabled={isLoading}
+          onChange={(e) => {
+            const val = e.target.value;
+            if (val === '' || parseInt(val) >= 0) {
+              setCapacity(val);
+            }
+          }}
+        />
+        <FormError>{error}</FormError>
+        <FormActions>
+          <Button type="submit" variant="accent" isLoading={isLoading} loadingText="Adding room">
+            <Plus className="h-4 w-4" strokeWidth={1.75} />
+            Add room
+          </Button>
+        </FormActions>
+      </Form>
     </div>
   );
 };

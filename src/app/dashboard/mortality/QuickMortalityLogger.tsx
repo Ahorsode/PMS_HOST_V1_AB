@@ -35,7 +35,7 @@ export function QuickMortalityLogger({ activeBatches, isolationRooms = [], defau
         <div>
           <h2 className={g.sectionTitle}>{isDead ? 'Log deaths' : 'Isolate birds'}</h2>
           <p className={`mt-1 text-sm ${g.secondary}`}>
-            {isDead ? 'Pick a batch to record birds that died' : 'Pick a batch to move sick birds into isolation'}
+            {isDead ? 'Pick a flock to record birds that died' : 'Pick a flock to move sick birds into isolation'}
           </p>
         </div>
         {headerAside}
@@ -77,19 +77,18 @@ export function QuickMortalityLogger({ activeBatches, isolationRooms = [], defau
       <Dialog
         isOpen={!!selectedBatch}
         onOpenChange={(open) => !open && setSelectedBatch(null)}
-        title={isDead ? `Log deaths: ${selectedBatchLabel}` : `Isolate birds: ${selectedBatchLabel}`}
+        title={isDead ? 'Record deaths' : 'Isolate sick birds'}
+        description={selectedBatchLabel}
       >
         {selectedBatch && (
-          <div className="p-2">
-            <LivestockForm
-              batch={selectedBatch}
-              houses={[]} // Not needed for mortality mode in LivestockForm
-              isolationRooms={isolationRooms}
-              mode="mortality"
-              defaultHealthType={defaultType}
-              onClose={() => setSelectedBatch(null)}
-            />
-          </div>
+          <LivestockForm
+            batch={selectedBatch}
+            houses={[]} // Not needed for mortality mode in LivestockForm
+            isolationRooms={isolationRooms}
+            mode="mortality"
+            defaultHealthType={defaultType}
+            onClose={() => setSelectedBatch(null)}
+          />
         )}
       </Dialog>
     </div>
