@@ -1,7 +1,33 @@
+import { AsyncLocalStorage } from 'node:async_hooks'
 import { PrismaClient } from '@prisma/client'
 import { validateDatabaseRuntimeConfig } from '@/lib/performance/env-validation'
 
 validateDatabaseRuntimeConfig()
+
+/**
+ * A farm-context transaction that several reads of one page share (see
+ * readTogether). It is only reused by code running inside that page's
+ * readTogether call, for the same user and farm, while it is still open.
+ */
+type SharedFarmRead = { userId: string; farmId: string; tx: any; open: boolean; failed: boolean }
+const sharedFarmRead = new AsyncLocalStorage<SharedFarmRead>()
+
+function joinableFarmRead(userId: string | null, farmId: string) {
+  const shared = sharedFarmRead.getStore()
+  if (!shared || !shared.open || shared.farmId !== farmId) return null
+  if (userId !== null && shared.userId !== userId) return null
+  return shared
+}
+
+async function runInShared<T>(shared: SharedFarmRead, read: (tx: any) => Promise<T>): Promise<T> {
+  try {
+    return await read(shared.tx)
+  } catch (error) {
+    // A failed statement aborts the whole transaction, so the page re-runs its reads separately.
+    shared.failed = true
+    throw error
+  }
+}
 
 const prismaClientSingleton = () => {
   return new PrismaClient().$extends({
@@ -35,6 +61,11 @@ const prismaClientSingleton = () => {
     },
     client: {
       async $withFarmContext(userId: string, farmId: string, callback: (tx: any) => Promise<any>) {
+        // Inside a page's readTogether call the context is already set for this
+        // user and farm, so the read joins that transaction instead of opening one.
+        const shared = joinableFarmRead(userId, String(farmId))
+        if (shared) return await runInShared(shared, callback)
+
         return await (this as any).$transaction(async (tx: any) => {
           // Both settings in one statement: same transaction-local values, one round trip instead of two.
           await tx.$executeRaw`SELECT set_config('app.current_user_id', ${userId}, true), set_config('app.current_farm_id', ${String(farmId)}, true)`;
@@ -76,3 +107,40 @@ export type DbTransactionClient = Parameters<Extract<Parameters<typeof prisma.$t
 export default prisma
 
 if (process.env.NODE_ENV !== 'production') globalThis.prisma = prisma
+
+/**
+ * Runs a page's farm reads inside one farm-context transaction instead of
+ * one transaction per read. Only for reads: nothing in `run` may write.
+ *
+ * Each read keeps its own code and error handling. If any of them fails, or
+ * the shared transaction itself fails, `run` is called again with every read
+ * on its own transaction, which is exactly how they behaved before.
+ */
+export async function readTogether<T>(userId: string, farmId: string, run: () => Promise<T>): Promise<T> {
+  const shared: SharedFarmRead = { userId, farmId: String(farmId), tx: null, open: false, failed: false }
+  try {
+    const result = await (prisma as any).$withFarmContext(userId, farmId, async (tx: any) => {
+      shared.tx = tx
+      shared.open = true
+      try {
+        return await sharedFarmRead.run(shared, run)
+      } finally {
+        shared.open = false
+      }
+    })
+    if (!shared.failed) return result as T
+  } catch {
+    // Fall through to the separate reads below.
+  }
+  return run()
+}
+
+/**
+ * For a read that normally uses the plain client with an explicit farmId
+ * filter: inside readTogether it runs on the shared transaction, elsewhere on
+ * the plain client as before.
+ */
+export async function readForFarm<T>(farmId: string, read: (db: DbTransactionClient) => Promise<T>): Promise<T> {
+  const shared = joinableFarmRead(null, farmId)
+  return shared ? runInShared(shared, read) : read(prisma)
+}

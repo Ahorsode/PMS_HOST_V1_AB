@@ -1,6 +1,7 @@
 "use server";
 
-import prisma from "@/lib/db";
+import prisma, { readForFarm } from "@/lib/db";
+import { getFarmRecord } from "@/lib/farm-record";
 import { getAppSettings } from "@/lib/settings/app-settings";
 import { revalidatePath } from "next/cache";
 import { getAuthContext } from "@/lib/auth-utils";
@@ -100,14 +101,19 @@ export async function getFarmSettings() {
   const { activeFarmId } = await getAuthContext();
   if (!activeFarmId) return null;
 
-  return prisma.farmSettings.findUnique({
-    where: { farmId: activeFarmId },
-  });
+  // The settings row comes with the farm record, which a page render has
+  // usually loaded already (plan access and currency use it too).
+  return (await getFarmRecord(activeFarmId))?.settings ?? null;
 }
 
 export async function getSalesSettings() {
   const { activeFarmId } = await getAuthContext();
   if (!activeFarmId) return null;
+
+  // Every farm has a row after its first visit, so read it first and only
+  // create one (with the admin defaults) when it is missing.
+  const existing = await readForFarm(activeFarmId, (db) => db.salesSettings.findUnique({ where: { farmId: activeFarmId } }));
+  if (existing) return existing;
 
   const { salesSettings } = await getAppSettings('farm-defaults');
   return prisma.salesSettings.upsert({
@@ -150,24 +156,24 @@ export async function getMonthlyProductionSummary() {
 
   const thirtyDaysAgo = new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  const [eggs, expenses, orders, sales] = await Promise.all([
-    prisma.eggProduction.aggregate({
+  const [eggs, expenses, orders, sales] = await readForFarm(activeFarmId, (db) => Promise.all([
+    db.eggProduction.aggregate({
       where: { farmId: activeFarmId, logDate: { gte: thirtyDaysAgo } },
       _sum: { eggsCollected: true }
     }),
-    prisma.expense.aggregate({
+    db.expense.aggregate({
       where: { farmId: activeFarmId, expenseDate: { gte: thirtyDaysAgo } },
       _sum: { amount: true }
     }),
-    prisma.order.aggregate({
+    db.order.aggregate({
       where: { farmId: activeFarmId, orderDate: { gte: thirtyDaysAgo } },
       _sum: { totalAmount: true }
     }),
-    prisma.sale.aggregate({
+    db.sale.aggregate({
       where: { farmId: activeFarmId, saleDate: { gte: thirtyDaysAgo } },
       _sum: { totalAmount: true }
     })
-  ]);
+  ]));
 
   const totalRevenue = (Number(orders._sum.totalAmount) || 0) + (Number(sales._sum.totalAmount) || 0);
 

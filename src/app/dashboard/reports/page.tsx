@@ -6,6 +6,7 @@ import { generateComprehensiveFarmReport } from '@/lib/actions/reports'
 import { getAllBatches } from '@/lib/actions/dashboard-actions'
 import { getFarmSettings } from '@/lib/actions/preference-actions'
 import { ReportsClient } from './ReportsClient'
+import { readFarmTogether } from '@/lib/farm-read'
 
 export default async function ReportsPage() {
   const { activeFarmId } = await getAuthContext()
@@ -26,11 +27,11 @@ export default async function ReportsPage() {
   // the cached report was never reused.
   start.setHours(0, 0, 0, 0)
 
-  const [report, rawBatches, farmSettings] = await Promise.all([
+  const [report, rawBatches, farmSettings] = await readFarmTogether(() => Promise.all([
     generateComprehensiveFarmReport(activeFarmId, start, end),
     getAllBatches(),
     getFarmSettings(),
-  ])
+  ]))
 
   if (!report) {
     return (

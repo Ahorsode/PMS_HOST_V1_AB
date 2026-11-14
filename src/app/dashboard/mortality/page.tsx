@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { QuickMortalityLogger } from './QuickMortalityLogger';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { readFarmTogether } from '@/lib/farm-read';
 
 export default async function MortalityPage() {
   const hasAccess = await checkWorkerPermissions('mortality', 'view');
@@ -19,10 +20,10 @@ export default async function MortalityPage() {
     redirect('/dashboard/unauthorized');
   }
 
-  const [logs, batches] = await Promise.all([
+  const [logs, batches] = await readFarmTogether(() => Promise.all([
     getAllMortalityLogs(),
     getAllBatches()
-  ]);
+  ]));
 
   const activeBatches = JSON.parse(JSON.stringify(
     batches.filter((b: any) => b.status === 'active')

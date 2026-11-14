@@ -14,6 +14,7 @@ import { WorkerStamp } from '@/components/ui/WorkerStamp';
 import Link from 'next/link';
 import { getAuthContext } from '@/lib/auth-utils';
 import { getFarmSettings, getSalesSettings } from '@/lib/actions/preference-actions';
+import { readFarmTogether } from '@/lib/farm-read';
 
 interface OrderItem {
   id: string;
@@ -123,7 +124,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
   const sellBatchId = resolvedParams.sellBatchId;
   const openSellOnLoad = resolvedParams.quick === 'sell';
 
-  const [ordersRaw, orderCount, customersRaw, inventoryRaw, eggInventoryRaw, eggBatchStockRaw, fifoEggAvailabilityRaw, livestockRaw, farmSettings, salesSettings] = await Promise.all([
+  const [ordersRaw, orderCount, customersRaw, inventoryRaw, eggInventoryRaw, eggBatchStockRaw, fifoEggAvailabilityRaw, livestockRaw, farmSettings, salesSettings] = await readFarmTogether(() => Promise.all([
     getAllOrders(),
     getOrderCount(),
     getAllCustomers(),
@@ -134,7 +135,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
     getAllBatches(),
     getFarmSettings(),
     getSalesSettings(),
-  ]);
+  ]));
   const eggsPerCrate = farmSettings?.eggsPerCrate ?? 30;
   const allowBatchOverride = salesSettings?.allowBatchOverride ?? false;
   const allowWorkerDiscounts = salesSettings?.allowWorkerDiscounts ?? true;

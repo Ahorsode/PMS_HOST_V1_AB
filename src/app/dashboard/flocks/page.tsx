@@ -5,6 +5,7 @@ import { LivestockTable } from './LivestockTable';
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
 import { redirect } from 'next/navigation';
 import { getAuthContext } from '@/lib/auth-utils';
+import { readFarmTogether } from '@/lib/farm-read';
 
 export default async function FlocksPage() {
   const { activeFarmId } = await getAuthContext();
@@ -20,11 +21,11 @@ export default async function FlocksPage() {
     redirect('/dashboard/unauthorized');
   }
 
-  const [rawBatches, rawHouses, rawIsolationRooms] = await Promise.all([
+  const [rawBatches, rawHouses, rawIsolationRooms] = await readFarmTogether(() => Promise.all([
     getAllBatches(),
     getHouses(),
     getIsolationRooms(),
-  ]);
+  ]));
 
   // Sanitize Decimal objects for Client Components
   const batches = JSON.parse(JSON.stringify(rawBatches));
