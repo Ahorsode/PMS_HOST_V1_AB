@@ -6,7 +6,7 @@ import { Loader2 } from 'lucide-react';
 import { Slot } from '@radix-ui/react-slot';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost' | 'glass';
+  variant?: 'primary' | 'accent' | 'secondary' | 'outline' | 'danger' | 'dangerSolid' | 'ghost' | 'glass';
   size?: 'sm' | 'md' | 'lg' | 'icon';
   isLoading?: boolean;
   loadingText?: React.ReactNode;
@@ -14,12 +14,15 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 // Graphite ramp: an off-white primary, raised neutral secondary, and red only for destructive actions.
+// `accent` is the green main button of a form (Save, Add, Continue); `dangerSolid` confirms a delete.
 const variants = {
   primary: 'bg-fg text-page hover:bg-fg/90 font-medium',
+  accent: 'bg-accent text-accent-fg hover:bg-accent/90 font-semibold',
   secondary:
     'border border-fg/[0.08] bg-raised text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] hover:bg-raised-2 font-medium',
   outline: 'border border-fg/[0.12] bg-transparent text-fg hover:bg-fg/[0.04] font-medium',
   danger: 'border border-neg-solid/30 bg-neg-solid/10 text-neg hover:bg-neg-solid/20 font-medium',
+  dangerSolid: 'bg-neg-solid text-white hover:bg-neg-solid/90 font-semibold',
   ghost: 'bg-transparent text-fg-2 hover:bg-fg/[0.06] hover:text-fg',
   glass:
     'border border-fg/[0.08] bg-raised text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] hover:bg-raised-2 font-medium',

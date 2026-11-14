@@ -2,50 +2,58 @@
 
 import React from 'react';
 import { COUNTRIES, GHANA } from '@/lib/countries';
-import { cn } from '@/lib/utils';
+import { SearchSelect } from '@/components/ui/form/controls';
 
 const ghana = COUNTRIES.find((country) => country.code === GHANA)!;
 const others = COUNTRIES.filter((country) => country.code !== GHANA);
 
-type CountrySelectProps = Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'onChange' | 'value'> & {
+// Ghana first (most farms), then everyone else by name.
+const COUNTRY_OPTIONS = [ghana, ...others].map((country) => ({
+  value: country.code,
+  label: country.name,
+  description: `Money shown in ${country.currency}`,
+  keywords: `${country.code} ${country.currency}`,
+}));
+
+type CountrySelectProps = {
+  id?: string;
+  name?: string;
   label?: string;
-  hint?: string;
+  hint?: React.ReactNode;
+  error?: React.ReactNode;
   value: string;
   onChange: (code: string) => void;
+  required?: boolean;
+  disabled?: boolean;
 };
 
-/** Native country picker; each option shows the currency the farm's money will be shown in. */
-export function CountrySelect({ id = 'country', label = 'Country', hint, value, onChange, className, ...props }: CountrySelectProps) {
+/** Searchable country picker; each option shows the currency the farm's money will be shown in. */
+export function CountrySelect({
+  id = 'country',
+  name,
+  label = 'Country',
+  hint,
+  error,
+  value,
+  onChange,
+  required,
+  disabled,
+}: CountrySelectProps) {
   return (
-    <div className="w-full space-y-2">
-      <label htmlFor={id} className="block text-sm font-medium text-fg-2">
-        {label}
-      </label>
-      <select
-        id={id}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className={cn(
-          'flex min-h-[44px] w-full rounded-lg border border-fg/[0.08] bg-page px-3 py-2 text-sm text-fg transition-[border-color,box-shadow] duration-150 focus:outline-none focus:border-accent/50 focus:ring-2 focus:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-50',
-          !value && 'text-fg-3',
-          className,
-        )}
-        {...props}
-      >
-        <option value="" disabled>
-          Select your country
-        </option>
-        <option value={ghana.code}>
-          {ghana.name} ({ghana.currency})
-        </option>
-        <option disabled>──────────</option>
-        {others.map((country) => (
-          <option key={country.code} value={country.code}>
-            {country.name} ({country.currency})
-          </option>
-        ))}
-      </select>
-      {hint ? <p className="text-xs leading-5 text-fg-3">{hint}</p> : null}
-    </div>
+    <SearchSelect
+      id={id}
+      name={name}
+      label={label}
+      hint={hint}
+      error={error}
+      value={value}
+      onChange={onChange}
+      options={COUNTRY_OPTIONS}
+      placeholder="Select your country"
+      searchPlaceholder="Search countries"
+      emptyText="No country matches"
+      required={required}
+      disabled={disabled}
+    />
   );
 }
