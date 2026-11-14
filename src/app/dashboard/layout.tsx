@@ -65,27 +65,30 @@ export default async function DashboardLayout({
     redirect('/login');
   }
 
-  // The active farm comes from its own lookup, which does not depend on the
+  // The auth context comes from its own lookup, which does not depend on the
   // ones below, so it runs alongside them instead of after them.
-  const activeFarmIdLookup = getAuthContext().then((context) => context.activeFarmId, () => undefined);
+  const authContextLookup = getAuthContext().then((context) => context, () => null);
 
   let dbUser: Awaited<ReturnType<typeof prisma.user.findUnique>>;
   let farm: Awaited<ReturnType<typeof prisma.farm.findFirst>>;
   let acceptedTerms = true;
 
   try {
-    [dbUser, farm, acceptedTerms] = await Promise.all([
-      prisma.user.findUnique({
-        where: { id: session.user.id }
-      }),
-      prisma.farm.findFirst({
-        where: {
-          OR: [
-            { userId: session.user.id },
-            { members: { some: { userId: session.user.id } } }
-          ]
-        }
-      }),
+    // The user and farm rows are read together in one database transaction.
+    [[dbUser, farm], acceptedTerms] = await Promise.all([
+      prisma.$transaction([
+        prisma.user.findUnique({
+          where: { id: session.user.id }
+        }),
+        prisma.farm.findFirst({
+          where: {
+            OR: [
+              { userId: session.user.id },
+              { members: { some: { userId: session.user.id } } }
+            ]
+          }
+        }),
+      ]),
       hasAcceptedCurrentTerms(session.user.id),
     ]);
   } catch (error) {
@@ -165,8 +168,17 @@ export default async function DashboardLayout({
   // The remaining lookups do not depend on each other, so they all start now.
   // They are read below in the same order as before, so the same check wins.
   const farmId = farm?.id;
-  const navigationAccessLookup = farmId ? loadNavigationAccess(farmId, dbUser.id) : null;
-  const moneyLookup = started(activeFarmIdLookup.then((activeFarmId) => getFarmMoney(activeFarmId ?? farmId)));
+  // The auth context already holds the user's permission row and role for the
+  // active farm. When that is the farm shown here they are reused; otherwise
+  // (another farm, or no context) they are looked up as before.
+  const navigationAccessLookup = farmId
+    ? authContextLookup.then((context) =>
+        context && context.activeFarmId === farmId
+          ? { userPermissions: context.permissions, membershipRole: context.membershipRole as string | null }
+          : loadNavigationAccess(farmId, dbUser.id),
+      )
+    : null;
+  const moneyLookup = started(authContextLookup.then((context) => getFarmMoney(context?.activeFarmId ?? farmId)));
   const staffAccessLookup = farmId ? started(getFarmStaffAccess(farmId)) : null;
   const messagesLookup = farmId ? getDashboardMessages(farmId, isOwner) : undefined;
   const lastPlanPaymentLookup = farmId && isOwner ? loadLastPlanPayment(farmId) : undefined;

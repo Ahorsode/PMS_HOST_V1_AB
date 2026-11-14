@@ -1,6 +1,7 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
+import { FARM_MESSAGES_TAG } from '@/lib/settings/farm-messages'
 import { z } from 'zod'
 import prisma from '@/lib/db'
 import { requirePaymentAdminAction, type ActiveAdmin } from '@/lib/admin-auth'
@@ -99,6 +100,7 @@ export async function adminSendMessage(input: z.input<typeof messageSchema>): Pr
   })
   revalidatePath('/admin/messages')
   revalidatePath('/dashboard', 'layout')
+  revalidateTag(FARM_MESSAGES_TAG, 'max')
   return { success: true }
 }
 
@@ -113,5 +115,6 @@ export async function adminWithdrawMessage(id: string): Promise<MessageActionRes
   await logAdminAction(admin, { action: 'message.withdraw', targetType: 'message', targetId: id, summary: `Withdrew the message "${message.title}"` })
   revalidatePath('/admin/messages')
   revalidatePath('/dashboard', 'layout')
+  revalidateTag(FARM_MESSAGES_TAG, 'max')
   return { success: true }
 }

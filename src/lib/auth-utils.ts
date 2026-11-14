@@ -175,7 +175,9 @@ export const getAuthContext = cache(async () => {
   const isFarmOwner = !!activeFarmId && data.farms.some((farm) => farm.id === activeFarmId)
   const role = membership?.role || (isFarmOwner ? 'OWNER' : (data.role === 'OWNER' ? 'WORKER' : data.role || sessionUser.role || 'WORKER'))
 
-  return { userId, activeFarmId, role, permissions, isFarmOwner }
+  // membershipRole is the user's role on the farm exactly as stored (null when
+  // they have no membership row); role above also covers owners and defaults.
+  return { userId, activeFarmId, role, permissions, isFarmOwner, membershipRole: membership?.role ?? null }
 })
 
 export function hasPermission(role: string, permissions: any, action: string): boolean {
