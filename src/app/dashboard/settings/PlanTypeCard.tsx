@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { Check, Minus, User, Users } from 'lucide-react';
 import { Dialog } from '@/components/ui/Dialog';
 import { Button } from '@/components/ui/Button';
+import { FormActions } from '@/components/ui/form';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { setFarmPlanType } from '@/lib/actions/subscription-actions';
 import { cn } from '@/lib/utils';
@@ -129,7 +130,7 @@ export function PlanTypeCard({
             );
           })}
         </div>
-        <p className="text-xs leading-5 text-fg/60">
+        <p className="text-[13px] leading-5 text-fg-2">
           {onPaidPlan
             ? 'You are on a paid plan. Choosing the other type takes you to the Plans page to buy a plan of that type.'
             : 'Switching changes which plans you see on the Plans page. Solo farms cannot have staff.'}
@@ -167,18 +168,18 @@ export function PlanTypeCard({
               </ul>
             </div>
             {onPaidPlan && (
-              <p className="text-xs leading-5 text-fg/60">
+              <p className="text-[13px] leading-5 text-fg-2">
                 You are on a paid plan, so confirming takes you to the Plans page to buy a {pendingChoice === 'SOLO' ? 'Solo' : 'Team'} plan.
               </p>
             )}
-            <div className="flex gap-2">
-              <Button variant="secondary" onClick={() => setPendingChoice(null)} disabled={isPending} className="flex-1">
+            <FormActions>
+              <Button type="button" variant="outline" onClick={() => setPendingChoice(null)} disabled={isPending}>
                 Keep {planType === 'SOLO' ? 'Solo' : 'Team'}
               </Button>
-              <Button onClick={confirmSwitch} isLoading={isPending} loadingText="Switching..." className="flex-1">
+              <Button type="button" variant="accent" onClick={confirmSwitch} isLoading={isPending} loadingText="Switching">
                 {onPaidPlan ? 'Continue to Plans' : `Switch to ${pendingChoice === 'SOLO' ? 'Solo' : 'Team'}`}
               </Button>
-            </div>
+            </FormActions>
           </div>
         )}
       </Dialog>

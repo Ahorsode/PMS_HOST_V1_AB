@@ -7,6 +7,7 @@ import {
   Wallet, ShoppingBag, ClipboardList, Package, Search,
   AlertTriangle, CheckCircle2, Loader2, ArrowLeft
 } from 'lucide-react'
+import { Input } from '@/components/ui/Input'
 import { restoreBatch } from '@/lib/actions/batch-actions'
 import { restoreEggProduction } from '@/lib/actions/egg-actions'
 import { restoreFeedingLog } from '@/lib/actions/feed-actions'
@@ -309,16 +310,15 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
       </div>
 
       {/* Search */}
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-fg/30" />
-        <input
-          type="text"
-          placeholder="Search records…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="w-full pl-9 pr-4 py-2.5 text-sm bg-fg/5 border border-fg/10 rounded-xl text-fg placeholder:text-fg/50 focus:outline-none focus:border-fg/30 transition-colors"
-        />
-      </div>
+      <Input
+        aria-label="Search deleted records"
+        type="search"
+        placeholder="Search"
+        leading={<Search className="h-4 w-4" strokeWidth={1.75} />}
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        wrapperClassName="max-w-sm"
+      />
 
       {/* Tabs */}
       <div className="flex flex-wrap gap-2">
@@ -327,25 +327,25 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
           const isActive = activeTab === tab.key
           const tc = COLOR_MAP[tab.color]
           return (
-            <motion.button
+            <button
               key={tab.key}
-              
-              whileTap={{ scale: 0.97 }}
+              type="button"
+              aria-pressed={isActive}
               onClick={() => { setActiveTab(tab.key); setSearch('') }}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-medium border transition-colors ${
+              className={`flex min-h-11 items-center gap-2 rounded-lg border px-3.5 text-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 md:min-h-10 ${
                 isActive
-                  ? `border-current bg-fg/10 ${tc.tab}`
-                  : 'border-fg/10 text-fg/50 hover:text-fg/70 hover:border-fg/20 bg-transparent'
+                  ? 'border-accent bg-accent font-semibold text-accent-fg'
+                  : 'border-fg/[0.14] text-fg-2 hover:border-fg/25 hover:text-fg'
               }`}
             >
-              <tab.icon className="w-3.5 h-3.5" />
+              <tab.icon className="h-4 w-4" strokeWidth={1.75} />
               {tab.label}
               {count > 0 && (
-                <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${isActive ? tc.badge : 'bg-fg/10 text-fg/50'}`}>
+                <span className={`rounded-full px-1.5 py-0.5 text-xs font-medium tabular-nums ${isActive ? 'bg-accent-fg/15 text-accent-fg' : tc.badge}`}>
                   {count}
                 </span>
               )}
-            </motion.button>
+            </button>
           )
         })}
       </div>

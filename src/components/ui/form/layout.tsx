@@ -161,7 +161,7 @@ export function FormActions({ sticky, note, destructive = false, className, chil
       {note ? <div className="min-w-0 flex-1 text-[13px] leading-5 text-fg-3">{note}</div> : null}
       <div
         className={cn(
-          'flex min-w-0 flex-1 gap-3 [&>*]:min-h-12 [&>*]:text-[15px] sm:[&>*]:min-h-11',
+          'flex min-w-0 flex-1 flex-wrap gap-3 [&>*]:min-h-12 [&>*]:text-[15px] sm:[&>*]:min-h-11',
           destructive
             ? 'flex-col-reverse sm:flex-row sm:items-center sm:justify-between'
             : 'items-center sm:justify-end [&>*:last-child]:flex-1 sm:[&>*:last-child]:min-w-36 sm:[&>*:last-child]:flex-none',
@@ -285,13 +285,29 @@ export function FormSummaryRow({ label, value, strong = false, tone = 'default' 
 interface MoreDetailsProps {
   label?: React.ReactNode;
   defaultOpen?: boolean;
+  /** Control it from outside, e.g. to fold it again after a save. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   className?: string;
   children: React.ReactNode;
 }
 
 /** Optional or rarely used fields, folded away until asked for. The fields stay in the form either way. */
-export function MoreDetails({ label = 'More details', defaultOpen = false, className, children }: MoreDetailsProps) {
-  const [open, setOpen] = React.useState(defaultOpen);
+export function MoreDetails({
+  label = 'More details',
+  defaultOpen = false,
+  open: openProp,
+  onOpenChange,
+  className,
+  children,
+}: MoreDetailsProps) {
+  const [openState, setOpenState] = React.useState(defaultOpen);
+  const open = openProp ?? openState;
+  const setOpen = (update: (value: boolean) => boolean) => {
+    const next = update(open);
+    if (openProp === undefined) setOpenState(next);
+    onOpenChange?.(next);
+  };
   const panelId = React.useId();
 
   return (
