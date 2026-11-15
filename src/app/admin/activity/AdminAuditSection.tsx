@@ -1,12 +1,13 @@
 import Link from 'next/link'
 import { Download, History } from 'lucide-react'
 import type { AdminAuditRow, AuditFilters } from '@/lib/actions/admin-audit-actions'
+import { controlClass } from '@/components/ui/form/styles'
 
 function formatDateTime(value: string) {
   return new Intl.DateTimeFormat('en-GH', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(value))
 }
 
-const fieldClass = 'h-9 rounded-md border border-zinc-700 bg-zinc-950 px-2 text-sm text-white outline-none focus:border-accent'
+const fieldClass = controlClass(false, 'w-auto')
 
 /** Every change made from the admin console, with filters and CSV export. */
 export default function AdminAuditSection({
