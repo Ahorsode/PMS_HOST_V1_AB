@@ -28,12 +28,14 @@ const nextConfig: NextConfig = {
             value: [
               "default-src 'self'",
               // Next.js App Router emits inline scripts for RSC hydration and recovery UI.
-              "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+              // js.paystack.co serves the Paystack checkout popup.
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.paystack.co",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https:",
               "font-src 'self' data:",
               "worker-src 'self' blob:",
-              "connect-src 'self' https://*.supabase.co https://*.sentry.io https://*.ingest.de.sentry.io https://vitals.vercel-insights.com https://va.vercel-scripts.com",
+              "frame-src 'self' https://checkout.paystack.com",
+              "connect-src 'self' https://*.supabase.co https://*.sentry.io https://*.ingest.de.sentry.io https://vitals.vercel-insights.com https://va.vercel-scripts.com https://api.paystack.co",
               "frame-ancestors 'none'",
               "base-uri 'self'",
               "form-action 'self'",
