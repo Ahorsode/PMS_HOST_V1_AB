@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useMemo, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { m, AnimatePresence } from 'framer-motion'
 import {
   AlertCircle,
   Calendar,
@@ -320,7 +320,7 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
 
                 <AnimatePresence initial={false}>
                   {allocateAcrossBatches && (
-                    <motion.div
+                    <m.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
@@ -437,14 +437,14 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
                         <ListPlus className="h-4 w-4" />
                         Add batch allocation
                       </Button>
-                    </motion.div>
+                    </m.div>
                   )}
                 </AnimatePresence>
               </div>
 
               <AnimatePresence>
                 {error && (
-                  <motion.div
+                  <m.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
@@ -452,11 +452,11 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
                   >
                     <AlertCircle className="w-4 h-4 shrink-0" />
                     {error}
-                  </motion.div>
+                  </m.div>
                 )}
 
                 {success && (
-                  <motion.div
+                  <m.div
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
@@ -464,7 +464,7 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
                   >
                     <CheckCircle2 className="w-4 h-4 shrink-0" />
                     Expense logged successfully.
-                  </motion.div>
+                  </m.div>
                 )}
               </AnimatePresence>
 

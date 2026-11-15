@@ -4,7 +4,7 @@ import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, m } from 'framer-motion';
 import { LogOut, Moon, Sun, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatRoleLabel } from '@/lib/navigation-permissions';
@@ -107,7 +107,7 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
 
                 <AnimatePresence>
                   {isOpen && (
-                    <motion.div
+                    <m.div
                       id={panelId}
                       role="group"
                       aria-label={`${category.name} pages`}
@@ -172,7 +172,7 @@ export const Sidebar = ({ role, permissions }: { role?: string, permissions?: an
                           </button>
                         </div>
                       )}
-                    </motion.div>
+                    </m.div>
                   )}
                 </AnimatePresence>
               </div>

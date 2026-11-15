@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { ReactNode } from "react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -16,7 +16,7 @@ interface GlassCardProps {
 
 export default function GlassCard({ children, className }: GlassCardProps) {
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 20, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ 
@@ -37,6 +37,6 @@ export default function GlassCard({ children, className }: GlassCardProps) {
       <div className="pointer-events-none absolute -inset-full rotate-45 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-20 transition-transform duration-1000 group-hover:translate-x-full" />
       
       {children}
-    </motion.div>
+    </m.div>
   );
 }
