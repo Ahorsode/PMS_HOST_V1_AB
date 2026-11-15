@@ -1,20 +1,62 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import bcrypt from 'bcryptjs';
-import { normalizePhoneNumber } from '@/lib/auth-utils';
+import { normalizePhoneNumber } from '@/lib/phone-auth';
+import { checkRateLimit, getRateLimitIp, rateLimitHeaders } from '@/lib/performance/rate-limit';
+import { MAX_PASSWORD_LENGTH, passwordPolicyError } from '@/lib/password-policy';
+import { recordLegalAcceptance } from '@/lib/legal-acceptance';
+import { z } from 'zod';
+import { freeTrialFields } from '@/lib/billing/trial';
+import { getBillingConfig } from '@/lib/billing/billing-config';
+
+const signupSchema = z.object({
+  firstname: z.string().trim().min(1, 'First name is required').max(100),
+  surname: z.string().trim().max(100).optional().default(''),
+  email: z.preprocess(
+    (value) => (typeof value === 'string' && value.trim() === '' ? null : value),
+    z.string().trim().email('Invalid email address').max(255).nullable().optional(),
+  ),
+  phoneNumber: z.string().trim().min(7, 'Phone number too short').max(20),
+  password: z.preprocess(
+    (value) => (typeof value === 'string' && value.length === 0 ? undefined : value),
+    z.string().max(MAX_PASSWORD_LENGTH, `Password must be ${MAX_PASSWORD_LENGTH} characters or fewer`).optional(),
+  ),
+  acceptTerms: z.literal(true, { error: 'Please accept the Terms of Service and Privacy Policy' }),
+});
 
 export async function POST(req: Request) {
   try {
-    const { firstname, surname, email, phoneNumber, password } = await req.json();
+    const limit = await checkRateLimit({
+      policy: 'auth.signup',
+      scope: 'api-signup',
+      ip: getRateLimitIp(req),
+    });
 
-    if (!phoneNumber) {
-      return NextResponse.json({ message: 'Phone number is required' }, { status: 400 });
+    if (!limit.ok) {
+      return NextResponse.json(
+        {
+          message: 'Too many signup attempts. Please wait and try again.',
+          code: 429,
+          retryAfterSec: limit.retryAfterSec,
+        },
+        { status: 429, headers: rateLimitHeaders(limit) },
+      );
     }
 
+    const body = await req.json();
+    const parsed = signupSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { message: parsed.error.issues[0]?.message ?? 'Invalid input' },
+        { status: 400 },
+      );
+    }
+
+    const { firstname, surname, email, phoneNumber, password } = parsed.data;
     const normalizedPhone = normalizePhoneNumber(phoneNumber);
 
     // Ensure email is null if empty string to avoid unique constraint issues
-    const cleanEmail = email && email.trim() !== '' ? email.trim() : null;
+    const cleanEmail = email ?? null;
 
     // Check if user already exists
     const existingUser = await prisma.user.findFirst({
@@ -26,10 +68,14 @@ export async function POST(req: Request) {
       }
     });
 
-    // If user exists and already has a password, it's a real duplicate.
-    // If user exists and doesn't have a password (or is invited), we can update them.
-    if (existingUser && existingUser.password && !existingUser.mustChangePassword) {
-      return NextResponse.json({ message: 'User already exists and is fully registered' }, { status: 400 });
+    // Signup must never modify an existing account: matching only on phone or
+    // email would let anyone set the password of a Google-only user or an
+    // invited worker (SEC-01). Existing users sign in instead.
+    if (existingUser) {
+      return NextResponse.json(
+        { message: 'An account with these details already exists. Please sign in instead.' },
+        { status: 409 },
+      );
     }
 
     // Check for invitations
@@ -43,38 +89,27 @@ export async function POST(req: Request) {
       }
     });
 
-    // Handle password
-    // If invited, we use '123456' as default if no password provided
-    const rawPassword = password || (invitation ? '123456' : null);
-    
-    if (!rawPassword) {
+    // Everyone who signs up chooses their own password, so there is nothing to
+    // change on first login (invite codes are only for owner-created accounts).
+    if (!password) {
       return NextResponse.json({ message: 'Password is required' }, { status: 400 });
     }
 
-    const hashedPassword = await bcrypt.hash(rawPassword, 10);
-    
-    // Set mustChangePassword if it's an invitation or if the password is the default '123456'
-    const mustChangePassword = !!invitation || rawPassword === '123456';
+    const passwordError = passwordPolicyError(password);
+    if (passwordError) {
+      return NextResponse.json({ message: passwordError }, { status: 400 });
+    }
 
-    // Create or Update the user
-    let user;
-    if (existingUser) {
-      user = await prisma.user.update({
-        where: { id: existingUser.id },
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const mustChangePassword = false;
+
+    // Create the user and associated resources in a transaction
+    const trialDays = (await getBillingConfig()).trial.days;
+    const user = await prisma.$transaction(async (tx) => {
+      const txUser = await tx.user.create({
         data: {
-          firstname,
-          surname,
-          email: cleanEmail || existingUser.email,
-          password: hashedPassword,
-          mustChangePassword,
-          role: invitation?.role || existingUser.role || 'OWNER',
-        }
-      });
-    } else {
-      user = await prisma.user.create({
-        data: {
-          firstname,
-          surname,
+          firstname: firstname || '',
+          surname: surname || '',
           email: cleanEmail,
           phoneNumber: normalizedPhone || phoneNumber,
           password: hashedPassword,
@@ -82,26 +117,55 @@ export async function POST(req: Request) {
           role: invitation?.role || 'OWNER',
         }
       });
-    }
 
-    // If there's an invitation, link to farm and update invitation
-    if (invitation) {
-      await prisma.farmMember.create({
-        data: {
-          farmId: invitation.farmId,
-          userId: user.id,
-          role: invitation.role
-        }
-      });
+      await recordLegalAcceptance(txUser.id, 'SIGNUP_CHECKBOX', tx);
 
-      await prisma.invitation.update({
-        where: { id: invitation.id },
-        data: { status: 'ACCEPTED' }
-      });
-    }
+      // If there's an invitation, link to farm and update invitation
+      if (invitation) {
+        await tx.farmMember.create({
+          data: {
+            farmId: invitation.farmId,
+            userId: txUser.id,
+            role: invitation.role
+          }
+        });
 
-    // If it's an OWNER, we should ideally create a default farm here, 
-    // but we'll follow existing logic for now unless requested.
+        await tx.invitation.update({
+          where: { id: invitation.id },
+          data: { status: 'ACCEPTED' }
+        });
+      } else {
+        // Create default farm for new standalone owners
+        const newFarm = await tx.farm.create({
+          data: {
+            name: `${firstname || 'My'}'s Farm`,
+            userId: txUser.id,
+            capacity: 0,
+            location: '',
+            ...freeTrialFields(new Date(), trialDays),
+          }
+        });
+
+        await tx.subscriptionEvent.create({
+          data: {
+            farmId: newFarm.id,
+            userId: txUser.id,
+            eventType: 'TRIAL_STARTED',
+            metadata: { source: 'signup', expiresAt: newFarm.trialExpiresAt?.toISOString() ?? null },
+          }
+        });
+
+        await tx.farmMember.create({
+          data: {
+            farmId: newFarm.id,
+            userId: txUser.id,
+            role: 'OWNER'
+          }
+        });
+      }
+
+      return txUser;
+    });
 
     return NextResponse.json({ 
       message: 'User created successfully', 
@@ -116,6 +180,6 @@ export async function POST(req: Request) {
     }, { status: 201 });
   } catch (error: any) {
     console.error('Error during signup:', error);
-    return NextResponse.json({ message: 'Internal server error', error: error.message }, { status: 500 });
+    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
   }
 }

@@ -1,20 +1,31 @@
 "use client";
 
 import React from 'react';
-import { useForm } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { createBatch } from '@/lib/actions/dashboard-actions';
+import { createBatch } from '@/lib/actions/batch-actions';
 import { useRouter } from 'next/navigation';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { Button } from '@/components/ui/Button';
-import Link from 'next/link';
+import {
+  BreedSelect,
+  Button,
+  DateInput,
+  Dialog,
+  Form,
+  FormActions,
+  FormRow,
+  FormSection,
+  FormSteps,
+  Input,
+  MoreDetails,
+  Select,
+} from '@/components/ui/form';
+import { getLivestockUnit } from '@/lib/utils/growth-utils';
+import { getBreedOptionsForCategory, LIVESTOCK_CATEGORY_OPTIONS, normalizeBreedValue } from '@/lib/livestock-breed-options';
 
 import { FinancialInitializationModal } from '@/components/modals/FinancialInitializationModal';
 import { LivestockType } from '@prisma/client';
 import { createHouse } from '@/lib/actions/dashboard-actions';
-import { Dialog } from '@/components/ui/Dialog';
 import { toast } from 'sonner';
 
 const formSchema = z.object({
@@ -30,9 +41,14 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+const REGISTER_STEPS = [
+  { id: 'house', label: 'House' },
+  { id: 'flock', label: 'Flock' },
+];
+
 interface RegisterBatchFormProps {
   houses: Array<{
-    id: number;
+    id: string | number;
     name: string;
   }>;
   onSuccess?: () => void;
@@ -40,6 +56,14 @@ interface RegisterBatchFormProps {
 
 export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps) {
   const router = useRouter();
+  // Houses made from this form show up straight away, before router.refresh() lands.
+  const [createdHouses, setCreatedHouses] = React.useState<Array<{ id: string; name: string }>>([]);
+  const allHouses = React.useMemo(() => {
+    const known = new Set(houses.map((h) => h.id.toString()));
+    return [...houses, ...createdHouses.filter((h) => !known.has(h.id))];
+  }, [houses, createdHouses]);
+  // Shows the two-step progress only to a farm that had to add its first house here.
+  const [startedWithoutHouse] = React.useState(houses.length === 0);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [showFinModal, setShowFinModal] = React.useState(false);
   const [createdBatchId, setCreatedBatchId] = React.useState<string | null>(null);
@@ -50,6 +74,7 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
   
   const {
     register,
+    control,
     handleSubmit,
     watch,
     setValue,
@@ -58,23 +83,41 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
     resolver: zodResolver(formSchema),
     defaultValues: {
       type: LivestockType.POULTRY_BROILER,
-      breed: "Broiler",
+      breed: "ross_308",
+      // Most flocks are added the day they arrive.
+      hatchDate: new Date().toISOString().split('T')[0],
     },
   });
 
   const selectedType = watch("type");
+  const selectedBreed = watch("breed");
   const selectedHouseId = watch("houseId");
+  const breedOptions = React.useMemo(() => getBreedOptionsForCategory(selectedType), [selectedType]);
 
   React.useEffect(() => {
     if (selectedHouseId === "NEW_HOUSE") {
       setShowHouseModal(true);
       setValue("houseId", ""); // Reset dropdown to placeholder
     }
-  }, [selectedHouseId]);
+  }, [selectedHouseId, setValue]);
+
+  React.useEffect(() => {
+    const firstBreed = breedOptions[0]?.value ?? "";
+    const hasSelectedBreed = breedOptions.some((option) => option.value === selectedBreed);
+
+    if (firstBreed && !hasSelectedBreed) {
+      setValue("breed", firstBreed, { shouldDirty: true, shouldValidate: true });
+    }
+
+    if (!firstBreed && selectedBreed) {
+      setValue("breed", "", { shouldDirty: true, shouldValidate: true });
+    }
+  }, [breedOptions, selectedBreed, setValue]);
 
   const handleCreateHouse = async () => {
+    if (isCreatingHouse) return;
     if (!newHouseData.name || !newHouseData.capacity) {
-      toast.error("Please fill in house name and capacity");
+      toast.error("Enter the house name and how many it holds");
       return;
     }
     setIsCreatingHouse(true);
@@ -83,71 +126,80 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
         houseNumber: newHouseData.name,
         capacity: parseInt(newHouseData.capacity)
       });
-      if (res.success) {
-        toast.success("House created successfully");
+      if (res.success && res.house) {
+        const created = { id: String(res.house.id), name: String(res.house.name ?? newHouseData.name) };
+        setCreatedHouses((prev) => [...prev, created]);
+        toast.success("House added. Now add your flock.");
         setShowHouseModal(false);
         setNewHouseData({ name: '', capacity: '' });
+        // Wait a tick so the new option exists before selecting it.
+        setTimeout(() => setValue("houseId", created.id, { shouldValidate: true }), 0);
         router.refresh();
-        // After refresh, the new house will be in the props
-        // We'll let the user select it from the updated list
       } else {
-        toast.error(res.error || "Failed to create house");
+        toast.error(res.error || "The house could not be added");
       }
     } catch (e) {
-      toast.error("An unexpected error occurred");
+      toast.error("Something went wrong. Check your connection and try again.");
     } finally {
       setIsCreatingHouse(false);
     }
   };
 
-  if (houses.length === 0) {
+  const houseFields = (
+    <>
+      <Input
+        label="House name"
+        placeholder="e.g. House A, Pen 1"
+        value={newHouseData.name}
+        onChange={e => setNewHouseData(p => ({ ...p, name: e.target.value }))}
+        disabled={isCreatingHouse}
+      />
+      <Input
+        label="How many it holds"
+        type="number"
+        min="1"
+        unit="birds"
+        placeholder="e.g. 500"
+        value={newHouseData.capacity}
+        onChange={e => setNewHouseData(p => ({ ...p, capacity: e.target.value }))}
+        disabled={isCreatingHouse}
+      />
+    </>
+  );
+
+  // First house: collect it right here, then this same pop-up moves on to
+  // the livestock form, instead of sending a new farm off to the Houses page.
+  if (allHouses.length === 0) {
     return (
-      <div className="p-5 text-center space-y-3">
-        <p className="text-gray-400">You don't have any active farm houses yet.</p>
-        <p className="text-sm text-gray-500 italic">A farm house is required before you can register a new livestock unit.</p>
-        <Button asChild className="w-full bg-amber-500 hover:bg-amber-600 text-black font-semibold">
-          <Link href="/dashboard/houses">Add New House First</Link>
-        </Button>
-      </div>
+      <Form
+        onSubmit={(event) => {
+          event.preventDefault();
+          handleCreateHouse();
+        }}
+        noValidate
+      >
+        <FormSteps steps={REGISTER_STEPS} current={0} />
+        <FormSection title="Add your first house" hint="Every flock lives in a house. Add one now, then add the flock.">
+          {houseFields}
+        </FormSection>
+        <FormActions>
+          <Button type="submit" variant="accent" isLoading={isCreatingHouse} loadingText="Saving house">
+            Save house and continue
+          </Button>
+        </FormActions>
+      </Form>
     );
   }
 
-  const houseOptions = houses.map(h => ({ label: h.name, value: h.id.toString() }));
+  const houseOptions = allHouses.map(h => ({ label: h.name, value: h.id.toString() }));
   
-  const speciesOptions = [
-    { label: "Poultry (Meat)", value: LivestockType.POULTRY_BROILER },
-    { label: "Poultry (Eggs)", value: LivestockType.POULTRY_LAYER },
-    { label: "Cattle / Livestock", value: LivestockType.CATTLE },
-    { label: "Sheep / Goat", value: LivestockType.SHEEP_GOAT },
-    { label: "Pig / Swine", value: LivestockType.PIG },
-    { label: "Other / Generic", value: LivestockType.OTHER },
-  ];
-
-  const breedOptions = selectedType === LivestockType.POULTRY_BROILER 
-    ? [
-        { label: "Ross 308 (Standard)", value: "Ross 308" },
-        { label: "Cobb 500 (Efficient)", value: "Cobb 500" },
-        { label: "Hubbard (Hardy)", value: "Hubbard" },
-        { label: "Other Breed", value: "Other" }
-      ]
-    : selectedType === LivestockType.POULTRY_LAYER
-    ? [
-        { label: "Isa Brown (Standard)", value: "Isa Brown" },
-        { label: "Leghorn (White Eggs)", value: "Leghorn" },
-        { label: "Lohmann (High Yield)", value: "Lohmann" },
-        { label: "Other Breed", value: "Other" }
-      ]
-    : [
-        { label: "No Preference / Standard", value: "Standard" },
-        { label: "Specific Breed / Variety", value: "Other" }
-      ];
-
   const onSubmit = async (data: FormValues) => {
+    if (isSubmitting) return;
     setIsSubmitting(true);
     try {
       const result = await createBatch({
-        houseId: parseInt(data.houseId),
-        breedType: data.breed,
+        houseId: data.houseId,
+        breedType: normalizeBreedValue(data.breed),
         initialCount: data.initialQuantity,
         arrivalDate: data.hatchDate,
         batchName: data.batchName,
@@ -160,10 +212,10 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
         setShowFinModal(true);
         router.refresh();
       } else {
-        alert("Error: " + result.error);
+        toast.error(result.error || "The flock could not be added. Try again.");
       }
     } catch (error) {
-      alert("An unexpected error occurred.");
+      toast.error("Something went wrong. Check your connection and try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -175,89 +227,93 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
   };
 
   return (
-    <div className="w-full max-w-lg">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <Input
-            label="Unit Name / Identity"
-            placeholder="e.g., Q1-Broiler-Alpha"
-            {...register("batchName")}
-            error={errors.batchName?.message}
-          />
-
-          <Select
-            label="Livestock Category"
-            options={speciesOptions}
-            {...register("type")}
-            error={errors.type?.message}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <Select
-            label="Primary Breed / Specie"
-            options={breedOptions}
-            {...register("breed")}
-            error={errors.breed?.message}
-          />
-
-          <Input
-            label="Initial Quantity"
-            type="number"
-            min="1"
-            placeholder="1000"
-            {...register("initialQuantity", { valueAsNumber: true })}
-            error={errors.initialQuantity?.message}
-          />
-        </div>
-
-          <Select
-            label="Farm House"
-            options={[
-              { label: "Select House Location", value: "" }, 
-              ...houseOptions,
-              { label: "➕ Add New House", value: "NEW_HOUSE" }
-            ]}
-            {...register("houseId")}
-            error={errors.houseId?.message}
-          />
-
-        <Input
-          label="Arrival / Hatch Date"
-          type="date"
-          {...register("hatchDate")}
-          error={errors.hatchDate?.message}
-        />
-
-        <div className="border-t border-white/10 pt-3 mt-2">
-          <h3 className="text-sm font-medium text-amber-500 mb-3 italic uppercase tracking-widest text-xs">Optional Initial Schedule</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <>
+      <Form onSubmit={handleSubmit(onSubmit)} noValidate>
+        {startedWithoutHouse ? <FormSteps steps={REGISTER_STEPS} current={1} /> : null}
+        <fieldset disabled={isSubmitting} className="min-w-0 space-y-6">
+          <FormSection title="Flock details">
             <Input
-              label="1st Vaccination Date"
-              type="date"
-              {...register("vaccinationDate")}
+              label="Flock name"
+              placeholder="e.g. Broilers March"
+              required
+              {...register("batchName")}
+              error={errors.batchName?.message}
             />
-            <Input
-              label="Vaccine Name"
-              placeholder="e.g., Gumboro"
-              {...register("vaccineName")}
-            />
-          </div>
-        </div>
 
-        <div className="pt-3">
-          <Button
-            type="submit"
-            isLoading={isSubmitting}
-            className="w-full bg-emerald-500 hover:bg-emerald-400 text-[#064e3b] font-bold h-14 rounded-lg uppercase tracking-widest transition-all shadow-[0_0_30px_rgba(16,185,129,0.2)]"
-          >
-            Register Unit & Continue
+            <FormRow>
+              <Select
+                label="Kind of livestock"
+                options={[...LIVESTOCK_CATEGORY_OPTIONS]}
+                {...register("type")}
+                error={errors.type?.message}
+              />
+              <Controller
+                name="breed"
+                control={control}
+                render={({ field }) => (
+                  <BreedSelect
+                    label="Breed"
+                    options={breedOptions}
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={errors.breed?.message}
+                    required
+                  />
+                )}
+              />
+            </FormRow>
+
+            <Select
+              label="House"
+              required
+              options={[
+                { label: "Select a house", value: "" },
+                ...houseOptions,
+                { label: "+ Add a new house", value: "NEW_HOUSE" }
+              ]}
+              {...register("houseId")}
+              error={errors.houseId?.message}
+            />
+          </FormSection>
+
+          <FormSection title="How many and when">
+            <FormRow>
+              <Input
+                label="Number at arrival"
+                type="number"
+                min="1"
+                unit={getLivestockUnit(selectedType)}
+                placeholder="e.g. 1000"
+                required
+                {...register("initialQuantity", { valueAsNumber: true })}
+                error={errors.initialQuantity?.message}
+              />
+              <DateInput
+                label="Arrival date"
+                required
+                {...register("hatchDate")}
+                error={errors.hatchDate?.message}
+              />
+            </FormRow>
+          </FormSection>
+
+          <MoreDetails label="First vaccination (optional)">
+            <FormRow>
+              <DateInput label="Vaccination date" {...register("vaccinationDate")} />
+              <Input label="Vaccine name" placeholder="e.g. Gumboro" {...register("vaccineName")} />
+            </FormRow>
+          </MoreDetails>
+        </fieldset>
+
+        <FormActions>
+          <Button type="submit" variant="accent" isLoading={isSubmitting} loadingText="Adding flock">
+            Add flock and continue
           </Button>
-        </div>
-      </form>
+        </FormActions>
+      </Form>
 
       {createdBatchId && (
-        <FinancialInitializationModal 
+        <FinancialInitializationModal
           isOpen={showFinModal}
           onClose={handleFinModalClose}
           batchId={createdBatchId}
@@ -268,37 +324,29 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
 
       <Dialog
         isOpen={showHouseModal}
-        onOpenChange={setShowHouseModal}
-        title="➕ Create New Farm House"
-        description="Add a new housing unit to your farm to accommodate this livestock unit."
+        onOpenChange={(open) => !isCreatingHouse && setShowHouseModal(open)}
+        title="Add a house"
+        description="A place on your farm where this flock will live."
       >
-        <div className="space-y-4 pt-3">
-          <Input 
-            label="House Name / Number"
-            placeholder="e.g. House Alpha, Pen 1"
-            value={newHouseData.name}
-            onChange={e => setNewHouseData(p => ({ ...p, name: e.target.value }))}
-          />
-          <Input 
-            label="Total Capacity (Birds/Heads)"
-            type="number"
-            min="1"
-            placeholder="e.g. 500"
-            value={newHouseData.capacity}
-            onChange={e => setNewHouseData(p => ({ ...p, capacity: e.target.value }))}
-          />
-          <div className="flex gap-2 pt-2">
-             <Button variant="secondary" onClick={() => setShowHouseModal(false)} className="flex-1">Cancel</Button>
-             <Button 
-               onClick={handleCreateHouse} 
-               isLoading={isCreatingHouse}
-               className="flex-1 bg-emerald-500 hover:bg-emerald-400 text-black font-bold"
-             >
-               Create House
-             </Button>
-          </div>
-        </div>
+        <Form
+          onSubmit={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            handleCreateHouse();
+          }}
+          noValidate
+        >
+          {houseFields}
+          <FormActions>
+            <Button type="button" variant="outline" onClick={() => setShowHouseModal(false)} disabled={isCreatingHouse}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="accent" isLoading={isCreatingHouse} loadingText="Saving house">
+              Add house
+            </Button>
+          </FormActions>
+        </Form>
       </Dialog>
-    </div>
+    </>
   );
 }

@@ -1,12 +1,13 @@
 'use client'
 
 import React, { useState, useTransition } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { m, AnimatePresence } from 'framer-motion'
 import { 
   Trash2, RotateCcw, PawPrint, Egg, Wheat, XCircle, 
   Wallet, ShoppingBag, ClipboardList, Package, Search,
-  AlertTriangle, CheckCircle2, Loader2
+  AlertTriangle, CheckCircle2, Loader2, ArrowLeft
 } from 'lucide-react'
+import { Input } from '@/components/ui/Input'
 import { restoreBatch } from '@/lib/actions/batch-actions'
 import { restoreEggProduction } from '@/lib/actions/egg-actions'
 import { restoreFeedingLog } from '@/lib/actions/feed-actions'
@@ -15,6 +16,10 @@ import { restoreSale } from '@/lib/actions/sale-actions'
 import { restoreOrder } from '@/lib/actions/order-actions'
 import { restoreInventory } from '@/lib/actions/inventory-actions'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { MutationBoundary } from '@/components/ui/MutationFeedback'
+import { getBreedDisplayName } from '@/lib/livestock-breed-options'
+import { useMoney } from '@/components/providers/CurrencyProvider'
 
 type TrashItems = {
   batches: any[]
@@ -29,8 +34,8 @@ type TrashItems = {
 
 const TABS = [
   { key: 'batches',      label: 'Batches',     icon: PawPrint,     color: 'emerald' },
-  { key: 'eggProduction',label: 'Egg Logs',    icon: Egg,          color: 'yellow'  },
-  { key: 'feedingLogs',  label: 'Feed Logs',   icon: Wheat,        color: 'orange'  },
+  { key: 'eggProduction',label: 'Egg logs',    icon: Egg,          color: 'yellow'  },
+  { key: 'feedingLogs',  label: 'Feed logs',   icon: Wheat,        color: 'orange'  },
   { key: 'mortality',    label: 'Mortality',   icon: XCircle,      color: 'red'     },
   { key: 'expenses',     label: 'Expenses',    icon: Wallet,       color: 'purple'  },
   { key: 'sales',        label: 'Sales',       icon: ShoppingBag,  color: 'blue'    },
@@ -39,32 +44,29 @@ const TABS = [
 ]
 
 const COLOR_MAP: Record<string, { tab: string; badge: string; btn: string; glow: string }> = {
-  emerald: { tab: 'text-emerald-400 border-emerald-500', badge: 'bg-emerald-500/20 text-emerald-300', btn: 'bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300', glow: 'shadow-emerald-500/30' },
-  yellow:  { tab: 'text-yellow-400 border-yellow-500',  badge: 'bg-yellow-500/20 text-yellow-300',  btn: 'bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-300',  glow: 'shadow-yellow-500/30'  },
-  orange:  { tab: 'text-orange-400 border-orange-500',  badge: 'bg-orange-500/20 text-orange-300',  btn: 'bg-orange-500/20 hover:bg-orange-500/40 text-orange-300',  glow: 'shadow-orange-500/30'  },
-  red:     { tab: 'text-red-400 border-red-500',        badge: 'bg-red-500/20 text-red-300',        btn: 'bg-red-500/20 hover:bg-red-500/40 text-red-300',           glow: 'shadow-red-500/30'     },
-  purple:  { tab: 'text-purple-400 border-purple-500',  badge: 'bg-purple-500/20 text-purple-300',  btn: 'bg-purple-500/20 hover:bg-purple-500/40 text-purple-300',  glow: 'shadow-purple-500/30'  },
-  blue:    { tab: 'text-blue-400 border-blue-500',      badge: 'bg-blue-500/20 text-blue-300',      btn: 'bg-blue-500/20 hover:bg-blue-500/40 text-blue-300',        glow: 'shadow-blue-500/30'    },
-  indigo:  { tab: 'text-indigo-400 border-indigo-500',  badge: 'bg-indigo-500/20 text-indigo-300',  btn: 'bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-300',  glow: 'shadow-indigo-500/30'  },
-  teal:    { tab: 'text-teal-400 border-teal-500',      badge: 'bg-teal-500/20 text-teal-300',      btn: 'bg-teal-500/20 hover:bg-teal-500/40 text-teal-300',        glow: 'shadow-teal-500/30'    },
+  emerald: { tab: 'text-fg border-fg/[0.12]', badge: 'bg-fg/[0.04] text-fg', btn: 'bg-fg/[0.04] hover:bg-fg/[0.04] text-fg', glow: '' },
+  yellow:  { tab: 'text-fg border-yellow-500',  badge: 'bg-fg/[0.04] text-fg',  btn: 'bg-fg/[0.04] hover:bg-fg/[0.04] text-fg',  glow: ''  },
+  orange:  { tab: 'text-fg border-orange-500',  badge: 'bg-fg/[0.04] text-fg',  btn: 'bg-fg/[0.04] hover:bg-fg/[0.04] text-fg',  glow: ''  },
+  red:     { tab: 'text-neg border-red-500',        badge: 'bg-fg/[0.04] text-neg',        btn: 'bg-fg/[0.04] hover:bg-fg/[0.04] text-neg',           glow: ''     },
+  purple:  { tab: 'text-fg-2 border-fg/[0.08]',  badge: 'bg-fg/[0.06] text-fg-2',  btn: 'bg-fg/[0.06] hover:bg-fg/[0.06] text-fg-2',  glow: ''  },
+  blue:    { tab: 'text-fg-2 border-fg/[0.08]',      badge: 'bg-fg/[0.06] text-fg-2',      btn: 'bg-fg/[0.06] hover:bg-fg/[0.06] text-fg-2',        glow: ''    },
+  indigo:  { tab: 'text-fg-2 border-fg/[0.08]',  badge: 'bg-fg/[0.06] text-fg-2',  btn: 'bg-fg/[0.06] hover:bg-fg/[0.06] text-fg-2',  glow: ''  },
+  teal:    { tab: 'text-fg-2 border-fg/[0.08]',      badge: 'bg-fg/[0.06] text-fg-2',      btn: 'bg-fg/[0.06] hover:bg-fg/[0.06] text-fg-2',        glow: ''    },
 }
 
 function fmt(date: string | Date) {
   return new Date(date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
 }
-function currency(n: number) {
-  return new Intl.NumberFormat('en-GH', { style: 'currency', currency: 'GHS', maximumFractionDigits: 2 }).format(n)
-}
+type RestoreFn = (id: string) => Promise<{ success: boolean; error?: string }>
 
-type RestoreFn = (id: number) => Promise<{ success: boolean; error?: string }>
-
-function RestoreButton({ id, onRestore, color }: { id: number; onRestore: RestoreFn; color: string }) {
+function RestoreButton({ id, onRestore, color }: { id: string; onRestore: RestoreFn; color: string }) {
   const [isPending, startTransition] = useTransition()
   const [done, setDone] = useState(false)
   const router = useRouter()
   const c = COLOR_MAP[color]
 
   const handle = () => {
+    if (isPending) return
     startTransition(async () => {
       const res = await onRestore(id)
       if (res.success) {
@@ -75,57 +77,61 @@ function RestoreButton({ id, onRestore, color }: { id: number; onRestore: Restor
   }
 
   if (done) return (
-    <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-400">
+    <span className="flex items-center gap-1.5 text-xs font-medium text-fg">
       <CheckCircle2 className="w-4 h-4" /> Restored
     </span>
   )
 
   return (
-    <motion.button
-      whileHover={{ scale: 1.04 }}
+    <m.button
+      
       whileTap={{ scale: 0.96 }}
       onClick={handle}
       disabled={isPending}
-      className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-md transition-all ${c.btn} shadow-md ${c.glow}`}
+      className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-md transition-colors ${c.btn} shadow-md ${c.glow}`}
     >
       {isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCcw className="w-3.5 h-3.5" />}
-      Restore
-    </motion.button>
+      {isPending ? 'Restoring...' : 'Restore'}
+    </m.button>
   )
 }
 
 function EmptyState({ label }: { label: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-      <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center">
-        <CheckCircle2 className="w-8 h-8 text-emerald-400/60" />
+      <div className="w-16 h-16 rounded-full bg-fg/5 flex items-center justify-center">
+        <CheckCircle2 className="w-8 h-8 text-fg-3" />
       </div>
-      <p className="text-white/60 font-semibold text-sm">No deleted {label} found</p>
-      <p className="text-white/30 text-xs">Records you delete will appear here for recovery</p>
+      <p className="text-fg/60 font-medium text-sm">No deleted {label} found</p>
+      <p className="text-fg/60 text-xs">Records you delete will appear here for recovery</p>
     </div>
   )
 }
 
-function Row({ children }: { children: React.ReactNode }) {
+function Row({ children, isMutating = false }: { children: React.ReactNode; isMutating?: boolean }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 6 }}
+    <MutationBoundary active={isMutating} label="Restoring record..." className="rounded-lg">
+    <m.div
+      initial={false}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="flex items-center justify-between gap-4 px-4 py-3 rounded-lg bg-white/5 border border-white/10 hover:border-white/20 hover:bg-white/8 transition-all"
+      style={{ '--rise-from': '6px' } as React.CSSProperties}
+      className="animate-rise-in flex items-center justify-between gap-4 px-4 py-3 rounded-lg bg-fg/5 border border-fg/10 hover:border-fg/20 hover:bg-fg/8 transition-colors"
     >
       {children}
-    </motion.div>
+    </m.div>
+    </MutationBoundary>
   )
 }
 
 export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems }) {
+  const money = useMoney()
   const [activeTab, setActiveTab] = useState('batches')
   const [search, setSearch] = useState('')
 
   if (!trashItems) return (
     <div className="min-h-screen flex items-center justify-center">
-      <p className="text-white/40 text-sm">Unable to load trash data.</p>
+      <p className="text-fg/40 text-sm">Unable to load trash data.</p>
     </div>
   )
 
@@ -145,10 +151,10 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
       return items.map(b => (
         <Row key={b.id}>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm text-white truncate">{b.batchName}</p>
-            <p className="text-xs text-white/50">{b.breedType} &bull; {b.initialCount} birds &bull; Arrived {fmt(b.arrivalDate)}</p>
+            <p className="font-medium text-sm text-fg truncate">{b.batchName}</p>
+            <p className="text-xs text-fg/50">{getBreedDisplayName(b.breedType)} &bull; {b.initialCount} birds &bull; Arrived {fmt(b.arrivalDate)}</p>
           </div>
-          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${c.badge}`}>{b.status}</span>
+          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${c.badge}`}>{b.status}</span>
           <RestoreButton id={b.id} onRestore={restoreBatch} color={activeTabConfig.color} />
         </Row>
       ))
@@ -162,8 +168,8 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
       return items.map(e => (
         <Row key={e.id}>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm text-white">{e.batch?.batchName || `Batch #${e.batchId}`}</p>
-            <p className="text-xs text-white/50">{e.eggsCollected} collected &bull; {e.unusableCount} unusable &bull; {fmt(e.logDate)}</p>
+            <p className="font-medium text-sm text-fg">{e.batch?.batchName || 'Recovered egg log'}</p>
+            <p className="text-xs text-fg/50">{e.eggsCollected} collected &bull; {e.unusableCount} unusable &bull; {fmt(e.logDate)}</p>
           </div>
           <RestoreButton id={e.id} onRestore={restoreEggProduction} color={activeTabConfig.color} />
         </Row>
@@ -178,8 +184,8 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
       return items.map(l => (
         <Row key={l.id}>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm text-white">{l.batch?.batchName || `Batch #${l.batchId}`}</p>
-            <p className="text-xs text-white/50">{l.amountConsumed} kg consumed &bull; {fmt(l.logDate)}</p>
+            <p className="font-medium text-sm text-fg">{l.batch?.batchName || 'Recovered feed log'}</p>
+            <p className="text-xs text-fg/50">{l.amountConsumed} kg consumed &bull; {fmt(l.logDate)}</p>
           </div>
           <RestoreButton id={l.id} onRestore={restoreFeedingLog} color={activeTabConfig.color} />
         </Row>
@@ -194,12 +200,12 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
       return items.map(m => (
         <Row key={m.id}>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm text-white">{m.batch?.batchName || `Batch #${m.batchId}`}</p>
-            <p className="text-xs text-white/50">{m.count} {m.type.toLowerCase()} &bull; {m.reason || 'No reason'} &bull; {fmt(m.logDate)}</p>
+            <p className="font-medium text-sm text-fg">{m.batch?.batchName || 'Recovered mortality record'}</p>
+            <p className="text-xs text-fg/50">{m.count} {m.type.toLowerCase()} &bull; {m.reason || 'No reason'} &bull; {fmt(m.logDate)}</p>
           </div>
-          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${m.type === 'DEAD' ? 'bg-red-500/20 text-red-300' : 'bg-orange-500/20 text-orange-300'}`}>{m.type}</span>
+          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${m.type === 'DEAD' ? 'bg-fg/[0.04] text-neg' : 'bg-fg/[0.04] text-yolk'}`}>{m.type}</span>
           {/* Mortality restore intentionally omitted — mortality records should not be undone silently */}
-          <span className="text-xs text-white/30 italic">Audit only</span>
+          <span className="text-xs text-fg/60">Audit only</span>
         </Row>
       ))
     }
@@ -212,10 +218,10 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
       return items.map(e => (
         <Row key={e.id}>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm text-white">{e.description || e.category}</p>
-            <p className="text-xs text-white/50">{e.category} &bull; {fmt(e.expenseDate)}</p>
+            <p className="font-medium text-sm text-fg">{e.description || e.category}</p>
+            <p className="text-xs text-fg/50">{e.category} &bull; {fmt(e.expenseDate)}</p>
           </div>
-          <span className="text-sm font-bold text-white/80">{currency(e.amount)}</span>
+          <span className="text-sm font-medium text-fg/80">{money.format(e.amount)}</span>
           <RestoreButton id={e.id} onRestore={restoreExpense} color={activeTabConfig.color} />
         </Row>
       ))
@@ -229,10 +235,10 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
       return items.map(s => (
         <Row key={s.id}>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm text-white">{s.customerName || 'Walk-in Customer'}</p>
-            <p className="text-xs text-white/50">{s.items.length} item(s) &bull; {s.status} &bull; {fmt(s.saleDate)}</p>
+            <p className="font-medium text-sm text-fg">{s.customerName || 'Walk-in Customer'}</p>
+            <p className="text-xs text-fg/50">{s.items.length} item(s) &bull; {s.status} &bull; {fmt(s.saleDate)}</p>
           </div>
-          <span className="text-sm font-bold text-white/80">{currency(s.totalAmount)}</span>
+          <span className="text-sm font-medium text-fg/80">{money.format(s.totalAmount)}</span>
           <RestoreButton id={s.id} onRestore={restoreSale} color={activeTabConfig.color} />
         </Row>
       ))
@@ -246,10 +252,10 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
       return items.map(o => (
         <Row key={o.id}>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm text-white">{o.customer?.name || 'No Customer'}</p>
-            <p className="text-xs text-white/50">{o.items.length} item(s) &bull; {o.status} &bull; {fmt(o.orderDate)}</p>
+            <p className="font-medium text-sm text-fg">{o.customer?.name || 'No Customer'}</p>
+            <p className="text-xs text-fg/50">{o.items.length} item(s) &bull; {o.status} &bull; {fmt(o.orderDate)}</p>
           </div>
-          <span className="text-sm font-bold text-white/80">{currency(o.totalAmount)}</span>
+          <span className="text-sm font-medium text-fg/80">{money.format(o.totalAmount)}</span>
           <RestoreButton id={o.id} onRestore={restoreOrder} color={activeTabConfig.color} />
         </Row>
       ))
@@ -263,8 +269,8 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
       return items.map(i => (
         <Row key={i.id}>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm text-white">{i.itemName}</p>
-            <p className="text-xs text-white/50">{i.stockLevel} {i.unit} &bull; {i.category || 'General'}</p>
+            <p className="font-medium text-sm text-fg">{i.itemName}</p>
+            <p className="text-xs text-fg/50">{i.stockLevel} {i.unit} &bull; {i.category || 'General'}</p>
           </div>
           <RestoreButton id={i.id} onRestore={restoreInventory} color={activeTabConfig.color} />
         </Row>
@@ -275,39 +281,45 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
   }
 
   return (
-    <div className="min-h-screen p-6 md:p-8 space-y-6">
+    <div className="min-h-screen px-0 pt-2 pb-7 md:p-8 space-y-6">
+      <Link
+        href="/dashboard/settings?tab=farm"
+        className="inline-flex items-center gap-2 text-sm font-medium text-fg/60 hover:text-fg transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Back to settings
+      </Link>
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <div className="w-10 h-10 rounded-xl bg-red-500/15 border border-red-500/20 flex items-center justify-center">
-              <Trash2 className="w-5 h-5 text-red-400" />
+            <div className="w-10 h-10 rounded-xl bg-fg/[0.04] border border-fg/[0.08] flex items-center justify-center">
+              <Trash2 className="w-5 h-5 text-neg" />
             </div>
-            <h1 className="text-2xl font-black text-white tracking-tight">Data Recovery Center</h1>
+            <h1 className="text-3xl font-semibold leading-tight text-fg">Deleted records</h1>
           </div>
-          <p className="text-white/40 text-sm ml-13 pl-0.5">
-            Restore soft-deleted records. Actual data is preserved in the delete log table.
+          <p className="text-fg/40 text-sm ml-13 pl-0.5">
+            Restore records that were deleted. The data is kept until you restore it.
           </p>
         </div>
         {totalCount > 0 && (
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-500/15 border border-red-500/20">
-            <AlertTriangle className="w-4 h-4 text-red-400" />
-            <span className="text-xs font-bold text-red-300">{totalCount} record{totalCount !== 1 ? 's' : ''} in trash</span>
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-fg/[0.04] border border-fg/[0.08]">
+            <AlertTriangle className="w-4 h-4 text-neg" />
+            <span className="text-xs font-medium text-neg">{totalCount} record{totalCount !== 1 ? 's' : ''} in trash</span>
           </div>
         )}
       </div>
 
       {/* Search */}
-      <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-        <input
-          type="text"
-          placeholder="Search records…"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="w-full pl-9 pr-4 py-2.5 text-sm bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/30 focus:outline-none focus:border-white/30 transition-colors"
-        />
-      </div>
+      <Input
+        aria-label="Search deleted records"
+        type="search"
+        placeholder="Search"
+        leading={<Search className="h-4 w-4" strokeWidth={1.75} />}
+        value={search}
+        onChange={e => setSearch(e.target.value)}
+        wrapperClassName="max-w-sm"
+      />
 
       {/* Tabs */}
       <div className="flex flex-wrap gap-2">
@@ -316,25 +328,25 @@ export function TrashDashboardClient({ trashItems }: { trashItems: TrashItems })
           const isActive = activeTab === tab.key
           const tc = COLOR_MAP[tab.color]
           return (
-            <motion.button
+            <button
               key={tab.key}
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
+              type="button"
+              aria-pressed={isActive}
               onClick={() => { setActiveTab(tab.key); setSearch('') }}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border transition-all ${
+              className={`flex min-h-11 items-center gap-2 rounded-lg border px-3.5 text-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 md:min-h-10 ${
                 isActive
-                  ? `border-current bg-white/10 ${tc.tab}`
-                  : 'border-white/10 text-white/50 hover:text-white/70 hover:border-white/20 bg-transparent'
+                  ? 'border-accent bg-accent font-semibold text-accent-fg'
+                  : 'border-fg/[0.14] text-fg-2 hover:border-fg/25 hover:text-fg'
               }`}
             >
-              <tab.icon className="w-3.5 h-3.5" />
+              <tab.icon className="h-4 w-4" strokeWidth={1.75} />
               {tab.label}
               {count > 0 && (
-                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${isActive ? tc.badge : 'bg-white/10 text-white/50'}`}>
+                <span className={`rounded-full px-1.5 py-0.5 text-xs font-medium tabular-nums ${isActive ? 'bg-accent-fg/15 text-accent-fg' : tc.badge}`}>
                   {count}
                 </span>
               )}
-            </motion.button>
+            </button>
           )
         })}
       </div>

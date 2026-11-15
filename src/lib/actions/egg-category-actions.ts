@@ -1,6 +1,7 @@
 'use server'
 
 import prisma from '@/lib/db'
+import { revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 import { revalidatePath } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
@@ -36,6 +37,7 @@ export async function createEggCategory(data: { name: string; description?: stri
       }
     })
     revalidatePath('/dashboard/eggs')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, category }
   }).catch((error: any) => {
     console.error('Error creating egg category:', error)

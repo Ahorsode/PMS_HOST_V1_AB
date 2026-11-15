@@ -4,12 +4,19 @@ import React from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Dialog } from '@/components/ui/Dialog';
-import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
+import {
+  Button,
+  Dialog,
+  Form,
+  FormActions,
+  FormRow,
+  FormSection,
+  Input,
+  Switch,
+} from '@/components/ui/form';
 import { updateProfile } from '@/lib/actions/dashboard-actions';
 import { useRouter } from 'next/navigation';
-import { User, Fingerprint, Shield } from 'lucide-react';
+import { MIN_PASSWORD_LENGTH } from '@/lib/password-policy';
 
 const profileSchema = z.object({
   firstname: z.string().min(2, "First name is required"),
@@ -17,7 +24,7 @@ const profileSchema = z.object({
   surname: z.string().min(2, "Surname is required"),
   changePassword: z.boolean(),
   currentPassword: z.string().optional(),
-  newPassword: z.string().min(6, "Password must be at least 6 characters").optional().or(z.literal('')),
+  newPassword: z.string().min(MIN_PASSWORD_LENGTH, `Password must be at least ${MIN_PASSWORD_LENGTH} characters`).optional().or(z.literal('')),
   confirmPassword: z.string().optional().or(z.literal('')),
 }).refine((data) => {
   if (data.changePassword) {
@@ -105,98 +112,84 @@ export function EditProfileModal({ isOpen, onOpenChange, initialData }: EditProf
     <Dialog 
       isOpen={isOpen} 
       onOpenChange={onOpenChange}
-      title="Edit Personal Identity"
-      description="Update your legal name and account security settings."
+      title="Edit your profile"
+      description="Your name shows on records you add and on invoices."
     >
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 pt-3">
-        <div className="flex items-center gap-3 mb-5 p-3 bg-emerald-500/10 border border-emerald-500/10 rounded-md">
-          <div className="w-12 h-12 rounded-md bg-emerald-500/10 flex items-center justify-center">
-            <Fingerprint className="w-6 h-6 text-emerald-400" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-emerald-500 uppercase tracking-widest leading-tight">Identity Control</p>
-            <p className="text-sm font-medium text-white/80">Changes will be reflected across all farm records.</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <Form onSubmit={handleSubmit(onSubmit)}>
+        <FormSection title="Your name">
+          <FormRow>
+            <Input
+              label="First name"
+              placeholder="e.g. Ama"
+              autoComplete="given-name"
+              required
+              {...register("firstname")}
+              error={errors.firstname?.message}
+            />
+            <Input
+              label="Middle name"
+              optional
+              placeholder="e.g. Esi"
+              autoComplete="additional-name"
+              {...register("middleName")}
+            />
+          </FormRow>
           <Input
-            label="First Name"
-            placeholder="John"
-            {...register("firstname")}
-            error={errors.firstname?.message}
+            label="Surname"
+            placeholder="e.g. Owusu"
+            autoComplete="family-name"
+            required
+            {...register("surname")}
+            error={errors.surname?.message}
           />
-          <Input
-            label="Middle Name (Optional)"
-            placeholder="Quincy"
-            {...register("middleName")}
+        </FormSection>
+
+        <FormSection>
+          <Switch
+            checked={changePasswordActive}
+            onChange={(checked) => setValue("changePassword", checked)}
+            label="Change my password"
+            hint="Leave this off to keep your current password."
           />
-        </div>
 
-        <Input
-          label="Surname / Last Name"
-          placeholder="Doe"
-          {...register("surname")}
-          error={errors.surname?.message}
-        />
+          {changePasswordActive && (
+            <div className="space-y-4">
+              <Input
+                label="Current password"
+                type="password"
+                autoComplete="current-password"
+                {...register("currentPassword")}
+              />
+              <FormRow>
+                <Input
+                  label="New password"
+                  type="password"
+                  autoComplete="new-password"
+                  hint={`At least ${MIN_PASSWORD_LENGTH} characters.`}
+                  {...register("newPassword")}
+                  error={errors.newPassword?.message}
+                />
+                <Input
+                  label="Type it again"
+                  type="password"
+                  autoComplete="new-password"
+                  {...register("confirmPassword")}
+                  error={errors.confirmPassword?.message}
+                />
+              </FormRow>
+            </div>
+          )}
+        </FormSection>
 
-        {/* Password Change Toggle */}
-        <div className="pt-3 border-t border-white/5">
-           <div 
-             onClick={() => setValue("changePassword", !changePasswordActive)}
-             className="flex items-center justify-between p-3 rounded-md bg-white/10 border border-white/5 cursor-pointer hover:bg-white/10 transition-all group"
-           >
-              <div className="flex items-center gap-2">
-                 <Shield className={`w-5 h-5 ${changePasswordActive ? 'text-amber-400' : 'text-white/70 group-hover:text-white/60'}`} />
-                 <p className="text-sm font-bold uppercase tracking-widest text-white/80">Change Password</p>
-              </div>
-              <div className={`w-10 h-5 rounded-full relative transition-colors ${changePasswordActive ? 'bg-amber-500/40' : 'bg-white/10'}`}>
-                 <div className={`absolute top-1 w-3 h-3 rounded-full transition-all ${changePasswordActive ? 'right-1 bg-amber-400' : 'left-1 bg-white/40'}`} />
-              </div>
-           </div>
-
-           {changePasswordActive && (
-              <div className="mt-3 space-y-3 animate-in slide-in-from-top-2 duration-300">
-                 <Input 
-                   label="Current Password"
-                   type="password"
-                   {...register("currentPassword")}
-                 />
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <Input 
-                      label="New Password"
-                      type="password"
-                      {...register("newPassword")}
-                    />
-                    <Input 
-                      label="Confirm New Password"
-                      type="password"
-                      {...register("confirmPassword")}
-                      error={errors.confirmPassword?.message}
-                    />
-                 </div>
-              </div>
-           )}
-        </div>
-
-        <div className="pt-3 flex gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            className="flex-1 rounded-md border-white/10 text-white/80 hover:text-white"
-          >
+        <FormActions>
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button
-            type="submit"
-            isLoading={isSubmitting}
-            className="flex-[2] bg-emerald-500 hover:bg-emerald-400 text-black font-bold uppercase tracking-widest rounded-md h-12"
-          >
-            Save Changes
+          <Button type="submit" variant="accent" isLoading={isSubmitting} loadingText="Saving">
+            Save changes
           </Button>
-        </div>
-      </form>
+        </FormActions>
+      </Form>
     </Dialog>
   );
 }

@@ -2,10 +2,115 @@
 
 import prisma from '@/lib/db'
 import { revalidatePath } from 'next/cache'
-import { getAuthContext, normalizePhoneNumber } from '@/lib/auth-utils'
-import { canAddWorker } from '@/lib/subscription-utils'
+import {
+  getAuthContext,
+  normalizePhoneNumber,
+  SECURITY_PERMISSION_UPDATE_MESSAGE,
+} from '@/lib/auth-utils'
+import { generateInviteCode, inviteCodeExpiry, normalizeInviteCode } from '@/lib/invite-code'
+import { canAddWorker, getFarmStaffAccess } from '@/lib/subscription-utils'
 import { Role } from '@prisma/client'
 import bcrypt from 'bcryptjs'
+import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
+import { setCachedSessionVersion } from '@/lib/performance/session-version-cache'
+import {
+  getDefaultPermissionsForRole,
+  type StaffPermissions,
+} from '@/lib/staff-permission-defaults'
+import { getAppSettings } from '@/lib/settings/app-settings'
+
+type StaffRole = 'OWNER' | 'MANAGER' | 'WORKER' | 'ACCOUNTANT' | 'FINANCE_OFFICER' | 'CASHIER'
+
+async function findOrCreateInvitedUser(
+  tx: any,
+  {
+    email,
+    phone,
+    role,
+  }: {
+    email: string | null
+    phone: string | null
+    role: StaffRole
+  }
+) {
+  const identifiers = [
+    ...(email ? [{ email }] : []),
+    ...(phone ? [{ phoneNumber: phone }] : []),
+  ]
+
+  if (identifiers.length === 0) {
+    throw new Error('Enter a valid email address or phone number')
+  }
+
+  const existingUser = await tx.user.findFirst({
+    where: { OR: identifiers },
+  })
+
+  // Users who already chose their own password sign in with it; no code.
+  if (existingUser && !existingUser.mustChangePassword) {
+    return { user: existingUser, inviteCode: null as string | null }
+  }
+
+  const inviteCode = generateInviteCode()
+  const credentials = await inviteCodeCredentials(inviteCode)
+
+  const user = existingUser
+    ? await tx.user.update({ where: { id: existingUser.id }, data: credentials })
+    : await tx.user.create({
+        data: {
+          email,
+          phoneNumber: phone,
+          role,
+          ...credentials,
+          // Firstname/Surname will be updated during change-password.
+        },
+      })
+
+  return { user, inviteCode: inviteCode as string | null }
+}
+
+/** A fresh one-time code replaces whatever first-login credential the user had (SEC-02). */
+async function inviteCodeCredentials(inviteCode: string) {
+  return {
+    password: await bcrypt.hash(normalizeInviteCode(inviteCode), 10),
+    mustChangePassword: true,
+    inviteCodeExpiresAt: inviteCodeExpiry(),
+  }
+}
+
+async function upsertInvitedUserPermissions(
+  tx: any,
+  {
+    userId,
+    farmId,
+    role,
+    permissions,
+  }: {
+    userId: string
+    farmId: string
+    role: StaffRole
+    permissions?: StaffPermissions
+  }
+) {
+  // Role defaults come from the admin Farm defaults settings.
+  const { rolePermissions } = await getAppSettings('farm-defaults')
+  const permissionsToApply = getDefaultPermissionsForRole(role, permissions, rolePermissions)
+
+  return await tx.userPermission.upsert({
+    where: {
+      userId_farmId: {
+        userId,
+        farmId,
+      },
+    },
+    create: {
+      userId,
+      farmId,
+      ...permissionsToApply,
+    },
+    update: permissionsToApply,
+  })
+}
 
 /**
  * Invites a worker to a farm.
@@ -13,15 +118,24 @@ import bcrypt from 'bcryptjs'
  */
 export async function inviteWorker(data: { 
   emailOrPhone: string, 
-  role: 'OWNER' | 'MANAGER' | 'WORKER' | 'ACCOUNTANT' | 'FINANCE_OFFICER' | 'CASHIER' 
+  role: StaffRole
+  permissions?: StaffPermissions
 }) {
   try {
     const { userId, activeFarmId } = await getAuthContext()
     if (!activeFarmId) throw new Error('No active farm selected')
-    
+
+    const rateLimit = await checkRateLimit({ policy: 'team.invite', scope: 'inviteWorker', farmId: activeFarmId, userId })
+    if (!rateLimit.ok) return rateLimitActionError(rateLimit)
+
     const limitCheck = await canAddWorker(activeFarmId)
     if (!limitCheck.canAdd) {
-      return { success: false, error: `Subscription limit reached. You can only have ${limitCheck.limit} workers.` }
+      return {
+        success: false,
+        error: limitCheck.limit === 0
+          ? 'Your plan does not include staff. Switch to a Team plan to invite people.'
+          : `Your plan allows ${limitCheck.limit} staff. Upgrade to Business Plus for unlimited staff.`,
+      }
     }
     
     return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
@@ -68,8 +182,15 @@ export async function inviteWorker(data: {
           where: { id: existingInvite.id },
           data: { role: data.role }
         })
+        const { user: invitedUser, inviteCode } = await findOrCreateInvitedUser(tx, { email, phone, role: data.role })
+        await upsertInvitedUserPermissions(tx, {
+          userId: invitedUser.id,
+          farmId: activeFarmId,
+          role: data.role,
+          permissions: data.permissions,
+        })
         revalidatePath('/dashboard/team')
-        return { success: true, invitation }
+        return { success: true, invitation, inviteCode }
       }
 
       const invitation = await tx.invitation.create({
@@ -82,35 +203,81 @@ export async function inviteWorker(data: {
         }
       })
 
-      // NEW: Auto-create User record so they can login directly with 123456
-      const existingUser = await tx.user.findFirst({
-        where: {
-          OR: [
-            ...(email ? [{ email }] : []),
-            ...(phone ? [{ phoneNumber: phone }] : [])
-          ]
-        }
+      // Auto-create User record and controlled permissions for pending access.
+      const { user: invitedUser, inviteCode } = await findOrCreateInvitedUser(tx, { email, phone, role: data.role })
+      await upsertInvitedUserPermissions(tx, {
+        userId: invitedUser.id,
+        farmId: activeFarmId,
+        role: data.role,
+        permissions: data.permissions,
       })
 
-      if (!existingUser) {
-        const hashedDefault = await bcrypt.hash('123456', 10)
-        await tx.user.create({
-          data: {
-            email: email,
-            phoneNumber: phone,
-            role: data.role,
-            password: hashedDefault,
-            mustChangePassword: true,
-            // Firstname/Surname will be updated during change-password
-          }
-        })
-      }
-
       revalidatePath('/dashboard/team')
-      return { success: true, invitation }
+      // The plain code is returned once, to the inviter only; just its hash is stored.
+      return { success: true, invitation, inviteCode }
     })
   } catch (error: any) {
     console.error('Fatal error inviting worker:', error)
+    return { success: false, error: error.message }
+  }
+}
+
+/**
+ * Issues a new one-time first-login code for someone who has not set their
+ * own password yet: a pending invitation, or a member who signed in with a
+ * code but never finished choosing a password. Owners and managers only.
+ */
+export async function regenerateInviteCode(target: { invitationId?: string; memberUserId?: string }) {
+  try {
+    const { userId, activeFarmId } = await getAuthContext()
+    if (!activeFarmId) throw new Error('No active farm selected')
+
+    const rateLimit = await checkRateLimit({ policy: 'team.invite', scope: 'regenerateInviteCode', farmId: activeFarmId, userId })
+    if (!rateLimit.ok) return rateLimitActionError(rateLimit)
+
+    return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+      const farm = await tx.farm.findUnique({ where: { id: activeFarmId }, select: { userId: true } })
+      const membership = await tx.farmMember.findUnique({
+        where: { farmId_userId: { farmId: activeFarmId, userId } },
+        select: { role: true },
+      })
+      if (farm?.userId !== userId && membership?.role !== 'MANAGER') {
+        throw new Error('Only Owners or Managers can issue invite codes')
+      }
+
+      let targetUser: { id: string; mustChangePassword: boolean } | null = null
+      if (target.invitationId) {
+        const invitation = await tx.invitation.findFirst({
+          where: { id: target.invitationId, farmId: activeFarmId, status: 'PENDING' },
+        })
+        if (!invitation) throw new Error('Invitation not found')
+        const identifiers = [
+          ...(invitation.email ? [{ email: invitation.email }] : []),
+          ...(invitation.phoneNumber ? [{ phoneNumber: invitation.phoneNumber }] : []),
+        ]
+        targetUser = identifiers.length
+          ? await tx.user.findFirst({ where: { OR: identifiers }, select: { id: true, mustChangePassword: true } })
+          : null
+      } else if (target.memberUserId) {
+        const member = await tx.farmMember.findUnique({
+          where: { farmId_userId: { farmId: activeFarmId, userId: target.memberUserId } },
+          select: { user: { select: { id: true, mustChangePassword: true } } },
+        })
+        targetUser = member?.user ?? null
+      }
+
+      if (!targetUser) throw new Error('Team member not found')
+      if (!targetUser.mustChangePassword) {
+        throw new Error('This person has already set their own password')
+      }
+
+      const inviteCode = generateInviteCode()
+      await tx.user.update({ where: { id: targetUser.id }, data: await inviteCodeCredentials(inviteCode) })
+
+      return { success: true, inviteCode }
+    })
+  } catch (error: any) {
+    console.error('Error issuing invite code:', error)
     return { success: false, error: error.message }
   }
 }
@@ -152,6 +319,11 @@ export async function acceptInvitation(shouldRevalidate = true) {
         }
       })
 
+      await tx.user.update({
+        where: { id: userId },
+        data: { role: invitation.role },
+      })
+
       // Update invitation status
       await tx.invitation.update({
         where: { id: invitation.id },
@@ -187,10 +359,23 @@ export async function getFarmMembers() {
     })
     const isAbsoluteOwner = farm?.userId === userId
 
+    // Select only display fields: `user: true` sent password hashes and
+    // security fields to the browser (SEC-17).
     const members = await tx.farmMember.findMany({
       where: { farmId: activeFarmId },
       include: {
-        user: true
+        user: {
+          select: {
+            id: true,
+            firstname: true,
+            surname: true,
+            email: true,
+            phoneNumber: true,
+            image: true,
+            role: true,
+            mustChangePassword: true,
+          }
+        }
       }
     })
 
@@ -198,9 +383,12 @@ export async function getFarmMembers() {
       where: { farmId: activeFarmId }
     })
 
+    const staffAccess = await getFarmStaffAccess(activeFarmId)
+
     // Map permissions and contextual roles back to members
     const membersWithContext = members.map((member: any) => ({
       ...member,
+      accessStatus: staffAccess.locked.get(member.userId) ?? 'ACTIVE',
       // Overwrite the User.role with the FarmMember.role for accurate UI reporting
       user: {
         ...member.user,
@@ -223,18 +411,69 @@ export async function getFarmMembers() {
       invitations, 
       isAbsoluteOwner,
       currentUserRole: isAbsoluteOwner ? 'OWNER' : (members.find((m: any) => m.userId === userId)?.role || 'WORKER'),
-      limitCheck
+      limitCheck,
+      staffPlan: {
+        planType: staffAccess.access.planType,
+        staffLimit: staffAccess.access.staffLimit,
+        overLimitCount: staffAccess.overLimitCount,
+      }
     }
   })
+}
+
+/**
+ * Pauses or restores a staff member's access. Owners use this to choose who
+ * keeps a seat when the plan allows fewer staff than the farm has; without a
+ * choice the most recently added staff are locked out.
+ */
+export async function setMemberAccessPaused(targetUserId: string, paused: boolean) {
+  const { userId, activeFarmId, isFarmOwner } = await getAuthContext()
+  if (!activeFarmId) return { success: false, error: 'No active farm selected' }
+  if (!isFarmOwner) return { success: false, error: 'Only the farm owner can change who has access' }
+  if (targetUserId === userId) return { success: false, error: 'You cannot pause your own access' }
+
+  try {
+    const member = await prisma.farmMember.findUnique({
+      where: { farmId_userId: { farmId: activeFarmId, userId: targetUserId } },
+      select: { id: true, accessPausedAt: true },
+    })
+    if (!member) return { success: false, error: 'Staff member not found' }
+
+    if (!paused && member.accessPausedAt) {
+      const { access, activeCount } = await getFarmStaffAccess(activeFarmId)
+      if (access.staffLimit !== null && activeCount >= access.staffLimit) {
+        return {
+          success: false,
+          error: access.staffLimit === 0
+            ? 'Your plan does not include staff. Switch to a Team plan to restore access.'
+            : `All ${access.staffLimit} staff seats are in use. Pause someone else first.`,
+        }
+      }
+    }
+
+    await prisma.farmMember.update({
+      where: { id: member.id },
+      data: { accessPausedAt: paused ? new Date() : null },
+    })
+
+    revalidatePath('/dashboard/team')
+    return { success: true }
+  } catch (error) {
+    console.error('Error changing member access:', error)
+    return { success: false, error: 'Could not change access' }
+  }
 }
 
 /**
  * Deletes a pending invitation.
  * Only the Absolute Owner (creator) or a Manager can cancel invitations.
  */
-export async function deleteInvitation(invitationId: number) {
+export async function deleteInvitation(invitationId: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
+
+  const rateLimit = await checkRateLimit({ policy: 'team.invite', scope: 'deleteInvitation', farmId: activeFarmId, userId })
+  if (!rateLimit.ok) return rateLimitActionError(rateLimit)
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const farm = await tx.farm.findUnique({ where: { id: activeFarmId } })
@@ -260,27 +499,214 @@ export async function deleteInvitation(invitationId: number) {
   })
 }
 
+export async function getUserForInvite(inviteId: string) {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return null
+
+  const farm = await prisma.farm.findUnique({
+    where: { id: activeFarmId },
+    select: { userId: true },
+  })
+
+  if (farm?.userId !== userId) return null
+
+  const invite = await prisma.invitation.findFirst({
+    where: { id: inviteId, farmId: activeFarmId },
+  })
+
+  if (!invite) return null
+
+  const identifiers = [
+    ...(invite.email ? [{ email: invite.email }] : []),
+    ...(invite.phoneNumber ? [{ phoneNumber: invite.phoneNumber }] : []),
+  ]
+
+  if (identifiers.length === 0) return null
+
+  const invitedUser = await prisma.user.findFirst({
+    where: { OR: identifiers },
+    select: {
+      id: true,
+      firstname: true,
+      userPermissions: {
+        where: { farmId: activeFarmId },
+        take: 1,
+      },
+    },
+  })
+
+  if (!invitedUser) return null
+
+  return {
+    userId: invitedUser.id,
+    permissions: invitedUser.userPermissions[0] ?? null,
+  }
+}
+
 /**
  * Deletes a member from the farm.
  * Only the Absolute Owner can remove others. 
  */
-export async function deleteMember(memberId: number) {
+export async function deleteMember(memberId: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
+
+  const rateLimit = await checkRateLimit({ policy: 'team.permissions', scope: 'deleteMember', farmId: activeFarmId, userId })
+  if (!rateLimit.ok) return rateLimitActionError(rateLimit)
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const farm = await tx.farm.findUnique({ where: { id: activeFarmId } })
     if (farm?.userId !== userId) throw new Error('Unauthorized: Only the creator can delete members')
 
-    await tx.farmMember.delete({
+    const removed = await tx.farmMember.delete({
       where: { id: memberId, farmId: activeFarmId }
     })
+
+    // Revoke the removed member's access straight away (SEC-04): drop their
+    // permissions on this farm and invalidate any session they still hold.
+    await tx.userPermission.deleteMany({
+      where: { userId: removed.userId, farmId: activeFarmId }
+    })
+    const revokedUser = await tx.user.update({
+      where: { id: removed.userId },
+      data: {
+        sessionVersion: { increment: 1 },
+        securityNotice: SECURITY_PERMISSION_UPDATE_MESSAGE,
+        securityRevokedAt: new Date()
+      },
+      select: { sessionVersion: true }
+    })
+    await tx.session.deleteMany({
+      where: { userId: removed.userId }
+    })
+
+    return { removedUserId: removed.userId as string, sessionVersion: revokedUser.sessionVersion as number }
+  }).then(async ({ removedUserId, sessionVersion }: { removedUserId: string; sessionVersion: number }) => {
+    await setCachedSessionVersion(removedUserId, sessionVersion)
     revalidatePath('/dashboard/team')
     return { success: true }
   }).catch((error: any) => {
     console.error('Error deleting member:', error)
     return { success: false, error: error.message }
   })
+}
+
+export async function updateFarmMemberRole(targetUserId: string, nextRole: Role) {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) throw new Error('No active farm selected')
+
+  const allowedRoles: Role[] = [Role.MANAGER, Role.WORKER, Role.ACCOUNTANT, Role.FINANCE_OFFICER, Role.CASHIER]
+  if (!allowedRoles.includes(nextRole)) {
+    return { success: false, error: 'Invalid role selection' }
+  }
+
+  if (targetUserId === userId) {
+    return { success: false, error: 'Owners cannot change their own role from this panel' }
+  }
+
+  const rateLimit = await checkRateLimit({ policy: 'team.permissions', scope: 'updateFarmMemberRole', farmId: activeFarmId, userId })
+  if (!rateLimit.ok) return rateLimitActionError(rateLimit)
+
+  try {
+    const result = await prisma.$transaction(async (tx: any) => {
+      const farm = await tx.farm.findUnique({
+        where: { id: activeFarmId },
+        select: { userId: true }
+      })
+
+      if (!farm || farm.userId !== userId) {
+        throw new Error('Unauthorized: Only the farm owner can update employee roles')
+      }
+
+      if (targetUserId === farm.userId) {
+        throw new Error('Cannot update the absolute farm owner role')
+      }
+
+      const membership = await tx.farmMember.findUnique({
+        where: {
+          farmId_userId: {
+            farmId: activeFarmId,
+            userId: targetUserId
+          }
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstname: true,
+              surname: true,
+              phoneNumber: true,
+              email: true,
+              role: true
+            }
+          }
+        }
+      })
+
+      if (!membership) {
+        throw new Error('Employee is not a member of this farm')
+      }
+
+      const oldRole = membership.role as Role
+      if (oldRole === nextRole) {
+        return { changed: false, role: nextRole }
+      }
+
+      const updatedMembership = await tx.farmMember.update({
+        where: {
+          farmId_userId: {
+            farmId: activeFarmId,
+            userId: targetUserId
+          }
+        },
+        data: { role: nextRole }
+      })
+
+      await tx.user.update({
+        where: { id: targetUserId },
+        data: {
+          role: nextRole,
+          sessionVersion: { increment: 1 },
+          securityNotice: SECURITY_PERMISSION_UPDATE_MESSAGE,
+          securityRevokedAt: new Date()
+        }
+      })
+
+      await tx.session.deleteMany({
+        where: { userId: targetUserId }
+      })
+
+      await tx.auditLog.create({
+        data: {
+          tableName: 'farm_members',
+          recordId: updatedMembership.id,
+          attributeName: 'role',
+          oldValue: oldRole,
+          newValue: nextRole,
+          reason: 'Owner role promotion update with forced session refresh',
+          userId,
+          farmId: activeFarmId,
+          actionType: 'ROLE_PROMOTION',
+          description: `Updated ${membership.user?.phoneNumber || membership.user?.email || targetUserId} from ${oldRole} to ${nextRole}`,
+          metadata: {
+            targetUserId,
+            oldRole,
+            newRole: nextRole,
+            invalidatedSessions: true
+          }
+        }
+      })
+
+      return { changed: true, role: nextRole }
+    })
+
+    revalidatePath('/dashboard/team')
+    revalidatePath('/dashboard', 'layout')
+    return { success: true, ...result }
+  } catch (error: any) {
+    console.error('Error updating farm member role:', error)
+    return { success: false, error: error.message || 'Failed to update role' }
+  }
 }
 
 /**
@@ -307,6 +733,8 @@ export async function updateWorkerPermissions(
     canEditHouses?: boolean
     canViewMortality?: boolean
     canEditMortality?: boolean
+    canViewHealth?: boolean
+    canEditHealth?: boolean
     canViewCustomers?: boolean
     canEditCustomers?: boolean
     canViewTeam?: boolean
@@ -316,8 +744,11 @@ export async function updateWorkerPermissions(
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
 
+  const rateLimit = await checkRateLimit({ policy: 'team.permissions', scope: 'updateWorkerPermissions', farmId: activeFarmId, userId })
+  if (!rateLimit.ok) return rateLimitActionError(rateLimit)
+
   try {
-    return await prisma.$transaction(async (tx: any) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       // 1. Fetch Farm for Absolute Ownership Check
       const farm = await tx.farm.findUnique({
         where: { id: activeFarmId }
@@ -365,6 +796,8 @@ export async function updateWorkerPermissions(
           canEditHouses: permissions.canEditHouses ?? false,
           canViewMortality: permissions.canViewMortality ?? false,
           canEditMortality: permissions.canEditMortality ?? false,
+          canViewHealth: permissions.canViewHealth ?? false,
+          canEditHealth: permissions.canEditHealth ?? false,
           canViewCustomers: permissions.canViewCustomers ?? false,
           canEditCustomers: permissions.canEditCustomers ?? false,
           canViewTeam: permissions.canViewTeam ?? false,
@@ -385,6 +818,7 @@ export async function updateWorkerPermissions(
         'canViewFeeding', 'canEditFeeding',
         'canViewHouses', 'canEditHouses',
         'canViewMortality', 'canEditMortality',
+        'canViewHealth', 'canEditHealth',
         'canViewCustomers', 'canEditCustomers',
         'canViewTeam', 'canEditTeam'
       ]
@@ -409,9 +843,37 @@ export async function updateWorkerPermissions(
         }
       }
 
-      revalidatePath('/dashboard', 'layout')
+      await tx.user.update({
+        where: { id: targetUserId },
+        data: {
+          sessionVersion: { increment: 1 },
+          securityNotice: SECURITY_PERMISSION_UPDATE_MESSAGE,
+          securityRevokedAt: new Date()
+        }
+      })
+
+      await tx.session.deleteMany({
+        where: { userId: targetUserId }
+      })
+
       return { success: true, permissions: updatedPerm }
     })
+
+    // Immediately push the new sessionVersion into the Redis cache.
+    // Without this, the JWT callback short-circuits on the cached (stale)
+    // version and never detects the revocation - the worker keeps their
+    // old sidebar permissions until the 30-second TTL expires.
+    const refreshed = await prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: { sessionVersion: true },
+    })
+    if (refreshed?.sessionVersion != null) {
+      await setCachedSessionVersion(targetUserId, refreshed.sessionVersion)
+    }
+
+    revalidatePath('/dashboard', 'layout')
+    revalidatePath('/dashboard/team')
+    return result
   } catch (error: any) {
     console.error('Permission Update Contention/Error:', error)
     if (error.code === 'P2002' || error.code === 'P2034') {
@@ -422,73 +884,82 @@ export async function updateWorkerPermissions(
 }
 
 /**
+ * Resets a staff member's permissions to the defaults for their current farm role.
+ */
+export async function resetWorkerPermissions(targetUserId: string) {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) throw new Error('No active farm selected')
+
+  const farm = await prisma.farm.findUnique({ where: { id: activeFarmId } })
+  if (!farm) return { success: false, error: 'Farm not found' }
+
+  if (farm.userId !== userId) {
+    return { success: false, error: 'Unauthorized: Only the farm creator can reset worker permissions' }
+  }
+
+  if (targetUserId === userId) {
+    return { success: false, error: 'Cannot reset permissions for the absolute owner' }
+  }
+
+  const membership = await prisma.farmMember.findUnique({
+    where: {
+      farmId_userId: {
+        farmId: activeFarmId,
+        userId: targetUserId,
+      },
+    },
+    select: { role: true },
+  })
+
+  if (!membership) {
+    return { success: false, error: 'Employee is not a member of this farm' }
+  }
+
+  if (membership.role === 'OWNER') {
+    return { success: false, error: 'Cannot reset permissions for the farm owner' }
+  }
+
+  const { rolePermissions } = await getAppSettings('farm-defaults')
+  const defaults = getDefaultPermissionsForRole(membership.role, undefined, rolePermissions)
+  return updateWorkerPermissions(targetUserId, defaults)
+}
+
+/**
  * Hardened contextual permission checker.
  * Identifies role based on farm membership, not global user role.
  */
 export async function checkWorkerPermissions(
-  module: 'finance' | 'inventory' | 'batches' | 'sales' | 'eggs' | 'feeding' | 'houses' | 'mortality' | 'customers' | 'team', 
+  module: 'finance' | 'inventory' | 'batches' | 'sales' | 'eggs' | 'feeding' | 'houses' | 'mortality' | 'health' | 'customers' | 'team', 
   action: 'view' | 'edit'
 ) {
-  const { userId, activeFarmId } = await getAuthContext()
+  const { role, activeFarmId, permissions, isFarmOwner } = await getAuthContext()
   if (!activeFarmId) return false
   
   try {
-    // 1. Fetch Farm for Absolute Ownership Check
-    const farm = await prisma.farm.findUnique({
-      where: { id: Number(activeFarmId) },
-      select: { userId: true }
-    })
-    if (!farm) return false
-    
     // Absolute Creator Bypass
-    if (farm.userId === userId) return true
+    if (isFarmOwner) return true
+    if (!role) return false
     
-    // 2. Fetch Contextual Role (FarmMember)
-    const membership = await prisma.farmMember.findUnique({
-      where: {
-        farmId_userId: {
-          farmId: Number(activeFarmId),
-          userId: userId
-        }
-      }
-    })
-    if (!membership) return false
-    
-    // 3. Load Overrides
-    const perm = await prisma.userPermission.findFirst({
-      where: { userId: userId, farmId: Number(activeFarmId) }
-    })
-    
-    // 3. Role-based defaults for privileged roles (not overrideable by UserPermission)
-    if (membership.role === 'MANAGER') return true
-    
-    if (membership.role === 'ACCOUNTANT' || membership.role === 'FINANCE_OFFICER') {
-      return module === 'finance' || module === 'sales' || module === 'customers'
-    }
-    
-    if (membership.role === 'CASHIER') {
-      return module === 'finance' || module === 'sales'
-    }
-    
-    // 4. WORKER: apply granular UserPermission overrides if they exist
-    if (membership.role === 'WORKER') {
-      if (perm) {
-        if (module === 'finance')    return action === 'view' ? perm.canViewFinance    : perm.canEditFinance
-        if (module === 'inventory')  return action === 'view' ? perm.canViewInventory  : perm.canEditInventory
-        if (module === 'batches')    return action === 'view' ? perm.canViewBatches    : perm.canEditBatches
-        if (module === 'sales')      return action === 'view' ? perm.canViewSales      : perm.canEditSales
-        if (module === 'eggs')       return action === 'view' ? perm.canViewEggs       : perm.canEditEggs
-        if (module === 'feeding')    return action === 'view' ? perm.canViewFeeding    : perm.canEditFeeding
-        if (module === 'houses')     return action === 'view' ? perm.canViewHouses     : perm.canEditHouses
-        if (module === 'mortality')  return action === 'view' ? perm.canViewMortality  : perm.canEditMortality
-        if (module === 'customers')  return action === 'view' ? perm.canViewCustomers  : perm.canEditCustomers
-        if (module === 'team')       return action === 'view' ? perm.canViewTeam       : perm.canEditTeam
-      }
-      // Worker with no explicit permissions: view-only by default
-      return action === 'view'
-    }
-    
-    return false
+    // Owner/manager bypass. Other staff roles are controlled by UserPermission.
+    if (role === 'MANAGER') return true
+
+    const permissionMap = {
+      finance: ['canViewFinance', 'canEditFinance'],
+      inventory: ['canViewInventory', 'canEditInventory'],
+      batches: ['canViewBatches', 'canEditBatches'],
+      sales: ['canViewSales', 'canEditSales'],
+      eggs: ['canViewEggs', 'canEditEggs'],
+      feeding: ['canViewFeeding', 'canEditFeeding'],
+      houses: ['canViewHouses', 'canEditHouses'],
+      mortality: ['canViewMortality', 'canEditMortality'],
+      health: ['canViewHealth', 'canEditHealth'],
+      customers: ['canViewCustomers', 'canEditCustomers'],
+      team: ['canViewTeam', 'canEditTeam'],
+    } as const
+
+    const [viewKey, editKey] = permissionMap[module]
+    if (action === 'view') return !!permissions?.[viewKey] || !!permissions?.[editKey]
+    return !!permissions?.[editKey]
   } catch (error) {
     console.error('Permission check failure:', error)
     return false

@@ -1,11 +1,12 @@
 'use server'
 
 import prisma from '@/lib/db'
+import { revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 import { revalidatePath } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
 
-export async function updateHouse(id: number, data: {
+export async function updateHouse(id: string, data: {
   name?: string
   capacity?: number
 }) {
@@ -27,9 +28,9 @@ export async function updateHouse(id: number, data: {
       where: { id, farmId: activeFarmId },
       data
     })
-    revalidatePath('/dashboard/climate')
     revalidatePath('/dashboard/settings')
     revalidatePath('/dashboard/houses')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { 
       success: true, 
       house: { 
@@ -44,7 +45,7 @@ export async function updateHouse(id: number, data: {
   })
 }
 
-export async function deleteHouse(id: number) {
+export async function deleteHouse(id: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
@@ -62,9 +63,9 @@ export async function deleteHouse(id: number) {
     await tx.house.delete({
       where: { id, farmId: activeFarmId }
     })
-    revalidatePath('/dashboard/climate')
     revalidatePath('/dashboard/settings')
     revalidatePath('/dashboard/houses')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true }
   }).catch((error: any) => {
     console.error('Error deleting house:', error)

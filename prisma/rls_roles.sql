@@ -54,14 +54,11 @@ CREATE POLICY batch_isolation_policy ON "batches"
 DROP POLICY IF EXISTS egg_prod_select_policy ON "egg_production";
 CREATE POLICY egg_prod_select_policy ON "egg_production"
   FOR SELECT USING (
-    (
-      EXISTS (
-        SELECT 1 FROM "users" u 
-        WHERE u.id = current_app_user() 
-        AND u.role IN ('OWNER', 'MANAGER')
-      )
-    ) OR (
-      "userId" = current_app_user()
+    is_farm_member("farmId", current_app_user())
+    OR EXISTS (
+      SELECT 1 FROM "farms" f
+      WHERE f.id = "egg_production"."farmId"
+        AND f."userId" = current_app_user()
     )
   );
 
@@ -88,7 +85,14 @@ CREATE POLICY mortality_isolation_policy ON "mortality"
 -- Update Sales Policy
 DROP POLICY IF EXISTS sales_isolation_policy ON "sales";
 CREATE POLICY sales_isolation_policy ON "sales" 
-  FOR ALL USING ("userId" = current_app_user());
+  FOR SELECT USING (
+    is_farm_member("farmId", current_app_user())
+    OR EXISTS (
+      SELECT 1 FROM "farms" f
+      WHERE f.id = "sales"."farmId"
+        AND f."userId" = current_app_user()
+    )
+  );
 
 -- BLOCK
 -- Update Inventory Policy

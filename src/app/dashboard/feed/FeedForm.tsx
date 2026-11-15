@@ -1,153 +1,275 @@
 'use client'
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { createFeedingLog, updateFeedingLog, deleteFeedingLog } from '@/lib/actions/feed-actions';
+import {
+  Button,
+  DateInput,
+  Form,
+  FormActions,
+  FormError,
+  FormSection,
+  Input,
+  SearchSelect,
+} from '@/components/ui/form';
+import { createFeedingLog, updateFeedingLog } from '@/lib/actions/feed-actions';
 import { useRouter } from 'next/navigation';
+import { getBreedDisplayName } from '@/lib/livestock-breed-options';
+import { feedSourceFromLog, parseFeedSource } from '@/lib/inventory/feed-source';
+import { cn } from '@/lib/utils';
 
 interface FeedFormProps {
-  batches: { id: number; breedType: string }[];
-  inventory: { id: number; itemName: string }[];
-  formulations?: { id: number; name: string }[];
+  batches: { id: string; breedType: string; batchName?: string | null }[];
+  inventory: { id: string; itemName: string }[];
+  formulations?: { id: string; name: string }[];
   log?: any;
   mode: 'create' | 'edit' | 'delete';
   onClose: () => void;
-  selectedFormulationId?: number;
+  onSaved?: () => void;
+  onOptimisticLog?: (batchId: string, amount: number) => void;
+  onOptimisticRollback?: (batchId: string, amount: number) => void;
+  selectedFormulationId?: string;
 }
 
-export const FeedForm = ({ batches, inventory, formulations = [], log, mode, onClose, selectedFormulationId }: FeedFormProps) => {
+const QUICK_AMOUNTS = [
+  { value: 0.25, label: '¼ bag' },
+  { value: 0.5, label: '½ bag' },
+  { value: 0.75, label: '¾ bag' },
+  { value: 1, label: '1 bag' },
+];
+
+export const FeedForm = ({
+  batches, inventory, formulations = [], log, mode,
+  onClose, onSaved, onOptimisticLog, onOptimisticRollback,
+  selectedFormulationId,
+}: FeedFormProps) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  
-  // Create combined options
+  const [error, setError] = useState<string | null>(null);
+
   const feedOptions = [
-    ...inventory.map(i => ({ label: `[Inventory] ${i.itemName}`, value: `inv_${i.id}` })),
-    ...formulations.map(f => ({ label: `[Formulation] ${f.name}`, value: `form_${f.id}` }))
+    ...inventory.map(i => ({ label: i.itemName, description: 'From your feed stock', value: `inv_${i.id}` })),
+    ...formulations.map(f => ({ label: f.name, description: 'Your own feed mix', value: `form_${f.id}` }))
   ];
 
-  const defaultFeedSource = selectedFormulationId 
-    ? `form_${selectedFormulationId}` 
-    : (log?.feedTypeId ? `inv_${log.feedTypeId}` : (log?.formulationId ? `form_${log.formulationId}` : feedOptions[0]?.value || ''));
+  const defaultFeedSource = selectedFormulationId
+    ? `form_${selectedFormulationId}`
+    : (log ? feedSourceFromLog(log) : feedOptions[0]?.value || '');
 
   const [formData, setFormData] = useState({
-    batchId: log?.batchId || (batches[0]?.id || 0),
+    batchId: log?.batchId || (batches[0]?.id || ''),
     feedSource: defaultFeedSource,
-    amountConsumed: log?.amountConsumed || '',
+    amountConsumed: log?.amountConsumed ?? '',
     logDate: log?.logDate ? new Date(log.logDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+
+    if (!formData.batchId) {
+      setError('Choose the flock that was fed.');
+      return;
+    }
+
+    const amount = Number(formData.amountConsumed);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setError('Enter how many bags were used. It must be more than zero.');
+      return;
+    }
+
+    const { feedTypeId, formulationId } = parseFeedSource(formData.feedSource);
+    if (!feedTypeId && !formulationId) {
+      setError('Choose the feed that was used.');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const isInv = String(formData.feedSource).startsWith('inv_');
-      const parsedId = Number(String(formData.feedSource).split('_')[1]);
-
       if (mode === 'create') {
-        await createFeedingLog({
-          ...formData,
-          batchId: Number(formData.batchId),
-          feedTypeId: isInv ? parsedId : null,
-          formulationId: !isInv ? parsedId : null,
-          amountConsumed: Number(formData.amountConsumed),
+        onOptimisticLog?.(formData.batchId, amount);
+        const res = await createFeedingLog({
+          batchId: formData.batchId,
+          feedTypeId,
+          formulationId,
+          amountConsumed: amount,
+          logDate: formData.logDate,
         });
+        if (!res?.success) {
+          onOptimisticRollback?.(formData.batchId, amount);
+          setError(res?.error || 'The feeding could not be saved. Try again.');
+          return;
+        }
       } else if (mode === 'edit') {
-        await updateFeedingLog(log.id, {
-          amountConsumed: Number(formData.amountConsumed),
-          oldAmount: Number(log.amountConsumed),
-          feedTypeId: isInv ? parsedId : null,
-          formulationId: !isInv ? parsedId : null,
+        const res = await updateFeedingLog(log.id, {
+          amountConsumed: amount,
+          feedTypeId,
+          formulationId,
         });
-      } else if (mode === 'delete') {
-        await deleteFeedingLog(log.id, {
-          amountConsumed: Number(log.amountConsumed),
-          feedTypeId: Number(log.feedTypeId),
-        });
+        if (!res?.success) {
+          setError(res?.error || 'The feeding could not be updated. Try again.');
+          return;
+        }
       }
       onClose();
+      onSaved?.();
       router.refresh();
-    } catch (error) {
-      console.error(error);
+    } catch (submitError) {
+      console.error(submitError);
+      if (mode === 'create') {
+        onOptimisticRollback?.(formData.batchId, amount);
+      }
+      setError('The feeding could not be saved. Check your connection and try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  if (mode === 'delete') {
+  if (feedOptions.length === 0) {
     return (
-      <div className="space-y-3">
-        <p className="text-white/70 font-medium">Are you sure you want to delete this log? This action cannot be undone.</p>
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>Cancel</Button>
-          <Button variant="danger" onClick={handleSubmit} isLoading={isLoading}>Delete Log</Button>
+      <div className="space-y-5 py-2">
+        <div className="space-y-1.5 text-center">
+          <p className="text-base font-semibold text-fg">No feed to record yet</p>
+          <p className="text-sm leading-6 text-fg-2">
+            Add a feed item to your stock, or create a feed mix, and you can record feedings here.
+          </p>
         </div>
+        <FormActions>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              onClose();
+              router.push('/dashboard/feed');
+            }}
+          >
+            Create feed mix
+          </Button>
+          <Button
+            type="button"
+            variant="accent"
+            onClick={() => {
+              onClose();
+              router.push('/dashboard/inventory');
+            }}
+          >
+            Add feed stock
+          </Button>
+        </FormActions>
+      </div>
+    );
+  }
+
+  if (batches.length === 0) {
+    return (
+      <div className="space-y-5 py-2">
+        <div className="space-y-1.5 text-center">
+          <p className="text-base font-semibold text-fg">No active flocks</p>
+          <p className="text-sm leading-6 text-fg-2">
+            Add a flock, or make one active, before recording a feeding.
+          </p>
+        </div>
+        <FormActions>
+          <Button type="button" variant="outline" onClick={onClose}>
+            Close
+          </Button>
+        </FormActions>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
-      <Select
-        label="Batch"
-        options={batches.map(b => ({ label: `FLK-${b.id.toString().padStart(3, '0')} (${b.breedType})`, value: b.id }))}
-        value={formData.batchId}
-        onChange={(e) => setFormData({ ...formData, batchId: Number(e.target.value) })}
-        disabled={mode === 'edit'}
-        required
-      />
-      <Select
-        label="Feed Type"
-        options={feedOptions}
-        value={formData.feedSource}
-        onChange={(e) => setFormData({ ...formData, feedSource: e.target.value })}
-        disabled={mode === 'edit'}
-        required
-      />
-      <div>
-        <Input
-          label="Amount Consumed (Bags)"
-          type="number"
-          min="0"
-          step="0.01"
-          value={formData.amountConsumed}
-          onChange={(e) => {
-            const val = Number(e.target.value);
-            if (val < 0) return;
-            setFormData({ ...formData, amountConsumed: e.target.value === '' ? '' : val });
-          }}
+    <Form onSubmit={handleSubmit}>
+      <FormError>{error}</FormError>
+
+      <FormSection title="What was fed">
+        <SearchSelect
+          label="Flock"
+          options={batches.map((b, index) => ({
+            label: b.batchName || `Unit ${index + 1}`,
+            description: getBreedDisplayName(b.breedType),
+            value: b.id,
+          }))}
+          value={formData.batchId}
+          onChange={(batchId) => setFormData({ ...formData, batchId })}
+          placeholder="Select a flock"
+          searchPlaceholder="Search flocks"
+          emptyText="No flock matches"
+          disabled={mode === 'edit'}
           required
         />
-        <div className="flex gap-2 mt-2">
-          {[0.25, 0.5, 0.75, 1].map(amt => (
-            <Button
-              key={amt}
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() => setFormData({ ...formData, amountConsumed: amt })}
-              className="flex-1 text-sm font-bold border-emerald-500/30 text-emerald-100 hover:bg-emerald-500/20"
-            >
-              {amt === 0.25 ? '1/4' : amt === 0.5 ? '1/2' : amt === 0.75 ? '3/4' : '1'} Bag
-            </Button>
-          ))}
+        <SearchSelect
+          label="Feed"
+          options={feedOptions}
+          value={formData.feedSource}
+          onChange={(feedSource) => setFormData({ ...formData, feedSource })}
+          placeholder="Select a feed"
+          searchPlaceholder="Search feed"
+          emptyText="No feed matches"
+          disabled={mode === 'edit'}
+          required
+        />
+      </FormSection>
+
+      <FormSection title="How much">
+        <div className="space-y-2">
+          <Input
+            label="Bags used"
+            type="number"
+            min="0"
+            step="0.01"
+            unit="bags"
+            placeholder="e.g. 2.5"
+            value={formData.amountConsumed}
+            onChange={(e) => {
+              const val = Number(e.target.value);
+              if (val < 0) return;
+              setFormData({ ...formData, amountConsumed: e.target.value === '' ? '' : val });
+            }}
+            required
+          />
+          <div className="grid grid-cols-4 gap-2" role="group" aria-label="Quick amounts">
+            {QUICK_AMOUNTS.map((quick) => {
+              const selected = Number(formData.amountConsumed) === quick.value;
+              return (
+                <button
+                  key={quick.value}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => setFormData({ ...formData, amountConsumed: quick.value })}
+                  className={cn(
+                    'min-h-11 rounded-lg border px-1 text-sm font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60',
+                    selected
+                      ? 'border-accent bg-accent font-semibold text-accent-fg'
+                      : 'border-fg/[0.14] bg-page text-fg-2 hover:border-fg/25 hover:text-fg',
+                  )}
+                >
+                  {quick.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
-      <Input
-        label="Log Date"
-        type="date"
-        value={formData.logDate}
-        onChange={(e) => setFormData({ ...formData, logDate: e.target.value })}
-        disabled={mode === 'edit'}
-        required
-      />
-      <div className="flex justify-end gap-2 pt-3">
-        <Button variant="outline" type="button" onClick={onClose}>Cancel</Button>
-        <Button type="submit" isLoading={isLoading}>
-          {mode === 'create' ? 'Save Log' : mode === 'edit' ? 'Update Log' : 'Save'}
+      </FormSection>
+
+      <FormSection title="When">
+        <DateInput
+          label="Date fed"
+          value={formData.logDate}
+          onChange={(e) => setFormData({ ...formData, logDate: e.target.value })}
+          disabled={mode === 'edit'}
+          hint={mode === 'edit' ? 'The date of a saved feeding cannot be changed.' : undefined}
+          required
+        />
+      </FormSection>
+
+      <FormActions>
+        <Button variant="outline" type="button" onClick={onClose} disabled={isLoading}>
+          Cancel
         </Button>
-      </div>
-    </form>
+        <Button type="submit" variant="accent" isLoading={isLoading} loadingText="Saving">
+          {mode === 'edit' ? 'Save changes' : 'Save feeding'}
+        </Button>
+      </FormActions>
+    </Form>
   );
 };

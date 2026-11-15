@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, useScroll, useTransform, useSpring } from "framer-motion";
+import { m, useScroll, useTransform, useSpring } from "framer-motion";
 import { useEffect, useState } from "react";
 
 export default function Background3D() {
@@ -36,7 +36,7 @@ export default function Background3D() {
       />
 
       {/* Floating 3D Shapes */}
-      <motion.div
+      <m.div
         animate={{
           x: mousePosition.x * 2,
           y: mousePosition.y * 2,
@@ -45,7 +45,7 @@ export default function Background3D() {
         transition={{ type: "spring", stiffness: 50, damping: 20 }}
         className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full bg-gradient-to-tr from-blue-500/20 to-purple-500/10 blur-3xl"
       />
-      <motion.div
+      <m.div
         animate={{
           x: -mousePosition.x * 3,
           y: -mousePosition.y * 3,

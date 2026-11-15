@@ -1,118 +1,82 @@
 "use client";
 
-import React, { useState } from 'react';
-import { motion, AnimatePresence, HTMLMotionProps } from 'framer-motion';
+import React from 'react';
 import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
 import { Slot } from '@radix-ui/react-slot';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost' | 'glass';
+  variant?: 'primary' | 'accent' | 'secondary' | 'outline' | 'danger' | 'dangerSolid' | 'ghost' | 'glass';
   size?: 'sm' | 'md' | 'lg' | 'icon';
   isLoading?: boolean;
+  loadingText?: React.ReactNode;
   asChild?: boolean;
 }
 
+// Graphite ramp: an off-white primary, raised neutral secondary, and red only for destructive actions.
+// `accent` is the green main button of a form (Save, Add, Continue); `dangerSolid` confirms a delete.
+const variants = {
+  primary: 'bg-fg text-page hover:bg-fg/90 font-medium',
+  accent: 'bg-accent text-accent-fg hover:bg-accent/90 font-semibold',
+  secondary:
+    'border border-fg/[0.08] bg-raised text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] hover:bg-raised-2 font-medium',
+  outline: 'border border-fg/[0.12] bg-transparent text-fg hover:bg-fg/[0.04] font-medium',
+  danger: 'border border-neg-solid/30 bg-neg-solid/10 text-neg hover:bg-neg-solid/20 font-medium',
+  dangerSolid: 'bg-neg-solid text-white hover:bg-neg-solid/90 font-semibold',
+  ghost: 'bg-transparent text-fg-2 hover:bg-fg/[0.06] hover:text-fg',
+  glass:
+    'border border-fg/[0.08] bg-raised text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] hover:bg-raised-2 font-medium',
+};
+
+// Touch-sized on phones, a little denser from md up.
+const sizes = {
+  sm: 'min-h-10 md:min-h-9 px-3 text-sm rounded-lg',
+  md: 'min-h-11 md:min-h-10 px-4 text-sm rounded-lg',
+  lg: 'min-h-12 px-6 text-base rounded-xl',
+  icon: 'h-11 w-11 md:h-10 md:w-10 rounded-lg',
+};
+
+const base =
+  'relative inline-flex items-center justify-center gap-2 whitespace-nowrap transition-[background-color,border-color,color,transform] duration-150 ease-[cubic-bezier(0.22,1,0.36,1)] active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:pointer-events-none disabled:opacity-50';
+
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'primary', size = 'md', isLoading, children, disabled, onClick, asChild = false, ...props }, ref) => {
-    const [ripples, setRipples] = useState<{ x: number; y: number; id: number }[]>([]);
-
-    const createRipple = (event: React.MouseEvent<HTMLButtonElement>) => {
-      const button = event.currentTarget;
-      const rect = button.getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
-      const id = Date.now();
-      
-      setRipples((prev) => [...prev, { x, y, id }]);
-      setTimeout(() => {
-        setRipples((prev) => prev.filter((r) => r.id !== id));
-      }, 600);
-      
-      onClick?.(event);
-    };
-
-    const variants = {
-      primary: 'bg-gradient-to-br from-emerald-400 to-teal-600 text-white shadow-lg shadow-emerald-500/20 active:shadow-none font-bold uppercase tracking-widest text-xs',
-      secondary: 'bg-white/10 text-white hover:bg-white/20 border border-white/10 backdrop-blur-md font-bold',
-      outline: 'border-2 border-emerald-500/30 bg-transparent hover:bg-emerald-500/10 text-emerald-400 font-bold',
-      danger: 'bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 font-bold',
-      ghost: 'bg-transparent hover:bg-white/5 text-white/80 hover:text-white',
-      glass: 'glass-morphism text-white hover:bg-white/10 font-bold tracking-normal'
-    };
-
-    const sizes = {
-      sm: 'min-h-[44px] px-3 text-xs rounded-md py-2',
-      md: 'min-h-[44px] h-11 px-5 text-sm rounded-md',
-      lg: 'min-h-[56px] h-14 px-9 text-base rounded-[1.5rem]',
-      icon: 'w-11 h-11 min-w-[44px] min-h-[44px] rounded-md',
-    };
-
+  ({ className, variant = 'primary', size = 'md', isLoading, loadingText, children, disabled, onClick, asChild = false, ...props }, ref) => {
     if (asChild) {
       return (
-        <Slot
-          className={cn(
-            'relative inline-flex items-center justify-center overflow-hidden transition-all focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed',
-            variants[variant],
-            sizes[size],
-            className
-          )}
-          ref={ref as any}
-          {...props}
-        >
+        <Slot className={cn(base, variants[variant], sizes[size], className)} ref={ref as any} {...props}>
           {children}
         </Slot>
       );
     }
 
-    return (
-      <motion.button
-        ref={ref}
-        whileHover={{ scale: 1.02, y: -2 }}
-        whileTap={{ scale: 0.98 }}
-        disabled={isLoading || disabled}
-        onClick={createRipple}
-        className={cn(
-          'relative inline-flex items-center justify-center overflow-hidden transition-all focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed',
-          variants[variant],
-          sizes[size],
-          className
-        )}
-        {...(props as any)}
-      >
-        {/* Ripple Effect Container */}
-        <span className="absolute inset-0 pointer-events-none">
-          <AnimatePresence>
-            {ripples.map((ripple) => (
-              <motion.span
-                key={ripple.id}
-                initial={{ scale: 0, opacity: 0.5 }}
-                animate={{ scale: 4, opacity: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.6 }}
-                style={{
-                  position: 'absolute',
-                  left: ripple.x,
-                  top: ripple.y,
-                  width: 20,
-                  height: 20,
-                  borderRadius: '100%',
-                  background: 'rgba(255, 255, 255, 0.3)',
-                  transform: 'translate(-50%, -50%)',
-                }}
-              />
-            ))}
-          </AnimatePresence>
-        </span>
+    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+      if (disabled || isLoading) {
+        event.preventDefault();
+        return;
+      }
+      onClick?.(event);
+    };
 
-        <span className="relative z-10 flex items-center gap-2">
-          {isLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            children
-          )}
-        </span>
-      </motion.button>
+    return (
+      <button
+        ref={ref}
+        disabled={isLoading || disabled}
+        aria-busy={isLoading || undefined}
+        onClick={handleClick}
+        className={cn(base, variants[variant], sizes[size], className)}
+        {...props}
+      >
+        {isLoading ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} />
+            {size !== 'icon' && (
+              <span>{loadingText ?? (typeof children === 'string' ? children : 'Working')}</span>
+            )}
+          </>
+        ) : (
+          children
+        )}
+      </button>
     );
   }
 );

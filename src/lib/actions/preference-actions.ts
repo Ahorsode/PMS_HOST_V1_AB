@@ -1,17 +1,26 @@
 "use server";
 
 import prisma from "@/lib/db";
+import { revalidateFarmPerformanceCaches } from "@/lib/performance/cache-tags";
+import { getFarmRecord } from "@/lib/farm-record";
+import { getAppSettings } from "@/lib/settings/app-settings";
 import { revalidatePath } from "next/cache";
 import { getAuthContext } from "@/lib/auth-utils";
 
 export async function updateFarmSettings(data: {
   eggRecordReminderTime?: string;
   feedRecordReminderTime?: string;
-  currency?: string;
   growthTargetStandard?: number;
+  defaultEggUnit?: string;
+  allowEggUnitChange?: boolean;
+  defaultEggSortMode?: string;
+  allowEggSortModeChange?: boolean;
 }) {
   const { activeFarmId } = await getAuthContext();
   if (!activeFarmId) throw new Error("No active farm found");
+
+  // The currency follows the farm's country (setFarmCountry), never this form.
+  delete (data as { currency?: unknown }).currency;
 
   const settings = await prisma.farmSettings.upsert({
     where: { farmId: activeFarmId },
@@ -23,10 +32,11 @@ export async function updateFarmSettings(data: {
   });
 
   revalidatePath("/dashboard/settings");
+  revalidateFarmPerformanceCaches(activeFarmId);
   return settings;
 }
 
-export async function updateReorderLevel(inventoryId: number, reorderLevel: number) {
+export async function updateReorderLevel(inventoryId: string, reorderLevel: number) {
   const { activeFarmId } = await getAuthContext();
   if (!activeFarmId) throw new Error("No active farm found");
 
@@ -36,11 +46,12 @@ export async function updateReorderLevel(inventoryId: number, reorderLevel: numb
   });
 
   revalidatePath("/dashboard/inventory");
+  revalidateFarmPerformanceCaches(activeFarmId);
   return updated;
 }
 
 export async function createVaccinationSchedule(data: {
-  livestockId: number;
+  livestockId: string;
   vaccineName: string;
   scheduledDate: Date;
   notes?: string;
@@ -53,16 +64,20 @@ export async function createVaccinationSchedule(data: {
       batchId: data.livestockId,
       vaccineName: data.vaccineName,
       scheduledDate: data.scheduledDate,
-      notes: data.notes
+      notes: data.notes,
+      farmId: activeFarmId,
     },
   });
 
   revalidatePath(`/dashboard/livestock/${data.livestockId}`);
+  revalidatePath(`/dashboard/flocks/${data.livestockId}`);
+  revalidatePath(`/dashboard/health`);
+  revalidateFarmPerformanceCaches(activeFarmId);
   return schedule;
 }
 
 export async function createMedicationSchedule(data: {
-  livestockId: number;
+  livestockId: string;
   medicationName: string;
   scheduledDate: Date;
   notes?: string;
@@ -75,11 +90,15 @@ export async function createMedicationSchedule(data: {
       batchId: data.livestockId,
       medicationName: data.medicationName,
       scheduledDate: data.scheduledDate,
-      notes: data.notes
+      notes: data.notes,
+      farmId: activeFarmId,
     },
   });
 
   revalidatePath(`/dashboard/livestock/${data.livestockId}`);
+  revalidatePath(`/dashboard/flocks/${data.livestockId}`);
+  revalidatePath(`/dashboard/health`);
+  revalidateFarmPerformanceCaches(activeFarmId);
   return schedule;
 }
 
@@ -87,9 +106,48 @@ export async function getFarmSettings() {
   const { activeFarmId } = await getAuthContext();
   if (!activeFarmId) return null;
 
-  return prisma.farmSettings.findUnique({
+  // The settings row comes with the farm record, which a page render has
+  // usually loaded already (plan access and currency use it too).
+  return (await getFarmRecord(activeFarmId))?.settings ?? null;
+}
+
+export async function getSalesSettings() {
+  const { activeFarmId } = await getAuthContext();
+  if (!activeFarmId) return null;
+
+  // Every farm has a row after its first visit, so read it first and only
+  // create one (with the admin defaults) when it is missing.
+  const existing = await prisma.salesSettings.findUnique({ where: { farmId: activeFarmId } });
+  if (existing) return existing;
+
+  const { salesSettings } = await getAppSettings('farm-defaults');
+  return prisma.salesSettings.upsert({
     where: { farmId: activeFarmId },
+    update: {},
+    create: { farmId: activeFarmId, ...salesSettings },
   });
+}
+
+export async function updateSalesSettings(data: {
+  allowBatchOverride?: boolean;
+  allowWorkerDiscounts?: boolean;
+  defaultDiscountType?: string;
+}) {
+  const { activeFarmId } = await getAuthContext();
+  if (!activeFarmId) throw new Error("No active farm found");
+
+  const settings = await prisma.salesSettings.upsert({
+    where: { farmId: activeFarmId },
+    update: data,
+    create: {
+      farmId: activeFarmId,
+      ...data,
+    },
+  });
+
+  revalidatePath("/dashboard/settings");
+  revalidatePath("/dashboard/sales");
+  return settings;
 }
 export async function getGrowthStandards(type?: any) {
   return await prisma.growthStandards.findMany({

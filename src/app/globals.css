@@ -1,51 +1,193 @@
 @import "tailwindcss";
 
+/*
+ * Graphite theme. Dark is the default everywhere; the dashboard opts into
+ * light with <html data-theme="light"> (set by ThemeToggle / the no-flash
+ * script in the root layout). Surfaces stay neutral in both, the content
+ * carries the color.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #141415;
+  --foreground: #ededed;
+
+  --page: #141415;
+  --deep: #0f0f10;
+  --card: #19191b;
+  --tile: #1e1e20;
+  --raised: #232325;
+  --raised-2: #2c2c2f;
+  --fg: #ededed;
+  --fg-2: #b8b8bd;
+  --fg-3: #9b9ba1;
+  --bar: #4a4a4f;
+  --accent: #34d399;
+  --accent-fg: #062016;
+  --pos: #4cc38a;
+  --neg: #f2777b;
+  --neg-solid: #e5484d;
+  --yolk: #d9a441;
+  --straw: #c9b37e;
+  --clay: #b5735a;
+  --steel: #8fa8c8;
+  --shadow: rgba(0, 0, 0, 0.35);
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --background: #f6f6f7;
+  --foreground: #18181b;
+
+  --page: #f6f6f7;
+  --deep: #ffffff;
+  --card: #ffffff;
+  --tile: #fafafa;
+  --raised: #f0f0f2;
+  --raised-2: #e6e6e9;
+  --fg: #18181b;
+  --fg-2: #3f3f46;
+  --fg-3: #5b5b63;
+  --bar: #c8c8cd;
+  --accent: #059669;
+  --accent-fg: #ffffff;
+  --pos: #15803d;
+  --neg: #dc2626;
+  --neg-solid: #dc2626;
+  --yolk: #b7791f;
+  --straw: #8f7a3f;
+  --clay: #a15c40;
+  --steel: #4b6a91;
+  --shadow: rgba(24, 24, 27, 0.08);
+  color-scheme: light;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-page: var(--page);
+  --color-deep: var(--deep);
+  --color-card: var(--card);
+  --color-tile: var(--tile);
+  --color-raised: var(--raised);
+  --color-raised-2: var(--raised-2);
+  --color-fg: var(--fg);
+  --color-fg-2: var(--fg-2);
+  --color-fg-3: var(--fg-3);
+  --color-bar: var(--bar);
+  --color-accent: var(--accent);
+  --color-accent-fg: var(--accent-fg);
+  --color-pos: var(--pos);
+  --color-neg: var(--neg);
+  --color-neg-solid: var(--neg-solid);
+  --color-yolk: var(--yolk);
+  --color-straw: var(--straw);
+  --color-clay: var(--clay);
+  --color-steel: var(--steel);
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
-@keyframes mesh-gradient {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+@keyframes mutation-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
+/* Loading placeholders only: a soft opacity breath, no glow. */
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.9; }
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 1.4s ease-in-out infinite;
+}
+
+/* Page change: one short fade and rise. Plain CSS so the server-rendered page shows before any script runs. */
+@keyframes page-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+.animate-page-enter {
+  animation: page-enter 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/*
+ * Entrances that used to start hidden in the server HTML and wait for the
+ * animation library. As CSS they play as soon as the page arrives; framer
+ * still runs the exit animations of the same elements.
+ */
+@keyframes auth-card-enter {
+  from { opacity: 0; transform: translateY(40px) scale(0.95); }
+  to { opacity: 1; transform: none; }
+}
+
+.animate-auth-card-enter {
+  animation: auth-card-enter 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Springy pop, close to the spring (bounce 0.5) it replaces. */
+@keyframes logo-pop {
+  from { transform: scale(0); }
+  to { transform: scale(1); }
+}
+
+.animate-logo-pop {
+  animation: logo-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+}
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(var(--rise-from, 16px)); }
+  to { opacity: 1; transform: none; }
+}
+
+.animate-rise-in {
+  animation: rise-in 0.35s ease-out;
+}
+
+/* Graphite ramp: one neutral page surface, the content carries the color. */
 body {
-  background: linear-gradient(-45deg, #064e3b, #065f46, #047857, #10b981);
-  background-size: 400% 400%;
-  animation: mesh-gradient 15s ease infinite;
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--page);
+  color: var(--fg);
   min-height: 100vh;
 }
 
+/*
+ * Native <select> popups draw their own list. Selects use translucent
+ * backgrounds (bg-fg/[0.04]) that the popup can't inherit, so options fell
+ * back to a white list with the theme's light text. Paint them explicitly.
+ */
+select option,
+select optgroup {
+  background-color: var(--raised);
+  color: var(--fg);
+}
+
+/* Kept for existing markup: both are now plain graphite surfaces with a
+   hairline, no blur, tint or shadow. */
 .glass-morphism {
-  background: rgba(15, 23, 42, 0.85); /* Darker, more solid for sunlight visibility */
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 12px 48px -12px rgba(0, 0, 0, 0.5);
+  background: var(--card);
+  border: 1px solid color-mix(in srgb, var(--fg) 8%, transparent);
 }
 
 .glass-pill {
-  background: rgba(10, 20, 15, 0.92); /* Nearly solid for critical data contrast */
-  backdrop-filter: blur(32px) saturate(200%);
-  -webkit-backdrop-filter: blur(32px) saturate(200%);
-  border: 1px solid rgba(16, 185, 129, 0.2);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  background: var(--card);
+  border: 1px solid color-mix(in srgb, var(--fg) 8%, transparent);
 }
 
 @layer utilities {
   .text-shadow-glow {
-    text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+    text-shadow: none;
+  }
+
+  .mutation-shimmer {
+    background-image: linear-gradient(
+      110deg,
+      color-mix(in srgb, var(--fg) 6%, transparent) 8%,
+      color-mix(in srgb, var(--fg) 14%, transparent) 18%,
+      color-mix(in srgb, var(--fg) 6%, transparent) 33%
+    );
+    background-size: 200% 100%;
+    animation: mutation-shimmer 1.15s linear infinite;
   }
 
   .custom-scrollbar {
@@ -67,6 +209,25 @@ body {
     border-radius: 10px;
   }
   .custom-scrollbar:hover::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
+    background: color-mix(in srgb, var(--fg) 12%, transparent);
+  }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+/*
+ * Readability floor. Many labels use faded text (text-fg/40 .. text-fg/70),
+ * which washed out, especially on the light theme's pale surfaces. Map them
+ * onto the solid secondary/tertiary text colors. Kept inside the utilities
+ * layer so hover:/focus: variants (higher specificity) still win.
+ */
+@layer utilities {
+  .text-fg\/35, .text-fg\/40, .text-fg\/45, .text-fg\/50, .text-fg\/55 {
+    color: var(--fg-3);
+  }
+  .text-fg\/60, .text-fg\/65, .text-fg\/70, .text-fg\/75 {
+    color: var(--fg-2);
   }
 }

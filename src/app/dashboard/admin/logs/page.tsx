@@ -17,18 +17,24 @@ export default async function AuditLogsPage() {
     redirect('/dashboard/unauthorized');
   }
 
-  const [editLogs, deleteLogs, trashItems] = await Promise.all([
-    getEditLogs(),
-    getDeleteLogs(),
-    getTrashItems()
-  ]);
+  let editLogs, deleteLogs, trashItems;
+  try {
+    [editLogs, deleteLogs, trashItems] = await Promise.all([
+      getEditLogs(),
+      getDeleteLogs(),
+      getTrashItems()
+    ]);
+  } catch (serverError: any) {
+    console.error("CRITICAL PRODUCTION LOGS ERROR:", serverError.message, serverError.stack);
+    throw serverError;
+  }
 
   return (
-    <div className="max-w-[1400px] mx-auto p-4 md:p-8">
+    <div className="max-w-[1400px] mx-auto px-0 pt-2 pb-4 md:p-8">
       <AuditLogView 
-        initialEditLogs={editLogs} 
-        initialDeleteLogs={deleteLogs}
-        trashItems={trashItems}
+        initialEditLogs={JSON.parse(JSON.stringify(editLogs, (key, value) => typeof value === 'bigint' ? value.toString() : value))} 
+        initialDeleteLogs={JSON.parse(JSON.stringify(deleteLogs, (key, value) => typeof value === 'bigint' ? value.toString() : value))}
+        trashItems={JSON.parse(JSON.stringify(trashItems, (key, value) => typeof value === 'bigint' ? value.toString() : value))}
       />
     </div>
   );

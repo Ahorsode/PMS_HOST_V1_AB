@@ -1,6 +1,7 @@
 'use server'
 
 import prisma from '@/lib/db'
+import { revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 import { revalidatePath } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 
@@ -79,7 +80,7 @@ const TABLE_TO_MODEL: Record<string, string> = {
   'invitations': 'invitation',
 }
 
-export async function restoreDeletedRecord(logId: number) {
+export async function restoreDeletedRecord(logId: string) {
   const { userId, role, activeFarmId } = await getAuthContext()
   if (!activeFarmId || role !== 'OWNER') {
     return { success: false, error: 'Unauthorized: Only Owners can restore data' }
@@ -159,7 +160,6 @@ export async function restoreDeletedRecord(logId: number) {
     })
 
     // Remove ID and metadata to let DB generate fresh ones
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { id, createdAt, updatedAt, deletedAt, ...dataToRestore } = record
 
     // Ensure context matches current session
@@ -184,6 +184,7 @@ export async function restoreDeletedRecord(logId: number) {
 
     revalidatePath('/dashboard/admin/logs')
     revalidatePath('/dashboard', 'layout')
+    revalidateFarmPerformanceCaches(activeFarmId)
     
     return { success: true, message: `Successfully restored record to ${log.tableName}` }
   } catch (error: any) {

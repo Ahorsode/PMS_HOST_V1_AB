@@ -1,41 +1,75 @@
-import React from 'react'; // Re-triggering build to resolve import lint
-import { getBatchDetails } from '@/lib/actions/dashboard-actions';
+import React from 'react';
+import { getFlockDeepDive } from '@/lib/actions/flock-detail-actions';
 import { notFound } from 'next/navigation';
 import { FlockDetailClient } from './FlockDetailClient';
+import { FlockLogsHistory } from './FlockLogsHistory';
+import { FlockReportGenerator } from './FlockReportGenerator';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
+import { getBreedDisplayName } from '@/lib/livestock-breed-options';
+import { getFarmSettings } from '@/lib/actions/preference-actions';
+import { getAuthContext } from '@/lib/auth-utils';
+import { checkFeature } from '@/lib/subscription-utils';
+import { PlanFeatureLocked } from '@/components/billing/PlanFeatureLocked';
+import { HeadCount } from '../flock-ui';
 
 export default async function FlockDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const batch = await getBatchDetails(Number(id));
+  const { activeFarmId } = await getAuthContext();
+  if (!activeFarmId || !(await checkFeature(activeFarmId, 'BATCH_DETAILS'))) {
+    return (
+      <PlanFeatureLocked
+        feature="BATCH_DETAILS"
+        title="Batch"
+        accent="Management"
+        description="Detailed batch management shows each batch's charts, health schedule and full history. You can still log eggs, feed and deaths for every batch."
+      />
+    );
+  }
 
-  if (!batch) {
+  const [data, farmSettings] = await Promise.all([
+    getFlockDeepDive(id),
+    getFarmSettings(),
+  ]);
+
+  if (!data) {
     notFound();
   }
 
+  const { batch } = data;
+  const eggsPerCrate = farmSettings?.eggsPerCrate ?? 30;
+
   return (
-    <div className="max-w-7xl mx-auto px-3 py-7 relative">
-      <Breadcrumbs 
+    <div className="mx-auto max-w-7xl px-0 pb-8 pt-2 md:px-4 md:py-8">
+      <Breadcrumbs
         items={[
           { label: 'Livestock', href: '/dashboard/flocks' },
-          { label: `UNIT-${batch.id.toString().padStart(3, '0')}` }
-        ]} 
+          { label: batch.batchName || 'Unit details' }
+        ]}
       />
-      
-      <div className="flex justify-between items-center mb-9 bg-white/10 backdrop-blur-md p-7 rounded-lg border border-white/10 relative overflow-hidden">
-        <div className="relative z-10">
-          <h2 className="text-4xl font-bold text-white tracking-normal">
-            Livestock <span className="text-emerald-400 italic">Management</span>
-          </h2>
-          <p className="text-white/70 font-bold uppercase tracking-widest text-xs mt-2 flex items-center gap-2 italic">
-             {batch.breedType} • House {batch.house?.name || batch.houseId}
-          </p>
-        </div>
-        <div className="flex gap-3">
-           {/* Actions will be here */}
-        </div>
-      </div>
 
-      <FlockDetailClient batch={batch} />
+      <header className="mb-6 flex flex-col gap-5 px-1 md:flex-row md:items-end md:justify-between md:px-0">
+        <div className="min-w-0">
+          <h1 className="text-[28px] font-semibold leading-tight text-fg md:text-[32px]">
+            {batch.batchName || 'Unit details'}
+          </h1>
+          <p className="mt-1 text-sm text-fg-2">
+            {getBreedDisplayName(batch.breedType)} · {batch.house?.name || 'House not named'}
+          </p>
+          <HeadCount
+            className="mt-4 max-w-xs"
+            current={batch.currentCount}
+            initial={batch.initialCount}
+            isolated={batch.isolationCount || 0}
+            active={String(batch.status || '').toLowerCase() === 'active'}
+          />
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <FlockLogsHistory data={data} />
+          <FlockReportGenerator data={data} />
+        </div>
+      </header>
+
+      <FlockDetailClient data={data} eggsPerCrate={eggsPerCrate} />
     </div>
   );
 }

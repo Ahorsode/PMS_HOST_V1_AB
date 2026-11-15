@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { motion, useAnimation } from 'framer-motion';
+import { m, useAnimation } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -77,21 +77,21 @@ export const PullToRefresh = ({ children }: { children: React.ReactNode }) => {
     >
       <div className="absolute w-full flex justify-center items-center z-0 top-0 left-0 pt-2 -mt-12">
         <div 
-          className="bg-white/10 backdrop-blur-md rounded-full p-2 border border-white/20 shadow-lg flex items-center justify-center transition-opacity"
+          className="bg-fg/10 rounded-full p-2 border border-fg/20 shadow-lg flex items-center justify-center transition-opacity"
           style={{ opacity: Math.min(pullDistance / refreshThreshold, 1) }}
         >
           <RefreshCw 
-            className={`w-5 h-5 text-emerald-400 ${pullDistance > refreshThreshold && !isPulling ? 'animate-spin' : ''}`} 
+            className={`w-5 h-5 text-accent ${pullDistance > refreshThreshold && !isPulling ? 'animate-spin' : ''}`} 
             style={{ transform: `rotate(${pullDistance * 2}deg)` }}
           />
         </div>
       </div>
-      <motion.div 
+      <m.div 
         animate={controls}
-        className="relative z-10 h-full w-full bg-[#0a0a0a]"
+        className="relative z-10 h-full w-full bg-page"
       >
         {children}
-      </motion.div>
+      </m.div>
     </div>
   );
 };

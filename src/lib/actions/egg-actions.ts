@@ -2,21 +2,16 @@
 
 import prisma from '@/lib/db'
 import { revalidatePath } from 'next/cache'
-import { auth } from '@/auth'
 import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
-
-async function getUserId() {
-  const session = await auth()
-  if (!session?.user?.id) throw new Error('Unauthorized')
-  return session.user.id
-}
+import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
+import { revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 
 export async function createEggProduction(data: {
-  batchId: number
+  batchId: string
   eggsCollected?: number
   cratesCollected?: number
-  categoryId?: number
+  categoryId?: string
   unusableCount?: number
   qualityGrade?: string
   isSorted?: boolean
@@ -28,8 +23,18 @@ export async function createEggProduction(data: {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
-  const hasEditAccess = await checkWorkerPermissions('batches', 'edit')
-  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Batches Permission' }
+  const hasEditAccess = await checkWorkerPermissions('eggs', 'edit')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Egg Production Permission' }
+
+  const limitResult = await checkRateLimit({
+    policy: 'production.write',
+    scope: 'createEggProduction',
+    farmId: activeFarmId,
+    userId,
+  })
+  if (!limitResult.ok) {
+    return rateLimitActionError(limitResult)
+  }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     // Fetch farm settings for dynamic crate size
@@ -39,8 +44,12 @@ export async function createEggProduction(data: {
     })
     const eggsPerCrate = settings?.eggsPerCrate ?? 30
 
-    // Calculate total eggs from crates if needed
-    const calculatedEggs = data.eggsCollected ?? (data.cratesCollected ? Math.round(data.cratesCollected * eggsPerCrate) : 0)
+    // What the farmer enters is the good eggs. Unusable eggs are recorded on
+    // top of that, never taken out of it. The stored eggsCollected is every egg
+    // laid (good + unusable), so reports keep computing good = total - unusable.
+    const goodEggs = Math.max(0, data.eggsCollected ?? (data.cratesCollected ? Math.round(data.cratesCollected * eggsPerCrate) : 0))
+    const unusableEggs = Math.max(0, data.unusableCount || 0)
+    const calculatedEggs = goodEggs + unusableEggs
     
     // Ensure "Unsorted" default if no categoryId provided
     let finalCategoryId = data.categoryId
@@ -68,8 +77,8 @@ export async function createEggProduction(data: {
         eggsCollected: calculatedEggs,
         cratesCollected: data.cratesCollected,
         categoryId: finalCategoryId,
-        unusableCount: data.unusableCount || 0,
-        eggsRemaining: calculatedEggs - (data.unusableCount || 0),
+        unusableCount: unusableEggs,
+        eggsRemaining: goodEggs,
         qualityGrade: data.qualityGrade,
         isSorted: data.isSorted || false,
         smallCount: data.smallCount || 0,
@@ -81,7 +90,7 @@ export async function createEggProduction(data: {
     })
 
     // Auto-sync usable eggs into Inventory based on Category
-    const usableEggs = calculatedEggs - (data.unusableCount || 0)
+    const usableEggs = goodEggs
     if (usableEggs > 0) {
       const category = await tx.eggCategory.findUnique({ where: { id: finalCategoryId } })
 
@@ -117,6 +126,7 @@ export async function createEggProduction(data: {
 
     revalidatePath('/dashboard/eggs')
     revalidatePath('/dashboard/inventory')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, log }
   }).catch((error: any) => {
     console.error('Error creating egg production log:', error)
@@ -124,7 +134,7 @@ export async function createEggProduction(data: {
   })
 }
 
-export async function updateEggProduction(id: number, data: {
+export async function updateEggProduction(id: string, data: {
   eggsCollected?: number
   unusableCount?: number
   qualityGrade?: string
@@ -137,18 +147,45 @@ export async function updateEggProduction(id: number, data: {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
-  const hasEditAccess = await checkWorkerPermissions('batches', 'edit')
-  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Batches Permission' }
+  const hasEditAccess = await checkWorkerPermissions('eggs', 'edit')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Egg Production Permission' }
+
+  const limitResult = await checkRateLimit({
+    policy: 'production.write',
+    scope: 'updateEggProduction',
+    farmId: activeFarmId,
+    userId,
+  })
+  if (!limitResult.ok) {
+    return rateLimitActionError(limitResult)
+  }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    // eggsCollected from the form is the good eggs; store good + unusable as the
+    // total laid, the same way createEggProduction does.
+    let eggsCollected: number | undefined
+    if (data.eggsCollected !== undefined) {
+      let unusable = data.unusableCount
+      if (unusable === undefined) {
+        const existing = await tx.eggProduction.findUnique({
+          where: { id, farmId: activeFarmId },
+          select: { unusableCount: true },
+        })
+        unusable = existing?.unusableCount ?? 0
+      }
+      eggsCollected = Math.max(0, data.eggsCollected) + Math.max(0, unusable ?? 0)
+    }
+
     const log = await tx.eggProduction.update({
       where: { id, farmId: activeFarmId },
       data: {
         ...data,
+        ...(eggsCollected !== undefined ? { eggsCollected } : {}),
         logDate: data.logDate ? new Date(data.logDate) : undefined,
       }
     })
     revalidatePath('/dashboard/eggs')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, log }
   }).catch((error: any) => {
     console.error('Error updating egg production log:', error)
@@ -156,19 +193,45 @@ export async function updateEggProduction(id: number, data: {
   })
 }
 
-export async function deleteEggProduction(id: number) {
+export async function deleteEggProduction(id: string, reason: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
-  const hasEditAccess = await checkWorkerPermissions('batches', 'edit')
-  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Batches Permission' }
+  const hasEditAccess = await checkWorkerPermissions('eggs', 'edit')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Egg Production Permission' }
+
+  if (!reason || reason.trim().length < 5) return { success: false, error: 'A valid reason is required for deletion' }
+
+  const limitResult = await checkRateLimit({
+    policy: 'production.write',
+    scope: 'deleteEggProduction',
+    farmId: activeFarmId,
+    userId,
+  })
+  if (!limitResult.ok) {
+    return rateLimitActionError(limitResult)
+  }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    const existing = await tx.eggProduction.findUnique({ where: { id, farmId: activeFarmId } })
+    if (existing) {
+      await tx.deleteLog.create({
+        data: {
+          userId,
+          farmId: activeFarmId,
+          tableName: 'egg_production',
+          deletedDataCsv: JSON.stringify(existing),
+          reason: reason.trim()
+        }
+      })
+    }
+
     await tx.eggProduction.update({
       where: { id, farmId: activeFarmId },
-      data: { isDeleted: true }
+      data: { isDeleted: true, deletedAt: new Date() }
     })
     revalidatePath('/dashboard/eggs')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true }
   }).catch((error: any) => {
     console.error('Error deleting egg production log:', error)
@@ -176,7 +239,7 @@ export async function deleteEggProduction(id: number) {
   })
 }
 
-export async function restoreEggProduction(id: number) {
+export async function restoreEggProduction(id: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
@@ -186,10 +249,11 @@ export async function restoreEggProduction(id: number) {
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     await tx.eggProduction.update({
       where: { id, farmId: activeFarmId },
-      data: { isDeleted: false }
+      data: { isDeleted: false, deletedAt: null }
     })
     revalidatePath('/dashboard/eggs')
     revalidatePath('/dashboard/settings/trash')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true }
   }).catch((error: any) => {
     console.error('Error restoring egg production log:', error)

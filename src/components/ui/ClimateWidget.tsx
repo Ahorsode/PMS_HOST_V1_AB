@@ -29,12 +29,12 @@ export const ClimateWidget: React.FC<ClimateWidgetProps> = ({ currentClimate }) 
     <div className={`flex items-center space-x-3 border px-3 py-2 rounded-lg shadow-sm transition-colors ${getStatusColor()}`}>
       <div className="flex items-center space-x-1">
         <ThermometerSun className="w-5 h-5" />
-        <span className="font-semibold">{temperature.toFixed(1)}°C</span>
+        <span className="font-medium">{temperature.toFixed(1)}°C</span>
       </div>
       <div className="w-px h-6 bg-current opacity-20" />
       <div className="flex items-center space-x-1">
         <Droplets className="w-5 h-5" />
-        <span className="font-semibold">{humidity}%</span>
+        <span className="font-medium">{humidity}%</span>
       </div>
       <div className="w-px h-6 bg-current opacity-20" />
       <div className="flex items-center space-x-1 text-sm font-medium">

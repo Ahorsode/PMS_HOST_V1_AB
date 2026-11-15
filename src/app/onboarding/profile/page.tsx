@@ -2,10 +2,9 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { ArrowRight } from 'lucide-react';
-import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
+import { AuthShell } from '@/components/auth/AuthShell';
+import { Button, Form, FormError, FormRow, Input } from '@/components/ui/form';
 import { updateProfile } from '@/lib/actions/dashboard-actions';
 
 export default function ProfileOnboardingPage() {
@@ -15,27 +14,20 @@ export default function ProfileOnboardingPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isLoading) return;
     setIsLoading(true);
     setError(null);
 
     const formData = new FormData(e.currentTarget);
     const firstname = formData.get('firstname') as string;
     const surname = formData.get('surname') as string;
-    const newPassword = formData.get('newPassword') as string;
-    const confirmPassword = formData.get('confirmPassword') as string;
-
-    if (newPassword && newPassword !== confirmPassword) {
-      setError("Passwords do not match");
-      setIsLoading(false);
-      return;
-    }
 
     try {
-      const result = await updateProfile({ firstname, surname, newPassword: newPassword || undefined });
+      const result = await updateProfile({ firstname, surname });
       if (result.success) {
         router.push('/dashboard');
       } else {
-        setError(result.error || 'Failed to update profile. Please try again.');
+        setError(result.error || 'Your name could not be saved. Try again.');
       }
     } catch (err) {
       setError('An unexpected error occurred.');
@@ -45,77 +37,40 @@ export default function ProfileOnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-3">
-      <div className="max-w-md w-full space-y-11 relative z-10">
-        <div className="text-center space-y-3">
-          <h1 className="text-5xl font-bold text-white tracking-normal italic">Welcome to <span className="text-emerald-400">Agri-ERP</span></h1>
-          <p className="text-sm text-white/70 font-bold uppercase tracking-widest italic">
-            Please complete your profile details to continue.
-          </p>
-        </div>
+    <AuthShell title="What should we call you?" subtitle="Your name appears on records you add and on invoices.">
+      <Form onSubmit={handleSubmit} className="space-y-5">
+        <FormError>{error}</FormError>
 
-        <Card className="glass-morphism border-none shadow-2xl rounded-lg p-3">
-          <CardHeader>
-            <CardTitle className="text-2xl italic tracking-normal">Your Profile</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-7">
-              {error && (
-                <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-md font-bold backdrop-blur-md">
-                  {error}
-                </div>
-              )}
+        <FormRow alwaysInline>
+          <Input
+            label="First name"
+            name="firstname"
+            autoComplete="given-name"
+            required
+            placeholder="e.g. Ama"
+            disabled={isLoading}
+          />
+          <Input
+            label="Surname"
+            name="surname"
+            autoComplete="family-name"
+            required
+            placeholder="e.g. Owusu"
+            disabled={isLoading}
+          />
+        </FormRow>
 
-              <div className="space-y-5">
-                <Input 
-                  label="First Name"
-                  name="firstname"
-                  required
-                  placeholder="e.g. John"
-                />
-                <Input 
-                  label="Surname"
-                  name="surname"
-                  required
-                  placeholder="e.g. Doe"
-                />
-                
-                <div className="pt-2 border-t border-white/5 space-y-5">
-                  <p className="text-xs text-white/70 italic mb-2">Since this is your first login, you can set a secure password (Optional but recommended).</p>
-                  <Input 
-                    label="New Password"
-                    name="newPassword"
-                    type="password"
-                    placeholder="Enter short or long password"
-                  />
-                  <Input 
-                    label="Confirm Password"
-                    name="confirmPassword"
-                    type="password"
-                    placeholder="Confirm your password"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-3">
-                <Button
-                  type="submit"
-                  isLoading={isLoading}
-                  size="lg"
-                  className="w-full"
-                >
-                  Continue to Dashboard
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Decorative background effects for onboarding */}
-      <div className="fixed top-1/4 left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-[120px] -z-10 animate-pulse" />
-      <div className="fixed bottom-1/4 right-1/4 w-96 h-96 bg-teal-500/20 rounded-full blur-[120px] -z-10 animate-pulse delay-700" />
-    </div>
+        <Button
+          type="submit"
+          variant="accent"
+          isLoading={isLoading}
+          loadingText="Saving"
+          className="min-h-12 w-full text-[15px] md:min-h-11"
+        >
+          Continue to your farm
+          <ArrowRight className="h-4 w-4" strokeWidth={1.75} />
+        </Button>
+      </Form>
+    </AuthShell>
   );
 }

@@ -1,9 +1,11 @@
 'use server'
 
 import prisma from '@/lib/db'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
+import { expireTag, farmCacheTags, revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
+import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 
 export async function createSale(data: {
   customerName?: string
@@ -13,8 +15,11 @@ export async function createSale(data: {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
-  const hasEditAccess = await checkWorkerPermissions('finance', 'edit')
-  if (!hasEditAccess) throw new Error('Unauthorized: Missing Edit Finance Permission')
+  const hasEditAccess = await checkWorkerPermissions('sales', 'edit')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Sales Permission' }
+
+  const limitResult = await checkRateLimit({ policy: 'sales.write', scope: 'createSale', farmId: activeFarmId, userId })
+  if (!limitResult.ok) return rateLimitActionError(limitResult)
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const sale = await tx.sale.create({
@@ -47,6 +52,9 @@ export async function createSale(data: {
 
     revalidatePath('/dashboard/sales')
     revalidatePath('/dashboard/inventory')
+    expireTag(farmCacheTags.sales(activeFarmId))
+    expireTag(farmCacheTags.inventory(activeFarmId))
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, sale: { ...sale, totalAmount: Number(sale.totalAmount) } }
   }).catch((error: any) => {
     console.error('Error creating sale:', error)
@@ -54,19 +62,39 @@ export async function createSale(data: {
   })
 }
 
-export async function deleteSale(id: number) {
+export async function deleteSale(id: string, reason: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
-  const hasEditAccess = await checkWorkerPermissions('finance', 'edit')
-  if (!hasEditAccess) throw new Error('Unauthorized: Missing Edit Finance Permission')
+  const hasEditAccess = await checkWorkerPermissions('sales', 'edit')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Sales Permission' }
+
+  if (!reason || reason.trim().length < 5) return { success: false, error: 'A valid reason is required for deletion' }
+
+  const limitResult = await checkRateLimit({ policy: 'sales.write', scope: 'deleteSale', farmId: activeFarmId, userId })
+  if (!limitResult.ok) return rateLimitActionError(limitResult)
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    const existing = await tx.sale.findUnique({ where: { id, farmId: activeFarmId } })
+    if (existing) {
+      await tx.deleteLog.create({
+        data: {
+          userId,
+          farmId: activeFarmId,
+          tableName: 'sales',
+          deletedDataCsv: JSON.stringify(existing),
+          reason: reason.trim()
+        }
+      })
+    }
+
     await tx.sale.update({
       where: { id, farmId: activeFarmId },
-      data: { isDeleted: true }
+      data: { isDeleted: true, deletedAt: new Date() }
     })
     revalidatePath('/dashboard/sales')
+    expireTag(farmCacheTags.sales(activeFarmId))
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true }
   }).catch((error: any) => {
     console.error('Error deleting sale:', error)
@@ -74,20 +102,25 @@ export async function deleteSale(id: number) {
   })
 }
 
-export async function restoreSale(id: number) {
+export async function restoreSale(id: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return { success: false, error: 'No active farm selected' }
 
-  const hasEditAccess = await checkWorkerPermissions('finance', 'edit')
-  if (!hasEditAccess) throw new Error('Unauthorized: Missing Edit Finance Permission')
+  const hasEditAccess = await checkWorkerPermissions('sales', 'edit')
+  if (!hasEditAccess) return { success: false, error: 'Unauthorized: Missing Edit Sales Permission' }
+
+  const limitResult = await checkRateLimit({ policy: 'sales.write', scope: 'restoreSale', farmId: activeFarmId, userId })
+  if (!limitResult.ok) return rateLimitActionError(limitResult)
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     await tx.sale.update({
       where: { id, farmId: activeFarmId },
-      data: { isDeleted: false }
+      data: { isDeleted: false, deletedAt: null }
     })
     revalidatePath('/dashboard/sales')
     revalidatePath('/dashboard/settings/trash')
+    expireTag(farmCacheTags.sales(activeFarmId))
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true }
   }).catch((error: any) => {
     console.error('Error restoring sale:', error)

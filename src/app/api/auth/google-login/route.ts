@@ -2,12 +2,19 @@ import { NextResponse } from "next/server";
 import { OAuth2Client } from "google-auth-library";
 import prisma from "@/lib/db";
 import { encode } from "next-auth/jwt";
-import { recordUserSession } from "@/lib/auth-utils";
+import { completeGoogleSignIn, recordUserSession } from "@/lib/auth-utils";
+import { checkRateLimit, getRateLimitIp, rateLimitHeaders } from "@/lib/performance/rate-limit";
 
 const client = new OAuth2Client(process.env.AUTH_GOOGLE_ID);
 
 export async function POST(req: Request) {
   try {
+    const authSecret = process.env.AUTH_SECRET;
+    const googleClientId = process.env.AUTH_GOOGLE_ID;
+    if (!authSecret || !googleClientId) {
+      return NextResponse.json({ error: "Server auth configuration is missing" }, { status: 500 });
+    }
+
     const json = await req.json();
     const { idToken, deviceType } = json;
 
@@ -15,10 +22,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing idToken" }, { status: 400 });
     }
 
+    const limit = await checkRateLimit({
+      policy: "auth.signup",
+      scope: "google-login",
+      ip: getRateLimitIp(req),
+    });
+
+    if (!limit.ok) {
+      return NextResponse.json(
+        { error: "Too many requests. Try again later." },
+        { status: 429, headers: rateLimitHeaders(limit) },
+      );
+    }
+
     // Verify the ID token from Flutter
     const ticket = await client.verifyIdToken({
       idToken,
-      audience: process.env.AUTH_GOOGLE_ID,
+      audience: googleClientId,
     });
 
     const payload = ticket.getPayload();
@@ -26,37 +46,72 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid token payload" }, { status: 401 });
     }
 
-    const { email, name, picture, sub: googleId } = payload;
+    // Accounts are matched by email, so only trust addresses Google has
+    // verified (SEC-12).
+    if (payload.email_verified !== true) {
+      return NextResponse.json({ error: "Google email address is not verified" }, { status: 401 });
+    }
 
-    // Synchronize user in database
-    const user = await prisma.user.upsert({
-      where: { email },
-      update: { name, image: picture },
-      create: {
-        email,
+    const { email: rawEmail, name, picture, sub: googleId } = payload;
+    const email = rawEmail.toLowerCase().trim();
+
+    const existingUser = await prisma.user.findFirst({
+      where: {
+        OR: [
+          { email },
+          {
+            accounts: {
+              some: { provider: "google", providerAccountId: googleId },
+            },
+          },
+        ],
+      },
+      select: { id: true },
+    });
+
+    if (!existingUser) {
+      return NextResponse.json(
+        { error: "No account found for this Google account. Please register via the web app first." },
+        { status: 403 },
+      );
+    }
+
+    await completeGoogleSignIn(existingUser.id);
+
+    const user = await prisma.user.update({
+      where: { id: existingUser.id },
+      data: {
         name,
         image: picture,
-        accounts: {
-          create: {
-            type: "oauth",
-            provider: "google",
-            providerAccountId: googleId,
-          },
-        },
+        mustChangePassword: false,
       },
     });
 
+    const membership = await prisma.farmMember.findFirst({
+      where: { userId: user.id },
+      select: { farmId: true, role: true }
+    });
+
+    const dbUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      select: { role: true, mustChangePassword: true, sessionVersion: true }
+    });
+
     // Create a NextAuth session JWT
-    const secret = process.env.AUTH_SECRET || "development_secret";
-    
     const token = await encode({
       token: {
         sub: user.id,
         email: user.email,
         name: user.name,
         picture: user.image,
+        role: dbUser?.role ?? 'OWNER',
+        activeFarmId: membership?.farmId ?? null,
+        mustChangePassword: dbUser?.mustChangePassword ?? false,
+        sessionVersion: dbUser?.sessionVersion ?? 1,
+        securityInvalidated: false,
+        securityNotice: null,
       },
-      secret,
+      secret: authSecret,
       salt: "authjs.session-token",
     });
     

@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 async function main() {
-  console.log('🚀 Starting Comprehensive Audit & Logging Migration...')
+  console.log('Starting Comprehensive Audit & Logging Migration...')
 
   const tables = [
     `CREATE TABLE IF NOT EXISTS insert_logs (
@@ -126,9 +126,9 @@ async function main() {
     for (const sql of [...tables, ...functions, ...triggers]) {
       await prisma.$executeRawUnsafe(sql);
     }
-    console.log('✅ Comprehensive auditing migration completed successfully!')
+    console.log('Comprehensive auditing migration completed successfully!')
   } catch (error) {
-    console.error('❌ Migration failed:', error)
+    console.error('Migration failed:', error)
     process.exit(1)
   } finally {
     await prisma.$disconnect()

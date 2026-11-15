@@ -1,19 +1,22 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { 
-  Plus, 
-  Trash2, 
-  Scale, 
-  Beaker, 
-  AlertCircle 
-} from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { Plus, Trash2, X } from 'lucide-react'
 import { createFeedFormulation } from '@/lib/actions/feed-actions'
 import { FeedType, LivestockType } from '@prisma/client'
 import { toast } from 'sonner'
+import {
+  Button,
+  Form,
+  FormActions,
+  FormRow,
+  FormSection,
+  FormSummary,
+  FormSummaryRow,
+  Input,
+  Select,
+} from '@/components/ui/form'
 
 const FEED_TYPES = [
   'PRE_STARTER',
@@ -24,36 +27,70 @@ const FEED_TYPES = [
   'CUSTOM'
 ] as const;
 
-const LIVESTOCK_TYPES = [
-  'POULTRY_BROILER',
-  'POULTRY_LAYER',
-  'CATTLE',
-  'SHEEP_GOAT',
-  'PIG'
-] as const;
+const FEED_TYPE_LABELS: Record<(typeof FEED_TYPES)[number], string> = {
+  PRE_STARTER: 'Pre-starter',
+  STARTER: 'Starter',
+  GROWER: 'Grower',
+  FINISHER: 'Finisher',
+  BREEDER: 'Breeder',
+  CUSTOM: 'Custom',
+};
 
 interface FeedFormulationFormProps {
   inventoryItems: any[]
   onSuccess: () => void
+  onClose?: () => void
 }
 
-export function FeedFormulationForm({ inventoryItems, onSuccess }: FeedFormulationFormProps) {
+export function FeedFormulationForm({ inventoryItems, onSuccess, onClose }: FeedFormulationFormProps) {
+  const router = useRouter()
   const [name, setName] = useState('')
   const [type, setType] = useState<FeedType>('STARTER')
-  const [targetLivestock, setTargetLivestock] = useState<LivestockType>('POULTRY_BROILER')
-  const [ingredients, setIngredients] = useState<{ inventoryId: number; percentage: number | '' }[]>([])
+  const [targetLivestock] = useState<LivestockType>('POULTRY_BROILER')
+  const [ingredients, setIngredients] = useState<{ inventoryId: string; bags: number | '' }[]>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  if (inventoryItems.length === 0) {
+    return (
+      <div className="mx-auto max-w-md space-y-5 rounded-2xl border border-fg/[0.08] bg-card p-5">
+        <div className="space-y-1.5 text-center">
+          <p className="text-base font-semibold text-fg">No feed in stock yet</p>
+          <p className="text-sm leading-6 text-fg-2">
+            A feed mix is made from feed items in your stock. Add those first, then come back to mix them.
+          </p>
+        </div>
+        <FormActions>
+          {onClose && (
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+          )}
+          <Button
+            type="button"
+            variant="accent"
+            onClick={() => {
+              if (onClose) onClose();
+              router.push('/dashboard/inventory');
+            }}
+          >
+            Add feed stock
+          </Button>
+        </FormActions>
+      </div>
+    );
+  }
 
   const addIngredient = () => {
     // Only allow adding if we haven't exhausted inventory items
     const usedIds = ingredients.map(i => i.inventoryId);
     const availableItems = inventoryItems.filter(item => !usedIds.includes(item.id));
-    
+
     if (availableItems.length === 0) {
-      toast.error("All inventory items have already been added to this formulation.");
+      toast.error("Every feed item in stock is already in this mix.");
       return;
     }
-    
-    setIngredients([...ingredients, { inventoryId: availableItems[0].id, percentage: '' }])
+
+    setIngredients([...ingredients, { inventoryId: availableItems[0].id, bags: '' }])
   }
 
   const removeIngredient = (index: number) => {
@@ -62,10 +99,10 @@ export function FeedFormulationForm({ inventoryItems, onSuccess }: FeedFormulati
 
   const updateIngredient = (index: number, field: string, value: any) => {
     const newIngredients = [...ingredients]
-    if (field === 'percentage') {
+    if (field === 'bags') {
       const item = inventoryItems.find(i => i.id === newIngredients[index].inventoryId)
       if (item && value !== '' && Number(value) > Number(item.stockLevel)) {
-        toast.error(`Cannot exceed stock level of ${item.stockLevel} bags`)
+        toast.error(`You only have ${item.stockLevel} bags in stock`)
         value = Number(item.stockLevel)
       }
     }
@@ -73,170 +110,175 @@ export function FeedFormulationForm({ inventoryItems, onSuccess }: FeedFormulati
     setIngredients(newIngredients)
   }
 
-  const totalBags = ingredients.reduce((sum, i) => sum + Number(i.percentage || 0), 0)
+  const totalBags = ingredients.reduce((sum, i) => sum + Number(i.bags || 0), 0)
 
   const getAvailableInventoryItems = (currentIndex: number) => {
     // Collect all IDs selected in OTHER rows
     const otherSelectedIds = ingredients
       .filter((_, idx) => idx !== currentIndex)
       .map(ing => ing.inventoryId);
-      
+
     // Return all items except those selected in other rows
     return inventoryItems.filter(item => !otherSelectedIds.includes(item.id));
   }
 
-  const handleSubmit = async () => {
-    if (ingredients.length === 0) {
-      toast.error('Please add at least one ingredient');
+  const handleSubmit = async (event?: React.FormEvent) => {
+    event?.preventDefault();
+    if (isSubmitting) return;
+
+    if (!name.trim()) {
+      toast.error('Give this feed mix a name');
       return;
     }
-    
-    if (ingredients.some(i => i.percentage === '' || Number(i.percentage) <= 0)) {
-      toast.error('All ingredients must have a valid number of bags');
+
+    if (ingredients.length === 0) {
+      toast.error('Add at least one ingredient');
+      return;
+    }
+
+    if (ingredients.some(i => i.bags === '' || Number(i.bags) <= 0)) {
+      toast.error('Enter how many bags of each ingredient go into the mix');
       return;
     }
 
     const uniqueIds = new Set(ingredients.map(i => i.inventoryId));
     if (uniqueIds.size !== ingredients.length) {
-      toast.error('Each ingredient can only be selected once');
+      toast.error('Each ingredient can only be used once');
       return;
     }
 
-    const res = await createFeedFormulation({
-      name,
-      type,
-      targetLivestock,
-      ingredients: ingredients.map(i => ({
-        ...i,
-        percentage: Number(i.percentage)
-      }))
-    })
+    setIsSubmitting(true);
+    try {
+      const res = await createFeedFormulation({
+        name: name.trim(),
+        type,
+        targetLivestock,
+        ingredients: ingredients.map((ingredient) => ({
+          inventoryId: ingredient.inventoryId,
+          quantity: Number(ingredient.bags),
+          bags: Number(ingredient.bags),
+        })),
+      })
 
-    if (res.success) {
-      toast.success('Formulation saved successfully');
-      onSuccess()
-    } else {
-      toast.error((res as any).error || 'Failed to save formulation');
+      if (res.success) {
+        toast.success('Feed mix saved');
+        onSuccess()
+      } else {
+        toast.error((res as any).error || 'The feed mix could not be saved');
+      }
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <Card className="border-white/20 bg-white/10 backdrop-blur-md shadow-2xl rounded-md overflow-hidden">
-      <CardHeader className="bg-gradient-to-r from-emerald-600/20 to-teal-500/10 border-b border-white/10">
-        <CardTitle className="flex items-center gap-2 text-white font-bold italic">
-          <Beaker className="w-5 h-5 text-emerald-400" />
-          Create New Formulation
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="p-5 space-y-5">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <div className="text-sm font-bold uppercase tracking-widest text-emerald-400">Formulation Name</div>
-            <Input 
-              value={name} 
-              onChange={(e) => setName(e.target.value)} 
-              placeholder="e.g. Broiler Power Starter"
-              className="bg-white/90 border-white/30 backdrop-blur-sm text-[#064e3b] font-bold h-12"
+    <div className="mx-auto max-w-2xl rounded-2xl border border-fg/[0.08] bg-card">
+      <div className="flex items-center justify-between gap-3 border-b border-fg/[0.08] py-3 pl-5 pr-3">
+        <h2 className="text-lg font-semibold leading-6 text-fg">New feed mix</h2>
+        {onClose && (
+          <button
+            type="button"
+            aria-label="Close"
+            onClick={onClose}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-fg-2 transition-colors duration-150 hover:bg-fg/[0.06] hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+          >
+            <X className="h-5 w-5" strokeWidth={1.75} />
+          </button>
+        )}
+      </div>
+
+      <Form onSubmit={handleSubmit} noValidate className="p-5">
+        <FormSection title="About the mix">
+          <FormRow>
+            <Input
+              label="Mix name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="e.g. Broiler starter mix"
+              required
             />
-          </div>
-          <div className="space-y-2">
-            <div className="text-sm font-bold uppercase tracking-widest text-emerald-400">Feed Type</div>
-            <select 
-              value={type} 
+            <Select
+              label="Feed stage"
+              value={type}
               onChange={(e) => setType(e.target.value as FeedType)}
-              className="w-full h-12 px-3 rounded-md bg-white/90 border border-white/30 backdrop-blur-sm text-[#064e3b] font-bold"
-            >
-              {FEED_TYPES.map(t => (
-                <option key={t} value={t}>{t.replace('_', ' ')}</option>
-              ))}
-            </select>
-          </div>
-        </div>
+              options={FEED_TYPES.map((t) => ({ value: t, label: FEED_TYPE_LABELS[t] }))}
+            />
+          </FormRow>
+        </FormSection>
 
-        <div className="space-y-3">
-          <div className="flex justify-between items-center">
-            <div className="text-lg font-bold flex items-center gap-2 text-white italic">
-              <Scale className="w-5 h-5 text-emerald-600" />
-              Ingredients Breakdown
-            </div>
-            <Button 
-              onClick={addIngredient} 
-              size="sm" 
-              variant="outline" 
-              disabled={ingredients.length >= inventoryItems.length}
-              className="gap-2 border-emerald-400/50 text-emerald-400 bg-emerald-400/10 font-bold uppercase tracking-widest text-xs h-10 px-4 disabled:opacity-50"
-            >
-              <Plus className="w-4 h-4" /> Add Item
+        <FormSection title="Ingredients" hint="Pick feed items from your stock and how many bags of each go in.">
+          {ingredients.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-fg/[0.14] px-4 py-6 text-center text-sm text-fg-3">
+              No ingredients yet
+            </p>
+          ) : (
+            <ul className="space-y-3">
+              {ingredients.map((ing, idx) => {
+                const stock = inventoryItems.find(i => i.id === ing.inventoryId)?.stockLevel || 0;
+                return (
+                  <li key={idx} className="rounded-xl border border-fg/[0.08] bg-tile p-3">
+                    <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 sm:grid-cols-[minmax(0,1fr)_10rem_auto]">
+                      <Select
+                        label={`Ingredient ${idx + 1}`}
+                        wrapperClassName="col-span-2 sm:col-span-1"
+                        value={ing.inventoryId}
+                        onChange={(e) => updateIngredient(idx, 'inventoryId', e.target.value)}
+                        options={getAvailableInventoryItems(idx).map((item) => ({ value: item.id, label: item.itemName }))}
+                      />
+                      <Input
+                        label="Bags"
+                        labelAside={`${stock} in stock`}
+                        type="number"
+                        min="0"
+                        max={stock}
+                        unit="bags"
+                        value={ing.bags}
+                        onChange={(e) => updateIngredient(idx, 'bags', e.target.value === '' ? '' : Number(e.target.value))}
+                        placeholder="0"
+                      />
+                      <button
+                        type="button"
+                        aria-label={`Remove ingredient ${idx + 1}`}
+                        onClick={() => removeIngredient(idx)}
+                        disabled={isSubmitting}
+                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-neg/30 bg-neg/10 text-neg transition-colors duration-150 hover:bg-neg/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:opacity-50 md:h-11 md:w-11"
+                      >
+                        <Trash2 className="h-5 w-5" strokeWidth={1.75} />
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          <Button
+            type="button"
+            variant="outline"
+            onClick={addIngredient}
+            disabled={isSubmitting || ingredients.length >= inventoryItems.length}
+            className="w-full"
+          >
+            <Plus className="h-4 w-4" strokeWidth={1.75} />
+            Add ingredient
+          </Button>
+
+          <FormSummary>
+            <FormSummaryRow label="Total mix" value={`${totalBags.toLocaleString()} bags`} strong />
+          </FormSummary>
+        </FormSection>
+
+        <FormActions>
+          {onClose && (
+            <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
+              Cancel
             </Button>
-          </div>
-
-          <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-2">
-            {ingredients.map((ing, idx) => (
-              <div key={idx} className="flex items-end gap-3 p-3 rounded-lg bg-white/5 border border-white/10">
-                <div className="flex-1 space-y-1">
-                  <div className="text-sm uppercase font-black text-emerald-400 tracking-widest italic ml-1">Ingredient Source</div>
-                  <select
-                    value={ing.inventoryId}
-                    onChange={(e) => updateIngredient(idx, 'inventoryId', Number(e.target.value))}
-                    className="w-full h-14 px-4 rounded-md bg-white border-2 border-emerald-500/30 text-[#064e3b] font-black text-lg focus:border-emerald-500 transition-all shadow-inner"
-                  >
-                    {getAvailableInventoryItems(idx).map(item => (
-                      <option key={item.id} value={item.id}>{item.itemName}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="w-52 space-y-1">
-                   <div className="text-sm uppercase font-black text-emerald-400 tracking-widest flex justify-between italic px-1">
-                     <span>Bags</span>
-                     <span className="text-white/50">Max: {inventoryItems.find(i => i.id === ing.inventoryId)?.stockLevel || 0}</span>
-                   </div>
-                  <Input 
-                    type="number"
-                    min="0"
-                    max={inventoryItems.find(i => i.id === ing.inventoryId)?.stockLevel || 0}
-                    value={ing.percentage}
-                    onChange={(e) => updateIngredient(idx, 'percentage', e.target.value === '' ? '' : Number(e.target.value))}
-                    placeholder="0"
-                    className="bg-white text-[#064e3b] font-black h-14 text-xl border-2 border-emerald-500/30 shadow-inner"
-                  />
-                </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => removeIngredient(idx)}
-                  className="text-red-500 hover:bg-red-500/20 h-14 w-14 border border-red-500/20"
-                >
-                  <Trash2 className="w-6 h-6" />
-                </Button>
-              </div>
-            ))}
-            {ingredients.length === 0 && (
-              <div className="text-center py-10 bg-white/20 rounded-md border-2 border-dashed border-white/20 text-emerald-900/40 font-bold uppercase tracking-widest text-xs italic">
-                No ingredients added yet
-              </div>
-            )}
-          </div>
-
-          <div className="p-5 rounded-md flex justify-between items-center bg-emerald-500/20 border-2 border-emerald-500/40 backdrop-blur-md shadow-lg shadow-emerald-500/10">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="w-7 h-7 text-emerald-400 animate-pulse" />
-              <span className="font-black text-white uppercase tracking-widest text-lg italic">Final Batch Size:</span>
-            </div>
-            <span className="text-5xl font-black text-emerald-400 italic tabular-nums">
-              {totalBags.toLocaleString()} <span className="text-xl text-white/50 not-italic ml-1">BAGS</span>
-            </span>
-          </div>
-        </div>
-
-        <Button 
-          onClick={handleSubmit} 
-          className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-md shadow-lg transition-all uppercase tracking-widest"
-        >
-          Save Formulation
-        </Button>
-      </CardContent>
-    </Card>
+          )}
+          <Button type="submit" variant="accent" isLoading={isSubmitting} loadingText="Saving mix">
+            Save feed mix
+          </Button>
+        </FormActions>
+      </Form>
     </div>
   )
 }

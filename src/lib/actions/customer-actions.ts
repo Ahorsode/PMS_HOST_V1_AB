@@ -1,8 +1,10 @@
 'use server'
 
 import prisma from '@/lib/db'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, unstable_cache } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
+import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
+import { expireTag, farmCacheTags, revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 
 export async function createCustomer(data: {
   name: string
@@ -14,6 +16,9 @@ export async function createCustomer(data: {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
 
+  const limitResult = await checkRateLimit({ policy: 'sales.write', scope: 'createCustomer', farmId: activeFarmId, userId })
+  if (!limitResult.ok) return rateLimitActionError(limitResult)
+
   try {
     const customer = await prisma.customer.create({
       data: {
@@ -22,6 +27,9 @@ export async function createCustomer(data: {
       }
     })
     revalidatePath('/dashboard/customers')
+    revalidatePath('/dashboard/sales')
+    revalidateFarmPerformanceCaches(activeFarmId)
+    expireTag(farmCacheTags.customers(activeFarmId))
     return { success: true, customer }
   } catch (error) {
     console.error('Error creating customer:', error)
@@ -30,39 +38,61 @@ export async function createCustomer(data: {
 }
 
 export async function getAllCustomers() {
-  const { userId, activeFarmId } = await getAuthContext()
+  const { activeFarmId } = await getAuthContext()
   if (!activeFarmId) return []
 
-  const customers = await prisma.customer.findMany({
-    where: { farmId: activeFarmId },
-    orderBy: { name: 'asc' }
-  })
-  return customers.map(c => ({
-    ...c,
-    balanceOwed: Number(c.balanceOwed)
-  }))
+  const cachedLoader = unstable_cache(
+    async () => {
+      const customers = await prisma.customer.findMany({
+        where: { farmId: activeFarmId },
+        orderBy: { name: 'asc' }
+      })
+      return customers.map(c => ({
+        ...c,
+        balanceOwed: Number(c.balanceOwed)
+      }))
+    },
+    [`customers-list:${activeFarmId}`],
+    {
+      revalidate: 60,
+      tags: [farmCacheTags.customers(activeFarmId)],
+    }
+  )
+
+  return cachedLoader()
 }
 
 export async function getCustomerStats() {
-  const { userId, activeFarmId } = await getAuthContext()
+  const { activeFarmId } = await getAuthContext()
   if (!activeFarmId) return null
 
-  const customers = await prisma.customer.findMany({
-    where: { farmId: activeFarmId },
-    include: {
-      orders: true
-    }
-  })
+  const cachedLoader = unstable_cache(
+    async () => {
+      const customers = await prisma.customer.findMany({
+        where: { farmId: activeFarmId },
+        include: {
+          orders: true
+        }
+      })
 
-  return customers.map(c => ({
-    id: c.id,
-    name: c.name,
-    phone: c.phone,
-    email: c.email,
-    address: c.address,
-    createdAt: c.createdAt,
-    balanceOwed: Number(c.balanceOwed),
-    orderCount: c.orders.length,
-    totalSpent: c.orders.reduce((sum, o) => sum + Number(o.totalAmount), 0)
-  }))
+      return customers.map(c => ({
+        id: c.id,
+        name: c.name,
+        phone: c.phone,
+        email: c.email,
+        address: c.address,
+        createdAt: c.createdAt,
+        balanceOwed: Number(c.balanceOwed),
+        orderCount: c.orders.length,
+        totalSpent: c.orders.reduce((sum, o) => sum + Number(o.totalAmount), 0)
+      }))
+    },
+    [`customers-stats:${activeFarmId}`],
+    {
+      revalidate: 60,
+      tags: [farmCacheTags.customers(activeFarmId)],
+    }
+  )
+
+  return cachedLoader()
 }

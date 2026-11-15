@@ -1,35 +1,95 @@
+'use client';
+
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { controlClass, FieldFrame, useFieldIds, type FieldShellProps } from '@/components/ui/form/field';
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
-  error?: string;
+export interface InputProps
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'prefix'>,
+    Omit<FieldShellProps, 'className' | 'error' | 'hint' | 'label'> {
+  label?: React.ReactNode;
+  hint?: React.ReactNode;
+  error?: React.ReactNode;
+  /** Shown inside the right edge of the input: "kg", "eggs", "GHS". */
+  unit?: React.ReactNode;
+  /** Shown inside the left edge of the input, e.g. a currency sign or an icon. */
+  leading?: React.ReactNode;
+  /** Classes for the wrapper around label, input and message. */
+  wrapperClassName?: string;
 }
 
+/** Whole numbers get the digit keypad; anything with a fractional step gets the decimal one. */
+function numberInputMode(step: InputProps['step']): 'numeric' | 'decimal' {
+  if (step === undefined || step === null || step === '') return 'numeric';
+  if (step === 'any') return 'decimal';
+  return Number.isInteger(Number(step)) ? 'numeric' : 'decimal';
+}
+
+/**
+ * Text, number and date input with the label on top and a hint or error below.
+ *
+ *   <Input label="Eggs collected" type="number" unit="eggs" required />
+ */
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, label, error, ...props }, ref) => {
-    return (
-      <div className="w-full space-y-2">
-        {label && (
-          <label className="text-sm font-bold uppercase tracking-widest text-emerald-400 italic ml-1">
-            {label}
-          </label>
+  (
+    { className, wrapperClassName, label, hint, error, unit, leading, optional, labelAside, id, type, ...props },
+    ref,
+  ) => {
+    const ids = useFieldIds(id, hint, error);
+    const isNumber = type === 'number';
+
+    const input = (
+      <input
+        ref={ref}
+        type={type}
+        inputMode={isNumber ? numberInputMode(props.step) : undefined}
+        {...props}
+        id={ids.controlId}
+        aria-invalid={props['aria-invalid'] ?? ids.control['aria-invalid']}
+        aria-describedby={props['aria-describedby'] ?? ids.control['aria-describedby']}
+        className={cn(
+          controlClass(ids.hasError),
+          isNumber && 'tabular-nums',
+          leading ? 'pl-10' : null,
+          unit ? 'pr-16' : null,
+          className,
         )}
-        <input
-          ref={ref}
-          inputMode={props.type === 'number' ? 'decimal' : props.inputMode}
-          pattern={props.type === 'number' && !props.pattern ? '[0-9]*' : props.pattern}
-          className={cn(
-            'flex min-h-[44px] w-full rounded-md border border-white/10 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 disabled:cursor-not-allowed disabled:opacity-50 transition-all font-medium',
-            error && 'border-red-500/50 focus:ring-red-500/50',
-            className
-          )}
-          {...props}
-        />
-        {error && <span className="text-xs text-red-400 font-bold uppercase tracking-wider ml-1">{error}</span>}
-      </div>
+      />
     );
-  }
+
+    return (
+      <FieldFrame
+        label={label}
+        hint={hint}
+        error={error}
+        required={props.required}
+        optional={optional}
+        labelAside={labelAside}
+        className={wrapperClassName}
+        controlId={ids.controlId}
+        hintId={ids.hintId}
+        errorId={ids.errorId}
+      >
+        {unit || leading ? (
+          <div className="relative">
+            {leading ? (
+              <span className="pointer-events-none absolute inset-y-0 left-0 flex w-10 items-center justify-center text-fg-3">
+                {leading}
+              </span>
+            ) : null}
+            {input}
+            {unit ? (
+              <span className="pointer-events-none absolute inset-y-0 right-0 flex max-w-[45%] items-center truncate pr-3.5 text-sm font-medium text-fg-3">
+                {unit}
+              </span>
+            ) : null}
+          </div>
+        ) : (
+          input
+        )}
+      </FieldFrame>
+    );
+  },
 );
 
 Input.displayName = 'Input';

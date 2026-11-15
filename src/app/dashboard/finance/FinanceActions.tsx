@@ -15,13 +15,13 @@ export const FinanceActions = ({ canEdit = true }: { canEdit?: boolean }) => {
     <>
       <Button onClick={() => setIsOpen(true)}>
         <Plus className="mr-2 h-4 w-4" />
-        Log Expense
+        Log expense
       </Button>
 
       <Dialog 
         isOpen={isOpen} 
         onOpenChange={setIsOpen} 
-        title="Log New Expense" 
+        title="Log new expense" 
         className="max-w-xl"
       >
         <ExpenseForm onSuccess={() => setIsOpen(false)} />

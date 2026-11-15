@@ -2,25 +2,48 @@ import React from 'react';
 import { getDashboardStats } from '@/lib/actions/dashboard-actions';
 import { DashboardContent } from './DashboardContent';
 import prisma from '@/lib/db';
+import { getFarmRecord } from '@/lib/farm-record';
+import { getFarmSettings } from '@/lib/actions/preference-actions';
 import { getAuthContext } from '@/lib/auth-utils';
+import { effectiveFarmTier } from '@/lib/subscription-utils';
 import { getMonthlyProductionSummary } from '@/lib/actions/preference-actions';
 import { PullToRefresh } from '@/components/layout/PullToRefresh';
+import { redirect } from 'next/navigation';
+import { getFarmCurrency } from '@/lib/farm-currency';
 
 export default async function DashboardPage() {
-  const { userId, activeFarmId } = await getAuthContext();
+  let userId: string;
+  let activeFarmId: string | undefined;
+  let ctx: Awaited<ReturnType<typeof getAuthContext>>;
+
+  try {
+    ctx = await getAuthContext();
+    userId = ctx.userId;
+    activeFarmId = ctx.activeFarmId;
+  } catch (err: any) {
+    const message = err?.message ?? '';
+    if (message.startsWith('SESSION_REVOKED:')) {
+      redirect('/login?reason=session_revoked');
+    }
+
+    redirect('/login');
+  }
+
   if (!activeFarmId) {
     return (
-      <div className="p-7 text-center bg-yellow-50 rounded-lg border border-yellow-200">
-        <h2 className="text-xl font-bold text-yellow-800 mb-2">No Active Farm</h2>
-        <p className="text-yellow-600">
-          You are not currently linked to an active farm. Please create or join a farm to view the dashboard.
+      <div className="rounded-xl border border-fg/[0.08] bg-card px-6 py-12 text-center">
+        <h2 className="mb-2 text-xl font-semibold text-fg">No active farm</h2>
+        <p className="text-sm text-fg-2">
+          Your account is not linked to a farm yet. Create a farm or join one to see the dashboard.
         </p>
       </div>
     );
   }
 
   try {
-    const [stats, housesRaw, summary, membership, farm, permissions] = await Promise.all([
+    // The farm, its settings, and the user's role and permission row are
+    // already loaded for this request (farm record and auth context).
+    const [stats, housesRaw, summary, farm, farmSettings] = await Promise.all([
       getDashboardStats(),
       (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
         return await tx.house.findMany({
@@ -28,16 +51,14 @@ export default async function DashboardPage() {
         });
       }),
       getMonthlyProductionSummary(),
-      prisma.farmMember.findUnique({
-        where: { farmId_userId: { farmId: activeFarmId, userId } }
-      }),
-      prisma.farm.findUnique({ where: { id: activeFarmId } }),
-      prisma.userPermission.findUnique({
-        where: { userId_farmId: { userId, farmId: activeFarmId } }
-      })
+      getFarmRecord(activeFarmId),
+      getFarmSettings(),
     ]);
+    const permissions = ctx.permissions;
 
-    const role = userId === farm?.userId ? 'OWNER' : membership?.role || 'WORKER';
+    const role = ctx.isFarmOwner ? 'OWNER' : ctx.membershipRole || 'WORKER';
+    const currency = await getFarmCurrency(activeFarmId);
+    const eggsPerCrate = farmSettings?.eggsPerCrate ?? 30;
     
     // Serialize Decimal objects to numbers for Client Components
     const houses = (housesRaw as any[]).map((house: { id: number; name: string; currentTemperature: any; currentHumidity: any }) => ({
@@ -53,18 +74,19 @@ export default async function DashboardPage() {
           houses={houses as any} 
           summary={summary} 
           role={role as any} 
-          subscriptionTier={farm?.subscriptionTier}
+          subscriptionTier={farm ? effectiveFarmTier(farm) : undefined}
           permissions={permissions}
+          currency={currency}
+          eggsPerCrate={eggsPerCrate}
         />
       </PullToRefresh>
     );
   } catch (error) {
     return (
-      <div className="p-7 text-center bg-red-50 rounded-lg border border-red-200">
-        <h2 className="text-xl font-bold text-red-800 mb-2">Database Connection Error</h2>
-        <p className="text-red-600">
-          The dashboard is currently unavailable due to an issue connecting to the database or retrieving data. 
-          Please check your connection and ensure the database schema is up-to-date.
+      <div className="rounded-xl border border-fg/[0.08] bg-card px-6 py-12 text-center">
+        <h2 className="mb-2 text-xl font-semibold text-fg">The dashboard could not load</h2>
+        <p className="text-sm text-fg-2">
+          Farm data could not be read from the database. Check your connection and try again.
         </p>
       </div>
     );

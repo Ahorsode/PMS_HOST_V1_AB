@@ -1,11 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { Phone, ArrowRight, Loader2, Bird, User, Mail, Lock } from 'lucide-react';
-import Background3D from '@/components/auth/Background3D';
+import { Phone, ArrowRight, Loader2, Mail, Lock } from 'lucide-react';
+import { AuthDivider, AuthShell } from '@/components/auth/AuthShell';
+import GoogleButton from '@/components/auth/GoogleButton';
+import { Button, Checkbox, Form, FormError, FormRow, Input } from '@/components/ui/form';
+import { MIN_PASSWORD_LENGTH } from '@/lib/password-policy';
 
 export default function SignUpPage() {
   const [formData, setFormData] = useState({
@@ -15,6 +18,7 @@ export default function SignUpPage() {
     phoneNumber: '',
     password: '',
   });
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -26,7 +30,17 @@ export default function SignUpPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLoading) return;
     if (!formData.phoneNumber || !formData.password) return;
+    if (!acceptTerms) {
+      setError('Tick the box to accept the Terms of Service and Privacy Policy.');
+      return;
+    }
+
+    if (formData.password.length < MIN_PASSWORD_LENGTH) {
+      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters long.`);
+      return;
+    }
     
     setIsLoading(true);
     setError('');
@@ -40,7 +54,7 @@ export default function SignUpPage() {
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, acceptTerms }),
       });
 
       const data = await res.json();
@@ -57,7 +71,7 @@ export default function SignUpPage() {
       });
       
       if (signinRes?.error) {
-        setError('Account created but login failed. Please go to login page.');
+        setError('Your account was made, but signing in failed. Go to Sign in and try again.');
         setIsLoading(false);
       } else {
         setSuccess(true);
@@ -72,160 +86,141 @@ export default function SignUpPage() {
     }
   };
 
+  const handleGoogleSignUp = () => {
+    if (isLoading) return;
+    setIsLoading(true);
+    signIn('google', { callbackUrl: '/dashboard' });
+  };
+
+  if (success) {
+    return (
+      <AuthShell title="Your account is ready" subtitle="Opening your farm...">
+        <div className="flex justify-center py-4">
+          <Loader2 className="h-6 w-6 animate-spin text-accent" strokeWidth={1.75} />
+        </div>
+      </AuthShell>
+    );
+  }
+
   return (
-    <main className="relative min-h-screen bg-[#0a0a0a] flex items-center justify-center overflow-hidden py-9">
-      <Background3D />
-      
-      <div className="relative z-10 w-full max-w-md px-5">
-        <AnimatePresence mode="wait">
-          {!success ? (
-            <motion.div
-              key="signup-form"
-              initial={{ opacity: 0, y: 40, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -40, scale: 0.95, filter: "blur(10px)" }}
-              transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="relative"
-            >
-              <div className="absolute inset-0 bg-emerald-500/20 blur-[100px] rounded-full pointer-events-none" />
+    <AuthShell
+      title="Create your account"
+      subtitle="Keep your flock, egg, feed and sales records in one place."
+      footer={
+        <>
+          Already have an account?{' '}
+          <button
+            type="button"
+            onClick={() => router.push('/login')}
+            disabled={isLoading}
+            className="inline-flex min-h-11 items-center font-semibold text-accent hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Sign in
+          </button>
+        </>
+      }
+    >
+      <Form onSubmit={handleSubmit} className="space-y-5">
+        <FormError>{error}</FormError>
 
-              <div className="relative bg-white/10 backdrop-blur-2xl border border-white/10 rounded-lg p-9 shadow-2xl overflow-hidden group">
-                <div className="flex flex-col items-center text-center space-y-5">
-                  <motion.div 
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: "spring", delay: 0.2, bounce: 0.5 }}
-                  >
-                    <img src="/logo.png" alt="Agri-ERP Logo" className="w-20 h-20 rounded-lg object-cover shadow-lg shadow-emerald-500/20" />
-                  </motion.div>
-                  
-                  <div className="space-y-2">
-                    <h1 className="text-4xl font-bold text-white tracking-normal">Join Us</h1>
-                    <p className="text-white/70 font-medium">Create your poultry farm account</p>
-                  </div>
+        <FormRow alwaysInline>
+          <Input
+            label="First name"
+            name="firstname"
+            autoComplete="given-name"
+            value={formData.firstname}
+            onChange={handleChange}
+            placeholder="e.g. Ama"
+            disabled={isLoading}
+          />
+          <Input
+            label="Surname"
+            name="surname"
+            autoComplete="family-name"
+            value={formData.surname}
+            onChange={handleChange}
+            placeholder="e.g. Owusu"
+            disabled={isLoading}
+          />
+        </FormRow>
 
-                  <form onSubmit={handleSubmit} className="w-full space-y-3 mt-3">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="relative group/input">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <User className="w-4 h-4 text-white/70 group-focus-within/input:text-emerald-400 transition-colors" />
-                        </div>
-                        <input
-                          type="text"
-                          name="firstname"
-                          value={formData.firstname}
-                          onChange={handleChange}
-                          placeholder="First"
-                          className="w-full h-12 pl-9 pr-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
-                        />
-                      </div>
-                      <div className="relative group/input">
-                        <input
-                          type="text"
-                          name="surname"
-                          value={formData.surname}
-                          onChange={handleChange}
-                          placeholder="Surname"
-                          className="w-full h-12 px-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
-                        />
-                      </div>
-                    </div>
+        <Input
+          label="Phone number"
+          type="tel"
+          inputMode="tel"
+          name="phoneNumber"
+          autoComplete="tel"
+          leading={<Phone className="h-4 w-4" strokeWidth={1.75} />}
+          value={formData.phoneNumber}
+          onChange={handleChange}
+          placeholder="e.g. 054 000 0000"
+          hint="You sign in with this number."
+          required
+          disabled={isLoading}
+        />
 
-                    <div className="relative group/input">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Mail className="w-4 h-4 text-white/70 group-focus-within/input:text-emerald-400 transition-colors" />
-                      </div>
-                      <input
-                        type="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        placeholder="Email Address (Optional)"
-                        className="w-full h-12 pl-9 pr-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
-                      />
-                    </div>
+        <Input
+          label="Email"
+          optional
+          type="email"
+          name="email"
+          autoComplete="email"
+          leading={<Mail className="h-4 w-4" strokeWidth={1.75} />}
+          value={formData.email}
+          onChange={handleChange}
+          placeholder="e.g. ama@example.com"
+          disabled={isLoading}
+        />
 
-                    <div className="relative group/input">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Phone className="w-4 h-4 text-white/70 group-focus-within/input:text-emerald-400 transition-colors" />
-                      </div>
-                      <input
-                        type="tel"
-                        name="phoneNumber"
-                        value={formData.phoneNumber}
-                        onChange={handleChange}
-                        placeholder="+233 54 000 0000"
-                        required
-                        className="w-full h-12 pl-9 pr-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
-                      />
-                    </div>
+        <Input
+          label="Password"
+          type="password"
+          name="password"
+          autoComplete="new-password"
+          leading={<Lock className="h-4 w-4" strokeWidth={1.75} />}
+          value={formData.password}
+          onChange={handleChange}
+          hint={`At least ${MIN_PASSWORD_LENGTH} characters.`}
+          required
+          disabled={isLoading}
+        />
 
-                    <div className="relative group/input">
-                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <Lock className="w-4 h-4 text-white/70 group-focus-within/input:text-emerald-400 transition-colors" />
-                      </div>
-                      <input
-                        type="password"
-                        name="password"
-                        value={formData.password}
-                        onChange={handleChange}
-                        placeholder="Create Password"
-                        required
-                        className="w-full h-12 pl-9 pr-3 bg-black/60 border border-white/10 rounded-md text-white placeholder:text-white/20 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all text-sm"
-                      />
-                    </div>
+        <Checkbox
+          name="acceptTerms"
+          checked={acceptTerms}
+          onChange={(e) => setAcceptTerms(e.target.checked)}
+          required
+          disabled={isLoading}
+          label={
+            <>
+              I agree to the{' '}
+              <Link href="/terms" target="_blank" className="font-semibold text-accent underline underline-offset-2">Terms of Service</Link>
+              {' '}and{' '}
+              <Link href="/privacy" target="_blank" className="font-semibold text-accent underline underline-offset-2">Privacy Policy</Link>
+              , and I am 18 or older.
+            </>
+          }
+        />
 
-                    <AnimatePresence>
-                      {error && (
-                        <motion.p
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          exit={{ opacity: 0, height: 0 }}
-                          className="text-red-400 text-xs font-bold uppercase tracking-widest bg-red-500/10 py-2 rounded-lg border border-red-500/20"
-                        >
-                          {error}
-                        </motion.p>
-                      )}
-                    </AnimatePresence>
+        <Button
+          type="submit"
+          variant="accent"
+          disabled={!formData.phoneNumber || !formData.password || !acceptTerms}
+          isLoading={isLoading}
+          loadingText="Creating account"
+          className="min-h-12 w-full text-[15px] md:min-h-11"
+        >
+          Create account
+          <ArrowRight className="h-4 w-4" strokeWidth={1.75} />
+        </Button>
+      </Form>
 
-                    <button
-                      type="submit"
-                      disabled={isLoading || !formData.phoneNumber || !formData.password}
-                      className="w-full h-14 bg-white hover:bg-gray-100 text-black rounded-md font-bold text-lg transition-all shadow-xl hover:scale-[1.02] active:scale-95 disabled:opacity-50 flex items-center justify-center group/btn"
-                    >
-                      {isLoading ? (
-                        <Loader2 className="w-6 h-6 animate-spin" />
-                      ) : (
-                        <>
-                          <span>Create Account</span>
-                          <ArrowRight className="w-5 h-5 ml-2 group-hover/btn:translate-x-1 transition-transform" />
-                        </>
-                      )}
-                    </button>
-                  </form>
-                  
-                  <p className="text-white/70 text-xs font-bold pt-3">
-                    Already have an account? <button onClick={() => router.push('/login')} className="text-emerald-400 hover:underline">Log In</button>
-                  </p>
-                </div>
-              </div>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="success-animation"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="flex flex-col items-center justify-center text-center space-y-5"
-            >
-              <div className="w-32 h-32 rounded-lg flex items-center justify-center shadow-[0_0_100px_rgba(16,185,129,0.4)]">
-                <img src="/logo.png" alt="Agri-ERP Logo" className="w-32 h-32 object-cover rounded-lg" />
-              </div>
-              <h2 className="text-3xl font-bold text-white tracking-normal">Welcome Aboard!</h2>
-              <Loader2 className="w-6 h-6 text-emerald-400 animate-spin" />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </main>
+      <AuthDivider />
+
+      <GoogleButton onClick={handleGoogleSignUp} label="Sign up with Google" disabled={isLoading} />
+      <p className="mt-3 text-center text-[13px] leading-5 text-fg-3">
+        With Google, you accept the Terms of Service and Privacy Policy before you start.
+      </p>
+    </AuthShell>
   );
 }

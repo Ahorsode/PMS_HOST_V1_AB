@@ -1,248 +1,565 @@
 import React from 'react';
 import Link from 'next/link';
-import { ArrowRight, Activity, Calculator, Bell, ShieldCheck, TrendingUp } from 'lucide-react';
+import { getBillingConfig } from '@/lib/billing/billing-config';
+import { getAppSettings } from '@/lib/settings/app-settings';
+import { activeAnnouncement, type SiteSettings } from '@/lib/settings/schemas';
+import { AnnouncementBanner } from '@/components/site/AnnouncementBanner';
+import { PricingPlans, type PricingPlan } from '@/components/site/PricingPlans';
+import {
+  formatGhs,
+  formatPlanPrice,
+  PAID_TIERS,
+  PLAN_FEATURE_DETAILS,
+  PLAN_TYPES,
+  staffLimitLabel,
+  type BillingConfig,
+} from '@/lib/billing/pricing';
+import {
+  ArrowRight,
+  Banknote,
+  BarChart3,
+  Bird,
+  ClipboardList,
+  Egg,
+  FileText,
+  HeartPulse,
+  Mail,
+  MessageCircle,
+  Package,
+  Phone,
+  ShieldCheck,
+  Smartphone,
+  TrendingDown,
+  Wheat,
+} from 'lucide-react';
+import { LandingNav } from '@/components/layout/LandingNav';
+import { BRAND_NAME } from '@/lib/brand';
+import { LegalLinks } from '@/components/legal/LegalPage';
+import {
+  BUSINESS_ADDRESS,
+  BUSINESS_NAME,
+} from '@/lib/legal';
 
-export default function LandingPage() {
+const features = [
+  {
+    icon: Bird,
+    title: 'Flocks and houses',
+    body: 'Register each batch by breed and hatch date, assign it to a house, and watch age, growth and population update on their own.',
+  },
+  {
+    icon: Egg,
+    title: 'Egg production and stock',
+    body: 'Log daily collection per flock. Stock is tracked in crates and eggs, and sales draw down oldest stock first.',
+  },
+  {
+    icon: Wheat,
+    title: 'Feed and inventory',
+    body: 'Record feeding, formulations and bag counts. Low-stock alerts land on the dashboard before the store runs empty.',
+  },
+  {
+    icon: HeartPulse,
+    title: 'Health, vaccines and quarantine',
+    body: 'Keep a vaccination and medication schedule per flock, isolate sick birds, and log mortality with a reason.',
+  },
+  {
+    icon: Banknote,
+    title: 'Sales, customers and suppliers',
+    body: 'Sell eggs, birds and manure, print invoices, and keep running statements for every customer and supplier.',
+  },
+  {
+    icon: FileText,
+    title: 'Finance and reports',
+    body: 'Expenses, revenue and profit per flock, with batch comparison and downloadable reports for the accountant.',
+  },
+];
+
+const steps = [
+  {
+    number: '01',
+    title: 'Set up your farm',
+    body: 'Create an account with your phone number, name the farm, add your houses and register the first batch.',
+  },
+  {
+    number: '02',
+    title: 'Log the day in a minute',
+    body: 'Workers record eggs, feed, deaths and treatments from their phones. Everything is stamped with who did it.',
+  },
+  {
+    number: '03',
+    title: 'Read the numbers',
+    body: 'Owners open one dashboard: population, production, mortality rate, money in and out, and alerts that need attention.',
+  },
+];
+
+const roles = [
+  {
+    icon: ShieldCheck,
+    title: 'Owner and manager',
+    body: 'Everything: flocks, money, reports, team permissions and the audit log.',
+  },
+  {
+    icon: ClipboardList,
+    title: 'Farm worker',
+    body: 'Daily logging for eggs, feed, mortality and health, with only the sections they need.',
+  },
+  {
+    icon: Banknote,
+    title: 'Cashier',
+    body: 'Record sales and manage customers without seeing farm finances.',
+  },
+  {
+    icon: BarChart3,
+    title: 'Accountant',
+    body: 'Finance hub, statements and reports, without touching flock records.',
+  },
+];
+
+/** Contact links from the admin Website settings. */
+function buildContacts(contact: SiteSettings['contact']) {
+  return [
+    { icon: Mail, label: 'Email', value: contact.email, href: `mailto:${contact.email}` },
+    ...(contact.whatsappEnabled
+      ? [{ icon: MessageCircle, label: 'WhatsApp', value: `WhatsApp ${contact.phoneDisplay}`, href: `https://wa.me/${contact.phoneInternational}` }]
+      : []),
+    { icon: Phone, label: 'Call', value: `Call ${contact.phoneDisplay}`, href: `tel:+${contact.phoneInternational}` },
+  ];
+}
+
+// Prices come from the admin Plans & Pricing page. Saving there revalidates this
+// page; the hourly refresh also covers a build that could not reach the database.
+export const revalidate = 3600;
+
+/** In every paid plan; the admin-configurable features are listed after these. */
+const coreFeatures = [
+  'Egg, feed and mortality logging',
+  'Houses and livestock batches',
+  'Sales and orders',
+  'Inventory and feed formulation',
+  'Reports and analytics',
+];
+
+/** Plan cards from the admin-set names, prices, staff limits and features. */
+function buildPlans(billing: BillingConfig, landing: SiteSettings['landing']): PricingPlan[] {
+  // Yearly uses the admin-set 12-month term discount, when that term is offered.
+  const offersYearly = billing.offeredTerms.includes(12);
+  const yearlyFactor = 12 * (1 - (billing.termDiscounts['12'] ?? 0));
+  const round = (n: number) => Math.round(n * 100) / 100;
+  return PLAN_TYPES.flatMap((planType) =>
+    PAID_TIERS.map((tier) => {
+      const plan = billing.plans[planType][tier];
+      return {
+        name: plan.name,
+        // Farms in Ghana pay in cedis; everyone else pays in US dollars.
+        monthly: { ghs: formatGhs(plan.monthlyPrice), usd: formatPlanPrice(plan.monthlyPriceUsd, 'USD') },
+        yearly: offersYearly
+          ? {
+              ghs: formatGhs(round(plan.monthlyPrice * yearlyFactor)),
+              usd: formatPlanPrice(round(plan.monthlyPriceUsd * yearlyFactor), 'USD'),
+              ghsPerMonth: formatGhs(round((plan.monthlyPrice * yearlyFactor) / 12)),
+            }
+          : null,
+        description: landing.planDescriptions[planType][tier],
+        highlight: landing.highlightedPlan?.planType === planType && landing.highlightedPlan.tier === tier,
+        features: [
+          staffLimitLabel(planType, plan.staffLimit),
+          ...coreFeatures,
+          ...plan.features.map((feature) => PLAN_FEATURE_DETAILS[feature].label),
+        ],
+      };
+    }),
+  );
+}
+
+const eggBars = [62, 70, 66, 78, 74, 84, 90];
+const mortalityBars = [30, 22, 26, 18, 14, 12, 10];
+
+function DashboardPreview() {
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
-      {/* Navigation */}
-      <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-5 h-20 flex items-center justify-between">
-          <div className="text-2xl font-bold text-green-900 tracking-normal flex items-center">
-            <div className="w-8 h-8 rounded-md bg-gradient-to-br from-amber-400 to-amber-600 mr-2 flex justify-center items-center">
-              <span className="text-white font-bold text-lg">A</span>
+    <div className="relative mx-auto w-full max-w-lg lg:max-w-none">
+      <div className="absolute -inset-3 rounded-[2rem] bg-emerald-500/20 blur-3xl sm:-inset-6" aria-hidden />
+      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-[#0a1510]/90 shadow-[0_30px_80px_rgba(0,0,0,0.6)] backdrop-blur-xl">
+        <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+          <div className="flex items-center gap-2">
+            <img src="/logo.png" alt="" className="h-7 w-7 rounded-lg object-cover" />
+            <span className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-300">Farm overview</span>
+          </div>
+          <span className="rounded-full bg-emerald-400/15 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-emerald-300">
+            Sample data
+          </span>
+        </div>
+
+        <div className="grid gap-3 p-4 sm:grid-cols-2">
+          <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">Total population</p>
+            <p className="mt-1 text-3xl font-bold text-white">12,480</p>
+            <p className="mt-1 text-xs font-semibold text-emerald-300">4 flocks · 3 houses</p>
+          </div>
+          <div className="rounded-xl border border-blue-500/20 bg-blue-500/10 p-4">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">Eggs today</p>
+            <p className="mt-1 text-3xl font-bold text-white">
+              318 <span className="text-base text-white/50">crates</span>
+            </p>
+            <div className="mt-3 flex h-10 items-end gap-1">
+              {eggBars.map((height, index) => (
+                <div
+                  key={index}
+                  className="flex-1 rounded-t-sm bg-blue-400/80"
+                  style={{ height: `${height}%` }}
+                />
+              ))}
             </div>
-            AgriTech
           </div>
-          <div className="space-x-7 hidden md:flex font-medium text-gray-600">
-            <a href="#features" className="hover:text-green-800 transition-colors">Features</a>
-            <a href="#markets" className="hover:text-green-800 transition-colors">Markets</a>
-            <a href="#testimonials" className="hover:text-green-800 transition-colors">Testimonials</a>
+          <div className="rounded-xl border border-red-500/20 bg-red-500/10 p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">Mortality rate</p>
+              <TrendingDown className="h-4 w-4 text-red-300" />
+            </div>
+            <p className="mt-1 text-3xl font-bold text-white">0.8%</p>
+            <div className="mt-3 flex h-8 items-end gap-1">
+              {mortalityBars.map((height, index) => (
+                <div
+                  key={index}
+                  className="flex-1 rounded-t-sm bg-red-400/70"
+                  style={{ height: `${height}%` }}
+                />
+              ))}
+            </div>
           </div>
-          <div>
-            <Link href="/dashboard" className="bg-green-800 hover:bg-green-700 text-white px-5 py-2.5 rounded-full font-medium transition-all shadow-md hover:shadow-lg flex items-center group">
-              Dashboard Login
-              <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-            </Link>
+          <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-4">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-white/50">Alerts</p>
+            <ul className="mt-2 space-y-2 text-xs">
+              <li className="flex items-center gap-2 rounded-lg bg-black/30 px-2.5 py-2 text-white/85">
+                <HeartPulse className="h-3.5 w-3.5 shrink-0 text-amber-300" />
+                Gumboro booster due · House 2
+              </li>
+              <li className="flex items-center gap-2 rounded-lg bg-black/30 px-2.5 py-2 text-white/85">
+                <Wheat className="h-3.5 w-3.5 shrink-0 text-red-300" />
+                Layer mash low · 6 bags left
+              </li>
+            </ul>
           </div>
         </div>
-      </nav>
 
-      {/* Hero Section */}
-      <section className="relative pt-20 pb-32 overflow-hidden flex-1 flex items-center">
-        {/* Background Decorative Blobs */}
-        <div className="absolute top-0 right-0 -translate-y-12 translate-x-1/3 w-96 h-96 bg-green-200/50 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 left-0 translate-y-1/3 -translate-x-1/4 w-[500px] h-[500px] bg-amber-100/50 rounded-full blur-3xl pointer-events-none" />
-        
-        <div className="max-w-7xl mx-auto px-5 grid lg:grid-cols-2 gap-11 items-center relative z-10">
-          <div className="max-w-2xl">
-            <div className="inline-flex items-center space-x-2 bg-amber-100 text-amber-800 px-3 py-2 rounded-full text-sm font-semibold mb-5">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-600"></span>
-              </span>
-              <span>Next-Gen Poultry Management</span>
-            </div>
-            <h1 className="text-5xl md:text-6xl font-extrabold text-gray-900 leading-tight mb-5 tracking-normal">
-              Precision Poultry Management: <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-800 to-green-600 drop-shadow-sm">
-                From Day-Old Chicks to Market.
+        <div className="border-t border-white/10 px-4 py-3">
+          <div className="flex items-center justify-between text-xs">
+            <span className="font-semibold text-white/60">This month</span>
+            <span className="font-bold text-emerald-300">+ GHS 18,420 profit</span>
+          </div>
+          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10">
+            <div className="h-full w-[68%] rounded-full bg-gradient-to-r from-emerald-500 to-emerald-300" />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default async function LandingPage() {
+  const [billing, site] = await Promise.all([getBillingConfig(), getAppSettings('site')]);
+  const { landing } = site;
+  const plans = buildPlans(billing, landing);
+  const contacts = buildContacts(site.contact);
+  const announcement = activeAnnouncement(site, 'landing');
+  // Only the longer terms that are offered and actually discounted, e.g. "3, 6 or 12".
+  const discountedTerms = billing.offeredTerms.filter((months) => months > 1 && billing.termDiscounts[`${months}`] > 0);
+  const maxDiscountPercent = Math.round(Math.max(0, ...discountedTerms.map((months) => billing.termDiscounts[`${months}`])) * 100);
+  const termList = discountedTerms.length > 1
+    ? `${discountedTerms.slice(0, -1).join(', ')} or ${discountedTerms[discountedTerms.length - 1]}`
+    : String(discountedTerms[0] ?? '');
+
+  const year = new Date().getFullYear();
+
+  return (
+    <div className="relative min-h-screen overflow-x-hidden bg-[#050d0a] text-white">
+      <div className="pointer-events-none absolute inset-0" aria-hidden>
+        <div className="absolute -top-40 left-1/2 h-[520px] w-[820px] -translate-x-1/2 rounded-full bg-emerald-500/15 blur-[140px]" />
+        <div className="absolute right-[-10%] top-[40%] h-96 w-96 rounded-full bg-teal-500/10 blur-[120px]" />
+        <div
+          className="absolute inset-0 opacity-[0.06]"
+          style={{ backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)', backgroundSize: '28px 28px' }}
+        />
+      </div>
+
+      <LandingNav />
+      {announcement ? (
+        <div className="relative mx-auto max-w-6xl px-4 pt-4 sm:px-6">
+          <AnnouncementBanner announcement={announcement} />
+        </div>
+      ) : null}
+
+      <main className="relative">
+        {/* Hero */}
+        <section className="mx-auto grid max-w-6xl items-center gap-12 px-4 pb-16 pt-10 sm:px-6 sm:pt-16 lg:grid-cols-[1.05fr_1fr] lg:gap-16 lg:pb-28 lg:pt-20">
+          <div>
+            {landing.heroBadge?.trim() && (
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1.5 text-xs font-semibold text-emerald-200">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+                </span>
+                {landing.heroBadge}
+              </div>
+            )}
+
+            <h1 className="text-[2.25rem] font-extrabold leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">
+              {landing.heroTitle}
+              <span className="block bg-gradient-to-r from-emerald-300 via-emerald-400 to-teal-300 bg-clip-text text-transparent">
+                {landing.heroTitleAccent}
               </span>
             </h1>
-            <p className="text-xl text-gray-600 mb-9 leading-relaxed max-w-lg">
-              Elevate your farm&apos;s productivity with intelligent tracking, real-time analytics, and automated health monitoring designed by farmers, for farmers.
+
+            <p className="mt-5 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
+              {landing.heroSubtitle}
             </p>
-            <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-              <Link href="/dashboard" className="bg-amber-500 hover:bg-amber-400 text-white px-7 py-3 rounded-full font-bold text-lg transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 text-center border-b-4 border-amber-600 active:border-b-0 active:translate-y-0">
-                Start Your First Batch
+
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <Link
+                href="/signup"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-400 px-7 py-3.5 text-base font-bold text-[#04150e] shadow-[0_0_40px_rgba(52,211,153,0.35)] transition-all hover:-translate-y-0.5 hover:bg-emerald-300"
+              >
+                Create your farm account
+                <ArrowRight className="h-4 w-4" />
               </Link>
-              <button className="bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 px-7 py-3 rounded-full font-bold text-lg transition-all shadow-sm hover:shadow text-center flex items-center justify-center">
-                Watch Demo
-              </button>
+              <Link
+                href="/login"
+                className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-7 py-3.5 text-base font-bold text-white transition-colors hover:bg-white/10"
+              >
+                Log in
+              </Link>
             </div>
-          </div>
-          
-          <div className="relative mx-auto w-full max-w-lg lg:max-w-none">
-            {/* Abstract Dashboard Graphic Presentation */}
-            <div className="relative rounded-md shadow-2xl overflow-hidden bg-white border border-gray-100 transform rotate-2 hover:rotate-0 transition-transform duration-500 z-10">
-              <div className="bg-gray-50 border-b border-gray-100 px-3 py-2 flex items-center space-x-2">
-                <div className="w-3 h-3 rounded-full bg-red-400" />
-                <div className="w-3 h-3 rounded-full bg-amber-400" />
-                <div className="w-3 h-3 rounded-full bg-green-400" />
-              </div>
-              <div className="p-5 relative bg-white h-72">
-                 <div className="absolute top-0 right-0 p-5 opacity-5">
-                   <TrendingUp className="w-48 h-48 text-green-800" />
-                 </div>
-                 <div className="space-y-3 relative z-10">
-                   <div className="h-6 w-32 bg-gray-200 rounded-md" />
-                   <div className="grid grid-cols-2 gap-3">
-                     <div className="h-28 bg-green-50 rounded-md border border-green-100 p-3 transition-transform hover:scale-105">
-                        <div className="h-4 w-16 bg-green-200 rounded mb-2" />
-                        <div className="h-8 w-12 bg-green-300 rounded" />
-                     </div>
-                     <div className="h-28 bg-amber-50 rounded-md border border-amber-100 p-3 transition-transform hover:scale-105">
-                        <div className="h-4 w-16 bg-amber-200 rounded mb-2" />
-                        <div className="h-8 w-12 bg-amber-300 rounded" />
-                     </div>
-                   </div>
-                   <div className="h-16 bg-gray-50 rounded-md border border-gray-100 mt-3 flex items-center px-3">
-                      <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div className="bg-green-600 h-2 rounded-full w-2/3"></div>
-                      </div>
-                   </div>
-                 </div>
-              </div>
-            </div>
-            
-            {/* Floating Badge */}
-            <div className="absolute -bottom-6 -left-6 bg-white p-3 rounded-md shadow-xl border border-gray-100 flex items-center space-x-3 animate-bounce hover:animate-none transition-all duration-300 z-20" style={{ animationDuration: '3s' }}>
-              <div className="bg-green-100 p-2 rounded-full text-green-800">
-                <ShieldCheck className="w-6 h-6" />
+
+            <dl className="mt-10 grid grid-cols-3 gap-4 border-t border-white/10 pt-6 text-sm">
+              <div>
+                <dt className="text-white/50">Sign in with</dt>
+                <dd className="mt-1 font-bold text-white">Phone or Google</dd>
               </div>
               <div>
-                <p className="text-sm font-bold text-gray-900">99.8% Livability</p>
-                <p className="text-xs text-gray-500">Top Performing Setup</p>
+                <dt className="text-white/50">Works on</dt>
+                <dd className="mt-1 font-bold text-white">Phone and desktop</dd>
               </div>
-            </div>
+              <div>
+                <dt className="text-white/50">Priced in</dt>
+                <dd className="mt-1 font-bold text-white">Cedis in Ghana, US dollars elsewhere</dd>
+              </div>
+            </dl>
           </div>
-        </div>
-      </section>
 
-      {/* Core Features */}
-      <section id="features" className="py-20 bg-white relative border-t border-gray-100">
-        <div className="max-w-7xl mx-auto px-5">
-          <div className="text-center max-w-3xl mx-auto mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-3 tracking-normal">Core Management Features</h2>
-            <p className="text-lg text-gray-600">Everything you need to run a highly profitable poultry operation without the guesswork.</p>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-7">
-            {/* Feature 1 */}
-            <div className="bg-gray-50 rounded-lg p-7 border border-gray-100 hover:border-green-800/50 hover:shadow-xl transition-all duration-300 group hover:-translate-y-1">
-              <div className="bg-white w-14 h-14 rounded-md shadow-sm flex items-center justify-center text-green-800 mb-5 group-hover:scale-110 group-hover:bg-green-800 group-hover:text-white transition-all duration-300 group-hover:rotate-3 shadow-green-900/5">
-                <Activity className="w-6 h-6" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Real-time Flock Tracking</h3>
-              <p className="text-gray-600 leading-relaxed font-medium">
-                Monitor birds&apos; health, daily mortality, and environmental conditions instantly across multiple houses seamlessly.
-              </p>
-            </div>
-            
-            {/* Feature 2 */}
-            <div className="bg-gray-50 rounded-lg p-7 border border-gray-100 hover:border-amber-500/50 hover:shadow-xl transition-all duration-300 group hover:-translate-y-1">
-              <div className="bg-white w-14 h-14 rounded-md shadow-sm flex items-center justify-center text-amber-500 mb-5 group-hover:scale-110 group-hover:bg-amber-500 group-hover:text-white transition-all duration-300 group-hover:-rotate-3 shadow-amber-500/5">
-                <Calculator className="w-6 h-6" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Automated FCR Calculations</h3>
-              <p className="text-gray-600 leading-relaxed font-medium">
-                Automatically calculate your Feed Conversion Ratio daily to optimize feed spend and growth rates on the fly.
-              </p>
-            </div>
-            
-            {/* Feature 3 */}
-            <div className="bg-gray-50 rounded-lg p-7 border border-gray-100 hover:border-green-800/50 hover:shadow-xl transition-all duration-300 group hover:-translate-y-1">
-              <div className="bg-white w-14 h-14 rounded-md shadow-sm flex items-center justify-center text-green-800 mb-5 group-hover:scale-110 group-hover:bg-green-800 group-hover:text-white transition-all duration-300 group-hover:rotate-3 shadow-green-900/5">
-                <Bell className="w-6 h-6" />
-              </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Vaccination Reminders</h3>
-              <p className="text-gray-600 leading-relaxed font-medium">
-                Stay compliant and secure with automated pushes for upcoming vaccinations and critical health scheduling.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+          <DashboardPreview />
+        </section>
 
-      {/* Market Focus Section */}
-      <section id="markets" className="py-20 bg-green-950 text-white relative overflow-hidden">
-        {/* Decorative pattern */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(#ffffff 2px, transparent 2px)', backgroundSize: '40px 40px' }}></div>
-        
-        <div className="max-w-7xl mx-auto px-5 relative z-10">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-5xl font-bold mb-3 tracking-normal">Tailored for Your Market Focus</h2>
-            <p className="text-green-200 text-lg max-w-2xl mx-auto font-medium">From poultry to path-breaking cattle management, AgriTech adapts to your specific production cycles dynamically.</p>
+        {/* Features */}
+        <section id="features" className="scroll-mt-20 border-t border-white/5 bg-white/[0.02] py-16 sm:py-24">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <div className="max-w-2xl">
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-300">What it covers</p>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+                Every record a farm keeps on paper, in one place.
+              </h2>
+              <p className="mt-4 text-base text-white/65 sm:text-lg">
+                Each module feeds the others: a sale reduces egg stock, a feeding reduces bags in store, a death updates
+                the flock count and mortality rate.
+              </p>
+            </div>
+
+            <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {features.map((feature) => (
+                <article
+                  key={feature.title}
+                  className="group rounded-2xl border border-white/10 bg-[#0a1510]/70 p-6 transition-colors hover:border-emerald-400/30 hover:bg-emerald-500/[0.06]"
+                >
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-400/10 text-emerald-300 transition-colors group-hover:bg-emerald-400/20">
+                    <feature.icon className="h-5 w-5" />
+                  </div>
+                  <h3 className="mt-5 text-lg font-bold">{feature.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-white/65">{feature.body}</p>
+                </article>
+              ))}
+            </div>
           </div>
-          
-          <div className="grid md:grid-cols-2 gap-7">
-            <div className="bg-green-900/50 backdrop-blur-sm p-9 rounded-lg border border-green-800 hover:bg-green-900 transition-colors group hover:border-amber-500/30">
-              <div className="flex items-center space-x-3 mb-7">
-                <div className="p-3 bg-white/10 rounded-md text-amber-400 group-hover:bg-amber-500 group-hover:text-white transition-colors">
-                  <TrendingUp className="w-8 h-8" />
+        </section>
+
+        {/* How it works */}
+        <section id="how-it-works" className="scroll-mt-20 py-16 sm:py-24">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-300">How it works</p>
+                <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Set up once. Log daily. Decide weekly.</h2>
+                <p className="mt-4 text-base text-white/65 sm:text-lg">
+                  Workers only see the forms they use, so logging takes a minute at the end of a shift. The owner sees
+                  the result without chasing anyone for a notebook.
+                </p>
+                <div className="mt-8 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-400/10 text-emerald-300">
+                    <Smartphone className="h-5 w-5" />
+                  </div>
+                  <p className="text-sm text-white/75">
+                    Every entry is stamped with the worker who made it, and owners can review the full audit log.
+                  </p>
                 </div>
-                <h3 className="text-3xl font-bold tracking-normal text-white group-hover:text-amber-400 transition-colors">Specialized Fattening</h3>
               </div>
-              <ul className="space-y-4 text-green-100 font-medium">
-                <li className="flex items-start"><ArrowRight className="w-5 h-5 mr-3 text-amber-400 mt-0.5" /> Rapid cycle tracking with daily weight gain predictions.</li>
-                <li className="flex items-start"><ArrowRight className="w-5 h-5 mr-3 text-amber-400 mt-0.5" /> Advanced lighting and climate control integration for optimal feed conversion.</li>
-                <li className="flex items-start"><ArrowRight className="w-5 h-5 mr-3 text-amber-400 mt-0.5" /> Market readiness and harvest scheduling analytics.</li>
-              </ul>
+
+              <ol className="space-y-4">
+                {steps.map((step) => (
+                  <li
+                    key={step.number}
+                    className="flex gap-5 rounded-2xl border border-white/10 bg-[#0a1510]/70 p-6"
+                  >
+                    <span className="text-2xl font-black text-emerald-400/60">{step.number}</span>
+                    <div>
+                      <h3 className="text-lg font-bold">{step.title}</h3>
+                      <p className="mt-1.5 text-sm leading-relaxed text-white/65">{step.body}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
             </div>
-            
-            <div className="bg-green-900/50 backdrop-blur-sm p-9 rounded-lg border border-green-800 hover:bg-green-900 transition-colors group hover:border-white/30">
-              <div className="flex items-center space-x-3 mb-7">
-                <div className="p-3 bg-white/10 rounded-md text-white group-hover:bg-white group-hover:text-green-900 transition-colors">
-                  <Activity className="w-8 h-8" />
+          </div>
+        </section>
+
+        {/* Roles */}
+        <section id="roles" className="scroll-mt-20 border-y border-white/5 bg-white/[0.02] py-16 sm:py-24">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <div className="max-w-2xl">
+              <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-300">Teams</p>
+              <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Each person sees their part of the farm.</h2>
+              <p className="mt-4 text-base text-white/65 sm:text-lg">
+                Invite staff by phone number or email. Permissions are set per section, so a worker can log eggs
+                without ever opening the finance hub.
+              </p>
+            </div>
+
+            <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {roles.map((role) => (
+                <div key={role.title} className="rounded-2xl border border-white/10 bg-[#0a1510]/70 p-6">
+                  <role.icon className="h-6 w-6 text-emerald-300" />
+                  <h3 className="mt-4 text-base font-bold">{role.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-white/65">{role.body}</p>
                 </div>
-                <h3 className="text-3xl font-bold tracking-normal text-white">Production Cycles</h3>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Pricing */}
+        <section id="pricing" className="scroll-mt-20 py-16 sm:py-24">
+          <div className="mx-auto max-w-[1440px] px-4 sm:px-6">
+            <div className="mx-auto max-w-2xl text-center">
+              <p className="text-lg font-extrabold uppercase tracking-[0.2em] text-emerald-300 sm:text-xl">Pricing</p>
+              <h2 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">Try everything free for 30 days.</h2>
+              <p className="mt-4 text-base text-white/65 sm:text-lg">
+                {landing.pricingIntro.replaceAll('{trialDays}', String(billing.trial.days))}{maxDiscountPercent > 0 ? ` Pay for ${termList} months to save up to ${maxDiscountPercent}%.` : ''}
+              </p>
+            </div>
+
+            <PricingPlans
+              plans={plans}
+              yearlySavePercent={Math.round((billing.termDiscounts['12'] ?? 0) * 100)}
+            />
+          </div>
+        </section>
+
+        {/* Final CTA */}
+        {landing.testimonials.length > 0 ? (
+          <section id="testimonials" className="scroll-mt-20 border-t border-white/5 py-16 sm:py-20">
+            <div className="mx-auto max-w-6xl px-4 sm:px-6">
+              <h2 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">What farmers say</h2>
+              <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+                {landing.testimonials.map((item, index) => (
+                  <figure key={index} className="flex flex-col rounded-3xl border border-white/10 bg-[#0a1510]/70 p-6">
+                    <blockquote className="flex-1 text-base leading-relaxed text-white/80">&ldquo;{item.quote}&rdquo;</blockquote>
+                    <figcaption className="mt-5 text-sm">
+                      <span className="font-bold text-white">{item.name}</span>
+                      {item.detail ? <span className="text-white/55"> · {item.detail}</span> : null}
+                    </figcaption>
+                  </figure>
+                ))}
               </div>
-              <ul className="space-y-4 text-green-100 font-medium">
-                <li className="flex items-start"><ArrowRight className="w-5 h-5 mr-3 text-white mt-0.5" /> Long-term lifecycle tracking across breeding and rearing phases.</li>
-                <li className="flex items-start"><ArrowRight className="w-5 h-5 mr-3 text-white mt-0.5" /> Daily production counting, grading percentages, and yield metrics.</li>
-                <li className="flex items-start"><ArrowRight className="w-5 h-5 mr-3 text-white mt-0.5" /> Critical event scheduling and age-productivity drop-off alerts.</li>
-              </ul>
+            </div>
+          </section>
+        ) : null}
+
+        {landing.faq.length > 0 ? (
+          <section id="faq" className="scroll-mt-20 border-t border-white/5 py-16 sm:py-20">
+            <div className="mx-auto max-w-3xl px-4 sm:px-6">
+              <h2 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">Questions</h2>
+              <div className="mt-10 space-y-3">
+                {landing.faq.map((item, index) => (
+                  <details key={index} className="rounded-2xl border border-white/10 bg-[#0a1510]/70 px-5 py-4">
+                    <summary className="cursor-pointer font-semibold text-white">{item.question}</summary>
+                    <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-white/70">{item.answer}</p>
+                  </details>
+                ))}
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+        <section className="px-4 pb-20 sm:px-6">
+          <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl border border-emerald-400/30 bg-gradient-to-br from-emerald-500/20 via-[#0a1510] to-[#0a1510] px-6 py-14 text-center sm:px-12">
+            <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" aria-hidden />
+            <Package className="mx-auto h-10 w-10 text-emerald-300" />
+            <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-4xl">{landing.ctaTitle}</h2>
+            {landing.ctaSubtitle ? (
+              <p className="mx-auto mt-4 max-w-xl text-base text-white/70 sm:text-lg">{landing.ctaSubtitle}</p>
+            ) : null}
+            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+              <Link
+                href="/signup"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-400 px-7 py-3.5 text-base font-bold text-[#04150e] transition-colors hover:bg-emerald-300"
+              >
+                Create your farm account
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href="/login"
+                className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-7 py-3.5 text-base font-bold text-white transition-colors hover:bg-white/10"
+              >
+                I already have an account
+              </Link>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </main>
 
-      {/* CTA final section */}
-      <section className="py-16 bg-amber-500 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] animate-pulse"></div>
-        <div className="max-w-4xl mx-auto px-5 text-center relative z-10">
-          <h2 className="text-4xl font-extrabold text-white mb-5 drop-shadow-sm">Ready to Optimize Your Lifestyle?</h2>
-          <p className="text-amber-100 text-xl font-medium mb-9">Join thousands of farmers streamlining their workflow from birth to harvest.</p>
-          <Link href="/dashboard" className="bg-white text-amber-600 px-9 py-3 rounded-full font-extrabold text-xl shadow-xl hover:shadow-2xl hover:bg-gray-50 transition-all hover:-translate-y-1 inline-block">
-            Start Your First Batch Today
-          </Link>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-[#0a0a0a] py-14 border-t border-gray-800 font-medium relative z-50 relative">
-        <div className="max-w-7xl mx-auto px-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-y-12 gap-x-8">
-          <div className="sm:col-span-2 space-y-5">
-            <div className="text-2xl font-bold text-white flex items-center">
-               <div className="w-6 h-6 rounded bg-gradient-to-br from-amber-400 to-amber-600 mr-2 flex justify-center items-center">
-                  <span className="text-white font-bold text-sm">A</span>
-               </div>
-               AgriTech
-            </div>
-            <p className="max-w-sm text-sm leading-relaxed text-slate-200">Empowering modern farming with intelligent precision tools. Building the future of agriculture, from farm to fork.</p>
+      <footer id="contact" className="relative border-t border-white/10 py-10">
+        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 sm:px-6 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-2.5">
+            <img src="/logo.png" alt="" className="h-8 w-8 rounded-lg object-cover" />
+            <span className="font-bold">{BRAND_NAME}</span>
           </div>
+          <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-white/60">
+            <a href="#features" className="hover:text-white">Features</a>
+            <a href="#how-it-works" className="hover:text-white">How it works</a>
+            <a href="#pricing" className="hover:text-white">Pricing</a>
+            <a href="#contact" className="hover:text-white">Contact</a>
+            <Link href="/login" className="hover:text-white">Log in</Link>
+            <Link href="/signup" className="hover:text-white">Sign up</Link>
+          </nav>
+        </div>
+        <div className="mx-auto mt-8 flex max-w-6xl flex-col gap-6 border-t border-white/10 px-4 pt-8 sm:px-6 md:flex-row md:items-center md:justify-between">
           <div>
-            <h4 className="text-white font-semibold mb-5 text-lg tracking-normal">Platform</h4>
-            <ul className="space-y-3 text-sm flex flex-col items-start">
-              <li><button className="text-slate-300 hover:text-amber-400 transition-colors">Features</button></li>
-              <li><button className="text-slate-300 hover:text-amber-400 transition-colors">Pricing</button></li>
-              <li><button className="text-slate-300 hover:text-amber-400 transition-colors">Integrations</button></li>
+            <h2 className="text-sm font-bold uppercase tracking-wider text-white/80">Contact us</h2>
+            <ul className="mt-3 flex flex-col gap-3 text-sm text-white/60 sm:flex-row sm:flex-wrap sm:gap-x-8">
+              {contacts.map(({ icon: Icon, label, value, href }) => (
+                <li key={label}>
+                  <a
+                    href={href}
+                    target={href.startsWith('http') ? '_blank' : undefined}
+                    rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
+                    className="inline-flex items-center gap-2 hover:text-white"
+                  >
+                    <Icon className="h-4 w-4 text-emerald-400" />
+                    <span className="sr-only">{label}: </span>
+                    {value}
+                  </a>
+                </li>
+              ))}
             </ul>
           </div>
-          <div>
-            <h4 className="text-white font-semibold mb-5 text-lg tracking-normal">Company</h4>
-            <ul className="space-y-3 text-sm flex flex-col items-start">
-              <li><button className="text-slate-300 hover:text-amber-400 transition-colors">About Us</button></li>
-              <li><button className="text-slate-300 hover:text-amber-400 transition-colors">Contact Support</button></li>
-              <li><button className="text-slate-300 hover:text-amber-400 transition-colors">Careers</button></li>
-            </ul>
-          </div>
-        </div>
-        <div className="max-w-7xl mx-auto px-5 mt-14 pt-7 border-t border-gray-800 text-sm text-center md:text-left flex flex-col md:flex-row justify-between items-center text-slate-300">
-          <p>© {new Date().getFullYear()} AgriTech Solutions Inc. All rights reserved.</p>
-          <div className="space-x-5 mt-5 md:mt-0 flex items-center justify-center">
-            <button className="hover:text-white transition-colors">Privacy Policy</button>
-            <button className="hover:text-white transition-colors">Terms of Service</button>
+          <div className="space-y-2 text-sm text-white/60 md:text-right">
+            <LegalLinks className="md:justify-end" />
+            <p>{`© ${year} ${BUSINESS_NAME}${BUSINESS_ADDRESS ? `, ${BUSINESS_ADDRESS}` : ''}. All rights reserved.`}</p>
           </div>
         </div>
       </footer>

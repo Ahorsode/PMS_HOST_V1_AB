@@ -1,13 +1,31 @@
 'use server'
 
 import prisma from '@/lib/db'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, unstable_cache } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 import bcrypt from 'bcryptjs'
 import { redirect } from 'next/navigation'
 import { checkWorkerPermissions } from './staff-actions'
-import { LivestockType } from '@prisma/client'
 import { signOut } from '@/auth'
+import { farmCacheTags, revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
+import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
+import { passwordPolicyError } from '@/lib/password-policy'
+import { freeTrialFields } from '@/lib/billing/trial'
+import { getBillingConfig } from '@/lib/billing/billing-config'
+import { getAppSettings } from '@/lib/settings/app-settings'
+import type { PlanType } from '@prisma/client'
+import { currencyForCountry, isSupportedCountry } from '@/lib/countries'
+import {
+  buildRevenueVelocitySeries,
+  buildStrategicPriorities,
+  computeBatchFcr,
+  computeGlobalFcr,
+  computeProfitTrend,
+  getFcrTarget,
+} from '@/lib/analytics/executive-metrics'
+import { computeFarmProductivityIndex } from '@/lib/analytics/productivity-index'
+import { feedCategoryFilter, getReorderThreshold, isLowStock } from '@/lib/inventory/feed-categories'
+import { buildDailyReminderAlerts } from '@/lib/reminders/farm-reminders'
 
 export async function getDashboardStats() {
   const { userId, activeFarmId } = await getAuthContext()
@@ -17,7 +35,8 @@ export async function getDashboardStats() {
   const canViewInventory = await checkWorkerPermissions('inventory', 'view')
   const canViewBatches = await checkWorkerPermissions('batches', 'view')
 
-  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+  const cachedLoader = unstable_cache(async () => {
+    return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
@@ -42,7 +61,11 @@ export async function getDashboardStats() {
       recentOrders,
       supplierDebt,
       customerDebt,
-      totalExpenses
+      totalExpenses,
+      topSupplier,
+      feedInventoryItems,
+      activeBatchesForFcr,
+      recentExpenses
     ] = await Promise.all([
       tx.livestock.aggregate({
         where: { status: 'active', farmId: activeFarmId },
@@ -67,10 +90,10 @@ export async function getDashboardStats() {
       tx.inventory.findMany({
         where: {
           farmId: activeFarmId,
-          category: 'feed',
-          stockLevel: { lt: 500 }
+          isDeleted: false,
+          category: feedCategoryFilter(),
         },
-        select: { itemName: true, stockLevel: true, unit: true }
+        select: { itemName: true, stockLevel: true, unit: true, category: true, reorderLevel: true },
       }),
       tx.livestock.findMany({
         where: { status: 'active', farmId: activeFarmId },
@@ -104,9 +127,9 @@ export async function getDashboardStats() {
         select: { logDate: true, eggsCollected: true }
       }),
       tx.feedingLog.findMany({
-        where: { logDate: { gte: sevenDaysAgo }, farmId: activeFarmId },
+        where: { logDate: { gte: sevenDaysAgo }, farmId: activeFarmId, isDeleted: false },
         orderBy: { logDate: 'asc' },
-        select: { logDate: true, amountConsumed: true }
+        select: { logDate: true, amountConsumed: true, feedTypeId: true }
       }),
       canViewFinance ? tx.sale.findMany({
         where: { saleDate: { gte: sevenDaysAgo }, farmId: activeFarmId },
@@ -134,7 +157,62 @@ export async function getDashboardStats() {
       tx.expense.aggregate({
         where: { farmId: activeFarmId },
         _sum: { amount: true }
-      })
+      }),
+      canViewFinance
+        ? tx.supplier.findFirst({
+            where: { farmId: activeFarmId, balanceOwed: { gt: 0 } },
+            orderBy: { balanceOwed: 'desc' },
+            select: { name: true, balanceOwed: true },
+          })
+        : Promise.resolve(null),
+      canViewInventory
+        ? tx.inventory.findMany({
+            where: {
+              farmId: activeFarmId,
+              isDeleted: false,
+              category: feedCategoryFilter(),
+              stockLevel: { gt: 0 },
+            },
+            select: { id: true, itemName: true, stockLevel: true, unit: true, reorderLevel: true },
+          })
+        : Promise.resolve([]),
+      canViewBatches
+        ? tx.livestock.findMany({
+            where: { farmId: activeFarmId, status: 'active', isDeleted: false },
+            select: {
+              id: true,
+              batchName: true,
+              localBatchId: true,
+              type: true,
+              breedType: true,
+              arrivalDate: true,
+              currentCount: true,
+              initialCount: true,
+              feedingLogs: {
+                where: { isDeleted: false },
+                select: { amountConsumed: true },
+              },
+              eggProduction: {
+                where: { isDeleted: false },
+                select: { eggsCollected: true },
+              },
+              weightRecords: {
+                orderBy: { logDate: 'asc' },
+                select: { averageWeight: true, logDate: true },
+              },
+            },
+          })
+        : Promise.resolve([]),
+      canViewFinance
+        ? tx.expense.findMany({
+            where: {
+              farmId: activeFarmId,
+              isDeleted: false,
+              expenseDate: { gte: new Date(Date.now() - 13 * 24 * 60 * 60 * 1000) },
+            },
+            select: { amount: true, expenseDate: true },
+          })
+        : Promise.resolve([]),
     ])
 
     const eggInventoryStock = eggInventoryItem ? Number(eggInventoryItem.stockLevel) : 0
@@ -183,38 +261,48 @@ export async function getDashboardStats() {
 
     const todayStr = formatDate(new Date())
 
-    const upcomingVaccinations = await tx.vaccinationSchedule.findMany({
-      where: {
-        farmId: activeFarmId,
-        status: 'PENDING',
-        scheduledDate: {
-          lte: new Date(new Date().getTime() + 3 * 24 * 60 * 60 * 1000) // Next 3 days
-        }
-      },
-      include: { batch: true }
-    })
-
-    const pendingMedications = await tx.medicationSchedule.findMany({
-      where: {
-        farmId: activeFarmId,
-        status: 'PENDING'
-      },
-      include: { batch: true }
-    })
-
-    const batchesNeedingEggs = await tx.livestock.findMany({
-      where: {
-        farmId: activeFarmId,
-        status: 'active',
-        eggProduction: {
-          none: {
-            logDate: {
-              gte: today
-            }
+    const [upcomingVaccinations, pendingMedications] = await Promise.all([
+      tx.vaccinationSchedule.findMany({
+        where: {
+          farmId: activeFarmId,
+          status: 'PENDING',
+          scheduledDate: {
+            lte: new Date(new Date().getTime() + 3 * 24 * 60 * 60 * 1000) // Next 3 days
           }
-        }
-      }
+        },
+        include: { batch: true }
+      }),
+      tx.medicationSchedule.findMany({
+        where: {
+          farmId: activeFarmId,
+          status: 'PENDING'
+        },
+        include: { batch: true }
+      }),
+    ])
+
+    const [farmSettings, growthStandards] = await Promise.all([
+      tx.farmSettings.findUnique({ where: { farmId: activeFarmId } }),
+      tx.growthStandards.findMany({
+        select: { ageInDays: true, targetWeight: true, livestockType: true },
+      }),
+    ])
+
+    const hasEggLogToday = (todayEggs._sum.eggsCollected || 0) > 0
+    const hasFeedLogToday = recentFeed.some((f: any) => formatDate(f.logDate) === todayStr)
+    const activeLayerBatchCount = activeBatches.filter(
+      (b: any) => String(b.type || '').includes('LAYER'),
+    ).length
+
+    const reminderAlerts = buildDailyReminderAlerts({
+      eggRecordReminderTime: farmSettings?.eggRecordReminderTime,
+      feedRecordReminderTime: farmSettings?.feedRecordReminderTime,
+      hasEggLogToday,
+      hasFeedLogToday,
+      activeLayerBatchCount,
     })
+
+    const lowFeedAlertsResolved = lowFeedAlerts.filter((item: any) => isLowStock(item))
 
     const dynamicAlerts = [
       ...upcomingVaccinations.map((v: any) => ({
@@ -229,13 +317,109 @@ export async function getDashboardStats() {
         message: `${m.medicationName} for ${m.batch.batchName || m.batchId}`,
         severity: 'error'
       })),
-      ...batchesNeedingEggs.map((b: any) => ({
-        type: 'EGGS',
-        title: 'Egg Collection Due',
-        message: `Flock ${b.batchName || b.id} needs collection`,
-        severity: 'info'
-      }))
+      ...reminderAlerts.map((alert) => ({
+        type: alert.type,
+        title: alert.title,
+        message: alert.message,
+        severity: alert.severity,
+      })),
     ]
+
+    const consumptionByFeedId = new Map<string, number>()
+    for (const log of recentFeed) {
+      if (!log.feedTypeId) continue
+      consumptionByFeedId.set(
+        log.feedTypeId,
+        (consumptionByFeedId.get(log.feedTypeId) || 0) + Number(log.amountConsumed || 0)
+      )
+    }
+
+    const feedShortfalls = feedInventoryItems
+      .map((item: any) => {
+        const consumed = consumptionByFeedId.get(item.id) || 0
+        const avgDaily = consumed / 7
+        const stockLevel = Number(item.stockLevel || 0)
+        const threshold = getReorderThreshold(item)
+        const reserveHours = avgDaily > 0 ? (stockLevel / avgDaily) * 24 : 0
+        return {
+          name: item.itemName,
+          stockLevel,
+          unit: item.unit || 'units',
+          hoursOfReserve: reserveHours,
+          isShortfall: avgDaily > 0 ? stockLevel < avgDaily * 2 : stockLevel < threshold,
+        }
+      })
+      .filter((item: any) => item.isShortfall)
+      .sort((a: any, b: any) => a.hoursOfReserve - b.hoursOfReserve)
+
+    const batchFcrSnapshots = activeBatchesForFcr.map((batch: any) => {
+      const fcr = computeBatchFcr({
+        livestockType: batch.type,
+        feedingLogs: batch.feedingLogs,
+        eggProduction: batch.eggProduction,
+        weightRecords: batch.weightRecords,
+        currentCount: batch.currentCount,
+        initialCount: batch.initialCount,
+      })
+      const targetFcr = getFcrTarget(batch.type)
+      return {
+        id: batch.id,
+        name: batch.batchName || `Batch ${batch.localBatchId || batch.id}`,
+        type: batch.type,
+        fcr,
+        targetFcr,
+      }
+    })
+
+    const worstFcrBatch =
+      batchFcrSnapshots
+        .filter((batch: { fcr: number; targetFcr: number }) => batch.fcr > batch.targetFcr && batch.fcr > 0)
+        .sort((a: { fcr: number }, b: { fcr: number }) => b.fcr - a.fcr)[0] || null
+
+    const strategicPriorities = buildStrategicPriorities({
+      topSupplier: topSupplier
+        ? { name: topSupplier.name, balanceOwed: Number(topSupplier.balanceOwed) }
+        : null,
+      feedShortfalls,
+      worstFcrBatch,
+    })
+
+    const revenueVelocityData = buildRevenueVelocitySeries({ revenueTrendData })
+
+    const fourteenDaysAgo = new Date()
+    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 13)
+    fourteenDaysAgo.setHours(0, 0, 0, 0)
+    const sevenDaysAgoMid = new Date(sevenDaysAgo)
+    sevenDaysAgoMid.setHours(0, 0, 0, 0)
+
+    const currentPeriodRevenue = revenueTrendData.reduce((sum, point) => sum + point.count, 0)
+    const previousPeriodRevenue = canViewFinance
+      ? recentSales
+          .filter((sale: any) => formatDate(sale.saleDate) < formatDate(sevenDaysAgoMid))
+          .reduce((sum: number, sale: any) => sum + Number(sale.totalAmount), 0) +
+        recentOrders
+          .filter((order: any) => formatDate(order.orderDate) < formatDate(sevenDaysAgoMid))
+          .reduce((sum: number, order: any) => sum + Number(order.totalAmount), 0)
+      : 0
+
+    const currentPeriodExpenses = canViewFinance
+      ? recentExpenses
+          .filter((expense: any) => formatDate(expense.expenseDate) >= formatDate(sevenDaysAgoMid))
+          .reduce((sum: number, expense: any) => sum + Number(expense.amount), 0)
+      : 0
+
+    const netProfitEstimate = currentPeriodRevenue - currentPeriodExpenses
+    const profitTrend = computeProfitTrend({ currentPeriodRevenue, previousPeriodRevenue })
+    const globalFcr = computeGlobalFcr(batchFcrSnapshots)
+    const productivityIndex = computeFarmProductivityIndex(
+      activeBatchesForFcr.map((batch: any) => ({
+        arrivalDate: batch.arrivalDate,
+        breedType: batch.breedType,
+        type: batch.type,
+        weightRecords: batch.weightRecords,
+      })),
+      growthStandards,
+    )
 
     return {
       totalBirds: totalBirds._sum.currentCount || 0,
@@ -244,8 +428,8 @@ export async function getDashboardStats() {
       todayDead: todayMortality._sum.count || 0,
       totalEggs: eggInventoryStock,
       todayEggs: todayEggs._sum.eggsCollected || 0,
-      lowFeedAlertsCount: lowFeedAlerts.length,
-      lowFeedItems: lowFeedAlerts.map((i: any) => ({ name: i.itemName, stockLevel: Number(i.stockLevel), category: i.category })),
+      lowFeedAlertsCount: lowFeedAlertsResolved.length,
+      lowFeedItems: lowFeedAlertsResolved.map((i: any) => ({ name: i.itemName, stockLevel: Number(i.stockLevel), category: i.category })),
       alerts: dynamicAlerts,
       eggTrendData,
       feedTrendData,
@@ -262,7 +446,7 @@ export async function getDashboardStats() {
         status: batch.status,
         houseNumber: batch.house?.name || 'N/A'
       })),
-      productivityIndex: 94.2, // Mocked for initial launch, would compute via growth-utils
+      productivityIndex,
       canViewFinance,
       canViewInventory,
       canViewBatches,
@@ -277,66 +461,36 @@ export async function getDashboardStats() {
         customerName: s.customer?.name || 'Walk-in'
       })),
       executiveStats: {
-        totalProfit: Number(totalInitialBirds._sum.initialCount || 0) * 10, // Mocked unit profit
-        profitTrend: 5.2,
-        globalFcr: 1.65,
+        totalProfit: netProfitEstimate,
+        profitTrend: Number(profitTrend.toFixed(1)),
+        globalFcr: Number(globalFcr.toFixed(2)),
         totalDebt: Number(supplierDebt._sum.balanceOwed || 0) + Number(customerDebt._sum.balanceOwed || 0),
         supplierDebt: Number(supplierDebt._sum.balanceOwed || 0),
         customerDebt: Number(customerDebt._sum.balanceOwed || 0),
         activeLivestock: totalBirds._sum.currentCount || 0,
         mortalityRate: Number(mortalityRate.toFixed(2))
-      }
+      },
+      strategicPriorities,
+      revenueVelocityData,
     }
-  }).catch((error: any) => {
+    })
+  }, [`dashboard-stats:${activeFarmId}:${canViewFinance ? 1 : 0}:${canViewInventory ? 1 : 0}:${canViewBatches ? 1 : 0}`], {
+    revalidate: 60,
+    tags: [farmCacheTags.dashboard(activeFarmId), farmCacheTags.analytics(activeFarmId)],
+  })
+
+  return await cachedLoader().catch((error: any) => {
     console.error('Error fetching dashboard stats:', error)
     throw new Error('Failed to fetch dashboard stats')
   })
 }
 
 
-export async function createBatch(data: {
-  houseId: number
-  breedType: string
-  initialCount: number
-  arrivalDate: string
-  batchName?: string
-  type?: LivestockType
-}) {
-  const { userId, activeFarmId } = await getAuthContext()
-  if (!activeFarmId) throw new Error('No active farm selected')
-
-  const hasAccess = await checkWorkerPermissions('batches', 'edit')
-  if (!hasAccess) throw new Error('Unauthorized')
-
-  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    const batch = await tx.livestock.create({
-      data: {
-        houseId: data.houseId,
-        farmId: activeFarmId,
-        batchName: data.batchName || 'New Batch',
-        type: data.type || LivestockType.POULTRY_BROILER,
-        breedType: data.breedType,
-        initialCount: data.initialCount,
-        currentCount: data.initialCount,
-        arrivalDate: new Date(data.arrivalDate),
-        status: 'active',
-        userId: userId
-      }
-    })
-    revalidatePath('/dashboard')
-    revalidatePath('/dashboard/flocks')
-    return { success: true, id: batch.id }
-  }).catch((error: any) => {
-    console.error('Error creating livestock:', error)
-    return { success: false, error: 'Failed to create livestock' }
-  })
-}
-
 /**
  * Updates the initial investment financials for a livestock unit.
  * This is triggered after batch creation as per the new financial control flow.
  */
-export async function updateBatchFinancials(id: number, data: {
+export async function updateBatchFinancials(id: string, data: {
   actualCost: number
   carriageInward: number
   otherExpenses: Array<{ label: string, amount: number }>
@@ -346,6 +500,16 @@ export async function updateBatchFinancials(id: number, data: {
 
   const hasAccess = await checkWorkerPermissions('finance', 'edit')
   if (!hasAccess) throw new Error('Unauthorized: Finance edit required')
+
+  const limitResult = await checkRateLimit({
+    policy: 'finance.write',
+    scope: 'updateBatchFinancials',
+    farmId: activeFarmId,
+    userId,
+  })
+  if (!limitResult.ok) {
+    return rateLimitActionError(limitResult)
+  }
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const batch = await tx.livestock.update({
@@ -377,7 +541,8 @@ export async function updateBatchFinancials(id: number, data: {
           amount: exp.amount,
           category: exp.category as any,
           description: exp.description,
-          expenseDate: batch.arrivalDate
+          expenseDate: batch.arrivalDate,
+          batch_id: id,
         }
       })
     }
@@ -385,6 +550,7 @@ export async function updateBatchFinancials(id: number, data: {
     revalidatePath('/dashboard')
     revalidatePath('/dashboard/accounting')
     revalidatePath('/dashboard/finance')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true }
   }).catch((error: any) => {
     console.error('Error updating financials:', error)
@@ -395,7 +561,7 @@ export async function updateBatchFinancials(id: number, data: {
 /**
  * Overrides the growth target standard for a specific batch.
  */
-export async function updateGrowthTarget(id: number, target: string) {
+export async function updateGrowthTarget(id: string, target: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
 
@@ -408,6 +574,7 @@ export async function updateGrowthTarget(id: number, target: string) {
       data: { growthTargetOverride: target }
     })
     revalidatePath('/dashboard/flocks')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true }
   }).catch((error: any) => {
     console.error('Error updating growth target:', error)
@@ -417,16 +584,26 @@ export async function updateGrowthTarget(id: number, target: string) {
 
 
 export async function logFeeding(data: {
-  batchId: number
-  feedTypeId: number
+  batchId: string
+  feedTypeId: string
   amountConsumed: number
-  formulationId?: number
+  formulationId?: string
 }) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
 
-  const hasAccess = await checkWorkerPermissions('inventory', 'edit')
+  const hasAccess = await checkWorkerPermissions('feeding', 'edit')
   if (!hasAccess) throw new Error('Unauthorized')
+
+  const limitResult = await checkRateLimit({
+    policy: 'feed.write',
+    scope: 'logFeeding',
+    farmId: activeFarmId,
+    userId,
+  })
+  if (!limitResult.ok) {
+    return rateLimitActionError(limitResult)
+  }
 
   try {
     const result = await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
@@ -452,6 +629,7 @@ export async function logFeeding(data: {
       return log
     })
     revalidatePath('/dashboard')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, log: { ...result, amountConsumed: Number(result.amountConsumed) } }
   } catch (error) {
     console.error('Error logging feeding:', error)
@@ -519,6 +697,7 @@ export async function createIsolationRoom(data: { name: string, capacity: number
     revalidatePath('/dashboard/settings')
     revalidatePath('/dashboard/flocks')
     revalidatePath('/dashboard/mortality')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, room }
   }).catch((error: any) => {
     console.error('Error creating isolation room:', error)
@@ -532,7 +711,7 @@ export async function getAllBatches() {
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const batches = await tx.livestock.findMany({
-      where: { farmId: activeFarmId },
+      where: { farmId: activeFarmId, isDeleted: false },
       include: {
         house: true,
         user: {
@@ -566,7 +745,7 @@ export async function getAllBatches() {
 }
 
 
-export async function updateBatchStatus(id: number, status: string) {
+export async function updateBatchStatus(id: string, status: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
 
@@ -580,6 +759,7 @@ export async function updateBatchStatus(id: number, status: string) {
     })
     revalidatePath('/dashboard/flocks')
     revalidatePath('/dashboard')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, batch }
   }).catch((error: any) => {
     console.error('Error updating batch status:', error)
@@ -588,7 +768,7 @@ export async function updateBatchStatus(id: number, status: string) {
 }
 
 export async function logProduction(data: {
-  batchId: number
+  batchId: string
   eggsCollected: number
   damagedEggs: number
   birdWeight?: number
@@ -597,7 +777,11 @@ export async function logProduction(data: {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')
 
-  const hasAccess = await checkWorkerPermissions('batches', 'edit')
+  const canLogEggs = data.eggsCollected > 0 || data.damagedEggs > 0
+  const canLogMortality = data.mortalityCount > 0
+  const hasEggAccess = !canLogEggs || (await checkWorkerPermissions('eggs', 'edit'))
+  const hasMortalityAccess = !canLogMortality || (await checkWorkerPermissions('mortality', 'edit'))
+  const hasAccess = hasEggAccess && hasMortalityAccess
   if (!hasAccess) throw new Error('Unauthorized')
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
@@ -607,7 +791,8 @@ export async function logProduction(data: {
         data: {
           batchId: data.batchId,
           farmId: activeFarmId,
-          eggsCollected: data.eggsCollected,
+          // Damaged eggs are recorded on top of the good ones, not taken out.
+          eggsCollected: data.eggsCollected + data.damagedEggs,
           unusableCount: data.damagedEggs,
           logDate: new Date(),
           userId: userId
@@ -641,6 +826,7 @@ export async function logProduction(data: {
 
     revalidatePath('/dashboard/eggs')
     revalidatePath('/dashboard')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true }
   }).catch((error: any) => {
     console.error('Error logging production:', error)
@@ -670,6 +856,47 @@ export async function updateFarmInfo(data: { name: string, location?: string, ca
     console.error('Error updating farm info:', error)
     return { success: false, error: 'Failed to update farm info' }
   })
+}
+
+/**
+ * Sets the farm's country, which sets the currency money is shown in and
+ * whether plans are priced in cedis (Ghana) or US dollars. Amounts already
+ * recorded are not converted. Owner only.
+ */
+export async function setFarmCountry(country: string) {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return { success: false as const, error: 'No active farm selected' }
+  if (!isSupportedCountry(country)) return { success: false as const, error: 'Select the country your farm is in.' }
+
+  const farm = await prisma.farm.findUnique({ where: { id: activeFarmId }, select: { userId: true } })
+  if (farm?.userId !== userId) return { success: false as const, error: 'Only the farm owner can change the country' }
+
+  const currency = currencyForCountry(country)
+  try {
+    // The owner's other farms that have no country yet get the same answer,
+    // so someone with several farms is asked once, not once per farm.
+    const unset = await prisma.farm.findMany({
+      where: { userId, country: null, id: { not: activeFarmId } },
+      select: { id: true },
+    })
+    const farmIds = [activeFarmId, ...unset.map((item) => item.id)]
+    await prisma.$transaction([
+      prisma.farm.update({ where: { id: activeFarmId }, data: { country } }),
+      prisma.farm.updateMany({ where: { id: { in: farmIds.slice(1) }, country: null }, data: { country } }),
+      ...farmIds.map((farmId) =>
+        prisma.farmSettings.upsert({
+          where: { farmId },
+          update: { currency },
+          create: { farmId, currency },
+        }),
+      ),
+    ])
+    revalidatePath('/dashboard', 'layout')
+    return { success: true as const, country, currency }
+  } catch (error) {
+    console.error('Error setting farm country:', error)
+    return { success: false as const, error: 'Could not save the country. Please try again.' }
+  }
 }
 
 export async function createHouse(data: { houseNumber: string, capacity: number } | FormData) {
@@ -709,6 +936,7 @@ export async function createHouse(data: { houseNumber: string, capacity: number 
     revalidatePath('/dashboard/settings')
     revalidatePath('/dashboard/houses')
     revalidatePath('/dashboard')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, house }
   }).catch((error: any) => {
     console.error('Error creating house:', error)
@@ -716,27 +944,126 @@ export async function createHouse(data: { houseNumber: string, capacity: number 
   })
 }
 
-export async function onboardFarmer(data: { name: string, location: string, capacity: number }) {
+export async function onboardFarmer(data: { name: string, location: string, capacity: number, country: string, planType?: PlanType }) {
   const { userId } = await getAuthContext()
+  if (!isSupportedCountry(data.country)) {
+    return { success: false, error: 'Select the country your farm is in.' }
+  }
+  const country = data.country
+  const currency = currencyForCountry(country)
+  const planType: PlanType = data.planType === 'SOLO' ? 'SOLO' : 'TEAM'
+  const [trialDays, farmDefaults] = await Promise.all([
+    getBillingConfig().then((config) => config.trial.days),
+    getAppSettings('farm-defaults'),
+  ])
   try {
     const result = await prisma.$transaction(async (tx: any) => {
-      const farm = await tx.farm.create({
-        data: {
-          name: data.name,
-          location: data.location,
-          capacity: data.capacity,
-          userId: userId
+      // Find if there is an existing placeholder/default farm created during signup
+      const placeholderFarm = await tx.farm.findFirst({
+        where: {
+          userId: userId,
+          capacity: 0,
+          location: ''
         }
       })
 
-      // Assign the user as OWNER of this farm
-      await tx.farmMember.create({
-        data: {
-          farmId: farm.id,
-          userId: userId,
-          role: 'OWNER'
+      let farm;
+      if (placeholderFarm) {
+        // Update the placeholder farm instead of creating a duplicate
+        farm = await tx.farm.update({
+          where: { id: placeholderFarm.id },
+          data: {
+            name: data.name,
+            location: data.location,
+            capacity: data.capacity,
+            country,
+            planType
+          }
+        })
+      } else {
+        // Create a new farm
+        farm = await tx.farm.create({
+          data: {
+            name: data.name,
+            location: data.location,
+            capacity: data.capacity,
+            country,
+            planType,
+            userId: userId
+          }
+        })
+      }
+
+      // One free trial per owner: farms from signup already have it, older
+      // accounts get it here, and extra farms do not start another one.
+      if (!farm.trialStartedAt && farm.subscriptionTier === 'BASIC') {
+        const hadTrial = await tx.farm.findFirst({
+          where: { userId, trialStartedAt: { not: null } },
+          select: { id: true }
+        })
+        if (!hadTrial) {
+          farm = await tx.farm.update({
+            where: { id: farm.id },
+            data: freeTrialFields(new Date(), trialDays)
+          })
+          await tx.subscriptionEvent.create({
+            data: {
+              farmId: farm.id,
+              userId,
+              eventType: 'TRIAL_STARTED',
+              metadata: { source: 'onboarding', expiresAt: farm.trialExpiresAt.toISOString() }
+            }
+          })
         }
+      }
+
+      // Assign/ensure the user is OWNER of this farm in farmMember
+      const existingMember = await tx.farmMember.findFirst({
+        where: { farmId: farm.id, userId: userId }
       })
+
+      if (!existingMember) {
+        await tx.farmMember.create({
+          data: {
+            farmId: farm.id,
+            userId: userId,
+            role: 'OWNER'
+          }
+        })
+      } else if (existingMember.role !== 'OWNER') {
+        await tx.farmMember.update({
+          where: { id: existingMember.id },
+          data: { role: 'OWNER' }
+        })
+      }
+
+      // Ensure the User's role is updated to OWNER
+      await tx.user.update({
+        where: { id: userId },
+        data: { role: 'OWNER' }
+      })
+
+      // Default FarmSettings, with money shown in the country's currency.
+      await tx.farmSettings.upsert({
+        where: { farmId: farm.id },
+        update: { currency },
+        create: { farmId: farm.id, currency, eggsPerCrate: 30 }
+      })
+
+      // Admin Farm defaults: starting egg categories and sales settings.
+      if (farmDefaults.eggCategories.length > 0) {
+        const existing = await tx.eggCategory.findMany({ where: { farmId: farm.id }, select: { name: true } })
+        const taken = new Set(existing.map((category: { name: string }) => category.name.toLowerCase()))
+        const toCreate = farmDefaults.eggCategories.filter((category) => !taken.has(category.name.toLowerCase()))
+        if (toCreate.length > 0) {
+          await tx.eggCategory.createMany({
+            data: toCreate.map((category) => ({ farmId: farm.id, name: category.name, description: category.description || null })),
+          })
+        }
+      }
+      if (!(await tx.salesSettings.findUnique({ where: { farmId: farm.id } }))) {
+        await tx.salesSettings.create({ data: { farmId: farm.id, ...farmDefaults.salesSettings } })
+      }
 
       return farm
     })
@@ -760,111 +1087,6 @@ export async function checkOnboardingStatus() {
   return { isOnboarded: !!membership }
 }
 
-export async function registerUser(data: { emailOrPhone: string, password: string, name: string }) {
-  try {
-    const isEmail = data.emailOrPhone.includes('@');
-    const email = isEmail ? data.emailOrPhone.toLowerCase().trim() : null;
-    const phone = isEmail ? null : data.emailOrPhone.trim();
-
-    // Check if user already exists
-    const existingUser = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: email || undefined },
-          { phoneNumber: phone || undefined }
-        ].filter(Boolean) as any
-      }
-    }) as any;
-
-    if (existingUser) {
-      if (existingUser.password) {
-        return { success: false, error: 'User already exists and has a password set' };
-      }
-      // If user exists but has no password (e.g. created via invitation or OAuth before)
-      const hashedPassword = await bcrypt.hash(data.password, 10);
-      const { firstname, surname, middleName } = splitName(data.name);
-      
-      await (prisma.user as any).update({
-        where: { id: existingUser.id },
-        data: {
-          password: hashedPassword,
-          firstname,
-          surname,
-          middleName,
-          name: data.name
-        }
-      });
-      return { success: true, userId: existingUser.id };
-    }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(data.password, 10);
-    const { firstname, surname, middleName } = splitName(data.name);
-
-    // Create user
-    const newUser = await (prisma.user as any).create({
-      data: {
-        email,
-        phoneNumber: phone,
-        password: hashedPassword,
-        name: data.name,
-        firstname,
-        surname,
-        middleName,
-        role: 'OWNER' // Default role for self-signup
-      }
-    });
-
-    // Check for pending invitations
-    const invitation = await (prisma.invitation as any).findFirst({
-      where: {
-        OR: [
-          { email: email || undefined },
-          { phoneNumber: phone || undefined }
-        ].filter(Boolean) as any,
-        status: 'PENDING'
-      }
-    });
-
-    if (invitation) {
-      // Auto-accept invitation
-      await prisma.$transaction([
-        (prisma.farmMember as any).create({
-          data: {
-            farmId: invitation.farmId,
-            userId: (newUser as any).id,
-            role: (invitation as any).role
-          }
-        }),
-        (prisma.invitation as any).update({
-          where: { id: (invitation as any).id },
-          data: { status: 'ACCEPTED' }
-        }),
-        (prisma.user as any).update({
-          where: { id: (newUser as any).id },
-          data: { role: (invitation as any).role }
-        })
-      ]);
-    }
-
-    return { success: true, userId: (newUser as any).id };
-  } catch (error: any) {
-    console.error('Error registering user:', error);
-    return { success: false, error: 'Failed to register user' };
-  }
-}
-
-function splitName(name: string) {
-  if (!name) return { firstname: '', surname: '', middleName: '' };
-  const parts = name.trim().split(/\s+/);
-  if (parts.length === 1) return { firstname: parts[0], surname: '', middleName: '' };
-  if (parts.length === 2) return { firstname: parts[0], surname: parts[1], middleName: '' };
-  return {
-    firstname: parts[0],
-    surname: parts[parts.length - 1],
-    middleName: parts.slice(1, -1).join(' ')
-  };
-}
 
 export async function updateProfile(data: { firstname: string; surname: string; newPassword?: string }) {
   const { userId } = await getAuthContext()
@@ -879,6 +1101,9 @@ export async function updateProfile(data: { firstname: string; surname: string; 
     };
 
     if (data.newPassword) {
+      const passwordError = passwordPolicyError(data.newPassword);
+      if (passwordError) return { success: false, error: passwordError };
+
       updateData.password = await bcrypt.hash(data.newPassword, 10);
       updateData.mustChangePassword = false;
     }
@@ -917,6 +1142,11 @@ export async function updatePassword(data: { current: string; new: string }) {
     const isValid = await bcrypt.compare(data.current, user.password)
     if (!isValid) {
       return { success: false, error: 'Current password is incorrect' }
+    }
+
+    const passwordError = passwordPolicyError(data.new)
+    if (passwordError) {
+      return { success: false, error: passwordError }
     }
 
     const hashedPassword = await bcrypt.hash(data.new, 10)
@@ -967,21 +1197,63 @@ export async function getAllEggProduction() {
   })
 }
 
+export async function getEggSalesHistory() {
+  const { userId, activeFarmId } = await getAuthContext()
+  if (!activeFarmId) return []
+
+  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+    return tx.orderItem.findMany({
+      where: {
+        inventory: { category: 'EGGS', isDeleted: false },
+        order: {
+          farmId: activeFarmId,
+          status: 'COMPLETED',
+          isDeleted: false,
+        },
+      },
+      include: {
+        inventory: { select: { itemName: true, unit: true } },
+        order: {
+          select: {
+            orderDate: true,
+            customer: { select: { name: true } },
+          },
+        },
+      },
+      orderBy: {
+        order: { orderDate: 'desc' },
+      },
+      take: 100,
+    })
+  }).catch((error: any) => {
+    console.error('Error fetching egg sales history:', error)
+    return []
+  })
+}
+
 export async function getAllFeedingLogs() {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return []
 
   return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const logs = await tx.feedingLog.findMany({
-      where: { farmId: activeFarmId },
+      where: { farmId: activeFarmId, isDeleted: false },
       include: {
         batch: true,
         inventory: true,
+        formulation: true,
+        user: {
+          select: {
+            firstname: true,
+            surname: true,
+          },
+        },
       },
-      orderBy: {
-        logDate: 'desc',
-      },
-      take: 50,
+      orderBy: [
+        { logDate: 'desc' },
+        { id: 'desc' },
+      ],
+      take: 100,
     })
     return logs.map((log: any) => ({
       ...log,
@@ -998,33 +1270,14 @@ export async function getAllFeedingLogs() {
         stockLevel: Number(log.inventory.stockLevel),
         reorderLevel: log.inventory.reorderLevel ? Number(log.inventory.reorderLevel) : null,
         costPerUnit: log.inventory.costPerUnit ? Number(log.inventory.costPerUnit) : null,
-      } : null
+      } : null,
+      formulation: log.formulation ? {
+        ...log.formulation,
+        stockLevel: Number(log.formulation.stockLevel),
+      } : null,
     }))
   }).catch((error: any) => {
     console.error('Error fetching feeding logs:', error)
-    return []
-  })
-}
-
-export async function getAllInventory() {
-  const { userId, activeFarmId } = await getAuthContext()
-  if (!activeFarmId) return []
-
-  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    const items = await tx.inventory.findMany({
-      where: { farmId: activeFarmId },
-      orderBy: {
-        itemName: 'asc',
-      },
-    })
-    return items.map((item: any) => ({
-      ...item,
-      stockLevel: Number(item.stockLevel),
-      reorderLevel: item.reorderLevel ? Number(item.reorderLevel) : null,
-      costPerUnit: item.costPerUnit ? Number(item.costPerUnit) : null
-    }))
-  }).catch((error: any) => {
-    console.error('Error fetching inventory:', error)
     return []
   })
 }
@@ -1097,7 +1350,7 @@ export async function getAllMortalityLogs() {
   })
 }
 
-export async function getBatchDetails(id: number) {
+export async function getBatchDetails(id: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return null
 
@@ -1166,7 +1419,7 @@ export async function getBatchDetails(id: number) {
 }
 
 export async function logWeight(data: {
-  batchId: number
+  batchId: string
   averageWeight: number
   logDate: string
 }) {
@@ -1184,6 +1437,7 @@ export async function logWeight(data: {
       }
     })
     revalidatePath(`/dashboard/flocks/${data.batchId}`)
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, record }
   }).catch((error: any) => {
     console.error('Error logging weight:', error)
@@ -1191,7 +1445,7 @@ export async function logWeight(data: {
   })
 }
 
-export async function getInventoryDetails(id: number) {
+export async function getInventoryDetails(id: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return null
 
@@ -1201,7 +1455,10 @@ export async function getInventoryDetails(id: number) {
       include: {
         feedingLogs: {
           include: { batch: true },
-          orderBy: { logDate: 'desc' }
+          orderBy: [
+            { logDate: 'desc' },
+            { id: 'desc' },
+          ],
         }
       }
     })
@@ -1223,7 +1480,7 @@ export async function getInventoryDetails(id: number) {
   })
 }
 
-export async function getSaleDetails(id: number) {
+export async function getSaleDetails(id: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return null
 

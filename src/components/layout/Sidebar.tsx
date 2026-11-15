@@ -1,201 +1,223 @@
 "use client";
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
-import { motion } from 'framer-motion';
-import { 
-  LayoutDashboard, Bird, PawPrint, Egg, ThermometerSun, 
-  Wheat, Settings, Users, XCircle, Banknote, Activity,
-  LogOut, Wallet, Crown, ShieldCheck, BarChart3, Truck, Trash2
-} from 'lucide-react';
+import { AnimatePresence, m } from 'framer-motion';
+import { LogOut, Moon, Sun, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatRoleLabel } from '@/lib/navigation-permissions';
+import {
+  DASHBOARD_NAV_ITEM,
+  canShowDashboardNavItem,
+  getActiveNavCategoryId,
+  getVisibleNavCategories,
+  isNavItemActive,
+} from '@/lib/app-navigation';
+import { useNavGroupMenu } from './useNavGroupMenu';
+import { groupHue } from '@/components/ui/graphite';
+import { useTheme } from './theme';
 
-export const Sidebar = ({ role = 'OWNER', permissions }: { role?: string, permissions?: any }) => {
+const focus = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60';
+const railItem = cn(
+  'flex w-[72px] flex-col items-center gap-1.5 rounded-lg py-2.5 transition-colors duration-150',
+  focus
+);
+const railLabel = 'text-xs font-medium leading-none';
+
+export const Sidebar = ({ role, permissions }: { role?: string, permissions?: any }) => {
   const pathname = usePathname();
+  const roleLabel = formatRoleLabel(role);
+  const profileActive = pathname === '/dashboard/profile';
+  const { openId, toggle, containerRef, registerTrigger } = useNavGroupMenu<HTMLElement>();
+  const { theme, toggle: toggleTheme } = useTheme();
 
-  const categories = [
-    {
-      name: 'Operations',
-      items: [
-        { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', roles: ['OWNER', 'MANAGER', 'WORKER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
-        { name: 'Livestock', icon: PawPrint, href: '/dashboard/flocks', roles: ['OWNER', 'MANAGER', 'WORKER'] },
-        { name: 'Analytics', icon: BarChart3, href: '/dashboard/analytics/compare', roles: ['OWNER', 'MANAGER'] },
-        { name: 'Houses', icon: ThermometerSun, href: '/dashboard/houses', roles: ['OWNER', 'MANAGER'] },
-        { name: 'Eggs', icon: Egg, href: '/dashboard/eggs', roles: ['OWNER', 'MANAGER', 'WORKER'] },
-        { name: 'Feeding', icon: Wheat, href: '/dashboard/feed', roles: ['OWNER', 'MANAGER', 'WORKER'] },
-        { name: 'Mortality', icon: XCircle, href: '/dashboard/mortality', roles: ['OWNER', 'MANAGER', 'WORKER'] },
-        { name: 'Quarantine', icon: Activity, href: '/dashboard/quarantine', roles: ['OWNER', 'MANAGER', 'WORKER'] },
-      ]
-    },
-    {
-      name: 'Commercial Hub',
-      items: [
-        { name: 'Sales', icon: Banknote, href: '/dashboard/sales', roles: ['OWNER', 'MANAGER', 'CASHIER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
-        { name: 'Customers', icon: Users, href: '/dashboard/sales/customers', roles: ['OWNER', 'MANAGER', 'CASHIER', 'ACCOUNTANT'] },
-        { name: 'Suppliers', icon: Truck, href: '/dashboard/suppliers', roles: ['OWNER', 'MANAGER', 'ACCOUNTANT'] },
-        { name: 'Finance Control', icon: Wallet, href: '/dashboard/finance', roles: ['OWNER', 'MANAGER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
-        { name: 'Inventory', icon: LayoutDashboard, href: '/dashboard/inventory', roles: ['OWNER', 'MANAGER', 'ACCOUNTANT'] },
-      ]
-    },
-    {
-      name: 'Governance',
-      items: [
-        { name: 'Audit Logs', icon: ShieldCheck, href: '/dashboard/admin/logs', roles: ['OWNER', 'MANAGER'] },
-        { name: 'Team Management', icon: Users, href: '/dashboard/team', roles: ['OWNER', 'MANAGER'] },
-        { name: 'License Upgrade', icon: Crown, href: '/dashboard/license-upgrade', roles: ['OWNER', 'MANAGER'] },
-        { name: 'Settings', icon: Settings, href: '/dashboard/settings', roles: ['OWNER', 'MANAGER'] },
-      ]
-    }
-  ];
+  const categories = useMemo(() => getVisibleNavCategories(role, permissions), [role, permissions]);
+  const allItems = useMemo(() => categories.flatMap((category) => category.items), [categories]);
+  const activeId = getActiveNavCategoryId(pathname, categories);
+  const showDashboard = canShowDashboardNavItem(role, permissions);
+  const dashboardActive = pathname === DASHBOARD_NAV_ITEM.href;
 
   return (
-    <aside className="hidden md:block fixed left-6 top-6 bottom-6 w-20 hover:w-64 group transition-all duration-500 ease-out z-50">
-      <div className="h-full glass-pill rounded-lg flex flex-col items-stretch pt-7 pb-3 overflow-hidden">
-        
-        {/* Logo Section */}
-        <div className="px-5 mb-9 flex items-center flex-shrink-0">
-          <img 
-            src="/logo.png" 
-            alt="Agri-ERP Logo" 
-            className="w-12 h-12 rounded-md object-cover shadow-lg shadow-emerald-500/20 shrink-0 mx-auto group-hover:mx-0"
-          />
-          <span className="ml-3 font-bold text-xl tracking-normal text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
-            Agri<span className="text-emerald-400 text-shadow-glow">Tech</span>
-          </span>
-        </div>
+    <aside
+      ref={containerRef}
+      className="fixed bottom-4 left-4 top-4 z-50 hidden w-[84px] md:block"
+    >
+      <div className="relative flex h-full flex-col items-center rounded-2xl border border-fg/[0.08] bg-deep pb-4 pt-5 shadow-[0_8px_24px_rgba(0,0,0,0.35)]">
+        {/* Logo doubles as the home link */}
+        <Link
+          href="/dashboard"
+          aria-label="Dashboard home"
+          className={cn('mb-6 shrink-0 rounded-lg', focus)}
+        >
+          <img src="/logo.png" alt="Poultry Ledger logo" className="h-10 w-10 rounded-lg object-cover" />
+        </Link>
 
-        {/* Navigation */}
-        <nav className="flex-1 px-3 space-y-7 overflow-y-auto custom-scrollbar overflow-x-hidden">
+        {/* Dashboard is a direct link; each group icon opens a flyout with that group's pages */}
+        <nav aria-label="Main" className="flex flex-col items-center gap-1">
+          {/* Dashboard stays set apart from the groups: a flat emerald tile above a divider */}
+          {showDashboard && (
+            <>
+              <Link
+                href={DASHBOARD_NAV_ITEM.href}
+                title={DASHBOARD_NAV_ITEM.name}
+                aria-current={dashboardActive ? 'page' : undefined}
+                className={cn(
+                  railItem,
+                  'bg-accent text-accent-fg hover:bg-accent',
+                  dashboardActive && 'ring-1 ring-accent/60 ring-offset-2 ring-offset-deep'
+                )}
+              >
+                <DASHBOARD_NAV_ITEM.icon className="h-6 w-6" strokeWidth={1.75} />
+                <span className={railLabel}>{DASHBOARD_NAV_ITEM.name}</span>
+              </Link>
+              <div aria-hidden="true" className="my-3 h-px w-10 bg-fg/[0.08]" />
+            </>
+          )}
+
           {categories.map((category) => {
-            const visibleItems = category.items.filter(item => {
-              // 1. Owner bypass (Absolute Creator)
-              if (role === 'OWNER') return true;
-
-              // 2. Explicit Permission Overrides
-              if (permissions) {
-                // Map item names to their respective permission keys
-                const permissionMap: Record<string, string[]> = {
-                  'Finance Control': ['canViewFinance', 'canEditFinance'],
-                  'Livestock': ['canViewBatches', 'canEditBatches'],
-                  'Analytics': ['canViewBatches', 'canEditBatches'],
-                  'Inventory': ['canViewInventory', 'canEditInventory'],
-                  'Sales': ['canViewSales', 'canEditSales'],
-                  'Eggs': ['canViewEggs', 'canEditEggs'],
-                  'Feeding': ['canViewFeeding', 'canEditFeeding'],
-                  'Houses': ['canViewHouses', 'canEditHouses'],
-                  'Mortality': ['canViewMortality', 'canEditMortality'],
-                  'Quarantine': ['canViewMortality', 'canEditMortality'],
-                  'Customers': ['canViewCustomers', 'canEditCustomers'],
-                  'Suppliers': ['canViewCustomers', 'canEditCustomers'],
-                  'Team Management': ['canViewTeam', 'canEditTeam'],
-                  'Settings': ['canViewSettings', 'canEditSettings']
-                };
-
-                const keys = permissionMap[item.name];
-                if (keys) {
-                  // If we have explicit permission overrides for this module, use them
-                  return keys.some(k => !!permissions[k]);
-                }
-              }
-
-              // 3. Role-based bypass (MANAGER/WORKER default behaviors)
-              if (role === 'MANAGER') return true;
-              
-              // 4. Role-based membership check
-              if (!item.roles.includes(role)) return false;
-
-              // 5. Role-specific Fallbacks (Accountant/Finance/Cashier)
-              if (role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER') {
-                return item.name === 'Finance Control' || item.name === 'Dashboard';
-              }
-              if (role === 'CASHIER') {
-                return item.name === 'Finance Control' || item.name === 'Sales' || item.name === 'Dashboard';
-              }
-
-              // Workers can view their allowed modules by default if not restricted by permissions above
-              if (role === 'WORKER') return true;
-
-              return false;
-            });
-
-            if (visibleItems.length === 0) return null;
+            const isOpen = openId === category.id;
+            const isActive = activeId === category.id;
+            const panelId = `nav-flyout-${category.id}`;
 
             return (
-              <div key={category.name} className="space-y-2">
-                <p className="px-3 text-xs font-bold uppercase tracking-[0.2em] text-white/20 group-hover:opacity-100 opacity-0 transition-opacity">
-                  {category.name}
-                </p>
-                {visibleItems.map((item) => {
-                  const isActive = pathname === item.href || (
-                    item.href !== '/dashboard' && 
-                    pathname.startsWith(item.href + '/') && 
-                    !visibleItems.some(other => 
-                      other.href !== item.href && 
-                      other.href.startsWith(item.href + '/') && 
-                      pathname.startsWith(other.href)
-                    )
-                  );
-                  return (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      className={cn(
-                        "relative flex items-center h-12 rounded-md transition-all duration-300 group/item overflow-hidden",
-                        isActive 
-                          ? "bg-emerald-500/20 text-emerald-400 shadow-[inset_0_0_20px_rgba(16,185,129,0.1)] border border-emerald-500/20" 
-                          : "text-white/80 hover:text-white hover:bg-white/15"
-                      )}
+              <div key={category.id}>
+                <button
+                  ref={registerTrigger(category.id)}
+                  type="button"
+                  onClick={() => toggle(category.id)}
+                  aria-expanded={isOpen}
+                  aria-controls={panelId}
+                  title={category.name}
+                  className={cn(
+                    railItem,
+                    isActive || isOpen
+                      ? 'bg-raised text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
+                      : 'text-fg-2 hover:bg-fg/[0.04] hover:text-fg'
+                  )}
+                >
+                  <category.icon
+                    className={cn('h-6 w-6 transition-opacity duration-150', isActive || isOpen ? 'opacity-100' : 'opacity-70')}
+                    style={{ color: groupHue[category.id] }}
+                    strokeWidth={1.5}
+                  />
+                  <span className={railLabel}>{category.name}</span>
+                </button>
+
+                <AnimatePresence>
+                  {isOpen && (
+                    <m.div
+                      id={panelId}
+                      role="group"
+                      aria-label={`${category.name} pages`}
+                      initial={{ opacity: 0, x: -6 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -6 }}
+                      transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+                      className="absolute inset-y-0 left-full ml-3 flex w-72 flex-col rounded-2xl border border-fg/[0.08] bg-deep pb-3 pt-6 shadow-[0_8px_24px_rgba(0,0,0,0.4)]"
                     >
-                      <div className="w-12 h-12 flex items-center justify-center shrink-0">
-                        <item.icon className={cn("w-6 h-6 transition-all duration-300 group-hover/item:scale-110", isActive ? "text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]" : "text-white/70 group-hover/item:text-white")} />
-                      </div>
-                      <span className={cn(
-                        "ml-1 font-bold text-sm tracking-normal opacity-0 group-hover:opacity-100 transition-all duration-300 whitespace-nowrap",
-                        isActive ? "text-emerald-400" : "text-white/80 group-hover:text-white"
-                      )}>
-                        {item.name}
-                      </span>
-                    </Link>
-                  );
-                })}
+                      <p className="mb-2 flex items-center gap-2 px-5 text-xs text-fg-3">
+                        <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: groupHue[category.id] }} />
+                        {category.name}
+                      </p>
+                      <ul className="custom-scrollbar min-h-0 flex-1 space-y-0.5 overflow-y-auto px-3">
+                        {category.items.map((item) => {
+                          const itemActive = isNavItemActive(pathname, item.href, allItems);
+                          return (
+                            <li key={item.href}>
+                              <Link
+                                href={item.href}
+                                aria-current={itemActive ? 'page' : undefined}
+                                className={cn(
+                                  'relative flex h-11 items-center gap-3 rounded-lg px-3 text-[15px] transition-colors duration-150',
+                                  focus,
+                                  itemActive
+                                    ? 'bg-raised font-medium text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]'
+                                    : 'text-fg-2 hover:bg-fg/[0.04] hover:text-fg'
+                                )}
+                              >
+                                {itemActive && (
+                                  <span
+                                    aria-hidden="true"
+                                    className="absolute inset-y-2 left-0 w-0.5 rounded-full"
+                                    style={{ backgroundColor: groupHue[category.id] }}
+                                  />
+                                )}
+                                <item.icon
+                                  className="h-5 w-5 shrink-0"
+                                  style={{ color: itemActive ? groupHue[category.id] : 'var(--fg-3)' }}
+                                  strokeWidth={1.5}
+                                />
+                                <span className="truncate">{item.name}</span>
+                              </Link>
+                            </li>
+                          );
+                        })}
+                      </ul>
+
+                      {category.id === 'governance' && (
+                        <div className="mt-3 space-y-1 border-t border-fg/[0.08] px-3 pt-3">
+                          <p className="px-3 pb-1 text-xs text-fg-3">Signed in as {roleLabel}</p>
+                          <button
+                            type="button"
+                            onClick={() => signOut({ callbackUrl: '/login' })}
+                            className={cn(
+                              'flex h-9 w-full items-center gap-3 rounded-lg px-3 text-sm text-fg-2 transition-colors duration-150 hover:bg-fg/[0.04] hover:text-neg',
+                              focus
+                            )}
+                          >
+                            <LogOut className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+                            Sign out
+                          </button>
+                        </div>
+                      )}
+                    </m.div>
+                  )}
+                </AnimatePresence>
               </div>
             );
           })}
         </nav>
 
-        {/* Footer Actions */}
-        <div className="mt-auto px-3 w-full pb-3 space-y-2 flex-shrink-0">
-            <div className="h-px bg-white/10 mb-3 group-hover:block hidden" />
-            
-            {/* Profile Action */}
-            <Link 
-              href="/dashboard/profile"
-              className="flex items-center hover:bg-white/5 rounded-md p-2 transition-all cursor-pointer group/profile"
-            >
-              <div className="w-10 h-10 rounded-md bg-emerald-400/10 flex items-center justify-center text-emerald-400 font-bold shrink-0 group-hover/profile:bg-emerald-400/20 transition-colors uppercase">
-                {role.charAt(0)}
-              </div>
-              <div className="ml-2 overflow-hidden opacity-0 group-hover:opacity-100 transition-all duration-300">
-                <p className="text-xs font-bold text-white truncate">My Profile</p>
-                <p className="text-xs text-white/70 font-bold uppercase tracking-wider">{role.toLowerCase()}</p>
-              </div>
-            </Link>
+        {/* Footer actions: always on the rail, below the groups */}
+        <div className="mt-auto flex w-[72px] flex-col items-center gap-1 border-t border-fg/[0.08] pt-3">
+          <button
+            type="button"
+            onClick={toggleTheme}
+            title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+            aria-label={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+            className={cn(railItem, 'text-fg-2 hover:bg-fg/[0.04] hover:text-fg')}
+          >
+            {theme === 'light' ? <Moon className="h-6 w-6" strokeWidth={1.5} /> : <Sun className="h-6 w-6" strokeWidth={1.5} />}
+            <span className={railLabel}>{theme === 'light' ? 'Dark' : 'Light'}</span>
+          </button>
+          <Link
+            href="/dashboard/profile"
+            title={`My profile (${roleLabel})`}
+            aria-current={profileActive ? 'page' : undefined}
+            className={cn(
+              railItem,
+              profileActive
+                ? 'bg-raised text-fg'
+                : 'text-fg-2 hover:bg-fg/[0.04] hover:text-fg'
+            )}
+          >
+            <span className="flex h-8 w-8 items-center justify-center rounded-full border border-fg/[0.08] bg-raised">
+              <User className="h-4 w-4" strokeWidth={1.5} />
+            </span>
+            <span className={railLabel}>Profile</span>
+          </Link>
 
-            {/* Logout Action */}
-            <div 
-              onClick={() => signOut({ callbackUrl: '/login' })}
-              className="flex items-center hover:bg-red-500/10 rounded-md p-2 transition-all cursor-pointer group/logout"
-            >
-              <div className="w-10 h-10 rounded-md bg-white/10 flex items-center justify-center text-white/70 shrink-0 group-hover/logout:bg-red-500/20 group-hover/logout:text-red-400 transition-colors">
-                <LogOut className="w-5 h-5" />
-              </div>
-              <div className="ml-2 overflow-hidden opacity-0 group-hover:opacity-100 transition-all duration-300">
-                <p className="text-xs font-bold text-white group-hover/logout:text-red-400 transition-colors">Sign Out</p>
-                <p className="text-xs text-white/70 font-bold uppercase tracking-wider">End Session</p>
-              </div>
-            </div>
+          <button
+            type="button"
+            onClick={() => signOut({ callbackUrl: '/login' })}
+            title="Sign out"
+            className={cn(railItem, 'text-fg-3 hover:bg-fg/[0.04] hover:text-neg')}
+          >
+            <LogOut className="h-6 w-6" strokeWidth={1.5} />
+            <span className={railLabel}>Sign out</span>
+          </button>
         </div>
       </div>
     </aside>

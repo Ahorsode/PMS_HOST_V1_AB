@@ -1,13 +1,14 @@
 'use client'
 
 import React, { useState } from 'react';
-import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
 import { createIsolationRoom } from '@/lib/actions/dashboard-actions';
 import { Plus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { Button, Form, FormActions, FormError, Input } from '@/components/ui/form';
+import { g } from '@/components/ui/graphite';
 
-export const IsolationRoomForm = () => {
+/** `bare` drops the tile chrome (for use inside a pop-up); `onCreated` runs after a save. */
+export const IsolationRoomForm = ({ bare = false, onCreated }: { bare?: boolean; onCreated?: () => void } = {}) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -15,6 +16,7 @@ export const IsolationRoomForm = () => {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (isLoading) return;
     setIsLoading(true);
     setError(null);
 
@@ -23,7 +25,7 @@ export const IsolationRoomForm = () => {
     const capacityVal = parseInt(capacity);
 
     if (isNaN(capacityVal) || capacityVal < 0) {
-      setError('Capacity must be a non-negative number');
+      setError('Enter how many birds the room can hold. It cannot be less than zero.');
       setIsLoading(false);
       return;
     }
@@ -35,57 +37,54 @@ export const IsolationRoomForm = () => {
         (e.target as HTMLFormElement).reset();
         setCapacity('');
         router.refresh();
+        onCreated?.();
       } else {
-        setError(result.error || 'Failed to create isolation room');
+        setError(result.error || 'The room could not be added. Try again.');
       }
     } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred');
+      setError(err.message || 'Something went wrong. Try again.');
     } finally {
       setIsLoading(false);
     }
   }
 
   return (
-    <div className="p-5 bg-[#1F2937] rounded-xl border border-gray-700 h-fit">
-      <h3 className="font-bold text-amber-400 mb-4 flex items-center gap-2">
-        <Plus className="w-4 h-4" /> Create New Room
-      </h3>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Input 
-          name="name" 
-          label="Room Name" 
-          placeholder="e.g. Infirmary A" 
-          required 
-          className="bg-[#374151] border-gray-600 text-white placeholder-gray-400" 
+    <div className={bare ? '' : `${g.tile} h-fit p-4`}>
+      {!bare && <h3 className="mb-4 text-base font-semibold text-fg">New room</h3>}
+      <Form onSubmit={handleSubmit} className="space-y-4">
+        <Input
+          id="isolation-room-name"
+          name="name"
+          label="Room name"
+          placeholder="e.g. Sick bay A"
+          required
+          disabled={isLoading}
         />
-        <Input 
-          name="capacity" 
-          type="number" 
-          label="Capacity (Birds)" 
-          placeholder="e.g. 50" 
-          required 
+        <Input
+          id="isolation-room-capacity"
+          name="capacity"
+          type="number"
+          label="How many birds it holds"
+          unit="birds"
+          placeholder="e.g. 50"
+          required
           value={capacity}
+          disabled={isLoading}
           onChange={(e) => {
             const val = e.target.value;
             if (val === '' || parseInt(val) >= 0) {
               setCapacity(val);
             }
           }}
-          className="bg-[#374151] border-gray-600 text-white placeholder-gray-400" 
         />
-        {error && (
-          <p className="text-xs font-bold text-red-400 bg-red-400/10 p-2 rounded border border-red-400/20">
-            {error}
-          </p>
-        )}
-        <Button 
-          type="submit" 
-          className="w-full bg-amber-600 hover:bg-amber-700 text-white"
-          isLoading={isLoading}
-        >
-          Add Room
-        </Button>
-      </form>
+        <FormError>{error}</FormError>
+        <FormActions>
+          <Button type="submit" variant="accent" isLoading={isLoading} loadingText="Adding room">
+            <Plus className="h-4 w-4" strokeWidth={1.75} />
+            Add room
+          </Button>
+        </FormActions>
+      </Form>
     </div>
   );
 };

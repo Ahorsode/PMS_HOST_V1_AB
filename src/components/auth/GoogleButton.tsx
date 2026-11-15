@@ -1,26 +1,29 @@
 "use client";
 
-import { motion } from "framer-motion";
-import Image from "next/image";
+import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 
 interface GoogleButtonProps {
   onClick: () => void;
   label: string;
+  isLoading?: boolean;
+  disabled?: boolean;
 }
 
-export default function GoogleButton({ onClick, label }: GoogleButtonProps) {
+/** "Continue with Google" in the shared outline button style. */
+export default function GoogleButton({ onClick, label, isLoading = false, disabled = false }: GoogleButtonProps) {
   return (
-    <motion.button
-      whileHover={{ scale: 1.02, y: -2 }}
-      whileTap={{ scale: 0.98 }}
+    <Button
+      type="button"
+      variant="outline"
       onClick={onClick}
-      className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-md border border-white/10 bg-white px-5 py-3 text-sm font-semibold text-black transition-all hover:bg-white/90"
-      style={{
-        boxShadow: "0 10px 30px -10px rgba(255, 255, 255, 0.2)"
-      }}
+      disabled={disabled || isLoading}
+      className="min-h-12 w-full text-[15px] md:min-h-11"
     >
-      <div className="h-5 w-5 relative">
-        <svg viewBox="0 0 24 24" className="w-full h-full">
+      {isLoading ? (
+        <Loader2 className="h-5 w-5 animate-spin" strokeWidth={1.75} />
+      ) : (
+        <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
           <path
             fill="#4285F4"
             d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -38,11 +41,8 @@ export default function GoogleButton({ onClick, label }: GoogleButtonProps) {
             d="M12 5.38c1.62 0 3.06.56 4.21 1.66l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.83c.87-2.6 3.3-4.53 6.16-4.53z"
           />
         </svg>
-      </div>
-      <span>{label}</span>
-      
-      {/* 3D Reflection Effect */}
-      <div className="absolute inset-x-0 -top-full h-full bg-gradient-to-b from-white/20 to-transparent transition-all group-hover:top-0" />
-    </motion.button>
+      )}
+      <span>{isLoading ? "Opening Google" : label}</span>
+    </Button>
   );
 }

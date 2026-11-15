@@ -1,125 +1,195 @@
 "use client";
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { LayoutDashboard, PawPrint, XCircle, User, Egg, ThermometerSun, Banknote, Wheat, Wallet, Users, Settings, Crown, LogOut, ShieldCheck, BarChart3, Activity } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { AnimatePresence, m } from 'framer-motion';
+import { LogOut, X } from 'lucide-react';
 import { signOut } from 'next-auth/react';
+import { cn } from '@/lib/utils';
+import { formatRoleLabel } from '@/lib/navigation-permissions';
+import {
+  DASHBOARD_NAV_ITEM,
+  canShowDashboardNavItem,
+  getActiveNavCategoryId,
+  getVisibleNavCategories,
+  isNavItemActive,
+} from '@/lib/app-navigation';
+import { useNavGroupMenu } from './useNavGroupMenu';
+import { groupHue } from '@/components/ui/graphite';
 
-export const BottomNav = ({ role = 'OWNER', permissions }: { role?: string, permissions?: any }) => {
+const ease = [0.22, 1, 0.36, 1] as const;
+
+export const BottomNav = ({ role, permissions }: { role?: string; permissions?: any }) => {
   const pathname = usePathname();
+  const roleLabel = formatRoleLabel(role);
+  const { openId, toggle, close, containerRef, registerTrigger } = useNavGroupMenu<HTMLDivElement>();
 
-  // Mobile navigation items
-  const allNavItems: { name: string; icon: React.ElementType; href: string; roles: string[] }[] = [
-    { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard', roles: ['OWNER', 'MANAGER', 'WORKER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
-    { name: 'Livestock', icon: PawPrint, href: '/dashboard/flocks', roles: ['OWNER', 'MANAGER', 'WORKER'] },
-    { name: 'Analytics', icon: BarChart3, href: '/dashboard/analytics/compare', roles: ['OWNER', 'MANAGER'] },
-    { name: 'Houses', icon: ThermometerSun, href: '/dashboard/houses', roles: ['OWNER', 'MANAGER'] },
-    { name: 'Eggs', icon: Egg, href: '/dashboard/eggs', roles: ['OWNER', 'MANAGER', 'WORKER'] },
-    { name: 'Feeding', icon: Wheat, href: '/dashboard/feed', roles: ['OWNER', 'MANAGER', 'WORKER'] },
-    { name: 'Mortality', icon: XCircle, href: '/dashboard/mortality', roles: ['OWNER', 'MANAGER', 'WORKER'] },
-    { name: 'Quarantine', icon: Activity, href: '/dashboard/quarantine', roles: ['OWNER', 'MANAGER', 'WORKER'] },
-    { name: 'Sales', icon: Banknote, href: '/dashboard/sales', roles: ['OWNER', 'MANAGER', 'CASHIER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
-    { name: 'Customers', icon: Users, href: '/dashboard/sales/customers', roles: ['OWNER', 'MANAGER', 'CASHIER', 'ACCOUNTANT'] },
-    { name: 'Finance Hub', icon: Wallet, href: '/dashboard/finance', roles: ['OWNER', 'MANAGER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
-    { name: 'My Profile', icon: User, href: '/dashboard/profile', roles: ['OWNER', 'MANAGER', 'WORKER', 'ACCOUNTANT', 'FINANCE_OFFICER'] },
-    { name: 'Audit Logs', icon: ShieldCheck, href: '/dashboard/admin/logs', roles: ['OWNER', 'MANAGER'] },
-    { name: 'License Upgrade', icon: Crown, href: '/dashboard/license-upgrade', roles: ['OWNER', 'MANAGER'] },
-    { name: 'Team', icon: Users, href: '/dashboard/team', roles: ['OWNER', 'MANAGER'] },
-    { name: 'Settings', icon: Settings, href: '/dashboard/settings', roles: ['OWNER', 'MANAGER'] },
-  ];
-
-  const navItems = allNavItems.filter(item => {
-    // 1. Owner bypass (Absolute Creator)
-    if (role === 'OWNER') return true;
-
-    // 2. Explicit Permission Overrides
-    if (permissions) {
-      const permissionMap: Record<string, string[]> = {
-        'Finance Hub': ['canViewFinance', 'canEditFinance'],
-        'Sales': ['canViewSales', 'canEditSales'],
-        'Livestock': ['canViewBatches', 'canEditBatches'],
-        'Analytics': ['canViewBatches', 'canEditBatches'],
-        'Inventory': ['canViewInventory', 'canEditInventory'],
-        'Eggs': ['canViewEggs', 'canEditEggs'],
-        'Feeding': ['canViewFeeding', 'canEditFeeding'],
-        'Houses': ['canViewHouses', 'canEditHouses'],
-        'Mortality': ['canViewMortality', 'canEditMortality'],
-        'Quarantine': ['canViewMortality', 'canEditMortality'],
-        'Customers': ['canViewCustomers', 'canEditCustomers'],
-        'Team': ['canViewTeam', 'canEditTeam'],
-        'Settings': ['canViewSettings', 'canEditSettings']
-      };
-
-      const keys = permissionMap[item.name];
-      if (keys) {
-        return keys.some(k => !!permissions[k]);
-      }
-    }
-
-    // 3. Role-based bypass (MANAGER default behavior)
-    if (role === 'MANAGER') return true;
-
-    // 4. Role-based membership check
-    if (!item.roles.includes(role)) return false;
-
-    // 5. Role-specific Fallbacks (Accountant/Finance/Cashier)
-    if (role === 'ACCOUNTANT' || role === 'FINANCE_OFFICER') {
-        const allowedForAccountant = ['Dashboard', 'Sales', 'Customers', 'Finance Hub', 'My Profile'];
-        return allowedForAccountant.includes(item.name);
-    }
-    
-    // Workers can view most things by default if not restricted by permissions above
-    if (role === 'WORKER') return true;
-
-    return false;
-  });
+  const categories = useMemo(() => getVisibleNavCategories(role, permissions), [role, permissions]);
+  const allItems = useMemo(() => categories.flatMap((category) => category.items), [categories]);
+  const activeId = getActiveNavCategoryId(pathname, categories);
+  const openCategory = categories.find((category) => category.id === openId);
+  const showDashboard = canShowDashboardNavItem(role, permissions);
+  const dashboardActive = pathname === DASHBOARD_NAV_ITEM.href;
+  const dashboardHighlighted = !openId && dashboardActive;
 
   return (
-    <motion.div
-      initial={{ y: 100 }}
-      animate={{ y: 0 }}
-      transition={{ type: "spring", stiffness: 260, damping: 20 }}
-      className="fixed bottom-0 left-0 right-0 z-40 md:hidden pb-safe"
-    >
-      <div className="bg-[#0a1510]/85 backdrop-blur-2xl mx-3 mb-3 mt-2 px-2 py-2 rounded-lg flex items-center gap-1 overflow-x-auto custom-scrollbar border border-emerald-900/40 shadow-[0_-4px_30px_rgba(0,0,0,0.6),0_8px_32px_rgba(0,0,0,0.5)] snap-x">
-        {navItems.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={cn(
-                "relative flex flex-col items-center justify-center min-w-[4.5rem] shrink-0 snap-center h-14 rounded-md transition-all duration-300",
-                isActive 
-                  ? "text-emerald-400" 
-                  : "text-white/80 hover:text-white"
+    <div ref={containerRef} className="md:hidden">
+      <AnimatePresence>
+        {openCategory && (
+          <m.div
+            key="backdrop"
+            className="fixed inset-0 z-40"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, ease }}
+          >
+            <button
+              type="button"
+              aria-label="Close menu"
+              tabIndex={-1}
+              className="absolute inset-0 bg-black/60"
+              onClick={close}
+            />
+          </m.div>
+        )}
+        {openCategory && (
+          <m.div
+            key={openCategory.id}
+            id={`mobile-nav-sheet-${openCategory.id}`}
+            role="group"
+            aria-label={`${openCategory.name} pages`}
+            initial={{ y: 24, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 24, opacity: 0 }}
+            transition={{ duration: 0.24, ease }}
+            className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-40 flex max-h-[min(75dvh,640px)] flex-col overflow-hidden rounded-t-2xl border border-b-0 border-fg/[0.08] bg-page shadow-[0_-16px_48px_rgba(0,0,0,0.45)]"
+          >
+            <div className="flex items-center justify-between px-4 pb-3 pt-4">
+              <div>
+                <p className="flex items-center gap-2 text-xs text-fg-3">
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: groupHue[openCategory.id] }} />
+                  Farm menu
+                </p>
+                <h2 className="text-lg font-semibold text-fg">{openCategory.name}</h2>
+              </div>
+              <button
+                type="button"
+                onClick={close}
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-fg/[0.08] bg-raised text-fg-2"
+                aria-label="Close menu"
+              >
+                <X className="h-5 w-5" strokeWidth={1.5} />
+              </button>
+            </div>
+
+            <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto px-4 pb-4">
+              <div className="grid grid-cols-2 gap-2">
+                {openCategory.items.map((item) => {
+                  const active = isNavItemActive(pathname, item.href, allItems);
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      aria-current={active ? 'page' : undefined}
+                      className={cn(
+                        'flex min-h-14 min-w-0 items-center gap-3 rounded-xl border px-3 py-2 transition-colors duration-150',
+                        active
+                          ? 'border-fg/[0.1] bg-raised text-fg'
+                          : 'border-fg/[0.06] bg-card text-fg'
+                      )}
+                    >
+                      <item.icon
+                        className="h-5 w-5 shrink-0"
+                        style={{ color: active ? groupHue[openCategory.id] : 'var(--fg-3)' }}
+                        strokeWidth={1.5}
+                      />
+                      <span className="min-w-0 text-sm leading-tight">{item.name}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+
+              {openCategory.id === 'governance' && (
+                <div className="mt-4 border-t border-fg/[0.08] pt-3">
+                  <p className="mb-2 px-1 text-xs text-fg-3">Signed in as {roleLabel}</p>
+                  <button
+                    type="button"
+                    onClick={() => signOut({ callbackUrl: '/login' })}
+                    className="flex min-h-12 w-full items-center gap-3 rounded-xl px-3 text-left text-sm text-neg"
+                  >
+                    <LogOut className="h-5 w-5" strokeWidth={1.5} />
+                    Sign out
+                  </button>
+                </div>
               )}
-            >
-              {isActive && (
-                <motion.div
-                  layoutId="bottomNavBubble"
-                  className="absolute inset-0 bg-emerald-500/20 rounded-md border border-emerald-500/20 shadow-[inset_0_0_12px_rgba(16,185,129,0.1)]"
-                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                />
-              )}
-              <item.icon className={cn("w-6 h-6 z-10", isActive && "drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]")} />
-              <span className="text-xs font-bold mt-1 z-10 whitespace-nowrap">{item.name}</span>
-            </Link>
-          );
-        })}
-        
-        {/* Logout Button */}
-        <button
-          onClick={() => signOut({ callbackUrl: '/login' })}
-          className="relative flex flex-col items-center justify-center min-w-[4.5rem] shrink-0 snap-center h-14 rounded-md transition-all duration-300 text-red-400/60 hover:text-red-400"
+            </div>
+          </m.div>
+        )}
+      </AnimatePresence>
+
+      <nav
+        aria-label="Main"
+        className="fixed inset-x-0 bottom-0 z-50 border-t border-fg/[0.08] bg-deep pb-[env(safe-area-inset-bottom)]"
+      >
+        <div
+          className="grid h-16"
+          style={{ gridTemplateColumns: `repeat(${Math.max(categories.length + (showDashboard ? 1 : 0), 1)}, minmax(0, 1fr))` }}
         >
-          <LogOut className="w-6 h-6 z-10" />
-          <span className="text-xs font-bold mt-1 z-10">Sign Out</span>
-        </button>
-      </div>
-    </motion.div>
+          {showDashboard && (
+            <Link
+              href={DASHBOARD_NAV_ITEM.href}
+              onClick={close}
+              aria-current={dashboardActive ? 'page' : undefined}
+              className="flex flex-col items-center justify-center gap-1 border-r border-fg/[0.06] px-1 text-fg"
+            >
+              {/* Raised flat emerald button so Dashboard stays apart from the group tabs */}
+              <span
+                className={cn(
+                  '-mt-5 flex h-12 w-12 items-center justify-center rounded-full bg-accent text-accent-fg ring-4 ring-deep',
+                  dashboardHighlighted && 'outline outline-1 outline-offset-4 outline-accent/60'
+                )}
+              >
+                <DASHBOARD_NAV_ITEM.icon className="h-6 w-6" strokeWidth={1.75} />
+              </span>
+              <span className="text-[11px] font-medium leading-none">{DASHBOARD_NAV_ITEM.name}</span>
+            </Link>
+          )}
+          {categories.map((category) => {
+            const isOpen = openId === category.id;
+            const highlighted = isOpen || (!openId && activeId === category.id);
+            return (
+              <button
+                key={category.id}
+                ref={registerTrigger(category.id)}
+                type="button"
+                onClick={() => toggle(category.id)}
+                aria-expanded={isOpen}
+                aria-controls={`mobile-nav-sheet-${category.id}`}
+                className={cn(
+                  'flex flex-col items-center justify-center gap-1 px-1 transition-colors duration-150',
+                  highlighted ? 'text-fg' : 'text-fg-3'
+                )}
+              >
+                <span
+                  className={cn(
+                    'flex h-8 w-12 items-center justify-center rounded-full transition-colors duration-150',
+                    highlighted && 'bg-raised'
+                  )}
+                >
+                  <category.icon
+                    className={cn('h-5 w-5', highlighted ? 'opacity-100' : 'opacity-70')}
+                    style={{ color: groupHue[category.id] }}
+                    strokeWidth={1.5}
+                  />
+                </span>
+                <span className="text-[11px] font-medium leading-none">{category.name}</span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
+    </div>
   );
 };

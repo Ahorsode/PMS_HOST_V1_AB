@@ -1,23 +1,23 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
+import { Toaster } from "sonner";
+import { validateEnv } from "@/lib/env-check";
 import "./globals.css";
+import { NO_FLASH_SCRIPT } from "@/components/layout/theme-script";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+// Fail fast on missing runtime config unless CI explicitly skips validation.
+validateEnv();
 
 export const metadata: Metadata = {
-  title: "Agri-ERP | Enterprise Farm Management System",
+  title: "Poultry Ledger | Enterprise Farm Management System",
   description: "Next-generation multi-species livestock management platform. Track performance, inventory, and health for Poultry, Cattle, and Pigs with precision.",
-  keywords: ["Agri-ERP", "Farm Management", "Poultry PMS", "Livestock Tracking", "Agriculture Software"],
+  keywords: ["Poultry Ledger", "Farm Management", "Poultry PMS", "Livestock Tracking", "Agriculture Software"],
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 export const viewport: Viewport = {
@@ -28,6 +28,7 @@ export const viewport: Viewport = {
 };
 
 import AuthProvider from "@/components/providers/SessionProvider";
+import { MotionProvider } from "@/components/providers/MotionProvider";
 
 export default function RootLayout({
   children,
@@ -35,15 +36,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-      <html lang="en">
-        <body className={`${geistSans.variable} antialiased bg-[#0a0a0a] min-h-screen text-white font-sans`}>
+      <html lang="en" suppressHydrationWarning>
+        <head>
+          <script dangerouslySetInnerHTML={{ __html: NO_FLASH_SCRIPT }} />
+        </head>
+        <body className="antialiased bg-page min-h-screen text-fg font-sans">
           <AuthProvider>
-            <div className="fixed inset-0 pointer-events-none">
-            <div className="absolute inset-0 bg-gradient-to-tr from-emerald-950/20 via-[#0a0a0a] to-[#0a0a0a]" />
-            <div className="absolute top-0 right-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-[128px]" />
-            <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-500/10 rounded-full blur-[128px]" />
-          </div>
-          {children}
+          <MotionProvider>{children}</MotionProvider>
+          <Toaster richColors position="top-right" theme="dark" />
           <SpeedInsights />
           <Analytics />
           </AuthProvider>

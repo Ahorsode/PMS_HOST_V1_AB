@@ -2,30 +2,72 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Users, Mail, Shield, UserPlus, Loader2, CheckCircle2, XCircle, Trash2, ShieldCheck, UserCheck, Settings, AlertCircle } from 'lucide-react';
-import { inviteWorker, getFarmMembers, deleteMember, deleteInvitation, updateWorkerPermissions } from '@/lib/actions/staff-actions';
-import { Button } from '@/components/ui/Button';
-import { Dialog } from '@/components/ui/Dialog';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
+import { Users, Mail, Shield, UserPlus, Loader2, CheckCircle2, Trash2, ShieldCheck, UserCheck, Settings, AlertCircle, Phone, RotateCcw, KeyRound, PauseCircle, PlayCircle } from 'lucide-react';
+import { inviteWorker, getFarmMembers, deleteMember, deleteInvitation, updateWorkerPermissions, resetWorkerPermissions, updateFarmMemberRole, getUserForInvite, regenerateInviteCode, setMemberAccessPaused } from '@/lib/actions/staff-actions';
+import Link from 'next/link';
+import { InviteCodePanel, type IssuedInviteCode } from '@/components/team/InviteCodePanel';
+import { getDefaultPermissionsForRole, type RolePermissionDefaults } from '@/lib/staff-permission-defaults';
+import {
+  Button,
+  Dialog,
+  Form,
+  FormActions,
+  FormError,
+  FormNote,
+  Input,
+  MoreDetails,
+  Select,
+} from '@/components/ui/form';
 import { PermissionsModal } from '@/components/ui/PermissionsModal';
 import { useRouter } from 'next/navigation';
+import { MutationBoundary } from '@/components/ui/MutationFeedback';
+import { toast } from 'sonner';
+import { QUICK_ICON, quickButtonClass } from '@/components/ui/quick-action';
 
-export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
+export default function TeamView({
+  canEdit = true,
+  rolePermissions,
+}: {
+  canEdit?: boolean;
+  /** Admin-set starting permissions per role (Farm defaults settings). */
+  rolePermissions?: RolePermissionDefaults;
+}) {
   const router = useRouter();
   const [members, setMembers] = useState<any[]>([]);
   const [invitations, setInvitations] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isInviting, setIsInviting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isSavingPermissions, setIsSavingPermissions] = useState(false);
+  const [resettingPermissionsUserId, setResettingPermissionsUserId] = useState<string | null>(null);
+  const [updatingRoleUserId, setUpdatingRoleUserId] = useState<string | null>(null);
   const [currentUserRole, setCurrentUserRole] = useState<string>('WORKER');
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<{ id: number, type: 'member' | 'invite' } | null>(null);
+  const [issuedCode, setIssuedCode] = useState<IssuedInviteCode | null>(null);
+  const [issuingCodeFor, setIssuingCodeFor] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string, type: 'member' | 'invite' } | null>(null);
   const [permissionTarget, setPermissionTarget] = useState<any>(null);
-  const [limitCheck, setLimitCheck] = useState<{ canAdd: boolean, limit: number, current: number } | null>(null);
+  const [limitCheck, setLimitCheck] = useState<{ canAdd: boolean, limit: number | null, current: number } | null>(null);
+  const [staffPlan, setStaffPlan] = useState<{ planType: 'SOLO' | 'TEAM', staffLimit: number | null, overLimitCount: number } | null>(null);
+  const [changingAccessUserId, setChangingAccessUserId] = useState<string | null>(null);
+  const [showPermissions, setShowPermissions] = useState(false);
+  const [inviteRole, setInviteRole] = useState<string>('WORKER');
+  const [pendingPermissions, setPendingPermissions] = useState<Record<string, boolean>>({});
+  const [editPermissionsInvite, setEditPermissionsInvite] = useState<{
+    inviteId: string;
+    userId: string;
+    name: string;
+    role: string;
+    currentPermissions: any;
+  } | null>(null);
 
   useEffect(() => {
     loadTeam();
   }, []);
+
+  useEffect(() => {
+    setPendingPermissions({});
+  }, [inviteRole]);
 
   const loadTeam = async () => {
     setIsLoading(true);
@@ -36,6 +78,7 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
         setInvitations(data.invitations || []);
         setCurrentUserRole(data.currentUserRole || 'WORKER');
         setLimitCheck(data.limitCheck || null);
+        setStaffPlan(data.staffPlan || null);
       }
     } catch (err) {
       console.error(err);
@@ -46,19 +89,29 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
 
   const handleInvite = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isInviting) return;
     setIsInviting(true);
     setMessage(null);
 
     const form = e.currentTarget;
     const formData = new FormData(form);
     const emailOrPhone = formData.get('emailOrPhone') as string;
-    const role = formData.get('role') as any;
+    const role = inviteRole as any;
 
     try {
-      const result = await inviteWorker({ emailOrPhone, role }) as any;
+      const result = await inviteWorker({
+        emailOrPhone,
+        role,
+        permissions: Object.keys(pendingPermissions).length > 0 ? pendingPermissions : undefined,
+      }) as any;
       if (result?.success) {
-        setMessage({ type: 'success', text: `Invitation sent to ${emailOrPhone}!` });
+        setMessage({ type: 'success', text: result.inviteCode ? `${emailOrPhone} added. Share their login code below.` : `${emailOrPhone} added. They can sign in with their existing password.` });
+        if (result.inviteCode) setIssuedCode({ code: result.inviteCode, recipient: emailOrPhone });
         form.reset();
+        setInviteRole('WORKER');
+        setPendingPermissions({});
+        setShowPermissions(false);
+        router.refresh();
         await loadTeam();
       } else {
         setMessage({ type: 'error', text: (result as any)?.error || 'Failed to send invitation.' });
@@ -71,9 +124,31 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
     }
   };
 
+  const handleNewCode = async (
+    target: { invitationId?: string; memberUserId?: string },
+    recipient: string,
+  ) => {
+    const key = target.invitationId || target.memberUserId || '';
+    if (issuingCodeFor) return;
+    setIssuingCodeFor(key);
+    try {
+      const result = await regenerateInviteCode(target) as any;
+      if (result?.success && result.inviteCode) {
+        setIssuedCode({ code: result.inviteCode, recipient });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        toast.error(result?.error || 'Could not issue a new code');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Could not issue a new code');
+    } finally {
+      setIssuingCodeFor(null);
+    }
+  };
+
   const handleDelete = async () => {
-    if (!deleteTarget) return;
-    setIsLoading(true);
+    if (!deleteTarget || isDeleting) return;
+    setIsDeleting(true);
     try {
       if (deleteTarget.type === 'member') {
         await deleteMember(deleteTarget.id);
@@ -85,40 +160,130 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
     } catch (err) {
       console.error(err);
     } finally {
-      setIsLoading(false);
+      setIsDeleting(false);
     }
   };
 
   const handleSavePermissions = async (permissions: any) => {
-    if (!permissionTarget) return;
-    setIsLoading(true);
+    if (!permissionTarget || isSavingPermissions) return;
+    setIsSavingPermissions(true);
     try {
       const response = await updateWorkerPermissions(permissionTarget.userId, permissions) as any;
       if (response?.success) {
+        toast.success('Permissions updated. Active sessions will be refreshed.');
         setPermissionTarget(null);
         router.refresh();
         await loadTeam();
       } else {
-        alert((response as any)?.error || 'Failed to save permissions');
+        toast.error((response as any)?.error || 'Failed to save permissions');
       }
     } catch (err: any) {
-      alert(err.message || 'Unknown error');
+      toast.error(err.message || 'Unknown error');
     } finally {
-      setIsLoading(false);
+      setIsSavingPermissions(false);
+    }
+  };
+
+  const handleResetPermissions = async (targetUserId: string, staffName: string, role: string) => {
+    if (isSavingPermissions || resettingPermissionsUserId) return;
+
+    const confirmed = window.confirm(
+      `Reset ${staffName.trim() || 'this staff member'} to the default ${role} permissions? Their active session will be refreshed.`
+    );
+    if (!confirmed) return;
+
+    setResettingPermissionsUserId(targetUserId);
+    try {
+      const response = await resetWorkerPermissions(targetUserId) as any;
+      if (response?.success) {
+        toast.success('Permissions reset to role defaults.');
+        setPermissionTarget(null);
+        setEditPermissionsInvite(null);
+        router.refresh();
+        await loadTeam();
+      } else {
+        toast.error(response?.error || 'Failed to reset permissions');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to reset permissions');
+    } finally {
+      setResettingPermissionsUserId(null);
+    }
+  };
+
+  const handleSavePendingInvitePermissions = async (permissions: any) => {
+    if (!editPermissionsInvite || isSavingPermissions) return;
+    setIsSavingPermissions(true);
+    try {
+      const response = await updateWorkerPermissions(editPermissionsInvite.userId, permissions) as any;
+      if (response?.success) {
+        setEditPermissionsInvite(null);
+        router.refresh();
+        await loadTeam();
+      } else {
+        toast.error(response?.error || 'Failed to save pending invite permissions');
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to save pending invite permissions');
+    } finally {
+      setIsSavingPermissions(false);
+    }
+  };
+
+  const handleAccessChange = async (member: any, paused: boolean) => {
+    if (changingAccessUserId) return;
+    setChangingAccessUserId(member.userId);
+    try {
+      const result = await setMemberAccessPaused(member.userId, paused);
+      if (!result.success) {
+        toast.error(result.error || 'Could not change access');
+        return;
+      }
+      toast.success(paused ? 'Access paused' : 'Access restored');
+      await loadTeam();
+    } finally {
+      setChangingAccessUserId(null);
+    }
+  };
+
+  const handleRoleChange = async (member: any, nextRole: string) => {
+    if (member.role === nextRole || updatingRoleUserId) return;
+
+    const previousRole = member.role;
+    setUpdatingRoleUserId(member.userId);
+    setMembers((current) => current.map((item) => item.id === member.id ? { ...item, role: nextRole, user: { ...item.user, role: nextRole } } : item));
+
+    try {
+      const response = await updateFarmMemberRole(member.userId, nextRole as any) as any;
+      if (response?.success) {
+        toast.success('Role updated. Active sessions will be refreshed.');
+        router.refresh();
+        await loadTeam();
+      } else {
+        setMembers((current) => current.map((item) => item.id === member.id ? { ...item, role: previousRole, user: { ...item.user, role: previousRole } } : item));
+        toast.error(response?.error || 'Failed to update role');
+      }
+    } catch (err: any) {
+      setMembers((current) => current.map((item) => item.id === member.id ? { ...item, role: previousRole, user: { ...item.user, role: previousRole } } : item));
+      toast.error(err.message || 'Failed to update role');
+    } finally {
+      setUpdatingRoleUserId(null);
     }
   };
 
   const getRoleBadge = (role: string) => {
     const configs: any = {
-      OWNER: { class: 'bg-purple-50 text-purple-700 border-purple-100', icon: ShieldCheck },
-      MANAGER: { class: 'bg-blue-50 text-blue-700 border-blue-100', icon: Shield },
+      OWNER: { class: 'bg-fg/[0.06] text-fg-2 border-fg/[0.08]', icon: ShieldCheck },
+      MANAGER: { class: 'bg-fg/[0.06] text-fg-2 border-fg/[0.08]', icon: Shield },
       WORKER: { class: 'bg-green-50 text-green-700 border-green-100', icon: UserCheck },
-      ACCOUNTANT: { class: 'bg-emerald-50 text-emerald-700 border-emerald-100', icon: ShieldCheck }
+      ACCOUNTANT: { class: 'bg-emerald-50 text-emerald-700 border-emerald-100', icon: ShieldCheck },
+      FINANCE_OFFICER: { class: 'bg-fg/[0.06] text-fg-2 border-fg/[0.08]', icon: ShieldCheck },
+      CASHIER: { class: 'bg-amber-50 text-amber-700 border-amber-100', icon: UserCheck }
     };
-    const config = configs[role] || { class: 'bg-gray-50 text-gray-700 border-gray-100', icon: Users };
+    const config = configs[role] || { class: 'bg-page text-fg-2 border-fg/[0.08]', icon: Users };
     const Icon = config.icon;
     return (
-      <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-widest border flex items-center gap-1 ${config.class}`}>
+      <span className={`px-2.5 py-1 rounded-full text-xs font-medium border flex items-center gap-1 ${config.class}`}>
         <Icon className="w-3 h-3" />
         {role}
       </span>
@@ -126,119 +291,291 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-7 px-3 py-7 relative">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-white/10 backdrop-blur-md p-7 rounded-lg border border-white/10 relative overflow-hidden gap-4">
-        <div className="absolute top-0 right-0 p-7 opacity-5">
-           <Users className="w-32 h-32 text-emerald-400" />
-        </div>
+    <div className="max-w-7xl mx-auto space-y-7 px-0 md:px-3 pt-2 pb-7 md:py-7 relative">
+      {issuedCode && <InviteCodePanel issued={issuedCode} onDismiss={() => setIssuedCode(null)} />}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-fg/10 p-7 rounded-lg border border-fg/10 relative overflow-hidden gap-4">
         <div className="relative z-10">
-          <h2 className="text-4xl font-bold text-white tracking-normal">Team <span className="text-emerald-400 italic">Management</span></h2>
-          <p className="text-white/80 font-bold uppercase tracking-widest text-xs mt-2 flex items-center gap-2 italic">
-             <Shield className="w-3 h-3" /> {currentUserRole === 'OWNER' ? 'Absolute Farm Owner' : `${currentUserRole} Access`}
+          <h1 className="text-3xl font-semibold leading-tight text-fg">Team</h1>
+          <p className="mt-2 text-sm text-fg-2">
+             {currentUserRole === 'OWNER' ? 'You are the farm owner' : `Your role: ${currentUserRole.toLowerCase()}`}
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-7">
         <div className="lg:col-span-2 space-y-7">
-          <Card className="rounded-lg border border-white/10 bg-white/10 backdrop-blur-xl overflow-hidden shadow-2xl">
-            <CardHeader className="bg-white/10 rounded-t-[2.5rem] border-b border-white/10 px-7 py-5">
-              <CardTitle className="flex items-center text-white font-bold italic">
-                <Users className="w-5 h-5 mr-2 text-emerald-400" />
-                Active Members
+          <Card className="rounded-lg border border-fg/10 bg-fg/10 overflow-hidden">
+            <CardHeader className="bg-fg/10 rounded-t-[2.5rem] border-b border-fg/10 px-7 py-5">
+              <CardTitle className="flex items-center text-fg font-medium">
+                <Users className="w-5 h-5 mr-2 text-fg-3" />
+                Active members
               </CardTitle>
             </CardHeader>
             <CardContent className="p-7">
               {isLoading && members.length === 0 ? (
-                <div className="flex justify-center p-16 text-emerald-500"><Loader2 className="animate-spin h-10 w-10" /></div>
+                <div className="flex justify-center p-16 text-fg"><Loader2 className="animate-spin h-10 w-10" /></div>
               ) : members.length === 0 ? (
-                <div className="text-center py-16 bg-white/10 rounded-lg border-2 border-dashed border-white/10">
-                  <Users className="w-12 h-12 text-white/10 mx-auto mb-3" />
-                  <p className="text-white/70 font-bold uppercase tracking-widest text-xs italic">No staff members found.</p>
+                <div className="text-center py-16 bg-fg/10 rounded-lg border-2 border-dashed border-fg/10">
+                  <Users className="w-12 h-12 text-fg/10 mx-auto mb-3" />
+                  <p className="text-fg/70 font-medium text-xs">No staff members found.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {members.map((member) => (
-                    <div key={member.id} className="p-4 rounded-lg border border-white/5 bg-white/10 hover:border-emerald-500/30 hover:bg-white/[0.08] transition-all flex items-center justify-between group relative overflow-hidden">
+                  {staffPlan && currentUserRole === 'OWNER' && (staffPlan.overLimitCount > 0 || staffPlan.staffLimit === 0) && members.some((m) => m.role !== 'OWNER') && (
+                    <div className="flex items-start gap-3 rounded-lg border border-fg/[0.08] bg-fg/[0.04] p-4 text-sm text-yolk">
+                      <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-fg-3" />
+                      <div className="space-y-1">
+                        {staffPlan.staffLimit === 0 ? (
+                          <p className="font-medium">Solo plans are owner only, so your staff cannot sign in.</p>
+                        ) : (
+                          <p className="font-medium">
+                            Your plan allows {staffPlan.staffLimit} staff, so {staffPlan.overLimitCount} {staffPlan.overLimitCount === 1 ? 'person is' : 'people are'} locked out.
+                          </p>
+                        )}
+                        <p className="text-yolk/80">
+                          {staffPlan.staffLimit === 0
+                            ? 'Switch to a Team plan to give them access again.'
+                            : 'The most recently added staff are locked unless you choose. Pause someone with the pause button to give their seat to a locked person.'}{' '}
+                          <Link href="/dashboard/license-upgrade" className="font-medium underline underline-offset-2">See plans</Link>
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  {members.map((member) => {
+                    const isMutatingMember = isDeleting && deleteTarget?.type === 'member' && deleteTarget.id === member.id;
+                    const isUpdatingRole = updatingRoleUserId === member.userId;
+
+                    return (
+                    <MutationBoundary key={member.id} active={isMutatingMember || isUpdatingRole} label={isUpdatingRole ? 'Updating role...' : 'Revoking access...'}>
+                    <div className="p-4 rounded-lg border border-fg/5 bg-fg/10 hover:border-fg/[0.08] hover:bg-fg/[0.08] transition-colors flex items-center justify-between group relative overflow-hidden">
                       <div className="flex items-center space-x-4">
-                        <div className="w-14 h-14 rounded-md bg-emerald-500/10 flex items-center justify-center text-emerald-400 font-bold text-xl shadow-lg border border-emerald-500/20">
+                        <div className="w-14 h-14 rounded-md bg-fg/[0.04] flex items-center justify-center text-fg font-medium text-xl border border-fg/[0.08]">
                           {(member.user.firstname?.charAt(0) || member.user.surname?.charAt(0) || 'U').toUpperCase()}
                         </div>
                         <div>
-                          <p className="font-bold text-white text-lg tracking-normal">
+                          <p className="font-medium text-fg text-lg tracking-normal">
                             {member.user.firstname} {member.user.surname}
                           </p>
-                          <p className="text-xs text-white/70 font-bold tracking-normal">{member.user.email}</p>
+                          <div className="mt-1 flex flex-wrap items-center gap-2">
+                            {member.user.phoneNumber && (
+                              <span className="inline-flex items-center gap-1 text-xs text-fg font-medium tracking-normal">
+                                <Phone className="w-3 h-3" />
+                                {member.user.phoneNumber}
+                              </span>
+                            )}
+                            <span className="text-xs text-fg/70 font-medium tracking-normal">{member.user.email || 'No email on file'}</span>
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
-                        {getRoleBadge(member.role)}
+                        {canEdit && member.user.mustChangePassword && (currentUserRole === 'OWNER' || currentUserRole === 'MANAGER') && (
+                          <button
+                            type="button"
+                            onClick={() => handleNewCode(
+                              { memberUserId: member.userId },
+                              member.user.phoneNumber || member.user.email || 'this team member',
+                            )}
+                            disabled={issuingCodeFor !== null}
+                            title="They haven't set a password yet. Issue a new one-time login code."
+                            className="inline-flex items-center gap-1.5 rounded-md border border-fg/[0.08] bg-fg/[0.04] px-2.5 py-1.5 text-xs font-medium text-fg transition hover:bg-fg/[0.04] disabled:opacity-50"
+                          >
+                            {issuingCodeFor === member.userId ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <KeyRound className="h-3.5 w-3.5" />}
+                            New code
+                          </button>
+                        )}
+                        {currentUserRole === 'OWNER' && member.role !== 'OWNER' ? (
+                          <div className="relative">
+                            <select
+                              value={member.role}
+                              onChange={(event) => handleRoleChange(member, event.target.value)}
+                              disabled={!canEdit || isUpdatingRole}
+                              className="h-11 cursor-pointer rounded-lg border border-fg/[0.14] bg-page px-3 pr-9 text-sm text-fg outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-50 md:h-10"
+                              title="Change role"
+                              aria-label={`Role for ${member.user?.firstname || 'this member'}`}
+                            >
+                              <option value="WORKER">Worker</option>
+                              <option value="CASHIER">Cashier</option>
+                              <option value="MANAGER">Manager</option>
+                              <option value="ACCOUNTANT">Accountant</option>
+                              <option value="FINANCE_OFFICER">Finance officer</option>
+                            </select>
+                            {isUpdatingRole && <Loader2 className="absolute right-3 top-3 h-4 w-4 animate-spin text-fg-3" />}
+                          </div>
+                        ) : (
+                          getRoleBadge(member.role)
+                        )}
+                        {member.accessStatus && member.accessStatus !== 'ACTIVE' && (
+                          <span className="rounded-full border border-fg/[0.08] bg-fg/[0.04] px-2.5 py-1 text-xs font-medium text-fg">
+                            {member.accessStatus === 'PAUSED' ? 'Paused' : 'Locked · over limit'}
+                          </span>
+                        )}
+                        {canEdit && currentUserRole === 'OWNER' && member.role !== 'OWNER' && (
+                          <button
+                            type="button"
+                            onClick={() => handleAccessChange(member, member.accessStatus !== 'PAUSED')}
+                            disabled={changingAccessUserId !== null}
+                            title={member.accessStatus === 'PAUSED' ? 'Restore access' : 'Pause access'}
+                            className="p-2.5 text-fg hover:bg-fg/[0.04] rounded-md transition-colors border border-transparent hover:border-fg/[0.08] disabled:opacity-50"
+                          >
+                            {changingAccessUserId === member.userId ? (
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : member.accessStatus === 'PAUSED' ? (
+                              <PlayCircle className="w-5 h-5" />
+                            ) : (
+                              <PauseCircle className="w-5 h-5" />
+                            )}
+                          </button>
+                        )}
                         {canEdit && currentUserRole === 'OWNER' && member.userId !== (members.find(m => m.role === 'OWNER')?.userId || '') && (
-                          <button 
+                          <>
+                          <button aria-label="Edit granular permissions" 
                             onClick={() => setPermissionTarget(member)}
-                            className="p-2.5 text-blue-400 hover:bg-blue-500/10 rounded-md transition-all opacity-0 group-hover:opacity-100 border border-transparent hover:border-blue-500/20"
+                            title="Edit granular permissions"
+                            className="p-2.5 text-fg-2 hover:bg-fg/[0.06] rounded-md transition-colors border border-transparent hover:border-fg/[0.08]"
                           >
                             <Settings className="w-5 h-5" />
                           </button>
+                          <button
+                            onClick={() => handleResetPermissions(
+                              member.userId,
+                              `${member.user.firstname || ''} ${member.user.surname || ''}`,
+                              member.role
+                            )}
+                            disabled={resettingPermissionsUserId === member.userId}
+                            title="Reset to role default permissions"
+                            className={quickButtonClass('restore')}
+                          >
+                            {resettingPermissionsUserId === member.userId ? (
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                              <RotateCcw {...QUICK_ICON} />
+                            )}
+                          </button>
+                          </>
                         )}
                         {canEdit && (currentUserRole === 'OWNER' || currentUserRole === 'MANAGER') && (member.role !== 'OWNER') && (
-                          <button 
+                          <button aria-label="Remove team member" 
                             onClick={() => setDeleteTarget({ id: member.id, type: 'member' })}
-                            className="p-2.5 text-white/20 hover:text-red-400 hover:bg-red-500/10 rounded-md transition-all opacity-0 group-hover:opacity-100 border border-transparent hover:border-red-500/20"
+                            className={quickButtonClass('delete')}
+                            title="Remove team member"
                           >
-                            <Trash2 className="w-5 h-5" />
+                            <Trash2 {...QUICK_ICON} />
                           </button>
                         )}
                       </div>
                     </div>
-                  ))}
+                    </MutationBoundary>
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
           </Card>
 
-          <Card className="rounded-lg border border-white/10 bg-white/10 backdrop-blur-xl overflow-hidden shadow-2xl">
-            <CardHeader className="bg-white/10 rounded-t-[2.5rem] border-b border-white/10 px-7 py-5">
-              <CardTitle className="flex items-center text-white font-bold italic">
-                <Mail className="w-5 h-5 mr-2 text-amber-400" />
-                Pending Invitations
+          <Card className="rounded-lg border border-fg/10 bg-fg/10 overflow-hidden">
+            <CardHeader className="bg-fg/10 rounded-t-[2.5rem] border-b border-fg/10 px-7 py-5">
+              <CardTitle className="flex items-center text-fg font-medium">
+                <Mail className="w-5 h-5 mr-2 text-fg-3" />
+                Pending invitations
               </CardTitle>
             </CardHeader>
             <CardContent className="p-7">
               {isLoading && invitations.length === 0 ? (
-                <div className="flex justify-center p-11 text-amber-400"><Loader2 className="animate-spin" /></div>
+                <div className="flex justify-center p-11 text-fg"><Loader2 className="animate-spin" /></div>
               ) : invitations.length === 0 ? (
-                <div className="text-center py-11 bg-white/10 rounded-lg border-2 border-dashed border-white/10">
-                  <Mail className="w-10 h-10 text-white/10 mx-auto mb-2" />
-                  <p className="text-white/70 font-bold uppercase tracking-widest text-xs italic">No pending invitations.</p>
+                <div className="text-center py-11 bg-fg/10 rounded-lg border-2 border-dashed border-fg/10">
+                  <Mail className="w-10 h-10 text-fg/10 mx-auto mb-2" />
+                  <p className="text-fg/70 font-medium text-xs">No pending invitations.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {invitations.map((invite) => (
-                    <div key={invite.id} className="p-4 rounded-md border border-white/5 bg-white/10 flex items-center justify-between group hover:bg-white/[0.08] transition-all">
+                  {invitations.map((invite) => {
+                    const isMutatingInvite = isDeleting && deleteTarget?.type === 'invite' && deleteTarget.id === invite.id;
+
+                    return (
+                    <MutationBoundary key={invite.id} active={isMutatingInvite} label="Cancelling invite...">
+                    <div className="p-4 rounded-md border border-fg/5 bg-fg/10 flex items-center justify-between group hover:bg-fg/[0.08] transition-colors">
                       <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 rounded-md bg-amber-500/10 flex items-center justify-center text-amber-500 border border-amber-500/20">
+                        <div className="w-12 h-12 rounded-md bg-fg/[0.04] flex items-center justify-center text-fg-3 border border-fg/[0.08]">
                           <Mail className="w-6 h-6" />
                         </div>
                         <div>
-                          <p className="font-bold text-white tracking-normal">{invite.email || invite.phoneNumber}</p>
-                          <p className="text-xs text-white/70 font-bold uppercase tracking-widest mt-0.5">Sent {new Date(invite.createdAt).toLocaleDateString()}</p>
+                          <p className="font-medium text-fg tracking-normal">{invite.email || invite.phoneNumber}</p>
+                          <p className="text-xs text-fg/70 font-medium mt-0.5">Sent {new Date(invite.createdAt).toLocaleDateString()}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
                         {getRoleBadge(invite.role)}
-                        <span className="text-xs bg-amber-500/10 text-amber-400 px-2 py-1 rounded-full font-bold uppercase tracking-widest border border-amber-500/20">Pending</span>
+                        <span className="text-xs bg-fg/[0.04] text-fg px-2 py-1 rounded-full font-medium border border-fg/[0.08]">Pending</span>
                         {canEdit && (currentUserRole === 'OWNER' || currentUserRole === 'MANAGER') && (
-                          <button 
-                            onClick={() => setDeleteTarget({ id: invite.id, type: 'invite' })}
-                            className="p-2 text-white/20 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all opacity-0 group-hover:opacity-100"
+                          <button
+                            type="button"
+                            onClick={() => handleNewCode({ invitationId: invite.id }, invite.email || invite.phoneNumber)}
+                            disabled={issuingCodeFor !== null}
+                            title="Issue a new one-time login code"
+                            className="inline-flex items-center gap-1.5 rounded-md border border-fg/10 bg-fg/5 px-2.5 py-1.5 text-xs font-medium text-fg/80 transition hover:bg-fg/10 hover:text-fg disabled:opacity-50"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            {issuingCodeFor === invite.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <KeyRound className="h-3.5 w-3.5" />}
+                            New code
+                          </button>
+                        )}
+                        {canEdit && currentUserRole === 'OWNER' && (
+                          <>
+                          <button aria-label="Edit access control"
+                            onClick={async () => {
+                              const result = await getUserForInvite(invite.id) as any;
+                              if (result?.userId) {
+                                setEditPermissionsInvite({
+                                  inviteId: invite.id,
+                                  userId: result.userId,
+                                  name: invite.email || invite.phoneNumber || 'Pending User',
+                                  currentPermissions: result.permissions,
+                                  role: invite.role,
+                                });
+                              } else {
+                                toast.error('Could not load pending invite permissions');
+                              }
+                            }}
+                            className="p-2 text-fg-2 hover:bg-fg/[0.06] rounded-lg transition-colors"
+                            title="Edit access control"
+                          >
+                            <Settings className="w-4 h-4" />
+                          </button>
+                          <button aria-label="Reset to role default permissions"
+                            onClick={async () => {
+                              const result = await getUserForInvite(invite.id) as any;
+                              if (result?.userId) {
+                                await handleResetPermissions(
+                                  result.userId,
+                                  invite.email || invite.phoneNumber || 'Pending User',
+                                  invite.role
+                                );
+                              } else {
+                                toast.error('Could not load pending invite permissions');
+                              }
+                            }}
+                            disabled={resettingPermissionsUserId !== null}
+                            className={quickButtonClass('restore')}
+                            title="Reset to role default permissions"
+                          >
+                            <RotateCcw {...QUICK_ICON} />
+                          </button>
+                          </>
+                        )}
+                        {canEdit && (currentUserRole === 'OWNER' || currentUserRole === 'MANAGER') && (
+                          <button aria-label="Cancel invitation" 
+                            onClick={() => setDeleteTarget({ id: invite.id, type: 'invite' })}
+                            className={quickButtonClass('delete')}
+                            title="Cancel invitation"
+                          >
+                            <Trash2 {...QUICK_ICON} />
                           </button>
                         )}
                       </div>
                     </div>
-                  ))}
+                    </MutationBoundary>
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
@@ -247,34 +584,34 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
 
         <div className="space-y-7">
           {limitCheck && (currentUserRole === 'OWNER' || currentUserRole === 'MANAGER') && (
-            <Card className="rounded-lg border border-white/10 bg-white/10 backdrop-blur-xl overflow-hidden shadow-2xl">
+            <Card className="rounded-lg border border-fg/10 bg-fg/10 overflow-hidden">
               <CardContent className="p-7">
                 <div className="flex justify-between items-end mb-3">
                   <div>
-                    <h3 className="text-white font-bold text-xl italic tracking-normal">Capacity Gauge</h3>
-                    <p className="text-white/70 text-xs font-bold uppercase tracking-widest mt-1">Worker Limit</p>
+                    <h3 className="text-fg font-medium text-xl tracking-normal">Capacity gauge</h3>
+                    <p className="text-fg/70 text-xs font-medium mt-1">Worker limit</p>
                   </div>
                   <div className="text-right">
-                    <span className="text-3xl font-bold text-emerald-400">{limitCheck.current}</span>
-                    <span className="text-white/70 font-bold text-lg mx-1">/</span>
-                    <span className="text-white font-bold">{limitCheck.limit >= 1000 ? '∞' : limitCheck.limit}</span>
+                    <span className="text-3xl font-medium text-fg">{limitCheck.current}</span>
+                    <span className="text-fg/70 font-medium text-lg mx-1">/</span>
+                    <span className="text-fg font-medium">{limitCheck.limit === null ? '∞' : limitCheck.limit}</span>
                   </div>
                 </div>
                 
                 {/* Progress Bar */}
-                <div className="h-3 w-full bg-white/10 rounded-full overflow-hidden mb-3 relative shadow-inner">
+                <div className="h-3 w-full bg-fg/10 rounded-full overflow-hidden mb-3 relative shadow-inner">
                   <div 
-                    className={`h-full rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(16,185,129,0.5)] ${limitCheck.canAdd ? 'bg-gradient-to-r from-emerald-400 to-teal-500' : 'bg-gradient-to-r from-rose-400 to-red-500'}`}
-                    style={{ width: `${Math.min((limitCheck.current / limitCheck.limit) * 100, 100)}%` }}
+                    className={`h-full rounded-full transition-colors duration-200 ${limitCheck.canAdd ? 'bg-tile' : 'bg-tile'}`}
+                    style={{ width: `${limitCheck.limit === null ? Math.min(limitCheck.current * 5, 100) : limitCheck.limit === 0 ? 100 : Math.min((limitCheck.current / limitCheck.limit) * 100, 100)}%` }}
                   ></div>
                 </div>
 
                 {!limitCheck.canAdd && (
-                  <div className="bg-rose-500/10 border border-rose-500/20 p-3 rounded-md flex items-start gap-2 mt-5 animate-in fade-in slide-in-from-bottom-2">
-                    <AlertCircle className="w-5 h-5 text-rose-400 shrink-0 mt-0.5" />
+                  <div className="bg-fg/[0.04] border border-fg/[0.08] p-3 rounded-md flex items-start gap-2 mt-5 animate-in fade-in slide-in-from-bottom-2">
+                    <AlertCircle className="w-5 h-5 text-neg shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-rose-400 font-bold text-sm tracking-normal">Subscription Limit Reached</p>
-                      <p className="text-rose-400/70 text-xs mt-1 leading-relaxed">Upgrade your tier to invite addition personnel to this farm.</p>
+                      <p className="text-neg font-medium text-sm tracking-normal">Subscription limit reached</p>
+                      <p className="text-neg text-xs mt-1 leading-relaxed">{limitCheck.limit === 0 ? 'Solo plans are owner only. Switch to a Team plan to invite staff.' : 'Upgrade to Business Plus for unlimited staff.'}</p>
                     </div>
                   </div>
                 )}
@@ -283,73 +620,104 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
           )}
 
           {canEdit && (currentUserRole === 'OWNER' || currentUserRole === 'MANAGER') && (
-            <Card className="rounded-lg border border-white/10 bg-emerald-500/10 backdrop-blur-xl text-white overflow-hidden relative shadow-2xl border-dashed">
-              <div className="absolute top-0 right-0 p-7 opacity-10 pointer-events-none">
-                <UserPlus className="w-48 h-48 text-emerald-400" />
-              </div>
+            <Card className="rounded-lg border border-fg/10 bg-fg/[0.04] text-fg overflow-hidden relative border-dashed">
               <CardHeader className="relative z-10 p-7">
                 <CardTitle className="flex items-center">
-                  Invite Staff
+                  Invite staff
                 </CardTitle>
               </CardHeader>
               <CardContent className="relative z-10 px-7 pb-7">
-                <form onSubmit={handleInvite} className="space-y-5">
-                  {message && (
-                    <div className={`p-3 rounded-md text-xs font-bold uppercase tracking-widest flex items-center gap-2 animate-in fade-in slide-in-from-top-2 backdrop-blur-md ${
-                      message.type === 'success' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/20 text-red-400 border border-red-500/30'
-                    }`}>
-                      {message.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
-                      {message.text}
-                    </div>
-                  )}
-                  <Input 
-                    label="Email or Phone Number"
-                    name="emailOrPhone"
-                    type="text" 
-                    required
-                    placeholder="staff@example.com or 0540000000"
-                  />
-                  <Select 
-                    label="Assign Role"
-                    name="role"
-                    options={[
-                      { label: 'Worker', value: 'WORKER' },
-                      { label: 'Manager', value: 'MANAGER' },
-                      { label: 'Accountant', value: 'ACCOUNTANT' }
-                    ]}
-                    defaultValue="WORKER"
-                  />
-                  <Button 
-                    type="submit" 
-                    disabled={!!(isInviting || (limitCheck && !limitCheck.canAdd))}
-                    className="w-full py-5 mt-3"
-                  >
-                    {isInviting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Send Invitation'}
-                  </Button>
-                </form>
+                <Form onSubmit={handleInvite}>
+                  <fieldset disabled={isInviting} className="min-w-0 space-y-5">
+                    {message ? (
+                      message.type === 'success' ? (
+                        <FormNote tone="success">
+                          <span className="flex items-center gap-2 font-medium">
+                            <CheckCircle2 className="h-4 w-4 shrink-0 text-accent" strokeWidth={1.75} />
+                            {message.text}
+                          </span>
+                        </FormNote>
+                      ) : (
+                        <FormError>{message.text}</FormError>
+                      )
+                    ) : null}
+                    <Input
+                      label="Email or phone number"
+                      name="emailOrPhone"
+                      type="text"
+                      required
+                      placeholder="e.g. 0540000000 or kofi@example.com"
+                      onChange={() => {
+                        if (message?.type === 'error') setMessage(null);
+                      }}
+                    />
+                    <Select
+                      label="Their role"
+                      name="role"
+                      value={inviteRole}
+                      onChange={(event) => setInviteRole(event.target.value)}
+                      hint="Sets what they can see and change. You can adjust it below."
+                      options={[
+                        { label: 'Worker', value: 'WORKER' },
+                        { label: 'Cashier', value: 'CASHIER' },
+                        { label: 'Manager', value: 'MANAGER' },
+                        { label: 'Accountant', value: 'ACCOUNTANT' },
+                        { label: 'Finance officer', value: 'FINANCE_OFFICER' }
+                      ]}
+                    />
+                    <MoreDetails label="Choose what they can see and change" open={showPermissions} onOpenChange={setShowPermissions}>
+                      <InlinePermissionToggles
+                        role={inviteRole}
+                        roleDefaults={rolePermissions}
+                        value={pendingPermissions}
+                        onChange={setPendingPermissions}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setPendingPermissions({})}
+                        className="w-full"
+                      >
+                        <RotateCcw className="h-4 w-4" strokeWidth={1.75} />
+                        Back to the {inviteRole.toLowerCase().replace('_', ' ')} defaults
+                      </Button>
+                    </MoreDetails>
+                  </fieldset>
+                  <FormActions>
+                    <Button
+                      type="submit"
+                      variant="accent"
+                      disabled={!!(isInviting || (limitCheck && !limitCheck.canAdd))}
+                      isLoading={isInviting}
+                      loadingText="Sending"
+                    >
+                      Send invitation
+                    </Button>
+                  </FormActions>
+                </Form>
               </CardContent>
             </Card>
           )}
 
-          <Card className="rounded-lg border border-white/10 bg-white/10 backdrop-blur-xl p-7 shadow-2xl">
+          <Card className="rounded-lg border border-fg/10 bg-fg/10 p-7">
             <div className="flex items-center gap-3 mb-7">
-              <div className="p-2 bg-blue-500/10 rounded-md border border-blue-500/20">
-                <Shield className="w-6 h-6 text-blue-400" />
+              <div className="p-2 bg-fg/[0.06] rounded-md border border-fg/[0.08]">
+                <Shield className="w-6 h-6 text-fg-2" />
               </div>
-              <h4 className="font-bold text-white italic tracking-normal text-xl">Permissions</h4>
+              <h4 className="font-medium text-fg tracking-normal text-xl">Permissions</h4>
             </div>
             <div className="space-y-4">
-              <div className="p-4 bg-white/10 rounded-lg border border-white/5 group hover:bg-white/[0.08] transition-all">
-                <p className="font-bold text-xs uppercase tracking-widest text-blue-400 mb-2 italic">Manager</p>
-                <p className="text-xs text-white/70 leading-relaxed font-bold tracking-normal">Full visibility of all farm operations and logs. Can manage staff, inventory, and sales.</p>
+              <div className="p-4 bg-fg/10 rounded-lg border border-fg/5 group hover:bg-fg/[0.08] transition-colors">
+                <p className="font-medium text-xs text-fg-2 mb-2">Manager</p>
+                <p className="text-xs text-fg/70 leading-relaxed font-medium tracking-normal">Full visibility of all farm operations and logs. can manage staff, inventory, and sales.</p>
               </div>
-              <div className="p-4 bg-white/10 rounded-lg border border-white/5 group hover:bg-white/[0.08] transition-all">
-                <p className="font-bold text-xs uppercase tracking-widest text-emerald-400 mb-2 italic">Worker</p>
-                <p className="text-xs text-white/70 leading-relaxed font-bold tracking-normal">Limited to data entry (feeding, mortality logs). Can only view their own activity records.</p>
+              <div className="p-4 bg-fg/10 rounded-lg border border-fg/5 group hover:bg-fg/[0.08] transition-colors">
+                <p className="font-medium text-xs text-fg mb-2">Worker</p>
+                <p className="text-xs text-fg/70 leading-relaxed font-medium tracking-normal">Limited to data entry (feeding, mortality logs). can only view their own activity records.</p>
               </div>
-              <div className="p-4 bg-white/10 rounded-lg border border-white/5 group hover:bg-white/[0.08] transition-all">
-                <p className="font-bold text-xs uppercase tracking-widest text-emerald-500 mb-2 italic">Accountant</p>
-                <p className="text-xs text-white/70 leading-relaxed font-bold tracking-normal">Exclusive access to Finance and Sales modules. Handles commercial initialization and P&L reporting.</p>
+              <div className="p-4 bg-fg/10 rounded-lg border border-fg/5 group hover:bg-fg/[0.08] transition-colors">
+                <p className="font-medium text-xs text-fg mb-2">Accountant</p>
+                <p className="text-xs text-fg/70 leading-relaxed font-medium tracking-normal">Exclusive access to finance and sales modules. handles commercial initialization and P&L reporting.</p>
               </div>
             </div>
           </Card>
@@ -358,20 +726,24 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
 
       <Dialog 
         isOpen={!!deleteTarget} 
-        onOpenChange={(open) => !open && setDeleteTarget(null)} 
-        title={`Revoke ${deleteTarget?.type === 'member' ? 'Access' : 'Invitation'}`}
+        onOpenChange={(open) => !open && !isDeleting && setDeleteTarget(null)} 
+        title={deleteTarget?.type === 'member' ? 'Remove this person from the farm?' : 'Cancel this invitation?'}
+        className="max-w-md"
       >
         <div className="space-y-5">
-          <p className="text-white/70 font-medium">
-            Are you sure you want to {deleteTarget?.type === 'member' ? 'remove this member from the farm' : 'cancel this invitation'}? 
-            This action cannot be undone.
+          <p className="text-[15px] leading-6 text-fg-2">
+            {deleteTarget?.type === 'member'
+              ? 'They will no longer be able to open this farm. This cannot be undone.'
+              : 'The invitation will stop working. This cannot be undone.'}
           </p>
-          <div className="flex justify-end gap-2 pt-5 border-t border-white/10">
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
-            <Button variant="danger" onClick={handleDelete} isLoading={isLoading}>
-              Confirm Revoke
+          <FormActions destructive>
+            <Button type="button" variant="outline" onClick={() => setDeleteTarget(null)} disabled={isDeleting}>
+              Cancel
             </Button>
-          </div>
+            <Button type="button" variant="dangerSolid" onClick={handleDelete} isLoading={isDeleting} loadingText="Removing">
+              {deleteTarget?.type === 'member' ? 'Remove access' : 'Cancel invitation'}
+            </Button>
+          </FormActions>
         </div>
       </Dialog>
       
@@ -380,11 +752,111 @@ export default function TeamView({ canEdit = true }: { canEdit?: boolean }) {
           isOpen={!!permissionTarget}
           onClose={() => setPermissionTarget(null)}
           staffName={`${permissionTarget.user?.firstname || ''} ${permissionTarget.user?.surname || ''}`}
+          role={permissionTarget.role}
+          defaultPermissions={getDefaultPermissionsForRole(permissionTarget.role, undefined, rolePermissions)}
           initialPermissions={permissionTarget.user?.userPermissions?.[0]}
-          isLoading={isLoading}
+          isLoading={isSavingPermissions || resettingPermissionsUserId === permissionTarget.userId}
           onSave={handleSavePermissions}
+          onResetToDefaults={() => handleResetPermissions(
+            permissionTarget.userId,
+            `${permissionTarget.user?.firstname || ''} ${permissionTarget.user?.surname || ''}`,
+            permissionTarget.role
+          )}
         />
       )}
+
+      {editPermissionsInvite && (
+        <PermissionsModal
+          isOpen={!!editPermissionsInvite}
+          onClose={() => setEditPermissionsInvite(null)}
+          staffName={`${editPermissionsInvite.name} (Pending)`}
+          role={editPermissionsInvite.role}
+          defaultPermissions={getDefaultPermissionsForRole(editPermissionsInvite.role, undefined, rolePermissions)}
+          initialPermissions={editPermissionsInvite.currentPermissions}
+          isLoading={isSavingPermissions || resettingPermissionsUserId === editPermissionsInvite.userId}
+          onSave={handleSavePendingInvitePermissions}
+          onResetToDefaults={() => handleResetPermissions(
+            editPermissionsInvite.userId,
+            editPermissionsInvite.name,
+            editPermissionsInvite.role
+          )}
+        />
+      )}
+    </div>
+  );
+}
+
+const PERMISSION_MODULES = [
+  { label: 'Finance', view: 'canViewFinance', edit: 'canEditFinance' },
+  { label: 'Inventory', view: 'canViewInventory', edit: 'canEditInventory' },
+  { label: 'Livestock / batches', view: 'canViewBatches', edit: 'canEditBatches' },
+  { label: 'Sales', view: 'canViewSales', edit: 'canEditSales' },
+  { label: 'Eggs', view: 'canViewEggs', edit: 'canEditEggs' },
+  { label: 'Feeding', view: 'canViewFeeding', edit: 'canEditFeeding' },
+  { label: 'Houses', view: 'canViewHouses', edit: 'canEditHouses' },
+  { label: 'Mortality / quarantine', view: 'canViewMortality', edit: 'canEditMortality' },
+  { label: 'Customers / suppliers', view: 'canViewCustomers', edit: 'canEditCustomers' },
+  { label: 'Team management', view: 'canViewTeam', edit: 'canEditTeam' },
+] as const;
+
+function getInviteRoleDefaults(role: string, roleDefaults?: RolePermissionDefaults): Record<string, boolean> {
+  return getDefaultPermissionsForRole(role, undefined, roleDefaults);
+}
+
+function InlinePermissionToggles({
+  role,
+  roleDefaults,
+  value,
+  onChange,
+}: {
+  role: string;
+  roleDefaults?: RolePermissionDefaults;
+  value: Record<string, boolean>;
+  onChange: (value: Record<string, boolean>) => void;
+}) {
+  const effective = { ...getInviteRoleDefaults(role, roleDefaults), ...value };
+
+  function toggle(key: string) {
+    const next = { ...value, [key]: !effective[key] };
+
+    if (key.startsWith('canView') && !next[key]) {
+      next[key.replace('canView', 'canEdit')] = false;
+    }
+
+    if (key.startsWith('canEdit') && next[key]) {
+      next[key.replace('canEdit', 'canView')] = true;
+    }
+
+    onChange(next);
+  }
+
+  return (
+    <div className="divide-y divide-fg/[0.06]">
+      {PERMISSION_MODULES.map((module) => (
+        <div key={module.label} className="flex items-center justify-between gap-3 py-1">
+          <span className="min-w-0 text-sm text-fg">{module.label}</span>
+          <div className="flex shrink-0 items-center gap-1">
+            <label className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg px-2 text-sm text-fg-2">
+              <input
+                type="checkbox"
+                className="h-5 w-5 accent-[var(--accent)]"
+                checked={!!effective[module.view]}
+                onChange={() => toggle(module.view)}
+              />
+              See
+            </label>
+            <label className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg px-2 text-sm text-fg-2">
+              <input
+                type="checkbox"
+                className="h-5 w-5 accent-[var(--accent)]"
+                checked={!!effective[module.edit]}
+                onChange={() => toggle(module.edit)}
+              />
+              Change
+            </label>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
