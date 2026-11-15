@@ -6,18 +6,27 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { createBatch } from '@/lib/actions/batch-actions';
 import { useRouter } from 'next/navigation';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { BreedSelect } from '@/components/ui/BreedSelect';
-import { Button } from '@/components/ui/Button';
+import {
+  BreedSelect,
+  Button,
+  DateInput,
+  Dialog,
+  Form,
+  FormActions,
+  FormRow,
+  FormSection,
+  FormSteps,
+  Input,
+  MoreDetails,
+  Select,
+} from '@/components/ui/form';
+import { getLivestockUnit } from '@/lib/utils/growth-utils';
 import { getBreedOptionsForCategory, LIVESTOCK_CATEGORY_OPTIONS, normalizeBreedValue } from '@/lib/livestock-breed-options';
 
 import { FinancialInitializationModal } from '@/components/modals/FinancialInitializationModal';
 import { LivestockType } from '@prisma/client';
 import { createHouse } from '@/lib/actions/dashboard-actions';
-import { Dialog } from '@/components/ui/Dialog';
 import { toast } from 'sonner';
-import { MutationBoundary } from '@/components/ui/MutationFeedback';
 
 const formSchema = z.object({
   batchName: z.string().min(2, "Unit Name is required"),
@@ -31,6 +40,11 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+const REGISTER_STEPS = [
+  { id: 'house', label: 'House' },
+  { id: 'flock', label: 'Flock' },
+];
 
 interface RegisterBatchFormProps {
   houses: Array<{
@@ -48,6 +62,8 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
     const known = new Set(houses.map((h) => h.id.toString()));
     return [...houses, ...createdHouses.filter((h) => !known.has(h.id))];
   }, [houses, createdHouses]);
+  // Shows the two-step progress only to a farm that had to add its first house here.
+  const [startedWithoutHouse] = React.useState(houses.length === 0);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [showFinModal, setShowFinModal] = React.useState(false);
   const [createdBatchId, setCreatedBatchId] = React.useState<string | null>(null);
@@ -99,7 +115,7 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
   const handleCreateHouse = async () => {
     if (isCreatingHouse) return;
     if (!newHouseData.name || !newHouseData.capacity) {
-      toast.error("Please fill in house name and capacity");
+      toast.error("Enter the house name and how many it holds");
       return;
     }
     setIsCreatingHouse(true);
@@ -111,17 +127,17 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
       if (res.success && res.house) {
         const created = { id: String(res.house.id), name: String(res.house.name ?? newHouseData.name) };
         setCreatedHouses((prev) => [...prev, created]);
-        toast.success("House created. Now register your livestock.");
+        toast.success("House added. Now add your flock.");
         setShowHouseModal(false);
         setNewHouseData({ name: '', capacity: '' });
         // Wait a tick so the new option exists before selecting it.
         setTimeout(() => setValue("houseId", created.id, { shouldValidate: true }), 0);
         router.refresh();
       } else {
-        toast.error(res.error || "Failed to create house");
+        toast.error(res.error || "The house could not be added");
       }
     } catch (e) {
-      toast.error("An unexpected error occurred");
+      toast.error("Something went wrong. Check your connection and try again.");
     } finally {
       setIsCreatingHouse(false);
     }
@@ -130,16 +146,17 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
   const houseFields = (
     <>
       <Input
-        label="House name / number"
-        placeholder="e.g. House Alpha, Pen 1"
+        label="House name"
+        placeholder="e.g. House A, Pen 1"
         value={newHouseData.name}
         onChange={e => setNewHouseData(p => ({ ...p, name: e.target.value }))}
         disabled={isCreatingHouse}
       />
       <Input
-        label="Total capacity (birds/heads)"
+        label="How many it holds"
         type="number"
         min="1"
+        unit="birds"
         placeholder="e.g. 500"
         value={newHouseData.capacity}
         onChange={e => setNewHouseData(p => ({ ...p, capacity: e.target.value }))}
@@ -152,26 +169,23 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
   // the livestock form, instead of sending a new farm off to the Houses page.
   if (allHouses.length === 0) {
     return (
-      <div className="w-full max-w-lg">
-        <MutationBoundary active={isCreatingHouse} label="Creating house...">
-          <div className="space-y-4">
-            <div>
-              <p className="text-xs font-medium text-fg-3">Step 1 of 2</p>
-              <h3 className="mt-1 text-base font-medium text-fg">Add your first house</h3>
-              <p className="mt-1 text-sm text-fg-3">Livestock needs a house. Add one now and you'll go straight on to registering the birds.</p>
-            </div>
-            {houseFields}
-            <Button
-              onClick={handleCreateHouse}
-              isLoading={isCreatingHouse}
-              loadingText="Creating..."
-              className="w-full bg-fg hover:bg-fg/90 text-page font-medium h-12 rounded-lg"
-            >
-              Save house & continue
-            </Button>
-          </div>
-        </MutationBoundary>
-      </div>
+      <Form
+        onSubmit={(event) => {
+          event.preventDefault();
+          handleCreateHouse();
+        }}
+        noValidate
+      >
+        <FormSteps steps={REGISTER_STEPS} current={0} />
+        <FormSection title="Add your first house" hint="Every flock lives in a house. Add one now, then add the flock.">
+          {houseFields}
+        </FormSection>
+        <FormActions>
+          <Button type="submit" variant="accent" isLoading={isCreatingHouse} loadingText="Saving house">
+            Save house and continue
+          </Button>
+        </FormActions>
+      </Form>
     );
   }
 
@@ -196,10 +210,10 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
         setShowFinModal(true);
         router.refresh();
       } else {
-        alert("Error: " + result.error);
+        toast.error(result.error || "The flock could not be added. Try again.");
       }
     } catch (error) {
-      alert("An unexpected error occurred.");
+      toast.error("Something went wrong. Check your connection and try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -211,102 +225,93 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
   };
 
   return (
-    <div className="w-full max-w-lg">
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        <MutationBoundary active={isSubmitting} label="Registering livestock unit...">
-        <fieldset disabled={isSubmitting} className="space-y-5 disabled:opacity-70">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+    <>
+      <Form onSubmit={handleSubmit(onSubmit)} noValidate>
+        {startedWithoutHouse ? <FormSteps steps={REGISTER_STEPS} current={1} /> : null}
+        <fieldset disabled={isSubmitting} className="min-w-0 space-y-6">
+          <FormSection title="Flock details">
             <Input
-              label="Unit name / identity"
-              placeholder="e.g., Q1-Broiler-Alpha"
+              label="Flock name"
+              placeholder="e.g. Broilers March"
+              required
               {...register("batchName")}
               error={errors.batchName?.message}
             />
 
-            <Select
-              label="Livestock category"
-              options={[...LIVESTOCK_CATEGORY_OPTIONS]}
-              {...register("type")}
-              error={errors.type?.message}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Controller
-              name="breed"
-              control={control}
-              render={({ field }) => (
-                <BreedSelect
-                  label="Primary breed / specie"
-                  options={breedOptions}
-                  value={field.value}
-                  onChange={field.onChange}
-                  error={errors.breed?.message}
-                  required
-                />
-              )}
-            />
-
-            <Input
-              label="Initial quantity"
-              type="number"
-              min="1"
-              placeholder="1000"
-              {...register("initialQuantity", { valueAsNumber: true })}
-              error={errors.initialQuantity?.message}
-            />
-          </div>
+            <FormRow>
+              <Select
+                label="Kind of livestock"
+                options={[...LIVESTOCK_CATEGORY_OPTIONS]}
+                {...register("type")}
+                error={errors.type?.message}
+              />
+              <Controller
+                name="breed"
+                control={control}
+                render={({ field }) => (
+                  <BreedSelect
+                    label="Breed"
+                    options={breedOptions}
+                    value={field.value}
+                    onChange={field.onChange}
+                    error={errors.breed?.message}
+                    required
+                  />
+                )}
+              />
+            </FormRow>
 
             <Select
-              label="Farm house"
+              label="House"
+              required
               options={[
-                { label: "Select house location", value: "" }, 
+                { label: "Select a house", value: "" },
                 ...houseOptions,
-                { label: "+ Add new house", value: "NEW_HOUSE" }
+                { label: "+ Add a new house", value: "NEW_HOUSE" }
               ]}
               {...register("houseId")}
               error={errors.houseId?.message}
             />
+          </FormSection>
 
-          <Input
-            label="Arrival / hatch date"
-            type="date"
-            {...register("hatchDate")}
-            error={errors.hatchDate?.message}
-          />
-
-          <div className="border-t border-fg/10 pt-3 mt-2">
-            <h3 className="text-sm font-medium text-fg mb-3 text-xs">Optional initial schedule</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <FormSection title="How many and when">
+            <FormRow>
               <Input
-                label="1st vaccination date"
-                type="date"
-                {...register("vaccinationDate")}
+                label="Number at arrival"
+                type="number"
+                min="1"
+                unit={getLivestockUnit(selectedType)}
+                placeholder="e.g. 1000"
+                required
+                {...register("initialQuantity", { valueAsNumber: true })}
+                error={errors.initialQuantity?.message}
               />
-              <Input
-                label="Vaccine name"
-                placeholder="e.g., Gumboro"
-                {...register("vaccineName")}
+              <DateInput
+                label="Arrival date"
+                required
+                {...register("hatchDate")}
+                error={errors.hatchDate?.message}
               />
-            </div>
-          </div>
+            </FormRow>
+          </FormSection>
 
-          <div className="pt-3">
-            <Button
-              type="submit"
-              isLoading={isSubmitting}
-              loadingText="Registering unit..."
-              className="w-full bg-fg hover:bg-fg/90 text-page font-medium h-14 rounded-lg transition-colors"
-            >
-              Register unit & continue
-            </Button>
-          </div>
+          <MoreDetails label="First vaccination (optional)">
+            <FormRow>
+              <DateInput label="Vaccination date" {...register("vaccinationDate")} />
+              <Input label="Vaccine name" placeholder="e.g. Gumboro" {...register("vaccineName")} />
+            </FormRow>
+          </MoreDetails>
         </fieldset>
-        </MutationBoundary>
-      </form>
+
+        <FormActions>
+          <Button type="submit" variant="accent" isLoading={isSubmitting} loadingText="Adding flock">
+            Add flock and continue
+          </Button>
+        </FormActions>
+      </Form>
 
       {createdBatchId && (
-        <FinancialInitializationModal 
+        <FinancialInitializationModal
           isOpen={showFinModal}
           onClose={handleFinModalClose}
           batchId={createdBatchId}
@@ -318,26 +323,28 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
       <Dialog
         isOpen={showHouseModal}
         onOpenChange={(open) => !isCreatingHouse && setShowHouseModal(open)}
-        title="Create new farm house"
-        description="Add a new housing unit to your farm to accommodate this livestock unit."
+        title="Add a house"
+        description="A place on your farm where this flock will live."
       >
-        <MutationBoundary active={isCreatingHouse} label="Creating house...">
-        <div className="space-y-4 pt-3">
+        <Form
+          onSubmit={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            handleCreateHouse();
+          }}
+          noValidate
+        >
           {houseFields}
-          <div className="flex gap-2 pt-2">
-             <Button variant="secondary" onClick={() => setShowHouseModal(false)} disabled={isCreatingHouse} className="flex-1">Cancel</Button>
-             <Button 
-               onClick={handleCreateHouse} 
-               isLoading={isCreatingHouse}
-               loadingText="Creating..."
-               className="flex-1 bg-fg hover:bg-fg/90 text-page font-medium"
-             >
-               Create house
-             </Button>
-          </div>
-        </div>
-        </MutationBoundary>
+          <FormActions>
+            <Button type="button" variant="outline" onClick={() => setShowHouseModal(false)} disabled={isCreatingHouse}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="accent" isLoading={isCreatingHouse} loadingText="Saving house">
+              Add house
+            </Button>
+          </FormActions>
+        </Form>
       </Dialog>
-    </div>
+    </>
   );
 }

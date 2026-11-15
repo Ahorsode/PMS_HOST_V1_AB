@@ -33,6 +33,9 @@ export const DialogDescription = ({ children, className, id }: { children: React
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+/** How many sheets are open right now, across the whole page. */
+let openSheets = 0;
+
 const closeButtonClass =
   'flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-fg-2 transition-colors duration-150 hover:bg-fg/[0.06] hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60';
 
@@ -56,13 +59,17 @@ export const Dialog = ({
 
   useEffect(() => {
     setMounted(true);
-    if (isOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
+  }, []);
+
+  // Sheets can open on top of sheets (e.g. a picker inside a form), so the page
+  // stays locked until the last one closes.
+  useEffect(() => {
+    if (!isOpen) return;
+    openSheets += 1;
+    document.body.style.overflow = 'hidden';
     return () => {
-      document.body.style.overflow = 'unset';
+      openSheets = Math.max(0, openSheets - 1);
+      if (openSheets === 0) document.body.style.overflow = 'unset';
     };
   }, [isOpen]);
 
@@ -85,6 +92,9 @@ export const Dialog = ({
   const descriptionId = `${dialogId}-description`;
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    // A sheet opened from inside this one is portalled elsewhere in the page but
+    // still bubbles React events through here; let it handle its own keys.
+    if (!panelRef.current?.contains(event.target as Node)) return;
     if (event.key === 'Escape') {
       event.stopPropagation();
       onOpenChange(false);

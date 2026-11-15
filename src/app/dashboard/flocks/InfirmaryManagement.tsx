@@ -1,10 +1,10 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Input } from '@/components/ui/Input'
+import { Button, Input } from '@/components/ui/form'
 import { returnFromIsolation, logMortalityInIsolation } from '@/lib/actions/batch-actions'
 import { toast } from 'sonner'
-import { Check, Loader2 } from 'lucide-react'
+import { Check } from 'lucide-react'
 import { MutationBoundary } from '@/components/ui/MutationFeedback'
 import { g, ink } from '@/components/ui/graphite'
 
@@ -99,52 +99,51 @@ export function InfirmaryManagement({ batches }: { batches: Batch[] }) {
                       </p>
                     </div>
 
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                      <label htmlFor={inputId} className="sr-only">Number of birds</label>
-                      <div className="w-full sm:w-28">
-                        <Input
-                          id={inputId}
-                          type="number"
-                          placeholder={`All ${batch.isolationCount}`}
-                          min="1"
-                          max={batch.isolationCount}
-                          value={counts[batch.id] || ''}
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                      <Input
+                        id={inputId}
+                        label="How many"
+                        wrapperClassName="sm:w-40"
+                        type="number"
+                        unit="birds"
+                        placeholder={`All ${batch.isolationCount}`}
+                        min="1"
+                        max={batch.isolationCount}
+                        value={counts[batch.id] || ''}
+                        disabled={isRowLoading}
+                        aria-invalid={tooMany || undefined}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value);
+                          if (val > batch.isolationCount) {
+                            toast.error(`Only ${batch.isolationCount} birds are in isolation`);
+                            return;
+                          }
+                          setCounts(prev => ({ ...prev, [batch.id]: e.target.value }));
+                        }}
+                      />
+                      <div className="flex gap-3 [&>*]:min-h-12 [&>*]:flex-1 sm:[&>*]:flex-none md:[&>*]:min-h-11">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => handleAction(batch.id, 'RECOVER', batch.isolationCount)}
                           disabled={isRowLoading}
-                          onChange={(e) => {
-                            const val = parseInt(e.target.value);
-                            if (val > batch.isolationCount) {
-                              toast.error(`Only ${batch.isolationCount} birds are in isolation`);
-                              return;
-                            }
-                            setCounts(prev => ({ ...prev, [batch.id]: e.target.value }));
-                          }}
-                          className={`${g.input} h-9 text-center ${tooMany ? 'border-neg-solid' : ''}`}
-                        />
+                          isLoading={isRecovering}
+                          loadingText="Returning"
+                        >
+                          <Check className="h-4 w-4 text-pos" strokeWidth={1.75} />
+                          Recovered
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="danger"
+                          onClick={() => handleAction(batch.id, 'DEAD', batch.isolationCount)}
+                          disabled={isRowLoading}
+                          isLoading={isLoggingMortality}
+                          loadingText="Saving"
+                        >
+                          Died
+                        </Button>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => handleAction(batch.id, 'RECOVER', batch.isolationCount)}
-                        disabled={isRowLoading}
-                        aria-busy={isRecovering || undefined}
-                        className={g.buttonSecondary}
-                      >
-                        {isRecovering ? (
-                          <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} />
-                        ) : (
-                          <Check className="h-4 w-4 text-pos" strokeWidth={1.5} />
-                        )}
-                        Mark recovered
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleAction(batch.id, 'DEAD', batch.isolationCount)}
-                        disabled={isRowLoading}
-                        aria-busy={isLoggingMortality || undefined}
-                        className={`${g.buttonQuiet} hover:text-neg-solid`}
-                      >
-                        {isLoggingMortality ? <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.5} /> : null}
-                        Record deaths
-                      </button>
                     </div>
                   </div>
                 </MutationBoundary>

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Package, Plus, Trash2, Pencil, Egg, Wheat, FlaskConical,
-  X, Save, AlertTriangle, ShoppingBag, TrendingDown, CheckCircle2, Syringe, History, Archive
+  AlertTriangle, ShoppingBag, TrendingDown, CheckCircle2, Syringe, History, Archive
 } from 'lucide-react';
 import { WorkerStamp } from '@/components/ui/WorkerStamp';
 import {
@@ -14,7 +14,19 @@ import {
   deleteInventoryItem
 } from '@/lib/actions/inventory-actions';
 import { getInventoryPageData, type InventoryPageData } from '@/lib/actions/inventory-page-actions';
-import { Dialog } from '@/components/ui/Dialog';
+import {
+  Button,
+  Dialog,
+  Form,
+  FormActions,
+  FormRow,
+  FormSection,
+  FormSummary,
+  FormSummaryRow,
+  Input,
+  Segmented,
+  Select,
+} from '@/components/ui/form';
 import { PartnerForm } from '@/components/partners/PartnerForm';
 import { DeleteConfirmationModal } from '@/components/modals/DeleteConfirmationModal';
 import { SkeletonLine } from '@/components/ui/MutationFeedback';
@@ -173,9 +185,9 @@ export default function InventoryView({
   const handleSave = () => {
     if (!canEdit) return;
     if (isPending) return;
-    if (!form.itemName.trim()) return showToast('Item name is required', false);
+    if (!form.itemName.trim()) return showToast('Enter a name for the item', false);
     let stockNum = parseFloat(form.stockLevel);
-    if (isNaN(stockNum) || stockNum < 0) return showToast('Invalid stock level', false);
+    if (isNaN(stockNum) || stockNum < 0) return showToast('Enter how much is in stock', false);
     if (HEALTH_CATEGORIES.includes(form.category) && form.usageType === 'ONE_TIME') {
       stockNum = 1;
     }
@@ -206,11 +218,11 @@ export default function InventoryView({
         });
       }
       if (res?.success) {
-        showToast(editing ? 'Item updated!' : 'Item added!');
+        showToast(editing ? 'Item updated' : 'Item added to stock');
         setShowForm(false);
         refreshList();
       } else {
-        showToast(res?.error || 'Something went wrong', false);
+        showToast(res?.error || 'The item could not be saved. Try again.', false);
       }
     });
   };
@@ -527,254 +539,227 @@ export default function InventoryView({
       )}
 
       {/* ── Add / Edit Modal ── */}
-      <AnimatePresence>
-        {showForm && (
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-3 pb-safe"
-          >
-            <motion.div
-              initial={{ scale: 0.92, y: 24 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.92, y: 24 }}
-              className="glass-pill rounded-lg p-5 w-full max-w-md max-h-[90dvh] overflow-y-auto custom-scrollbar pb-safe space-y-4 border border-fg/10"
-            >
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-fg">{editing ? 'Edit item' : 'Add inventory item'}</h2>
-                <button aria-label="Close form" onClick={() => setShowForm(false)} className="p-2 rounded-md hover:bg-fg/10 text-fg/70 hover:text-fg">
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
+      <Dialog
+        isOpen={showForm}
+        onOpenChange={(open) => !isPending && setShowForm(open)}
+        title={editing ? 'Edit item' : 'Add to stock'}
+        className="max-w-lg"
+      >
+        <Form
+          onSubmit={(event) => {
+            event.preventDefault();
+            handleSave();
+          }}
+          noValidate
+        >
+          <FormSection title="What is it">
+            <Segmented
+              label="Type of item"
+              value={form.category}
+              onChange={(cat: string) => setForm(p => ({
+                ...p,
+                category: cat,
+                unit: cat === 'FEED' ? 'bags' : cat === 'VACCINE' ? 'doses' : 'units',
+              }))}
+              options={[
+                { value: 'FEED', label: 'Feed' },
+                { value: 'MEDICINE', label: 'Medicine' },
+                { value: 'VACCINE', label: 'Vaccine' },
+                { value: 'OTHER', label: 'Other' },
+              ]}
+              wrap
+            />
 
-              {/* Category */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-fg/70">Category</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {['FEED', 'MEDICINE', 'VACCINE', 'OTHER'].map(cat => (
+            <Input
+              label="Item name"
+              required
+              value={form.itemName}
+              onChange={e => setForm(p => ({ ...p, itemName: e.target.value }))}
+              placeholder="e.g. Layer mash, Tylosin 50"
+            />
+
+            {/* Usage — only for health stock (vaccines/medicines) */}
+            {HEALTH_CATEGORIES.includes(form.category) && (
+              <Segmented
+                label="How is it used"
+                value={form.usageType}
+                onChange={(usageType: string) =>
+                  setForm(p => (usageType === 'ONE_TIME' ? { ...p, usageType: 'ONE_TIME', stockLevel: '1' } : { ...p, usageType: 'QUANTITY' }))
+                }
+                options={[
+                  { value: 'ONE_TIME', label: 'Used once' },
+                  { value: 'QUANTITY', label: 'Measured amount' },
+                ]}
+                hint={
+                  form.usageType === 'ONE_TIME'
+                    ? 'Stock stays at 1 and is used up when it is marked done on a flock.'
+                    : 'Stock goes down by the amount used each time.'
+                }
+              />
+            )}
+          </FormSection>
+
+          <FormSection title="How much">
+            {/* Stock level — bag fractions for FEED */}
+            {form.category === 'FEED' ? (
+              <div className="space-y-2">
+                <Input
+                  label="Bags in stock"
+                  type="number"
+                  step="0.25"
+                  min="0"
+                  unit="bags"
+                  value={form.stockLevel}
+                  onChange={e => {
+                    const val = e.target.value;
+                    if (val === '' || Number(val) >= 0) {
+                      setForm(p => ({ ...p, stockLevel: val }));
+                    }
+                  }}
+                  placeholder="0"
+                />
+                <div className="grid grid-cols-4 gap-2" role="group" aria-label="Add to the bags in stock">
+                  {BAG_OPTIONS.map(opt => (
                     <button
-                      key={cat}
-                      onClick={() => setForm(p => ({
-                        ...p,
-                        category: cat,
-                        unit: cat === 'FEED' ? 'bags' : cat === 'VACCINE' ? 'doses' : 'units',
-                      }))}
-                      className={`py-2 rounded-md text-xs font-medium transition-colors ${form.category === cat ? 'bg-accent font-semibold text-accent-fg shadow-sm' : 'bg-fg/10 text-fg/70 hover:bg-fg/10'}`}
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setForm(p => ({ ...p, stockLevel: String((parseFloat(p.stockLevel || '0') + opt.value).toFixed(2)) }))}
+                      className="min-h-11 rounded-lg border border-fg/[0.14] bg-page px-1 text-sm font-medium text-fg-2 transition-colors duration-150 hover:border-fg/25 hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
                     >
-                      {cat}
+                      + {opt.label.toLowerCase()}
                     </button>
                   ))}
                 </div>
               </div>
-
-              {/* Usage — only for health stock (vaccines/medicines) */}
-              {HEALTH_CATEGORIES.includes(form.category) && (
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-fg/70">Usage</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setForm(p => ({ ...p, usageType: 'ONE_TIME', stockLevel: '1' }))}
-                      className={`py-2 rounded-md text-xs font-medium transition-colors ${form.usageType === 'ONE_TIME' ? 'bg-accent font-semibold text-accent-fg shadow-sm' : 'bg-fg/10 text-fg/70 hover:bg-fg/10'}`}
-                    >
-                      One-time use
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setForm(p => ({ ...p, usageType: 'QUANTITY' }))}
-                      className={`py-2 rounded-md text-xs font-medium transition-colors ${form.usageType === 'QUANTITY' ? 'bg-accent font-semibold text-accent-fg shadow-sm' : 'bg-fg/10 text-fg/70 hover:bg-fg/10'}`}
-                    >
-                      Quantity-tracked
-                    </button>
-                  </div>
-                  <p className="text-[11px] text-fg/40">
-                    {form.usageType === 'ONE_TIME'
-                      ? 'Single application only — stock is capped at 1 and depletes when marked completed on a batch.'
-                      : 'Tracked by stock quantity and unit.'}
-                  </p>
-                </div>
-              )}
-
-              {/* Name */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-fg/70">Item name</label>
-                <input
-                  value={form.itemName}
-                  onChange={e => setForm(p => ({ ...p, itemName: e.target.value }))}
-                  placeholder="e.g. Layers Mash, Tylosin 50…"
-                  className="w-full bg-fg/10 border border-fg/10 rounded-md px-3 py-2.5 text-fg text-sm placeholder-white/20 focus:outline-none focus:border-fg/[0.08]"
-                />
-              </div>
-
-              {/* Stock level — bag fractions for FEED */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-fg/70">
-                  {form.category === 'FEED' ? 'Quantity (bags)' : 'Stock Level'}
-                </label>
-                {form.category === 'FEED' ? (
-                  <div className="space-y-2">
-                    <input
-                      type="number"
-                      step="0.25"
-                      min="0"
-                      value={form.stockLevel}
-                      onChange={e => {
-                        const val = e.target.value;
-                        if (val === '' || Number(val) >= 0) {
-                          setForm(p => ({ ...p, stockLevel: val }));
-                        }
-                      }}
-                      placeholder="0"
-                      className="w-full bg-fg/10 border border-fg/10 rounded-md px-3 py-2.5 text-fg text-sm focus:outline-none focus:border-fg/[0.08]"
-                    />
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {BAG_OPTIONS.map(opt => (
-                        <button
-                          key={opt.value}
-                          onClick={() => setForm(p => ({ ...p, stockLevel: String((parseFloat(p.stockLevel || '0') + opt.value).toFixed(2)) }))}
-                          className="py-1.5 text-xs rounded-md bg-fg/10 hover:bg-fg/[0.04] text-fg/70 hover:text-fg font-medium transition-colors"
-                        >
-                          + {opt.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ) : (
-                  <input
-                    type="number"
-                    min="0"
-                    value={form.stockLevel}
-                    onChange={e => {
-                      const val = e.target.value;
-                      if (val === '' || Number(val) >= 0) {
-                        setForm(p => ({ ...p, stockLevel: val }));
-                      }
-                    }}
-                    placeholder="0"
-                    className="w-full bg-fg/10 border border-fg/10 rounded-md px-3 py-2.5 text-fg text-sm focus:outline-none focus:border-fg/[0.08]"
-                  />
-                )}
-              </div>
-
-              {/* Unit (non-FEED) */}
-              {form.category !== 'FEED' && (
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-fg/70">Unit</label>
-                  <input
-                    value={form.unit}
-                    onChange={e => setForm(p => ({ ...p, unit: e.target.value }))}
-                    placeholder="e.g. vials, sachets, litres…"
-                    className="w-full bg-fg/10 border border-fg/10 rounded-md px-3 py-2.5 text-fg text-sm placeholder-white/20 focus:outline-none focus:border-fg/[0.08]"
-                  />
-                </div>
-              )}
-
-              {/* Cost per unit */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-fg/70">Cost per unit ({money.currency})</label>
-                <input
+            ) : (
+              <FormRow alwaysInline>
+                <Input
+                  label="In stock"
                   type="number"
-                  step="0.01"
                   min="0"
-                  value={form.costPerUnit}
+                  value={form.stockLevel}
                   onChange={e => {
                     const val = e.target.value;
                     if (val === '' || Number(val) >= 0) {
-                      setForm(p => ({ ...p, costPerUnit: val }));
+                      setForm(p => ({ ...p, stockLevel: val }));
                     }
                   }}
-                  placeholder="0.00"
-                  className="w-full bg-fg/10 border border-fg/10 rounded-md px-3 py-2.5 text-fg text-sm font-medium placeholder-white/20 focus:outline-none focus:border-fg/[0.08]"
+                  placeholder="0"
                 />
-              </div>
+                {/* Unit (non-FEED) */}
+                <Input
+                  label="Counted in"
+                  value={form.unit}
+                  onChange={e => setForm(p => ({ ...p, unit: e.target.value }))}
+                  placeholder="e.g. vials"
+                />
+              </FormRow>
+            )}
+          </FormSection>
 
-              {/* Supplier & Payment */}
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-fg/80">Supplier</label>
-                <div className="flex gap-2">
-                  <select
-                    value={form.supplierId}
-                    onChange={e => {
-                      const val = e.target.value;
-                      if (val === 'add_new') {
-                        handleAddNewSupplier();
-                      } else {
-                        setForm(p => ({ 
-                          ...p, 
-                          supplierId: val,
-                          ...(val === 'onetime' ? { paymentPlan: 'full' } : {}) 
-                        }));
-                      }
-                    }}
-                    className="flex-1 bg-fg/10 border border-fg/10 rounded-md px-3 py-2.5 text-fg text-sm font-medium focus:outline-none focus:border-fg/[0.08] [&>option]:bg-raised"
-                  >
-                    <option value="">-- Select Supplier --</option>
-                    <option value="onetime">One-Time supplier</option>
-                    {suppliers.map(sup => (
-                      <option key={sup.id} value={sup.id}>{sup.name}</option>
-                    ))}
-                    <option value="add_new">+ Add New Supply</option>
-                  </select>
-                  <button
-                    type="button"
-                    onClick={() => setForm(p => ({ ...p, supplierId: 'onetime', paymentPlan: 'full' }))}
-                    className="px-3 py-2 rounded-md bg-fg/10 hover:bg-fg/[0.04] text-fg/80 hover:text-fg text-xs font-medium transition-colors whitespace-nowrap"
-                  >
-                    Set One-Time
-                  </button>
-                </div>
-              </div>
+          <FormSection title="Cost">
+            <Input
+              label={`Cost for one ${form.category === 'FEED' ? 'bag' : (form.unit || 'unit').replace(/s$/, '')}`}
+              optional
+              type="number"
+              step="0.01"
+              min="0"
+              unit={money.currency}
+              value={form.costPerUnit}
+              onChange={e => {
+                const val = e.target.value;
+                if (val === '' || Number(val) >= 0) {
+                  setForm(p => ({ ...p, costPerUnit: val }));
+                }
+              }}
+              placeholder="0.00"
+            />
+            {Number(form.costPerUnit) > 0 && Number(form.stockLevel) > 0 ? (
+              <FormSummary>
+                <FormSummaryRow
+                  label="Value of this stock"
+                  value={money.format(Number(form.costPerUnit) * Number(form.stockLevel))}
+                  strong
+                />
+              </FormSummary>
+            ) : null}
+          </FormSection>
 
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-fg/80">Payment plan</label>
-                <select
-                  value={form.paymentPlan}
-                  onChange={e => setForm(p => ({ ...p, paymentPlan: e.target.value }))}
-                  disabled={form.supplierId === 'onetime'}
-                  className="w-full bg-fg/10 border border-fg/10 rounded-md px-3 py-2.5 text-fg text-sm focus:outline-none focus:border-fg/[0.08] [&>option]:bg-raised disabled:opacity-50"
-                >
-                  <option value="full">Paid in full</option>
-                  <option value="installments">Installments</option>
-                  <option value="none">None</option>
-                </select>
-              </div>
+          {/* Supplier & Payment */}
+          <FormSection title="Supplier and payment">
+            <Select
+              label="Supplier"
+              optional
+              value={form.supplierId}
+              onChange={e => {
+                const val = e.target.value;
+                if (val === 'add_new') {
+                  handleAddNewSupplier();
+                } else {
+                  setForm(p => ({
+                    ...p,
+                    supplierId: val,
+                    ...(val === 'onetime' ? { paymentPlan: 'full' } : {})
+                  }));
+                }
+              }}
+            >
+              <option value="">No supplier chosen</option>
+              <option value="onetime">One-time supplier</option>
+              {suppliers.map(sup => (
+                <option key={sup.id} value={sup.id}>{sup.name}</option>
+              ))}
+              <option value="add_new">+ Add a new supplier</option>
+            </Select>
 
-              {form.paymentPlan === 'installments' && (
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-fg/70">Amount paid (initial payment)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={form.amountPaid}
-                    onChange={e => {
-                      const val = e.target.value;
-                      if (val === '' || Number(val) >= 0) {
-                        setForm(p => ({ ...p, amountPaid: val }));
-                      }
-                    }}
-                    placeholder="0.00"
-                    className="w-full bg-fg/10 border border-fg/10 rounded-md px-3 py-2.5 text-fg text-sm font-medium placeholder-white/20 focus:outline-none focus:border-fg/[0.08]"
-                  />
-                </div>
-              )}
+            <Segmented
+              label="How was it paid for"
+              value={form.paymentPlan}
+              onChange={(paymentPlan: string) => setForm(p => ({ ...p, paymentPlan }))}
+              disabled={form.supplierId === 'onetime'}
+              options={[
+                { value: 'full', label: 'Paid in full' },
+                { value: 'installments', label: 'Part paid' },
+                { value: 'none', label: 'Not paid' },
+              ]}
+              hint={form.supplierId === 'onetime' ? 'A one-time supplier is always paid in full.' : undefined}
+            />
 
-              <motion.button
-                whileTap={{ scale: 0.98 }}
-                onClick={handleSave}
-                disabled={isPending}
-                className="w-full py-2 rounded-md bg-fg hover:bg-fg/90 text-page font-medium text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
-              >
-                <Save className="w-4 h-4" />
-                {isPending ? 'Saving…' : editing ? 'Update item' : 'Add to inventory'}
-              </motion.button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            {form.paymentPlan === 'installments' && (
+              <Input
+                label="Paid so far"
+                type="number"
+                step="0.01"
+                min="0"
+                unit={money.currency}
+                value={form.amountPaid}
+                onChange={e => {
+                  const val = e.target.value;
+                  if (val === '' || Number(val) >= 0) {
+                    setForm(p => ({ ...p, amountPaid: val }));
+                  }
+                }}
+                placeholder="0.00"
+              />
+            )}
+          </FormSection>
+
+          <FormActions>
+            <Button type="button" variant="outline" onClick={() => setShowForm(false)} disabled={isPending}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="accent" isLoading={isPending} loadingText="Saving">
+              {editing ? 'Save changes' : 'Add to stock'}
+            </Button>
+          </FormActions>
+        </Form>
+      </Dialog>
 
       {/* ── Add Supplier Modal ── */}
       <Dialog
         isOpen={showSupplierModal}
         onOpenChange={setShowSupplierModal}
-        title="Add distribution partner"
+        title="Add a supplier"
       >
         <PartnerForm 
           setIsOpen={setShowSupplierModal} 
@@ -792,7 +777,7 @@ export default function InventoryView({
         {toast && (
           <motion.div
             initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
-            className={`fixed bottom-24 right-4 md:bottom-6 md:right-6 z-[99] flex items-center gap-2 px-4 py-2 rounded-md font-medium text-sm 
+            className={`fixed bottom-24 right-4 md:bottom-6 md:right-6 z-[110] flex items-center gap-2 px-4 py-2 rounded-md font-medium text-sm 
               ${toast.ok ? 'bg-accent font-semibold text-accent-fg shadow-sm' : 'bg-red-500/90 text-fg'}`}
           >
             {toast.ok ? <CheckCircle2 className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}

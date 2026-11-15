@@ -4,8 +4,7 @@ import React, { useState } from 'react'
 import { Plus, UserPlus } from 'lucide-react'
 import { toast } from 'sonner'
 import { createCustomer } from '@/lib/actions/customer-actions'
-import { Dialog } from '@/components/ui/Dialog'
-import { Button } from '@/components/ui/Button'
+import { Button, Dialog, Form, FormActions, Input } from '@/components/ui/form'
 
 export type SaleCustomer = {
   id: string
@@ -57,7 +56,7 @@ export function QuickAddCustomerButton({
       onCreated(customer)
       handleClose(false)
     } else {
-      toast.error((result as { error?: string }).error || 'Failed to create customer')
+      toast.error((result as { error?: string }).error || 'The customer could not be saved. Try again.')
     }
   }
 
@@ -67,53 +66,47 @@ export function QuickAddCustomerButton({
         type="button"
         disabled={disabled}
         onClick={() => setOpen(true)}
-        className="inline-flex shrink-0 items-center gap-1.5 text-xs font-medium text-fg transition-colors hover:text-fg disabled:cursor-not-allowed disabled:opacity-40"
+        className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg px-1 text-sm font-medium text-accent transition-colors hover:text-accent/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-not-allowed disabled:opacity-40"
       >
-        <Plus className="hidden h-3 w-3 sm:inline" />
-        <span className="sm:hidden">+ New</span>
-        <span className="hidden sm:inline">Add new customer</span>
+        <Plus className="h-4 w-4" strokeWidth={1.75} />
+        Add a new customer
       </button>
 
       <Dialog
         isOpen={open}
         onOpenChange={handleClose}
         title="Add customer"
-        description="Create a customer profile without leaving this sale."
+        description="They are saved to your customers and picked for this sale."
         className="max-w-md"
       >
-        <form onSubmit={handleSubmit} className="space-y-4 pt-1">
-          <div className="space-y-1">
-            <label className="px-1 text-xs font-medium text-fg/80">Full name / company *</label>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              autoFocus
-              placeholder="e.g. John Doe / Kumasi Retail"
-              className="h-11 w-full rounded-md border border-fg/10 bg-fg/10 px-3 text-sm font-medium text-fg outline-none focus:border-fg/[0.08]"
-            />
-          </div>
-
-          <div className="space-y-1">
-            <label className="px-1 text-xs font-medium text-fg/80">Phone (optional)</label>
-            <input
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="+233..."
-              className="h-11 w-full rounded-md border border-fg/10 bg-fg/10 px-3 text-sm font-medium text-fg outline-none focus:border-fg/[0.08]"
-            />
-          </div>
-
-          <div className="flex gap-2 pt-1">
-            <Button type="button" variant="ghost" onClick={() => handleClose(false)} className="flex-1">
+        <Form onSubmit={handleSubmit}>
+          <Input
+            label="Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            autoFocus
+            placeholder="e.g. Ama Owusu or Kumasi Cold Store"
+          />
+          <Input
+            label="Phone"
+            optional
+            type="tel"
+            inputMode="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="e.g. 0241234567"
+          />
+          <FormActions>
+            <Button type="button" variant="outline" onClick={() => handleClose(false)} disabled={saving}>
               Cancel
             </Button>
-            <Button type="submit" disabled={saving || !name.trim()} className="flex-[2] font-medium">
-              <UserPlus className="h-4 w-4" />
-              {saving ? 'Saving...' : 'Save customer'}
+            <Button type="submit" variant="accent" disabled={!name.trim()} isLoading={saving} loadingText="Saving">
+              <UserPlus className="h-4 w-4" strokeWidth={1.75} />
+              Save customer
             </Button>
-          </div>
-        </form>
+          </FormActions>
+        </Form>
       </Dialog>
     </>
   )

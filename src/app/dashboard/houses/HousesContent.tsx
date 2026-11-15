@@ -3,8 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Plus, Home, Edit2, Trash2, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import { Button, Dialog, Form, FormActions, Input } from '@/components/ui/form';
 import { createHouse } from '@/lib/actions/dashboard-actions';
 import { updateHouse, deleteHouse } from '@/lib/actions/house-actions';
 import { useRouter } from 'next/navigation';
@@ -34,10 +33,10 @@ export default function HousesPage({ houses, canEdit = true, openAddOnLoad = fal
     try {
       await createHouse(formData);
       setIsAdding(false);
-      toast.success("House added successfully");
+      toast.success("House added");
       router.refresh();
     } catch (error) {
-      toast.error("Failed to add house");
+      toast.error("The house could not be added. Try again.");
       console.error(error);
     } finally {
       setIsSaving(false);
@@ -57,14 +56,14 @@ export default function HousesPage({ houses, canEdit = true, openAddOnLoad = fal
     try {
       const res = await updateHouse(editingHouse.id, { name, capacity });
       if (res.success) {
-        toast.success("House updated successfully");
+        toast.success("House updated");
         setEditingHouse(null);
         router.refresh();
       } else {
-        toast.error(res.error || "Failed to update house");
+        toast.error(res.error || "The house could not be updated. Try again.");
       }
     } catch (error) {
-      toast.error("An error occurred during update");
+      toast.error("Something went wrong. Check your connection and try again.");
     } finally {
       setIsSaving(false);
     }
@@ -95,55 +94,73 @@ export default function HousesPage({ houses, canEdit = true, openAddOnLoad = fal
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-card p-5 rounded-md shadow-sm border border-fg/[0.08] gap-4">
         <div>
           <h1 className="text-3xl font-semibold leading-tight text-fg">Houses</h1>
-          <p className="mt-2 text-sm text-fg-2">The houses your units live in</p>
+          <p className="mt-2 text-sm text-fg-2">The houses your flocks live in</p>
         </div>
         {canEdit && (
-          <Button onClick={() => setIsAdding(!isAdding)}>
-            <Plus className="mr-2 h-4 w-4" />
-            {isAdding ? 'Cancel' : 'Add house'}
+          <Button variant="accent" onClick={() => setIsAdding(true)}>
+            <Plus className="h-4 w-4" />
+            Add house
           </Button>
         )}
       </div>
 
-      {isAdding && (
-        <Card className="animate-in fade-in slide-in-from-top-4 duration-300 border-fg/[0.08]">
-          <CardHeader>
-            <CardTitle className="text-fg">Register new house</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <Input label="House name / number" name="name" placeholder="e.g. House 1" required />
-                <Input label="Capacity" name="capacity" type="number" min="0" placeholder="Max birds" required />
-              </div>
-              <div className="flex justify-end gap-2 pt-3">
-                <Button type="button" variant="outline" onClick={() => setIsAdding(false)} disabled={isSaving}>Cancel</Button>
-                <Button type="submit" isLoading={isSaving} loadingText="Saving..." className="bg-fg hover:bg-fg/90">Save house</Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
+      <Dialog
+        isOpen={isAdding}
+        onOpenChange={(open) => !isSaving && setIsAdding(open)}
+        title="Add a house"
+        description="A place on your farm where a flock lives."
+      >
+        <Form onSubmit={handleSubmit}>
+          <Input label="House name" name="name" placeholder="e.g. House 1" required />
+          <Input
+            label="How many it holds"
+            name="capacity"
+            type="number"
+            min="0"
+            unit="birds"
+            placeholder="e.g. 2000"
+            required
+          />
+          <FormActions>
+            <Button type="button" variant="outline" onClick={() => setIsAdding(false)} disabled={isSaving}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="accent" isLoading={isSaving} loadingText="Saving">
+              Add house
+            </Button>
+          </FormActions>
+        </Form>
+      </Dialog>
 
-      {editingHouse && (
-        <Card className="animate-in fade-in slide-in-from-top-4 duration-300 border-fg/[0.08]">
-          <CardHeader>
-            <CardTitle className="text-fg-2">Edit house: {editingHouse.name}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleUpdate} className="space-y-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <Input label="House name / number" name="name" defaultValue={editingHouse.name} required />
-                <Input label="Capacity" name="capacity" type="number" min="0" defaultValue={editingHouse.capacity} required />
-              </div>
-              <div className="flex justify-end gap-2 pt-3">
-                <Button type="button" variant="outline" onClick={() => setEditingHouse(null)} disabled={isSaving}>Cancel</Button>
-                <Button type="submit" isLoading={isSaving} loadingText="Updating..." className="bg-raised hover:bg-raised">Update house</Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
+      <Dialog
+        isOpen={Boolean(editingHouse)}
+        onOpenChange={(open) => !open && !isSaving && setEditingHouse(null)}
+        title="Edit house"
+        description={editingHouse?.name}
+      >
+        {editingHouse ? (
+          <Form key={editingHouse.id} onSubmit={handleUpdate}>
+            <Input label="House name" name="name" defaultValue={editingHouse.name} required />
+            <Input
+              label="How many it holds"
+              name="capacity"
+              type="number"
+              min="0"
+              unit="birds"
+              defaultValue={editingHouse.capacity}
+              required
+            />
+            <FormActions>
+              <Button type="button" variant="outline" onClick={() => setEditingHouse(null)} disabled={isSaving}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="accent" isLoading={isSaving} loadingText="Saving">
+                Save changes
+              </Button>
+            </FormActions>
+          </Form>
+        ) : null}
+      </Dialog>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
         {houses.map((house) => (
@@ -190,7 +207,7 @@ export default function HousesPage({ houses, canEdit = true, openAddOnLoad = fal
         
         {houses.length === 0 && (
           <div className="col-span-full py-16 text-center border-2 border-dashed border-fg/[0.08] rounded-lg">
-            <p className="text-fg-3 font-medium">No houses configured yet. add your first house to manage flocks.</p>
+            <p className="text-fg-3 font-medium">No houses yet. Add your first house so you can keep flocks in it.</p>
           </div>
         )}
       </div>

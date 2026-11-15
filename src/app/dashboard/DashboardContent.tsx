@@ -388,10 +388,8 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
         </>
       )}
 
-      <Dialog isOpen={isRegisterModalOpen} onOpenChange={setIsRegisterModalOpen} title="Register unit">
-        <div className="p-1">
-          <RegisterBatchForm houses={houses} onSuccess={() => setIsRegisterModalOpen(false)} />
-        </div>
+      <Dialog isOpen={isRegisterModalOpen} onOpenChange={setIsRegisterModalOpen} title="Add a flock">
+        <RegisterBatchForm houses={houses} onSuccess={() => setIsRegisterModalOpen(false)} />
       </Dialog>
     </div>
   );

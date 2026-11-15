@@ -28,6 +28,9 @@ export const Form = React.forwardRef<HTMLFormElement, FormProps>(({ className, o
   };
 
   const handleSubmit: NonNullable<FormProps['onSubmit']> = (event) => {
+    // A form in a sheet opened from inside another form is portalled out of it
+    // in the page, but React still bubbles its submit to the outer form. Stop it here.
+    event.stopPropagation();
     onSubmit?.(event);
     // Let the submit handler set its error state and React paint it first.
     window.requestAnimationFrame(() => {
@@ -147,9 +150,11 @@ export function FormActions({ sticky, note, destructive = false, className, chil
       className={cn(
         'flex flex-col gap-3 sm:flex-row sm:items-center',
         pinned
-          ? 'sticky bottom-0 z-10 border-t border-fg/[0.08] bg-card py-3'
+          ? 'sticky z-10 border-t border-fg/[0.08] bg-card py-3'
           : 'pt-2',
-        pinned && inSheet && '-mx-5 !-mb-5 px-5',
+        // Sticky offsets count from inside the sheet's 20px padding, so pin to the
+        // padding edge and bleed over the padding to sit flush with the sheet.
+        pinned && (inSheet ? '-bottom-5 -mx-5 !-mb-5 px-5' : 'bottom-0'),
         className,
       )}
     >
