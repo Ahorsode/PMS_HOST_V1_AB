@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Phone, ArrowRight, Loader2, Bird, User, Mail, Lock } from 'lucide-react';
@@ -98,25 +98,26 @@ export default function SignUpPage() {
       <div className="relative z-10 w-full max-w-md">
         <AnimatePresence mode="wait">
           {!success ? (
-            <motion.div
+            <m.div
               key="signup-form"
-              initial={{ opacity: 0, y: 40, scale: 0.95 }}
+              initial={false}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -40, scale: 0.95, filter: "blur(10px)" }}
               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="relative"
+              className="relative animate-auth-card-enter"
             >
               <div className="absolute inset-0 bg-emerald-500/20 blur-[100px] rounded-full pointer-events-none" />
 
               <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/10 p-5 shadow-2xl backdrop-blur-2xl sm:rounded-lg sm:p-9">
                 <div className="flex flex-col items-center text-center space-y-5">
-                  <motion.div 
-                    initial={{ scale: 0 }}
+                  <m.div 
+                    initial={false}
                     animate={{ scale: 1 }}
                     transition={{ type: "spring", delay: 0.2, bounce: 0.5 }}
+                    className="animate-logo-pop"
                   >
                     <img src="/logo.png" alt="Poultry Ledger logo" className="w-20 h-20 rounded-lg object-cover shadow-lg shadow-emerald-500/20" />
-                  </motion.div>
+                  </m.div>
                   
                   <div className="space-y-2">
                     <h1 className="text-3xl font-bold tracking-normal text-white sm:text-4xl">Join Us</h1>
@@ -220,14 +221,14 @@ export default function SignUpPage() {
 
                     <AnimatePresence>
                       {error && (
-                        <motion.p
+                        <m.p
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
                           exit={{ opacity: 0, height: 0 }}
                           className="text-red-400 text-xs font-bold uppercase tracking-widest bg-red-500/10 py-2 rounded-lg border border-red-500/20"
                         >
                           {error}
-                        </motion.p>
+                        </m.p>
                       )}
                     </AnimatePresence>
 
@@ -281,9 +282,9 @@ export default function SignUpPage() {
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </m.div>
           ) : (
-            <motion.div
+            <m.div
               key="success-animation"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -294,7 +295,7 @@ export default function SignUpPage() {
               </div>
               <h2 className="text-3xl font-bold text-white tracking-normal">Welcome Aboard!</h2>
               <Loader2 className="w-6 h-6 text-emerald-400 animate-spin" />
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </div>

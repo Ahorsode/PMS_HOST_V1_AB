@@ -1,7 +1,7 @@
 import { Wrench } from 'lucide-react'
 import type { FarmAccess } from '@/lib/billing/access'
 import { getDashboardNotices } from '@/lib/settings/dashboard-notices'
-import { getDashboardMessages } from '@/lib/settings/farm-messages'
+import { getDashboardMessages, type DashboardMessage } from '@/lib/settings/farm-messages'
 import { AnnouncementBanner } from './AnnouncementBanner'
 import { DismissibleNotice } from './DismissibleNotice'
 
@@ -14,14 +14,19 @@ export async function DashboardNotices({
   farm,
   access,
   isOwner,
+  messages,
+  lastPlanPayment,
 }: {
   farm: { id: string; name: string; createdAt: Date } | null
   access: FarmAccess | null
   isOwner: boolean
+  /** Lookups the layout already started, so they overlap its own instead of following them. */
+  messages?: Promise<DashboardMessage[]>
+  lastPlanPayment?: Promise<{ createdAt: Date } | null>
 }) {
   const [{ maintenanceMessage, announcement, notice }, adminMessages] = await Promise.all([
-    getDashboardNotices({ farm, access, isOwner }),
-    farm ? getDashboardMessages(farm.id, isOwner) : Promise.resolve([]),
+    getDashboardNotices({ farm, access, isOwner, lastPlanPayment }),
+    messages ?? (farm ? getDashboardMessages(farm.id, isOwner) : Promise.resolve([])),
   ])
 
   if (!maintenanceMessage && !announcement && !notice && adminMessages.length === 0) return null

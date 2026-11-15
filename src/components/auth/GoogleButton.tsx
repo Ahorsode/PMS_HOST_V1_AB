@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import Image from "next/image";
 
 interface GoogleButtonProps {
@@ -10,7 +10,7 @@ interface GoogleButtonProps {
 
 export default function GoogleButton({ onClick, label }: GoogleButtonProps) {
   return (
-    <motion.button
+    <m.button
       whileHover={{ scale: 1.02, y: -2 }}
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
@@ -43,6 +43,6 @@ export default function GoogleButton({ onClick, label }: GoogleButtonProps) {
       
       {/* 3D Reflection Effect */}
       <div className="absolute inset-x-0 -top-full h-full bg-gradient-to-b from-white/20 to-transparent transition-all group-hover:top-0" />
-    </motion.button>
+    </m.button>
   );
 }

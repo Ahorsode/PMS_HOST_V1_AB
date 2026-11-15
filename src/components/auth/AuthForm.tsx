@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { signIn } from "next-auth/react";
 import GlassCard from "./GlassCard";
 import FloatingInput from "./FloatingInput";
@@ -63,7 +63,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
       </AnimatePresence>
 
       <GlassCard className="w-full max-w-md">
-        <motion.div
+        <m.div
           key={mode}
           initial={{ opacity: 0, x: mode === "login" ? -20 : 20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -84,7 +84,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
           <form onSubmit={handleSubmit} className="space-y-3">
             <AnimatePresence mode="popLayout">
               {mode === "signup" && (
-                <motion.div
+                <m.div
                   initial={{ opacity: 0, height: 0, marginBottom: 0 }}
                   animate={{ opacity: 1, height: "auto", marginBottom: 24 }}
                   exit={{ opacity: 0, height: 0, marginBottom: 0 }}
@@ -105,7 +105,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
                     required
                     placeholder=" "
                   />
-                </motion.div>
+                </m.div>
               )}
             </AnimatePresence>
 
@@ -117,7 +117,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
               placeholder=" "
             />
 
-            <motion.div
+            <m.div
               animate={shake ? { x: [-10, 10, -10, 10, 0] } : {}}
               transition={{ duration: 0.4 }}
             >
@@ -129,16 +129,16 @@ export default function AuthForm({ mode }: AuthFormProps) {
                 error={error || undefined}
                 placeholder=" "
               />
-            </motion.div>
+            </m.div>
 
-            <motion.button
+            <m.button
               whileHover={{ scale: 1.01 }}
               whileTap={{ scale: 0.99 }}
               type="submit"
               className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-md font-bold transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] active:shadow-none"
             >
               {mode === "login" ? "Sign In" : "Create Account"}
-            </motion.button>
+            </m.button>
           </form>
 
           <div className="relative my-7">
@@ -172,7 +172,7 @@ export default function AuthForm({ mode }: AuthFormProps) {
               </>
             )}
           </div>
-        </motion.div>
+        </m.div>
       </GlassCard>
     </div>
   );

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useTransition, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import {
   Package, Plus, Trash2, Pencil, Egg, Wheat, FlaskConical,
   X, Save, AlertTriangle, ShoppingBag, TrendingDown, CheckCircle2, Syringe, History, Archive
@@ -256,13 +256,13 @@ export default function InventoryView({
           <p className="mt-2 text-sm text-fg-2">Feed, medicine and egg stock</p>
         </div>
         {canEdit && (
-          <motion.button
+          <m.button
             whileTap={{ scale: 0.98 }}
             onClick={openAdd}
             className="flex items-center gap-2 px-4 py-2.5 rounded-md bg-fg hover:bg-fg/90 text-page font-medium text-sm transition-colors"
           >
             <Plus className="w-4 h-4" /> Add item
-          </motion.button>
+          </m.button>
         )}
       </div>
 
@@ -305,9 +305,9 @@ export default function InventoryView({
 
       {/* ── Egg Inventory Card ── */}
       {!showUsedUp && eggStock.totalEggs > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
-          className="rounded-lg border bg-tile border-fg/[0.08] p-5 space-y-4"
+        <m.div
+          initial={false} animate={{ opacity: 1, y: 0 }}
+          className="animate-rise-in rounded-lg border bg-tile border-fg/[0.08] p-5 space-y-4"
         >
           <div className="flex flex-col sm:flex-row items-center justify-between gap-5">
             <div className="flex items-center gap-4">
@@ -359,7 +359,7 @@ export default function InventoryView({
               </table>
             </div>
           )}
-        </motion.div>
+        </m.div>
       )}
 
       {/* ── Summary Cards ── */}
@@ -529,11 +529,11 @@ export default function InventoryView({
       {/* ── Add / Edit Modal ── */}
       <AnimatePresence>
         {showForm && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-3 pb-safe"
           >
-            <motion.div
+            <m.div
               initial={{ scale: 0.92, y: 24 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.92, y: 24 }}
               className="glass-pill rounded-lg p-5 w-full max-w-md max-h-[90dvh] overflow-y-auto custom-scrollbar pb-safe space-y-4 border border-fg/10"
             >
@@ -756,7 +756,7 @@ export default function InventoryView({
                 </div>
               )}
 
-              <motion.button
+              <m.button
                 whileTap={{ scale: 0.98 }}
                 onClick={handleSave}
                 disabled={isPending}
@@ -764,9 +764,9 @@ export default function InventoryView({
               >
                 <Save className="w-4 h-4" />
                 {isPending ? 'Saving…' : editing ? 'Update item' : 'Add to inventory'}
-              </motion.button>
-            </motion.div>
-          </motion.div>
+              </m.button>
+            </m.div>
+          </m.div>
         )}
       </AnimatePresence>
 
@@ -790,14 +790,14 @@ export default function InventoryView({
 
       <AnimatePresence>
         {toast && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
             className={`fixed bottom-24 right-4 md:bottom-6 md:right-6 z-[99] flex items-center gap-2 px-4 py-2 rounded-md font-medium text-sm 
               ${toast.ok ? 'bg-accent font-semibold text-accent-fg shadow-sm' : 'bg-red-500/90 text-fg'}`}
           >
             {toast.ok ? <CheckCircle2 className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
             {toast.msg}
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
 

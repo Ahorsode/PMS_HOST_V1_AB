@@ -574,6 +574,7 @@ export async function updateGrowthTarget(id: string, target: string) {
       data: { growthTargetOverride: target }
     })
     revalidatePath('/dashboard/flocks')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true }
   }).catch((error: any) => {
     console.error('Error updating growth target:', error)
@@ -696,6 +697,7 @@ export async function createIsolationRoom(data: { name: string, capacity: number
     revalidatePath('/dashboard/settings')
     revalidatePath('/dashboard/flocks')
     revalidatePath('/dashboard/mortality')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, room }
   }).catch((error: any) => {
     console.error('Error creating isolation room:', error)
@@ -757,6 +759,7 @@ export async function updateBatchStatus(id: string, status: string) {
     })
     revalidatePath('/dashboard/flocks')
     revalidatePath('/dashboard')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, batch }
   }).catch((error: any) => {
     console.error('Error updating batch status:', error)
@@ -823,6 +826,7 @@ export async function logProduction(data: {
 
     revalidatePath('/dashboard/eggs')
     revalidatePath('/dashboard')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true }
   }).catch((error: any) => {
     console.error('Error logging production:', error)
@@ -932,6 +936,7 @@ export async function createHouse(data: { houseNumber: string, capacity: number 
     revalidatePath('/dashboard/settings')
     revalidatePath('/dashboard/houses')
     revalidatePath('/dashboard')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, house }
   }).catch((error: any) => {
     console.error('Error creating house:', error)
@@ -1432,6 +1437,7 @@ export async function logWeight(data: {
       }
     })
     revalidatePath(`/dashboard/flocks/${data.batchId}`)
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, record }
   }).catch((error: any) => {
     console.error('Error logging weight:', error)

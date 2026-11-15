@@ -21,6 +21,10 @@ export default async function ReportsPage() {
   const end = new Date()
   const start = new Date()
   start.setDate(end.getDate() - 30)
+  // From the start of that day, like the date picker's ranges. A start time
+  // that changes every millisecond gave each visit its own cache entry, so
+  // the cached report was never reused.
+  start.setHours(0, 0, 0, 0)
 
   const [report, rawBatches, farmSettings] = await Promise.all([
     generateComprehensiveFarmReport(activeFarmId, start, end),

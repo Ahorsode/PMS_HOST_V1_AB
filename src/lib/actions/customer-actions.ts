@@ -1,10 +1,10 @@
 'use server'
 
 import prisma from '@/lib/db'
-import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
+import { revalidatePath, unstable_cache } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
-import { farmCacheTags } from '@/lib/performance/cache-tags'
+import { expireTag, farmCacheTags, revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 
 export async function createCustomer(data: {
   name: string
@@ -28,7 +28,8 @@ export async function createCustomer(data: {
     })
     revalidatePath('/dashboard/customers')
     revalidatePath('/dashboard/sales')
-    revalidateTag(farmCacheTags.customers(activeFarmId), "max")
+    revalidateFarmPerformanceCaches(activeFarmId)
+    expireTag(farmCacheTags.customers(activeFarmId))
     return { success: true, customer }
   } catch (error) {
     console.error('Error creating customer:', error)

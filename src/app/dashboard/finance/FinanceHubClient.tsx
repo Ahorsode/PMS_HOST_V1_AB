@@ -86,6 +86,9 @@ const PAYMENT_METHODS = [
   'Card'
 ]
 
+/** Ledger rows drawn at first and per "Show more"; totals, search and filters still use every row. */
+const LEDGER_PAGE_SIZE = 50
+
 function statusLabel(status: string) {
   if (status === 'PAID') return 'Paid'
   if (status === 'UNPAID') return 'Unpaid'
@@ -268,6 +271,12 @@ export function FinanceHubClient({
     }
   }
 
+  // How many matching rows are drawn. Changing the search or a filter starts
+  // again from the first page.
+  const filterKey = `${searchTerm}|${filterType}|${filterStatus}`
+  const [shownRows, setShownRows] = useState({ filterKey, count: LEDGER_PAGE_SIZE })
+  const visibleCount = shownRows.filterKey === filterKey ? shownRows.count : LEDGER_PAGE_SIZE
+
   // Filter list
   const filteredTransactions = transactions.filter(t => {
     const matchesSearch = 
@@ -280,6 +289,7 @@ export function FinanceHubClient({
 
     return matchesSearch && matchesType && matchesStatus
   })
+  const visibleTransactions = filteredTransactions.slice(0, visibleCount)
 
   return (
     <div className="space-y-6">
@@ -541,7 +551,7 @@ export function FinanceHubClient({
             ) : (
               <>
               <MobileCardList
-                items={filteredTransactions}
+                items={visibleTransactions}
                 getKey={(tx) => tx.id}
                 cardClassName={(tx) => (!!mutationMode && selectedTx?.id === tx.id ? 'bg-fg/[0.04] animate-pulse' : undefined)}
                 title={(tx) => tx.category}
@@ -623,7 +633,7 @@ export function FinanceHubClient({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-fg/5">
-                  {filteredTransactions.map((tx) => {
+                  {visibleTransactions.map((tx) => {
                     const isMutatingTx = !!mutationMode && selectedTx?.id === tx.id
 
                     return (
@@ -710,6 +720,20 @@ export function FinanceHubClient({
                   })}
                 </tbody>
               </table>
+              {filteredTransactions.length > visibleTransactions.length && (
+                <div className="flex flex-col items-center gap-2 border-t border-fg/[0.08] px-5 py-4 sm:flex-row sm:justify-between">
+                  <span className="font-mono text-xs tabular-nums text-fg-3">
+                    Showing {visibleTransactions.length} of {filteredTransactions.length}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShownRows({ filterKey, count: visibleCount + LEDGER_PAGE_SIZE })}
+                  >
+                    Show {Math.min(LEDGER_PAGE_SIZE, filteredTransactions.length - visibleTransactions.length)} more
+                  </Button>
+                </div>
+              )}
               </>
             )}
           </div>

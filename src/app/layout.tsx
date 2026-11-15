@@ -27,6 +27,7 @@ export const viewport: Viewport = {
 };
 
 import AuthProvider from "@/components/providers/SessionProvider";
+import { MotionProvider } from "@/components/providers/MotionProvider";
 
 export default function RootLayout({
   children,
@@ -40,7 +41,7 @@ export default function RootLayout({
         </head>
         <body className="antialiased bg-page min-h-screen text-fg font-sans">
           <AuthProvider>
-          {children}
+          <MotionProvider>{children}</MotionProvider>
           <Toaster richColors position="top-right" theme="dark" />
           <SpeedInsights />
           </AuthProvider>

@@ -108,7 +108,11 @@ export async function getBatchPerformanceReports() {
 
   const canViewFinance = await checkWorkerPermissions('finance', 'view')
 
-  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
+  // About twenty reads over every batch's full history, so the result is
+  // cached per farm (and per finance permission, the only per-user input).
+  // Every write to the farm's data clears the analytics tag straight away.
+  const loader = unstable_cache(async () => {
+    return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
     const [batches, generalExpensesRaw, activeBatchesForAlloc, farmFeedingLogs, farmVaccinations, farmMedications, inventoryItems, farmFormulations, farmOrderItems, farmBatchAllocations, manualLedgerRevenue] =
       await Promise.all([
       tx.livestock.findMany({
@@ -371,7 +375,14 @@ export async function getBatchPerformanceReports() {
       selectedBatchId: reports.find((batch: any) => batch.status === 'active')?.id || reports[0]?.id || null,
       canViewFinance,
     }
-  }).catch((error: any) => {
+    })
+  }, [`batch-performance:${activeFarmId}:${canViewFinance ? 1 : 0}`], {
+    revalidate: 60,
+    tags: [farmCacheTags.analytics(activeFarmId)],
+  })
+
+  // Failures are handled outside the cache so an empty result is never stored.
+  return await loader().catch((error: any) => {
     console.error('Error fetching batch performance reports:', error)
     return { batches: [], selectedBatchId: null, canViewFinance }
   })

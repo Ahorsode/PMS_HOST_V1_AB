@@ -1,11 +1,11 @@
 'use server'
 
 import prisma from '@/lib/db'
-import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
+import { revalidatePath, unstable_cache } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 import { FeedType, LivestockType } from '@prisma/client'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
-import { farmCacheTags, revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
+import { expireTag, farmCacheTags, revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 
 type FeedFormulationIngredientInput = {
   inventoryId: string
@@ -130,7 +130,7 @@ export async function createFeedFormulation(data: {
     })
 
     revalidatePath('/dashboard/feed')
-    revalidateTag(farmCacheTags.feedStatic(activeFarmId), "max")
+    expireTag(farmCacheTags.feedStatic(activeFarmId))
     revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, formulation }
   } catch (error: any) {
@@ -186,7 +186,8 @@ export async function deleteFeedFormulation(id: string) {
       where: { id, farmId: activeFarmId }
     })
     revalidatePath('/dashboard/feed')
-    revalidateTag(farmCacheTags.feedStatic(activeFarmId), "max")
+    revalidateFarmPerformanceCaches(activeFarmId)
+    expireTag(farmCacheTags.feedStatic(activeFarmId))
     return { success: true }
   } catch (error) {
     console.error('Error deleting formulation:', error)
@@ -327,7 +328,7 @@ export async function createFeedingLog(data: {
     })
 
     revalidatePath('/dashboard/feed')
-    revalidateTag(farmCacheTags.feedDynamic(activeFarmId), "max")
+    expireTag(farmCacheTags.feedDynamic(activeFarmId))
     revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, log }
   } catch (error: any) {
@@ -352,7 +353,8 @@ export async function updateFeedingLog(id: string, data: any) {
       }
     })
     revalidatePath('/dashboard/feed')
-    revalidateTag(farmCacheTags.feedDynamic(activeFarmId), "max")
+    revalidateFarmPerformanceCaches(activeFarmId)
+    expireTag(farmCacheTags.feedDynamic(activeFarmId))
     return { success: true }
   } catch (error) {
     console.error('Error updating feeding log:', error)
@@ -385,7 +387,8 @@ export async function deleteFeedingLog(id: string, reason: string) {
       data: { isDeleted: true, deletedAt: new Date() }
     })
     revalidatePath('/dashboard/feed')
-    revalidateTag(farmCacheTags.feedDynamic(activeFarmId), "max")
+    revalidateFarmPerformanceCaches(activeFarmId)
+    expireTag(farmCacheTags.feedDynamic(activeFarmId))
     return { success: true }
   } catch (error) {
     console.error('Error deleting feeding log:', error)
@@ -404,7 +407,8 @@ export async function restoreFeedingLog(id: string) {
     })
     revalidatePath('/dashboard/feed')
     revalidatePath('/dashboard/settings/trash')
-    revalidateTag(farmCacheTags.feedDynamic(activeFarmId), "max")
+    revalidateFarmPerformanceCaches(activeFarmId)
+    expireTag(farmCacheTags.feedDynamic(activeFarmId))
     return { success: true }
   } catch (error) {
     console.error('Error restoring feeding log:', error)

@@ -1,6 +1,7 @@
 'use server'
 
 import prisma from '@/lib/db'
+import { revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 import { revalidatePath } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 
@@ -183,6 +184,7 @@ export async function restoreDeletedRecord(logId: string) {
 
     revalidatePath('/dashboard/admin/logs')
     revalidatePath('/dashboard', 'layout')
+    revalidateFarmPerformanceCaches(activeFarmId)
     
     return { success: true, message: `Successfully restored record to ${log.tableName}` }
   } catch (error: any) {

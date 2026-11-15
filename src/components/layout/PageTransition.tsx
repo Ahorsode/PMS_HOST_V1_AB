@@ -1,21 +1,19 @@
 "use client";
 
-import { motion } from "framer-motion";
 import { usePathname } from "next/navigation";
 
-/** One short fade and rise when the page changes. No exit animation, so navigation never waits on it. */
+/**
+ * One short fade and rise when the page changes. No exit animation, so
+ * navigation never waits on it. The animation is CSS (see globals.css): a
+ * script-driven one kept the server-rendered page invisible until all the
+ * JavaScript had loaded and run.
+ */
 export function PageTransition({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <motion.div
-      key={pathname}
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-      className="flex-1 w-full h-full"
-    >
+    <div key={pathname} className="flex-1 w-full h-full animate-page-enter">
       {children}
-    </motion.div>
+    </div>
   );
 }

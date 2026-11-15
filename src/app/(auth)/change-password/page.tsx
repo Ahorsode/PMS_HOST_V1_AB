@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Lock, ArrowRight, Loader2, Bird, CheckCircle2 } from 'lucide-react';
@@ -74,26 +74,26 @@ export default function ChangePasswordPage() {
       <div className="relative z-10 w-full max-w-md">
         <AnimatePresence mode="wait">
           {!success ? (
-            <motion.div
+            <m.div
               key="change-password-form"
-              initial={{ opacity: 0, y: 40, scale: 0.95 }}
+              initial={false}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -40, scale: 0.95, filter: "blur(10px)" }}
               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="relative"
+              className="relative animate-auth-card-enter"
             >
               <div className="absolute inset-0 bg-blue-500/10 blur-[100px] rounded-full pointer-events-none" />
 
               <div className="group relative overflow-hidden rounded-2xl border border-white/10 bg-white/10 p-5 shadow-2xl backdrop-blur-2xl sm:rounded-lg sm:p-9">
                 <div className="flex flex-col items-center text-center space-y-5">
-                  <motion.div 
-                    initial={{ scale: 0 }}
+                  <m.div 
+                    initial={false}
                     animate={{ scale: 1 }}
                     transition={{ type: "spring", delay: 0.2, bounce: 0.5 }}
-                    className="w-20 h-20 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/20"
+                    className="animate-logo-pop w-20 h-20 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/20"
                   >
                     <Lock className="w-10 h-10 text-white" />
-                  </motion.div>
+                  </m.div>
                   
                   <div className="space-y-2">
                     <h1 className="text-3xl font-bold text-white tracking-normal text-center">Security Update</h1>
@@ -157,14 +157,14 @@ export default function ChangePasswordPage() {
 
                     <AnimatePresence>
                       {error && (
-                        <motion.p
+                        <m.p
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: 'auto' }}
                           exit={{ opacity: 0, height: 0 }}
                           className="text-red-400 text-xs font-bold uppercase tracking-widest bg-red-500/10 py-2 rounded-lg border border-red-500/20 w-full"
                         >
                           {error}
-                        </motion.p>
+                        </m.p>
                       )}
                     </AnimatePresence>
 
@@ -188,9 +188,9 @@ export default function ChangePasswordPage() {
                   </form>
                 </div>
               </div>
-            </motion.div>
+            </m.div>
           ) : (
-            <motion.div
+            <m.div
               key="success-animation"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -202,7 +202,7 @@ export default function ChangePasswordPage() {
               <h2 className="text-3xl font-bold text-white tracking-normal">Password Updated!</h2>
               <p className="text-white/70">Redirecting to your dashboard...</p>
               <Loader2 className="w-6 h-6 text-blue-400 animate-spin" />
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </div>

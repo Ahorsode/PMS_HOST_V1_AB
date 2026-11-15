@@ -53,5 +53,9 @@ export default function middleware(request: NextRequest, event: NextFetchEvent) 
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|.*\\.png$).*)'],
+  // Static files (images, icons, fonts, the manifest, robots.txt, the sitemap)
+  // are public and skip the middleware; every page still runs through it.
+  matcher: [
+    '/((?!api|_next/static|_next/image|.*\\.(?:png|jpe?g|webp|avif|gif|svg|ico|woff2?|ttf|otf|webmanifest)$|manifest\\.json$|robots\\.txt$|sitemap\\.xml$).*)',
+  ],
 };

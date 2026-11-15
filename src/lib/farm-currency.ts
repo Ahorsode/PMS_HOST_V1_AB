@@ -1,6 +1,6 @@
 import 'server-only'
 import { cache } from 'react'
-import prisma from '@/lib/db'
+import { getFarmRecord } from '@/lib/farm-record'
 import { billingCurrencyForCountry, currencyForCountry, DEFAULT_FARM_CURRENCY, type BillingCurrency } from '@/lib/countries'
 
 export type FarmMoney = {
@@ -17,10 +17,7 @@ export type FarmMoney = {
 /** A farm's country and currencies, read once per request. */
 export const getFarmMoney = cache(async (farmId: string | null | undefined): Promise<FarmMoney> => {
   if (!farmId) return { ownerId: null, country: null, currency: DEFAULT_FARM_CURRENCY, billingCurrency: 'GHS' }
-  const farm = await prisma.farm.findUnique({
-    where: { id: farmId },
-    select: { userId: true, country: true, settings: { select: { currency: true } } },
-  })
+  const farm = await getFarmRecord(farmId)
   const country = farm?.country ?? null
   return {
     ownerId: farm?.userId ?? null,

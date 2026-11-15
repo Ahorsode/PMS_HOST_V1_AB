@@ -36,8 +36,8 @@ const prismaClientSingleton = () => {
     client: {
       async $withFarmContext(userId: string, farmId: string, callback: (tx: any) => Promise<any>) {
         return await (this as any).$transaction(async (tx: any) => {
-          await tx.$executeRaw`SELECT set_config('app.current_user_id', ${userId}, true)`;
-          await tx.$executeRaw`SELECT set_config('app.current_farm_id', ${String(farmId)}, true)`;
+          // Both settings in one statement: same transaction-local values, one round trip instead of two.
+          await tx.$executeRaw`SELECT set_config('app.current_user_id', ${userId}, true), set_config('app.current_farm_id', ${String(farmId)}, true)`;
           return await callback(tx);
         }, {
           // Pages run many of these in parallel (Sales starts 9). Prisma's default
@@ -50,8 +50,7 @@ const prismaClientSingleton = () => {
       // Keep $withUser for backward compatibility but update it to set farm_id to null or default
       async $withUser(userId: string, callback: (tx: any) => Promise<any>) {
         return await (this as any).$transaction(async (tx: any) => {
-          await tx.$executeRaw`SELECT set_config('app.current_user_id', ${userId}, true)`;
-          await tx.$executeRaw`SELECT set_config('app.current_farm_id', ${''}, true)`;
+          await tx.$executeRaw`SELECT set_config('app.current_user_id', ${userId}, true), set_config('app.current_farm_id', ${''}, true)`;
           return await callback(tx);
         }, {
           // Pages run many of these in parallel (Sales starts 9). Prisma's default

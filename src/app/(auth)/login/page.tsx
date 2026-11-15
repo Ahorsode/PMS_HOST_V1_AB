@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Phone, ArrowRight, Loader2, Plus, Lock, ShieldAlert } from 'lucide-react';
@@ -79,13 +79,13 @@ export default function LoginPage() {
       <div className="relative z-10 w-full max-w-md">
         <AnimatePresence mode="wait">
           {!success ? (
-            <motion.div
+            <m.div
               key="login-form"
-              initial={{ opacity: 0, y: 40, scale: 0.95 }}
+              initial={false}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -40, scale: 0.95, filter: "blur(10px)" }}
               transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-              className="relative"
+              className="relative animate-auth-card-enter"
             >
               {/* Ambient Glow */}
               <div className="absolute inset-0 bg-blue-500/20 blur-[100px] rounded-full pointer-events-none" />
@@ -95,13 +95,14 @@ export default function LoginPage() {
                 <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 transform -translate-x-full group-hover:translate-x-full pointer-events-none" />
                 
                 <div className="flex flex-col items-center text-center space-y-5">
-                  <motion.div 
-                    initial={{ scale: 0 }}
+                  <m.div 
+                    initial={false}
                     animate={{ scale: 1 }}
                     transition={{ type: "spring", delay: 0.2, bounce: 0.5 }}
+                    className="animate-logo-pop"
                   >
                     <img src="/logo.png" alt="Poultry Ledger logo" className="w-20 h-20 rounded-lg object-cover shadow-lg shadow-emerald-500/20" />
-                  </motion.div>
+                  </m.div>
                   
                   <div className="space-y-2">
                     <h1 className="text-3xl font-bold tracking-normal text-white sm:text-4xl">Welcome</h1>
@@ -146,7 +147,7 @@ export default function LoginPage() {
 
                     <AnimatePresence>
                       {securityMessage && (
-                        <motion.div
+                        <m.div
                           initial={{ opacity: 0, height: 0, y: -10 }}
                           animate={{ opacity: 1, height: 'auto', y: 0 }}
                           exit={{ opacity: 0, height: 0, y: -10 }}
@@ -154,17 +155,17 @@ export default function LoginPage() {
                         >
                           <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" />
                           <span>{securityMessage}</span>
-                        </motion.div>
+                        </m.div>
                       )}
                       {error && (
-                        <motion.p
+                        <m.p
                           initial={{ opacity: 0, height: 0, y: -10 }}
                           animate={{ opacity: 1, height: 'auto', y: 0 }}
                           exit={{ opacity: 0, height: 0, y: -10 }}
                           className="text-red-400 text-sm font-bold bg-red-500/10 py-2 rounded-md border border-red-500/20"
                         >
                           {error}
-                        </motion.p>
+                        </m.p>
                       )}
                     </AnimatePresence>
 
@@ -223,32 +224,32 @@ export default function LoginPage() {
                   <LegalLinks className="justify-center pt-5 text-xs text-white/60" />
                 </div>
               </div>
-            </motion.div>
+            </m.div>
           ) : (
-            <motion.div
+            <m.div
               key="success-animation"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               className="flex flex-col items-center justify-center text-center space-y-5"
             >
-              <motion.div 
+              <m.div 
                 initial={{ scale: 0, rotate: -180 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: "spring", bounce: 0.6 }}
                 className="w-32 h-32 rounded-lg flex items-center justify-center shadow-[0_0_100px_rgba(16,185,129,0.4)]"
               >
                 <img src="/logo.png" alt="Poultry Ledger logo" className="w-32 h-32 object-cover rounded-lg" />
-              </motion.div>
-              <motion.h2 
+              </m.div>
+              <m.h2 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
                 className="text-3xl font-bold text-white tracking-normal"
               >
                 Access Granted
-              </motion.h2>
+              </m.h2>
               <Loader2 className="w-6 h-6 text-emerald-400 animate-spin" />
-            </motion.div>
+            </m.div>
           )}
         </AnimatePresence>
       </div>
