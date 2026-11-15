@@ -32,7 +32,7 @@ export const FlockActionsHeader = ({ houses, canEdit = true }: { houses: any[], 
           </ActionButton>
         )}
       </div>
-      <Dialog isOpen={isOpen} onOpenChange={setIsOpen} title="Register a livestock unit">
+      <Dialog isOpen={isOpen} onOpenChange={setIsOpen} title="Add a flock">
         <RegisterBatchForm houses={houses} onSuccess={() => setIsOpen(false)} />
       </Dialog>
     </>

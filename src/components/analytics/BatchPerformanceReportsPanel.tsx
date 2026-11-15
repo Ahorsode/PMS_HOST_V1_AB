@@ -16,7 +16,8 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { Activity, Banknote, Bird, ChevronDown, Skull, TrendingUp } from 'lucide-react'
+import { Activity, Banknote, Bird, Skull, TrendingUp } from 'lucide-react'
+import { SearchSelect } from '@/components/ui/form'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { cn, currencySymbol, formatCurrency } from '@/lib/utils'
 import { useCurrency } from '@/components/providers/CurrencyProvider'
@@ -102,20 +103,19 @@ export function BatchPerformanceReportsPanel({ reports }: { reports: ReportsPayl
           </p>
         </div>
 
-        <div className="relative w-full lg:w-[360px]">
-          <select
-            value={selectedBatch.id}
-            onChange={(event) => setSelectedBatchId(event.target.value)}
-            className="h-12 w-full appearance-none rounded-md border border-fg/10 bg-card px-4 pr-10 text-sm font-medium text-fg outline-none transition focus:border-fg/[0.08] focus:ring-2 focus:ring-fg/10"
-          >
-            {reports.batches.map((batch) => (
-              <option key={batch.id} value={batch.id} className="bg-card">
-                {batch.name} · {batch.status}
-              </option>
-            ))}
-          </select>
-          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg/50" />
-        </div>
+        <SearchSelect
+          label="Flock"
+          wrapperClassName="w-full lg:w-[360px]"
+          value={selectedBatch.id}
+          onChange={setSelectedBatchId}
+          searchPlaceholder="Search flocks"
+          emptyText="No flock matches"
+          options={reports.batches.map((batch) => ({
+            value: batch.id,
+            label: batch.name,
+            description: batch.status,
+          }))}
+        />
       </div>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">

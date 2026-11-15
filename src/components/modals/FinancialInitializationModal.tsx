@@ -1,14 +1,21 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Dialog } from '@/components/ui/Dialog';
-import { Card, CardContent } from '@/components/ui/Card';
-import { Banknote, Truck, Plus, Trash2, Save, X, Loader2 } from 'lucide-react';
+import {
+  Button,
+  Dialog,
+  Form,
+  FormActions,
+  FormSection,
+  FormSummary,
+  FormSummaryRow,
+  Input,
+} from '@/components/ui/form';
+import { Plus, Trash2 } from 'lucide-react';
 import { updateBatchFinancials } from '@/lib/actions/dashboard-actions';
 import { toast } from 'sonner';
 import { formatCurrency } from '@/lib/utils';
 import { useCurrency } from '@/components/providers/CurrencyProvider'
-import { MutationBoundary } from '@/components/ui/MutationFeedback';
 
 interface FinancialInitializationModalProps {
   isOpen: boolean;
@@ -55,137 +62,129 @@ export function FinancialInitializationModal({ isOpen, onClose, batchId, batchNa
       });
 
       if (result.success) {
-        toast.success("Financial records initialized successfully");
+        toast.success("Flock costs saved");
         onClose();
       } else {
-        toast.error(result.error || "Failed to save financials");
+        toast.error(result.error || "The costs could not be saved. Try again.");
       }
     } catch (error) {
-      toast.error("An unexpected error occurred");
+      toast.error("Something went wrong. Check your connection and try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const otherTotal = otherExpenses.reduce((sum, exp) => sum + (Number(exp.amount) || 0), 0);
+  const grandTotal = totalActualCost + (Number(carriageCost) || 0) + otherTotal;
+
   return (
-    <Dialog 
-      isOpen={isOpen} 
-      onOpenChange={(open) => !open && !isSubmitting && onClose()} 
-      title={`Financial Initialization: ${batchName}`}
-      description="Initialize the investment costs for this livestock unit. these will be recorded as farm expenses for accurate P&L reporting."
+    <Dialog
+      isOpen={isOpen}
+      onOpenChange={(open) => !open && !isSubmitting && onClose()}
+      title="What did this flock cost?"
+      description={`${batchName}: record what you paid so your profit is worked out correctly.`}
     >
-      <MutationBoundary active={isSubmitting} label="Saving initial costs...">
-      <div className="space-y-5 pt-3">
-        
-        <div className="bg-fg/[0.04] border border-fg/[0.08] rounded-lg p-3 flex justify-between items-center">
-           <div>
-              <p className="text-xs font-medium text-fg">Quantity for unit</p>
-              <p className="text-lg font-medium text-fg">{quantity.toLocaleString()} Birds / Heads</p>
-           </div>
-           <div className="text-right">
-              <p className="text-xs font-medium text-fg">Total actual cost</p>
-              <p className="text-xl font-medium text-fg">{formatCurrency(totalActualCost, currency)}</p>
-           </div>
-        </div>
+      <Form
+        onSubmit={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          handleSave();
+        }}
+        noValidate
+      >
+        <FormSection title="Buying the birds">
+          <Input
+            label="Price for one"
+            type="number"
+            min="0"
+            step="0.01"
+            unit={currency}
+            placeholder="e.g. 12.50"
+            hint={`${quantity.toLocaleString()} in this flock`}
+            value={costPerUnit}
+            onChange={(e) => setCostPerUnit(e.target.value === '' ? '' : Number(e.target.value))}
+            onFocus={(e) => e.target.select()}
+            disabled={isSubmitting}
+          />
+          <Input
+            label="Transport"
+            optional
+            type="number"
+            min="0"
+            step="0.01"
+            unit={currency}
+            placeholder="e.g. 200"
+            value={carriageCost}
+            onChange={(e) => setCarriageCost(e.target.value === '' ? '' : Number(e.target.value))}
+            onFocus={(e) => e.target.select()}
+            disabled={isSubmitting}
+          />
+        </FormSection>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-fg flex items-center gap-2">
-               <Banknote className="w-3 h-3" /> Cost per unit
-            </label>
-            <input 
-              type="number" 
-              min="0"
-              value={costPerUnit}
-              onChange={(e) => setCostPerUnit(e.target.value === '' ? '' : Number(e.target.value))}
-              placeholder="0.00"
-              className="w-full bg-fg/[0.04] border border-fg/10 rounded-md px-3 py-2 text-fg font-medium focus:border-fg/[0.08] transition-colors outline-none"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-xs font-medium text-fg-2 flex items-center gap-2">
-               <Truck className="w-3 h-3" /> Carriage / transport
-            </label>
-            <input 
-              type="number" 
-              min="0"
-              value={carriageCost}
-              onChange={(e) => setCarriageCost(e.target.value === '' ? '' : Number(e.target.value))}
-              placeholder="0.00"
-              className="w-full bg-fg/[0.04] border border-fg/10 rounded-md px-3 py-2 text-fg font-medium focus:border-fg/[0.08] transition-colors outline-none"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-3">
-          <div className="flex justify-between items-center">
-            <label className="text-xs font-medium text-fg-2 flex items-center gap-2">
-               Other direct expenses
-            </label>
-            <button aria-label="Add expense" 
-              onClick={addOtherExpense}
-              disabled={isSubmitting}
-              className="p-1.5 bg-fg/[0.06] border border-fg/[0.08] rounded-lg text-fg-2 hover:bg-fg/[0.06] transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-          </div>
-
-          <div className="space-y-2 max-h-[200px] overflow-y-auto custom-scrollbar pr-2">
-             {otherExpenses.map((exp, idx) => (
-               <div key={idx} className="flex gap-2 items-center">
-                  <input 
-                    placeholder="Expense label (e.g. agent fee)"
+        <FormSection title="Other costs" hint="Anything else you paid to bring this flock in, such as an agent fee.">
+          {otherExpenses.length > 0 ? (
+            <ul className="space-y-3">
+              {otherExpenses.map((exp, idx) => (
+                <li key={idx} className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 rounded-xl border border-fg/[0.08] bg-tile p-3 sm:grid-cols-[minmax(0,1fr)_10rem_auto]">
+                  <Input
+                    label="What for"
+                    wrapperClassName="col-span-2 sm:col-span-1"
+                    placeholder="e.g. Agent fee"
                     value={exp.label}
                     onChange={(e) => updateOtherExpense(idx, 'label', e.target.value)}
-                    className="flex-1 bg-fg/[0.04] border border-fg/10 rounded-md px-3 py-2 text-xs text-fg font-medium"
+                    disabled={isSubmitting}
                   />
-                  <input 
+                  <Input
+                    label="Amount"
                     type="number"
                     min="0"
-                    placeholder="0.00"
+                    step="0.01"
+                    unit={currency}
+                    placeholder="0"
                     value={exp.amount}
                     onChange={(e) => updateOtherExpense(idx, 'amount', e.target.value === '' ? '' : Number(e.target.value))}
-                    className="w-24 bg-fg/[0.04] border border-fg/10 rounded-md px-3 py-2 text-xs text-fg font-medium"
+                    disabled={isSubmitting}
                   />
-                  <button aria-label="Remove expense" 
+                  <button
+                    type="button"
+                    aria-label={`Remove cost ${idx + 1}`}
                     onClick={() => removeOtherExpense(idx)}
                     disabled={isSubmitting}
-                    className="p-2 text-neg hover:bg-fg/[0.04] rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-neg/30 bg-neg/10 text-neg transition-colors duration-150 hover:bg-neg/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-not-allowed disabled:opacity-50 md:h-11 md:w-11"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 className="h-5 w-5" strokeWidth={1.75} />
                   </button>
-               </div>
-             ))}
-             {otherExpenses.length === 0 && (
-               <div className="text-center py-3 border border-dashed border-fg/10 rounded-md text-fg/70 text-xs font-medium">
-                  No additional expenses
-               </div>
-             )}
-          </div>
-        </div>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <Button type="button" variant="outline" onClick={addOtherExpense} disabled={isSubmitting} className="w-full">
+            <Plus className="h-4 w-4" strokeWidth={1.75} />
+            Add another cost
+          </Button>
+        </FormSection>
 
-        <div className="flex gap-2 pt-3">
-          <button 
-            onClick={onClose}
-            disabled={isSubmitting}
-            className="flex-1 py-3 rounded-md bg-fg/10 border border-fg/10 text-fg font-medium text-xs hover:bg-fg/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
+        <FormSummary>
+          <FormSummaryRow
+            label={`Birds (${quantity.toLocaleString()} × ${formatCurrency(Number(costPerUnit) || 0, currency)})`}
+            value={formatCurrency(totalActualCost, currency)}
+          />
+          <FormSummaryRow label="Transport" value={formatCurrency(Number(carriageCost) || 0, currency)} />
+          {otherExpenses.length > 0 ? (
+            <FormSummaryRow label="Other costs" value={formatCurrency(otherTotal, currency)} />
+          ) : null}
+          <FormSummaryRow label="Total paid" value={formatCurrency(grandTotal, currency)} strong />
+        </FormSummary>
+
+        <FormActions>
+          <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
             Skip for now
-          </button>
-          <button 
-            onClick={handleSave}
-            disabled={isSubmitting}
-            className="flex-1 py-3 rounded-md bg-fg text-page font-medium text-xs hover:bg-fg/90 transition-colors disabled:opacity-50"
-          >
-            <span className="inline-flex items-center justify-center gap-2">
-              {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-              {isSubmitting ? 'Saving...' : 'Save Initial Costs'}
-            </span>
-          </button>
-        </div>
-      </div>
-      </MutationBoundary>
+          </Button>
+          <Button type="submit" variant="accent" isLoading={isSubmitting} loadingText="Saving">
+            Save costs
+          </Button>
+        </FormActions>
+      </Form>
     </Dialog>
   );
 }

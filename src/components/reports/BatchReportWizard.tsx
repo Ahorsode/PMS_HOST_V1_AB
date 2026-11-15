@@ -10,7 +10,20 @@ import {
   MessageCircle,
   SkipForward,
 } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import {
+  Button,
+  Checkbox,
+  DateInput,
+  FormActions,
+  FormNote,
+  FormRow,
+  FormSection,
+  FormSteps,
+  FormSummary,
+  FormSummaryRow,
+  MoreDetails,
+  OptionCards,
+} from '@/components/ui/form'
 import { DialogDescription, DialogTitle } from '@/components/ui/Dialog'
 import { cn, formatCurrency } from '@/lib/utils'
 import { useCurrency } from '@/components/providers/CurrencyProvider'
@@ -66,34 +79,16 @@ const INDIVIDUAL_SECTIONS: { key: ReportSectionKey; label: string }[] = [
   { key: 'health', label: 'Health' },
 ]
 
-function StepIndicator({ step }: { step: WizardStep }) {
-  const steps: { key: WizardStep; label: string }[] = [
-    { key: 'duration', label: 'Duration' },
-    { key: 'data', label: 'Data' },
-    { key: 'format', label: 'Format' },
-    { key: 'preview', label: 'Preview' },
-  ]
-  const currentIndex = steps.findIndex((s) => s.key === step)
+const WIZARD_STEPS: { id: WizardStep; label: string }[] = [
+  { id: 'duration', label: 'Dates' },
+  { id: 'data', label: 'What to include' },
+  { id: 'format', label: 'File type' },
+  { id: 'preview', label: 'Preview' },
+]
 
-  return (
-    <div className="mb-6 flex flex-wrap gap-2">
-      {steps.map((s, idx) => (
-        <div
-          key={s.key}
-          className={cn(
-            'rounded-lg border px-3 py-1 text-xs',
-            idx === currentIndex
-              ? 'border-accent bg-accent font-semibold text-accent-fg'
-              : idx < currentIndex
-                ? 'border-accent/40 bg-accent/10 font-medium text-accent'
-                : 'border-fg/10 bg-fg/[0.02] font-medium text-fg-3'
-          )}
-        >
-          {idx + 1}. {s.label}
-        </div>
-      ))}
-    </div>
-  )
+function StepIndicator({ step, onBack }: { step: WizardStep; onBack: (step: WizardStep) => void }) {
+  const currentIndex = WIZARD_STEPS.findIndex((s) => s.id === step)
+  return <FormSteps steps={WIZARD_STEPS} current={currentIndex} onStepClick={(index) => onBack(WIZARD_STEPS[index].id)} />
 }
 
 export function BatchReportWizard({ dataSources }: { dataSources: any[] }) {
@@ -200,234 +195,194 @@ export function BatchReportWizard({ dataSources }: { dataSources: any[] }) {
   }
 
   return (
-    <>
-      <div className="mb-2">
-        <DialogTitle>Generate report</DialogTitle>
-        <DialogDescription>
-          {scopeLabel} — choose duration, data, format, then preview or download.
-        </DialogDescription>
+    <div className="space-y-6">
+      <div>
+        <DialogTitle>Make a report</DialogTitle>
+        <DialogDescription>{scopeLabel}</DialogDescription>
       </div>
 
-      <StepIndicator step={step} />
+      <StepIndicator step={step} onBack={setStep} />
 
       {step === 'duration' ? (
-        <div className="space-y-4">
-          <p className="text-xs font-medium text-fg/45">1. Report duration</p>
-          <div className="grid gap-2 sm:grid-cols-2">
-            {DURATION_OPTIONS.map((option) => (
-              <button
-                key={option.key}
-                type="button"
-                onClick={() => setDuration(option.key)}
-                aria-pressed={duration === option.key}
-                className={cn(
-                  'rounded-lg px-4 py-3 text-left transition-colors',
-                  duration === option.key
-                    ? 'border-2 border-accent bg-accent/10 shadow-sm'
-                    : 'border-2 border-fg/10 bg-fg/[0.03] hover:border-fg/25'
-                )}
-              >
-                <p className={cn('text-sm', duration === option.key ? 'font-semibold text-accent' : 'font-medium text-fg')}>{option.label}</p>
-                <p className="mt-0.5 text-xs font-medium text-fg/45">{option.hint}</p>
-              </button>
-            ))}
-          </div>
+        <>
+          <OptionCards
+            label="Which dates"
+            value={duration}
+            onChange={setDuration}
+            options={DURATION_OPTIONS.map((option) => ({
+              value: option.key,
+              label: option.label,
+              description: option.hint,
+            }))}
+          />
 
           {duration === 'custom' ? (
-            <div className="grid gap-3 rounded-lg border border-fg/10 bg-fg/[0.03] p-4 sm:grid-cols-2">
-              <label className="space-y-1">
-                <span className="text-xs font-medium text-fg/45">Start date</span>
-                <input
-                  type="date"
-                  value={customStart}
-                  onChange={(e) => setCustomStart(e.target.value)}
-                  className="w-full rounded-lg border border-fg/10 bg-fg/[0.04] px-3 py-2 text-sm font-medium text-fg"
-                />
-              </label>
-              <label className="space-y-1">
-                <span className="text-xs font-medium text-fg/45">End date</span>
-                <input
-                  type="date"
-                  value={customEnd}
-                  onChange={(e) => setCustomEnd(e.target.value)}
-                  className="w-full rounded-lg border border-fg/10 bg-fg/[0.04] px-3 py-2 text-sm font-medium text-fg"
-                />
-              </label>
-            </div>
+            <FormRow>
+              <DateInput label="From" value={customStart} onChange={(e) => setCustomStart(e.target.value)} />
+              <DateInput label="To" value={customEnd} onChange={(e) => setCustomEnd(e.target.value)} />
+            </FormRow>
           ) : (
-            <div className="flex items-center gap-2 rounded-lg border border-fg/10 bg-fg/[0.03] px-4 py-3 text-xs font-medium text-fg/60">
-              <Calendar className="h-4 w-4 text-fg-3" />
-              Selected period: {dateRange.label}
-            </div>
+            <FormNote>
+              <span className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 shrink-0 text-fg-3" strokeWidth={1.75} />
+                {dateRange.label}
+              </span>
+            </FormNote>
           )}
 
-          <div className="flex justify-end pt-2">
-            <Button onClick={() => setStep('data')} disabled={!canProceedFromDuration}>
-              Next: select data
-              <ChevronRight className="h-4 w-4" />
+          <FormActions>
+            <Button type="button" variant="accent" onClick={() => setStep('data')} disabled={!canProceedFromDuration}>
+              Next: what to include
+              <ChevronRight className="h-4 w-4" strokeWidth={1.75} />
             </Button>
-          </div>
-        </div>
+          </FormActions>
+        </>
       ) : null}
 
       {step === 'data' ? (
-        <div className="space-y-4">
-          <p className="text-xs font-medium text-fg/45">2. Report data</p>
-
-          <label className={cn('flex cursor-pointer items-center gap-3 rounded-lg px-4 py-3 transition-colors', allData ? 'border-2 border-accent bg-accent/10' : 'border-2 border-fg/10 bg-fg/[0.03]')}>
+        <>
+          <label
+            className={cn(
+              'flex min-h-12 cursor-pointer items-start gap-3 rounded-xl border px-3.5 py-3 transition-colors duration-150',
+              allData ? 'border-accent bg-accent/10' : 'border-fg/[0.14] bg-page hover:border-fg/25'
+            )}
+          >
             <input
               type="checkbox"
               checked={allData}
               onChange={(e) => toggleAllData(e.target.checked)}
-              className="h-4 w-4 accent-emerald-500"
+              className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--accent)]"
             />
-            <div>
-              <p className={cn('text-sm', allData ? 'font-semibold text-accent' : 'font-medium text-fg')}>All data</p>
-              <p className="text-xs text-fg/50">Include every section available for this report</p>
-            </div>
+            <span>
+              <span className="block text-sm font-semibold text-fg">Everything</span>
+              <span className="block text-[13px] leading-5 text-fg-2">Every section available for this report</span>
+            </span>
           </label>
 
-          <div className="grid gap-2 sm:grid-cols-2">
-            {DATA_GROUPS.filter((g) => g.key !== 'finance' || canViewFinance).map((group) => (
-              <label
-                key={group.key}
-                className={cn(
-                  'flex cursor-pointer items-start gap-3 rounded-lg px-4 py-3 transition-colors',
-                  allData || isGroupChecked(group.sections) ? 'border-2 border-accent/60 bg-accent/10' : 'border-2 border-fg/10 bg-fg/[0.03]'
-                )}
-              >
-                <input
-                  type="checkbox"
-                  checked={allData || isGroupChecked(group.sections)}
-                  disabled={allData}
-                  onChange={(e) => toggleGroup(group.sections, e.target.checked)}
-                  className="mt-0.5 h-4 w-4 accent-emerald-500"
-                />
-                <div>
-                  <p className="text-sm font-medium text-fg">{group.label}</p>
-                  <p className="text-xs text-fg/50">{group.hint}</p>
-                </div>
-              </label>
-            ))}
-          </div>
-
-          <div className="rounded-lg border border-fg/10 bg-fg/[0.02] p-4">
-            <p className="mb-3 text-xs font-medium text-fg/45">Or pick specific sections</p>
+          <FormSection title="Or choose parts">
             <div className="grid gap-2 sm:grid-cols-2">
-              {INDIVIDUAL_SECTIONS.filter(
-                (s) => canViewFinance || !['finance', 'sales', 'expenses'].includes(s.key)
-              ).map((section) => (
-                <label key={section.key} className="flex items-center gap-2 text-xs font-medium text-fg/75">
-                  <input
-                    type="checkbox"
+              {DATA_GROUPS.filter((g) => g.key !== 'finance' || canViewFinance).map((group) => {
+                const checked = allData || isGroupChecked(group.sections)
+                return (
+                  <label
+                    key={group.key}
+                    className={cn(
+                      'flex min-h-12 cursor-pointer items-start gap-3 rounded-xl border px-3.5 py-3 transition-colors duration-150',
+                      checked ? 'border-accent bg-accent/10' : 'border-fg/[0.14] bg-page hover:border-fg/25',
+                      allData && 'cursor-not-allowed opacity-70'
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      disabled={allData}
+                      onChange={(e) => toggleGroup(group.sections, e.target.checked)}
+                      className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--accent)]"
+                    />
+                    <span>
+                      <span className="block text-sm font-semibold text-fg">{group.label}</span>
+                      <span className="block text-[13px] leading-5 text-fg-2">{group.hint}</span>
+                    </span>
+                  </label>
+                )
+              })}
+            </div>
+
+            <MoreDetails label="Pick single sections">
+              <div className="grid gap-x-4 sm:grid-cols-2">
+                {INDIVIDUAL_SECTIONS.filter(
+                  (s) => canViewFinance || !['finance', 'sales', 'expenses'].includes(s.key)
+                ).map((section) => (
+                  <Checkbox
+                    key={section.key}
+                    label={section.label}
                     checked={allData || effectiveSections.includes(section.key)}
                     disabled={allData}
                     onChange={(e) => toggleSection(section.key, e.target.checked)}
-                    className="h-3.5 w-3.5 accent-emerald-500"
                   />
-                  {section.label}
-                </label>
-              ))}
-            </div>
-          </div>
+                ))}
+              </div>
+            </MoreDetails>
+          </FormSection>
 
-          <div className="flex justify-between pt-2">
-            <Button variant="ghost" onClick={() => setStep('duration')}>
-              <ChevronLeft className="h-4 w-4" />
+          <FormActions>
+            <Button type="button" variant="outline" onClick={() => setStep('duration')}>
+              <ChevronLeft className="h-4 w-4" strokeWidth={1.75} />
               Back
             </Button>
-            <Button onClick={() => setStep('format')} disabled={!canProceedFromData}>
-              Next: choose format
-              <ChevronRight className="h-4 w-4" />
+            <Button type="button" variant="accent" onClick={() => setStep('format')} disabled={!canProceedFromData}>
+              Next: file type
+              <ChevronRight className="h-4 w-4" strokeWidth={1.75} />
             </Button>
-          </div>
-        </div>
+          </FormActions>
+        </>
       ) : null}
 
       {step === 'format' ? (
-        <div className="space-y-4">
-          <p className="text-xs font-medium text-fg/45">3. Export format</p>
-
-          <div className="grid gap-2 sm:grid-cols-2">
-            {(['pdf', 'word'] as ReportFormat[]).map((option) => (
-              <button
-                key={option}
-                type="button"
-                onClick={() => setFormat(option)}
-                aria-pressed={format === option}
-                className={cn(
-                  'rounded-lg px-4 py-4 text-left transition-colors',
-                  format === option
-                    ? 'border-2 border-accent bg-accent/10 shadow-sm'
-                    : 'border-2 border-fg/10 bg-fg/[0.03] hover:border-fg/25'
-                )}
-              >
-                <p className={cn('text-sm', format === option ? 'font-semibold text-accent' : 'font-medium text-fg')}>{option === 'pdf' ? 'PDF' : 'Word (.doc)'}</p>
-                <p className="mt-0.5 text-xs text-fg/45">
-                  {option === 'pdf' ? 'Best for sharing and printing' : 'Editable document format'}
-                </p>
-              </button>
-            ))}
-          </div>
+        <>
+          <OptionCards
+            label="File type"
+            value={format}
+            onChange={setFormat}
+            options={[
+              { value: 'pdf', label: 'PDF', description: 'Best for sharing and printing' },
+              { value: 'word', label: 'Word (.doc)', description: 'You can edit it after' },
+            ]}
+          />
 
           {builtReport?.finance ? (
-            <div className="rounded-lg border border-fg/10 bg-fg/[0.03] px-4 py-3 text-xs text-fg/60">
-              Preview will include net position of{' '}
-              <span className={cn('font-medium', builtReport.finance.netProfit >= 0 ? 'text-accent' : 'text-neg')}>
-                {formatCurrency(builtReport.finance.netProfit, currency)}
-              </span>{' '}
-              for {dateRange.label.toLowerCase()}.
-            </div>
+            <FormSummary>
+              <FormSummaryRow
+                label={`Profit, ${dateRange.label.toLowerCase()}`}
+                value={formatCurrency(builtReport.finance.netProfit, currency)}
+                tone={builtReport.finance.netProfit >= 0 ? 'positive' : 'negative'}
+                strong
+              />
+            </FormSummary>
           ) : null}
 
-          <div className="flex flex-wrap justify-between gap-2 pt-2">
-            <Button variant="ghost" onClick={() => setStep('data')}>
-              <ChevronLeft className="h-4 w-4" />
+          <FormActions>
+            <Button type="button" variant="outline" onClick={() => setStep('data')}>
+              <ChevronLeft className="h-4 w-4" strokeWidth={1.75} />
               Back
             </Button>
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" disabled={!builtReport || busy} onClick={() => builtReport && handleDownload(builtReport)}>
-                <SkipForward className="h-4 w-4" />
-                Skip preview & download
-              </Button>
-              <Button disabled={!builtReport} onClick={goPreview}>
-                <Eye className="h-4 w-4" />
-                Preview report
-              </Button>
-            </div>
-          </div>
-        </div>
+            <Button type="button" variant="outline" disabled={!builtReport || busy} onClick={() => builtReport && handleDownload(builtReport)}>
+              <SkipForward className="h-4 w-4" strokeWidth={1.75} />
+              Download now
+            </Button>
+            <Button type="button" variant="accent" disabled={!builtReport} onClick={goPreview}>
+              <Eye className="h-4 w-4" strokeWidth={1.75} />
+              Preview
+            </Button>
+          </FormActions>
+        </>
       ) : null}
 
       {step === 'preview' && previewReport ? (
-        <div className="space-y-4">
-          <p className="text-xs font-medium text-fg/45">4. Preview before download</p>
-
-          <div className="overflow-hidden rounded-lg border border-fg/10 bg-card">
+        <>
+          <div className="overflow-hidden rounded-xl border border-fg/[0.08] bg-card">
             <div
               className="max-h-[min(50vh,420px)] overflow-y-auto custom-scrollbar"
               dangerouslySetInnerHTML={{ __html: previewHtml }}
             />
           </div>
 
-          <div className="flex flex-wrap justify-between gap-2 pt-2">
-            <Button variant="ghost" onClick={() => setStep('format')} disabled={busy}>
-              <ChevronLeft className="h-4 w-4" />
+          <FormActions>
+            <Button type="button" variant="outline" onClick={() => setStep('format')} disabled={busy}>
+              <ChevronLeft className="h-4 w-4" strokeWidth={1.75} />
               Back
             </Button>
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" disabled={busy} onClick={() => handleShare(previewReport)}>
-                <MessageCircle className="h-4 w-4" />
-                Share on WhatsApp
-              </Button>
-              <Button disabled={busy} onClick={() => handleDownload(previewReport)}>
-                <Download className="h-4 w-4" />
-                Download {format === 'pdf' ? 'PDF' : 'Word'}
-              </Button>
-            </div>
-          </div>
-        </div>
+            <Button type="button" variant="outline" disabled={busy} onClick={() => handleShare(previewReport)}>
+              <MessageCircle className="h-4 w-4" strokeWidth={1.75} />
+              WhatsApp
+            </Button>
+            <Button type="button" variant="accent" disabled={busy} isLoading={busy} loadingText="Preparing" onClick={() => handleDownload(previewReport)}>
+              <Download className="h-4 w-4" strokeWidth={1.75} />
+              Download {format === 'pdf' ? 'PDF' : 'Word'}
+            </Button>
+          </FormActions>
+        </>
       ) : null}
-    </>
+    </div>
   )
 }

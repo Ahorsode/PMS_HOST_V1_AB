@@ -38,7 +38,7 @@ export function TeamMessageComposer({
   return (
     <form ref={formRef} action={formAction} className="space-y-2">
       {memberUserId ? <input type="hidden" name="memberUserId" value={memberUserId} /> : null}
-      <div className="flex items-end gap-2 rounded-lg border border-fg/10 bg-fg/5 p-2 focus-within:border-fg/25">
+      <div className="flex items-end gap-2 rounded-xl border border-fg/[0.14] bg-page p-1.5 transition-[border-color,box-shadow] duration-150 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/25">
         <label className="sr-only" htmlFor={`team-message-${memberUserId ?? 'all'}`}>Message</label>
         <textarea
           id={`team-message-${memberUserId ?? 'all'}`}
@@ -55,23 +55,23 @@ export function TeamMessageComposer({
               formRef.current?.requestSubmit();
             }
           }}
-          className="min-h-[44px] flex-1 resize-y bg-transparent px-2 py-1.5 text-sm text-fg placeholder:text-fg/40 focus:outline-none"
+          className="min-h-11 flex-1 resize-y bg-transparent px-2.5 py-2 text-base leading-6 text-fg placeholder:text-fg-3 focus:outline-none"
         />
         <button
           type="submit"
           disabled={pending || length === 0}
-          className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-md bg-accent px-3 text-sm font-medium text-accent-fg transition-opacity disabled:opacity-40"
+          className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-lg bg-accent px-4 text-sm font-semibold text-accent-fg transition-colors hover:bg-accent/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:opacity-40"
         >
           {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <SendHorizontal className="h-4 w-4" />}
           {submitLabel}
         </button>
       </div>
-      <div className="flex justify-between gap-3 px-1 text-xs">
-        <p role="status" className={cn(state.error ? 'text-neg' : 'text-fg/50')}>
+      <div className="flex justify-between gap-3 px-1 text-[13px] leading-5">
+        <p role="status" className={cn(state.error ? 'font-medium text-neg' : 'text-fg-3')}>
           {state.error ?? (state.ok && successNote ? successNote : 'Ctrl + Enter to send')}
         </p>
         {length > TEAM_MESSAGE_MAX_LENGTH * 0.8 ? (
-          <span className="tabular-nums text-fg/50">
+          <span className="tabular-nums text-fg-3">
             {length}/{TEAM_MESSAGE_MAX_LENGTH}
           </span>
         ) : null}

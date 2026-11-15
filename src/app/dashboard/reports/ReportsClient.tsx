@@ -14,6 +14,7 @@ import {
   User,
   Wheat,
 } from 'lucide-react'
+import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { ReportGeneratorLauncher } from '@/components/reports/ReportGeneratorLauncher'
 import { ComprehensiveReport } from '@/lib/actions/reports'
@@ -341,7 +342,7 @@ function PresetChip({ label, onClick, disabled }: { label: string; onClick: () =
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="rounded-lg border border-fg/10 bg-fg/[0.04] px-3 py-2 text-xs font-medium text-fg/70 transition-colors hover:border-fg/[0.08] hover:text-fg disabled:opacity-50"
+      className="min-h-11 rounded-lg border border-fg/[0.14] px-3.5 text-sm font-medium text-fg-2 transition-colors duration-150 hover:border-fg/25 hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:opacity-50 md:min-h-10"
     >
       {label}
     </button>
@@ -350,18 +351,13 @@ function PresetChip({ label, onClick, disabled }: { label: string; onClick: () =
 
 function DateField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   return (
-    <label className="space-y-1">
-      <span className="flex items-center gap-1 px-1 text-xs font-medium text-fg/45">
-        <Calendar className="h-3.5 w-3.5 text-fg-3" />
-        {label}
-      </span>
-      <input
-        type="date"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="h-11 rounded-md border border-fg/10 bg-fg/[0.04] px-3 text-sm font-medium text-fg outline-none focus:border-fg/[0.08]"
-      />
-    </label>
+    <Input
+      label={label}
+      type="date"
+      leading={<Calendar className="h-4 w-4" strokeWidth={1.75} />}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    />
   )
 }
 

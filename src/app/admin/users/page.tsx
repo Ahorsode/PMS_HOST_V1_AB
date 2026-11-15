@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Search, UsersRound } from 'lucide-react'
 import { requirePaymentAdminPage } from '@/lib/admin-auth'
 import { adminSearchFarmers } from '@/lib/actions/admin-farmer-actions'
+import { controlClass } from '@/components/ui/form/styles'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,7 +34,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
               name="q"
               defaultValue={q}
               placeholder="Name, phone, email or farm"
-              className="h-11 w-full rounded-md border border-zinc-700 bg-zinc-900 pl-10 pr-4 text-sm text-white outline-none placeholder:text-zinc-500 focus:border-emerald-500"
+              className={controlClass(false, 'w-full pl-10 pr-4')}
             />
           </form>
         </header>

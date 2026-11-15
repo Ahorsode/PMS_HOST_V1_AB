@@ -1,17 +1,25 @@
 'use client'
 
 import React, { useState } from 'react';
-import { cn } from '@/lib/utils';
-import { ActionButton, segmentClass } from './flock-ui';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { BreedSelect } from '@/components/ui/BreedSelect';
+import {
+  BreedSelect,
+  Button,
+  DateInput,
+  Form,
+  FormActions,
+  FormRow,
+  FormSection,
+  Input,
+  MoreDetails,
+  Segmented,
+  Select,
+} from '@/components/ui/form';
+import { getLivestockUnit } from '@/lib/utils/growth-utils';
 import { createBatch, updateBatch, logHealthEvent } from '@/lib/actions/batch-actions';
 import { createIsolationRoom } from '@/lib/actions/dashboard-actions';
 import { Activity, Skull } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { MutationBoundary } from '@/components/ui/MutationFeedback';
 import {
   getBreedOptionsForCategory,
   LIVESTOCK_CATEGORY_OPTIONS,
@@ -119,7 +127,7 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
         // Handle dynamic room creation
         if (formData.healthType === 'SICK' && formData.isolationRoomId === 'add_new') {
           if (!formData.newRoomName) {
-            toast.error("Please enter a room name");
+            toast.error("Enter a name for the new room");
             setIsLoading(false);
             return;
           }
@@ -130,7 +138,7 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
           if (roomRes.success) {
             finalIsolationRoomId = (roomRes.room as any).id.toString();
           } else {
-            toast.error(roomRes.error || "Failed to create isolation room");
+            toast.error(roomRes.error || "The new room could not be added");
             setIsLoading(false);
             return;
           }
@@ -149,15 +157,15 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
       }
 
       if (res?.success) {
-        toast.success('Operation successful');
+        toast.success(mode === 'create' ? 'Flock added' : mode === 'edit' ? 'Flock updated' : formData.healthType === 'SICK' ? 'Birds moved to isolation' : 'Deaths recorded');
         onClose();
         router.refresh();
       } else {
-        toast.error(res?.error || 'Operation failed');
+        toast.error(res?.error || 'That could not be saved. Try again.');
       }
     } catch (error) {
       console.error(error);
-      toast.error('An unexpected error occurred');
+      toast.error('Something went wrong. Check your connection and try again.');
     } finally {
       setIsLoading(false);
     }
@@ -167,236 +175,232 @@ export const LivestockForm = ({ houses, isolationRooms = [], batch, mode, defaul
 
   const currentRemaining = batch?.currentCount || 0;
   const isMortalityExceeded = mode === 'mortality' && Number(formData.mortalityCount) > currentRemaining;
+  const isSick = formData.healthType === 'SICK';
+  const unitLabel = getLivestockUnit(mode === 'mortality' ? batch?.type : formData.type);
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
-      <MutationBoundary
-        active={isLoading}
-        label={mode === 'create' ? 'Registering unit…' : mode === 'edit' ? 'Saving changes…' : formData.healthType === 'SICK' ? 'Transferring to isolation…' : 'Logging mortality…'}
-      >
-      <fieldset disabled={isLoading} className="space-y-3 disabled:opacity-70">
+    <Form onSubmit={handleSubmit}>
+      <fieldset disabled={isLoading} className="min-w-0 space-y-6">
         {mode === 'mortality' ? (
           <>
-          {!defaultHealthType && (
-            <div className="mb-4 flex gap-1 rounded-xl border border-fg/[0.08] bg-card p-1">
-              <button
-                type="button"
-                aria-pressed={formData.healthType === 'DEAD'}
-                onClick={() => setFormData({ ...formData, healthType: 'DEAD' })}
-                className={cn(segmentClass(formData.healthType === 'DEAD'), 'flex-1 justify-center')}
-              >
-                <Skull className="h-4 w-4" strokeWidth={1.5} />
-                Mortality (dead)
-              </button>
-              <button
-                type="button"
-                aria-pressed={formData.healthType === 'SICK'}
-                onClick={() => setFormData({ ...formData, healthType: 'SICK' })}
-                className={cn(segmentClass(formData.healthType === 'SICK'), 'flex-1 justify-center')}
-              >
-                <Activity className="h-4 w-4" strokeWidth={1.5} />
-                Sickness (sick)
-              </button>
-            </div>
-          )}
-
-          <div className="space-y-1">
-            <Input
-              label={formData.healthType === 'DEAD' ? "Mortality count" : "Sickness count"}
-              type="number"
-              min="0"
-              value={formData.mortalityCount}
-              onChange={(e) => {
-                const val = Number(e.target.value);
-                if (val > currentRemaining) {
-                  return;
-                }
-                setFormData({ ...formData, mortalityCount: e.target.value });
-              }}
-              required
-              placeholder={formData.healthType === 'DEAD' ? "How many were lost?" : "How many are showing symptoms?"}
-              className={isMortalityExceeded ? "border-red-500 focus:ring-red-500" : ""}
-            />
-            <p className={`text-xs ${isMortalityExceeded ? "text-neg" : "text-fg-3"}`}>
-              {isMortalityExceeded
-                ? `Only ${currentRemaining} birds remain in this batch, so the count is too high`
-                : `${currentRemaining} birds remain in this batch`}
-            </p>
-          </div>
-          {/* Health Details: Isolation Room (Show only if not DEAD) */}
-          {formData.healthType === 'SICK' && (
-            <div className="space-y-3">
-              <Select
-                label="Transfer to isolation room"
+            {!defaultHealthType && (
+              <Segmented
+                label="What happened"
+                value={formData.healthType}
+                onChange={(healthType: 'DEAD' | 'SICK') => setFormData({ ...formData, healthType })}
                 options={[
-                  { label: 'Select room (optional)', value: '' },
-                  ...isolationRooms.map(room => ({ label: `${room.name} (Cap: ${room.capacity})`, value: room.id.toString() })),
-                  { label: 'Add new room', value: 'add_new' }
+                  { value: 'DEAD', label: 'Died', icon: <Skull className="h-4 w-4" strokeWidth={1.75} /> },
+                  { value: 'SICK', label: 'Sick', icon: <Activity className="h-4 w-4" strokeWidth={1.75} /> },
                 ]}
-                value={formData.isolationRoomId}
-                onChange={(e) => setFormData({ ...formData, isolationRoomId: e.target.value })}
+              />
+            )}
+
+            <FormSection title="How many">
+              <Input
+                label={isSick ? 'Sick birds' : 'Birds that died'}
+                type="number"
+                min="0"
+                unit={unitLabel}
+                value={formData.mortalityCount}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  if (val > currentRemaining) {
+                    return;
+                  }
+                  setFormData({ ...formData, mortalityCount: e.target.value });
+                }}
+                required
+                placeholder="e.g. 3"
+                hint={`${currentRemaining.toLocaleString()} in this flock now`}
+                error={
+                  isMortalityExceeded
+                    ? `Only ${currentRemaining.toLocaleString()} are left in this flock. Enter a smaller number.`
+                    : undefined
+                }
               />
 
-              {formData.isolationRoomId === 'add_new' && (
-                <div className="grid grid-cols-2 gap-3 rounded-lg border border-fg/[0.08] bg-page p-4">
-                  <Input
-                    label="New room name"
-                    placeholder="e.g. Room A"
-                    value={formData.newRoomName}
-                    onChange={(e) => setFormData({ ...formData, newRoomName: e.target.value })}
-                    required
+              {/* Health Details: Isolation Room (Show only if not DEAD) */}
+              {isSick && (
+                <>
+                  <Select
+                    label="Move to isolation room"
+                    optional
+                    options={[
+                      { label: 'No room', value: '' },
+                      ...isolationRooms.map(room => ({ label: `${room.name} (holds ${room.capacity})`, value: room.id.toString() })),
+                      { label: 'Add a new room', value: 'add_new' }
+                    ]}
+                    value={formData.isolationRoomId}
+                    onChange={(e) => setFormData({ ...formData, isolationRoomId: e.target.value })}
                   />
-                  <Input
-                    label="Capacity"
-                    type="number"
-                    placeholder="50"
-                    value={formData.newRoomCapacity}
-                    onChange={(e) => {
-                      const val = Number(e.target.value);
-                      if (val < 0) return;
-                      setFormData({ ...formData, newRoomCapacity: e.target.value });
-                    }}
-                    required
-                  />
-                </div>
-              )}
-            </div>
-          )}
 
-          <Select
-            label="Condition or reason"
-            options={[
-              { label: 'Select category', value: '' },
-              ...Object.keys(MORTALITY_REASONS).map(cat => ({ label: cat, value: cat }))
-            ]}
-            value={formData.category}
-            onChange={(e) => setFormData({ ...formData, category: e.target.value, subCategory: '' })}
-            required
-          />
-          {formData.category && formData.category !== 'Unknown' && (
-            <Select
-              label="Specific symptom or cause"
-              options={[
-                { label: 'Select sub-category', value: '' },
-                ...MORTALITY_REASONS[formData.category].map(sub => ({ label: sub, value: sub }))
-              ]}
-              value={formData.subCategory}
-              onChange={(e) => setFormData({ ...formData, subCategory: e.target.value })}
-              required
-            />
-          )}
-          <Input
-            label="Additional notes"
-            value={formData.reason}
-            onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-            placeholder="Briefly describe the health incident"
-          />
+                  {formData.isolationRoomId === 'add_new' && (
+                    <FormRow alwaysInline className="rounded-xl border border-fg/[0.08] bg-tile p-3">
+                      <Input
+                        label="New room name"
+                        placeholder="e.g. Room A"
+                        value={formData.newRoomName}
+                        onChange={(e) => setFormData({ ...formData, newRoomName: e.target.value })}
+                        required
+                      />
+                      <Input
+                        label="Holds"
+                        type="number"
+                        unit="birds"
+                        placeholder="e.g. 50"
+                        value={formData.newRoomCapacity}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          if (val < 0) return;
+                          setFormData({ ...formData, newRoomCapacity: e.target.value });
+                        }}
+                        required
+                      />
+                    </FormRow>
+                  )}
+                </>
+              )}
+            </FormSection>
+
+            <FormSection title="Why">
+              <Select
+                label="Cause"
+                options={[
+                  { label: 'Select a cause', value: '' },
+                  ...Object.keys(MORTALITY_REASONS).map(cat => ({ label: cat, value: cat }))
+                ]}
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value, subCategory: '' })}
+                required
+              />
+              {formData.category && formData.category !== 'Unknown' && (
+                <Select
+                  label="What exactly"
+                  options={[
+                    { label: 'Select one', value: '' },
+                    ...MORTALITY_REASONS[formData.category].map(sub => ({ label: sub, value: sub }))
+                  ]}
+                  value={formData.subCategory}
+                  onChange={(e) => setFormData({ ...formData, subCategory: e.target.value })}
+                  required
+                />
+              )}
+              <Input
+                label="Notes"
+                optional
+                value={formData.reason}
+                onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+                placeholder="e.g. Found near the drinkers"
+              />
+            </FormSection>
           </>
         ) : (
           <>
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              label="Unit name"
-              value={formData.batchName}
-              onChange={(e) => setFormData({ ...formData, batchName: e.target.value })}
-              required
-              placeholder="e.g. Batch Q1"
-            />
-            <Select
-              label="House"
-              options={houses.map(h => ({ label: h.name, value: h.id }))}
-              value={formData.houseId}
-              onChange={(e) => setFormData({ ...formData, houseId: e.target.value })}
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-             <Select
-               label="Livestock category"
-               options={[...LIVESTOCK_CATEGORY_OPTIONS]}
-               value={formData.type}
-               onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-               required
-             />
-             <BreedSelect
-               label="Primary breed"
-               options={breedOptions}
-               value={formData.breedType}
-               onChange={(breedType) => setFormData({ ...formData, breedType })}
-               required
-             />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-             {mode === 'edit' && (
+            <FormSection title="Flock details">
+              <Input
+                label="Flock name"
+                value={formData.batchName}
+                onChange={(e) => setFormData({ ...formData, batchName: e.target.value })}
+                required
+                placeholder="e.g. Broilers March"
+              />
+              <FormRow>
                 <Select
-                  label="Benchmark override"
-                  options={[
-                    { label: 'Default (from breed)', value: '' },
-                    { label: 'Ross 308 (meat)', value: 'Ross 308' },
-                    { label: 'Cobb 500 (meat)', value: 'Cobb 500' },
-                    { label: 'ISA brown (eggs)', value: 'ISA Brown' },
-                    { label: 'Lohmann (eggs)', value: 'Lohmann' },
-                    { label: 'Ankole (cattle)', value: 'Ankole' },
-                  ]}
-                  value={formData.growthTargetOverride}
-                  onChange={(e) => setFormData({ ...formData, growthTargetOverride: e.target.value })}
+                  label="Kind of livestock"
+                  options={[...LIVESTOCK_CATEGORY_OPTIONS]}
+                  value={formData.type}
+                  onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                  required
                 />
-             )}
-          </div>
+                <BreedSelect
+                  label="Breed"
+                  options={breedOptions}
+                  value={formData.breedType}
+                  onChange={(breedType) => setFormData({ ...formData, breedType })}
+                  required
+                />
+              </FormRow>
+              <Select
+                label="House"
+                options={houses.map(h => ({ label: h.name, value: h.id }))}
+                value={formData.houseId}
+                onChange={(e) => setFormData({ ...formData, houseId: e.target.value })}
+                required
+              />
+            </FormSection>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              label="Initial quantity"
-              type="number"
-              min="0"
-              value={formData.initialCount}
-              onChange={(e) => {
-                const val = Number(e.target.value);
-                if (val < 0) return;
-                setFormData({ ...formData, initialCount: e.target.value === '' ? '' : val });
-              }}
-              required
-              placeholder="e.g. 1000"
-            />
-            <Input
-              label="Arrival date"
-              type="date"
-              value={formData.arrivalDate}
-              onChange={(e) => setFormData({ ...formData, arrivalDate: e.target.value })}
-              required
-            />
-          </div>
+            <FormSection title="How many and when">
+              <FormRow>
+                <Input
+                  label="Number at arrival"
+                  type="number"
+                  min="0"
+                  unit={unitLabel}
+                  value={formData.initialCount}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    if (val < 0) return;
+                    setFormData({ ...formData, initialCount: e.target.value === '' ? '' : val });
+                  }}
+                  required
+                  placeholder="e.g. 1000"
+                />
+                <DateInput
+                  label="Arrival date"
+                  value={formData.arrivalDate}
+                  onChange={(e) => setFormData({ ...formData, arrivalDate: e.target.value })}
+                  required
+                />
+              </FormRow>
+            </FormSection>
 
-          {mode === 'edit' && (
-            <Select
-              label="Status"
-              options={[
-                { label: 'Active (ongoing)', value: 'active' },
-                { label: 'Completed (decommissioned)', value: 'completed' },
-              ]}
-              value={formData.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-            />
-          )}
+            {mode === 'edit' && (
+              <FormSection title="Status">
+                <Segmented
+                  label="Is this flock still on the farm?"
+                  value={formData.status as string}
+                  onChange={(status: string) => setFormData({ ...formData, status })}
+                  options={[
+                    { label: 'Active', value: 'active' },
+                    { label: 'Completed', value: 'completed' },
+                  ]}
+                />
+                <MoreDetails label="Growth target">
+                  <Select
+                    label="Compare growth against"
+                    hint="Leave on the default to use the breed's own target."
+                    options={[
+                      { label: 'Default (from breed)', value: '' },
+                      { label: 'Ross 308 (meat)', value: 'Ross 308' },
+                      { label: 'Cobb 500 (meat)', value: 'Cobb 500' },
+                      { label: 'ISA Brown (eggs)', value: 'ISA Brown' },
+                      { label: 'Lohmann (eggs)', value: 'Lohmann' },
+                      { label: 'Ankole (cattle)', value: 'Ankole' },
+                    ]}
+                    value={formData.growthTargetOverride}
+                    onChange={(e) => setFormData({ ...formData, growthTargetOverride: e.target.value })}
+                  />
+                </MoreDetails>
+              </FormSection>
+            )}
           </>
         )}
       </fieldset>
-      </MutationBoundary>
-      <div className="flex justify-end gap-2 border-t border-fg/[0.08] pt-5">
-        <ActionButton type="button" onClick={onClose} disabled={isLoading}>Cancel</ActionButton>
-        <ActionButton
+
+      <FormActions>
+        <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
+          Cancel
+        </Button>
+        <Button
           type="submit"
-          variant="primary"
+          variant="accent"
           isLoading={isLoading}
-          loadingText={mode === 'create' ? 'Registering…' : mode === 'edit' ? 'Saving…' : formData.healthType === 'SICK' ? 'Transferring…' : 'Logging…'}
+          loadingText={mode === 'create' ? 'Adding flock' : mode === 'edit' ? 'Saving' : isSick ? 'Moving birds' : 'Saving'}
           disabled={isMortalityExceeded}
         >
-          {mode === 'create' ? 'Register unit' : mode === 'edit' ? 'Apply changes' : formData.healthType === 'SICK' ? 'Transfer to isolation' : 'Log mortality'}
-        </ActionButton>
-      </div>
-    </form>
-
+          {mode === 'create' ? 'Add flock' : mode === 'edit' ? 'Save changes' : isSick ? 'Move to isolation' : 'Record deaths'}
+        </Button>
+      </FormActions>
+    </Form>
   );
 };

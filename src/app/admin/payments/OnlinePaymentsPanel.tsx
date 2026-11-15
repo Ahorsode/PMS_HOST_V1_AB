@@ -99,12 +99,12 @@ export default function OnlinePaymentsPanel({ payments, paystackConfigured }: { 
                   {payment.status !== 'PAID' ? (
                     <button type="button" disabled={isPending || !paystackConfigured}
                       onClick={() => run(() => adminRecheckOnlinePayment(payment.reference), 'Checked')}
-                      className="inline-flex h-9 items-center gap-1.5 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 hover:border-zinc-500 disabled:opacity-50">
+                      className="inline-flex h-11 md:h-9 items-center gap-1.5 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 hover:border-zinc-500 disabled:opacity-50">
                       <RefreshCw className="h-4 w-4" /> Check with Paystack
                     </button>
                   ) : payment.amount > payment.refunded ? (
                     <button type="button" disabled={isPending} onClick={() => setRefundFor(refundFor === payment.reference ? null : payment.reference)}
-                      className="h-9 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 hover:border-red-400/50 disabled:opacity-50">
+                      className="h-11 md:h-9 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 hover:border-red-400/50 disabled:opacity-50">
                       Record refund
                     </button>
                   ) : null}

@@ -15,9 +15,9 @@ import {
 } from '@/lib/actions/admin-user-actions'
 import { ADMIN_ROLE_DETAILS, ADMIN_ROLES, isAdminRole } from '@/lib/admin-permissions'
 import { cn } from '@/lib/utils'
+import { controlClass } from '@/components/ui/form'
 
-const inputClass =
-  'h-10 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 text-sm text-white outline-none transition-colors placeholder:text-zinc-600 focus:border-emerald-500 disabled:opacity-50'
+const inputClass = controlClass()
 
 function formatDateTime(value: string | null) {
   if (!value) return 'Never'
@@ -77,22 +77,22 @@ export default function AdminAccountsPanel({ admins, currentAdminId }: { admins:
             }}
           >
             <label className="block">
-              <span className="text-xs font-semibold text-zinc-300">Username</span>
+              <span className="block text-sm font-medium leading-5 text-fg">Username</span>
               <input value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="off" className={cn(inputClass, 'mt-1')} disabled={isPending} />
             </label>
             <label className="block">
-              <span className="text-xs font-semibold text-zinc-300">Temporary password</span>
+              <span className="block text-sm font-medium leading-5 text-fg">Temporary password</span>
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" placeholder="10+ characters" className={cn(inputClass, 'mt-1')} disabled={isPending} />
             </label>
             <label className="block">
-              <span className="text-xs font-semibold text-zinc-300">Role</span>
+              <span className="block text-sm font-medium leading-5 text-fg">Role</span>
               <select value={role} onChange={(e) => setRole(e.target.value)} className={cn(inputClass, 'mt-1')} disabled={isPending}>
                 {ADMIN_ROLES.map((value) => (
                   <option key={value} value={value}>{ADMIN_ROLE_DETAILS[value].label}</option>
                 ))}
               </select>
             </label>
-            <button type="submit" disabled={isPending || !username || !password} className="h-10 rounded-md bg-emerald-500 px-4 text-sm font-semibold text-zinc-950 transition-colors hover:bg-emerald-400 disabled:opacity-50">
+            <button type="submit" disabled={isPending || !username || !password} className="h-11 md:h-10 rounded-md bg-accent px-4 text-sm font-semibold text-accent-fg transition-colors hover:bg-accent/90 disabled:opacity-50">
               Create
             </button>
           </form>
@@ -133,7 +133,7 @@ export default function AdminAccountsPanel({ admins, currentAdminId }: { admins:
                         value={isAdminRole(admin.role) ? admin.role : ''}
                         disabled={isPending || isSelf}
                         onChange={(e) => run(() => adminUpdateAdmin(admin.id, { role: e.target.value }), `Role updated for ${admin.username}`)}
-                        className="h-9 rounded-md border border-zinc-700 bg-zinc-950 px-2 text-sm text-white disabled:opacity-50"
+                        className={controlClass()}
                       >
                         {!isAdminRole(admin.role) ? <option value="">Unknown role</option> : null}
                         {ADMIN_ROLES.map((value) => (
@@ -147,7 +147,7 @@ export default function AdminAccountsPanel({ admins, currentAdminId }: { admins:
                           setResetFor(resetFor === admin.id ? null : admin.id)
                           setResetPassword('')
                         }}
-                        className="inline-flex h-9 items-center gap-1.5 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 hover:border-zinc-500 disabled:opacity-50"
+                        className="inline-flex h-11 md:h-9 items-center gap-1.5 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 hover:border-zinc-500 disabled:opacity-50"
                       >
                         <KeyRound className="h-4 w-4" /> Reset password
                       </button>
@@ -158,14 +158,14 @@ export default function AdminAccountsPanel({ admins, currentAdminId }: { admins:
                               run(() => adminResetAdminTwoStep(admin.id), `Two-step reset for ${admin.username}`)
                             }
                           }}
-                          className="h-9 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 hover:border-zinc-500 disabled:opacity-50">
+                          className="h-11 md:h-9 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 hover:border-zinc-500 disabled:opacity-50">
                           Reset two-step
                         </button>
                       ) : null}
                       {!isSelf && admin.activeSessions > 0 ? (
                         <button type="button" disabled={isPending}
                           onClick={() => run(() => adminSignOutAdmin(admin.id), `${admin.username} signed out`)}
-                          className="h-9 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 hover:border-zinc-500 disabled:opacity-50">
+                          className="h-11 md:h-9 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 hover:border-zinc-500 disabled:opacity-50">
                           Sign out
                         </button>
                       ) : null}
@@ -207,7 +207,7 @@ export default function AdminAccountsPanel({ admins, currentAdminId }: { admins:
                         className={cn(inputClass, 'sm:max-w-xs')}
                         disabled={isPending}
                       />
-                      <button type="submit" disabled={isPending || !resetPassword} className="h-10 rounded-md bg-emerald-500 px-4 text-sm font-semibold text-zinc-950 disabled:opacity-50">
+                      <button type="submit" disabled={isPending || !resetPassword} className="h-11 md:h-10 rounded-md bg-accent px-4 text-sm font-semibold text-accent-fg disabled:opacity-50">
                         Save password
                       </button>
                     </form>

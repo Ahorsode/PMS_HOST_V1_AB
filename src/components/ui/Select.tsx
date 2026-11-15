@@ -1,47 +1,69 @@
-import React from 'react';
-import { cn } from '@/lib/utils';
+'use client';
 
-interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
-  label?: string;
-  options: { label: string; value: string | number }[];
-  error?: string;
+import React from 'react';
+import { ChevronDown } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { controlClass, FieldFrame, useFieldIds, type FieldShellProps } from '@/components/ui/form/field';
+
+export interface SelectProps
+  extends React.SelectHTMLAttributes<HTMLSelectElement>,
+    Omit<FieldShellProps, 'className' | 'error' | 'hint' | 'label'> {
+  label?: React.ReactNode;
+  hint?: React.ReactNode;
+  error?: React.ReactNode;
+  /** Either pass options here or write <option> children yourself. */
+  options?: { label: string; value: string | number; disabled?: boolean }[];
+  /** Classes for the wrapper around label, select and message. */
+  wrapperClassName?: string;
 }
 
+/**
+ * Native dropdown in the shared field look. Use it for short and medium lists;
+ * SearchSelect is for long ones, Segmented for two to five choices.
+ */
 export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
-  ({ className, label, options, error, ...props }, ref) => {
+  ({ className, wrapperClassName, label, hint, error, options, optional, labelAside, id, children, ...props }, ref) => {
+    const ids = useFieldIds(id, hint, error);
+
     return (
-      <div className="w-full space-y-2">
-        {label && (
-          <label className="text-sm font-medium text-fg ml-1">
-            {label}
-          </label>
-        )}
-        <div className="relative group">
+      <FieldFrame
+        label={label}
+        hint={hint}
+        error={error}
+        required={props.required}
+        optional={optional}
+        labelAside={labelAside}
+        className={wrapperClassName}
+        controlId={ids.controlId}
+        hintId={ids.hintId}
+        errorId={ids.errorId}
+      >
+        <div className="relative">
           <select
             ref={ref}
-            className={cn(
-              'flex h-11 w-full rounded-md border border-fg/10 bg-fg/10 px-3 py-2 text-sm text-fg focus:outline-none focus:ring-2 focus:ring-fg/10 focus:border-fg/[0.08] disabled:cursor-not-allowed disabled:opacity-50 transition-colors appearance-none cursor-pointer font-medium',
-              error && 'border-fg/[0.08] focus:ring-fg/10',
-              className
-            )}
             {...props}
+            id={ids.controlId}
+            aria-invalid={props['aria-invalid'] ?? ids.control['aria-invalid']}
+            aria-describedby={props['aria-describedby'] ?? ids.control['aria-describedby']}
+            className={cn(controlClass(ids.hasError), 'cursor-pointer appearance-none truncate pr-10', className)}
           >
-            {options.map((option) => (
-              <option key={option.value} value={option.value} className="bg-card text-fg">
-                {option.label}
-              </option>
-            ))}
+            {options
+              ? options.map((option) => (
+                  <option key={option.value} value={option.value} disabled={option.disabled}>
+                    {option.label}
+                  </option>
+                ))
+              : children}
           </select>
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-fg/70 group-hover:text-fg/60 transition-colors">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
+          <ChevronDown
+            aria-hidden="true"
+            className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-fg-3"
+            strokeWidth={1.75}
+          />
         </div>
-        {error && <span className="text-xs text-neg font-medium ml-1">{error}</span>}
-      </div>
+      </FieldFrame>
     );
-  }
+  },
 );
 
 Select.displayName = 'Select';

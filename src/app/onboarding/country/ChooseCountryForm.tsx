@@ -3,9 +3,8 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { CountrySelect } from '@/components/ui/CountrySelect';
+import { AuthShell } from '@/components/auth/AuthShell';
+import { Button, CountrySelect, Form, FormError } from '@/components/ui/form';
 import { setFarmCountry } from '@/lib/actions/dashboard-actions';
 import { currencyForCountry } from '@/lib/countries';
 
@@ -19,7 +18,7 @@ export function ChooseCountryForm({ farmName }: { farmName: string }) {
     e.preventDefault();
     if (isLoading) return;
     if (!country) {
-      setError('Select the country your farm is in.');
+      setError('Choose the country your farm is in.');
       return;
     }
     setIsLoading(true);
@@ -38,46 +37,46 @@ export function ChooseCountryForm({ farmName }: { farmName: string }) {
   const currency = country ? currencyForCountry(country) : null;
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-4">
-      <Card className="glass-morphism w-full max-w-md border-none shadow-2xl rounded-lg p-3">
-        <CardHeader>
-          <CardTitle className="text-2xl tracking-normal">Where is your farm?</CardTitle>
-          <p className="text-sm leading-6 text-white/75">
-            Choose the country for <span className="font-semibold text-white">{farmName}</span> once. Poultry Ledger shows your sales, expenses and reports in its currency.
-          </p>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {error && (
-              <div role="alert" className="p-3 bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-md font-bold">
-                {error}
-              </div>
-            )}
+    <AuthShell
+      title="Where is your farm?"
+      subtitle={
+        <>
+          Choose the country for <span className="font-semibold text-fg">{farmName}</span>. Your sales, expenses and
+          reports are shown in its money.
+        </>
+      }
+    >
+      <Form onSubmit={handleSubmit} className="space-y-5">
+        <FormError>{error}</FormError>
 
-            <CountrySelect
-              value={country}
-              onChange={(code) => {
-                setCountry(code);
-                setError(null);
-              }}
-              required
-              disabled={isLoading}
-              hint={
-                currency
-                  ? currency === 'GHS'
-                    ? 'Money is shown in Ghana cedis (GHS), and plans are priced in cedis.'
-                    : `Money is shown in ${currency}. Amounts you already recorded keep their numbers; they are not converted. Plans are priced in US dollars.`
-                  : undefined
-              }
-            />
+        <CountrySelect
+          value={country}
+          onChange={(code) => {
+            setCountry(code);
+            setError(null);
+          }}
+          required
+          disabled={isLoading}
+          hint={
+            currency
+              ? currency === 'GHS'
+                ? 'Money is shown in Ghana cedis (GHS), and plans are priced in cedis.'
+                : `Money is shown in ${currency}. Amounts already recorded keep their numbers; they are not converted. Plans are priced in US dollars.`
+              : undefined
+          }
+        />
 
-            <Button type="submit" isLoading={isLoading} loadingText="Saving..." size="lg" className="w-full">
-              Continue
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+        <Button
+          type="submit"
+          variant="accent"
+          isLoading={isLoading}
+          loadingText="Saving"
+          className="min-h-12 w-full text-[15px] md:min-h-11"
+        >
+          Continue
+          <ArrowRight className="h-4 w-4" strokeWidth={1.75} />
+        </Button>
+      </Form>
+    </AuthShell>
   );
 }

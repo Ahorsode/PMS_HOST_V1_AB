@@ -5,9 +5,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Check, Clock3, Crown, Monitor, Shield, Smartphone, Tag, User, Users, X } from "lucide-react";
+import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
-import { previewPromoCode, requestSubscriptionUpgrade, startPaystackCheckout } from "@/lib/actions/subscription-actions";
+import { confirmPaystackPayment, previewPromoCode, requestSubscriptionUpgrade, startPaystackCheckout } from "@/lib/actions/subscription-actions";
+import { openPaystackPopup, type PopupResult } from "@/lib/billing/paystack-popup";
 import { type DesktopLicenseRow } from "@/lib/actions/licenses";
 import {
   PLAN_FEATURE_DETAILS,
@@ -229,7 +231,33 @@ export default function LicenseUpgradeClient({
         return;
       }
 
-      window.location.assign(result.authorizationUrl);
+      let popup: PopupResult;
+      try {
+        popup = await openPaystackPopup(result.accessCode);
+      } catch {
+        // Popup script blocked or offline: use Paystack's own checkout page instead.
+        window.location.assign(result.authorizationUrl);
+        return;
+      }
+
+      if (popup.outcome === "cancelled") {
+        toast.info("Payment cancelled. You have not been charged.");
+        return;
+      }
+      if (popup.outcome === "error") {
+        toast.error(popup.message);
+        return;
+      }
+
+      const confirmed = await confirmPaystackPayment(popup.reference);
+      if (confirmed.success) {
+        toast.success("Payment received. Your plan is now active.");
+      } else if (confirmed.status === "pending") {
+        toast.info("We're confirming your payment. Your plan will update shortly.");
+      } else {
+        toast.error(confirmed.error || "We could not confirm this payment. Contact support if you were charged.");
+      }
+      router.refresh();
     });
   }
 
@@ -361,11 +389,12 @@ export default function LicenseUpgradeClient({
                 key={option.months}
                 type="button"
                 onClick={() => setSelectedMonths(option.months)}
+                aria-pressed={selected}
                 className={cn(
-                  "rounded-full border px-4 py-2 text-sm font-medium transition",
+                  "min-h-11 rounded-lg border px-4 text-sm transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60",
                   selected
-                    ? "border-emerald-300 bg-fg/[0.04] text-fg"
-                    : "border-fg/10 bg-fg/5 text-fg/70 hover:border-fg/20 hover:text-fg",
+                    ? "border-accent bg-accent font-semibold text-accent-fg"
+                    : "border-fg/[0.14] font-medium text-fg-2 hover:border-fg/25 hover:text-fg",
                 )}
               >
                 {option.months} {option.months === 1 ? "Month" : "Months"}
@@ -376,10 +405,11 @@ export default function LicenseUpgradeClient({
         </div>
 
         <div className="flex flex-col gap-3 border-t border-fg/10 pt-4 sm:flex-row sm:items-center">
-          <label className="relative flex-1 sm:max-w-xs">
-            <Tag className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg/40" />
-            <span className="sr-only">Promo code</span>
-            <input
+          <div className="flex-1 sm:max-w-xs">
+            <Input
+              aria-label="Promo code"
+              leading={<Tag className="h-4 w-4" strokeWidth={1.75} />}
+              autoCapitalize="characters"
               value={promoInput}
               onChange={(event) => {
                 setPromoInput(event.target.value);
@@ -392,17 +422,19 @@ export default function LicenseUpgradeClient({
                 }
               }}
               placeholder="Promo code"
-              className="h-10 w-full rounded-full border border-fg/10 bg-fg/5 pl-9 pr-4 text-sm font-medium text-fg outline-none placeholder:normal-case placeholder:text-fg/40 focus:border-fg/[0.08]"
             />
-          </label>
-          <button
+          </div>
+          <Button
             type="button"
+            variant="outline"
             onClick={applyPromo}
-            disabled={!promoInput.trim() || isCheckingPromo}
-            className="h-10 rounded-full border border-fg/15 px-5 text-sm font-medium text-fg/80 transition hover:border-fg/30 hover:text-fg disabled:opacity-50"
+            disabled={!promoInput.trim()}
+            isLoading={isCheckingPromo}
+            loadingText="Checking"
+            className="min-h-12 md:min-h-11"
           >
-            {isCheckingPromo ? "Checking..." : "Apply"}
-          </button>
+            Apply code
+          </Button>
           <div className="text-sm text-fg">
             {appliedPromo ? <p>{appliedPromo.code}: {appliedPromo.percentOff}% off</p> : null}
             {farmDiscountPercent > 0 ? <p>Your farm has a {farmDiscountPercent}% discount.</p> : null}

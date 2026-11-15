@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { CalendarPlus } from 'lucide-react'
+import { Button, Checkbox, Form, FormActions, Input } from '@/components/ui/form'
 import { adminBulkExtendTrials } from '@/lib/actions/admin-farm-actions'
 
 /** "Extend all trials" for outages or promotions; only farms still on their free trial are touched. */
@@ -42,30 +43,40 @@ export default function BulkExtendTrials() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="inline-flex h-11 items-center gap-2 rounded-md border border-zinc-700 bg-zinc-900 px-4 text-sm font-semibold text-zinc-200 transition-colors hover:border-emerald-500/60"
+        className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-fg/[0.14] px-4 text-sm font-medium text-fg transition-colors hover:bg-fg/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
       >
-        <CalendarPlus className="h-4 w-4 text-emerald-300" /> Extend all trials
+        <CalendarPlus className="h-4 w-4 text-accent" strokeWidth={1.75} /> Extend all trials
       </button>
     )
   }
 
   return (
-    <form onSubmit={submit} className="flex flex-wrap items-end gap-3 rounded-md border border-zinc-800 bg-zinc-900/70 p-3">
-      <label className="block">
-        <span className="text-xs font-semibold text-zinc-300">Extra days</span>
-        <input type="number" min={1} max={365} value={days} onChange={(e) => setDays(e.target.value)} disabled={isPending}
-          className="mt-1 h-10 w-24 rounded-md border border-zinc-700 bg-zinc-950 px-3 text-sm text-white outline-none focus:border-emerald-500" />
-      </label>
-      <label className="flex h-10 items-center gap-2 text-sm text-zinc-300">
-        <input type="checkbox" checked={includeEnded} onChange={(e) => setIncludeEnded(e.target.checked)} disabled={isPending} className="h-4 w-4 accent-emerald-500" />
-        Include trials that already ended
-      </label>
-      <button type="submit" disabled={isPending || !(Number(days) >= 1)} className="h-10 rounded-md bg-emerald-500 px-4 text-sm font-semibold text-zinc-950 disabled:opacity-50">
-        {isPending ? 'Extending…' : 'Extend trials'}
-      </button>
-      <button type="button" onClick={() => setOpen(false)} disabled={isPending} className="h-10 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300">
-        Cancel
-      </button>
-    </form>
+    <Form onSubmit={submit} className="w-full space-y-4 rounded-xl border border-fg/[0.08] bg-card p-4 sm:max-w-md">
+      <Input
+        label="Days to add"
+        type="number"
+        min={1}
+        max={365}
+        unit="days"
+        value={days}
+        onChange={(e) => setDays(e.target.value)}
+        disabled={isPending}
+        wrapperClassName="sm:max-w-[200px]"
+      />
+      <Checkbox
+        label="Also extend trials that already ended"
+        checked={includeEnded}
+        onChange={(e) => setIncludeEnded(e.target.checked)}
+        disabled={isPending}
+      />
+      <FormActions>
+        <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isPending}>
+          Cancel
+        </Button>
+        <Button type="submit" variant="accent" disabled={!(Number(days) >= 1)} isLoading={isPending} loadingText="Extending">
+          Extend trials
+        </Button>
+      </FormActions>
+    </Form>
   )
 }

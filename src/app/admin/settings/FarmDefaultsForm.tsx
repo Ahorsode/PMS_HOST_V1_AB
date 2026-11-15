@@ -66,11 +66,11 @@ export default function FarmDefaultsForm({ initial }: { initial: AdminAppSetting
                 <span>{area}</span>
                 <span className="text-center">
                   <input type="checkbox" aria-label={`${ROLE_LABELS[role]} can view ${area}`} checked={!!permissions[viewKey]} disabled={isSaving}
-                    onChange={(e) => setPermission(viewKey, e.target.checked)} className="h-4 w-4 accent-emerald-500" />
+                    onChange={(e) => setPermission(viewKey, e.target.checked)} className="h-5 w-5 accent-[var(--accent)]" />
                 </span>
                 <span className="text-center">
                   <input type="checkbox" aria-label={`${ROLE_LABELS[role]} can edit ${area}`} checked={!!permissions[editKey]} disabled={isSaving}
-                    onChange={(e) => setPermission(editKey, e.target.checked)} className="h-4 w-4 accent-emerald-500" />
+                    onChange={(e) => setPermission(editKey, e.target.checked)} className="h-5 w-5 accent-[var(--accent)]" />
                 </span>
               </div>
             )
@@ -97,7 +97,7 @@ export default function FarmDefaultsForm({ initial }: { initial: AdminAppSetting
         {form.eggCategories.length < 12 ? (
           <button type="button" disabled={isSaving}
             onClick={() => setForm((c) => ({ ...c, eggCategories: [...c.eggCategories, { name: '', description: '' }] }))}
-            className="inline-flex h-9 items-center gap-1.5 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 hover:border-zinc-500">
+            className="inline-flex h-11 md:h-9 items-center gap-1.5 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 hover:border-zinc-500">
             <Plus className="h-4 w-4" /> Add category
           </button>
         ) : null}
@@ -109,7 +109,7 @@ export default function FarmDefaultsForm({ initial }: { initial: AdminAppSetting
         <CheckboxField label="Let workers give discounts" checked={form.salesSettings.allowWorkerDiscounts} disabled={isSaving}
           onChange={(allowWorkerDiscounts) => setSales({ allowWorkerDiscounts })} />
         <label className="block sm:max-w-xs">
-          <span className="text-xs font-semibold text-zinc-300">Default discount type</span>
+          <span className="block text-sm font-medium leading-5 text-fg">Default discount type</span>
           <select value={form.salesSettings.defaultDiscountType} disabled={isSaving} className={`${inputClass} mt-1`}
             onChange={(e) => setSales({ defaultDiscountType: e.target.value as FarmDefaults['salesSettings']['defaultDiscountType'] })}>
             <option value="item">Per item</option>

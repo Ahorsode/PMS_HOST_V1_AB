@@ -4,7 +4,8 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { FileText, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
-import { Dialog } from '@/components/ui/Dialog'
+import { Dialog, DialogDescription, DialogTitle } from '@/components/ui/Dialog'
+import { FormActions, OptionCards, SearchSelect } from '@/components/ui/form'
 import { loadBatchReportPayloads } from '@/lib/actions/report-actions'
 import { BatchReportWizard } from '@/components/reports/BatchReportWizard'
 import { cn } from '@/lib/utils'
@@ -106,81 +107,60 @@ export function ReportGeneratorLauncher({
         className={cn('shrink-0', buttonClassName)}
       >
         <FileText className="h-4 w-4" />
-        Generate report
+        Make a report
       </Button>
 
-      <Dialog isOpen={open} onOpenChange={handleOpenChange} className="max-w-3xl" title={undefined}>
+      <Dialog isOpen={open} onOpenChange={handleOpenChange} className="max-w-2xl" title={undefined}>
         {loading && !showWizard ? (
           <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
             <Loader2 className="h-8 w-8 animate-spin text-fg-3" />
-            <p className="text-xs font-medium text-fg/50">Preparing report data...</p>
+            <p className="text-sm text-fg-2">Getting your report ready...</p>
           </div>
         ) : showWizard && dataSources?.length ? (
           <BatchReportWizard dataSources={dataSources} />
         ) : showScopeStep ? (
-          <div className="space-y-5 pt-1">
+          <div className="space-y-6">
             <div>
-              <h3 className="text-xl font-medium tracking-normal text-fg">Generate report</h3>
-              <p className="mt-1 text-xs font-medium text-fg/90">Choose all batches or one batch, then continue.</p>
+              <DialogTitle>Make a report</DialogTitle>
+              <DialogDescription>Choose the flocks to report on.</DialogDescription>
             </div>
 
-            <div className="grid gap-2 sm:grid-cols-2">
-              <button
-                type="button"
-                onClick={() => setScopeMode('all')}
-                className={cn(
-                  'rounded-lg px-4 py-4 text-left transition-colors',
-                  scopeMode === 'all'
-                    ? 'border-2 border-accent bg-accent/10 shadow-sm'
-                    : 'border-2 border-fg/10 bg-fg/[0.03] hover:border-fg/25'
-                )}
-              >
-                <p className="text-sm font-medium text-fg">All batches</p>
-                <p className="mt-0.5 text-xs text-fg/45">Combined report for every unit ({batches.length})</p>
-              </button>
-              <button
-                type="button"
-                onClick={() => setScopeMode('single')}
-                className={cn(
-                  'rounded-lg px-4 py-4 text-left transition-colors',
-                  scopeMode === 'single'
-                    ? 'border-2 border-accent bg-accent/10 shadow-sm'
-                    : 'border-2 border-fg/10 bg-fg/[0.03] hover:border-fg/25'
-                )}
-              >
-                <p className="text-sm font-medium text-fg">One batch</p>
-                <p className="mt-0.5 text-xs text-fg/45">Report for a single livestock unit</p>
-              </button>
-            </div>
+            <OptionCards
+              aria-label="Which flocks"
+              value={scopeMode}
+              onChange={setScopeMode}
+              options={[
+                { value: 'all', label: 'All flocks', description: `One report for every flock (${batches.length})` },
+                { value: 'single', label: 'One flock', description: 'A report for a single flock' },
+              ]}
+            />
 
             {scopeMode === 'single' ? (
-              <label className="block space-y-1">
-                <span className="px-1 text-xs font-medium text-fg/45">Select batch</span>
-                <select
-                  value={selectedBatchId}
-                  onChange={(e) => setSelectedBatchId(e.target.value)}
-                  className="h-11 w-full rounded-md border border-fg/10 bg-fg/[0.04] px-3 text-sm font-medium text-fg outline-none focus:border-fg/[0.08]"
-                >
-                  {batches.map((batch) => (
-                    <option key={batch.id} value={batch.id} className="bg-card">
-                      {batch.batchName || 'Unnamed batch'}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <SearchSelect
+                label="Flock"
+                value={selectedBatchId}
+                onChange={setSelectedBatchId}
+                searchPlaceholder="Search flocks"
+                emptyText="No flock matches"
+                options={batches.map((batch) => ({ value: batch.id, label: batch.batchName || 'Unnamed flock' }))}
+              />
             ) : null}
 
-            <div className="flex justify-end gap-2 pt-1">
-              <Button variant="ghost" onClick={() => handleOpenChange(false)}>
+            <FormActions>
+              <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
                 Cancel
               </Button>
               <Button
+                type="button"
+                variant="accent"
                 onClick={continueFromScope}
                 disabled={loading || batches.length === 0 || (scopeMode === 'single' && !selectedBatchId)}
+                isLoading={loading}
+                loadingText="Preparing"
               >
                 Continue
               </Button>
-            </div>
+            </FormActions>
           </div>
         ) : null}
       </Dialog>

@@ -23,11 +23,9 @@ export function NewRoomButton() {
         isOpen={open}
         onOpenChange={setOpen}
         title="New isolation room"
-        description="Housing set aside for sick or quarantined birds."
+        description="A room set aside for sick birds."
       >
-        <div className="pt-2">
-          <IsolationRoomForm bare onCreated={() => setOpen(false)} />
-        </div>
+        <IsolationRoomForm bare onCreated={() => setOpen(false)} />
       </Dialog>
     </>
   );

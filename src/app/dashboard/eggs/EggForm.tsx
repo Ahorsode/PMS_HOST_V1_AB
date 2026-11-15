@@ -1,10 +1,22 @@
 'use client'
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { createEggProduction, updateEggProduction, deleteEggProduction } from '@/lib/actions/egg-actions';
+import { toast } from 'sonner';
+import {
+  Button,
+  DateInput,
+  Form,
+  FormActions,
+  FormError,
+  FormRow,
+  FormSection,
+  FormSummary,
+  FormSummaryRow,
+  Input,
+  SearchSelect,
+  Segmented,
+} from '@/components/ui/form';
+import { createEggProduction, updateEggProduction } from '@/lib/actions/egg-actions';
 import { useRouter } from 'next/navigation';
 import { formatLivestockType } from '@/lib/utils/growth-utils';
 
@@ -39,6 +51,7 @@ export const EggForm = ({
 }: EggFormProps) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const initialLoggingMode = log
     ? (log.cratesCollected != null ? 'crates' : 'individual')
     : unitToLoggingMode(defaultEggUnit);
@@ -70,17 +83,30 @@ export const EggForm = ({
     setFormData(prev => ({ ...prev, eggsCollected: (c * eggsPerCrate) + r }));
   };
 
+  /** Strips leading zeros as the farmer types and reads the field as a whole number (empty = 0). */
+  const readCount = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let valStr = e.target.value;
+    if (valStr.startsWith('0') && valStr.length > 1) {
+      valStr = valStr.replace(/^0+/, '');
+      e.target.value = valStr;
+    }
+    return valStr === '' ? 0 : Number(valStr);
+  };
+
   const sortedTotal = formData.smallCount + formData.mediumCount + formData.largeCount;
   const isOverTotal = formData.isSorted && sortedTotal > formData.eggsCollected;
   const remainderMax = Math.max(eggsPerCrate - 1, 0);
+  const totalLaid = Number(formData.eggsCollected) + Number(formData.unusableCount);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isOverTotal) return;
     setIsLoading(true);
+    setError(null);
     try {
+      let res: { success?: boolean; error?: string } | undefined;
       if (mode === 'create') {
-        await createEggProduction({
+        res = await createEggProduction({
           ...formData,
           batchId: formData.batchId,
           eggsCollected: Number(formData.eggsCollected),
@@ -90,7 +116,7 @@ export const EggForm = ({
           largeCount: Number(formData.largeCount),
         });
       } else if (mode === 'edit') {
-        await updateEggProduction(log.id, {
+        res = await updateEggProduction(log.id, {
           eggsCollected: Number(formData.eggsCollected),
           unusableCount: Number(formData.unusableCount),
           qualityGrade: formData.qualityGrade,
@@ -101,266 +127,233 @@ export const EggForm = ({
           logDate: formData.logDate,
         });
       }
+      if (res && res.success === false) {
+        setError(res.error || 'The egg record could not be saved. Try again.');
+        return;
+      }
+      toast.success(mode === 'edit' ? 'Egg record updated' : 'Egg record saved');
       onClose();
       router.refresh();
-    } catch (error) {
-      console.error(error);
+    } catch (submitError) {
+      console.error(submitError);
+      setError('The egg record could not be saved. Check your connection and try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <Form onSubmit={handleSubmit}>
+      <FormError>{error}</FormError>
+
       {mode === 'create' && (
-        <Select
-          label="Livestock"
-          options={batches.map(b => ({ label: `${b.batchName} (${formatLivestockType(b.type)})`, value: b.id }))}
+        <SearchSelect
+          label="Flock"
+          options={batches.map(b => ({ label: b.batchName, description: formatLivestockType(b.type), value: b.id }))}
           value={formData.batchId}
-          onChange={(e) => setFormData({ ...formData, batchId: e.target.value })}
+          onChange={(batchId) => setFormData({ ...formData, batchId })}
+          placeholder="Select a flock"
+          searchPlaceholder="Search flocks"
+          emptyText="No flock matches"
           required
         />
       )}
-      
-      <div className="space-y-4">
+
+      <FormSection title="Eggs collected">
         {allowEggUnitChange ? (
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-fg/70">Logging mode</label>
-            <div className="grid grid-cols-2 gap-2">
-              {['individual', 'crates'].map(modeOpt => (
-                <button
-                  key={modeOpt}
-                  type="button"
-                  onClick={() => setLoggingMode(modeOpt as 'individual' | 'crates')}
-                  className={`py-2 rounded-md text-xs font-medium transition-colors ${loggingMode === modeOpt ? 'bg-accent font-semibold text-accent-fg shadow-sm' : 'bg-fg/10 text-fg/70 hover:bg-fg/10'}`}
-                >
-                  {modeOpt === 'individual' ? 'Individual Eggs' : `Crates (${eggsPerCrate}/ea)`}
-                </button>
-              ))}
-            </div>
-          </div>
+          <Segmented
+            label="Count by"
+            value={loggingMode}
+            onChange={setLoggingMode}
+            options={[
+              { value: 'crates', label: `Crates of ${eggsPerCrate}` },
+              { value: 'individual', label: 'Single eggs' },
+            ]}
+          />
         ) : null}
 
-        {allowEggSortModeChange ? (
-          <div className="space-y-1.5">
-            <label className="text-xs font-medium text-fg/70">Sorting status</label>
-            <div className="grid grid-cols-2 gap-2">
-              {[false, true].map(isSorted => (
-                <button
-                  key={isSorted ? 'sorted' : 'unsorted'}
-                  type="button"
-                  onClick={() => setFormData({ 
-                    ...formData, 
-                    isSorted,
-                    ...(isSorted ? {} : { smallCount: 0, mediumCount: 0, largeCount: 0 })
-                  })}
-                  className={`py-2 rounded-md text-xs font-medium transition-colors ${formData.isSorted === isSorted ? 'bg-accent font-semibold text-accent-fg shadow-sm' : 'bg-fg/10 text-fg/70 hover:bg-fg/10'}`}
-                >
-                  {isSorted ? 'Sorted' : 'Unsorted'}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : null}
-      </div>
-
-      <div className="space-y-4">
         {loggingMode === 'individual' ? (
           <Input
-            label="Total eggs collected"
+            label="Good eggs"
             type="number"
             min="0"
+            unit="eggs"
             value={formData.eggsCollected}
             onChange={(e) => {
-              let valStr = e.target.value;
-              if (valStr.startsWith('0') && valStr.length > 1) {
-                valStr = valStr.replace(/^0+/, '');
-                e.target.value = valStr;
-              }
-              const val = valStr === '' ? 0 : Number(valStr);
+              const val = readCount(e);
               setFormData({ ...formData, eggsCollected: val });
             }}
             onFocus={(e) => e.target.select()}
             required
           />
         ) : (
-          <div className="space-y-4">
-             <Input
-                label="Number of crates"
-                type="number"
-                min="0"
-                value={crates}
-                onChange={(e) => {
-                  let valStr = e.target.value;
-                  if (valStr.startsWith('0') && valStr.length > 1) {
-                    valStr = valStr.replace(/^0+/, '');
-                    e.target.value = valStr;
-                  }
-                  const val = valStr === '' ? 0 : Number(valStr);
-                  handleCrateChange(val, remainder);
-                }}
-                onFocus={(e) => e.target.select()}
-                required
-              />
-              <Input
-                label="Remainder eggs"
-                type="number"
-                min="0"
-                max={remainderMax}
-                value={remainder}
-                onChange={(e) => {
-                  let valStr = e.target.value;
-                  if (valStr.startsWith('0') && valStr.length > 1) {
-                    valStr = valStr.replace(/^0+/, '');
-                    e.target.value = valStr;
-                  }
-                  let val = valStr === '' ? 0 : Number(valStr);
-                  if (val > remainderMax) {
-                    val = remainderMax;
-                    e.target.value = String(remainderMax);
-                  }
-                  handleCrateChange(crates, val);
-                }}
-                onFocus={(e) => e.target.select()}
-              />
-          </div>
+          <FormRow alwaysInline>
+            <Input
+              label="Full crates"
+              type="number"
+              min="0"
+              unit="crates"
+              value={crates}
+              onChange={(e) => {
+                const val = readCount(e);
+                handleCrateChange(val, remainder);
+              }}
+              onFocus={(e) => e.target.select()}
+              required
+            />
+            <Input
+              label="Loose eggs"
+              type="number"
+              min="0"
+              max={remainderMax}
+              unit="eggs"
+              value={remainder}
+              onChange={(e) => {
+                let val = readCount(e);
+                if (val > remainderMax) {
+                  val = remainderMax;
+                  e.target.value = String(remainderMax);
+                }
+                handleCrateChange(crates, val);
+              }}
+              onFocus={(e) => e.target.select()}
+            />
+          </FormRow>
         )}
-        
-        {!formData.isSorted && (
-          <Select
-            label="General egg size"
+
+        <Input
+          label="Unusable eggs"
+          type="number"
+          min="0"
+          unit="eggs"
+          hint="Cracked or damaged. Counted on top of the good eggs."
+          value={formData.unusableCount}
+          onChange={(e) => {
+            const val = readCount(e);
+            setFormData({ ...formData, unusableCount: val });
+          }}
+          onFocus={(e) => e.target.select()}
+        />
+
+        <FormSummary>
+          <FormSummaryRow label="Good eggs" value={Number(formData.eggsCollected).toLocaleString()} />
+          <FormSummaryRow label="Unusable eggs" value={Number(formData.unusableCount).toLocaleString()} />
+          <FormSummaryRow label="Total laid" value={`${totalLaid.toLocaleString()} eggs`} strong />
+        </FormSummary>
+      </FormSection>
+
+      <FormSection
+        title="Egg size"
+        aside={
+          formData.isSorted ? (
+            <span className={isOverTotal ? 'font-medium text-neg' : 'font-medium text-accent'}>
+              {sortedTotal.toLocaleString()} of {Number(formData.eggsCollected).toLocaleString()} sorted
+            </span>
+          ) : undefined
+        }
+      >
+        {allowEggSortModeChange ? (
+          <Segmented
+            label="Sorted by size?"
+            value={formData.isSorted}
+            onChange={(isSorted: boolean) =>
+              setFormData({
+                ...formData,
+                isSorted,
+                ...(isSorted ? {} : { smallCount: 0, mediumCount: 0, largeCount: 0 }),
+              })
+            }
+            options={[
+              { value: false, label: 'Not sorted' },
+              { value: true, label: 'Sorted' },
+            ]}
+          />
+        ) : null}
+
+        {!formData.isSorted ? (
+          <Segmented
+            label="Size of most eggs"
+            value={formData.qualityGrade as string}
+            onChange={(qualityGrade: string) => setFormData({ ...formData, qualityGrade })}
             options={[
               { label: 'Small', value: 'SMALL' },
               { label: 'Medium', value: 'MEDIUM' },
               { label: 'Large', value: 'LARGE' },
             ]}
-            value={formData.qualityGrade}
-            onChange={(e) => setFormData({ ...formData, qualityGrade: e.target.value })}
           />
+        ) : (
+          <>
+            <div className="grid grid-cols-3 gap-3">
+              <Input
+                label="Small"
+                type="number"
+                min="0"
+                value={formData.smallCount}
+                onChange={(e) => {
+                  const val = readCount(e);
+                  const currentTotal = val + formData.mediumCount + formData.largeCount;
+                  if (currentTotal > formData.eggsCollected) {
+                    return;
+                  }
+                  setFormData({ ...formData, smallCount: val });
+                }}
+                onFocus={(e) => e.target.select()}
+              />
+              <Input
+                label="Medium"
+                type="number"
+                min="0"
+                value={formData.mediumCount}
+                onChange={(e) => {
+                  const val = readCount(e);
+                  const currentTotal = formData.smallCount + val + formData.largeCount;
+                  if (currentTotal > formData.eggsCollected) {
+                    return;
+                  }
+                  setFormData({ ...formData, mediumCount: val });
+                }}
+                onFocus={(e) => e.target.select()}
+              />
+              <Input
+                label="Large"
+                type="number"
+                min="0"
+                value={formData.largeCount}
+                onChange={(e) => {
+                  const val = readCount(e);
+                  const currentTotal = formData.smallCount + formData.mediumCount + val;
+                  if (currentTotal > formData.eggsCollected) {
+                    return;
+                  }
+                  setFormData({ ...formData, largeCount: val });
+                }}
+                onFocus={(e) => e.target.select()}
+              />
+            </div>
+            {isOverTotal ? (
+              <FormError>The sizes add up to more than the good eggs. Lower one of them.</FormError>
+            ) : null}
+          </>
         )}
-      </div>
+      </FormSection>
 
-      {formData.isSorted && (
-        <div className="p-4 bg-fg/[0.04] border border-fg/[0.08] rounded-xl space-y-3">
-          <div className="flex justify-between items-center mb-1">
-            <label className="text-xs font-medium text-fg">Size distribution</label>
-            <span className={`text-xs font-medium ${isOverTotal ? 'text-neg' : 'text-accent'}`}>
-              Allocated: {sortedTotal} / {formData.eggsCollected}
-            </span>
-          </div>
-          <div className="space-y-4">
-            <Input
-              label="Small"
-              type="number"
-              min="0"
-              value={formData.smallCount}
-              onChange={(e) => {
-                let valStr = e.target.value;
-                if (valStr.startsWith('0') && valStr.length > 1) {
-                  valStr = valStr.replace(/^0+/, '');
-                  e.target.value = valStr;
-                }
-                const val = valStr === '' ? 0 : Number(valStr);
-                const currentTotal = val + formData.mediumCount + formData.largeCount;
-                if (currentTotal > formData.eggsCollected) {
-                  return;
-                }
-                setFormData({ ...formData, smallCount: val });
-              }}
-              onFocus={(e) => e.target.select()}
-              className="bg-fg/[0.04] border-fg/[0.08]"
-            />
-            <Input
-              label="Medium"
-              type="number"
-              min="0"
-              value={formData.mediumCount}
-              onChange={(e) => {
-                let valStr = e.target.value;
-                if (valStr.startsWith('0') && valStr.length > 1) {
-                  valStr = valStr.replace(/^0+/, '');
-                  e.target.value = valStr;
-                }
-                const val = valStr === '' ? 0 : Number(valStr);
-                const currentTotal = formData.smallCount + val + formData.largeCount;
-                if (currentTotal > formData.eggsCollected) {
-                  return;
-                }
-                setFormData({ ...formData, mediumCount: val });
-              }}
-              onFocus={(e) => e.target.select()}
-              className="bg-fg/[0.04] border-fg/[0.08]"
-            />
-            <Input
-              label="Large"
-              type="number"
-              min="0"
-              value={formData.largeCount}
-              onChange={(e) => {
-                let valStr = e.target.value;
-                if (valStr.startsWith('0') && valStr.length > 1) {
-                  valStr = valStr.replace(/^0+/, '');
-                  e.target.value = valStr;
-                }
-                const val = valStr === '' ? 0 : Number(valStr);
-                const currentTotal = formData.smallCount + formData.mediumCount + val;
-                if (currentTotal > formData.eggsCollected) {
-                  return;
-                }
-                setFormData({ ...formData, largeCount: val });
-              }}
-              onFocus={(e) => e.target.select()}
-              className="bg-fg/[0.04] border-fg/[0.08]"
-            />
-          </div>
-          {isOverTotal && (
-            <p className="text-xs text-neg font-medium">
-              Warning: Sum of sizes exceeds total eggs collected!
-            </p>
-          )}
-        </div>
-      )}
-
-      <div className="space-y-4">
-        <Input
-          label="Unusable eggs (damaged/cracked)"
-          type="number"
-          min="0"
-          value={formData.unusableCount}
-          onChange={(e) => {
-            let valStr = e.target.value;
-            if (valStr.startsWith('0') && valStr.length > 1) {
-              valStr = valStr.replace(/^0+/, '');
-              e.target.value = valStr;
-            }
-            const val = valStr === '' ? 0 : Number(valStr);
-            setFormData({ ...formData, unusableCount: val });
-          }}
-          onFocus={(e) => e.target.select()}
-        />
-        <p className="-mt-2 text-xs text-fg-3">
-          Recorded on its own. It is not taken out of the eggs collected above
-          {formData.unusableCount > 0
-            ? ` (${(formData.eggsCollected + formData.unusableCount).toLocaleString()} eggs laid in total).`
-            : '.'}
-        </p>
-        <Input
-          label="Log date"
-          type="date"
+      <FormSection title="When">
+        <DateInput
+          label="Date collected"
           value={formData.logDate}
           onChange={(e) => setFormData({ ...formData, logDate: e.target.value })}
           required
         />
-      </div>
+      </FormSection>
 
-      <div className="flex justify-end gap-2 pt-2">
-        <Button variant="outline" type="button" onClick={onClose}>Cancel</Button>
-        <Button type="submit" isLoading={isLoading} disabled={isOverTotal}>
-          {mode === 'create' ? 'Save Log' : mode === 'edit' ? 'Update log' : 'Save'}
+      <FormActions>
+        <Button variant="outline" type="button" onClick={onClose} disabled={isLoading}>
+          Cancel
         </Button>
-      </div>
-    </form>
+        <Button type="submit" variant="accent" isLoading={isLoading} loadingText="Saving" disabled={isOverTotal}>
+          {mode === 'edit' ? 'Save changes' : 'Save eggs'}
+        </Button>
+      </FormActions>
+    </Form>
   );
 };

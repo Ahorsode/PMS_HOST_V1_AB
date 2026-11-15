@@ -17,9 +17,9 @@ import {
 } from '@/lib/actions/admin-account-actions'
 import { ADMIN_ROLE_DETAILS, isAdminRole } from '@/lib/admin-permissions'
 import { cn } from '@/lib/utils'
+import { controlClass } from '@/components/ui/form'
 
-const inputClass =
-  'h-10 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-emerald-500 disabled:opacity-50'
+const inputClass = controlClass()
 
 function formatDateTime(value: string) {
   return new Intl.DateTimeFormat('en-GH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(value))
@@ -103,7 +103,7 @@ export default function AccountPanel({
                   run(() => adminDisableTwoStep(code), 'Two-step sign-in turned off', () => setCode(''))
                 }}>
                   <input value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} inputMode="numeric" placeholder="Current code" disabled={isPending} className={cn(inputClass, 'sm:max-w-[160px]')} />
-                  <button type="submit" disabled={isPending || code.length !== 6} className="h-10 rounded-md border border-zinc-700 px-4 text-sm text-zinc-300 disabled:opacity-50">Turn off</button>
+                  <button type="submit" disabled={isPending || code.length !== 6} className="h-11 md:h-10 rounded-md border border-zinc-700 px-4 text-sm text-zinc-300 disabled:opacity-50">Turn off</button>
                 </form>
               ) : (
                 <p className="text-xs text-zinc-500">Required for super admins. If you lose your phone, another super admin can reset it from the Admins page.</p>
@@ -129,7 +129,7 @@ export default function AccountPanel({
                 run(() => adminConfirmTwoStep(setup.secret, code), 'Two-step sign-in is on', () => { setSetup(null); setCode('') })
               }}>
                 <input value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" placeholder="6-digit code from the app" disabled={isPending} className={cn(inputClass, 'sm:max-w-[220px]')} />
-                <button type="submit" disabled={isPending || code.length !== 6} className="h-10 rounded-md bg-emerald-500 px-4 text-sm font-semibold text-zinc-950 disabled:opacity-50">Confirm and turn on</button>
+                <button type="submit" disabled={isPending || code.length !== 6} className="h-11 md:h-10 rounded-md bg-accent px-4 text-sm font-semibold text-accent-fg disabled:opacity-50">Confirm and turn on</button>
               </form>
             </div>
           ) : (
@@ -141,7 +141,7 @@ export default function AccountPanel({
                   if (!result.success) toast.error(result.error)
                   else setSetup({ secret: result.secret, formatted: result.formatted, uri: result.uri })
                 })}
-                className="h-10 rounded-md bg-emerald-500 px-4 text-sm font-semibold text-zinc-950 hover:bg-emerald-400 disabled:opacity-50">
+                className="h-11 md:h-10 rounded-md bg-accent px-4 text-sm font-semibold text-accent-fg hover:bg-accent/90 disabled:opacity-50">
                 Set up two-step sign-in
               </button>
             </>
@@ -154,14 +154,14 @@ export default function AccountPanel({
             run(() => adminChangeOwnPassword(currentPassword, newPassword), 'Password changed. Your other sessions were signed out.', () => { setCurrentPassword(''); setNewPassword('') })
           }}>
             <label className="block">
-              <span className="text-xs font-semibold text-zinc-300">Current password</span>
+              <span className="block text-sm font-medium leading-5 text-fg">Current password</span>
               <input type="password" autoComplete="current-password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} disabled={isPending} className={cn(inputClass, 'mt-1')} />
             </label>
             <label className="block">
-              <span className="text-xs font-semibold text-zinc-300">New password</span>
+              <span className="block text-sm font-medium leading-5 text-fg">New password</span>
               <input type="password" autoComplete="new-password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} disabled={isPending} placeholder="10+ characters" className={cn(inputClass, 'mt-1')} />
             </label>
-            <button type="submit" disabled={isPending || !currentPassword || newPassword.length < 10} className="h-10 rounded-md bg-emerald-500 px-4 text-sm font-semibold text-zinc-950 disabled:opacity-50">Change</button>
+            <button type="submit" disabled={isPending || !currentPassword || newPassword.length < 10} className="h-11 md:h-10 rounded-md bg-accent px-4 text-sm font-semibold text-accent-fg disabled:opacity-50">Change</button>
           </form>
         </Card>
 
@@ -189,7 +189,7 @@ export default function AccountPanel({
           </ul>
           {account.sessions.length > 1 ? (
             <button type="button" disabled={isPending} onClick={() => run(adminEndOtherSessions, 'Signed out everywhere else')}
-              className="h-9 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 hover:border-red-400/50 disabled:opacity-50">
+              className="h-11 md:h-9 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 hover:border-red-400/50 disabled:opacity-50">
               Sign out everywhere else
             </button>
           ) : null}

@@ -1,8 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Check, ChevronDown } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { SearchSelect } from '@/components/ui/form/controls';
 import type { BreedBadge, BreedOption } from '@/lib/livestock-breed-options';
 
 interface BreedSelectProps {
@@ -11,6 +10,7 @@ interface BreedSelectProps {
   options: BreedOption[];
   onChange: (value: string) => void;
   error?: string;
+  hint?: string;
   placeholder?: string;
   disabled?: boolean;
   required?: boolean;
@@ -22,7 +22,7 @@ function BreedBadgeSwatch({ badge }: { badge: BreedBadge }) {
   if (badge.kind === 'split') {
     return (
       <span
-        className="h-4 w-4 shrink-0 border"
+        className="h-4 w-4 shrink-0 rounded-[3px] border"
         style={{
           borderColor,
           background: `linear-gradient(90deg, ${badge.leftColor} 0 50%, ${badge.rightColor} 50% 100%)`,
@@ -34,101 +34,48 @@ function BreedBadgeSwatch({ badge }: { badge: BreedBadge }) {
 
   return (
     <span
-      className="h-4 w-4 shrink-0 border"
+      className="h-4 w-4 shrink-0 rounded-[3px] border"
       style={{ backgroundColor: badge.color, borderColor }}
       aria-hidden="true"
     />
   );
 }
 
+/** Breed picker: a searchable list with each breed's colour swatch. */
 export function BreedSelect({
   label,
   value,
   options,
   onChange,
   error,
-  placeholder = 'Select breed...',
+  hint,
+  placeholder = 'Select breed',
   disabled = false,
   required = false,
 }: BreedSelectProps) {
-  const [isOpen, setIsOpen] = React.useState(false);
-  const containerRef = React.useRef<HTMLDivElement>(null);
-  const labelId = React.useId();
-  const selectedOption = options.find((option) => option.value === value) ?? null;
-
-  React.useEffect(() => {
-    if (!isOpen) return;
-
-    function handlePointerDown(event: PointerEvent) {
-      if (!containerRef.current?.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-
-    document.addEventListener('pointerdown', handlePointerDown);
-    return () => document.removeEventListener('pointerdown', handlePointerDown);
-  }, [isOpen]);
+  const selectOptions = React.useMemo(
+    () =>
+      options.map((option) => ({
+        value: option.value,
+        label: option.label,
+        leading: <BreedBadgeSwatch badge={option.badge} />,
+      })),
+    [options],
+  );
 
   return (
-    <div className="w-full space-y-2" ref={containerRef}>
-      {label && (
-        <label id={labelId} className="ml-1 text-sm font-medium text-fg">
-          {label}
-        </label>
-      )}
-      <div className="relative">
-        <button
-          type="button"
-          disabled={disabled || options.length === 0}
-          aria-haspopup="listbox"
-          aria-expanded={isOpen}
-          aria-labelledby={label ? labelId : undefined}
-          aria-label={label ? undefined : placeholder}
-          data-required={required ? 'true' : undefined}
-          onClick={() => setIsOpen((open) => !open)}
-          className={cn(
-            'flex h-11 w-full items-center justify-between rounded-md border border-fg/10 bg-fg/10 px-3 py-2 text-left text-sm font-medium text-fg transition-colors focus:border-fg/[0.08] focus:outline-none focus:ring-2 focus:ring-fg/10 disabled:cursor-not-allowed disabled:opacity-50',
-            error && 'border-fg/[0.08] focus:ring-fg/10',
-          )}
-        >
-          <span className="flex min-w-0 items-center gap-2">
-            {selectedOption ? <BreedBadgeSwatch badge={selectedOption.badge} /> : null}
-            <span className={cn('truncate', !selectedOption && 'text-fg/45')}>
-              {selectedOption?.label ?? placeholder}
-            </span>
-          </span>
-          <ChevronDown className="h-4 w-4 shrink-0 text-fg/70" />
-        </button>
-
-        {isOpen && !disabled && options.length > 0 ? (
-          <div
-            role="listbox"
-            className="absolute z-50 mt-2 max-h-64 w-full overflow-auto rounded-md border border-fg/10 bg-card p-1 shadow-black/30"
-          >
-            {options.map((option) => (
-              <button
-                key={option.value}
-                type="button"
-                role="option"
-                aria-selected={option.value === value}
-                onClick={() => {
-                  onChange(option.value);
-                  setIsOpen(false);
-                }}
-                className={cn(
-                  'flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm font-medium text-fg transition-colors hover:bg-fg/10',
-                  option.value === value && 'bg-fg/[0.04] text-fg',
-                )}
-              >
-                <BreedBadgeSwatch badge={option.badge} />
-                <span className="min-w-0 flex-1 truncate">{option.label}</span>
-                {option.value === value ? <Check className="h-4 w-4 shrink-0 text-fg-3" /> : null}
-              </button>
-            ))}
-          </div>
-        ) : null}
-      </div>
-      {error ? <span className="ml-1 text-xs font-medium text-neg">{error}</span> : null}
-    </div>
+    <SearchSelect
+      label={label}
+      value={value}
+      options={selectOptions}
+      onChange={onChange}
+      error={error}
+      hint={hint}
+      placeholder={placeholder}
+      searchPlaceholder="Search breeds"
+      emptyText="No breed matches"
+      disabled={disabled || options.length === 0}
+      required={required}
+    />
   );
 }

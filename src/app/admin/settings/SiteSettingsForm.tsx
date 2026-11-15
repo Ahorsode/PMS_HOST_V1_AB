@@ -42,7 +42,7 @@ export default function SiteSettingsForm({
           onChange={(message) => set((c) => ({ ...c, announcement: { ...c.announcement, message } }))} />
         <div className="grid gap-3 sm:grid-cols-3">
           <label className="block">
-            <span className="text-xs font-semibold text-zinc-300">Style</span>
+            <span className="block text-sm font-medium leading-5 text-fg">Style</span>
             <select value={form.announcement.tone} disabled={isSaving} className={`${inputClass} mt-1`}
               onChange={(e) => set((c) => ({ ...c, announcement: { ...c.announcement, tone: e.target.value as SiteSettings['announcement']['tone'] } }))}>
               <option value="info">Information (blue)</option>
@@ -111,7 +111,7 @@ export default function SiteSettingsForm({
           )}
         </div>
         <label className="block sm:max-w-sm">
-          <span className="text-xs font-semibold text-zinc-300">&quot;Most popular&quot; badge</span>
+          <span className="block text-sm font-medium leading-5 text-fg">&quot;Most popular&quot; badge</span>
           <select disabled={isSaving} className={`${inputClass} mt-1`}
             value={landing.highlightedPlan ? `${landing.highlightedPlan.planType}:${landing.highlightedPlan.tier}` : ''}
             onChange={(e) => {
@@ -148,7 +148,7 @@ export default function SiteSettingsForm({
           {landing.testimonials.length < 6 ? (
             <button type="button" disabled={isSaving}
               onClick={() => set((c) => ({ ...c, landing: { ...c.landing, testimonials: [...c.landing.testimonials, { quote: '', name: '', detail: '' }] } }))}
-              className="inline-flex h-9 items-center gap-1.5 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 hover:border-zinc-500">
+              className="inline-flex h-11 md:h-9 items-center gap-1.5 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 hover:border-zinc-500">
               <Plus className="h-4 w-4" /> Add testimonial
             </button>
           ) : null}
@@ -172,7 +172,7 @@ export default function SiteSettingsForm({
           {landing.faq.length < 12 ? (
             <button type="button" disabled={isSaving}
               onClick={() => set((c) => ({ ...c, landing: { ...c.landing, faq: [...c.landing.faq, { question: '', answer: '' }] } }))}
-              className="inline-flex h-9 items-center gap-1.5 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 hover:border-zinc-500">
+              className="inline-flex h-11 md:h-9 items-center gap-1.5 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 hover:border-zinc-500">
               <Plus className="h-4 w-4" /> Add question
             </button>
           ) : null}

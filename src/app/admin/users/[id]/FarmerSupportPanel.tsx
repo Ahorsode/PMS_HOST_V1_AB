@@ -16,9 +16,9 @@ import {
   type FarmerSearchRow,
 } from '@/lib/actions/admin-farmer-actions'
 import { cn } from '@/lib/utils'
+import { controlClass } from '@/components/ui/form'
 
-const inputClass =
-  'h-10 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-emerald-500 disabled:opacity-50'
+const inputClass = controlClass()
 
 function Card({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
   return (
@@ -91,7 +91,7 @@ export default function FarmerSupportPanel({ farmer, canManage }: { farmer: Farm
             if (!window.confirm(`Reset ${farmer.name}'s sign-in? Their current password will stop working.`)) return
             run(() => adminResetFarmerLogin(farmer.id), 'One-time code created', (result) => setCode({ code: result.code ?? '', message: result.message ?? '' }))
           }}
-          className="h-10 rounded-md bg-emerald-500 px-4 text-sm font-semibold text-zinc-950 hover:bg-emerald-400 disabled:opacity-50">
+          className="h-11 md:h-10 rounded-md bg-accent px-4 text-sm font-semibold text-accent-fg hover:bg-accent/90 disabled:opacity-50">
           Create one-time sign-in code
         </button>
         {code ? (
@@ -111,14 +111,14 @@ export default function FarmerSupportPanel({ farmer, canManage }: { farmer: Farm
           }}
         >
           <label className="block">
-            <span className="text-xs font-semibold text-zinc-300">Phone</span>
+            <span className="block text-sm font-medium leading-5 text-fg">Phone</span>
             <input value={phone} onChange={(e) => setPhone(e.target.value)} disabled={disabled} placeholder="0540000000" className={cn(inputClass, 'mt-1')} />
           </label>
           <label className="block">
-            <span className="text-xs font-semibold text-zinc-300">Email</span>
+            <span className="block text-sm font-medium leading-5 text-fg">Email</span>
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={disabled} className={cn(inputClass, 'mt-1')} />
           </label>
-          <button type="submit" disabled={disabled} className="h-10 rounded-md border border-zinc-700 px-4 text-sm font-semibold text-zinc-200 hover:border-zinc-500 disabled:opacity-50">
+          <button type="submit" disabled={disabled} className="h-11 md:h-10 rounded-md border border-zinc-700 px-4 text-sm font-semibold text-zinc-200 hover:border-zinc-500 disabled:opacity-50">
             Save
           </button>
         </form>
@@ -128,7 +128,7 @@ export default function FarmerSupportPanel({ farmer, canManage }: { farmer: Farm
         <p className="text-sm text-zinc-400">For a lost or shared phone. They stay signed out until they sign in again with their password.</p>
         <button type="button" disabled={disabled}
           onClick={() => run(() => adminSignOutFarmer(farmer.id), `${farmer.name} signed out everywhere`)}
-          className="h-10 rounded-md border border-zinc-700 px-4 text-sm font-semibold text-zinc-200 hover:border-red-400/50 disabled:opacity-50">
+          className="h-11 md:h-10 rounded-md border border-zinc-700 px-4 text-sm font-semibold text-zinc-200 hover:border-red-400/50 disabled:opacity-50">
           Sign out everywhere
         </button>
       </Card>
@@ -178,7 +178,7 @@ export default function FarmerSupportPanel({ farmer, canManage }: { farmer: Farm
                         setOwnerResults(results)
                         if (results.length === 0) toast.info('No account found. They need to sign up first.')
                       })}
-                      className="h-10 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 disabled:opacity-50">
+                      className="h-11 md:h-10 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 disabled:opacity-50">
                       Find
                     </button>
                   </div>
@@ -187,7 +187,7 @@ export default function FarmerSupportPanel({ farmer, canManage }: { farmer: Farm
                       if (!window.confirm(`Make the selected person the owner of ${farm.name}?`)) return
                       run(() => adminTransferFarm(farm.id, newOwnerId), `${farm.name} handed over`, () => setTransferFarmId(null))
                     }}
-                    className="h-10 rounded-md bg-amber-500 px-4 text-sm font-semibold text-zinc-950 disabled:opacity-50">
+                    className="h-11 md:h-10 rounded-md bg-amber-500 px-4 text-sm font-semibold text-zinc-950 disabled:opacity-50">
                     Make them the owner
                   </button>
                 </div>
