@@ -35,6 +35,7 @@ import DeviceTools from './DeviceTools'
 import { cn, formatCurrency } from '@/lib/utils'
 import { MobileCardList } from '@/components/ui/MobileCardList'
 import type { BillingConfig, DesktopLicenseDays } from '@/lib/billing/pricing'
+import { controlClass } from '@/components/ui/form'
 
 const durationPackLabels: Record<DesktopLicenseDays, string> = {
   30: '+30 Days Starter Extension',
@@ -557,7 +558,7 @@ export default function DesktopLicensesDashboard({
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Search farm, phone, owner, hardware ID..."
-                className="h-12 w-full rounded-full border border-[#f7f1df]/10 bg-black/25 pl-11 pr-4 text-sm font-bold text-[#fff9e8] outline-none transition focus:border-[#d8c78f]/45 focus:ring-4 focus:ring-[#d8c78f]/10"
+                className={controlClass(false, 'w-full pl-11 pr-4')}
               />
             </label>
           </div>
@@ -811,7 +812,7 @@ export default function DesktopLicensesDashboard({
                     value={durationDays}
                     onChange={(event) => handleDurationChange(event.target.value)}
                     disabled={isPending}
-                    className="h-12 w-full rounded-2xl border border-[#f7f1df]/10 bg-[#0f100b] px-4 text-sm font-bold text-[#fff9e8] outline-none transition focus:border-[#d8c78f]/45 focus:ring-4 focus:ring-[#d8c78f]/10 disabled:opacity-50"
+                    className={controlClass(false, 'w-full')}
                   >
                     {durationPacks.map((pack) => (
                       <option key={pack.value} value={pack.value}>
@@ -830,7 +831,7 @@ export default function DesktopLicensesDashboard({
                     onChange={(event) => setAmount(event.target.value)}
                     disabled={isPending}
                     inputMode="decimal"
-                    className="h-12 w-full rounded-2xl border border-[#f7f1df]/10 bg-[#0f100b] px-4 font-[var(--font-payment-admin-mono)] text-sm font-bold text-[#fff9e8] outline-none transition focus:border-[#d8c78f]/45 focus:ring-4 focus:ring-[#d8c78f]/10 disabled:opacity-50"
+                    className={controlClass(false, 'w-full')}
                     placeholder="300"
                   />
                 </label>
@@ -846,7 +847,7 @@ export default function DesktopLicensesDashboard({
                     onChange={(event) => setPaymentModeNote(event.target.value)}
                     disabled={isPending}
                     rows={4}
-                    className="w-full resize-none rounded-2xl border border-[#f7f1df]/10 bg-[#0f100b] px-4 py-3 text-sm font-semibold leading-6 text-[#fff9e8] outline-none transition placeholder:text-[#c5ba9a]/45 focus:border-[#d8c78f]/45 focus:ring-4 focus:ring-[#d8c78f]/10 disabled:opacity-50"
+                    className={controlClass(false, 'w-full resize-none')}
                     placeholder="Received via Mobile Money - Ref Tx: #1234"
                   />
                 </label>

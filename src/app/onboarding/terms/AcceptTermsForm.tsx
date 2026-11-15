@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import { ArrowRight } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
+import { AuthShell } from '@/components/auth/AuthShell';
+import { Button, Checkbox, Form, FormError } from '@/components/ui/form';
 import { acceptCurrentTerms } from '@/lib/actions/legal-actions';
 import { LEGAL_UPDATED_LABEL } from '@/lib/legal';
 
@@ -33,56 +33,50 @@ export function AcceptTermsForm() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-4">
-      <Card className="glass-morphism w-full max-w-md border-none shadow-2xl rounded-lg p-3">
-        <CardHeader>
-          <CardTitle className="text-2xl tracking-normal">Our terms</CardTitle>
-          <p className="text-sm leading-6 text-white/75">
-            Please read and accept our Terms of Service and Privacy Policy (updated {LEGAL_UPDATED_LABEL}) to keep using
-            your farm account.
-          </p>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {error && (
-              <div role="alert" className="p-3 bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-md font-bold">
-                {error}
-              </div>
-            )}
+    <AuthShell
+      title="Our terms have changed"
+      subtitle={`Read and accept the Terms of Service and Privacy Policy (updated ${LEGAL_UPDATED_LABEL}) to keep using your farm account.`}
+    >
+      <Form onSubmit={handleSubmit} className="space-y-5">
+        <FormError>{error}</FormError>
 
-            <label className="flex items-start gap-3 text-sm leading-6 text-white/85">
-              <input
-                type="checkbox"
-                checked={accepted}
-                onChange={(e) => setAccepted(e.target.checked)}
-                disabled={isLoading}
-                className="mt-1 h-4 w-4 shrink-0 accent-emerald-500"
-              />
-              <span>
-                I agree to the{' '}
-                <Link href="/terms" target="_blank" className="font-semibold text-emerald-400 underline underline-offset-2">Terms of Service</Link>
-                {' '}and{' '}
-                <Link href="/privacy" target="_blank" className="font-semibold text-emerald-400 underline underline-offset-2">Privacy Policy</Link>
-                , and I am 18 or older.
-              </span>
-            </label>
+        <Checkbox
+          checked={accepted}
+          onChange={(e) => setAccepted(e.target.checked)}
+          disabled={isLoading}
+          label={
+            <>
+              I agree to the{' '}
+              <Link href="/terms" target="_blank" className="font-semibold text-accent underline underline-offset-2">Terms of Service</Link>
+              {' '}and{' '}
+              <Link href="/privacy" target="_blank" className="font-semibold text-accent underline underline-offset-2">Privacy Policy</Link>
+              , and I am 18 or older.
+            </>
+          }
+        />
 
-            <Button type="submit" isLoading={isLoading} loadingText="Saving..." size="lg" className="w-full" disabled={!accepted}>
-              Continue
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </Button>
+        <Button
+          type="submit"
+          variant="accent"
+          isLoading={isLoading}
+          loadingText="Saving"
+          disabled={!accepted}
+          className="min-h-12 w-full text-[15px] md:min-h-11"
+        >
+          Continue
+          <ArrowRight className="h-4 w-4" strokeWidth={1.75} />
+        </Button>
 
-            <button
-              type="button"
-              onClick={() => signOut({ callbackUrl: '/login' })}
-              disabled={isLoading}
-              className="w-full text-center text-sm font-semibold text-white/70 hover:text-white disabled:opacity-50"
-            >
-              Don&apos;t agree? Sign out
-            </button>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => signOut({ callbackUrl: '/login' })}
+          disabled={isLoading}
+          className="min-h-12 w-full md:min-h-11"
+        >
+          I don&apos;t agree. Sign out
+        </Button>
+      </Form>
+    </AuthShell>
   );
 }

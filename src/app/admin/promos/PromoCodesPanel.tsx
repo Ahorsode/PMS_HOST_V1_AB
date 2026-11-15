@@ -13,9 +13,9 @@ import {
 } from '@/lib/actions/admin-promo-actions'
 import { PLAN_TYPE_LABELS, PLAN_TYPES } from '@/lib/billing/pricing'
 import { cn } from '@/lib/utils'
+import { controlClass } from '@/components/ui/form'
 
-const inputClass =
-  'h-10 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 text-sm text-white outline-none transition-colors placeholder:text-zinc-600 focus:border-emerald-500 disabled:opacity-50'
+const inputClass = controlClass()
 
 function formatDate(value: string | null) {
   if (!value) return 'No expiry'
@@ -99,23 +99,23 @@ export default function PromoCodesPanel({ promos }: { promos: PromoCodeRow[] }) 
           </h2>
           <form onSubmit={create} className="mt-4 grid gap-3 md:grid-cols-3">
             <label className="block">
-              <span className="text-xs font-semibold text-zinc-300">Code</span>
+              <span className="block text-sm font-medium leading-5 text-fg">Code</span>
               <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="HARVEST20" className={cn(inputClass, 'mt-1 uppercase')} disabled={isPending} />
             </label>
             <label className="block">
-              <span className="text-xs font-semibold text-zinc-300">Discount (%)</span>
+              <span className="block text-sm font-medium leading-5 text-fg">Discount (%)</span>
               <input type="number" min={1} max={95} value={percentOff} onChange={(e) => setPercentOff(e.target.value)} className={cn(inputClass, 'mt-1')} disabled={isPending} />
             </label>
             <label className="block">
-              <span className="text-xs font-semibold text-zinc-300">Description (optional)</span>
+              <span className="block text-sm font-medium leading-5 text-fg">Description (optional)</span>
               <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Harvest season offer" className={cn(inputClass, 'mt-1')} disabled={isPending} />
             </label>
             <label className="block">
-              <span className="text-xs font-semibold text-zinc-300">Expires on (optional)</span>
+              <span className="block text-sm font-medium leading-5 text-fg">Expires on (optional)</span>
               <input type="date" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} className={cn(inputClass, 'mt-1')} disabled={isPending} />
             </label>
             <label className="block">
-              <span className="text-xs font-semibold text-zinc-300">Maximum uses (optional)</span>
+              <span className="block text-sm font-medium leading-5 text-fg">Maximum uses (optional)</span>
               <input type="number" min={1} value={maxRedemptions} onChange={(e) => setMaxRedemptions(e.target.value)} placeholder="Unlimited" className={cn(inputClass, 'mt-1')} disabled={isPending} />
             </label>
             <fieldset>
@@ -127,7 +127,7 @@ export default function PromoCodesPanel({ promos }: { promos: PromoCodeRow[] }) 
                       type="checkbox"
                       checked={planTypes.includes(planType)}
                       onChange={() => setPlanTypes((current) => (current.includes(planType) ? current.filter((v) => v !== planType) : [...current, planType]))}
-                      className="h-4 w-4 accent-emerald-500"
+                      className="h-5 w-5 accent-[var(--accent)]"
                       disabled={isPending}
                     />
                     {PLAN_TYPE_LABELS[planType]}
@@ -137,7 +137,7 @@ export default function PromoCodesPanel({ promos }: { promos: PromoCodeRow[] }) 
               <p className="mt-1 text-xs text-zinc-500">Leave both unticked for all plans.</p>
             </fieldset>
             <div className="md:col-span-3">
-              <button type="submit" disabled={isPending || !code.trim()} className="h-10 rounded-md bg-emerald-500 px-4 text-sm font-semibold text-zinc-950 hover:bg-emerald-400 disabled:opacity-50">
+              <button type="submit" disabled={isPending || !code.trim()} className="h-11 md:h-10 rounded-md bg-accent px-4 text-sm font-semibold text-accent-fg hover:bg-accent/90 disabled:opacity-50">
                 Create promo code
               </button>
             </div>
@@ -175,7 +175,7 @@ export default function PromoCodesPanel({ promos }: { promos: PromoCodeRow[] }) 
                         type="button"
                         disabled={isPending}
                         onClick={() => run(() => adminSetPromoActive(promo.id, !promo.isActive), `${promo.code} ${promo.isActive ? 'deactivated' : 'reactivated'}`)}
-                        className="h-9 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 hover:border-zinc-500 disabled:opacity-50"
+                        className="h-11 md:h-9 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 hover:border-zinc-500 disabled:opacity-50"
                       >
                         {promo.isActive ? 'Deactivate' : 'Reactivate'}
                       </button>
@@ -189,7 +189,7 @@ export default function PromoCodesPanel({ promos }: { promos: PromoCodeRow[] }) 
                               run(() => adminDeletePromoCode(promo.id), `${promo.code} deleted`)
                             }
                           }}
-                          className="flex h-9 w-9 items-center justify-center rounded-md border border-red-500/40 text-red-200 hover:bg-red-950/40 disabled:opacity-50"
+                          className="flex h-11 md:h-9 w-9 items-center justify-center rounded-md border border-red-500/40 text-red-200 hover:bg-red-950/40 disabled:opacity-50"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>

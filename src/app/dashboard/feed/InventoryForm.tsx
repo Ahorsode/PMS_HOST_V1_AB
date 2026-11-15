@@ -1,10 +1,17 @@
 'use client'
 
 import React, { useState } from 'react';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
-import { createInventoryItem, updateInventoryItem, deleteInventoryItem } from '@/lib/actions/inventory-actions';
+import { toast } from 'sonner';
+import {
+  Button,
+  Form,
+  FormActions,
+  FormError,
+  FormRow,
+  Input,
+  Segmented,
+} from '@/components/ui/form';
+import { createInventoryItem, updateInventoryItem } from '@/lib/actions/inventory-actions';
 import { useRouter } from 'next/navigation';
 
 interface InventoryFormProps {
@@ -13,9 +20,17 @@ interface InventoryFormProps {
   onClose: () => void;
 }
 
+const CATEGORY_OPTIONS = [
+  { label: 'Feed', value: 'feed' },
+  { label: 'Medicine', value: 'medicine' },
+  { label: 'Equipment', value: 'equipment' },
+  { label: 'Other', value: 'other' },
+];
+
 export const InventoryForm = ({ item, mode, onClose }: InventoryFormProps) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     itemName: item?.itemName || '',
     stockLevel: item?.stockLevel || 0,
@@ -26,40 +41,64 @@ export const InventoryForm = ({ item, mode, onClose }: InventoryFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError(null);
     try {
+      let res: { success?: boolean; error?: string } | undefined;
       if (mode === 'create') {
-        await createInventoryItem({
+        res = await createInventoryItem({
           ...formData,
           stockLevel: Number(formData.stockLevel),
         });
       } else if (mode === 'edit') {
-        await updateInventoryItem(item.id, {
+        res = await updateInventoryItem(item.id, {
           ...formData,
           stockLevel: Number(formData.stockLevel),
         });
       }
+      if (res && res.success === false) {
+        setError(res.error || 'The item could not be saved. Try again.');
+        return;
+      }
+      toast.success(mode === 'create' ? 'Item added to stock' : 'Item updated');
       onClose();
       router.refresh();
-    } catch (error) {
-      console.error(error);
+    } catch (submitError) {
+      console.error(submitError);
+      setError('The item could not be saved. Check your connection and try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-
+  // Saved categories can be in capitals ("FEED"); match them to the buttons without changing what is saved.
+  const selectedCategory = CATEGORY_OPTIONS.find(
+    (option) => option.value === String(formData.category).toLowerCase(),
+  )?.value;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
+    <Form onSubmit={handleSubmit}>
+      <FormError>{error}</FormError>
+
       <Input
         label="Item name"
+        placeholder="e.g. Layer mash"
         value={formData.itemName}
         onChange={(e) => setFormData({ ...formData, itemName: e.target.value })}
         required
       />
-      <div className="grid grid-cols-2 gap-3">
+
+      <Segmented
+        label="Type of item"
+        value={selectedCategory}
+        onChange={(category: string) => setFormData({ ...formData, category })}
+        options={CATEGORY_OPTIONS}
+        wrap
+        required
+      />
+
+      <FormRow alwaysInline>
         <Input
-          label="Stock level"
+          label="In stock now"
           type="number"
           min="0"
           step="0.01"
@@ -72,30 +111,22 @@ export const InventoryForm = ({ item, mode, onClose }: InventoryFormProps) => {
           required
         />
         <Input
-          label="Unit"
+          label="Counted in"
+          placeholder="e.g. bags"
           value={formData.unit}
           onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
           required
         />
-      </div>
-      <Select
-        label="Category"
-        options={[
-          { label: 'Feed', value: 'feed' },
-          { label: 'Medicine', value: 'medicine' },
-          { label: 'Equipment', value: 'equipment' },
-          { label: 'Other', value: 'other' },
-        ]}
-        value={formData.category}
-        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-        required
-      />
-      <div className="flex justify-end gap-2 pt-3">
-        <Button variant="outline" type="button" onClick={onClose}>Cancel</Button>
-        <Button type="submit" isLoading={isLoading}>
-          {mode === 'create' ? 'Add Item' : mode === 'edit' ? 'Update item' : 'Save'}
+      </FormRow>
+
+      <FormActions>
+        <Button variant="outline" type="button" onClick={onClose} disabled={isLoading}>
+          Cancel
         </Button>
-      </div>
-    </form>
+        <Button type="submit" variant="accent" isLoading={isLoading} loadingText="Saving">
+          {mode === 'create' ? 'Add item' : 'Save changes'}
+        </Button>
+      </FormActions>
+    </Form>
   );
 };

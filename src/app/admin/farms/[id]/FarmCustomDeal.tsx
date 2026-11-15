@@ -7,11 +7,11 @@ import { Handshake } from 'lucide-react'
 import { adminSaveFarmOverride, type AdminFarmOverride } from '@/lib/actions/admin-farm-actions'
 import { PLAN_FEATURE_DETAILS, PLAN_FEATURE_KEYS } from '@/lib/billing/pricing'
 import { cn } from '@/lib/utils'
+import { controlClass } from '@/components/ui/form'
 
 const EMPTY: AdminFarmOverride = { extraFeatures: [], overrideStaffLimit: false, staffLimit: null, discountPercent: 0, notes: null }
 
-const inputClass =
-  'h-10 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 text-sm text-white outline-none transition-colors placeholder:text-zinc-600 focus:border-emerald-500 disabled:opacity-50'
+const inputClass = controlClass()
 
 /** Per-farm exceptions to its plan: extra features, custom staff limit, checkout discount. */
 export default function FarmCustomDeal({
@@ -67,7 +67,7 @@ export default function FarmCustomDeal({
               return (
                 <label key={feature} className={cn('flex cursor-pointer items-center gap-2 rounded-md border px-3 py-2 text-sm',
                   checked ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-100' : 'border-zinc-800 text-zinc-300')}>
-                  <input type="checkbox" checked={checked} disabled={disabled} className="h-4 w-4 accent-emerald-500"
+                  <input type="checkbox" checked={checked} disabled={disabled} className="h-5 w-5 accent-[var(--accent)]"
                     onChange={() => setDeal((d) => ({
                       ...d,
                       extraFeatures: checked ? d.extraFeatures.filter((f) => f !== feature) : [...d.extraFeatures, feature],
@@ -82,7 +82,7 @@ export default function FarmCustomDeal({
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="flex items-center gap-2 text-sm font-semibold text-zinc-200">
-              <input type="checkbox" checked={deal.overrideStaffLimit} disabled={disabled} className="h-4 w-4 accent-emerald-500"
+              <input type="checkbox" checked={deal.overrideStaffLimit} disabled={disabled} className="h-5 w-5 accent-[var(--accent)]"
                 onChange={(e) => setDeal((d) => ({ ...d, overrideStaffLimit: e.target.checked }))} />
               Custom staff limit
             </label>
@@ -102,16 +102,16 @@ export default function FarmCustomDeal({
         </div>
 
         <label className="block">
-          <span className="text-xs font-semibold text-zinc-300">Notes (why this farm has a deal)</span>
+          <span className="block text-sm font-medium leading-5 text-fg">Notes (why this farm has a deal)</span>
           <textarea rows={2} maxLength={500} value={deal.notes ?? ''} disabled={disabled}
             onChange={(e) => setDeal((d) => ({ ...d, notes: e.target.value }))}
-            className="mt-1 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-white outline-none focus:border-emerald-500" />
+            className={controlClass(false, 'mt-1 w-full')} />
         </label>
 
         {canManage ? (
           <div className="flex gap-2">
             <button type="button" onClick={save} disabled={isPending}
-              className="h-10 rounded-md bg-emerald-500 px-4 text-sm font-semibold text-zinc-950 hover:bg-emerald-400 disabled:opacity-50">
+              className="h-11 md:h-10 rounded-md bg-accent px-4 text-sm font-semibold text-accent-fg hover:bg-accent/90 disabled:opacity-50">
               {isPending ? 'Saving…' : 'Save custom deal'}
             </button>
             {initial ? (
@@ -121,7 +121,7 @@ export default function FarmCustomDeal({
                   setStaffLimitText('')
                   setDiscountText('0')
                 }}
-                className="h-10 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 hover:border-zinc-500 disabled:opacity-50">
+                className="h-11 md:h-10 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 hover:border-zinc-500 disabled:opacity-50">
                 Clear (then save)
               </button>
             ) : null}

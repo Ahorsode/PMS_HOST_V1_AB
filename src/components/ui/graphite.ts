@@ -57,7 +57,7 @@ export const g = {
   segment: `h-8 whitespace-nowrap rounded-md px-3 text-sm transition-colors duration-150 ${focus}`,
   segmentOn: 'bg-raised-2 font-medium text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]',
   segmentOff: 'text-fg-2 hover:text-fg',
-  input:
-    'h-10 min-h-0 rounded-lg border-fg/[0.08] bg-page text-fg placeholder:text-fg-3 focus:border-accent/50 focus:ring-accent/30 font-normal tabular-nums',
-  label: 'mb-2 block text-sm text-fg-2',
+  /** Kept for old call sites: Input already carries the shared field look. */
+  input: 'tabular-nums',
+  label: 'mb-1.5 block text-sm font-medium leading-5 text-fg',
 } as const

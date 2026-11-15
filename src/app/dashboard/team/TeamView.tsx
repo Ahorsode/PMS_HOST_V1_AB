@@ -2,15 +2,22 @@
 
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Users, Mail, Shield, UserPlus, Loader2, CheckCircle2, XCircle, Trash2, ShieldCheck, UserCheck, Settings, AlertCircle, Phone, ChevronDown, RotateCcw, KeyRound, PauseCircle, PlayCircle } from 'lucide-react';
+import { Users, Mail, Shield, UserPlus, Loader2, CheckCircle2, Trash2, ShieldCheck, UserCheck, Settings, AlertCircle, Phone, RotateCcw, KeyRound, PauseCircle, PlayCircle } from 'lucide-react';
 import { inviteWorker, getFarmMembers, deleteMember, deleteInvitation, updateWorkerPermissions, resetWorkerPermissions, updateFarmMemberRole, getUserForInvite, regenerateInviteCode, setMemberAccessPaused } from '@/lib/actions/staff-actions';
 import Link from 'next/link';
 import { InviteCodePanel, type IssuedInviteCode } from '@/components/team/InviteCodePanel';
 import { getDefaultPermissionsForRole, type RolePermissionDefaults } from '@/lib/staff-permission-defaults';
-import { Button } from '@/components/ui/Button';
-import { Dialog } from '@/components/ui/Dialog';
-import { Input } from '@/components/ui/Input';
-import { Select } from '@/components/ui/Select';
+import {
+  Button,
+  Dialog,
+  Form,
+  FormActions,
+  FormError,
+  FormNote,
+  Input,
+  MoreDetails,
+  Select,
+} from '@/components/ui/form';
 import { PermissionsModal } from '@/components/ui/PermissionsModal';
 import { useRouter } from 'next/navigation';
 import { MutationBoundary } from '@/components/ui/MutationFeedback';
@@ -382,8 +389,9 @@ export default function TeamView({
                               value={member.role}
                               onChange={(event) => handleRoleChange(member, event.target.value)}
                               disabled={!canEdit || isUpdatingRole}
-                              className="h-10 rounded-md border border-fg/10 bg-card px-3 pr-9 text-xs font-medium text-fg outline-none transition-colors focus:border-emerald-400/60 disabled:cursor-not-allowed disabled:opacity-50"
-                              title="Update employee role"
+                              className="h-11 cursor-pointer rounded-lg border border-fg/[0.14] bg-page px-3 pr-9 text-sm text-fg outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/25 disabled:cursor-not-allowed disabled:opacity-50 md:h-10"
+                              title="Change role"
+                              aria-label={`Role for ${member.user?.firstname || 'this member'}`}
                             >
                               <option value="WORKER">Worker</option>
                               <option value="CASHIER">Cashier</option>
@@ -619,90 +627,74 @@ export default function TeamView({
                 </CardTitle>
               </CardHeader>
               <CardContent className="relative z-10 px-7 pb-7">
-                <form onSubmit={handleInvite} className="space-y-5">
-                  <MutationBoundary active={isInviting} label="Sending invitation...">
-                  <fieldset disabled={isInviting} className="space-y-5 disabled:opacity-70">
-                  {message && (
-                    <div className={`p-3 rounded-md text-xs font-medium flex items-center gap-2 animate-in fade-in slide-in-from-top-2 ${
-                      message.type === 'success' ? 'bg-fg/[0.04] text-accent border border-fg/[0.08]' : 'bg-fg/[0.04] text-neg border border-fg/[0.08]'
-                    }`}>
-                      {message.type === 'success' ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
-                      {message.text}
-                    </div>
-                  )}
-                  <Input 
-                    label="Email or phone number"
-                    name="emailOrPhone"
-                    type="text" 
-                    required
-                    placeholder="staff@example.com or 0540000000"
-                    onChange={() => {
-                      if (message?.type === 'error') setMessage(null);
-                    }}
-                  />
-                  <Select 
-                    label="Assign role"
-                    name="role"
-                    value={inviteRole}
-                    onChange={(event) => setInviteRole(event.target.value)}
-                    options={[
-                      { label: 'Worker', value: 'WORKER' },
-                      { label: 'Cashier', value: 'CASHIER' },
-                      { label: 'Manager', value: 'MANAGER' },
-                      { label: 'Accountant', value: 'ACCOUNTANT' },
-                      { label: 'Finance officer', value: 'FINANCE_OFFICER' }
-                    ]}
-                  />
-                  <div className="border border-fg/10 rounded-lg overflow-hidden bg-fg/[0.03]">
-                    <button
-                      type="button"
-                      aria-expanded={showPermissions}
-                      aria-controls="invite-permission-toggles"
-                      onClick={() => setShowPermissions((current) => !current)}
-                      className="w-full flex items-center justify-between gap-3 px-4 py-3 text-xs font-medium text-fg/70 hover:text-fg hover:bg-fg/5 transition-colors"
-                    >
-                      <span className="flex items-center gap-2">
-                        <Shield className="w-4 h-4 text-fg-3" />
-                        Configure access control
-                      </span>
-                      <ChevronDown className={`w-4 h-4 shrink-0 transition-transform ${showPermissions ? 'rotate-180' : ''}`} />
-                    </button>
-
-                    {showPermissions && (
-                      <div id="invite-permission-toggles" className="px-4 pb-4 pt-2 space-y-2 border-t border-fg/10">
-                        <p className="text-xs text-fg/50 mb-3 leading-relaxed">
-                          Default access based on role is pre-selected. Customise before sending the invitation.
-                        </p>
-                        <InlinePermissionToggles
-                          role={inviteRole}
-                          roleDefaults={rolePermissions}
-                          value={pendingPermissions}
-                          onChange={setPendingPermissions}
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setPendingPermissions({})}
-                          className="w-full mt-3 border-fg/[0.08] text-fg hover:bg-fg/[0.04] text-[11px] font-medium"
-                        >
-                          <RotateCcw className="w-4 h-4 mr-2 inline" />
-                          Reset to {inviteRole} Defaults
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                  <Button 
-                    type="submit" 
-                    disabled={!!(isInviting || (limitCheck && !limitCheck.canAdd))}
-                    isLoading={isInviting}
-                    loadingText="Sending..."
-                    className="w-full py-5 mt-3"
-                  >
-                    Send invitation
-                  </Button>
+                <Form onSubmit={handleInvite}>
+                  <fieldset disabled={isInviting} className="min-w-0 space-y-5">
+                    {message ? (
+                      message.type === 'success' ? (
+                        <FormNote tone="success">
+                          <span className="flex items-center gap-2 font-medium">
+                            <CheckCircle2 className="h-4 w-4 shrink-0 text-accent" strokeWidth={1.75} />
+                            {message.text}
+                          </span>
+                        </FormNote>
+                      ) : (
+                        <FormError>{message.text}</FormError>
+                      )
+                    ) : null}
+                    <Input
+                      label="Email or phone number"
+                      name="emailOrPhone"
+                      type="text"
+                      required
+                      placeholder="e.g. 0540000000 or kofi@example.com"
+                      onChange={() => {
+                        if (message?.type === 'error') setMessage(null);
+                      }}
+                    />
+                    <Select
+                      label="Their role"
+                      name="role"
+                      value={inviteRole}
+                      onChange={(event) => setInviteRole(event.target.value)}
+                      hint="Sets what they can see and change. You can adjust it below."
+                      options={[
+                        { label: 'Worker', value: 'WORKER' },
+                        { label: 'Cashier', value: 'CASHIER' },
+                        { label: 'Manager', value: 'MANAGER' },
+                        { label: 'Accountant', value: 'ACCOUNTANT' },
+                        { label: 'Finance officer', value: 'FINANCE_OFFICER' }
+                      ]}
+                    />
+                    <MoreDetails label="Choose what they can see and change" open={showPermissions} onOpenChange={setShowPermissions}>
+                      <InlinePermissionToggles
+                        role={inviteRole}
+                        roleDefaults={rolePermissions}
+                        value={pendingPermissions}
+                        onChange={setPendingPermissions}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setPendingPermissions({})}
+                        className="w-full"
+                      >
+                        <RotateCcw className="h-4 w-4" strokeWidth={1.75} />
+                        Back to the {inviteRole.toLowerCase().replace('_', ' ')} defaults
+                      </Button>
+                    </MoreDetails>
                   </fieldset>
-                  </MutationBoundary>
-                </form>
+                  <FormActions>
+                    <Button
+                      type="submit"
+                      variant="accent"
+                      disabled={!!(isInviting || (limitCheck && !limitCheck.canAdd))}
+                      isLoading={isInviting}
+                      loadingText="Sending"
+                    >
+                      Send invitation
+                    </Button>
+                  </FormActions>
+                </Form>
               </CardContent>
             </Card>
           )}
@@ -735,19 +727,23 @@ export default function TeamView({
       <Dialog 
         isOpen={!!deleteTarget} 
         onOpenChange={(open) => !open && !isDeleting && setDeleteTarget(null)} 
-        title={`Revoke ${deleteTarget?.type === 'member' ? 'Access' : 'Invitation'}`}
+        title={deleteTarget?.type === 'member' ? 'Remove this person from the farm?' : 'Cancel this invitation?'}
+        className="max-w-md"
       >
         <div className="space-y-5">
-          <p className="text-fg/70 font-medium">
-            Are you sure you want to {deleteTarget?.type === 'member' ? 'remove this member from the farm' : 'cancel this invitation'}? 
-            This action cannot be undone.
+          <p className="text-[15px] leading-6 text-fg-2">
+            {deleteTarget?.type === 'member'
+              ? 'They will no longer be able to open this farm. This cannot be undone.'
+              : 'The invitation will stop working. This cannot be undone.'}
           </p>
-          <div className="flex justify-end gap-2 pt-5 border-t border-fg/10">
-            <Button variant="outline" onClick={() => setDeleteTarget(null)} disabled={isDeleting}>Cancel</Button>
-            <Button variant="danger" onClick={handleDelete} isLoading={isDeleting} loadingText="Revoking...">
-              Confirm revoke
+          <FormActions destructive>
+            <Button type="button" variant="outline" onClick={() => setDeleteTarget(null)} disabled={isDeleting}>
+              Cancel
             </Button>
-          </div>
+            <Button type="button" variant="dangerSolid" onClick={handleDelete} isLoading={isDeleting} loadingText="Removing">
+              {deleteTarget?.type === 'member' ? 'Remove access' : 'Cancel invitation'}
+            </Button>
+          </FormActions>
         </div>
       </Dialog>
       
@@ -835,28 +831,28 @@ function InlinePermissionToggles({
   }
 
   return (
-    <div className="space-y-2">
+    <div className="divide-y divide-fg/[0.06]">
       {PERMISSION_MODULES.map((module) => (
-        <div key={module.label} className="flex items-center justify-between gap-3 py-2 border-b border-fg/5 last:border-0">
-          <span className="text-xs font-medium text-fg/75 tracking-normal">{module.label}</span>
-          <div className="flex items-center gap-3">
-            <label className="flex items-center gap-1.5 text-xs text-fg/60 cursor-pointer">
+        <div key={module.label} className="flex items-center justify-between gap-3 py-1">
+          <span className="min-w-0 text-sm text-fg">{module.label}</span>
+          <div className="flex shrink-0 items-center gap-1">
+            <label className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg px-2 text-sm text-fg-2">
               <input
                 type="checkbox"
-                className="accent-emerald-400"
+                className="h-5 w-5 accent-[var(--accent)]"
                 checked={!!effective[module.view]}
                 onChange={() => toggle(module.view)}
               />
-              View
+              See
             </label>
-            <label className="flex items-center gap-1.5 text-xs text-fg/60 cursor-pointer">
+            <label className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg px-2 text-sm text-fg-2">
               <input
                 type="checkbox"
-                className="accent-emerald-400"
+                className="h-5 w-5 accent-[var(--accent)]"
                 checked={!!effective[module.edit]}
                 onChange={() => toggle(module.edit)}
               />
-              Edit
+              Change
             </label>
           </div>
         </div>

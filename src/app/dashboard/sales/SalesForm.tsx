@@ -3,7 +3,26 @@
 import React, { useEffect, useState } from 'react';
 import { createOrder } from '@/lib/actions/order-actions';
 import { toast } from 'sonner';
-import { AlertTriangle, Banknote, Calendar, ChevronLeft, ChevronRight, Lock, Plus, ShieldCheck, ShoppingCart, Trash2 } from 'lucide-react';
+import { Banknote, ChevronLeft, ChevronRight, Lock, Plus, ShoppingCart, Trash2 } from 'lucide-react';
+import {
+  Button,
+  Dialog,
+  Form,
+  FormActions,
+  FormField,
+  FormNote,
+  FormRow,
+  FormSection,
+  FormSteps,
+  FormSummary,
+  FormSummaryRow,
+  Input,
+  OptionCards,
+  SearchSelect,
+  Segmented,
+  controlClass,
+  fieldStyles,
+} from '@/components/ui/form';
 import {
   defaultEggInventoryRow,
   eggSizeLabelFromRow,
@@ -32,6 +51,11 @@ import {
 import { useMoney } from '@/components/providers/CurrencyProvider'
 
 type ProductType = 'inventory' | 'livestock' | 'custom';
+
+const SALE_STEPS = [
+  { id: 'items', label: 'What was sold' },
+  { id: 'payment', label: 'Payment' },
+];
 
 interface SaleItemState {
   productType: ProductType;
@@ -573,11 +597,11 @@ export function SalesForm({
     if (response.success) {
       toast.success(completeNow === false && needsCompletionPrompt
         ? 'Sale saved. Complete it later from the sales list.'
-        : 'Farm-gate sale logged successfully');
+        : 'Sale recorded');
       setSaleDate(toLocalDateTimeInputValue());
       onSuccess();
     } else {
-      toast.error((response as any).error || 'Failed to record sale');
+      toast.error((response as any).error || 'The sale could not be saved. Try again.');
     }
   };
 
@@ -593,638 +617,458 @@ export function SalesForm({
     await submitOrder();
   };
 
+  const cashMismatch = !isCreditSale && !isWalkIn && !canOverridePrice && totalCashReceived !== '' && !cashBalances;
+  const outstanding = Math.max(total - (Number.isFinite(cashValue) ? cashValue : 0), 0);
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-5 overflow-hidden">
-      <div className="flex flex-nowrap gap-2 overflow-x-auto">
-        {[
-          { key: 1 as const, label: 'Customer & products' },
-          { key: 2 as const, label: 'Payment & discounts' },
-        ].map((wizardStep) => (
-          <div
-            key={wizardStep.key}
-            className={`rounded-lg border px-3 py-1 text-xs ${
-              step === wizardStep.key
-                ? 'border-accent bg-accent font-semibold text-accent-fg'
-                : step > wizardStep.key
-                  ? 'border-accent/40 bg-accent/10 font-medium text-accent'
-                  : 'border-fg/10 bg-fg/[0.02] font-medium text-fg-3'
-            }`}
-          >
-            {wizardStep.key}. {wizardStep.label}
-          </div>
-        ))}
-      </div>
+    <Form onSubmit={handleSubmit} noValidate className="min-w-0">
+      <FormSteps
+        steps={SALE_STEPS}
+        current={step - 1}
+        onStepClick={(index) => {
+          if (index === 0) setStep(1);
+        }}
+      />
 
       {step === 1 ? (
         <>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <div className="space-y-2 min-w-0">
-          <label className="px-1 text-xs font-medium text-fg/90">Customer</label>
-          <div className="flex items-center gap-2 sm:block sm:space-y-2">
-            <select
-              value={customerId}
-              onChange={(event) => setCustomerId(event.target.value)}
-              className="h-11 min-w-0 flex-1 rounded-md border border-fg/10 bg-fg/10 px-3 text-sm font-medium text-fg outline-none transition-colors focus:border-fg/[0.08] sm:w-full"
-            >
-              <option value="" className="bg-card">Walk-in customer</option>
-              {customerOptions.map((customer) => (
-                <option key={customer.id} value={customer.id} className="bg-card">{customer.name}</option>
-              ))}
-            </select>
-            {canAddCustomer ? (
-              <QuickAddCustomerButton
-                onCreated={(customer) => {
-                  setCustomerOptions((current) => {
-                    if (current.some((row) => row.id === customer.id)) return current
-                    return [...current, customer].sort((a, b) => a.name.localeCompare(b.name))
-                  })
-                  setCustomerId(customer.id)
-                }}
+          <FormSection title="Who and when">
+            <FormRow>
+              <div className="min-w-0 space-y-2">
+                <SearchSelect
+                  label="Customer"
+                  value={customerId}
+                  onChange={setCustomerId}
+                  options={[
+                    { value: '', label: 'Walk-in customer', description: 'Pays the full amount now' },
+                    ...customerOptions.map((customer) => ({ value: customer.id, label: customer.name })),
+                  ]}
+                  searchPlaceholder="Search customers"
+                  emptyText="No customer matches"
+                />
+                {canAddCustomer ? (
+                  <QuickAddCustomerButton
+                    onCreated={(customer) => {
+                      setCustomerOptions((current) => {
+                        if (current.some((row) => row.id === customer.id)) return current
+                        return [...current, customer].sort((a, b) => a.name.localeCompare(b.name))
+                      })
+                      setCustomerId(customer.id)
+                    }}
+                  />
+                ) : null}
+              </div>
+              <Input
+                label="Date and time of sale"
+                type="datetime-local"
+                required
+                value={saleDate}
+                onChange={(event) => setSaleDate(event.target.value)}
               />
-            ) : null}
-          </div>
-        </div>
+            </FormRow>
+          </FormSection>
 
-        <div className="flex items-center gap-2 min-w-0 sm:block sm:space-y-2">
-          <label className="flex shrink-0 items-center gap-1 px-1 text-xs font-medium text-fg/90">
-            <Calendar className="h-3.5 w-3.5 shrink-0 text-fg-3" />
-            Sale date & time
-          </label>
-          <input
-            type="datetime-local"
-            required
-            value={saleDate}
-            onChange={(event) => setSaleDate(event.target.value)}
-            className="h-11 min-w-0 flex-1 rounded-md border border-fg/10 bg-fg/10 px-3 text-sm font-medium text-fg outline-none transition-colors focus:border-fg/[0.08] sm:w-full"
-          />
-        </div>
-      </div>
-
-      {(canOverridePrice || hasAnyLockedLine) ? (
-      <div className="rounded-md border border-fg/[0.08] bg-fg/[0.04] p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-xs font-medium text-fg">
-            {canOverridePrice ? <ShieldCheck className="h-4 w-4 shrink-0" /> : <Lock className="h-4 w-4 shrink-0" />}
-            {canOverridePrice ? 'Manager controls' : 'Locked pricing'}
-          </div>
-          <p className="text-2xl font-medium text-fg">{money.format(total)}</p>
-        </div>
-      </div>
-      ) : null}
-
-      <div className="space-y-3">
-        <div className="flex items-center justify-between gap-3 px-1">
-          <label className="text-xs font-medium text-fg/90">Sale lines</label>
-          <button
-            type="button"
-            onClick={addItem}
-            className="inline-flex items-center gap-1 text-xs font-medium text-fg transition-colors hover:text-fg"
+          <FormSection
+            title="What was sold"
+            hint={
+              canOverridePrice
+                ? 'You can change prices and give discounts.'
+                : hasAnyLockedLine
+                  ? 'Prices are set by the farm.'
+                  : undefined
+            }
           >
-            <Plus className="h-3 w-3" /> Add line
-          </button>
-        </div>
+            <ul className="space-y-3">
+              {items.map((item, index) => {
+                const basePrice = getItemBasePrice(item);
+                const catalogPrice = getItemCatalogPrice(item);
+                const effectivePrice = getEffectiveUnitPrice(item);
+                const lineSubtotal = getLineSubtotal(item);
+                const lineTotal = getLineTotal(item);
+                const giveawayQty = showDiscountSection ? getGiveawayQuantity(item) : 0;
+                const isPriceLocked = !canOverridePrice && (
+                  (item.productType === 'inventory' && catalogPrice > 0)
+                  || (item.productType === 'livestock' && basePrice > 0)
+                );
+                const isEggs = item.productType === 'inventory';
+                const lineDiscountType = item.lineDiscountType ?? 'flat';
 
-        <div className="space-y-3">
-          {items.map((item, index) => {
-            const basePrice = getItemBasePrice(item);
-            const catalogPrice = getItemCatalogPrice(item);
-            const effectivePrice = getEffectiveUnitPrice(item);
-            const lineSubtotal = getLineSubtotal(item);
-            const lineTotal = getLineTotal(item);
-            const giveawayQty = showDiscountSection ? getGiveawayQuantity(item) : 0;
-            const isPriceLocked = !canOverridePrice && (
-              (item.productType === 'inventory' && catalogPrice > 0)
-              || (item.productType === 'livestock' && basePrice > 0)
-            );
+                return (
+                  <li key={index} className="min-w-0 space-y-4 rounded-xl border border-fg/[0.08] bg-tile p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <p className="text-sm font-semibold text-fg">Item {index + 1}</p>
+                      {items.length > 1 ? (
+                        <button
+                          type="button"
+                          aria-label={`Remove item ${index + 1}`}
+                          onClick={() => removeItem(index)}
+                          className="-my-1 -mr-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-fg-3 transition-colors duration-150 hover:bg-neg-solid/10 hover:text-neg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 md:h-10 md:w-10"
+                        >
+                          <Trash2 className="h-4 w-4" strokeWidth={1.75} />
+                        </button>
+                      ) : null}
+                    </div>
 
-            return (
-              <div key={index} className="overflow-hidden rounded-md border border-fg/10 bg-fg/5 p-4">
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <div className="space-y-1 min-w-0">
-                    <label className="text-xs font-medium text-fg/50">Type</label>
-                    <select
+                    <Segmented
+                      label="Selling"
                       value={item.productType}
-                      onChange={(event) => updateProductType(index, event.target.value as ProductType)}
-                      className="h-11 w-full min-w-0 rounded-md border border-fg/10 bg-card px-3 text-sm font-medium text-fg outline-none focus:border-fg/[0.08]"
-                    >
-                      <option value="inventory">Eggs</option>
-                      <option value="livestock">Birds</option>
-                      {canOverridePrice && <option value="custom">Custom</option>}
-                    </select>
-                  </div>
+                      onChange={(value: ProductType) => updateProductType(index, value)}
+                      options={[
+                        { value: 'inventory', label: 'Eggs' },
+                        { value: 'livestock', label: 'Birds' },
+                        ...(canOverridePrice ? [{ value: 'custom' as ProductType, label: 'Other' }] : []),
+                      ]}
+                    />
 
-                  <div className="space-y-1 min-w-0">
-                    <label className="text-xs font-medium text-fg/50">Product</label>
                     {item.productType === 'custom' ? (
-                      <input
+                      <Input
+                        label="What is it"
+                        placeholder="e.g. Manure, empty sacks"
                         value={item.description}
                         onChange={(event) => updateItem(index, { description: event.target.value })}
-                        className="h-11 w-full min-w-0 rounded-md border border-fg/10 bg-card px-3 text-sm font-medium text-fg outline-none focus:border-fg/[0.08]"
                       />
-                    ) : item.productType === 'inventory' && eggInventory.length === 0 ? (
-                      <div className="flex h-11 min-w-0 items-center rounded-md border border-fg/[0.08] bg-fg/[0.04] px-3 text-sm font-medium text-fg">
-                        No eggs in stock — log egg production first
-                      </div>
-                    ) : item.productType === 'inventory' ? (
-                      <div className="space-y-2">
+                    ) : isEggs && eggInventory.length === 0 ? (
+                      <FormNote tone="warning">No eggs in stock. Record egg collection first.</FormNote>
+                    ) : isEggs ? (
+                      <>
                         {showBatchToggle ? (
-                          <div className="flex min-w-0 overflow-hidden rounded-md border border-fg/10 bg-card">
-                            <button
-                              type="button"
-                              onClick={() => updateItem(index, { eggAllocationMode: 'fifo', eggBatchId: undefined })}
-                              className={`flex-1 px-3 py-2 text-xs font-medium ${item.eggAllocationMode !== 'batch' ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'text-fg/60'}`}
-                            >
-                              FIFO
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => updateItem(index, { eggAllocationMode: 'batch' })}
-                              className={`flex-1 px-3 py-2 text-xs font-medium ${item.eggAllocationMode === 'batch' ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'text-fg/60'}`}
-                            >
-                              By batch
-                            </button>
-                          </div>
+                          <Segmented
+                            label="Take eggs from"
+                            value={item.eggAllocationMode === 'batch' ? 'batch' : 'fifo'}
+                            onChange={(mode: 'fifo' | 'batch') =>
+                              mode === 'batch'
+                                ? updateItem(index, { eggAllocationMode: 'batch' })
+                                : updateItem(index, { eggAllocationMode: 'fifo', eggBatchId: undefined })
+                            }
+                            options={[
+                              { value: 'fifo', label: 'Oldest first' },
+                              { value: 'batch', label: 'One flock' },
+                            ]}
+                          />
                         ) : null}
                         {showBatchToggle && item.eggAllocationMode === 'batch' ? (
                           eggBatchStock.length === 0 ? (
-                            <div className="rounded-md border border-fg/[0.08] bg-fg/[0.04] px-3 py-2 text-sm font-medium text-fg">
-                              No active layer batches with eggs in stock
-                            </div>
+                            <FormNote tone="warning">No layer flock has eggs in stock.</FormNote>
                           ) : (
-                            <select
+                            <SearchSelect
+                              label="Flock"
                               value={item.eggBatchId ?? ''}
-                              onChange={(event) => updateItem(index, { eggBatchId: event.target.value })}
-                              className="h-11 w-full min-w-0 rounded-md border border-fg/10 bg-card px-3 text-sm font-medium text-fg outline-none focus:border-fg/[0.08]"
-                            >
-                              <option value="" className="bg-card">Select batch</option>
-                              {eggBatchStock.map((batch) => (
-                                <option key={batch.batchId} value={batch.batchId} className="bg-card">
-                                  {batch.batchName} ({Math.floor(batch.eggsRemaining / eggsPerCrate)} crates, {batch.eggsRemaining % eggsPerCrate} eggs remaining)
-                                </option>
-                              ))}
-                            </select>
+                              onChange={(eggBatchId) => updateItem(index, { eggBatchId })}
+                              placeholder="Select a flock"
+                              searchPlaceholder="Search flocks"
+                              options={eggBatchStock.map((batch) => ({
+                                value: batch.batchId,
+                                label: batch.batchName,
+                                description: `${Math.floor(batch.eggsRemaining / eggsPerCrate)} crates, ${batch.eggsRemaining % eggsPerCrate} eggs left`,
+                              }))}
+                            />
                           )
                         ) : null}
                         {requiresEggSizeSelection(eggInventory) ? (
-                          <button
-                            type="button"
-                            onClick={() => setSizePickerIndex(index)}
-                            className="flex h-11 w-full items-center justify-between rounded-md border border-fg/10 bg-card px-3 text-sm font-medium text-fg transition-colors hover:border-fg/[0.08]"
-                          >
-                            <span>{item.productId ? `Size: ${eggSizeLabelFromRow(eggInventory.find((entry: any) => entry.id === item.productId))}` : 'Select egg size'}</span>
-                            <span className="text-xs text-fg">Choose</span>
-                          </button>
+                          <FormField label="Egg size">
+                            {(field) => (
+                              <button
+                                {...field}
+                                type="button"
+                                onClick={() => setSizePickerIndex(index)}
+                                className={controlClass(false, 'flex items-center justify-between gap-3 text-left')}
+                              >
+                                <span className={item.productId ? '' : 'text-fg-3'}>
+                                  {item.productId
+                                    ? eggSizeLabelFromRow(eggInventory.find((entry: any) => entry.id === item.productId))
+                                    : 'Select egg size'}
+                                </span>
+                                <span className="text-sm font-medium text-accent">Choose</span>
+                              </button>
+                            )}
+                          </FormField>
                         ) : (
-                          <div className="flex h-11 min-w-0 items-center rounded-md border border-fg/10 bg-card px-3 text-sm font-medium text-fg">
-                            {item.description || 'Eggs'}
-                            {' '}
-                            ({formatEggStockCrateLabel(
+                          <p className={fieldStyles.hint}>
+                            {item.description || 'Eggs'}:{' '}
+                            {formatEggStockCrateLabel(
                               getEggAvailable(item, eggInventory, eggBatchStock, fifoEggAvailability),
                               eggsPerCrate,
-                            )})
-                          </div>
+                            )}{' '}
+                            in stock
+                          </p>
                         )}
-                      </div>
+                      </>
                     ) : shouldHideProductPicker(item, eggInventory, livestock) ? (
-                      <div className="flex h-11 min-w-0 items-center rounded-md border border-fg/10 bg-card px-3 text-sm font-medium text-fg">
-                        {item.description || 'Livestock batch'}
-                      </div>
+                      <p className={fieldStyles.hint}>{item.description || 'Livestock batch'}</p>
                     ) : (
-                      <select
+                      <SearchSelect
+                        label="Flock"
                         value={item.productId}
-                        onChange={(event) => updateProduct(index, event.target.value)}
-                        className="h-11 w-full min-w-0 rounded-md border border-fg/10 bg-card px-3 text-sm font-medium text-fg outline-none focus:border-fg/[0.08]"
-                      >
-                        <option value="" className="bg-card">Select product</option>
-                        {livestock.map((entry: any) => (
-                          <option key={entry.id} value={entry.id} className="bg-card">
-                            {`${entry.batchName} (${entry.currentCount} birds)`}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={(productId) => updateProduct(index, productId)}
+                        placeholder="Select a flock"
+                        searchPlaceholder="Search flocks"
+                        options={livestock.map((entry: any) => ({
+                          value: entry.id,
+                          label: entry.batchName,
+                          description: `${entry.currentCount} birds`,
+                        }))}
+                      />
                     )}
-                  </div>
-                </div>
 
-                <div className="mt-4 space-y-3">
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end">
-                    <div className="space-y-1 min-w-0">
-                      <label className="text-xs font-medium text-fg/50">
-                        {item.productType === 'inventory' ? 'Crates sold' : 'Quantity sold'}
-                      </label>
-                      <input
+                    <FormRow alwaysInline>
+                      <Input
+                        label={isEggs ? 'Crates sold' : 'How many'}
                         type="number"
-                        inputMode="numeric"
                         min="1"
                         step="1"
+                        unit={isEggs ? 'crates' : item.productType === 'livestock' ? 'birds' : undefined}
                         value={item.quantity}
                         onChange={(event) => updateItem(index, { quantity: event.target.value === '' ? '' : Number(event.target.value) })}
-                        className="h-14 w-full min-w-0 rounded-md border border-fg/10 bg-card px-4 text-base font-medium text-fg outline-none transition-colors focus:border-fg/[0.08]"
                       />
-                    </div>
+                      <Input
+                        label={isEggs ? 'Price per crate' : 'Price for one'}
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        unit={isPriceLocked ? <Lock className="h-4 w-4" aria-label="Price is fixed" /> : money.currency}
+                        value={isPriceLocked ? effectivePrice : item.unitPrice}
+                        onChange={(event) => updateItem(index, { unitPrice: event.target.value === '' ? '' : Number(event.target.value) })}
+                        disabled={isPriceLocked}
+                        hint={isEggs && catalogPrice <= 0 ? 'No set price. Enter what you charged.' : undefined}
+                      />
+                    </FormRow>
 
-                    <div className="space-y-1 min-w-0">
-                      <label className="text-xs font-medium text-fg/50">
-                        {item.productType === 'inventory' ? 'Price / Crate' : 'Unit Price'}
-                      </label>
-                      <div className="relative min-w-0">
-                        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-xs font-medium text-fg">{money.symbol}</span>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={isPriceLocked ? effectivePrice : item.unitPrice}
-                          onChange={(event) => updateItem(index, { unitPrice: event.target.value === '' ? '' : Number(event.target.value) })}
-                          disabled={isPriceLocked}
-                          className="box-border h-14 w-full min-w-0 rounded-md border border-fg/10 bg-card py-0 pl-11 pr-10 text-base font-medium text-fg outline-none transition-colors focus:border-fg/[0.08] disabled:cursor-not-allowed disabled:bg-card disabled:text-fg/60"
-                        />
-                        {isPriceLocked && <Lock className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-fg/30" />}
-                      </div>
-                      {item.productType === 'inventory' && catalogPrice <= 0 && (
-                        <p className="text-xs text-fg mt-1 flex items-center gap-1">
-                          <AlertTriangle className="w-3 h-3" />
-                          No catalog price — enter the sale price.
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="hidden items-end md:flex md:justify-end">
-                      <button aria-label="Remove line"
-                        type="button"
-                        onClick={() => removeItem(index)}
-                        disabled={items.length === 1}
-                        title="Remove line"
-                        className="h-14 w-14 shrink-0 rounded-md border border-transparent text-fg/60 transition-colors hover:border-fg/[0.08] hover:bg-fg/[0.04] hover:text-neg disabled:cursor-not-allowed disabled:opacity-30"
-                      >
-                        <Trash2 className="mx-auto h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {showDiscountSection ? (
-                  <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_120px]">
-                    {canOverridePrice ? (
-                      <>
-                        <div className="space-y-1 min-w-0">
-                          <label className="text-xs font-medium text-fg/50">
-                            {(item.lineDiscountType ?? 'flat') === 'item' ? 'Extra free crates (on top)' : 'Line Discount'}
-                          </label>
-                          <input
+                    {showDiscountSection ? (
+                      canOverridePrice ? (
+                        <FormRow>
+                          <Segmented
+                            label="Discount on this item"
+                            value={lineDiscountType}
+                            onChange={(value: LineDiscountType) => updateItem(index, { lineDiscountType: value })}
+                            options={[
+                              { value: 'flat', label: money.currency },
+                              { value: 'percent', label: '%' },
+                              { value: 'item', label: 'Free crates' },
+                            ]}
+                          />
+                          <Input
+                            label={lineDiscountType === 'item' ? 'Free crates on top' : 'Discount'}
                             type="number"
                             min="0"
-                            step={(item.lineDiscountType ?? 'flat') === 'item' ? '1' : '0.01'}
+                            step={lineDiscountType === 'item' ? '1' : '0.01'}
+                            unit={lineDiscountType === 'item' ? 'crates' : lineDiscountType === 'percent' ? '%' : money.currency}
                             value={item.lineDiscountAmount ?? 0}
                             onChange={(event) => updateItem(index, { lineDiscountAmount: event.target.value === '' ? '' : Number(event.target.value) })}
-                            className="h-11 w-full min-w-0 rounded-md border border-fg/10 bg-card px-3 text-sm font-medium text-fg outline-none focus:border-fg/[0.08]"
                           />
-                        </div>
-                        <div className="space-y-1 min-w-0">
-                          <label className="text-xs font-medium text-fg/50">Type</label>
-                          <select
-                            value={item.lineDiscountType ?? 'flat'}
-                            onChange={(event) => updateItem(index, { lineDiscountType: event.target.value as LineDiscountType })}
-                            className="h-11 w-full min-w-0 rounded-md border border-fg/10 bg-card px-3 text-sm font-medium text-fg outline-none focus:border-fg/[0.08]"
-                          >
-                            <option value="flat" className="bg-card">{money.currency}</option>
-                            <option value="percent" className="bg-card">%</option>
-                            <option value="item" className="bg-card">Giveaway</option>
-                          </select>
-                        </div>
-                      </>
-                    ) : defaultDiscountType === 'item' ? (
-                      <div className="space-y-1 min-w-0 sm:col-span-2">
-                        <label className="text-xs font-medium text-fg/50">
-                          Extra free crates (on top)
-                        </label>
-                        <input
+                        </FormRow>
+                      ) : (
+                        <Input
+                          label={defaultDiscountType === 'item' ? 'Free crates on top' : 'Discount on this item'}
                           type="number"
                           min="0"
-                          step="1"
+                          step={defaultDiscountType === 'item' ? '1' : '0.01'}
+                          unit={defaultDiscountType === 'item' ? 'crates' : defaultDiscountType === 'percent' ? '%' : money.currency}
                           value={item.lineDiscountAmount ?? 0}
                           onChange={(event) => updateItem(index, { lineDiscountAmount: event.target.value === '' ? '' : Number(event.target.value) })}
-                          className="h-11 w-full min-w-0 rounded-md border border-fg/10 bg-card px-3 text-sm font-medium text-fg outline-none focus:border-fg/[0.08]"
                         />
-                      </div>
-                    ) : defaultDiscountType === 'percent' ? (
-                      <div className="space-y-1 min-w-0 sm:col-span-2">
-                        <label className="text-xs font-medium text-fg/50">Line discount (%)</label>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={item.lineDiscountAmount ?? 0}
-                          onChange={(event) => updateItem(index, { lineDiscountAmount: event.target.value === '' ? '' : Number(event.target.value) })}
-                          className="h-11 w-full min-w-0 rounded-md border border-fg/10 bg-card px-3 text-sm font-medium text-fg outline-none focus:border-fg/[0.08]"
+                      )
+                    ) : null}
+
+                    <FormSummary>
+                      {basePrice > 0 && basePrice !== effectivePrice ? (
+                        <FormSummaryRow label="Set price" value={money.format(basePrice)} />
+                      ) : null}
+                      <FormSummaryRow label="Before discount" value={money.format(lineSubtotal)} />
+                      {giveawayQty > 0 ? (
+                        <FormSummaryRow
+                          label="Free on top"
+                          value={`${giveawayQty} ${giveawayQty === 1 ? 'crate' : 'crates'}`}
                         />
-                      </div>
-                    ) : (
-                      <div className="space-y-1 min-w-0 sm:col-span-2">
-                        <label className="text-xs font-medium text-fg/50">Line discount ({money.currency})</label>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={item.lineDiscountAmount ?? 0}
-                          onChange={(event) => updateItem(index, { lineDiscountAmount: event.target.value === '' ? '' : Number(event.target.value) })}
-                          className="h-11 w-full min-w-0 rounded-md border border-fg/10 bg-card px-3 text-sm font-medium text-fg outline-none focus:border-fg/[0.08]"
-                        />
-                      </div>
-                    )}
-                  </div>
-                ) : null}
+                      ) : null}
+                      <FormSummaryRow label="Item total" value={money.format(lineTotal)} strong />
+                    </FormSummary>
+                  </li>
+                );
+              })}
+            </ul>
 
-                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-fg/10 pt-3">
-                  <span className="text-xs font-medium text-fg/50">
-                    Base: {money.format(basePrice)} | Subtotal: {money.format(lineSubtotal)}
-                    {giveawayQty > 0
-                      ? ` | +${giveawayQty} free ${giveawayQty === 1 ? 'crate' : 'crates'}`
-                      : ''}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <button aria-label="Remove line"
-                      type="button"
-                      onClick={() => removeItem(index)}
-                      disabled={items.length === 1}
-                      title="Remove line"
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-transparent text-fg/60 transition-colors hover:border-fg/[0.08] hover:bg-fg/[0.04] hover:text-neg disabled:cursor-not-allowed disabled:opacity-30 md:hidden"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                    <span className="text-sm font-medium text-fg">Line total: {money.format(lineTotal)}</span>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+            <Button type="button" variant="outline" onClick={addItem} className="w-full">
+              <Plus className="h-4 w-4" strokeWidth={1.75} />
+              Add another item
+            </Button>
+          </FormSection>
 
-      {step1Errors.length > 0 && (
-        <div className="rounded-md border border-fg/[0.08] bg-fg/[0.04] px-4 py-3 text-sm font-medium text-fg">
-          {step1Errors[0]}
-        </div>
-      )}
+          {step1Errors.length > 0 ? <FormNote tone="warning">{step1Errors[0]}</FormNote> : null}
 
-      <div className="flex flex-col gap-3 rounded-md border border-fg/10 bg-fg/5 p-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-xs font-medium text-fg/50">Line subtotal</p>
-          <p className="text-lg font-medium text-fg">{money.format(subtotal)}</p>
-        </div>
-        <button
-          type="button"
-          disabled={!canContinueStep1}
-          onClick={() => setStep(2)}
-          className="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-emerald-500 px-5 text-[11px] font-medium text-accent-fg transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Continue
-          <ChevronRight className="h-4 w-4" />
-        </button>
-      </div>
+          <FormActions
+            note={
+              <span>
+                Subtotal <span className="font-semibold tabular-nums text-fg">{money.format(subtotal)}</span>
+              </span>
+            }
+          >
+            <Button type="button" variant="accent" disabled={!canContinueStep1} onClick={() => setStep(2)}>
+              Continue to payment
+              <ChevronRight className="h-4 w-4" strokeWidth={1.75} />
+            </Button>
+          </FormActions>
         </>
       ) : (
         <>
-      {canOverridePrice && (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_160px]">
-          <div className="space-y-2 min-w-0">
-            <label className="px-1 text-xs font-medium text-fg/90">Discount</label>
-            <div className="flex min-w-0 overflow-hidden rounded-md border border-fg/10 bg-fg/5">
-              <button
-                type="button"
-                onClick={() => setDiscountType('flat')}
-                className={`shrink-0 border-r border-fg/10 px-4 py-3 text-xs font-medium transition-colors ${discountType === 'flat' ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'text-fg/60'}`}
-              >
-                {money.currency}
-              </button>
-              <button aria-label="Percentage discount"
-                type="button"
-                onClick={() => setDiscountType('percent')}
-                className={`shrink-0 border-r border-fg/10 px-4 py-3 text-xs font-medium transition-colors ${discountType === 'percent' ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'text-fg/60'}`}
-              >
-                %
-              </button>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={discountValue}
-                onChange={(event) => setDiscountValue(event.target.value === '' ? '' : Number(event.target.value))}
-                className="h-12 min-w-0 flex-1 bg-transparent px-3 text-sm font-medium text-fg outline-none"
+          <FormSection title="Payment">
+            <Segmented
+              label="How did they pay"
+              value={paymentMethod}
+              onChange={(value: SalePaymentMethod) => setPaymentMethod(value)}
+              options={SALE_PAYMENT_METHOD_OPTIONS.map((option) => ({
+                value: option.value,
+                label: option.value === 'MOBILE_MONEY' ? 'MoMo' : option.value === 'BANK_TRANSFER' ? 'Bank' : option.label,
+              }))}
+              hint={isCreditSale ? 'They can pay part now, or nothing, and the rest later.' : undefined}
+            />
+
+            {paymentMethod === 'MOBILE_MONEY' ? (
+              <FormRow>
+                <Input
+                  label="MoMo number"
+                  type="tel"
+                  inputMode="tel"
+                  value={paymentReference}
+                  onChange={(event) => setPaymentReference(event.target.value)}
+                  placeholder="e.g. 0241234567"
+                />
+                <Input
+                  label="Name on the MoMo account"
+                  type="text"
+                  value={paymentAccountName}
+                  onChange={(event) => setPaymentAccountName(event.target.value)}
+                  placeholder="e.g. Kofi Mensah"
+                />
+              </FormRow>
+            ) : paymentMethod === 'BANK_TRANSFER' ? (
+              <Input
+                label="Bank reference"
+                optional
+                type="text"
+                value={paymentReference}
+                onChange={(event) => setPaymentReference(event.target.value)}
+                placeholder="e.g. TRF-20391"
               />
-            </div>
-          </div>
-          <div className="rounded-md border border-fg/10 bg-fg/5 p-3 text-right">
-            <p className="text-xs font-medium text-fg/50">Discount</p>
-            <p className="text-xl font-medium text-fg">{money.format(calculatedDiscount)}</p>
-          </div>
-        </div>
-      )}
+            ) : null}
 
-      <div className="space-y-2 min-w-0">
-        <label className="px-1 text-xs font-medium text-fg/90">Payment method</label>
-        <select
-          value={paymentMethod}
-          onChange={(event) => setPaymentMethod(event.target.value as SalePaymentMethod)}
-          className="h-11 w-full min-w-0 rounded-md border border-fg/10 bg-fg/10 px-3 text-sm font-medium text-fg outline-none transition-colors focus:border-fg/[0.08]"
-        >
-          {SALE_PAYMENT_METHOD_OPTIONS.map((option) => (
-            <option key={option.value} value={option.value} className="bg-card">
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </div>
+            {canOverridePrice ? (
+              <FormRow>
+                <Segmented
+                  label="Discount on the whole sale"
+                  value={discountType}
+                  onChange={(value: 'flat' | 'percent') => setDiscountType(value)}
+                  options={[
+                    { value: 'flat', label: money.currency },
+                    { value: 'percent', label: '%' },
+                  ]}
+                />
+                <Input
+                  label="Discount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  unit={discountType === 'percent' ? '%' : money.currency}
+                  value={discountValue}
+                  onChange={(event) => setDiscountValue(event.target.value === '' ? '' : Number(event.target.value))}
+                />
+              </FormRow>
+            ) : null}
 
-      {paymentMethod === 'MOBILE_MONEY' ? (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div className="space-y-2 min-w-0">
-            <label className="px-1 text-xs font-medium text-fg/90">MoMo phone number</label>
-            <input
-              type="tel"
-              value={paymentReference}
-              onChange={(event) => setPaymentReference(event.target.value)}
-              className="h-11 w-full min-w-0 rounded-md border border-fg/10 bg-fg/10 px-3 text-sm font-medium text-fg outline-none focus:border-fg/[0.08]"
-              placeholder="e.g. 0241234567"
-            />
-          </div>
-          <div className="space-y-2 min-w-0">
-            <label className="px-1 text-xs font-medium text-fg/90">Account holder name</label>
-            <input
-              type="text"
-              value={paymentAccountName}
-              onChange={(event) => setPaymentAccountName(event.target.value)}
-              className="h-11 w-full min-w-0 rounded-md border border-fg/10 bg-fg/10 px-3 text-sm font-medium text-fg outline-none focus:border-fg/[0.08]"
-              placeholder="Name on MoMo account"
-            />
-          </div>
-        </div>
-      ) : paymentMethod === 'BANK_TRANSFER' ? (
-        <div className="space-y-2 min-w-0">
-          <label className="px-1 text-xs font-medium text-fg/90">Bank reference (optional)</label>
-          <input
-            type="text"
-            value={paymentReference}
-            onChange={(event) => setPaymentReference(event.target.value)}
-            className="h-11 w-full min-w-0 rounded-md border border-fg/10 bg-fg/10 px-3 text-sm font-medium text-fg outline-none focus:border-fg/[0.08]"
-            placeholder="Transfer reference"
-          />
-        </div>
-      ) : null}
-
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_240px]">
-        <div className="space-y-2 min-w-0">
-          <label className="px-1 text-xs font-medium text-fg/90">Total cash received ({money.currency})</label>
-          <div className="relative min-w-0">
-            <Banknote className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-fg-3" />
-            <input
+            <Input
+              label="Money received"
               type="number"
-              inputMode="decimal"
               min="0"
               step="0.01"
+              leading={<Banknote className="h-5 w-5" strokeWidth={1.5} />}
+              unit={money.currency}
               readOnly={isWalkIn}
               value={totalCashReceived}
               onChange={(event) => {
                 if (isWalkIn) return;
                 setTotalCashReceived(event.target.value === '' ? '' : Number(event.target.value));
               }}
-              className={`box-border h-14 w-full min-w-0 rounded-md border bg-card pl-12 pr-4 text-xl font-medium text-fg outline-none transition-colors focus:border-emerald-500/60 sm:text-2xl ${
-                !isCreditSale && !isWalkIn && !canOverridePrice && totalCashReceived !== '' && !cashBalances ? 'border-red-500/60' : 'border-fg/10'
-              }`}
+              className="text-lg font-semibold"
+              error={cashMismatch ? `Enter exactly ${money.format(total)}, the sale total.` : undefined}
+              hint={
+                isCreditSale
+                  ? 'Part payment is fine for a saved customer.'
+                  : isWalkIn
+                    ? 'A walk-in customer pays the full total.'
+                    : canOverridePrice
+                      ? 'You can record a different amount. It is noted for review.'
+                      : cashBalances
+                        ? 'Matches the total.'
+                        : 'Enter the full total.'
+              }
             />
-          </div>
-        </div>
+          </FormSection>
 
-        <div className={`min-w-0 rounded-md border p-4 ${!isCreditSale && !isWalkIn && !canOverridePrice && totalCashReceived !== '' && !cashBalances ? 'border-fg/[0.08] bg-fg/[0.04]' : 'border-fg/[0.08] bg-fg/[0.04]'}`}>
-          <p className="text-xs font-medium text-fg/50">Balance check</p>
-          <div className="mt-2 flex items-start gap-2">
-            {!isCreditSale && !isWalkIn && !canOverridePrice && totalCashReceived !== '' && !cashBalances ? (
-              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-neg" />
-            ) : (
-              <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-fg-3" />
-            )}
-            <span className={`text-sm font-medium leading-snug ${!isCreditSale && !isWalkIn && !canOverridePrice && totalCashReceived !== '' && !cashBalances ? 'text-neg' : 'text-accent'}`}>
-              {isCreditSale
-                ? 'Credit sale: partial or zero payment allowed for saved customers'
-                : isWalkIn
-                ? 'Walk-in sale: cash is locked to the sale total'
-                : canOverridePrice
-                  ? 'Credit sale: override audit enabled'
-                  : cashBalances
-                    ? 'Cash matches total'
-                    : 'Awaiting exact cash total'}
-            </span>
-          </div>
-        </div>
-      </div>
+          <FormSummary>
+            <FormSummaryRow label="Subtotal" value={money.format(subtotal)} />
+            {calculatedDiscount > 0 ? (
+              <FormSummaryRow label="Discount" value={`− ${money.format(calculatedDiscount)}`} />
+            ) : null}
+            <FormSummaryRow label="Total" value={money.format(total)} strong />
+            <FormSummaryRow
+              label="Still to pay"
+              value={money.format(outstanding)}
+              tone={outstanding > 0 ? 'negative' : 'default'}
+            />
+          </FormSummary>
 
-      <div className="rounded-md border border-fg/10 bg-fg/5 p-4">
-        <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-          <div>
-            <p className="text-xs font-medium text-fg/50">Subtotal</p>
-            <p className="font-medium text-fg">{money.format(subtotal)}</p>
-          </div>
-          {calculatedDiscount > 0 ? (
-            <div>
-              <p className="text-xs font-medium text-fg/50">Discount</p>
-              <p className="font-medium text-fg">- {money.format(calculatedDiscount)}</p>
-            </div>
-          ) : null}
-          <div>
-            <p className="text-xs font-medium text-fg/50">Total</p>
-            <p className="font-medium text-fg">{money.format(total)}</p>
-          </div>
-          <div>
-            <p className="text-xs font-medium text-fg/50">Outstanding</p>
-            <p className="font-medium text-fg">{money.format(Math.max(total - (Number.isFinite(cashValue) ? cashValue : 0), 0))}</p>
-          </div>
-        </div>
-      </div>
+          {step2Errors.length > 0 ? <FormNote tone="warning">{step2Errors[0]}</FormNote> : null}
 
-      {step2Errors.length > 0 && (
-        <div className="rounded-md border border-fg/[0.08] bg-fg/[0.04] px-4 py-3 text-sm font-medium text-fg">
-          {step2Errors[0]}
-        </div>
-      )}
-
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <button
-          type="button"
-          onClick={() => setStep(1)}
-          className="inline-flex h-12 items-center justify-center gap-2 rounded-md border border-fg/10 px-5 text-[11px] font-medium text-fg/80 hover:bg-fg/5"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Back
-        </button>
-        <button
-          type="submit"
-          disabled={!canSubmit}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-fg px-5 text-sm font-medium text-page transition-[background-color,transform] duration-150 hover:bg-fg/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <ShoppingCart className="h-4 w-4" />
-          {isSubmitting ? 'Processing...' : 'Record Sale'}
-        </button>
-      </div>
+          <FormActions>
+            <Button type="button" variant="outline" onClick={() => setStep(1)} disabled={isSubmitting}>
+              <ChevronLeft className="h-4 w-4" strokeWidth={1.75} />
+              Back
+            </Button>
+            <Button type="submit" variant="accent" disabled={!canSubmit} isLoading={isSubmitting} loadingText="Saving sale">
+              <ShoppingCart className="h-4 w-4" strokeWidth={1.75} />
+              Record sale
+            </Button>
+          </FormActions>
         </>
       )}
 
-      {completionDialogOpen ? (
-        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 p-4 pb-safe">
-          <div className="w-full max-w-md max-h-[90dvh] overflow-y-auto custom-scrollbar pb-safe rounded-md border border-fg/10 bg-card p-5">
-            <h3 className="text-lg font-medium text-fg">Complete this sale now?</h3>
-            <p className="mt-2 text-sm text-fg/70">
-              This credit or partial-payment sale can be completed now to deduct stock and finalize fulfillment, or saved to complete later.
-            </p>
-            <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-end">
-              <button
-                type="button"
-                onClick={() => submitOrder(false)}
-                disabled={isSubmitting}
-                className="inline-flex h-11 items-center justify-center rounded-md border border-fg/10 px-4 text-xs font-medium text-fg/80 hover:bg-fg/5 disabled:opacity-50"
-              >
-                Skip for now
-              </button>
-              <button
-                type="button"
-                onClick={() => submitOrder(true)}
-                disabled={isSubmitting}
-                className="inline-flex h-11 items-center justify-center rounded-md bg-emerald-500 px-4 text-xs font-medium text-accent-fg disabled:opacity-50"
-              >
-                {isSubmitting ? 'Processing...' : 'Complete sale now'}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
+      <Dialog
+        isOpen={completionDialogOpen}
+        onOpenChange={(open) => !open && !isSubmitting && setCompletionDialogOpen(false)}
+        title="Hand over the goods now?"
+        description="This sale is not fully paid. Complete it now to take the stock out, or save it and complete it later from the sales list."
+        className="max-w-md"
+      >
+        <FormActions>
+          <Button type="button" variant="outline" onClick={() => submitOrder(false)} disabled={isSubmitting}>
+            Save for later
+          </Button>
+          <Button type="button" variant="accent" onClick={() => submitOrder(true)} isLoading={isSubmitting} loadingText="Saving">
+            Complete now
+          </Button>
+        </FormActions>
+      </Dialog>
 
-      {sizePickerIndex !== null ? (
-        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 p-4 pb-safe">
-          <div className="w-full max-w-md max-h-[90dvh] overflow-y-auto custom-scrollbar pb-safe rounded-md border border-fg/10 bg-card p-4">
-            <h3 className="text-lg font-medium text-fg">Select egg size</h3>
-            <div className="mt-3 space-y-2">
-              {eggInventory.map((entry: any) => (
-                <button
-                  key={entry.id}
-                  type="button"
-                  onClick={() => selectEggSize(sizePickerIndex, entry)}
-                  className="flex w-full items-center justify-between rounded-md border border-fg/10 bg-fg/5 px-4 py-3 text-left text-sm font-medium text-fg transition-colors hover:border-fg/[0.08] hover:bg-fg/[0.04]"
-                >
-                  <span>{eggSizeLabelFromRow(entry)}</span>
-                  <span className="text-xs text-fg/60">
-                    {formatEggStockCrateLabel(Number(entry.stockLevel), eggsPerCrate)} in stock
-                  </span>
-                </button>
-              ))}
-            </div>
-            <button
-              type="button"
-              onClick={() => setSizePickerIndex(null)}
-              className="mt-4 w-full rounded-md border border-fg/10 px-4 py-2 text-sm font-medium text-fg/70 hover:bg-fg/5"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      ) : null}
-    </form>
+      <Dialog
+        isOpen={sizePickerIndex !== null}
+        onOpenChange={(open) => !open && setSizePickerIndex(null)}
+        title="Choose egg size"
+        className="max-w-md"
+      >
+        <OptionCards
+          aria-label="Egg size"
+          cols={1}
+          value={sizePickerIndex !== null ? items[sizePickerIndex]?.productId : undefined}
+          onChange={(id: string) => {
+            const entry = eggInventory.find((row: any) => row.id === id);
+            if (entry && sizePickerIndex !== null) selectEggSize(sizePickerIndex, entry);
+          }}
+          options={eggInventory.map((entry: any) => ({
+            value: entry.id,
+            label: eggSizeLabelFromRow(entry),
+            aside: `${formatEggStockCrateLabel(Number(entry.stockLevel), eggsPerCrate)} in stock`,
+          }))}
+        />
+      </Dialog>
+    </Form>
   );
 }

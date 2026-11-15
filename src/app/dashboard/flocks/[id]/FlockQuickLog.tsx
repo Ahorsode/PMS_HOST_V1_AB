@@ -3,11 +3,24 @@
 import React, { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { Banknote, Egg, Scale, Skull, Truck, Wheat } from 'lucide-react'
-import { Dialog } from '@/components/ui/Dialog'
-import { Input } from '@/components/ui/Input'
-import { Select } from '@/components/ui/Select'
+import {
+  Button,
+  DateInput,
+  Dialog,
+  Form,
+  FormActions,
+  FormError,
+  FormRow,
+  FormSection,
+  FormSummary,
+  FormSummaryRow,
+  Input,
+  SearchSelect,
+  Segmented,
+  Select,
+} from '@/components/ui/form'
 import { cn } from '@/lib/utils'
-import { ActionButton, buttonClass, segmentClass, tone } from '../flock-ui'
+import { buttonClass, tone } from '../flock-ui'
 import { logWeight } from '@/lib/actions/dashboard-actions'
 import { createFeedingLog } from '@/lib/actions/feed-actions'
 import { createEggProduction } from '@/lib/actions/egg-actions'
@@ -52,10 +65,10 @@ const MORTALITY_CATEGORIES = [
 
 const EXPENSE_CATEGORIES = [
   { label: 'Feed', value: 'FEED' },
-  { label: 'Medication', value: 'MEDICATION' },
+  { label: 'Medicine', value: 'MEDICATION' },
   { label: 'Equipment', value: 'EQUIPMENT' },
   { label: 'Utilities', value: 'UTILITIES' },
-  { label: 'Labor / salary', value: 'SALARY' },
+  { label: 'Wages', value: 'SALARY' },
   { label: 'Maintenance', value: 'MAINTENANCE' },
   { label: 'Transport', value: 'TRANSPORT' },
   { label: 'Other', value: 'OTHER' },
@@ -77,19 +90,19 @@ export function FlockQuickLog({
   const [active, setActive] = useState<LogKind | null>(null)
 
   const buttons: { kind: LogKind; label: string; icon: React.ElementType; show: boolean }[] = [
-    { kind: 'weight', label: 'Log weight', icon: Scale, show: true },
-    { kind: 'feed', label: 'Log feed', icon: Wheat, show: true },
-    { kind: 'eggs', label: 'Log eggs', icon: Egg, show: isLayer },
-    { kind: 'mortality', label: 'Log mortality', icon: Skull, show: true },
-    { kind: 'sale', label: 'Record sale', icon: Truck, show: true },
-    { kind: 'expense', label: 'Add expense', icon: Banknote, show: canEditFinance },
+    { kind: 'weight', label: 'Weight', icon: Scale, show: true },
+    { kind: 'feed', label: 'Feed', icon: Wheat, show: true },
+    { kind: 'eggs', label: 'Eggs', icon: Egg, show: isLayer },
+    { kind: 'mortality', label: 'Deaths / sick', icon: Skull, show: true },
+    { kind: 'sale', label: 'Sale', icon: Truck, show: true },
+    { kind: 'expense', label: 'Expense', icon: Banknote, show: canEditFinance },
   ]
 
   const titleMap: Record<LogKind, string> = {
-    weight: 'Log average weight',
-    feed: 'Log feed consumption',
-    eggs: 'Log egg production',
-    mortality: 'Log mortality or sickness',
+    weight: 'Record weight',
+    feed: 'Record feeding',
+    eggs: 'Record eggs',
+    mortality: 'Record deaths or sick birds',
     sale: 'Record a sale',
     expense: 'Add an expense',
   }
@@ -138,13 +151,13 @@ function useSubmit(onDone: () => void) {
       try {
         const res = await fn()
         if (res && res.success === false) {
-          setError(res.error || 'Something went wrong')
+          setError(res.error || 'That could not be saved. Try again.')
           return
         }
         router.refresh()
         onDone()
       } catch (err: any) {
-        setError(err?.message || 'Something went wrong')
+        setError(err?.message || 'Something went wrong. Check your connection and try again.')
       }
     })
   }
@@ -152,9 +165,28 @@ function useSubmit(onDone: () => void) {
   return { isPending, error, run }
 }
 
-function FormError({ error }: { error: string | null }) {
-  if (!error) return null
-  return <p className="text-[13px] text-neg">{error}</p>
+/** Cancel on the left, the green save button on the right. Shared by every quick-log form. */
+function QuickLogActions({
+  onCancel,
+  isPending,
+  label,
+  loadingText,
+}: {
+  onCancel: () => void
+  isPending: boolean
+  label: string
+  loadingText: string
+}) {
+  return (
+    <FormActions>
+      <Button type="button" variant="outline" onClick={onCancel} disabled={isPending}>
+        Cancel
+      </Button>
+      <Button type="submit" variant="accent" isLoading={isPending} loadingText={loadingText}>
+        {label}
+      </Button>
+    </FormActions>
+  )
 }
 
 function WeightForm({ batchId, onDone }: { batchId: string; onDone: () => void }) {
@@ -163,23 +195,29 @@ function WeightForm({ batchId, onDone }: { batchId: string; onDone: () => void }
   const [logDate, setLogDate] = useState(today())
 
   return (
-    <form
+    <Form
       onSubmit={(e) => {
         e.preventDefault()
         if (!weight) return
         run(() => logWeight({ batchId, averageWeight: Number(weight), logDate }))
       }}
-      className="space-y-4"
     >
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Input label="Average weight (kg)" type="number" step="0.001" value={weight} onChange={(e) => setWeight(e.target.value)} required disabled={isPending} />
-        <Input label="Log date" type="date" value={logDate} onChange={(e) => setLogDate(e.target.value)} required disabled={isPending} />
-      </div>
-      <FormError error={error} />
-      <ActionButton type="submit" variant="primary" className="w-full" isLoading={isPending} loadingText="Saving weight…">
-        Save weight
-      </ActionButton>
-    </form>
+      <FormError>{error}</FormError>
+      <Input
+        label="Average weight of one bird"
+        type="number"
+        step="0.001"
+        unit="kg"
+        placeholder="e.g. 1.85"
+        hint="Weigh a few birds and enter the average."
+        value={weight}
+        onChange={(e) => setWeight(e.target.value)}
+        required
+        disabled={isPending}
+      />
+      <DateInput label="Date weighed" value={logDate} onChange={(e) => setLogDate(e.target.value)} required disabled={isPending} />
+      <QuickLogActions onCancel={onDone} isPending={isPending} label="Save weight" loadingText="Saving" />
+    </Form>
   )
 }
 
@@ -191,36 +229,46 @@ function FeedForm({ batchId, feedInventory, onDone }: { batchId: string; feedInv
 
   if (feedInventory.length === 0) {
     return (
-      <p className="rounded-lg border border-dashed border-fg/[0.08] p-6 text-center text-[13px] text-fg-2">
-        No feed stock in inventory. Add feed under Inventory first, then log consumption here.
+      <p className="rounded-xl border border-dashed border-fg/[0.14] px-4 py-6 text-center text-sm leading-6 text-fg-2">
+        There is no feed in stock. Add feed under Inventory first, then record feedings here.
       </p>
     )
   }
 
+  const selectedFeed = feedInventory.find((f) => f.id === feedTypeId)
+
   return (
-    <form
+    <Form
       onSubmit={(e) => {
         e.preventDefault()
         if (!feedTypeId || !amount) return
         run(() => createFeedingLog({ batchId, feedTypeId, amountConsumed: Number(amount), logDate }))
       }}
-      className="space-y-4"
     >
-      <Select
-        label="Feed source"
+      <FormError>{error}</FormError>
+      <SearchSelect
+        label="Feed"
         value={feedTypeId}
-        onChange={(e) => setFeedTypeId(e.target.value)}
-        options={feedInventory.map((f) => ({ label: `${f.itemName} (${f.stockLevel} ${f.unit} left)`, value: f.id }))}
+        onChange={setFeedTypeId}
+        options={feedInventory.map((f) => ({ label: f.itemName, description: `${f.stockLevel} ${f.unit} in stock`, value: f.id }))}
+        searchPlaceholder="Search feed"
+        emptyText="No feed matches"
       />
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Input label="Amount (bags)" type="number" step="0.25" value={amount} onChange={(e) => setAmount(e.target.value)} required disabled={isPending} />
-        <Input label="Log date" type="date" value={logDate} onChange={(e) => setLogDate(e.target.value)} required disabled={isPending} />
-      </div>
-      <FormError error={error} />
-      <ActionButton type="submit" variant="primary" className="w-full" isLoading={isPending} loadingText="Saving feed…">
-        Save feeding log
-      </ActionButton>
-    </form>
+      <Input
+        label="Bags used"
+        type="number"
+        step="0.25"
+        unit="bags"
+        placeholder="e.g. 2.5"
+        hint={selectedFeed ? `${selectedFeed.stockLevel} ${selectedFeed.unit} in stock` : undefined}
+        value={amount}
+        onChange={(e) => setAmount(e.target.value)}
+        required
+        disabled={isPending}
+      />
+      <DateInput label="Date fed" value={logDate} onChange={(e) => setLogDate(e.target.value)} required disabled={isPending} />
+      <QuickLogActions onCancel={onDone} isPending={isPending} label="Save feeding" loadingText="Saving" />
+    </Form>
   )
 }
 
@@ -231,7 +279,7 @@ function EggsForm({ batchId, onDone }: { batchId: string; onDone: () => void }) 
   const [logDate, setLogDate] = useState(today())
 
   return (
-    <form
+    <Form
       onSubmit={(e) => {
         e.preventDefault()
         if (!eggs) return
@@ -244,18 +292,22 @@ function EggsForm({ batchId, onDone }: { batchId: string; onDone: () => void }) 
           })
         )
       }}
-      className="space-y-4"
     >
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Input label="Eggs collected" type="number" value={eggs} onChange={(e) => setEggs(e.target.value)} required disabled={isPending} />
-        <Input label="Damaged or unusable" type="number" value={unusable} onChange={(e) => setUnusable(e.target.value)} disabled={isPending} />
-      </div>
-      <Input label="Log date" type="date" value={logDate} onChange={(e) => setLogDate(e.target.value)} required disabled={isPending} />
-      <FormError error={error} />
-      <ActionButton type="submit" variant="primary" className="w-full" isLoading={isPending} loadingText="Saving eggs…">
-        Save egg production
-      </ActionButton>
-    </form>
+      <FormError>{error}</FormError>
+      <Input label="Good eggs" type="number" unit="eggs" placeholder="e.g. 1200" value={eggs} onChange={(e) => setEggs(e.target.value)} required disabled={isPending} />
+      <Input
+        label="Unusable eggs"
+        optional
+        type="number"
+        unit="eggs"
+        hint="Cracked or damaged. Counted on top of the good eggs."
+        value={unusable}
+        onChange={(e) => setUnusable(e.target.value)}
+        disabled={isPending}
+      />
+      <DateInput label="Date collected" value={logDate} onChange={(e) => setLogDate(e.target.value)} required disabled={isPending} />
+      <QuickLogActions onCancel={onDone} isPending={isPending} label="Save eggs" loadingText="Saving" />
+    </Form>
   )
 }
 
@@ -269,7 +321,7 @@ function MortalityForm({ batchId, onDone }: { batchId: string; onDone: () => voi
   const [logDate, setLogDate] = useState(today())
 
   return (
-    <form
+    <Form
       onSubmit={(e) => {
         e.preventDefault()
         if (!count) return
@@ -285,33 +337,35 @@ function MortalityForm({ batchId, onDone }: { batchId: string; onDone: () => voi
           })
         )
       }}
-      className="space-y-4"
     >
-      <div className={cn(tone.panel, 'flex gap-1 p-1')}>
-        {(['DEAD', 'SICK'] as const).map((t) => (
-          <button
-            key={t}
-            type="button"
-            aria-pressed={type === t}
-            onClick={() => setType(t)}
-            className={cn(segmentClass(type === t), 'flex-1 justify-center')}
-          >
-            {t === 'DEAD' ? 'Mortality' : 'Sickness'}
-          </button>
-        ))}
-      </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Input label="Count" type="number" value={count} onChange={(e) => setCount(e.target.value)} required disabled={isPending} />
-        <Select label="Category" value={category} onChange={(e) => setCategory(e.target.value)} options={MORTALITY_CATEGORIES} />
-      </div>
-      <Input label="Specific cause (optional)" placeholder="e.g. Newcastle, heat stress" value={subCategory} onChange={(e) => setSubCategory(e.target.value)} disabled={isPending} />
-      <Input label="Notes (optional)" value={reason} onChange={(e) => setReason(e.target.value)} disabled={isPending} />
-      <Input label="Log date" type="date" value={logDate} onChange={(e) => setLogDate(e.target.value)} required disabled={isPending} />
-      <FormError error={error} />
-      <ActionButton type="submit" variant="primary" className="w-full" isLoading={isPending} loadingText="Saving…">
-        Save health event
-      </ActionButton>
-    </form>
+      <FormError>{error}</FormError>
+      <Segmented
+        label="What happened"
+        value={type}
+        onChange={setType}
+        options={[
+          { value: 'DEAD', label: 'Died' },
+          { value: 'SICK', label: 'Sick' },
+        ]}
+      />
+      <Input
+        label={type === 'DEAD' ? 'Birds that died' : 'Sick birds'}
+        type="number"
+        unit="birds"
+        placeholder="e.g. 3"
+        value={count}
+        onChange={(e) => setCount(e.target.value)}
+        required
+        disabled={isPending}
+      />
+      <DateInput label="Date" value={logDate} onChange={(e) => setLogDate(e.target.value)} required disabled={isPending} />
+      <FormSection title="Why">
+        <Select label="Cause" value={category} onChange={(e) => setCategory(e.target.value)} options={MORTALITY_CATEGORIES} />
+        <Input label="What exactly" optional placeholder="e.g. Newcastle, heat stress" value={subCategory} onChange={(e) => setSubCategory(e.target.value)} disabled={isPending} />
+        <Input label="Notes" optional value={reason} onChange={(e) => setReason(e.target.value)} disabled={isPending} />
+      </FormSection>
+      <QuickLogActions onCancel={onDone} isPending={isPending} label="Save" loadingText="Saving" />
+    </Form>
   )
 }
 
@@ -336,7 +390,7 @@ function SaleForm({
   const total = (Number(quantity) || 0) * (Number(unitPrice) || 0)
 
   return (
-    <form
+    <Form
       onSubmit={(e) => {
         e.preventDefault()
         if (!quantity || !unitPrice) return
@@ -355,31 +409,38 @@ function SaleForm({
           })
         )
       }}
-      className="space-y-4"
     >
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <FormError>{error}</FormError>
+      <FormRow>
         <Input
-          label="Quantity (birds)"
+          label="Birds sold"
           type="number"
+          unit="birds"
+          hint={`${currentCount.toLocaleString()} in this flock`}
           value={quantity}
           onChange={(e) => setQuantity(e.target.value)}
           required
           disabled={isPending}
           max={currentCount}
         />
-        <Input label={`Unit price (${money.currency})`} type="number" step="0.01" value={unitPrice} onChange={(e) => setUnitPrice(e.target.value)} required disabled={isPending} />
-      </div>
-      <Input label="Customer (optional)" value={customer} onChange={(e) => setCustomer(e.target.value)} disabled={isPending} />
-      <Input label="Sale date" type="datetime-local" value={orderDate} onChange={(e) => setOrderDate(e.target.value)} required disabled={isPending} />
-      <div className="flex items-baseline justify-between rounded-lg border border-fg/[0.08] bg-raised px-4 py-3">
-        <span className="text-[13px] text-fg-2">Total</span>
-        <span className="text-lg tabular-nums text-fg">{money.format(total)}</span>
-      </div>
-      <FormError error={error} />
-      <ActionButton type="submit" variant="primary" className="w-full" isLoading={isPending} loadingText="Recording sale…">
-        Record sale
-      </ActionButton>
-    </form>
+        <Input
+          label="Price for one bird"
+          type="number"
+          step="0.01"
+          unit={money.currency}
+          value={unitPrice}
+          onChange={(e) => setUnitPrice(e.target.value)}
+          required
+          disabled={isPending}
+        />
+      </FormRow>
+      <FormSummary>
+        <FormSummaryRow label="Total" value={money.format(total)} strong />
+      </FormSummary>
+      <Input label="Customer" optional placeholder="e.g. Kofi Mensah" value={customer} onChange={(e) => setCustomer(e.target.value)} disabled={isPending} />
+      <Input label="Date and time of sale" type="datetime-local" value={orderDate} onChange={(e) => setOrderDate(e.target.value)} required disabled={isPending} />
+      <QuickLogActions onCancel={onDone} isPending={isPending} label="Record sale" loadingText="Saving sale" />
+    </Form>
   )
 }
 
@@ -419,7 +480,7 @@ function ExpenseForm({
   }
 
   return (
-    <form
+    <Form
       onSubmit={(e) => {
         e.preventDefault()
         if (!amount) return
@@ -434,50 +495,52 @@ function ExpenseForm({
           })
         )
       }}
-      className="space-y-4"
     >
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Input label={`Amount (${money.currency})`} type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} required disabled={isPending} />
-        <Select label="Category" value={category} onChange={(e) => setCategory(e.target.value)} options={EXPENSE_CATEGORIES} />
-      </div>
-      <Input label="Description (optional)" value={description} onChange={(e) => setDescription(e.target.value)} disabled={isPending} />
-      <Input label="Expense date" type="datetime-local" value={expenseDate} onChange={(e) => setExpenseDate(e.target.value)} required disabled={isPending} />
+      <FormError>{error}</FormError>
+      <FormRow>
+        <Select label="What was it for" value={category} onChange={(e) => setCategory(e.target.value)} options={EXPENSE_CATEGORIES} />
+        <Input
+          label="Amount"
+          type="number"
+          step="0.01"
+          unit={money.currency}
+          placeholder="e.g. 250"
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          required
+          disabled={isPending}
+        />
+      </FormRow>
+      <Input label="Date and time" type="datetime-local" value={expenseDate} onChange={(e) => setExpenseDate(e.target.value)} required disabled={isPending} />
 
-      <div>
-        <p className="mb-2 text-[13px] text-fg-2">Allocation</p>
-        <div className={cn(tone.panel, 'flex gap-1 p-1')}>
-          <button
-            type="button"
-            aria-pressed={mode === 'direct'}
-            onClick={() => setMode('direct')}
-            className={cn(segmentClass(mode === 'direct'), 'flex-1 justify-center')}
-          >
-            Direct to this batch
-          </button>
-          <button
-            type="button"
-            aria-pressed={mode === 'general'}
-            onClick={() => setMode('general')}
-            className={cn(segmentClass(mode === 'general'), 'flex-1 justify-center')}
-          >
-            General (by headcount)
-          </button>
-        </div>
-        {mode === 'general' ? (
-          <p className="mt-2 text-xs text-fg-2">
-            Split across {allocationBatches.length} active {allocationBatches.length === 1 ? 'batch' : 'batches'} by livestock count. This batch carries{' '}
-            <span className="font-mono tabular-nums text-fg">{thisShare.toFixed(1)}%</span>
-            {amount ? <> {'\u2248'} <span className="tabular-nums text-fg">{money.format((Number(amount) * thisShare) / 100)}</span></> : null}
-          </p>
-        ) : (
-          <p className="mt-2 text-xs text-fg-2">The full amount is charged to this batch only</p>
-        )}
-      </div>
+      <Segmented
+        label="Who pays for it"
+        value={mode}
+        onChange={setMode}
+        options={[
+          { value: 'direct', label: 'This flock only' },
+          { value: 'general', label: 'All flocks' },
+        ]}
+        hint={
+          mode === 'general' ? (
+            <>
+              Shared across {allocationBatches.length} active {allocationBatches.length === 1 ? 'flock' : 'flocks'} by number of birds.
+              This flock carries <span className="font-medium tabular-nums text-fg">{thisShare.toFixed(1)}%</span>
+              {amount ? (
+                <>
+                  , about <span className="font-medium tabular-nums text-fg">{money.format((Number(amount) * thisShare) / 100)}</span>
+                </>
+              ) : null}
+              .
+            </>
+          ) : (
+            'The full amount is charged to this flock.'
+          )
+        }
+      />
 
-      <FormError error={error} />
-      <ActionButton type="submit" variant="primary" className="w-full" isLoading={isPending} loadingText="Saving expense…">
-        Save expense
-      </ActionButton>
-    </form>
+      <Input label="Notes" optional placeholder="e.g. Vet visit" value={description} onChange={(e) => setDescription(e.target.value)} disabled={isPending} />
+      <QuickLogActions onCancel={onDone} isPending={isPending} label="Save expense" loadingText="Saving" />
+    </Form>
   )
 }

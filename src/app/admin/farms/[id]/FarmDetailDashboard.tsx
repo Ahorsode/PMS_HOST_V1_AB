@@ -27,6 +27,7 @@ import { MobileCardList } from '@/components/ui/MobileCardList'
 import FarmCustomDeal from './FarmCustomDeal'
 import FarmNotes from './FarmNotes'
 import type { FarmNoteRow } from '@/lib/actions/admin-farmer-actions'
+import { controlClass } from '@/components/ui/form'
 
 type DialogMode =
   | { type: 'upgrade'; tier: 'STANDARD' | 'PREMIUM' }
@@ -518,7 +519,7 @@ export default function FarmDetailDashboard({
                 max={365}
                 value={extraDays}
                 onChange={(event) => setExtraDays(Number(event.target.value))}
-                className="h-11 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 text-sm text-white outline-none transition-colors focus:border-emerald-500"
+                className={controlClass(false, 'w-full')}
               />
             </label>
           ) : null}
@@ -534,7 +535,7 @@ export default function FarmDetailDashboard({
                   type="text"
                   value={confirmName}
                   onChange={(event) => setConfirmName(event.target.value)}
-                  className="h-11 w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 text-sm text-white outline-none transition-colors focus:border-red-500"
+                  className={controlClass(false, 'w-full')}
                 />
               </label>
             </div>
@@ -545,7 +546,7 @@ export default function FarmDetailDashboard({
               type="button"
               onClick={closeDialog}
               disabled={isPending}
-              className="h-10 rounded-md border border-zinc-700 px-4 text-sm font-semibold text-zinc-300 transition-colors hover:border-zinc-500 disabled:opacity-50"
+              className="h-11 md:h-10 rounded-md border border-zinc-700 px-4 text-sm font-semibold text-zinc-300 transition-colors hover:border-zinc-500 disabled:opacity-50"
             >
               Cancel
             </button>

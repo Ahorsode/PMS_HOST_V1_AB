@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Shield, ShieldCheck, Database, LayoutDashboard, Settings, Egg, Wheat, ThermometerSun, XCircle, Users, Banknote, RotateCcw, HeartPulse } from 'lucide-react';
+import { Shield, Database, LayoutDashboard, Settings, Egg, Wheat, ThermometerSun, XCircle, Users, Banknote, RotateCcw, HeartPulse } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { Dialog } from '@/components/ui/Dialog';
+import { FormActions, FormNote, FormSection } from '@/components/ui/form/layout';
 import type { StaffPermissions } from '@/lib/staff-permission-defaults';
 
 type PermissionState = Required<StaffPermissions>;
@@ -89,185 +90,100 @@ export function PermissionsModal({
   };
 
   const PermissionRow = ({ title, viewKey, editKey, icon: Icon, description }: { title: string, viewKey: keyof typeof permissions, editKey: keyof typeof permissions, icon: any, description?: string }) => (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 bg-fg/10 border border-fg/10 rounded-md mb-2 gap-3 sm:gap-0">
-      <div className="flex items-center gap-2">
-        <div className="p-2 bg-fg/10 rounded-md">
-          <Icon className="w-5 h-5 text-fg-3" />
-        </div>
-        <div>
-          <h4 className="text-fg font-medium">{title}</h4>
-          <p className="text-fg/70 text-xs font-medium">{description ?? 'Module Access'}</p>
+    <li className="flex items-center justify-between gap-3 py-2.5">
+      <div className="flex min-w-0 items-center gap-3">
+        <Icon className="h-5 w-5 shrink-0 text-fg-3" strokeWidth={1.75} />
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium text-fg">{title}</p>
+          {description ? <p className="text-[13px] leading-5 text-fg-3">{description}</p> : null}
         </div>
       </div>
-      <div className="flex items-center gap-5 sm:gap-4 w-full sm:w-auto justify-around sm:justify-end border-t border-fg/5 pt-2 sm:pt-0 sm:border-0 mt-1 sm:mt-0">
-        <div className="flex flex-col items-center">
-          <span className="text-xs text-fg/70 mb-1 font-medium">View</span>
-          <ToggleSwitch checked={permissions[viewKey]} onChange={() => handleToggle(viewKey)} disabled={isLoading} />
-        </div>
-        <div className="flex flex-col items-center">
-          <span className="text-xs text-fg/70 mb-1 font-medium">Edit</span>
-          <ToggleSwitch checked={permissions[editKey]} onChange={() => handleToggle(editKey)} disabled={isLoading} />
-        </div>
+      <div className="flex shrink-0 items-center gap-4">
+        <ToggleSwitch label={`See ${title}`} short="See" checked={permissions[viewKey]} onChange={() => handleToggle(viewKey)} disabled={isLoading} />
+        <ToggleSwitch label={`Change ${title}`} short="Change" checked={permissions[editKey]} onChange={() => handleToggle(editKey)} disabled={isLoading} />
       </div>
-    </div>
+    </li>
   );
 
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 z-[100]"
-            onClick={isLoading ? undefined : onClose}
-          />
-          <div className="fixed inset-0 z-[101] flex items-center justify-center p-3">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="w-full max-w-lg overflow-hidden flex flex-col"
-            >
-              <div className="bg-page border border-fg/10 rounded-lg flex flex-col max-h-[90vh] glass-morphism">
-                {/* Header - Sticky */}
-                <div className="p-4 sm:p-8 border-b border-fg/10 flex items-center justify-between bg-fg/10 flex-shrink-0">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 sm:p-2.5 bg-fg/[0.06] rounded-md border border-fg/[0.08]">
-                      <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-fg-2" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg sm:text-xl font-medium text-fg tracking-normal">Access control</h3>
-                      <p className="text-fg-2 text-xs sm:text-xs font-medium">{staffName}</p>
-                    </div>
-                  </div>
-                  <button aria-label="Close" 
-                    onClick={onClose}
-                    disabled={isLoading}
-                    className="p-2 text-fg/70 hover:text-fg hover:bg-fg/10 rounded-full transition-colors"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-                
-                {/* Scrollable Content */}
-                <div className="p-4 sm:p-8 overflow-y-auto scrollbar-hide flex-grow custom-scrollbar">
-                  <div className="space-y-1 mb-5">
-                    <p className="text-fg/70 text-[11px] sm:text-xs font-medium leading-relaxed">
-                      Configure individual access rights for this staff member. 
-                      Changes are logged for security auditing.
-                    </p>
-                    <p className="text-fg/50 text-[11px] font-medium">
-                      Role: {role}
-                    </p>
-                  </div>
-                  
-                  <div className="space-y-5">
-                    <div>
-                      <p className="px-1 text-xs font-medium text-fg/70 mb-2 ml-2">Commercial hub</p>
-                      <div className="space-y-2 sm:space-y-4">
-                        <PermissionRow title="Finance" viewKey="canViewFinance" editKey="canEditFinance" icon={Database} />
-                        <PermissionRow title="Sales" viewKey="canViewSales" editKey="canEditSales" icon={Banknote} />
-                        <PermissionRow title="Customers" viewKey="canViewCustomers" editKey="canEditCustomers" icon={Users} />
-                        <PermissionRow title="Inventory" viewKey="canViewInventory" editKey="canEditInventory" icon={LayoutDashboard} />
-                      </div>
-                    </div>
+    <Dialog
+      isOpen={isOpen}
+      onOpenChange={(open) => !open && !isLoading && onClose()}
+      title="What they can see and change"
+      description={`${staffName} · ${role.toLowerCase().replace('_', ' ')}`}
+      className="max-w-lg"
+    >
+      <div className="space-y-6">
+        <FormSection title="Money and customers">
+          <ul className="divide-y divide-fg/[0.06]">
+            <PermissionRow title="Finance" viewKey="canViewFinance" editKey="canEditFinance" icon={Database} />
+            <PermissionRow title="Sales" viewKey="canViewSales" editKey="canEditSales" icon={Banknote} />
+            <PermissionRow title="Customers" viewKey="canViewCustomers" editKey="canEditCustomers" icon={Users} />
+            <PermissionRow title="Inventory" viewKey="canViewInventory" editKey="canEditInventory" icon={LayoutDashboard} />
+          </ul>
+        </FormSection>
 
-                    <div>
-                      <p className="px-1 text-xs font-medium text-fg/70 mb-2 ml-2 mt-3">Operations</p>
-                      <div className="space-y-2 sm:space-y-4">
-                        <PermissionRow title="Livestock units" viewKey="canViewBatches" editKey="canEditBatches" icon={Settings} />
-                        <PermissionRow title="Houses" viewKey="canViewHouses" editKey="canEditHouses" icon={ThermometerSun} />
-                        <PermissionRow title="Eggs" viewKey="canViewEggs" editKey="canEditEggs" icon={Egg} />
-                        <PermissionRow title="Feeding" viewKey="canViewFeeding" editKey="canEditFeeding" icon={Wheat} />
-                        <PermissionRow title="Mortality" viewKey="canViewMortality" editKey="canEditMortality" icon={XCircle} description="Logging, quarantine recovery & transfer" />
-                        <PermissionRow title="Health (vaccines & meds)" viewKey="canViewHealth" editKey="canEditHealth" icon={HeartPulse} />
-                      </div>
-                    </div>
+        <FormSection title="Farm work">
+          <ul className="divide-y divide-fg/[0.06]">
+            <PermissionRow title="Flocks" viewKey="canViewBatches" editKey="canEditBatches" icon={Settings} />
+            <PermissionRow title="Houses" viewKey="canViewHouses" editKey="canEditHouses" icon={ThermometerSun} />
+            <PermissionRow title="Eggs" viewKey="canViewEggs" editKey="canEditEggs" icon={Egg} />
+            <PermissionRow title="Feeding" viewKey="canViewFeeding" editKey="canEditFeeding" icon={Wheat} />
+            <PermissionRow title="Deaths and sick birds" viewKey="canViewMortality" editKey="canEditMortality" icon={XCircle} description="Recording, isolation and recovery" />
+            <PermissionRow title="Vaccines and medicine" viewKey="canViewHealth" editKey="canEditHealth" icon={HeartPulse} />
+          </ul>
+        </FormSection>
 
-                    <div>
-                      <p className="px-1 text-xs font-medium text-fg/70 mb-2 ml-2 mt-3">Governance</p>
-                      <div className="space-y-2 sm:space-y-4">
-                        <PermissionRow title="Team management" viewKey="canViewTeam" editKey="canEditTeam" icon={Shield} />
-                      </div>
-                    </div>
-                  </div>
+        <FormSection title="Team">
+          <ul className="divide-y divide-fg/[0.06]">
+            <PermissionRow title="Team" viewKey="canViewTeam" editKey="canEditTeam" icon={Shield} />
+          </ul>
+        </FormSection>
 
-                  {/* Warning Note for small screens */}
-                  <div className="mt-5 p-3 bg-fg/[0.04] border border-fg/[0.08] rounded-md">
-                     <p className="text-xs text-fg font-medium mb-1"> Security policy </p>
-                     <p className="text-fg/80 text-[11px] leading-relaxed font-medium">
-                        Owners bypass all checks. Managers are unrestricted by default unless limited here.
-                     </p>
-                  </div>
-                </div>
+        <FormNote>Owners can always see and change everything. Managers can too, unless you limit them here.</FormNote>
 
-                {/* Footer - Sticky */}
-                <div className="p-4 sm:p-8 border-t border-fg/10 flex flex-col gap-2 bg-fg/10 flex-shrink-0">
-                  {onResetToDefaults ? (
-                    <Button
-                      variant="outline"
-                      onClick={() => onResetToDefaults()}
-                      disabled={isLoading}
-                      className="w-full rounded-md border-fg/[0.08] text-fg hover:bg-fg/[0.04] text-[11px] font-medium"
-                    >
-                      <RotateCcw className="w-4 h-4 mr-2 inline" />
-                      Reset to {role} Defaults
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      onClick={() => setPermissions(defaultPermissions)}
-                      disabled={isLoading}
-                      className="w-full rounded-md border-fg/[0.08] text-fg hover:bg-fg/[0.04] text-[11px] font-medium"
-                    >
-                      <RotateCcw className="w-4 h-4 mr-2 inline" />
-                      Reset to {role} Defaults
-                    </Button>
-                  )}
-                  <div className="flex flex-col sm:flex-row justify-end gap-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={onClose} 
-                    disabled={isLoading}
-                    className="w-full sm:w-auto rounded-md border-fg/10 hover:bg-fg/5 text-[11px] font-medium"
-                  >
-                    Discard
-                  </Button>
-                  <Button 
-                    onClick={() => onSave(permissions)} 
-                    isLoading={isLoading}
-                    className="w-full sm:w-auto rounded-md bg-raised hover:bg-raised text-fg"
-                  >
-                    Save & apply
-                  </Button>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </>
-      )}
-    </AnimatePresence>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => (onResetToDefaults ? onResetToDefaults() : setPermissions(defaultPermissions))}
+          disabled={isLoading}
+          className="w-full"
+        >
+          <RotateCcw className="h-4 w-4" strokeWidth={1.75} />
+          Back to the {role.toLowerCase().replace('_', ' ')} defaults
+        </Button>
+
+        <FormActions>
+          <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
+            Cancel
+          </Button>
+          <Button type="button" variant="accent" onClick={() => onSave(permissions)} isLoading={isLoading} loadingText="Saving">
+            Save access
+          </Button>
+        </FormActions>
+      </div>
+    </Dialog>
   );
 }
 
-function ToggleSwitch({ checked, onChange, disabled }: { checked: boolean, onChange: () => void, disabled?: boolean }) {
+function ToggleSwitch({ checked, onChange, disabled, label, short }: { checked: boolean, onChange: () => void, disabled?: boolean, label: string, short: string }) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={checked}
+      aria-label={label}
       disabled={disabled}
       onClick={onChange}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none disabled:opacity-50 ring-offset-black focus:ring-2 focus:ring-emerald-500 ring-offset-2 ${checked ? 'bg-emerald-500' : 'bg-fg/10'}`}
+      className="flex min-h-11 flex-col items-center justify-center gap-1 rounded-lg px-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:opacity-50"
     >
-      <motion.span
-        layout
-        transition={{ type: "spring", stiffness: 500, damping: 30 }}
-        className={`inline-block h-4 w-4 transform rounded-full bg-fg ${checked ? 'translate-x-6' : 'translate-x-1'}`}
-      />
+      <span className="text-xs font-medium text-fg-2">{short}</span>
+      <span
+        aria-hidden="true"
+        className={`relative inline-flex h-6 w-11 items-center rounded-full border transition-colors duration-150 ${checked ? 'border-accent bg-accent' : 'border-fg/20 bg-fg/10'}`}
+      >
+        <span className={`inline-block h-4 w-4 rounded-full transition-transform duration-150 ${checked ? 'translate-x-6 bg-accent-fg' : 'translate-x-1 bg-fg-2'}`} />
+      </span>
     </button>
   );
 }

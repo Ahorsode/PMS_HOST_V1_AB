@@ -1,7 +1,16 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Truck, Users } from 'lucide-react';
+import {
+  Button,
+  Form,
+  FormActions,
+  FormRow,
+  FormSection,
+  Input,
+  MoreDetails,
+  Textarea,
+} from '@/components/ui/form';
 import { createCustomer } from '@/lib/actions/customer-actions';
 import { createSupplier } from '@/lib/actions/supplier-actions';
 import { toast } from 'sonner';
@@ -42,97 +51,72 @@ export function PartnerForm({ setIsOpen, defaultType = 'supplier', onSuccess }: 
 
     if (res.success) {
       const partner = res.supplier || res.customer;
-      toast.success(`${partnerType === 'supplier' ? 'Supplier' : 'Customer'} profile created`);
+      toast.success(`${partnerType === 'supplier' ? 'Supplier' : 'Customer'} added`);
       if (onSuccess && partner) {
         onSuccess(partner);
       }
       setIsOpen(false);
     } else {
-      toast.error(res.error || 'Failed to create profile');
+      toast.error(res.error || 'That could not be saved. Try again.');
     }
   };
 
+  const isSupplier = partnerType === 'supplier';
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-5 pt-2">
-       <div className="space-y-4">
-          <input type="hidden" name="partnerType" value={partnerType} />
-          <div className="space-y-1">
-             <label className="text-sm font-medium text-fg px-1">Partner type</label>
-             <div className="bg-fg/5 border border-fg/10 rounded-md p-3 text-fg font-medium flex items-center gap-2">
-               {partnerType === 'supplier' ? <Truck className="w-4 h-4" /> : <Users className="w-4 h-4" />}
-               {partnerType === 'supplier' ? 'Supplier (Vendor)' : 'Buyer (Customer)'}
-             </div>
-          </div>
+    <Form onSubmit={handleSubmit}>
+      <input type="hidden" name="partnerType" value={partnerType} />
 
-          <div className="space-y-1">
-             <label className="text-sm font-medium text-fg/80 px-1">
-               {partnerType === 'supplier' ? 'Supplier Name / Company *' : 'Full Name / Company *'}
-             </label>
-             <input 
-               name="name"
-               required
-               autoFocus
-               className="w-full bg-fg/10 border border-fg/10 rounded-md p-3 text-fg font-medium outline-none focus:border-fg/[0.08] transition-colors"
-               placeholder={partnerType === 'supplier' ? "e.g. Acme Feeds Ltd." : "e.g. John Doe / Kumasi Allied Feed"}
-             />
-          </div>
+      <FormSection title={isSupplier ? 'Supplier' : 'Customer'}>
+        <Input
+          label={isSupplier ? 'Supplier or company name' : 'Name or company'}
+          name="name"
+          required
+          autoFocus
+          placeholder={isSupplier ? 'e.g. Agro Feeds Ltd' : 'e.g. Ama Owusu or Kumasi Cold Store'}
+        />
+        <FormRow>
+          <Input label="Phone" optional name="phone" type="tel" inputMode="tel" placeholder="e.g. 0241234567" />
+          <Input label="Email" optional name="email" type="email" placeholder="e.g. orders@agrofeeds.com" />
+        </FormRow>
+      </FormSection>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-             <div className="space-y-1">
-                <label className="text-sm font-medium text-fg/80 px-1">Phone number</label>
-                <input 
-                  name="phone"
-                  className="w-full bg-fg/10 border border-fg/10 rounded-md p-3 text-fg font-medium outline-none focus:border-fg/[0.08] transition-colors"
-                  placeholder="+233..."
-                />
-             </div>
-             <div className="space-y-1">
-                <label className="text-sm font-medium text-fg/80 px-1">Email address</label>
-                <input 
-                  name="email"
-                  type="email"
-                  className="w-full bg-fg/10 border border-fg/10 rounded-md p-3 text-fg font-medium outline-none focus:border-fg/[0.08] transition-colors"
-                  placeholder={partnerType === 'supplier' ? "vendor@supply.com" : "client@growth.com"}
-                />
-             </div>
-          </div>
+      <MoreDetails label="Address and money already owed">
+        <Textarea
+          label="Address"
+          optional
+          name="address"
+          rows={2}
+          placeholder={isSupplier ? 'e.g. Warehouse, Kejetia, Kumasi' : 'e.g. Shop 12, Adum, Kumasi'}
+        />
+        <Input
+          label={isSupplier ? 'You already owe them' : 'They already owe you'}
+          optional
+          name="balanceOwed"
+          type="number"
+          step="0.01"
+          min="0"
+          unit={money.currency}
+          hint="Any old balance from before you started using Poultry Ledger."
+          value={balanceOwed}
+          onChange={(e) => {
+            const val = e.target.value;
+            if (val === '' || Number(val) >= 0) {
+              setBalanceOwed(val);
+            }
+          }}
+          placeholder="0.00"
+        />
+      </MoreDetails>
 
-          <div className="space-y-1">
-             <label className="text-sm font-medium text-fg/80 px-1">Location / address</label>
-             <textarea 
-               name="address"
-               className="w-full bg-fg/10 border border-fg/10 rounded-md p-3 text-fg font-medium outline-none focus:border-fg/[0.08] transition-colors h-24"
-               placeholder={partnerType === 'supplier' ? "Warehouse or business location" : "Global shipping or warehouse location"}
-             />
-          </div>
-
-          <div className="space-y-1">
-             <label className="text-sm font-medium text-fg px-1">Old debt / amount owing ({money.currency})</label>
-             <input 
-               name="balanceOwed"
-               type="number"
-               step="0.01"
-               min="0"
-               value={balanceOwed}
-               onChange={(e) => {
-                 const val = e.target.value;
-                 if (val === '' || Number(val) >= 0) {
-                   setBalanceOwed(val);
-                 }
-               }}
-               className="w-full bg-fg/10 border border-fg/10 rounded-md p-3 text-fg font-medium outline-none focus:border-fg/[0.08] transition-colors"
-               placeholder="0.00"
-             />
-          </div>
-       </div>
-
-       <button 
-         type="submit"
-         disabled={isSubmitting}
-         className="w-full bg-emerald-500 text-accent-fg py-4 rounded-md font-medium text-xs transition-colors active:scale-[0.99]"
-       >
-         {isSubmitting ? 'Expanding Network...' : `Create ${partnerType === 'supplier' ? 'Supplier' : 'Partner'} Profile`}
-       </button>
-    </form>
+      <FormActions>
+        <Button type="button" variant="outline" onClick={() => setIsOpen(false)} disabled={isSubmitting}>
+          Cancel
+        </Button>
+        <Button type="submit" variant="accent" isLoading={isSubmitting} loadingText="Saving">
+          {isSupplier ? 'Add supplier' : 'Add customer'}
+        </Button>
+      </FormActions>
+    </Form>
   );
 }
