@@ -6,9 +6,10 @@ import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { createEggProduction, updateEggProduction, deleteEggProduction } from '@/lib/actions/egg-actions';
 import { useRouter } from 'next/navigation';
+import { formatLivestockType } from '@/lib/utils/growth-utils';
 
 interface EggFormProps {
-  batches: { id: string; batchName: string; livestockType: string }[];
+  batches: { id: string; batchName: string; type: string }[];
   log?: any;
   mode: 'create' | 'edit' | 'delete';
   onClose: () => void;
@@ -116,7 +117,7 @@ export const EggForm = ({
       {mode === 'create' && (
         <Select
           label="Livestock"
-          options={batches.map(b => ({ label: `${b.batchName} (${b.livestockType})`, value: b.id }))}
+          options={batches.map(b => ({ label: `${b.batchName} (${formatLivestockType(b.type)})`, value: b.id }))}
           value={formData.batchId}
           onChange={(e) => setFormData({ ...formData, batchId: e.target.value })}
           required
