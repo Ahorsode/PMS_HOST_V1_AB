@@ -13,13 +13,28 @@ export const farmCacheTags = {
   feedDynamic: (farmId: string) => `farm:${farmId}:feed:dynamic`,
 };
 
+/**
+ * Expires a cache tag now, so the next read after a save gets fresh data.
+ * The "max" profile used before only marked the tag stale: the next read
+ * still got the old copy once while it refreshed in the background, so a
+ * page opened right after saving could miss the change.
+ */
+export function expireTag(tag: string) {
+  revalidateTag(tag, { expire: 0 });
+}
+
+/** Clears every cached view of one farm's data; called after any write to it. */
 export function revalidateFarmPerformanceCaches(farmId: string) {
-  revalidateTag(farmCacheTags.dashboard(farmId), "max");
-  revalidateTag(farmCacheTags.analytics(farmId), "max");
-  revalidateTag(farmCacheTags.reports(farmId), "max");
-  revalidateTag(farmCacheTags.inventory(farmId), "max");
-  revalidateTag(farmCacheTags.sales(farmId), "max");
-  revalidateTag(farmCacheTags.customers(farmId), "max");
-  revalidateTag(farmCacheTags.suppliers(farmId), "max");
+  expireTag(farmCacheTags.dashboard(farmId));
+  expireTag(farmCacheTags.analytics(farmId));
+  expireTag(farmCacheTags.reports(farmId));
+  expireTag(farmCacheTags.inventory(farmId));
+  expireTag(farmCacheTags.sales(farmId));
+  expireTag(farmCacheTags.customers(farmId));
+  expireTag(farmCacheTags.suppliers(farmId));
+  // The feed page caches batches, formulations, feed stock and logs.
+  expireTag(farmCacheTags.feed(farmId));
+  expireTag(farmCacheTags.feedStatic(farmId));
+  expireTag(farmCacheTags.feedDynamic(farmId));
 }
 

@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useTransition } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { m, AnimatePresence } from 'framer-motion'
 import { 
   Trash2, RotateCcw, PawPrint, Egg, Wheat, XCircle, 
   Wallet, ShoppingBag, ClipboardList, Package, Search,
@@ -83,7 +83,7 @@ function RestoreButton({ id, onRestore, color }: { id: string; onRestore: Restor
   )
 
   return (
-    <motion.button
+    <m.button
       
       whileTap={{ scale: 0.96 }}
       onClick={handle}
@@ -92,7 +92,7 @@ function RestoreButton({ id, onRestore, color }: { id: string; onRestore: Restor
     >
       {isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCcw className="w-3.5 h-3.5" />}
       {isPending ? 'Restoring...' : 'Restore'}
-    </motion.button>
+    </m.button>
   )
 }
 
@@ -111,14 +111,15 @@ function EmptyState({ label }: { label: string }) {
 function Row({ children, isMutating = false }: { children: React.ReactNode; isMutating?: boolean }) {
   return (
     <MutationBoundary active={isMutating} label="Restoring record..." className="rounded-lg">
-    <motion.div
-      initial={{ opacity: 0, y: 6 }}
+    <m.div
+      initial={false}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: -20 }}
-      className="flex items-center justify-between gap-4 px-4 py-3 rounded-lg bg-fg/5 border border-fg/10 hover:border-fg/20 hover:bg-fg/8 transition-colors"
+      style={{ '--rise-from': '6px' } as React.CSSProperties}
+      className="animate-rise-in flex items-center justify-between gap-4 px-4 py-3 rounded-lg bg-fg/5 border border-fg/10 hover:border-fg/20 hover:bg-fg/8 transition-colors"
     >
       {children}
-    </motion.div>
+    </m.div>
     </MutationBoundary>
   )
 }

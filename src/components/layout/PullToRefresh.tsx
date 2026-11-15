@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { motion, useAnimation } from 'framer-motion';
+import { m, useAnimation } from 'framer-motion';
 import { RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -86,12 +86,12 @@ export const PullToRefresh = ({ children }: { children: React.ReactNode }) => {
           />
         </div>
       </div>
-      <motion.div 
+      <m.div 
         animate={controls}
         className="relative z-10 h-full w-full bg-page"
       >
         {children}
-      </motion.div>
+      </m.div>
     </div>
   );
 };

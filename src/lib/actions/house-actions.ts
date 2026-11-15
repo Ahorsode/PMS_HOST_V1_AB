@@ -1,6 +1,7 @@
 'use server'
 
 import prisma from '@/lib/db'
+import { revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 import { revalidatePath } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
@@ -29,6 +30,7 @@ export async function updateHouse(id: string, data: {
     })
     revalidatePath('/dashboard/settings')
     revalidatePath('/dashboard/houses')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { 
       success: true, 
       house: { 
@@ -63,6 +65,7 @@ export async function deleteHouse(id: string) {
     })
     revalidatePath('/dashboard/settings')
     revalidatePath('/dashboard/houses')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true }
   }).catch((error: any) => {
     console.error('Error deleting house:', error)

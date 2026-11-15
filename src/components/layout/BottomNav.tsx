@@ -3,7 +3,7 @@
 import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, m } from 'framer-motion';
 import { LogOut, X } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { cn } from '@/lib/utils';
@@ -37,7 +37,7 @@ export const BottomNav = ({ role, permissions }: { role?: string; permissions?: 
     <div ref={containerRef} className="md:hidden">
       <AnimatePresence>
         {openCategory && (
-          <motion.div
+          <m.div
             key="backdrop"
             className="fixed inset-0 z-40"
             initial={{ opacity: 0 }}
@@ -52,10 +52,10 @@ export const BottomNav = ({ role, permissions }: { role?: string; permissions?: 
               className="absolute inset-0 bg-black/60"
               onClick={close}
             />
-          </motion.div>
+          </m.div>
         )}
         {openCategory && (
-          <motion.div
+          <m.div
             key={openCategory.id}
             id={`mobile-nav-sheet-${openCategory.id}`}
             role="group"
@@ -125,7 +125,7 @@ export const BottomNav = ({ role, permissions }: { role?: string; permissions?: 
                 </div>
               )}
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
 

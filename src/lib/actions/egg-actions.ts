@@ -253,6 +253,7 @@ export async function restoreEggProduction(id: string) {
     })
     revalidatePath('/dashboard/eggs')
     revalidatePath('/dashboard/settings/trash')
+    revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true }
   }).catch((error: any) => {
     console.error('Error restoring egg production log:', error)

@@ -1,10 +1,10 @@
 'use server'
 
 import prisma from '@/lib/db'
-import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
+import { revalidatePath, unstable_cache } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
-import { farmCacheTags } from '@/lib/performance/cache-tags'
+import { expireTag, farmCacheTags, revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 
 export async function getSuppliers() {
   const { userId, activeFarmId } = await getAuthContext()
@@ -110,7 +110,8 @@ export async function createSupplier(data: {
       }
     })
     revalidatePath('/dashboard/commercial')
-    revalidateTag(farmCacheTags.suppliers(activeFarmId), "max")
+    revalidateFarmPerformanceCaches(activeFarmId)
+    expireTag(farmCacheTags.suppliers(activeFarmId))
     return { success: true, supplier }
   }).catch((error: any) => {
     console.error('Error creating supplier:', error)
@@ -132,7 +133,8 @@ export async function updateSupplierBalance(id: string, amount: number) {
       }
     })
     revalidatePath('/dashboard/commercial')
-    revalidateTag(farmCacheTags.suppliers(activeFarmId), "max")
+    revalidateFarmPerformanceCaches(activeFarmId)
+    expireTag(farmCacheTags.suppliers(activeFarmId))
     return { success: true }
   })
 }

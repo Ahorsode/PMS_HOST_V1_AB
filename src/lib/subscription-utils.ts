@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import prisma from './db';
 import { SubscriptionTier } from '@prisma/client';
 import {
@@ -12,6 +13,7 @@ import {
 import { getAppSettings } from './settings/app-settings';
 import { getBillingConfig } from './billing/billing-config';
 import { isPlanFeature } from './billing/pricing';
+import { getFarmRecord } from './farm-record';
 
 export type Feature =
   | 'PDF_INVOICES'
@@ -64,27 +66,21 @@ function tierHasFeature(tier: SubscriptionTier, feature: Feature) {
   return TIER_MAPPING[tier].includes(feature);
 }
 
-const FARM_ACCESS_SELECT = {
-  userId: true,
-  subscriptionTier: true,
-  planType: true,
-  masterLicenseStatus: true,
-  trialExpiresAt: true,
-  createdAt: true,
-} as const;
+// The lookups below are wrapped in cache() so that each runs once per request,
+// however many checks (layout, page, feature gates) ask about the same farm.
 
 /** Admin-set exceptions for a farm; null when none (or the table is not migrated yet). */
-async function getFarmOverride(farmId: string): Promise<FarmOverrideInput | null> {
+const getFarmOverride = cache(async (farmId: string): Promise<FarmOverrideInput | null> => {
   return prisma.farmOverride
     .findUnique({ where: { farmId }, select: { extraFeatures: true, overrideStaffLimit: true, staffLimit: true } })
     .catch(() => null);
-}
+});
 
-export async function getFarmAccess(farmId: string): Promise<FarmAccess> {
+export const getFarmAccess = cache(async (farmId: string): Promise<FarmAccess> => {
   // Old-style subscription rows were converted onto the farm by migration
   // 20261103090000 and are no longer read.
   const [farm, config, override] = await Promise.all([
-    prisma.farm.findUnique({ where: { id: farmId }, select: FARM_ACCESS_SELECT }),
+    getFarmRecord(farmId),
     getBillingConfig(),
     getFarmOverride(farmId),
   ]);
@@ -94,7 +90,7 @@ export async function getFarmAccess(farmId: string): Promise<FarmAccess> {
   }
 
   return applyStaffLimitOverride(resolveFarmAccess(farm, new Date(), config), override);
-}
+});
 
 export async function getFarmTier(farmId: string): Promise<SubscriptionTier> {
   return (await getFarmAccess(farmId)).tier;
@@ -118,10 +114,10 @@ export async function checkFeature(farmId: string, feature: Feature): Promise<bo
 }
 
 /** Staff access for a farm: who is locked out (paused by the owner or over the plan's limit). */
-export async function getFarmStaffAccess(farmId: string) {
+export const getFarmStaffAccess = cache(async (farmId: string) => {
   const [access, farm, members] = await Promise.all([
     getFarmAccess(farmId),
-    prisma.farm.findUnique({ where: { id: farmId }, select: { userId: true } }),
+    getFarmRecord(farmId),
     prisma.farmMember.findMany({
       where: { farmId },
       select: { userId: true, createdAt: true, accessPausedAt: true },
@@ -130,7 +126,7 @@ export async function getFarmStaffAccess(farmId: string) {
 
   const staff = resolveStaffAccess(members, farm?.userId ?? '', access.staffLimit);
   return { access, ...staff };
-}
+});
 
 export async function isStaffMemberLocked(farmId: string, userId: string) {
   const { locked } = await getFarmStaffAccess(farmId);

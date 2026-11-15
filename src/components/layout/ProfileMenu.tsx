@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, m } from 'framer-motion';
 import { LogOut, Moon, Sun, User } from 'lucide-react';
 import { useTheme } from './theme';
 import { cn } from '@/lib/utils';
@@ -79,7 +79,7 @@ export const ProfileMenu = ({ role, permissions }: { role?: string; permissions?
 
       <AnimatePresence>
         {open && (
-          <motion.div
+          <m.div
             id="mobile-profile-menu"
             initial={{ opacity: 0, y: -6, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -129,7 +129,7 @@ export const ProfileMenu = ({ role, permissions }: { role?: string; permissions?
                 Sign out
               </button>
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </div>

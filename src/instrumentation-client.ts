@@ -9,21 +9,8 @@ Sentry.init({
     process.env.NEXT_PUBLIC_SENTRY_DSN ||
     "https://4fde711c9f57a992b69b450d185fe992@o4511385037963264.ingest.de.sentry.io/4511385048645712",
 
-  // Add optional integrations for additional features
-  integrations: [
-    // Mask on-screen text and media so replays never capture farm records.
-    Sentry.replayIntegration({ maskAllText: true, blockAllMedia: true }),
-    Sentry.feedbackIntegration({
-      colorScheme: "system",
-      isNameRequired: true,
-      isEmailRequired: true,
-      autoInject: false,
-      showBranding: false,
-      buttonLabel: "Report a Bug",
-      submitButtonLabel: "Send Feedback",
-      formTitle: "What were you doing when this happened?",
-    }),
-  ],
+  // Session Replay and the feedback form are added below, once the page has loaded.
+  integrations: [],
 
   // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
   tracesSampleRate: process.env.NODE_ENV === "development" ? 1.0 : 0.1,
@@ -43,5 +30,33 @@ Sentry.init({
   // Off: farm financial data and user IPs should not leave for Sentry (OPS-04).
   sendDefaultPii: false,
 });
+
+// Replay and feedback are most of the SDK's size and are not needed to show
+// the page, so they are fetched as a separate chunk after it has loaded.
+// Error and performance reporting above start straight away.
+function addDeferredIntegrations() {
+  void import("@sentry/nextjs").then((sentry) => {
+    // Mask on-screen text and media so replays never capture farm records.
+    Sentry.addIntegration(sentry.replayIntegration({ maskAllText: true, blockAllMedia: true }));
+    Sentry.addIntegration(
+      sentry.feedbackIntegration({
+        colorScheme: "system",
+        isNameRequired: true,
+        isEmailRequired: true,
+        autoInject: false,
+        showBranding: false,
+        buttonLabel: "Report a Bug",
+        submitButtonLabel: "Send Feedback",
+        formTitle: "What were you doing when this happened?",
+      }),
+    );
+  });
+}
+
+if (document.readyState === "complete") {
+  addDeferredIntegrations();
+} else {
+  window.addEventListener("load", addDeferredIntegrations, { once: true });
+}
 
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;

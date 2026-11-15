@@ -441,6 +441,7 @@ export async function createHealthSchedulesBulk(entries: HealthScheduleInput[]) 
       revalidatePath("/dashboard/health");
       revalidatePath("/dashboard/inventory");
       revalidatePath("/dashboard/finance");
+      revalidateFarmPerformanceCaches(activeFarmId);
       for (const id of touchedBatchIds) {
         revalidatePath(`/dashboard/flocks/${id}`);
       }
@@ -530,6 +531,7 @@ export async function registerHealthInventoryItem(data: {
     revalidatePath("/dashboard/health");
     revalidatePath("/dashboard/inventory");
     revalidatePath("/dashboard/finance");
+    revalidateFarmPerformanceCaches(activeFarmId);
 
     return {
       success: true,
@@ -595,6 +597,7 @@ export async function updateHealthScheduleStatus(data: {
       revalidatePath("/dashboard/health");
       revalidatePath("/dashboard/inventory");
       revalidatePath("/dashboard/finance");
+      revalidateFarmPerformanceCaches(activeFarmId);
       if (schedule.batchId) {
         revalidatePath(`/dashboard/flocks/${schedule.batchId}`);
       }
@@ -626,6 +629,7 @@ export async function deleteHealthSchedule(data: {
       if (result.count === 0) throw new Error("Schedule not found");
 
       revalidatePath("/dashboard/health");
+      revalidateFarmPerformanceCaches(activeFarmId);
       return { success: true };
     }
   );

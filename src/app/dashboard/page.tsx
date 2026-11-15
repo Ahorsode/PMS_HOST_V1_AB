@@ -2,6 +2,8 @@ import React from 'react';
 import { getDashboardStats } from '@/lib/actions/dashboard-actions';
 import { DashboardContent } from './DashboardContent';
 import prisma from '@/lib/db';
+import { getFarmRecord } from '@/lib/farm-record';
+import { getFarmSettings } from '@/lib/actions/preference-actions';
 import { getAuthContext } from '@/lib/auth-utils';
 import { effectiveFarmTier } from '@/lib/subscription-utils';
 import { getMonthlyProductionSummary } from '@/lib/actions/preference-actions';
@@ -12,9 +14,10 @@ import { getFarmCurrency } from '@/lib/farm-currency';
 export default async function DashboardPage() {
   let userId: string;
   let activeFarmId: string | undefined;
+  let ctx: Awaited<ReturnType<typeof getAuthContext>>;
 
   try {
-    const ctx = await getAuthContext();
+    ctx = await getAuthContext();
     userId = ctx.userId;
     activeFarmId = ctx.activeFarmId;
   } catch (err: any) {
@@ -38,7 +41,9 @@ export default async function DashboardPage() {
   }
 
   try {
-    const [stats, housesRaw, summary, membership, farm, permissions, farmSettings] = await Promise.all([
+    // The farm, its settings, and the user's role and permission row are
+    // already loaded for this request (farm record and auth context).
+    const [stats, housesRaw, summary, farm, farmSettings] = await Promise.all([
       getDashboardStats(),
       (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
         return await tx.house.findMany({
@@ -46,19 +51,12 @@ export default async function DashboardPage() {
         });
       }),
       getMonthlyProductionSummary(),
-      prisma.farmMember.findUnique({
-        where: { farmId_userId: { farmId: activeFarmId, userId } }
-      }),
-      prisma.farm.findUnique({ where: { id: activeFarmId } }),
-      prisma.userPermission.findUnique({
-        where: { userId_farmId: { userId, farmId: activeFarmId } }
-      }),
-      prisma.farmSettings.findUnique({
-        where: { farmId: activeFarmId }
-      })
+      getFarmRecord(activeFarmId),
+      getFarmSettings(),
     ]);
+    const permissions = ctx.permissions;
 
-    const role = userId === farm?.userId ? 'OWNER' : membership?.role || 'WORKER';
+    const role = ctx.isFarmOwner ? 'OWNER' : ctx.membershipRole || 'WORKER';
     const currency = await getFarmCurrency(activeFarmId);
     const eggsPerCrate = farmSettings?.eggsPerCrate ?? 30;
     

@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import {
   Syringe,
   Pill,
@@ -694,7 +694,7 @@ function ScheduleList({
             const usage = usageLabel(rec);
 
             return (
-              <motion.div
+              <m.div
                 key={rec.id}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -793,7 +793,7 @@ function ScheduleList({
                     {rec.status}
                   </span>
                 )}
-              </motion.div>
+              </m.div>
             );
           })}
         </div>

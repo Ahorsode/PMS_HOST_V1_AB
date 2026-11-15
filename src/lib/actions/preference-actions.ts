@@ -1,6 +1,8 @@
 "use server";
 
 import prisma from "@/lib/db";
+import { revalidateFarmPerformanceCaches } from "@/lib/performance/cache-tags";
+import { getFarmRecord } from "@/lib/farm-record";
 import { getAppSettings } from "@/lib/settings/app-settings";
 import { revalidatePath } from "next/cache";
 import { getAuthContext } from "@/lib/auth-utils";
@@ -30,6 +32,7 @@ export async function updateFarmSettings(data: {
   });
 
   revalidatePath("/dashboard/settings");
+  revalidateFarmPerformanceCaches(activeFarmId);
   return settings;
 }
 
@@ -43,6 +46,7 @@ export async function updateReorderLevel(inventoryId: string, reorderLevel: numb
   });
 
   revalidatePath("/dashboard/inventory");
+  revalidateFarmPerformanceCaches(activeFarmId);
   return updated;
 }
 
@@ -68,6 +72,7 @@ export async function createVaccinationSchedule(data: {
   revalidatePath(`/dashboard/livestock/${data.livestockId}`);
   revalidatePath(`/dashboard/flocks/${data.livestockId}`);
   revalidatePath(`/dashboard/health`);
+  revalidateFarmPerformanceCaches(activeFarmId);
   return schedule;
 }
 
@@ -93,6 +98,7 @@ export async function createMedicationSchedule(data: {
   revalidatePath(`/dashboard/livestock/${data.livestockId}`);
   revalidatePath(`/dashboard/flocks/${data.livestockId}`);
   revalidatePath(`/dashboard/health`);
+  revalidateFarmPerformanceCaches(activeFarmId);
   return schedule;
 }
 
@@ -100,14 +106,19 @@ export async function getFarmSettings() {
   const { activeFarmId } = await getAuthContext();
   if (!activeFarmId) return null;
 
-  return prisma.farmSettings.findUnique({
-    where: { farmId: activeFarmId },
-  });
+  // The settings row comes with the farm record, which a page render has
+  // usually loaded already (plan access and currency use it too).
+  return (await getFarmRecord(activeFarmId))?.settings ?? null;
 }
 
 export async function getSalesSettings() {
   const { activeFarmId } = await getAuthContext();
   if (!activeFarmId) return null;
+
+  // Every farm has a row after its first visit, so read it first and only
+  // create one (with the admin defaults) when it is missing.
+  const existing = await prisma.salesSettings.findUnique({ where: { farmId: activeFarmId } });
+  if (existing) return existing;
 
   const { salesSettings } = await getAppSettings('farm-defaults');
   return prisma.salesSettings.upsert({

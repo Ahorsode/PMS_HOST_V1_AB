@@ -97,8 +97,15 @@ export async function completeGoogleSignIn(userId: string) {
   return acceptedFarmId
 }
 
+/**
+ * The signed-in session, resolved once per request. Every auth() call re-runs
+ * the JWT callback (a session-version check), so callers in the same request
+ * share one.
+ */
+export const getSession = cache(() => auth())
+
 export const getAuthContext = cache(async () => {
-  const session = await auth()
+  const session = await getSession()
   if (!session?.user?.id) {
     throw new Error('Unauthorized')
   }
@@ -168,7 +175,9 @@ export const getAuthContext = cache(async () => {
   const isFarmOwner = !!activeFarmId && data.farms.some((farm) => farm.id === activeFarmId)
   const role = membership?.role || (isFarmOwner ? 'OWNER' : (data.role === 'OWNER' ? 'WORKER' : data.role || sessionUser.role || 'WORKER'))
 
-  return { userId, activeFarmId, role, permissions, isFarmOwner }
+  // membershipRole is the user's role on the farm exactly as stored (null when
+  // they have no membership row); role above also covers owners and defaults.
+  return { userId, activeFarmId, role, permissions, isFarmOwner, membershipRole: membership?.role ?? null }
 })
 
 export function hasPermission(role: string, permissions: any, action: string): boolean {

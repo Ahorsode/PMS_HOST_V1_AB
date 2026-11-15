@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { m, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SheetContext } from '@/components/ui/form/layout';
@@ -129,7 +129,7 @@ export const Dialog = ({
           role="presentation"
         >
           {/* Backdrop */}
-          <motion.div
+          <m.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -139,7 +139,7 @@ export const Dialog = ({
           />
 
           {/* Sheet on phones, dialog from sm up */}
-          <motion.div
+          <m.div
             ref={panelRef}
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -205,7 +205,7 @@ export const Dialog = ({
                 {footer}
               </div>
             ) : null}
-          </motion.div>
+          </m.div>
         </div>
       )}
     </AnimatePresence>,

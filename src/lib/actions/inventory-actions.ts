@@ -1,10 +1,10 @@
 'use server'
 
 import prisma from '@/lib/db'
-import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
+import { revalidatePath, unstable_cache } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
-import { farmCacheTags, revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
+import { expireTag, farmCacheTags, revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 import { supplierBelongsToFarm } from '@/lib/suppliers/supplier-ownership'
 import {
@@ -104,7 +104,7 @@ export async function createInventoryItem(data: {
     
     revalidatePath('/dashboard/inventory')
     revalidatePath('/dashboard')
-    revalidateTag(farmCacheTags.inventory(activeFarmId), "max")
+    expireTag(farmCacheTags.inventory(activeFarmId))
     revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, item: { ...item, stockLevel: Number(item.stockLevel) } }
   }).catch((error: any) => {
@@ -176,7 +176,7 @@ export async function updateInventoryItem(id: string, data: {
 
     revalidatePath('/dashboard/inventory')
     revalidatePath('/dashboard')
-    revalidateTag(farmCacheTags.inventory(activeFarmId), "max")
+    expireTag(farmCacheTags.inventory(activeFarmId))
     revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true, item: { ...item, stockLevel: Number(item.stockLevel) } }
   }).catch((error: any) => {
@@ -216,7 +216,7 @@ export async function deleteInventoryItem(id: string, reason: string) {
       data: { isDeleted: true, deletedAt: new Date() }
     })
     revalidatePath('/dashboard/inventory')
-    revalidateTag(farmCacheTags.inventory(activeFarmId), "max")
+    expireTag(farmCacheTags.inventory(activeFarmId))
     revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true }
   }).catch((error: any) => {
@@ -242,7 +242,7 @@ export async function restoreInventory(id: string) {
     })
     revalidatePath('/dashboard/inventory')
     revalidatePath('/dashboard/settings/trash')
-    revalidateTag(farmCacheTags.inventory(activeFarmId), "max")
+    expireTag(farmCacheTags.inventory(activeFarmId))
     revalidateFarmPerformanceCaches(activeFarmId)
     return { success: true }
   }).catch((error: any) => {
