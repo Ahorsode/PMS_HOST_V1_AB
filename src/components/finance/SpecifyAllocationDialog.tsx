@@ -2,9 +2,19 @@
 
 import React, { useEffect, useMemo, useState } from 'react'
 import { AlertCircle, Banknote, CheckCircle2, GitBranch, ListPlus, Percent, Trash2, Users } from 'lucide-react'
-import { Dialog } from '@/components/ui/Dialog'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
+import {
+  Button,
+  Dialog,
+  FormActions,
+  FormError,
+  FormNote,
+  FormSummary,
+  FormSummaryRow,
+  Input,
+  OptionCards,
+  Segmented,
+  Select,
+} from '@/components/ui/form'
 import { getActiveExpenseAllocationBatches } from '@/lib/actions/expense-actions'
 import {
   buildEvenAllocations,
@@ -13,7 +23,6 @@ import {
   type AllocationMode,
   type LedgerAllocationInput,
 } from '@/lib/finance/ledger-allocation'
-import { cn } from '@/lib/utils'
 import { useMoney } from '@/components/providers/CurrencyProvider'
 
 type Preset = 'EVEN' | 'HEADCOUNT' | 'MANUAL'
@@ -126,16 +135,16 @@ export function SpecifyAllocationDialog({ isOpen, onOpenChange, totalAmount, onS
   const canSave = totalAmount > 0 && batches.length > 0 && !loading && manualComplete
 
   const balanceLabel = useMemo(() => {
-    if (preset !== 'MANUAL') return `${batches.length} batches · auto-calculated`
-    if (duplicateBatchIds.length > 0) return 'Each batch can only appear once'
+    if (preset !== 'MANUAL') return `Worked out for ${batches.length} flocks`
+    if (duplicateBatchIds.length > 0) return 'The same flock is chosen twice'
     if (allocationMode === 'PERCENTAGE') {
       const delta = 100 - allocationTotal
-      if (percentageBalanced) return 'Balanced at 100%'
-      return `${delta > 0 ? '+' : ''}${delta.toFixed(2)}% remaining`
+      if (percentageBalanced) return 'Adds up to 100%'
+      return delta > 0 ? `${delta.toFixed(2)}% still to share out` : `${Math.abs(delta).toFixed(2)}% too much`
     }
     const delta = totalAmount - allocationTotal
-    if (amountBalanced) return `Balanced at ${money.format(totalAmount)}`
-    return `${money.format(Math.abs(delta))} ${delta > 0 ? 'remaining' : 'over'}`
+    if (amountBalanced) return `Adds up to ${money.format(totalAmount)}`
+    return `${money.format(Math.abs(delta))} ${delta > 0 ? 'still to share out' : 'too much'}`
   }, [
     allocationMode,
     allocationTotal,
@@ -162,10 +171,10 @@ export function SpecifyAllocationDialog({ isOpen, onOpenChange, totalAmount, onS
 
     const label =
       preset === 'EVEN'
-        ? `Even split · ${batches.length} batches`
+        ? `Evenly · ${batches.length} flocks`
         : preset === 'HEADCOUNT'
-          ? `By headcount · ${batches.length} batches`
-          : `Manual · ${allocations.length} batches`
+          ? `By number of birds · ${batches.length} flocks`
+          : `Entered by hand · ${allocations.length} flocks`
 
     onSave({ allocationMode, allocations, label })
     onOpenChange(false)
@@ -175,156 +184,136 @@ export function SpecifyAllocationDialog({ isOpen, onOpenChange, totalAmount, onS
     <Dialog
       isOpen={isOpen}
       onOpenChange={onOpenChange}
-      title="Specify allocation"
-      description={`Divide ${money.format(totalAmount)} across your active livestock units.`}
+      title="Split across flocks"
+      description={`Share ${money.format(totalAmount)} between your active flocks.`}
       className="max-w-2xl"
     >
-      <div className="space-y-5 pt-2">
-        {loading ? (
-          <p className="text-xs font-medium text-fg/50">Loading active batches…</p>
-        ) : batches.length === 0 ? (
-          <p className="text-xs font-medium text-fg">No active livestock batches found to allocate to.</p>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-              <PresetButton
-                active={preset === 'EVEN'}
-                icon={Users}
-                title="Divide evenly"
-                subtitle="Same share for every batch"
-                onClick={() => setPreset('EVEN')}
-              />
-              <PresetButton
-                active={preset === 'HEADCOUNT'}
-                icon={GitBranch}
-                title="By livestock count"
-                subtitle="Weighted by current headcount"
-                onClick={() => setPreset('HEADCOUNT')}
-              />
-              <PresetButton
-                active={preset === 'MANUAL'}
-                icon={ListPlus}
-                title="Manual entry"
-                subtitle="Type amount or percentage"
-                onClick={() => setPreset('MANUAL')}
-              />
-            </div>
+      {loading ? (
+        <p className="py-6 text-center text-sm text-fg-3">Loading your active flocks...</p>
+      ) : batches.length === 0 ? (
+        <FormNote>There are no active flocks to share this between.</FormNote>
+      ) : (
+        <div className="space-y-6">
+          <OptionCards
+            label="How to split it"
+            value={preset}
+            onChange={setPreset}
+            cols={3}
+            options={[
+              { value: 'EVEN', label: 'Evenly', description: 'The same share for each flock', icon: <Users className="h-4 w-4" strokeWidth={1.75} /> },
+              { value: 'HEADCOUNT', label: 'By number of birds', description: 'Bigger flocks pay more', icon: <GitBranch className="h-4 w-4" strokeWidth={1.75} /> },
+              { value: 'MANUAL', label: 'I will enter it', description: 'Type each share yourself', icon: <ListPlus className="h-4 w-4" strokeWidth={1.75} /> },
+            ]}
+          />
 
-            <div className="grid w-full grid-cols-2 gap-1 rounded-md border border-fg/10 bg-fg/[0.04] p-1">
-              <ModeButton
-                active={allocationMode === 'AMOUNT'}
-                icon={Banknote}
-                label={`Amount (${money.currency})`}
-                onClick={() => setAllocationMode('AMOUNT')}
-              />
-              <ModeButton
-                active={allocationMode === 'PERCENTAGE'}
-                icon={Percent}
-                label="Percentage (%)"
-                onClick={() => setAllocationMode('PERCENTAGE')}
-              />
-            </div>
+          <Segmented
+            label="Show shares as"
+            value={allocationMode}
+            onChange={setAllocationMode}
+            options={[
+              { value: 'AMOUNT', label: `Amount (${money.currency})`, icon: <Banknote className="h-4 w-4" strokeWidth={1.75} /> },
+              { value: 'PERCENTAGE', label: 'Percent', icon: <Percent className="h-4 w-4" strokeWidth={1.75} /> },
+            ]}
+          />
 
-            {preset === 'MANUAL' ? (
-              <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+          {preset === 'MANUAL' ? (
+            <div className="space-y-3">
+              <ul className="space-y-3">
                 {rows.map((row, index) => {
                   const taken = rows.filter((other) => other.key !== row.key).map((other) => other.batchId)
                   return (
-                    <div key={row.key} className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_130px_40px]">
-                      <select
+                    <li
+                      key={row.key}
+                      className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 sm:grid-cols-[minmax(0,1fr)_9rem_auto]"
+                    >
+                      <Select
+                        label={`Flock ${index + 1}`}
+                        wrapperClassName="col-span-2 sm:col-span-1"
                         value={row.batchId}
                         onChange={(e) => updateRow(row.key, { batchId: e.target.value })}
-                        className="h-10 rounded-md border border-fg/10 bg-fg/[0.04] px-3 text-sm text-fg"
                       >
-                        <option value="">Select batch #{index + 1}</option>
+                        <option value="">Select a flock</option>
                         {batches.map((batch) => (
                           <option key={batch.id} value={batch.id} disabled={taken.includes(batch.id)}>
                             {batch.name} · {batch.currentCount.toLocaleString()} birds
                           </option>
                         ))}
-                      </select>
+                      </Select>
                       <Input
+                        label="Share"
                         type="number"
                         min="0"
                         step="0.01"
+                        unit={allocationMode === 'PERCENTAGE' ? '%' : money.currency}
                         value={row.value}
                         onChange={(e) => {
                           const value = e.target.value
                           if (value === '' || Number(value) >= 0) updateRow(row.key, { value })
                         }}
-                        placeholder={allocationMode === 'PERCENTAGE' ? '0.00 %' : `${money.symbol} 0.00`}
-                        className="bg-fg/[0.04] border-fg/10 text-fg"
+                        placeholder="0"
                       />
-                      <Button aria-label="Remove row"
+                      <button
                         type="button"
-                        variant="ghost"
-                        size="icon"
+                        aria-label={`Remove flock ${index + 1}`}
                         disabled={rows.length <= 1}
                         onClick={() => setRows((current) => current.filter((item) => item.key !== row.key))}
-                        className="border border-fg/10 text-fg/60"
+                        className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-neg/30 bg-neg/10 text-neg transition-colors duration-150 hover:bg-neg/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-not-allowed disabled:opacity-40 md:h-11 md:w-11"
                       >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                        <Trash2 className="h-5 w-5" strokeWidth={1.75} />
+                      </button>
+                    </li>
                   )
                 })}
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setRows((current) => [...current, makeRow()])}
-                  className="w-full border border-fg/10 bg-fg/[0.06]"
-                >
-                  <ListPlus className="h-4 w-4" />
-                  Add batch row
-                </Button>
-              </div>
-            ) : (
-              <div className="rounded-lg border border-fg/10 bg-fg/[0.03] p-3 space-y-2 max-h-48 overflow-y-auto">
-                {buildPresetPreview(batches, totalAmount, preset, allocationMode).map((row) => (
-                  <div key={row.batchId} className="flex items-center justify-between gap-3 text-xs">
-                    <span className="min-w-0 truncate text-fg/70">{row.name}</span>
-                    <span className="shrink-0 text-right font-medium text-fg">
-                      {row.amount != null && row.amount > 0 ? (
-                        <>
-                          {money.format(row.amount)}
-                          {row.percentage != null ? (
-                            <span className="ml-1.5 font-medium text-fg/45">· {row.percentage.toFixed(2)}%</span>
-                          ) : null}
-                        </>
-                      ) : (
-                        `${row.percentage?.toFixed(2)}%`
-                      )}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
+              </ul>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setRows((current) => [...current, makeRow()])}
+                className="w-full"
+              >
+                <ListPlus className="h-4 w-4" strokeWidth={1.75} />
+                Add another flock
+              </Button>
+            </div>
+          ) : (
+            <FormSummary title="Each flock's share">
+              {buildPresetPreview(batches, totalAmount, preset, allocationMode).map((row) => (
+                <FormSummaryRow
+                  key={row.batchId}
+                  label={row.name}
+                  value={
+                    row.amount != null && row.amount > 0
+                      ? `${money.format(row.amount)}${row.percentage != null ? ` · ${row.percentage.toFixed(2)}%` : ''}`
+                      : `${row.percentage?.toFixed(2)}%`
+                  }
+                />
+              ))}
+            </FormSummary>
+          )}
 
-            <div
-              className={cn(
-                'flex items-center gap-2 rounded-md border px-3 py-2 text-xs font-medium',
-                canSave
-                  ? 'border-fg/[0.08] bg-fg/[0.04] text-accent'
-                  : 'border-fg/[0.08] bg-fg/[0.04] text-yolk'
+          <FormNote tone={canSave ? 'success' : 'warning'}>
+            <span className="inline-flex items-center gap-2 font-medium">
+              {canSave ? (
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-accent" strokeWidth={1.75} />
+              ) : (
+                <AlertCircle className="h-4 w-4 shrink-0 text-yolk" strokeWidth={1.75} />
               )}
-            >
-              {canSave ? <CheckCircle2 className="h-4 w-4 shrink-0" /> : <AlertCircle className="h-4 w-4 shrink-0" />}
               {balanceLabel}
-            </div>
+            </span>
+          </FormNote>
 
-            {error ? <p className="text-xs font-medium text-neg">{error}</p> : null}
+          <FormError>{error}</FormError>
 
-            <div className="flex gap-2 pt-1">
-              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} className="flex-1">
-                Cancel
-              </Button>
-              <Button type="button" onClick={handleSave} disabled={!canSave} className="flex-[2] bg-raised text-fg border border-fg/[0.08] font-medium">
-                Apply allocation
-              </Button>
-            </div>
-          </>
-        )}
-      </div>
+          <FormActions>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="button" variant="accent" onClick={handleSave} disabled={!canSave}>
+              Use this split
+            </Button>
+          </FormActions>
+        </div>
+      )}
     </Dialog>
   )
 }
@@ -343,66 +332,9 @@ function buildPresetPreview(
     const batch = batches.find((item) => item.id === row.batchId)
     return {
       batchId: row.batchId,
-      name: batch?.name || 'Batch',
+      name: batch?.name || 'Flock',
       percentage: row.percentage,
       amount: row.amount,
     }
   })
-}
-
-function PresetButton({
-  active,
-  icon: Icon,
-  title,
-  subtitle,
-  onClick,
-}: {
-  active: boolean
-  icon: React.ElementType
-  title: string
-  subtitle: string
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        'rounded-lg border-2 p-3 text-left transition-colors',
-        active
-          ? 'border-accent bg-accent/10 text-fg shadow-sm'
-          : 'border-fg/10 bg-fg/[0.03] text-fg-2 hover:bg-fg/[0.06]'
-      )}
-    >
-      <Icon className={cn('mb-2 h-4 w-4', active ? 'text-accent' : 'text-fg/40')} />
-      <p className="text-xs font-medium">{title}</p>
-      <p className="text-xs text-fg/45">{subtitle}</p>
-    </button>
-  )
-}
-
-function ModeButton({
-  active,
-  icon: Icon,
-  label,
-  onClick,
-}: {
-  active: boolean
-  icon: React.ElementType
-  label: string
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        'inline-flex w-full items-center justify-center gap-1.5 rounded-md px-2 py-2.5 text-[11px] font-medium transition-colors sm:text-xs',
-        active ? 'bg-accent font-semibold text-accent-fg shadow-sm' : 'text-fg/60 hover:text-fg'
-      )}
-    >
-      <Icon className="h-3.5 w-3.5" />
-      {label}
-    </button>
-  )
 }

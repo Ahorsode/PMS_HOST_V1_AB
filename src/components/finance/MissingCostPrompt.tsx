@@ -1,10 +1,19 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Dialog } from '@/components/ui/Dialog';
-import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
-import { Banknote, Truck, Plus, Trash2, AlertCircle } from 'lucide-react';
+import {
+  Button,
+  Dialog,
+  Form,
+  FormActions,
+  FormSection,
+  FormSteps,
+  FormSummary,
+  FormSummaryRow,
+  Input,
+} from '@/components/ui/form';
+import { Plus, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { updateBatchFinancials } from '@/lib/actions/dashboard-actions';
 import { useRouter } from 'next/navigation';
 import { useMoney } from '@/components/providers/CurrencyProvider'
@@ -52,7 +61,7 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
   const handleSkip = () => {
      // If user really wants to skip (keep as 0), we should probably record it as 0.01 or something 
      // but the requirement says "prompt to add". I'll allow a "Confirm Zero Cost" if they really want.
-     if (confirm("Are you sure this unit has zero initial cost? This will stop future prompts for this unit.")) {
+     if (confirm("Did this flock really cost nothing? You will not be asked about it again.")) {
         handleSubmit(true);
      }
   };
@@ -77,64 +86,62 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
           router.refresh();
         }
       } else {
-        alert("Error: " + result.error);
+        toast.error(result.error || "The cost could not be saved. Try again.");
       }
     } catch (error) {
-      alert("Failed to save financials.");
+      toast.error("The cost could not be saved. Check your connection and try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const purchaseTotal = Number(costPerUnit) > 0 ? Number(costPerUnit) * currentBatch.initialCount : 0;
+  const otherTotal = otherExpenses.reduce((sum, exp) => sum + exp.amount, 0);
+  const isLast = currentIndex >= batches.length - 1;
+
   return (
-    <Dialog 
-      isOpen={isOpen} 
+    <Dialog
+      isOpen={isOpen}
       onOpenChange={() => {}} // Force user to address it
-      title="Missing financial data"
-      description={`Unit "${currentBatch.batchName}" is missing its initial purchase cost. Please record it now for accurate P&L tracking.`}
+      title="What did this flock cost?"
+      description={`${currentBatch.batchName} has no buying cost yet. Add it so your profit is worked out correctly.`}
     >
-      <div className="space-y-5 pt-3">
-        {/* Progress Indicator */}
-        <div className="flex gap-1 mb-3">
-           {batches.map((_, i) => (
-             <div key={i} className={`h-1 flex-1 rounded-full ${i === currentIndex ? 'bg-emerald-500' : i < currentIndex ? 'bg-fg/[0.04]' : 'bg-fg/10'}`} />
-           ))}
-        </div>
+      <Form
+        onSubmit={(event) => {
+          event.preventDefault();
+          handleSubmit(false);
+        }}
+        noValidate
+      >
+        {batches.length > 1 ? (
+          <FormSteps steps={batches.map((batch) => ({ id: batch.id, label: batch.batchName }))} current={currentIndex} />
+        ) : null}
 
-        <div className="p-3 rounded-md bg-fg/[0.04] border border-fg/[0.08] flex gap-2">
-           <AlertCircle className="w-5 h-5 text-fg-3 shrink-0" />
-           <p className="text-xs text-fg leading-relaxed font-medium">
-             Financial accuracy depends on recording the initial investment. This ensures your <span className="text-fg font-medium">Return on investment (ROI)</span> calculations are correct.
-           </p>
-        </div>
-
-        <div className="space-y-3">
-          <div className="space-y-1">
-            <Input 
-              label="Cost per unit"
-              placeholder="0.00"
-              type="number"
-              min="0"
-              value={costPerUnit}
-              onChange={e => {
-                const val = e.target.value;
-                if (val === '' || Number(val) >= 0) {
-                  setCostPerUnit(val);
-                }
-              }}
-            />
-            {costPerUnit && Number(costPerUnit) > 0 && (
-              <p className="text-xs font-medium text-fg px-1 text-right">
-                Total Purchase Cost: {money.format((Number(costPerUnit) * currentBatch.initialCount))}
-              </p>
-            )}
-          </div>
-
-          <Input 
-            label="Carriage inward (transport cost)"
+        <FormSection title="Buying the birds">
+          <Input
+            label="Price for one"
             placeholder="0.00"
             type="number"
             min="0"
+            step="0.01"
+            unit={money.currency}
+            hint={`${currentBatch.initialCount.toLocaleString()} in this flock`}
+            value={costPerUnit}
+            onChange={e => {
+              const val = e.target.value;
+              if (val === '' || Number(val) >= 0) {
+                setCostPerUnit(val);
+              }
+            }}
+          />
+          <Input
+            label="Transport"
+            optional
+            placeholder="0.00"
+            type="number"
+            min="0"
+            step="0.01"
+            unit={money.currency}
             value={carriageInward}
             onChange={e => {
               const val = e.target.value;
@@ -143,75 +150,85 @@ export function MissingCostPrompt({ batches }: MissingCostPromptProps) {
               }
             }}
           />
+        </FormSection>
 
-          <div className="space-y-2">
-             <label className="text-xs font-medium text-fg/70 block">Additional expenses</label>
-             <div className="grid grid-cols-5 gap-2">
-                <input 
-                  placeholder="Label (e.g. loading)"
-                  className="col-span-3 bg-fg/10 border border-fg/10 rounded-md px-3 py-2 text-sm text-fg focus:outline-none focus:border-fg/[0.08]"
-                  value={newExpenseLabel}
-                  onChange={e => setNewExpenseLabel(e.target.value)}
-                />
-                <input 
-                  placeholder="0.00"
-                  type="number"
-                  min="0"
-                  className="col-span-1 bg-fg/10 border border-fg/10 rounded-md px-3 py-2 text-sm text-fg focus:outline-none focus:border-fg/[0.08]"
-                  value={newExpenseAmount}
-                  onChange={e => {
-                    const val = e.target.value;
-                    if (val === '' || Number(val) >= 0) {
-                      setNewExpenseAmount(val);
-                    }
-                  }}
-                />
-                <Button aria-label="Add another cost" 
-                  type="button" 
-                  variant="outline" 
-                   onClick={handleAddOther}
-                  className="col-span-1 rounded-md h-10 border-fg/[0.08] text-fg-3 hover:bg-fg/[0.04]"
-                >
-                   <Plus className="w-4 h-4" />
-                </Button>
-             </div>
-
-             {otherExpenses.length > 0 && (
-               <div className="space-y-2 max-h-32 overflow-y-auto pr-2 custom-scrollbar">
-                  {otherExpenses.map((exp, i) => (
-                    <div key={i} className="flex items-center justify-between p-2 rounded-md bg-fg/10 border border-fg/5">
-                       <span className="text-xs font-medium text-fg/80">{exp.label}</span>
-                       <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium text-fg">{money.format(exp.amount)}</span>
-                          <button aria-label="Remove cost" onClick={() => removeOther(i)} className="text-neg hover:text-neg transition-colors">
-                             <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                       </div>
-                    </div>
-                  ))}
-               </div>
-             )}
+        <FormSection title="Other costs" hint="e.g. loading or an agent fee.">
+          {otherExpenses.length > 0 ? (
+            <ul className="divide-y divide-fg/[0.06] rounded-xl border border-fg/[0.08] bg-tile">
+              {otherExpenses.map((exp, i) => (
+                <li key={i} className="flex min-h-12 items-center justify-between gap-3 py-1 pl-3.5 pr-1 text-sm">
+                  <span className="min-w-0 truncate text-fg">{exp.label}</span>
+                  <span className="flex shrink-0 items-center gap-1">
+                    <span className="font-medium tabular-nums text-fg">{money.format(exp.amount)}</span>
+                    <button
+                      type="button"
+                      aria-label={`Remove ${exp.label}`}
+                      onClick={() => removeOther(i)}
+                      className="flex h-11 w-11 items-center justify-center rounded-lg text-fg-3 transition-colors duration-150 hover:bg-neg-solid/10 hover:text-neg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+                    >
+                      <Trash2 className="h-4 w-4" strokeWidth={1.75} />
+                    </button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <div className="grid grid-cols-[minmax(0,1fr)_7.5rem] items-end gap-3">
+            <Input
+              label="What for"
+              placeholder="e.g. Loading"
+              value={newExpenseLabel}
+              onChange={e => setNewExpenseLabel(e.target.value)}
+            />
+            <Input
+              label="Amount"
+              placeholder="0.00"
+              type="number"
+              min="0"
+              value={newExpenseAmount}
+              onChange={e => {
+                const val = e.target.value;
+                if (val === '' || Number(val) >= 0) {
+                  setNewExpenseAmount(val);
+                }
+              }}
+            />
           </div>
-        </div>
+          <Button type="button" variant="outline" onClick={handleAddOther} disabled={!newExpenseLabel || !newExpenseAmount} className="w-full">
+            <Plus className="h-4 w-4" strokeWidth={1.75} />
+            Add this cost
+          </Button>
+        </FormSection>
 
-        <div className="flex gap-2 pt-3">
-           <Button 
-             variant="ghost" 
-             onClick={handleSkip}
-             className="flex-1 rounded-md text-fg/70 hover:text-neg hover:bg-fg/[0.04]"
-           >
-              Confirm zero cost
-           </Button>
-           <Button 
-             onClick={() => handleSubmit(false)}
-             isLoading={isSubmitting}
-             disabled={!costPerUnit || Number(costPerUnit) <= 0}
-             className="flex-[2] rounded-md bg-fg text-page font-medium hover:bg-fg/90"
-           >
-              Save & {currentIndex < batches.length - 1 ? 'Next unit' : 'Finish'}
-           </Button>
-        </div>
-      </div>
+        <FormSummary>
+          <FormSummaryRow
+            label={`Birds (${currentBatch.initialCount.toLocaleString()} × ${money.format(Number(costPerUnit) || 0)})`}
+            value={money.format(purchaseTotal)}
+          />
+          <FormSummaryRow label="Transport" value={money.format(Number(carriageInward) || 0)} />
+          {otherExpenses.length > 0 ? <FormSummaryRow label="Other costs" value={money.format(otherTotal)} /> : null}
+          <FormSummaryRow
+            label="Total paid"
+            value={money.format(purchaseTotal + (Number(carriageInward) || 0) + otherTotal)}
+            strong
+          />
+        </FormSummary>
+
+        <FormActions>
+          <Button type="button" variant="outline" onClick={handleSkip} disabled={isSubmitting}>
+            It cost nothing
+          </Button>
+          <Button
+            type="submit"
+            variant="accent"
+            isLoading={isSubmitting}
+            loadingText="Saving"
+            disabled={!costPerUnit || Number(costPerUnit) <= 0}
+          >
+            {isLast ? 'Save' : 'Save and next flock'}
+          </Button>
+        </FormActions>
+      </Form>
     </Dialog>
   );
 }

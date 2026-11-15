@@ -18,12 +18,27 @@ import {
   Search,
   Filter,
   Check,
-  X,
   CreditCard,
   GitBranch,
   XCircle
 } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import {
+  Button,
+  Dialog,
+  Form,
+  FormActions,
+  FormError,
+  FormRow,
+  FormSection,
+  FormSummary,
+  FormSummaryRow,
+  Input,
+  MoreDetails,
+  Segmented,
+  Select,
+  Textarea,
+  fieldStyles,
+} from '@/components/ui/form'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { createFinancialTransaction, settleTransaction, deleteFinancialTransaction } from '@/lib/actions/financial-transaction-actions'
 import { toLocalDateTimeInputValue } from '@/lib/financial-dates'
@@ -318,58 +333,41 @@ export function FinanceHubClient({
 
       {/* Advanced Filter Matrix */}
       <Card>
-        <CardContent className="p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
-          <div className="relative w-full md:w-80">
-            <span className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="h-4 w-4 text-fg-3" />
-            </span>
-            <input
-              type="text"
-              placeholder="Search"
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-              className="block w-full pl-9 pr-3 py-2 bg-raised border border-fg/[0.08] rounded-lg text-sm text-fg placeholder:text-fg-3 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/50 transition-colors"
+        <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-end md:justify-between">
+          <Input
+            aria-label="Search entries"
+            type="search"
+            placeholder="Search"
+            leading={<Search className="h-4 w-4" strokeWidth={1.75} />}
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+            wrapperClassName="md:w-80"
+          />
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Segmented
+              aria-label="Show"
+              size="sm"
+              value={filterType}
+              onChange={setFilterType}
+              options={[
+                { value: 'ALL', label: 'All' },
+                { value: 'REVENUE', label: 'Money in' },
+                { value: 'EXPENSE', label: 'Money out' },
+              ]}
             />
-          </div>
-
-          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
-            <div className="flex bg-raised rounded-lg p-0.5 border border-fg/[0.08]">
-              <button
-                onClick={() => setFilterType('ALL')}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${filterType === 'ALL' ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'text-fg-2 hover:text-fg'}`}
-              >
-                All
-              </button>
-              <button
-                onClick={() => setFilterType('REVENUE')}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${filterType === 'REVENUE' ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'text-fg-2 hover:text-fg'}`}
-              >
-                Revenue
-              </button>
-              <button
-                onClick={() => setFilterType('EXPENSE')}
-                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${filterType === 'EXPENSE' ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'text-fg-2 hover:text-fg'}`}
-              >
-                Expenses
-              </button>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <span className="text-fg-3 text-xs font-medium flex items-center gap-1">
-                <Filter className="w-3.5 h-3.5" />
-                Status:
-              </span>
-              <select
-                value={filterStatus}
-                onChange={e => setFilterStatus(e.target.value)}
-                className="bg-raised border border-fg/[0.08] rounded-lg text-xs font-medium text-fg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/50 transition-colors"
-              >
-                <option value="ALL">All status</option>
-                <option value="PAID">Paid</option>
-                <option value="UNPAID">Unpaid</option>
-                <option value="PARTIALLY_PAID">Partially paid</option>
-              </select>
-            </div>
+            <Select
+              aria-label="Paid status"
+              value={filterStatus}
+              onChange={e => setFilterStatus(e.target.value)}
+              wrapperClassName="sm:w-44"
+              options={[
+                { value: 'ALL', label: 'Any status' },
+                { value: 'PAID', label: 'Paid' },
+                { value: 'UNPAID', label: 'Not paid' },
+                { value: 'PARTIALLY_PAID', label: 'Part paid' },
+              ]}
+            />
           </div>
         </CardContent>
       </Card>
@@ -717,351 +715,235 @@ export function FinanceHubClient({
       </Card>
 
       {/* CREATE ENTRY MODAL */}
-      {isAddOpen && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
-          <Card className="bg-card border-fg/10 w-full max-w-lg relative">
-            <button aria-label="Close" 
-              onClick={() => setIsAddOpen(false)}
-              disabled={isAddingTransaction}
-              className="absolute top-4 right-4 text-fg-3 hover:text-fg disabled:opacity-50 disabled:cursor-not-allowed"
+      <Dialog
+        isOpen={isAddOpen}
+        onOpenChange={(open) => !isAddingTransaction && setIsAddOpen(open)}
+        title="Add money in or out"
+        className="max-w-lg"
+      >
+        <Form onSubmit={handleAddSubmit}>
+          <FormError>{errorMsg}</FormError>
+
+          <Segmented
+            label="Is this money in or money out"
+            value={formData.type}
+            onChange={handleTypeChange}
+            options={[
+              { value: 'REVENUE', label: 'Money in', icon: <ArrowUpRight className="h-4 w-4" strokeWidth={1.75} /> },
+              { value: 'EXPENSE', label: 'Money out', icon: <ArrowDownRight className="h-4 w-4" strokeWidth={1.75} /> },
+            ]}
+          />
+
+          <FormSection title="What and how much">
+            <Select
+              label={formData.type === 'REVENUE' ? 'Where it came from' : 'What it was for'}
+              value={formData.category}
+              onChange={e => setFormData(prev => ({ ...prev, category: e.target.value }))}
             >
-              <X className="w-5 h-5" />
-            </button>
-            <CardHeader>
-              <CardTitle className="text-fg text-xl font-medium">Record ledger entry</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleAddSubmit} className="space-y-4 text-fg">
-                {errorMsg && (
-                  <div className="p-3 bg-fg/[0.04] border border-fg/[0.08] text-neg text-xs rounded-lg font-medium flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4 shrink-0" />
-                    <span>{errorMsg}</span>
-                  </div>
-                )}
+              {formData.type === 'REVENUE' ? (
+                <optgroup label="Money in">
+                  {REVENUE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </optgroup>
+              ) : (
+                <>
+                  <optgroup label="Running costs">
+                    {OPEX_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </optgroup>
+                  <optgroup label="Equipment and buildings">
+                    {CAPEX_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  </optgroup>
+                </>
+              )}
+            </Select>
+            <Input
+              label="Amount"
+              type="number"
+              step="0.01"
+              required
+              unit={money.currency}
+              placeholder="0.00"
+              value={formData.amount}
+              onChange={e => setFormData(prev => ({ ...prev, amount: e.target.value }))}
+            />
+          </FormSection>
 
-                {/* Type selector tabs */}
-                <div className="grid grid-cols-2 bg-raised rounded-lg p-1 border border-fg/[0.08]">
+          <FormSection title="Payment">
+            <Segmented
+              label="Paid?"
+              value={formData.paymentStatus}
+              onChange={(paymentStatus: 'PAID' | 'UNPAID' | 'PARTIALLY_PAID') => setFormData(prev => ({ ...prev, paymentStatus }))}
+              options={[
+                { value: 'PAID', label: 'Paid' },
+                { value: 'PARTIALLY_PAID', label: 'Part paid' },
+                { value: 'UNPAID', label: 'Not paid' },
+              ]}
+            />
+            <FormRow>
+              <Select
+                label="Paid by"
+                value={formData.paymentMethod}
+                onChange={e => setFormData(prev => ({ ...prev, paymentMethod: e.target.value }))}
+                options={PAYMENT_METHODS.map(m => ({ value: m, label: m }))}
+              />
+              <Input
+                label="Date and time"
+                type="datetime-local"
+                required
+                value={formData.transactionDate}
+                onChange={e => setFormData(prev => ({ ...prev, transactionDate: e.target.value }))}
+              />
+            </FormRow>
+          </FormSection>
+
+          <MoreDetails label="Reference, notes and split across flocks" defaultOpen={Boolean(savedAllocation)}>
+            <Input
+              label="Reference"
+              optional
+              type="text"
+              placeholder="e.g. MoMo ID or receipt number"
+              value={formData.referenceNum}
+              onChange={e => setFormData(prev => ({ ...prev, referenceNum: e.target.value }))}
+            />
+            <Textarea
+              label="Notes"
+              optional
+              placeholder="e.g. Paid to the vet for the March visit"
+              value={formData.description}
+              onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              rows={2}
+            />
+            <div className="space-y-2">
+              <p className={fieldStyles.label}>Split across flocks</p>
+              {savedAllocation ? (
+                <div className="flex min-h-12 items-center justify-between gap-3 rounded-lg border border-accent/30 bg-accent/10 px-3.5 text-sm">
+                  <span className="min-w-0 truncate font-medium text-fg">{savedAllocation.label}</span>
                   <button
                     type="button"
-                    onClick={() => handleTypeChange('REVENUE')}
-                    className={`py-2 rounded-md text-xs font-medium transition-colors flex items-center justify-center gap-1.5 ${formData.type === 'REVENUE' ? 'bg-raised-2 text-fg shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]' : 'text-fg-2 hover:text-fg'}`}
+                    onClick={() => setSavedAllocation(null)}
+                    className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg px-2 text-neg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
                   >
-                    <ArrowUpRight className="w-4 h-4" />
-                    Revenue (inflow)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleTypeChange('EXPENSE')}
-                    className={`py-2 rounded-md text-xs font-medium transition-colors flex items-center justify-center gap-1.5 ${formData.type === 'EXPENSE' ? 'bg-rose-500 text-white shadow' : 'text-fg-2 hover:text-fg'}`}
-                  >
-                    <ArrowDownRight className="w-4 h-4" />
-                    Expense (outflow)
+                    <XCircle className="h-4 w-4" strokeWidth={1.75} />
+                    Clear
                   </button>
                 </div>
+              ) : null}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsAllocationOpen(true)}
+                disabled={!formData.amount || Number(formData.amount) <= 0}
+                className="w-full"
+              >
+                <GitBranch className="h-4 w-4" strokeWidth={1.75} />
+                {savedAllocation ? 'Change the split' : 'Split across flocks'}
+              </Button>
+              <p className={fieldStyles.hint}>
+                {!formData.amount || Number(formData.amount) <= 0 ? 'Enter the amount first.' : 'Charge part of this to each flock.'}
+              </p>
+            </div>
+          </MoreDetails>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-fg-3 text-xs font-medium mb-1.5">Category</label>
-                    <select
-                      value={formData.category}
-                      onChange={e => setFormData(prev => ({ ...prev, category: e.target.value }))}
-                      className="w-full bg-raised border border-fg/[0.08] rounded-lg text-sm text-fg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                    >
-                      {formData.type === 'REVENUE' ? (
-                        <optgroup label="Consolidated revenue streams">
-                          {REVENUE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                        </optgroup>
-                      ) : (
-                        <>
-                          <optgroup label="Operating expenses (OpEx)">
-                            {OPEX_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                          </optgroup>
-                          <optgroup label="Capital expenditure (CapEx)">
-                            {CAPEX_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                          </optgroup>
-                        </>
-                      )}
-                    </select>
-                  </div>
+          <SpecifyAllocationDialog
+            isOpen={isAllocationOpen}
+            onOpenChange={setIsAllocationOpen}
+            totalAmount={Number(formData.amount) || 0}
+            initial={savedAllocation}
+            onSave={setSavedAllocation}
+          />
 
-                  <div>
-                    <label className="block text-fg-3 text-xs font-medium mb-1.5">Amount ({money.currency})</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      required
-                      placeholder="0.00"
-                      value={formData.amount}
-                      onChange={e => setFormData(prev => ({ ...prev, amount: e.target.value }))}
-                      className="w-full bg-raised border border-fg/[0.08] rounded-lg text-sm text-fg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-fg-3 text-xs font-medium mb-1.5">Payment method</label>
-                    <select
-                      value={formData.paymentMethod}
-                      onChange={e => setFormData(prev => ({ ...prev, paymentMethod: e.target.value }))}
-                      className="w-full bg-raised border border-fg/[0.08] rounded-lg text-sm text-fg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                    >
-                      {PAYMENT_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-fg-3 text-xs font-medium mb-1.5">Payment status</label>
-                    <select
-                      value={formData.paymentStatus}
-                      onChange={e => setFormData(prev => ({ ...prev, paymentStatus: e.target.value as any }))}
-                      className="w-full bg-raised border border-fg/[0.08] rounded-lg text-sm text-fg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                    >
-                      <option value="PAID">Paid</option>
-                      <option value="UNPAID">Unpaid</option>
-                      <option value="PARTIALLY_PAID">Partially paid</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-fg-3 text-xs font-medium mb-1.5">Date & time</label>
-                    <input
-                      type="datetime-local"
-                      required
-                      value={formData.transactionDate}
-                      onChange={e => setFormData(prev => ({ ...prev, transactionDate: e.target.value }))}
-                      className="w-full bg-raised border border-fg/[0.08] rounded-lg text-sm text-fg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-fg-3 text-xs font-medium mb-1.5">Reference number</label>
-                    <input
-                      type="text"
-                      placeholder="e.g. TxRef-12345"
-                      value={formData.referenceNum}
-                      onChange={e => setFormData(prev => ({ ...prev, referenceNum: e.target.value }))}
-                      className="w-full bg-raised border border-fg/[0.08] rounded-lg text-sm text-fg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-fg-3 text-xs font-medium mb-1.5">Description (notes)</label>
-                  <textarea
-                    placeholder="Log detail notes..."
-                    value={formData.description}
-                    onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    rows={3}
-                    className="w-full bg-raised border border-fg/[0.08] rounded-lg text-sm text-fg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none resize-none"
-                  />
-                </div>
-
-                <div className="rounded-lg border border-fg/[0.08] bg-raised p-4 space-y-3">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-medium text-fg">Specify allocation</p>
-                      <p className="text-[11px] text-fg-3">Split this entry across livestock batches</p>
-                    </div>
-                    <Button
-                      type="button"
-                      onClick={() => setIsAllocationOpen(true)}
-                      disabled={!formData.amount || Number(formData.amount) <= 0}
-                      className="bg-raised hover:bg-slate-600 text-fg font-medium text-xs"
-                    >
-                      <GitBranch className="w-4 h-4" />
-                      {savedAllocation ? 'Edit allocation' : 'Specify allocation'}
-                    </Button>
-                  </div>
-                  {savedAllocation ? (
-                    <div className="flex items-center justify-between rounded-md border border-fg/[0.08] bg-fg/[0.04] px-3 py-2 text-xs">
-                      <span className="font-medium text-accent">{savedAllocation.label}</span>
-                      <button
-                        type="button"
-                        onClick={() => setSavedAllocation(null)}
-                        className="inline-flex items-center gap-1 text-neg hover:text-neg"
-                      >
-                        <XCircle className="w-3.5 h-3.5" />
-                        Clear
-                      </button>
-                    </div>
-                  ) : null}
-                </div>
-
-                <SpecifyAllocationDialog
-                  isOpen={isAllocationOpen}
-                  onOpenChange={setIsAllocationOpen}
-                  totalAmount={Number(formData.amount) || 0}
-                  initial={savedAllocation}
-                  onSave={setSavedAllocation}
-                />
-
-                <div className="flex gap-3 justify-end pt-2">
-                  <Button
-                    type="button"
-                    onClick={() => setIsAddOpen(false)}
-                    disabled={isAddingTransaction}
-                    className="bg-raised hover:bg-slate-600 text-fg font-medium"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    isLoading={isAddingTransaction}
-                    loadingText="Submitting..."
-                    className="bg-fg hover:bg-fg/90 text-page font-medium"
-                  >
-                    Record transaction
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+          <FormActions>
+            <Button type="button" variant="outline" onClick={() => setIsAddOpen(false)} disabled={isAddingTransaction}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="accent" isLoading={isAddingTransaction} loadingText="Saving">
+              Save
+            </Button>
+          </FormActions>
+        </Form>
+      </Dialog>
 
       {/* SETTLE MODAL */}
-      {isSettleOpen && selectedTx && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
-          <Card className="bg-card border-fg/10 w-full max-w-md relative">
-            <button aria-label="Close" 
-              onClick={() => setIsSettleOpen(false)}
-              disabled={isSettlingTransaction}
-              className="absolute top-4 right-4 text-fg-3 hover:text-fg disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-fg text-xl font-medium">Record settle payment</CardTitle>
-              <p className="text-xs text-fg-3 font-medium mt-1">
-                Settling {selectedTx.type === 'REVENUE' ? 'Receivable' : 'Payable'} invoice {selectedTx.referenceNum ? `#${selectedTx.referenceNum}` : 'for this transaction'} generated on {new Date(selectedTx.transactionDate).toLocaleDateString()} for {money.format(selectedTx.amount)}
-              </p>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSettleSubmit} className="space-y-4 text-fg">
-                {errorMsg && (
-                  <div className="p-3 bg-fg/[0.04] border border-fg/[0.08] text-neg text-xs rounded-lg font-medium flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4 shrink-0" />
-                    <span>{errorMsg}</span>
-                  </div>
-                )}
-
-                <div className="p-3 bg-raised rounded-lg border border-fg/[0.08] space-y-1.5">
-                  <p className="text-fg-3 text-xs font-medium">Unpaid transaction info</p>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="font-medium text-fg">{selectedTx.category}</span>
-                    <span className="font-medium text-fg">{money.format(selectedTx.amount)}</span>
-                  </div>
-                  {selectedTx.description && (
-                    <p className="text-xs text-fg-3 truncate">{selectedTx.description}</p>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-fg-3 text-xs font-medium mb-1.5">Settlement transaction reference (optional)</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Momo TxID, bank ref, cheque num..."
-                    value={settleRef}
-                    onChange={e => setSettleRef(e.target.value)}
-                    className="w-full bg-raised border border-fg/[0.08] rounded-lg text-sm text-fg px-3 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                  />
-                </div>
-
-                <div className="flex gap-3 justify-end pt-2">
-                  <Button
-                    type="button"
-                    onClick={() => setIsSettleOpen(false)}
-                    disabled={isSettlingTransaction}
-                    className="bg-raised hover:bg-slate-600 text-fg font-medium"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    isLoading={isSettlingTransaction}
-                    loadingText="Saving..."
-                    className="bg-fg hover:bg-fg/90 text-page font-medium"
-                  >
-                    Confirm settlement
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      <Dialog
+        isOpen={isSettleOpen && Boolean(selectedTx)}
+        onOpenChange={(open) => !isSettlingTransaction && setIsSettleOpen(open)}
+        title="Mark as paid"
+        description={
+          selectedTx
+            ? `${selectedTx.type === 'REVENUE' ? 'Money you are owed' : 'Money you owe'}, from ${new Date(selectedTx.transactionDate).toLocaleDateString()}`
+            : undefined
+        }
+        className="max-w-md"
+      >
+        {selectedTx ? (
+          <Form onSubmit={handleSettleSubmit}>
+            <FormError>{errorMsg}</FormError>
+            <FormSummary>
+              <FormSummaryRow label={selectedTx.category} value={money.format(selectedTx.amount)} strong />
+            </FormSummary>
+            {selectedTx.description ? (
+              <p className="-mt-3 truncate text-[13px] text-fg-3">{selectedTx.description}</p>
+            ) : null}
+            <Input
+              label="Payment reference"
+              type="text"
+              required
+              placeholder="e.g. MoMo ID, bank reference or cheque number"
+              value={settleRef}
+              onChange={e => setSettleRef(e.target.value)}
+            />
+            <FormActions>
+              <Button type="button" variant="outline" onClick={() => setIsSettleOpen(false)} disabled={isSettlingTransaction}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="accent" isLoading={isSettlingTransaction} loadingText="Saving">
+                Mark as paid
+              </Button>
+            </FormActions>
+          </Form>
+        ) : null}
+      </Dialog>
 
       {/* SOFT DELETE MODAL */}
-      {isDeleteOpen && selectedTx && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50 animate-in fade-in duration-300">
-          <Card className="bg-card border-fg/10 w-full max-w-md relative">
-            <button aria-label="Close" 
-              onClick={() => setIsDeleteOpen(false)}
-              disabled={isDeletingTransaction}
-              className="absolute top-4 right-4 text-fg-3 hover:text-fg disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <CardHeader>
-              <CardTitle className="text-fg text-xl font-medium">Soft delete transaction</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleDeleteSubmit} className="space-y-4 text-fg">
-                {errorMsg && (
-                  <div className="p-3 bg-fg/[0.04] border border-fg/[0.08] text-neg text-xs rounded-lg font-medium flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4 shrink-0" />
-                    <span>{errorMsg}</span>
-                  </div>
-                )}
-
-                <div className="p-3 bg-fg/[0.04] border border-fg/[0.08] rounded-lg space-y-1 text-neg text-xs">
-                  <p className="font-medium flex items-center gap-1.5">
-                    <AlertTriangle className="w-4 h-4" />
-                    Destructive ledger action
-                  </p>
-                  <p>You are soft-deleting ledger item for <b>{selectedTx.category}</b> ({money.format(selectedTx.amount)}). An audit record will be logged with the reason.</p>
-                </div>
-
-                <div>
-                  <label className="block text-fg-3 text-xs font-medium mb-1.5">Reason for deletion</label>
-                  <textarea
-                    required
-                    rows={3}
-                    placeholder="Provide a valid accounting explanation (minimum 5 characters)..."
-                    value={deleteReason}
-                    onChange={e => setDeleteReason(e.target.value)}
-                    className="w-full bg-raised border border-fg/[0.08] rounded-lg text-sm text-fg px-3 py-2 focus:ring-2 focus:ring-rose-500 focus:outline-none resize-none"
-                  />
-                </div>
-
-                <div className="flex gap-3 justify-end pt-2">
-                  <Button
-                    type="button"
-                    onClick={() => setIsDeleteOpen(false)}
-                    disabled={isDeletingTransaction}
-                    className="bg-raised hover:bg-slate-600 text-fg font-medium"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    disabled={deleteReason.trim().length < 5}
-                    isLoading={isDeletingTransaction}
-                    loadingText="Deleting..."
-                    className="bg-rose-500 hover:bg-rose-600 text-white font-medium"
-                  >
-                    Log deletion
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      <Dialog
+        isOpen={isDeleteOpen && Boolean(selectedTx)}
+        onOpenChange={(open) => !isDeletingTransaction && setIsDeleteOpen(open)}
+        title="Delete this entry?"
+        description="It is moved out of your records and a note of why is kept."
+        className="max-w-md"
+      >
+        {selectedTx ? (
+          <Form onSubmit={handleDeleteSubmit}>
+            <FormError>{errorMsg}</FormError>
+            <p className="rounded-lg border border-fg/[0.08] bg-tile px-3.5 py-3 text-sm font-medium text-fg">
+              {selectedTx.category} · {money.format(selectedTx.amount)}
+            </p>
+            <Textarea
+              label="Reason for deleting"
+              required
+              rows={3}
+              placeholder="e.g. Entered twice by mistake"
+              hint="At least 5 characters."
+              value={deleteReason}
+              onChange={e => setDeleteReason(e.target.value)}
+            />
+            <FormActions destructive>
+              <Button type="button" variant="outline" onClick={() => setIsDeleteOpen(false)} disabled={isDeletingTransaction}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                variant="dangerSolid"
+                disabled={deleteReason.trim().length < 5}
+                isLoading={isDeletingTransaction}
+                loadingText="Deleting"
+              >
+                <Trash2 className="h-4 w-4" strokeWidth={1.75} />
+                Delete
+              </Button>
+            </FormActions>
+          </Form>
+        ) : null}
+      </Dialog>
     </div>
   )
 }

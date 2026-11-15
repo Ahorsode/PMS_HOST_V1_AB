@@ -1,33 +1,47 @@
 'use client'
 
 import React, { useEffect, useMemo, useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import {
   AlertCircle,
-  Calendar,
   CheckCircle2,
   CircleDollarSign,
-  FileText,
-  GitBranch,
   ListPlus,
   Percent,
-  ReceiptText,
-  Tag,
   Trash2,
 } from 'lucide-react'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Input } from '@/components/ui/Input'
-import { MutationBoundary } from '@/components/ui/MutationFeedback'
-import { Select } from '@/components/ui/Select'
+import {
+  Button,
+  Form,
+  FormActions,
+  FormError,
+  FormNote,
+  FormRow,
+  FormSection,
+  Input,
+  MoreDetails,
+  Segmented,
+  Select,
+  Switch,
+} from '@/components/ui/form'
 import {
   createExpense,
   getActiveExpenseAllocationBatches,
 } from '@/lib/actions/expense-actions'
 import { toLocalDateTimeInputValue } from '@/lib/financial-dates'
-import { cn } from '@/lib/utils'
 import { useMoney } from '@/components/providers/CurrencyProvider'
+
+const CATEGORY_LABELS: Record<string, string> = {
+  FEED: 'Feed',
+  MEDICATION: 'Medicine',
+  EQUIPMENT: 'Equipment',
+  LABOR: 'Wages',
+  UTILITIES: 'Water and power',
+  TRANSPORT: 'Transport',
+  MAINTENANCE: 'Repairs',
+  OTHER: 'Other',
+}
 
 const CATEGORIES = [
   'FEED',
@@ -89,7 +103,7 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
   const [allocationMode, setAllocationMode] = useState<AllocationMode>('PERCENTAGE')
   const [allocationRows, setAllocationRows] = useState<AllocationRow[]>([makeRow(), makeRow()])
 
-  const categoryOptions = CATEGORIES.map((category) => ({ label: category, value: category }))
+  const categoryOptions = CATEGORIES.map((category) => ({ label: CATEGORY_LABELS[category] ?? category, value: category }))
   const baseAmount = toNumber(amount)
 
   useEffect(() => {
@@ -127,20 +141,20 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
   const balanceBadge = useMemo(() => {
     if (!allocateAcrossBatches) return null
     if (hasDuplicates) {
-      return { tone: 'error', label: 'Duplicate batch selected' }
+      return { tone: 'error', label: 'The same flock is chosen twice' }
     }
     if (!hasCompleteRows) {
-      return { tone: 'error', label: 'Complete every allocation row' }
+      return { tone: 'error', label: 'Choose a flock and a share on every row' }
     }
     if (allocationMode === 'PERCENTAGE') {
       const delta = 100 - allocationTotal
-      if (percentageBalanced) return { tone: 'success', label: 'Balanced at 100%' }
-      return { tone: 'error', label: `${delta > 0 ? '+' : ''}${delta.toFixed(2)}% remaining` }
+      if (percentageBalanced) return { tone: 'success', label: 'Adds up to 100%' }
+      return { tone: 'error', label: delta > 0 ? `${delta.toFixed(2)}% still to share out` : `${Math.abs(delta).toFixed(2)}% too much` }
     }
 
     const delta = baseAmount - allocationTotal
-    if (amountBalanced) return { tone: 'success', label: `Balanced at ${money.format(baseAmount)}` }
-    return { tone: 'error', label: `${money.format(Math.abs(delta))} ${delta > 0 ? 'remaining' : 'over'}` }
+    if (amountBalanced) return { tone: 'success', label: `Adds up to ${money.format(baseAmount)}` }
+    return { tone: 'error', label: `${money.format(Math.abs(delta))} ${delta > 0 ? 'still to share out' : 'too much'}` }
   }, [
     allocateAcrossBatches,
     allocationMode,
@@ -202,11 +216,11 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
 
       if (result.success) {
         setSuccess(true)
-        toast.success('Expense logged successfully')
+        toast.success('Expense recorded')
         resetForm(form)
         onSuccess?.()
       } else {
-        const message = result.error || 'Failed to log expense'
+        const message = result.error || 'The expense could not be saved. Try again.'
         setError(message)
         toast.error(message)
       }
@@ -216,306 +230,167 @@ export function ExpenseForm({ onSuccess }: { onSuccess?: () => void }) {
   }
 
   return (
-    <Card className="bg-card/80 border-fg/10">
-      <CardHeader className="border-b border-fg/5 pb-3">
-        <CardTitle className="text-xl font-medium text-fg flex items-center gap-2">
-          <CircleDollarSign className="w-5 h-5 text-fg-3" />
-          Log expense
-        </CardTitle>
+    <Card className="border-fg/[0.08] bg-card">
+      <CardHeader className="border-b border-fg/[0.08] pb-4">
+        <CardTitle className="text-lg font-semibold text-fg">Record an expense</CardTitle>
       </CardHeader>
       <CardContent className="pt-5">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <MutationBoundary active={loading} label="Logging expense...">
-            <fieldset disabled={loading} className="space-y-4 disabled:opacity-70">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <FieldLabel icon={Tag} label="Category" />
-                  <Select name="category" required defaultValue="FEED" options={categoryOptions} />
-                </div>
-
-                <div className="space-y-2">
-                  <FieldLabel icon={CircleDollarSign} label={`Amount (${money.currency})`} />
-                  <Input
-                    name="amount"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="0.00"
-                    required
-                    value={amount}
-                    onChange={(event) => {
-                      const value = event.target.value
-                      if (value === '' || Number(value) >= 0) setAmount(value)
-                    }}
-                    className="bg-fg/[0.04] border-fg/10 rounded-md text-fg placeholder:text-fg/50"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <FieldLabel icon={Calendar} label="Date" />
-                  <Input
-                    name="expenseDate"
-                    type="datetime-local"
-                    required
-                    value={expenseDate}
-                    onChange={(event) => setExpenseDate(event.target.value)}
-                    className="bg-fg/[0.04] border-fg/10 rounded-md text-fg"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <FieldLabel icon={ReceiptText} label="Reference / receipt" />
-                  <Input
-                    name="reference"
-                    placeholder="Ref-001"
-                    className="bg-fg/[0.04] border-fg/10 rounded-md text-fg placeholder:text-fg/50"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <FieldLabel icon={FileText} label="Description" />
-                <Input
-                  name="description"
-                  placeholder="Detailed description of the expense..."
-                  className="bg-fg/[0.04] border-fg/10 rounded-md text-fg placeholder:text-fg/50"
+        <Form onSubmit={handleSubmit}>
+          <fieldset disabled={loading} className="min-w-0 space-y-6">
+            <FormSection title="What and how much">
+              <FormRow>
+                <Select
+                  label="What was it for"
+                  name="category"
+                  required
+                  defaultValue="FEED"
+                  options={categoryOptions}
                 />
-              </div>
+                <Input
+                  label="Amount"
+                  name="amount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  unit={money.currency}
+                  placeholder="0.00"
+                  required
+                  value={amount}
+                  onChange={(event) => {
+                    const value = event.target.value
+                    if (value === '' || Number(value) >= 0) setAmount(value)
+                  }}
+                />
+              </FormRow>
+              <Input
+                label="Date and time"
+                name="expenseDate"
+                type="datetime-local"
+                required
+                value={expenseDate}
+                onChange={(event) => setExpenseDate(event.target.value)}
+              />
+            </FormSection>
 
-              <div className="rounded-lg border border-fg/10 bg-fg/[0.04] p-4 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-md border border-fg/[0.08] bg-fg/[0.04] text-fg-3">
-                      <GitBranch className="h-5 w-5" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-fg">Allocate this expense across multiple batches</p>
-                      <p className="text-xs text-fg/50">{batchesLoading ? 'Loading active batches...' : `${batches.length} active batches available`}</p>
-                    </div>
-                  </div>
+            <MoreDetails label="Receipt number and notes">
+              <Input label="Receipt or reference" optional name="reference" placeholder="e.g. RCT-0012" />
+              <Input label="Notes" optional name="description" placeholder="e.g. 10 bags of layer mash from Agro Feeds" />
+            </MoreDetails>
 
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={allocateAcrossBatches}
-                    aria-label="Allocate this expense across multiple batches"
-                    onClick={() => setAllocateAcrossBatches((active) => !active)}
-                    className={cn(
-                      'h-7 w-12 rounded-full border p-0.5 transition-colors focus:outline-none focus:ring-2 focus:ring-fg/10',
-                      allocateAcrossBatches
-                        ? 'border-fg/[0.08] bg-emerald-500'
-                        : 'border-fg/10 bg-fg/10'
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        'block h-5 w-5 rounded-full bg-fg transition-transform',
-                        allocateAcrossBatches && 'translate-x-5'
-                      )}
-                    />
-                  </button>
-                </div>
+            <FormSection>
+              <Switch
+                checked={allocateAcrossBatches}
+                onChange={setAllocateAcrossBatches}
+                label="Split across flocks"
+                hint={
+                  batchesLoading
+                    ? 'Loading your active flocks...'
+                    : `Charge part of this to each flock. ${batches.length} active ${batches.length === 1 ? 'flock' : 'flocks'}.`
+                }
+              />
 
-                <AnimatePresence initial={false}>
-                  {allocateAcrossBatches && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: 'auto' }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="space-y-4 overflow-hidden"
-                    >
-                      <div className="flex flex-col sm:flex-row gap-3 sm:items-center justify-between border-t border-fg/10 pt-4">
-                        <div className="inline-grid grid-cols-2 rounded-md border border-fg/10 bg-fg/[0.04] p-1">
-                          <ModeButton
-                            active={allocationMode === 'PERCENTAGE'}
-                            icon={Percent}
-                            label="Percentage"
-                            onClick={() => setAllocationMode('PERCENTAGE')}
-                          />
-                          <ModeButton
-                            active={allocationMode === 'AMOUNT'}
-                            icon={CircleDollarSign}
-                            label="Amount"
-                            onClick={() => setAllocationMode('AMOUNT')}
-                          />
-                        </div>
+              {allocateAcrossBatches && (
+                <div className="space-y-4 rounded-xl border border-fg/[0.08] bg-tile p-4">
+                  <Segmented
+                    label="Split by"
+                    value={allocationMode}
+                    onChange={setAllocationMode}
+                    options={[
+                      { value: 'PERCENTAGE', label: 'Percent', icon: <Percent className="h-4 w-4" strokeWidth={1.75} /> },
+                      { value: 'AMOUNT', label: 'Amount', icon: <CircleDollarSign className="h-4 w-4" strokeWidth={1.75} /> },
+                    ]}
+                  />
 
-                        {balanceBadge && (
-                          <span
-                            className={cn(
-                              'inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium',
-                              balanceBadge.tone === 'success'
-                                ? 'border-fg/[0.08] bg-fg/[0.04] text-accent'
-                                : 'border-fg/[0.08] bg-fg/[0.04] text-yolk'
-                            )}
+                  <ul className="space-y-3">
+                    {allocationRows.map((row, index) => {
+                      const selectedIdsForRow = allocationRows
+                        .filter((otherRow) => otherRow.key !== row.key)
+                        .map((otherRow) => otherRow.batchId)
+                      const rowHasDuplicate = !!row.batchId && selectedIdsForRow.includes(row.batchId)
+
+                      return (
+                        <li
+                          key={row.key}
+                          className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3 sm:grid-cols-[minmax(0,1fr)_9rem_auto]"
+                        >
+                          <Select
+                            label={`Flock ${index + 1}`}
+                            wrapperClassName="col-span-2 sm:col-span-1"
+                            value={row.batchId}
+                            onChange={(event) => updateRow(row.key, { batchId: event.target.value })}
+                            error={rowHasDuplicate ? 'This flock is already in the split.' : undefined}
                           >
-                            {balanceBadge.tone === 'success' ? (
-                              <CheckCircle2 className="h-3.5 w-3.5" />
-                            ) : (
-                              <AlertCircle className="h-3.5 w-3.5" />
-                            )}
-                            {balanceBadge.label}
-                          </span>
+                            <option value="">Select a flock</option>
+                            {batches.map((batch) => (
+                              <option key={batch.id} value={batch.id} disabled={selectedIdsForRow.includes(batch.id)}>
+                                {batch.name} · {batch.houseName} · {batch.currentCount.toLocaleString()} birds
+                              </option>
+                            ))}
+                          </Select>
+                          <Input
+                            label={allocationMode === 'PERCENTAGE' ? 'Share' : 'Amount'}
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            unit={allocationMode === 'PERCENTAGE' ? '%' : money.currency}
+                            value={row.value}
+                            onChange={(event) => {
+                              const value = event.target.value
+                              if (value === '' || Number(value) >= 0) updateRow(row.key, { value })
+                            }}
+                            placeholder="0"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeRow(row.key)}
+                            disabled={allocationRows.length <= 1}
+                            aria-label={`Remove flock ${index + 1} from the split`}
+                            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg border border-neg/30 bg-neg/10 text-neg transition-colors duration-150 hover:bg-neg/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 disabled:cursor-not-allowed disabled:opacity-40 md:h-11 md:w-11"
+                          >
+                            <Trash2 className="h-5 w-5" strokeWidth={1.75} />
+                          </button>
+                        </li>
+                      )
+                    })}
+                  </ul>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setAllocationRows((rows) => [...rows, makeRow()])}
+                    className="w-full"
+                  >
+                    <ListPlus className="h-4 w-4" strokeWidth={1.75} />
+                    Add another flock
+                  </Button>
+
+                  {balanceBadge ? (
+                    <FormNote tone={balanceBadge.tone === 'success' ? 'success' : 'warning'}>
+                      <span className="inline-flex items-center gap-2 font-medium">
+                        {balanceBadge.tone === 'success' ? (
+                          <CheckCircle2 className="h-4 w-4 shrink-0 text-accent" strokeWidth={1.75} />
+                        ) : (
+                          <AlertCircle className="h-4 w-4 shrink-0 text-yolk" strokeWidth={1.75} />
                         )}
-                      </div>
+                        {balanceBadge.label}
+                      </span>
+                    </FormNote>
+                  ) : null}
+                </div>
+              )}
+            </FormSection>
 
-                      <div className="space-y-2">
-                        {allocationRows.map((row, index) => {
-                          const selectedIdsForRow = allocationRows
-                            .filter((otherRow) => otherRow.key !== row.key)
-                            .map((otherRow) => otherRow.batchId)
-                          const rowHasDuplicate = !!row.batchId && selectedIdsForRow.includes(row.batchId)
+            <FormError>{error}</FormError>
+            {success ? <FormNote tone="success">Expense recorded.</FormNote> : null}
+          </fieldset>
 
-                          return (
-                            <div key={row.key} className="grid grid-cols-1 md:grid-cols-[1fr_150px_44px] gap-2 items-start">
-                              <select
-                                aria-label={`Allocation batch ${index + 1}`}
-                                value={row.batchId}
-                                onChange={(event) => updateRow(row.key, { batchId: event.target.value })}
-                                className={cn(
-                                  'h-11 w-full rounded-md border bg-fg/[0.04] px-3 text-sm text-fg focus:outline-none focus:ring-2 focus:ring-fg/10',
-                                  rowHasDuplicate ? 'border-fg/[0.08]' : 'border-fg/10'
-                                )}
-                              >
-                                <option value="" className="bg-card">Select active batch #{index + 1}</option>
-                                {batches.map((batch) => (
-                                  <option
-                                    key={batch.id}
-                                    value={batch.id}
-                                    disabled={selectedIdsForRow.includes(batch.id)}
-                                    className="bg-card"
-                                  >
-                                    {batch.name} · {batch.houseName} · {batch.currentCount.toLocaleString()} birds
-                                  </option>
-                                ))}
-                              </select>
-
-                              <div className="relative">
-                                <Input
-                                  aria-label={`${allocationMode === 'PERCENTAGE' ? 'Percentage' : 'Amount'} for allocation row ${index + 1}`}
-                                  type="number"
-                                  min="0"
-                                  step={allocationMode === 'PERCENTAGE' ? '0.01' : '0.01'}
-                                  value={row.value}
-                                  onChange={(event) => {
-                                    const value = event.target.value
-                                    if (value === '' || Number(value) >= 0) updateRow(row.key, { value })
-                                  }}
-                                  placeholder={allocationMode === 'PERCENTAGE' ? '0.00' : '0.00'}
-                                  className="bg-fg/[0.04] border-fg/10 rounded-md text-fg pr-10 placeholder:text-fg/50"
-                                />
-                                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-fg/40">
-                                  {allocationMode === 'PERCENTAGE' ? '%' : money.symbol}
-                                </span>
-                              </div>
-
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => removeRow(row.key)}
-                                disabled={allocationRows.length <= 1}
-                                className="border border-fg/10 text-fg/60 hover:text-neg"
-                                title="Remove allocation row"
-                                aria-label={`Remove allocation row ${index + 1}`}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          )
-                        })}
-                      </div>
-
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        onClick={() => setAllocationRows((rows) => [...rows, makeRow()])}
-                        className="w-full border border-fg/10 bg-fg/[0.06]"
-                      >
-                        <ListPlus className="h-4 w-4" />
-                        Add batch allocation
-                      </Button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              <AnimatePresence>
-                {error && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="bg-fg/[0.04] border border-fg/[0.08] text-neg p-2 rounded-md flex items-center gap-2 text-xs font-medium"
-                  >
-                    <AlertCircle className="w-4 h-4 shrink-0" />
-                    {error}
-                  </motion.div>
-                )}
-
-                {success && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="bg-fg/[0.04] border border-fg/[0.08] text-fg p-2 rounded-md flex items-center gap-2 text-xs font-medium"
-                  >
-                    <CheckCircle2 className="w-4 h-4 shrink-0" />
-                    Expense logged successfully.
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <Button
-                isLoading={loading}
-                loadingText="Logging..."
-                type="submit"
-                disabled={!canSubmit}
-                className="w-full bg-fg hover:bg-fg/90 text-page font-medium h-12 rounded-md"
-              >
-                Log expense
-              </Button>
-            </fieldset>
-          </MutationBoundary>
-        </form>
+          <FormActions>
+            <Button type="submit" variant="accent" isLoading={loading} loadingText="Saving" disabled={!canSubmit}>
+              Save expense
+            </Button>
+          </FormActions>
+        </Form>
       </CardContent>
     </Card>
-  )
-}
-
-function FieldLabel({ icon: Icon, label }: { icon: React.ElementType; label: string }) {
-  return (
-    <label className="text-xs font-medium text-fg/70 flex items-center gap-1 ml-1 opacity-70">
-      <Icon className="w-3 h-3 text-fg-3" />
-      {label}
-    </label>
-  )
-}
-
-function ModeButton({
-  active,
-  icon: Icon,
-  label,
-  onClick,
-}: {
-  active: boolean
-  icon: React.ElementType
-  label: string
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        'flex h-9 items-center justify-center gap-2 rounded px-3 text-xs font-medium transition-colors',
-        active ? 'bg-accent font-semibold text-accent-fg shadow-sm' : 'text-fg/60 hover:text-fg'
-      )}
-    >
-      <Icon className="h-3.5 w-3.5" />
-      {label}
-    </button>
   )
 }
