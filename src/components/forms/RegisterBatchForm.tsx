@@ -84,6 +84,8 @@ export function RegisterBatchForm({ houses, onSuccess }: RegisterBatchFormProps)
     defaultValues: {
       type: LivestockType.POULTRY_BROILER,
       breed: "ross_308",
+      // Most flocks are added the day they arrive.
+      hatchDate: new Date().toISOString().split('T')[0],
     },
   });
 
