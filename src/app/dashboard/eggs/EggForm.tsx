@@ -18,9 +18,10 @@ import {
 } from '@/components/ui/form';
 import { createEggProduction, updateEggProduction } from '@/lib/actions/egg-actions';
 import { useRouter } from 'next/navigation';
+import { formatLivestockType } from '@/lib/utils/growth-utils';
 
 interface EggFormProps {
-  batches: { id: string; batchName: string; livestockType: string }[];
+  batches: { id: string; batchName: string; type: string }[];
   log?: any;
   mode: 'create' | 'edit' | 'delete';
   onClose: () => void;
@@ -148,7 +149,7 @@ export const EggForm = ({
       {mode === 'create' && (
         <SearchSelect
           label="Flock"
-          options={batches.map(b => ({ label: b.batchName, description: b.livestockType, value: b.id }))}
+          options={batches.map(b => ({ label: b.batchName, description: formatLivestockType(b.type), value: b.id }))}
           value={formData.batchId}
           onChange={(batchId) => setFormData({ ...formData, batchId })}
           placeholder="Select a flock"
