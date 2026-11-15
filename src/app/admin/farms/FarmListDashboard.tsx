@@ -6,6 +6,7 @@ import { Search, Server } from 'lucide-react'
 import type { AdminFarmRow } from '@/lib/actions/admin-farm-actions'
 import { MobileCardList } from '@/components/ui/MobileCardList'
 import BulkExtendTrials from './BulkExtendTrials'
+import { controlClass } from '@/components/ui/form'
 
 function formatDate(value: string | null) {
   if (!value) return '-'
@@ -91,7 +92,7 @@ export default function FarmListDashboard({ farms, canManage }: { farms: AdminFa
               placeholder="Search farms, owners, or locations"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              className="h-11 w-full rounded-md border border-zinc-700 bg-zinc-900 pl-10 pr-4 text-sm text-white outline-none transition-colors placeholder:text-zinc-500 focus:border-emerald-500"
+              className={controlClass(false, 'w-full pl-10 pr-4')}
             />
           </label>
           </div>

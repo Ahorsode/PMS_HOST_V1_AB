@@ -14,6 +14,7 @@ import {
 import type { MomoRequestRow, MomoRequestStatus } from '@/lib/admin/plan-payments'
 import { cn } from '@/lib/utils'
 import RefundForm from './RefundForm'
+import { controlClass } from '@/components/ui/form'
 
 const STATUS_STYLE: Record<MomoRequestStatus, string> = {
   PENDING: 'border-amber-500/35 bg-amber-950/60 text-amber-200',
@@ -119,17 +120,17 @@ export default function MomoRequestsPanel({ requests }: { requests: MomoRequestR
                   {request.status === 'PENDING' ? (
                     <>
                       <button type="button" disabled={isPending} onClick={() => open(request, 'approve')}
-                        className="h-9 rounded-md bg-emerald-500 px-3 text-sm font-semibold text-zinc-950 hover:bg-emerald-400 disabled:opacity-50">
+                        className="h-11 md:h-9 rounded-md bg-accent px-3 text-sm font-semibold text-accent-fg hover:bg-accent/90 disabled:opacity-50">
                         Payment received
                       </button>
                       <button type="button" disabled={isPending} onClick={() => open(request, 'reject')}
-                        className="h-9 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 hover:border-zinc-500 disabled:opacity-50">
+                        className="h-11 md:h-9 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 hover:border-zinc-500 disabled:opacity-50">
                         Close
                       </button>
                     </>
                   ) : request.status === 'APPROVED' && (request.amountReceived ?? 0) > request.refunded ? (
                     <button type="button" disabled={isPending} onClick={() => open(request, 'refund')}
-                      className="h-9 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 hover:border-red-400/50 disabled:opacity-50">
+                      className="h-11 md:h-9 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 hover:border-red-400/50 disabled:opacity-50">
                       Record refund
                     </button>
                   ) : null}
@@ -145,19 +146,19 @@ export default function MomoRequestsPanel({ requests }: { requests: MomoRequestR
                   }}
                 >
                   <label className="block sm:w-40">
-                    <span className="text-xs font-semibold text-zinc-400">Amount received (GHS)</span>
+                    <span className="block text-sm font-medium leading-5 text-fg">Amount received (GHS)</span>
                     <input type="number" min={0.01} step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} disabled={isPending}
-                      className="mt-1 h-9 w-full rounded-md border border-zinc-700 bg-zinc-950 px-2 text-sm text-white" />
+                      className={controlClass(false, 'mt-1 w-full')} />
                   </label>
                   <label className="block flex-1">
-                    <span className="text-xs font-semibold text-zinc-400">MoMo transaction reference</span>
+                    <span className="block text-sm font-medium leading-5 text-fg">MoMo transaction reference</span>
                     <input value={reference} onChange={(e) => setReference(e.target.value)} disabled={isPending} placeholder="e.g. 54839201744"
-                      className="mt-1 h-9 w-full rounded-md border border-zinc-700 bg-zinc-950 px-2 text-sm text-white" />
+                      className={controlClass(false, 'mt-1 w-full')} />
                   </label>
-                  <button type="submit" disabled={isPending || !reference.trim()} className="h-9 rounded-md bg-emerald-500 px-3 text-sm font-semibold text-zinc-950 disabled:opacity-50">
+                  <button type="submit" disabled={isPending || !reference.trim()} className="h-11 md:h-9 rounded-md bg-accent px-3 text-sm font-semibold text-accent-fg disabled:opacity-50">
                     Activate plan
                   </button>
-                  <button type="button" onClick={() => setOpenId(null)} disabled={isPending} className="h-9 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300">
+                  <button type="button" onClick={() => setOpenId(null)} disabled={isPending} className="h-11 md:h-9 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300">
                     Cancel
                   </button>
                 </form>
@@ -172,14 +173,14 @@ export default function MomoRequestsPanel({ requests }: { requests: MomoRequestR
                   }}
                 >
                   <label className="block flex-1">
-                    <span className="text-xs font-semibold text-zinc-400">Why is it being closed?</span>
+                    <span className="block text-sm font-medium leading-5 text-fg">Why is it being closed?</span>
                     <input value={reason} onChange={(e) => setReason(e.target.value)} disabled={isPending} maxLength={300} placeholder="No payment arrived after 7 days"
-                      className="mt-1 h-9 w-full rounded-md border border-zinc-700 bg-zinc-950 px-2 text-sm text-white" />
+                      className={controlClass(false, 'mt-1 w-full')} />
                   </label>
-                  <button type="submit" disabled={isPending || reason.trim().length < 3} className="h-9 rounded-md bg-zinc-200 px-3 text-sm font-semibold text-zinc-950 disabled:opacity-50">
+                  <button type="submit" disabled={isPending || reason.trim().length < 3} className="h-11 md:h-9 rounded-md bg-zinc-200 px-3 text-sm font-semibold text-zinc-950 disabled:opacity-50">
                     Close request
                   </button>
-                  <button type="button" onClick={() => setOpenId(null)} disabled={isPending} className="h-9 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300">
+                  <button type="button" onClick={() => setOpenId(null)} disabled={isPending} className="h-11 md:h-9 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300">
                     Cancel
                   </button>
                 </form>

@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { NotebookPen } from 'lucide-react'
+import { Button, Form, FormActions, Textarea } from '@/components/ui/form'
 import { adminAddFarmNote, type FarmNoteRow } from '@/lib/actions/admin-farmer-actions'
 
 function formatDateTime(value: string) {
@@ -23,8 +24,8 @@ export default function FarmNotes({ farmId, notes }: { farmId: string; notes: Fa
         <h2 className="text-lg font-semibold text-white">Support notes</h2>
       </div>
       <div className="space-y-4 p-5">
-        <form
-          className="flex flex-col gap-2 sm:flex-row sm:items-start"
+        <Form
+          className="space-y-3"
           onSubmit={(event) => {
             event.preventDefault()
             startTransition(async () => {
@@ -42,14 +43,21 @@ export default function FarmNotes({ farmId, notes }: { farmId: string; notes: Fa
             })
           }}
         >
-          <textarea rows={2} maxLength={2000} value={body} onChange={(e) => setBody(e.target.value)} disabled={isPending}
+          <Textarea
+            label="New note"
+            rows={2}
+            maxLength={2000}
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            disabled={isPending}
             placeholder="e.g. Called the owner on 3 Nov; will pay by MoMo on Friday."
-            className="flex-1 rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-emerald-500" />
-          <button type="submit" disabled={isPending || body.trim().length < 2}
-            className="h-10 rounded-md bg-emerald-500 px-4 text-sm font-semibold text-zinc-950 hover:bg-emerald-400 disabled:opacity-50">
-            Add note
-          </button>
-        </form>
+          />
+          <FormActions>
+            <Button type="submit" variant="accent" disabled={body.trim().length < 2} isLoading={isPending} loadingText="Saving">
+              Add note
+            </Button>
+          </FormActions>
+        </Form>
         {notes.length === 0 ? (
           <p className="text-sm text-zinc-500">No notes yet.</p>
         ) : (

@@ -6,9 +6,9 @@ import { toast } from 'sonner'
 import { Megaphone, Send } from 'lucide-react'
 import { adminSendMessage, adminWithdrawMessage, type AdminMessageRow } from '@/lib/actions/admin-message-actions'
 import { cn } from '@/lib/utils'
+import { controlClass } from '@/components/ui/form'
 
-const inputClass =
-  'h-10 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 text-sm text-white outline-none placeholder:text-zinc-600 focus:border-emerald-500 disabled:opacity-50'
+const inputClass = controlClass()
 
 function formatDateTime(value: string) {
   return new Intl.DateTimeFormat('en-GH', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(value))
@@ -89,7 +89,7 @@ export default function MessagesPanel({
               }}
             >
               <label className="block">
-                <span className="text-xs font-semibold text-zinc-300">To</span>
+                <span className="block text-sm font-medium leading-5 text-fg">To</span>
                 <select value={farmId} onChange={(e) => setFarmId(e.target.value)} disabled={isPending} className={cn(inputClass, 'mt-1')}>
                   <option value="">Every farm</option>
                   {farms.map((farm) => (
@@ -98,23 +98,23 @@ export default function MessagesPanel({
                 </select>
               </label>
               <label className="block">
-                <span className="text-xs font-semibold text-zinc-300">Who sees it</span>
+                <span className="block text-sm font-medium leading-5 text-fg">Who sees it</span>
                 <select value={audience} onChange={(e) => setAudience(e.target.value as 'OWNERS' | 'EVERYONE')} disabled={isPending} className={cn(inputClass, 'mt-1')}>
                   <option value="OWNERS">Owners only</option>
                   <option value="EVERYONE">Owners and staff</option>
                 </select>
               </label>
               <label className="block md:col-span-2">
-                <span className="text-xs font-semibold text-zinc-300">Title</span>
+                <span className="block text-sm font-medium leading-5 text-fg">Title</span>
                 <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={80} disabled={isPending} placeholder="New feature: batch reports" className={cn(inputClass, 'mt-1')} />
               </label>
               <label className="block md:col-span-2">
-                <span className="text-xs font-semibold text-zinc-300">Message</span>
+                <span className="block text-sm font-medium leading-5 text-fg">Message</span>
                 <textarea rows={3} value={body} onChange={(e) => setBody(e.target.value)} maxLength={1000} disabled={isPending}
-                  className="mt-1 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-white outline-none focus:border-emerald-500" />
+                  className={controlClass(false, 'mt-1 w-full')} />
               </label>
               <label className="block">
-                <span className="text-xs font-semibold text-zinc-300">Style</span>
+                <span className="block text-sm font-medium leading-5 text-fg">Style</span>
                 <select value={tone} onChange={(e) => setTone(e.target.value as 'info' | 'warning' | 'success')} disabled={isPending} className={cn(inputClass, 'mt-1')}>
                   <option value="info">Information</option>
                   <option value="warning">Warning</option>
@@ -122,12 +122,12 @@ export default function MessagesPanel({
                 </select>
               </label>
               <label className="block">
-                <span className="text-xs font-semibold text-zinc-300">Show until (optional)</span>
+                <span className="block text-sm font-medium leading-5 text-fg">Show until (optional)</span>
                 <input type="date" value={showUntil} onChange={(e) => setShowUntil(e.target.value)} disabled={isPending} className={cn(inputClass, 'mt-1')} />
               </label>
               <div className="md:col-span-2">
                 <button type="submit" disabled={isPending || title.trim().length < 2 || body.trim().length < 2}
-                  className="h-10 rounded-md bg-emerald-500 px-4 text-sm font-semibold text-zinc-950 hover:bg-emerald-400 disabled:opacity-50">
+                  className="h-11 md:h-10 rounded-md bg-accent px-4 text-sm font-semibold text-accent-fg hover:bg-accent/90 disabled:opacity-50">
                   Send message
                 </button>
               </div>
@@ -161,7 +161,7 @@ export default function MessagesPanel({
                     {canSend && state.label === 'Showing' ? (
                       <button type="button" disabled={isPending}
                         onClick={() => run(() => adminWithdrawMessage(message.id), 'Message withdrawn')}
-                        className="h-9 shrink-0 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 hover:border-red-400/50 disabled:opacity-50">
+                        className="h-11 md:h-9 shrink-0 rounded-md border border-zinc-700 px-3 text-sm text-zinc-300 hover:border-red-400/50 disabled:opacity-50">
                         Withdraw
                       </button>
                     ) : null}

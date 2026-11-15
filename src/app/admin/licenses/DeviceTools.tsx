@@ -12,6 +12,7 @@ import {
   type AdminFarmDevice,
 } from '@/lib/actions/admin-device-actions'
 import { cn } from '@/lib/utils'
+import { controlClass } from '@/components/ui/form'
 
 const buttonClass =
   'inline-flex h-8 items-center gap-1.5 rounded-full border border-[#f7f1df]/15 px-3 text-xs font-bold text-[#fff9e8]/85 transition hover:border-[#f7f1df]/35 disabled:opacity-50'
@@ -101,7 +102,7 @@ export default function DeviceTools({
             value={targetFarmId}
             onChange={(event) => setTargetFarmId(event.target.value)}
             aria-label="Farm to move the device to"
-            className="h-9 flex-1 rounded-full border border-[#f7f1df]/10 bg-black/40 px-3 text-sm text-[#fff9e8]"
+            className={controlClass(false, 'flex-1')}
           >
             <option value="">Choose a farm…</option>
             {farms
@@ -116,7 +117,7 @@ export default function DeviceTools({
             type="button"
             disabled={isPending || !targetFarmId}
             onClick={() => run(() => adminMoveDevice(device.id, targetFarmId), 'Device moved')}
-            className="h-9 rounded-full bg-[#d9a441] px-4 text-xs font-black uppercase tracking-wider text-[#11140d] disabled:opacity-50"
+            className="h-11 md:h-9 rounded-full bg-[#d9a441] px-4 text-xs font-black uppercase tracking-wider text-[#11140d] disabled:opacity-50"
           >
             Move device
           </button>

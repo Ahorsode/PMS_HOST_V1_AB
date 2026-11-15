@@ -29,6 +29,7 @@ import {
 } from '@/lib/billing/pricing'
 import type { PlanType } from '@prisma/client'
 import { cn } from '@/lib/utils'
+import { controlClass } from '@/components/ui/form'
 
 /** Number inputs are kept as strings while editing so partial values can be typed. */
 type PlanForm = {
@@ -169,8 +170,7 @@ function FieldError({ message }: { message?: string }) {
   return message ? <p className="mt-1 text-xs font-semibold text-red-300">{message}</p> : null
 }
 
-const inputClass =
-  'h-10 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 text-sm text-white outline-none transition-colors placeholder:text-zinc-600 focus:border-emerald-500 disabled:opacity-50'
+const inputClass = controlClass()
 
 export default function PlanPricingEditor({ initialSettings }: { initialSettings: AdminBillingSettings }) {
   const [settings, setSettings] = useState(initialSettings)
@@ -269,14 +269,14 @@ export default function PlanPricingEditor({ initialSettings }: { initialSettings
             </div>
             <div className="grid gap-3 p-5 sm:grid-cols-3">
               <label className="block">
-                <span className="text-xs font-semibold text-zinc-300">Trial length (days)</span>
+                <span className="block text-sm font-medium leading-5 text-fg">Trial length (days)</span>
                 <input type="number" min={1} max={365} step={1} value={form.trial.days} disabled={isSaving}
                   onChange={(event) => setForm((current) => ({ ...current, trial: { ...current.trial, days: event.target.value } }))}
                   className={cn(inputClass, 'mt-1')} />
                 <FieldError message={errors['trial.days']} />
               </label>
               <label className="block">
-                <span className="text-xs font-semibold text-zinc-300">Trial gives</span>
+                <span className="block text-sm font-medium leading-5 text-fg">Trial gives</span>
                 <select value={form.trial.tier} disabled={isSaving}
                   onChange={(event) => setForm((current) => ({ ...current, trial: { ...current.trial, tier: event.target.value as PaidTier } }))}
                   className={cn(inputClass, 'mt-1')}>
@@ -285,7 +285,7 @@ export default function PlanPricingEditor({ initialSettings }: { initialSettings
                 </select>
               </label>
               <label className="block">
-                <span className="text-xs font-semibold text-zinc-300">Grace period (days)</span>
+                <span className="block text-sm font-medium leading-5 text-fg">Grace period (days)</span>
                 <input type="number" min={0} max={30} step={1} value={form.trial.graceDays} disabled={isSaving}
                   onChange={(event) => setForm((current) => ({ ...current, trial: { ...current.trial, graceDays: event.target.value } }))}
                   className={cn(inputClass, 'mt-1')} />
@@ -306,7 +306,7 @@ export default function PlanPricingEditor({ initialSettings }: { initialSettings
               <label className="flex items-start gap-3">
                 <input type="checkbox" checked={form.paystackEnabled} disabled={isSaving}
                   onChange={(event) => setForm((current) => ({ ...current, paystackEnabled: event.target.checked }))}
-                  className="mt-0.5 h-4 w-4 accent-emerald-500" />
+                  className="mt-0.5 h-5 w-5 accent-[var(--accent)]" />
                 <span>
                   <span className="block text-sm font-semibold text-zinc-100">Online payment with Paystack</span>
                   <span className="block text-xs text-zinc-500">Also needs the Paystack keys set on the server. When off, farms pay by Mobile Money.</span>
@@ -320,7 +320,7 @@ export default function PlanPricingEditor({ initialSettings }: { initialSettings
                       form.offeredTerms.includes(months) ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-100' : 'border-zinc-800 text-zinc-400')}>
                       <input type="checkbox" checked={form.offeredTerms.includes(months)} disabled={isSaving}
                         onChange={() => setForm((current) => ({ ...current, offeredTerms: toggleIn(current.offeredTerms, months) }))}
-                        className="h-4 w-4 accent-emerald-500" />
+                        className="h-5 w-5 accent-[var(--accent)]" />
                       {months} {months === 1 ? 'month' : 'months'}
                     </label>
                   ))}
@@ -357,7 +357,7 @@ export default function PlanPricingEditor({ initialSettings }: { initialSettings
 
                     <div className="grid gap-3 sm:grid-cols-2">
                       <label className="block">
-                        <span className="text-xs font-semibold text-zinc-300">Plan name</span>
+                        <span className="block text-sm font-medium leading-5 text-fg">Plan name</span>
                         <input
                           value={plan.name}
                           maxLength={40}
@@ -368,7 +368,7 @@ export default function PlanPricingEditor({ initialSettings }: { initialSettings
                         <FieldError message={errorKey('name')} />
                       </label>
                       <label className="block">
-                        <span className="text-xs font-semibold text-zinc-300">Monthly price in Ghana (GHS)</span>
+                        <span className="block text-sm font-medium leading-5 text-fg">Monthly price in Ghana (GHS)</span>
                         <input
                           type="number"
                           inputMode="decimal"
@@ -382,7 +382,7 @@ export default function PlanPricingEditor({ initialSettings }: { initialSettings
                         <FieldError message={errorKey('monthlyPrice')} />
                       </label>
                       <label className="block sm:col-span-2">
-                        <span className="text-xs font-semibold text-zinc-300">Monthly price outside Ghana (USD)</span>
+                        <span className="block text-sm font-medium leading-5 text-fg">Monthly price outside Ghana (USD)</span>
                         <input
                           type="number"
                           inputMode="decimal"
@@ -399,7 +399,7 @@ export default function PlanPricingEditor({ initialSettings }: { initialSettings
 
                     {planType === 'TEAM' ? (
                       <label className="block">
-                        <span className="text-xs font-semibold text-zinc-300">Staff limit</span>
+                        <span className="block text-sm font-medium leading-5 text-fg">Staff limit</span>
                         <input
                           type="number"
                           inputMode="numeric"
@@ -437,7 +437,7 @@ export default function PlanPricingEditor({ initialSettings }: { initialSettings
                                 checked={checked}
                                 onChange={() => toggleFeature(planType, tier, feature)}
                                 disabled={isSaving}
-                                className="mt-0.5 h-4 w-4 shrink-0 accent-emerald-500"
+                                className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--accent)]"
                               />
                               <span className="min-w-0">
                                 <span className="block text-sm font-semibold text-zinc-100">{PLAN_FEATURE_DETAILS[feature].label}</span>
@@ -467,7 +467,7 @@ export default function PlanPricingEditor({ initialSettings }: { initialSettings
             <div className="grid grid-cols-2 gap-3 p-5 sm:grid-cols-4">
               {TERM_MONTHS.map((months) => (
                 <label key={months} className="block">
-                  <span className="text-xs font-semibold text-zinc-300">
+                  <span className="block text-sm font-medium leading-5 text-fg">
                     {months} {months === 1 ? 'month' : 'months'}
                   </span>
                   <div className="relative mt-1">
@@ -520,7 +520,7 @@ export default function PlanPricingEditor({ initialSettings }: { initialSettings
             <div className="grid grid-cols-2 gap-3 p-5 sm:grid-cols-4">
               {DESKTOP_LICENSE_DAYS.map((days) => (
                 <label key={days} className="block">
-                  <span className="text-xs font-semibold text-zinc-300">{DESKTOP_PACK_LABELS[days]} (GHS)</span>
+                  <span className="block text-sm font-medium leading-5 text-fg">{DESKTOP_PACK_LABELS[days]} (GHS)</span>
                   <input
                     type="number"
                     inputMode="decimal"
@@ -540,7 +540,7 @@ export default function PlanPricingEditor({ initialSettings }: { initialSettings
                   <label className="mt-1.5 flex items-center gap-1.5 text-xs text-zinc-400">
                     <input type="checkbox" checked={form.offeredDesktopPacks.includes(days)} disabled={isSaving}
                       onChange={() => setForm((current) => ({ ...current, offeredDesktopPacks: toggleIn(current.offeredDesktopPacks, days) }))}
-                      className="h-3.5 w-3.5 accent-emerald-500" />
+                      className="h-5 w-5 accent-[var(--accent)]" />
                     Offered
                   </label>
                 </label>
@@ -562,13 +562,13 @@ export default function PlanPricingEditor({ initialSettings }: { initialSettings
             <label className="flex items-center gap-3">
               <input type="checkbox" checked={form.manualPayment.enabled} disabled={isSaving}
                 onChange={(event) => setForm((current) => ({ ...current, manualPayment: { ...current.manualPayment, enabled: event.target.checked } }))}
-                className="h-4 w-4 accent-emerald-500" />
+                className="h-5 w-5 accent-[var(--accent)]" />
               <span className="text-sm font-semibold text-zinc-100">Allow paying by Mobile Money</span>
             </label>
             <div className="grid gap-3 sm:grid-cols-3">
               {([['network', 'Network'], ['momoNumber', 'MoMo number'], ['accountName', 'Account name']] as const).map(([field, label]) => (
                 <label key={field} className="block">
-                  <span className="text-xs font-semibold text-zinc-300">{label}</span>
+                  <span className="block text-sm font-medium leading-5 text-fg">{label}</span>
                   <input value={form.manualPayment[field]} disabled={isSaving}
                     onChange={(event) => setForm((current) => ({ ...current, manualPayment: { ...current.manualPayment, [field]: event.target.value } }))}
                     className={cn(inputClass, 'mt-1')} />
@@ -577,10 +577,10 @@ export default function PlanPricingEditor({ initialSettings }: { initialSettings
               ))}
             </div>
             <label className="block">
-              <span className="text-xs font-semibold text-zinc-300">Instructions</span>
+              <span className="block text-sm font-medium leading-5 text-fg">Instructions</span>
               <textarea rows={3} value={form.manualPayment.instructions} disabled={isSaving} maxLength={500}
                 onChange={(event) => setForm((current) => ({ ...current, manualPayment: { ...current.manualPayment, instructions: event.target.value } }))}
-                className="mt-1 w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-white outline-none focus:border-emerald-500" />
+                className={controlClass(false, 'mt-1 w-full')} />
               <FieldError message={errors['manualPayment.instructions']} />
             </label>
             {!form.paystackEnabled && !form.manualPayment.enabled ? (
@@ -617,7 +617,7 @@ export default function PlanPricingEditor({ initialSettings }: { initialSettings
               type="button"
               onClick={() => setForm(toForm(DEFAULT_BILLING_CONFIG))}
               disabled={isSaving}
-              className="inline-flex h-10 items-center gap-2 rounded-md border border-zinc-700 px-3 text-sm font-semibold text-zinc-300 transition-colors hover:border-zinc-500 disabled:opacity-50"
+              className="inline-flex h-11 md:h-10 items-center gap-2 rounded-md border border-zinc-700 px-3 text-sm font-semibold text-zinc-300 transition-colors hover:border-zinc-500 disabled:opacity-50"
             >
               <RotateCcw className="h-4 w-4" />
               Load defaults
@@ -629,7 +629,7 @@ export default function PlanPricingEditor({ initialSettings }: { initialSettings
                 setSaveError(null)
               }}
               disabled={isSaving || !isDirty}
-              className="h-10 rounded-md border border-zinc-700 px-3 text-sm font-semibold text-zinc-300 transition-colors hover:border-zinc-500 disabled:opacity-50"
+              className="h-11 md:h-10 rounded-md border border-zinc-700 px-3 text-sm font-semibold text-zinc-300 transition-colors hover:border-zinc-500 disabled:opacity-50"
             >
               Discard changes
             </button>
@@ -637,7 +637,7 @@ export default function PlanPricingEditor({ initialSettings }: { initialSettings
               type="button"
               onClick={save}
               disabled={isSaving || !isDirty || hasErrors}
-              className="inline-flex h-10 items-center gap-2 rounded-md bg-emerald-500 px-4 text-sm font-semibold text-zinc-950 transition-colors hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-11 md:h-10 items-center gap-2 rounded-md bg-accent px-4 text-sm font-semibold text-accent-fg transition-colors hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Save className="h-4 w-4" />
               {isSaving ? 'Saving…' : 'Save changes'}

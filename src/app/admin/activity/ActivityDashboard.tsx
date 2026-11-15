@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { ScrollText, Search } from 'lucide-react'
 import type { AdminActivityRow } from '@/lib/actions/admin-farm-actions'
 import { MobileCardList } from '@/components/ui/MobileCardList'
+import { controlClass } from '@/components/ui/form'
 
 const dateTimeFormatter = new Intl.DateTimeFormat('en-GH', {
   month: 'short',
@@ -89,7 +90,7 @@ export default function ActivityDashboard({ events }: { events: AdminActivityRow
               placeholder="Search farm, action, or admin"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              className="h-11 w-full rounded-md border border-zinc-700 bg-zinc-900 pl-10 pr-4 text-sm text-white outline-none transition-colors placeholder:text-zinc-500 focus:border-emerald-500"
+              className={controlClass(false, 'w-full pl-10 pr-4')}
             />
           </label>
         </div>

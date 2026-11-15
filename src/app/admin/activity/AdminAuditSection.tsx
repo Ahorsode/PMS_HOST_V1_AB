@@ -6,7 +6,7 @@ function formatDateTime(value: string) {
   return new Intl.DateTimeFormat('en-GH', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(value))
 }
 
-const fieldClass = 'h-9 rounded-md border border-zinc-700 bg-zinc-950 px-2 text-sm text-white outline-none focus:border-emerald-500'
+const fieldClass = 'h-9 rounded-md border border-zinc-700 bg-zinc-950 px-2 text-sm text-white outline-none focus:border-accent'
 
 /** Every change made from the admin console, with filters and CSV export. */
 export default function AdminAuditSection({
@@ -39,25 +39,25 @@ export default function AdminAuditSection({
         </div>
 
         <form action="/admin/activity" className="flex flex-wrap items-end gap-2 border-b border-zinc-800 px-5 py-3">
-          <label className="block text-xs text-zinc-400">
+          <label className="block text-sm font-medium leading-5 text-fg">
             Admin
             <select name="admin" defaultValue={filters.admin ?? ''} className={`${fieldClass} mt-1 block`}>
               <option value="">Anyone</option>
               {options.admins.map((admin) => <option key={admin} value={admin}>{admin}</option>)}
             </select>
           </label>
-          <label className="block text-xs text-zinc-400">
+          <label className="block text-sm font-medium leading-5 text-fg">
             Kind
             <select name="action" defaultValue={filters.action ?? ''} className={`${fieldClass} mt-1 block`}>
               <option value="">All</option>
               {options.actionGroups.map((group) => <option key={group} value={group}>{group}</option>)}
             </select>
           </label>
-          <label className="block text-xs text-zinc-400">
+          <label className="block text-sm font-medium leading-5 text-fg">
             From
             <input type="date" name="from" defaultValue={filters.from ?? ''} className={`${fieldClass} mt-1 block`} />
           </label>
-          <label className="block text-xs text-zinc-400">
+          <label className="block text-sm font-medium leading-5 text-fg">
             To
             <input type="date" name="to" defaultValue={filters.to ?? ''} className={`${fieldClass} mt-1 block`} />
           </label>
@@ -65,7 +65,7 @@ export default function AdminAuditSection({
             Search
             <input name="q" defaultValue={filters.q ?? ''} placeholder="Words or a farm id" className={`${fieldClass} mt-1 block w-full min-w-[160px]`} />
           </label>
-          <button type="submit" className="h-9 rounded-md bg-emerald-500 px-3 text-sm font-semibold text-zinc-950">Filter</button>
+          <button type="submit" className="h-11 md:h-9 rounded-md bg-accent px-3 text-sm font-semibold text-accent-fg">Filter</button>
           {filtered ? <Link href="/admin/activity" className="h-9 rounded-md border border-zinc-700 px-3 py-2 text-sm text-zinc-300">Clear</Link> : null}
         </form>
 
