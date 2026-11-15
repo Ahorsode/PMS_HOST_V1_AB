@@ -1,6 +1,7 @@
 "use server";
 
 import prisma from "@/lib/db";
+import { revalidateFarmPerformanceCaches } from "@/lib/performance/cache-tags";
 import { getFarmRecord } from "@/lib/farm-record";
 import { getAppSettings } from "@/lib/settings/app-settings";
 import { revalidatePath } from "next/cache";
@@ -31,6 +32,7 @@ export async function updateFarmSettings(data: {
   });
 
   revalidatePath("/dashboard/settings");
+  revalidateFarmPerformanceCaches(activeFarmId);
   return settings;
 }
 
@@ -44,6 +46,7 @@ export async function updateReorderLevel(inventoryId: string, reorderLevel: numb
   });
 
   revalidatePath("/dashboard/inventory");
+  revalidateFarmPerformanceCaches(activeFarmId);
   return updated;
 }
 
@@ -69,6 +72,7 @@ export async function createVaccinationSchedule(data: {
   revalidatePath(`/dashboard/livestock/${data.livestockId}`);
   revalidatePath(`/dashboard/flocks/${data.livestockId}`);
   revalidatePath(`/dashboard/health`);
+  revalidateFarmPerformanceCaches(activeFarmId);
   return schedule;
 }
 
@@ -94,6 +98,7 @@ export async function createMedicationSchedule(data: {
   revalidatePath(`/dashboard/livestock/${data.livestockId}`);
   revalidatePath(`/dashboard/flocks/${data.livestockId}`);
   revalidatePath(`/dashboard/health`);
+  revalidateFarmPerformanceCaches(activeFarmId);
   return schedule;
 }
 

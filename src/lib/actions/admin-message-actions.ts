@@ -100,7 +100,7 @@ export async function adminSendMessage(input: z.input<typeof messageSchema>): Pr
   })
   revalidatePath('/admin/messages')
   revalidatePath('/dashboard', 'layout')
-  revalidateTag(FARM_MESSAGES_TAG, 'max')
+  revalidateTag(FARM_MESSAGES_TAG, { expire: 0 })
   return { success: true }
 }
 
@@ -115,6 +115,6 @@ export async function adminWithdrawMessage(id: string): Promise<MessageActionRes
   await logAdminAction(admin, { action: 'message.withdraw', targetType: 'message', targetId: id, summary: `Withdrew the message "${message.title}"` })
   revalidatePath('/admin/messages')
   revalidatePath('/dashboard', 'layout')
-  revalidateTag(FARM_MESSAGES_TAG, 'max')
+  revalidateTag(FARM_MESSAGES_TAG, { expire: 0 })
   return { success: true }
 }
