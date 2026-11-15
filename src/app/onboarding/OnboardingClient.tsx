@@ -3,12 +3,19 @@
 import React, { useState } from 'react';
 import { onboardFarmer } from '@/lib/actions/dashboard-actions';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { ArrowRight, User, Users } from 'lucide-react';
-import { Input } from '@/components/ui/Input';
-import { Button } from '@/components/ui/Button';
-import { cn } from '@/lib/utils';
-import { CountrySelect } from '@/components/ui/CountrySelect';
+import { AuthShell } from '@/components/auth/AuthShell';
+import {
+  Button,
+  CountrySelect,
+  Form,
+  FormActions,
+  FormError,
+  FormRow,
+  FormSection,
+  Input,
+  OptionCards,
+} from '@/components/ui/form';
 import { billingCurrencyForCountry, countryName, currencyForCountry } from '@/lib/countries';
 
 const planTypes = [
@@ -42,7 +49,7 @@ export default function OnboardingClient({
     e.preventDefault();
     if (isLoading) return;
     if (!country) {
-      setError('Select the country your farm is in.');
+      setError('Choose the country your farm is in.');
       return;
     }
     if (!planType) {
@@ -72,125 +79,89 @@ export default function OnboardingClient({
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-3">
-      <div className="max-w-md w-full space-y-11 relative z-10">
-        <div className="text-center space-y-3">
-          <h1 className="text-5xl font-bold text-white tracking-normal italic">Welcome to <span className="text-emerald-400">Poultry Ledger</span></h1>
-          <p className="text-sm text-white/70 font-bold uppercase tracking-widest italic">
-            Let's get your farm set up to start tracking your operations.
-          </p>
-        </div>
+    <AuthShell
+      wide
+      title="Set up your farm"
+      subtitle="A few details and you can start recording. Every feature is free for your first 30 days."
+    >
+      <Form onSubmit={handleSubmit}>
+        <FormError>{error}</FormError>
 
-        <Card className="glass-morphism border-none shadow-2xl rounded-lg p-3">
-          <CardHeader>
-            <CardTitle className="text-2xl italic tracking-normal">Farm Profile</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-7">
-              {error && (
-                <div className="p-3 bg-red-500/10 border border-red-500/30 text-red-400 text-sm rounded-md font-bold backdrop-blur-md">
-                  {error}
-                </div>
-              )}
+        <FormSection title="Your farm">
+          <Input
+            label="Farm name"
+            name="name"
+            required
+            placeholder="e.g. Green Valley Farm"
+            disabled={isLoading}
+          />
+          <CountrySelect
+            value={country}
+            onChange={(code) => {
+              setCountry(code);
+              setError(null);
+            }}
+            required
+            disabled={isLoading}
+            hint={
+              country
+                ? `Sales, expenses and reports will be shown in ${currencyForCountry(country)}.`
+                : 'Sets the money your sales, expenses and reports are shown in.'
+            }
+          />
+          <FormRow>
+            <Input
+              label="Town or city"
+              name="location"
+              required
+              placeholder={country ? `e.g. a town in ${countryName(country)}` : 'e.g. Kumasi'}
+              disabled={isLoading}
+            />
+            <Input
+              label="Birds the farm can hold"
+              name="capacity"
+              type="number"
+              required
+              min="1"
+              unit="birds"
+              placeholder="e.g. 5000"
+              disabled={isLoading}
+            />
+          </FormRow>
+        </FormSection>
 
-              <div className="space-y-5">
-                <Input 
-                  label="Farm Name"
-                  name="name"
-                  required
-                  placeholder="e.g. Green Valley Farm"
-                  disabled={isLoading}
-                />
-                <CountrySelect
-                  value={country}
-                  onChange={(code) => {
-                    setCountry(code);
-                    setError(null);
-                  }}
-                  required
-                  disabled={isLoading}
-                  hint={
-                    country
-                      ? `Sales, expenses and reports will be shown in ${currencyForCountry(country)}.`
-                      : 'Sets the currency your sales, expenses and reports are shown in.'
-                  }
-                />
-                <Input 
-                  label="Town or city"
-                  name="location"
-                  required
-                  placeholder={country ? `e.g. a town in ${countryName(country)}` : 'e.g. Kumasi'}
-                  disabled={isLoading}
-                />
-                <Input 
-                  label="Total Capacity (Birds)"
-                  name="capacity"
-                  type="number"
-                  required
-                  min="1"
-                  placeholder="e.g. 5000"
-                  disabled={isLoading}
-                />
-              </div>
+        <FormSection title="Who will use Poultry Ledger?" hint="You can switch between Solo and Team later in Settings.">
+          <OptionCards
+            aria-label="Who will use Poultry Ledger"
+            value={planType}
+            onChange={setPlanType}
+            disabled={isLoading}
+            options={planTypes.map((option) => {
+              const Icon = option.icon;
+              return {
+                value: option.value,
+                label: option.label,
+                description: option.description,
+                icon: <Icon className="h-5 w-5" strokeWidth={1.75} />,
+                // Plans cost cedis in Ghana and dollars elsewhere, so the price waits for the country.
+                aside: country ? priceLabels[billingCurrencyForCountry(country)][option.value] : undefined,
+              };
+            })}
+          />
+        </FormSection>
 
-              <fieldset className="space-y-3">
-                <legend className="mb-3 text-sm font-bold text-white">Who will use Poultry Ledger?</legend>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  {planTypes.map((option) => {
-                    const Icon = option.icon;
-                    const selected = planType === option.value;
-                    return (
-                      <button
-                        key={option.value}
-                        type="button"
-                        onClick={() => setPlanType(option.value)}
-                        disabled={isLoading}
-                        aria-pressed={selected}
-                        className={cn(
-                          'flex flex-col items-start gap-2 rounded-lg border p-4 text-left transition-all',
-                          selected
-                            ? 'border-emerald-400 bg-emerald-500/15 ring-2 ring-emerald-400/40'
-                            : 'border-white/10 bg-white/5 hover:border-white/30',
-                        )}
-                      >
-                        <span className="flex items-center gap-2 text-base font-bold text-white">
-                          <Icon className="h-5 w-5 text-emerald-300" />
-                          {option.label}
-                        </span>
-                        <span className="text-xs leading-5 text-white/70">{option.description}</span>
-                        {/* Plans cost cedis in Ghana and dollars elsewhere, so the price waits for the country. */}
-                        {country ? (
-                          <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-300/90">{priceLabels[billingCurrencyForCountry(country)][option.value]}</span>
-                        ) : null}
-                      </button>
-                    );
-                  })}
-                </div>
-                <p className="text-xs leading-5 text-white/60">
-                  Every feature is free for your first 30 days. You can switch between Solo and Team later in Settings.
-                </p>
-              </fieldset>
-
-              <div className="pt-3">
-                <Button
-                  type="submit"
-                  isLoading={isLoading}
-                  loadingText="Setting up farm..."
-                  size="lg"
-                  className="w-full"
-                >
-                  Start Managing Farm
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Decorative background effects for onboarding */}
-      <div className="fixed top-1/4 left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-[120px] -z-10 animate-pulse" />
-      <div className="fixed bottom-1/4 right-1/4 w-96 h-96 bg-teal-500/20 rounded-full blur-[120px] -z-10 animate-pulse delay-700" />
-    </div>
+        <FormActions>
+          <Button
+            type="submit"
+            variant="accent"
+            isLoading={isLoading}
+            loadingText="Setting up your farm"
+          >
+            Start using Poultry Ledger
+            <ArrowRight className="h-4 w-4" strokeWidth={1.75} />
+          </Button>
+        </FormActions>
+      </Form>
+    </AuthShell>
   );
 }

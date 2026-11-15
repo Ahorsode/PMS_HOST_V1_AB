@@ -1,24 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { signIn } from "next-auth/react";
-import GlassCard from "./GlassCard";
-import FloatingInput from "./FloatingInput";
-import GoogleButton from "./GoogleButton";
-import LoadingOverlay from "./LoadingOverlay";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { MIN_PASSWORD_LENGTH } from "@/lib/password-policy";
+import { AuthDivider, AuthShell } from "./AuthShell";
+import GoogleButton from "./GoogleButton";
+import { Button, Form, Input } from "@/components/ui/form";
 
 interface AuthFormProps {
   mode: "login" | "signup";
 }
 
+/**
+ * Generic sign-in / sign-up card. Not used by the live /login and /signup
+ * pages, but kept in the same look so it matches if it is ever wired up.
+ */
 export default function AuthForm({ mode }: AuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [shake, setShake] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -27,20 +28,16 @@ export default function AuthForm({ mode }: AuthFormProps) {
     setError(null);
 
     const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
     const password = formData.get("password") as string;
-    const name = formData.get("name") as string;
 
     // Simulate validation/submission logic
     // In a real app, you'd use signIn('credentials', ...) or a server action
     try {
       // Mock delay
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       if (password.length < MIN_PASSWORD_LENGTH) {
-        setShake(true);
-        setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`);
-        setTimeout(() => setShake(false), 500);
+        setError(`Use at least ${MIN_PASSWORD_LENGTH} characters`);
         return;
       }
 
@@ -57,123 +54,61 @@ export default function AuthForm({ mode }: AuthFormProps) {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center p-5">
-      <AnimatePresence>
-        {isLoading && <LoadingOverlay />}
-      </AnimatePresence>
-
-      <GlassCard className="w-full max-w-md">
-        <motion.div
-          key={mode}
-          initial={{ opacity: 0, x: mode === "login" ? -20 : 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: mode === "login" ? 20 : -20 }}
-          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+    <AuthShell
+      title={mode === "login" ? "Sign in" : "Create your account"}
+      subtitle={mode === "login" ? "Welcome back. Sign in to see your farm." : "Keep your farm records in one place."}
+      footer={
+        mode === "login" ? (
+          <>
+            Don't have an account?{" "}
+            <Link href="/signup" className="font-semibold text-accent hover:underline">
+              Create one
+            </Link>
+          </>
+        ) : (
+          <>
+            Already have an account?{" "}
+            <Link href="/login" className="font-semibold text-accent hover:underline">
+              Sign in
+            </Link>
+          </>
+        )
+      }
+    >
+      <Form onSubmit={handleSubmit} className="space-y-5">
+        {mode === "signup" && (
+          <>
+            <Input label="Full name" name="name" type="text" autoComplete="name" required />
+            <Input label="Phone number" name="phone" type="tel" inputMode="tel" autoComplete="tel" required />
+          </>
+        )}
+        <Input label="Email" name="email" type="email" autoComplete="email" required />
+        <Input
+          label="Password"
+          name="password"
+          type="password"
+          autoComplete={mode === "login" ? "current-password" : "new-password"}
+          required
+          error={error || undefined}
+        />
+        <Button
+          type="submit"
+          variant="accent"
+          isLoading={isLoading}
+          loadingText={mode === "login" ? "Signing in" : "Creating account"}
+          className="min-h-12 w-full text-[15px] md:min-h-11"
         >
-          <div className="text-center mb-7">
-            <h1 className="text-4xl font-bold tracking-normal text-white mb-2">
-              {mode === "login" ? "Welcome Back" : "Start Your Farm"}
-            </h1>
-            <p className="text-gray-400">
-              {mode === "login" 
-                ? "Sign in to manage your poultry counts" 
-                : "Create an account to digitize your records"}
-            </p>
-          </div>
+          {mode === "login" ? "Sign in" : "Create account"}
+        </Button>
+      </Form>
 
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <AnimatePresence mode="popLayout">
-              {mode === "signup" && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0, marginBottom: 0 }}
-                  animate={{ opacity: 1, height: "auto", marginBottom: 24 }}
-                  exit={{ opacity: 0, height: 0, marginBottom: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className="space-y-3"
-                >
-                  <FloatingInput
-                    label="Full Name"
-                    name="name"
-                    type="text"
-                    required
-                    placeholder=" "
-                  />
-                  <FloatingInput
-                    label="Phone Number"
-                    name="phone"
-                    type="tel"
-                    required
-                    placeholder=" "
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
+      <AuthDivider />
 
-            <FloatingInput
-              label="Email Address"
-              name="email"
-              type="email"
-              required
-              placeholder=" "
-            />
-
-            <motion.div
-              animate={shake ? { x: [-10, 10, -10, 10, 0] } : {}}
-              transition={{ duration: 0.4 }}
-            >
-              <FloatingInput
-                label="Password"
-                name="password"
-                type="password"
-                required
-                error={error || undefined}
-                placeholder=" "
-              />
-            </motion.div>
-
-            <motion.button
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.99 }}
-              type="submit"
-              className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-md font-bold transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] active:shadow-none"
-            >
-              {mode === "login" ? "Sign In" : "Create Account"}
-            </motion.button>
-          </form>
-
-          <div className="relative my-7">
-            <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t border-white/10"></span>
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-[#121212]/50 backdrop-blur-md px-3 text-gray-500">Or continue with</span>
-            </div>
-          </div>
-
-          <GoogleButton 
-            onClick={handleGoogleSignIn} 
-            label={mode === "login" ? "Google" : "Sign up with Google"} 
-          />
-
-          <div className="mt-7 text-center text-sm text-gray-400">
-            {mode === "login" ? (
-              <>
-                Don't have an account?{" "}
-                <Link href="/signup" className="text-blue-400 font-semibold hover:text-blue-300 transition-colors">
-                  Create one
-                </Link>
-              </>
-            ) : (
-              <>
-                Already have an account?{" "}
-                <Link href="/login" className="text-blue-400 font-semibold hover:text-blue-300 transition-colors">
-                  Sign in
-                </Link>
-              </>
-            )}
-          </div>
-        </motion.div>
-      </GlassCard>
-    </div>
+      <GoogleButton
+        onClick={handleGoogleSignIn}
+        label={mode === "login" ? "Continue with Google" : "Sign up with Google"}
+        disabled={isLoading}
+      />
+    </AuthShell>
   );
 }
