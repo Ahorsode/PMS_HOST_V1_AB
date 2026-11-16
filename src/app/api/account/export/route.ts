@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
-import { getAuthContext } from '@/lib/auth-utils';
+import { getAuthContext } from '@/lib/auth/auth-utils';
 import { checkRateLimit, rateLimitHeaders } from '@/lib/performance/rate-limit';
 import { BRAND_NAME } from '@/lib/brand';
 

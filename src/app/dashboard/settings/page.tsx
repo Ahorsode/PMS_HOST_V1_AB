@@ -2,13 +2,13 @@ import React, { Suspense } from 'react';
 import prisma from '@/lib/db';
 import { auth } from '@/auth';
 import { SettingsContent } from './SettingsContent';
-import { getAuthContext } from '@/lib/auth-utils';
+import { getAuthContext } from '@/lib/auth/auth-utils';
 import { Settings } from 'lucide-react';
 import { feedCategoryFilter } from '@/lib/inventory/feed-categories';
-import { getFarmAccess } from '@/lib/subscription-utils';
+import { getFarmAccess } from '@/lib/billing/subscription-utils';
 import { getBillingConfig } from '@/lib/billing/billing-config';
 import { planTypePriceSummary } from '@/lib/billing/pricing';
-import { getFarmMoney } from '@/lib/farm-currency';
+import { getFarmMoney } from '@/lib/farm/farm-currency';
 import { PlanTypeCard } from './PlanTypeCard';
 
 export default async function SettingsPage() {

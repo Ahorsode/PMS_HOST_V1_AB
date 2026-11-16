@@ -1,10 +1,10 @@
-import { getAuthContext } from '@/lib/auth-utils'
+import { getAuthContext } from '@/lib/auth/auth-utils'
 import { getDesktopLicenses } from '@/lib/actions/licenses'
-import { getFarmAccess } from '@/lib/subscription-utils'
+import { getFarmAccess } from '@/lib/billing/subscription-utils'
 import { getBillingConfig } from '@/lib/billing/billing-config'
 import { isPaystackConfigured } from '@/lib/billing/paystack'
 import { getFarmDiscountPercent } from '@/lib/billing/checkout-discounts'
-import { getFarmMoney } from '@/lib/farm-currency'
+import { getFarmMoney } from '@/lib/farm/farm-currency'
 import LicenseUpgradeClient from './LicenseUpgradeClient'
 
 export default async function LicenseUpgradePage({

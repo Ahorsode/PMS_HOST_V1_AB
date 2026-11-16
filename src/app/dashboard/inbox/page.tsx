@@ -18,8 +18,8 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import prisma from '@/lib/db';
-import { getAuthContext } from '@/lib/auth-utils';
-import { getFarmAccess } from '@/lib/subscription-utils';
+import { getAuthContext } from '@/lib/auth/auth-utils';
+import { getFarmAccess } from '@/lib/billing/subscription-utils';
 import { getAppSettings } from '@/lib/settings/app-settings';
 import { getDashboardNotices } from '@/lib/settings/dashboard-notices';
 import { getDashboardMessages } from '@/lib/settings/farm-messages';

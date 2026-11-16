@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import prisma, { type DbTransactionClient } from '@/lib/db'
 import { checkRateLimit } from '@/lib/performance/rate-limit'
-import { getFarmStaffAccess } from '@/lib/subscription-utils'
+import { getFarmStaffAccess } from '@/lib/billing/subscription-utils'
 import { normalizeTeamMessage } from '@/lib/team-messages/shared'
 import { getTeamChatViewer, type TeamChatViewer } from '@/lib/team-messages/team-chat'
 

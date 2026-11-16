@@ -1,7 +1,7 @@
 'use server'
 
 import prisma from '@/lib/db'
-import { getAuthContext } from '@/lib/auth-utils'
+import { getAuthContext } from '@/lib/auth/auth-utils'
 import { revalidatePath } from 'next/cache'
 import {
   calculateUpgradeTotal,
@@ -12,7 +12,7 @@ import {
   PLAN_TYPE_LABELS,
   toMinorUnits,
 } from '@/lib/billing/pricing'
-import { getFarmMoney } from '@/lib/farm-currency'
+import { getFarmMoney } from '@/lib/farm/farm-currency'
 import {
   checkoutErrorMessage,
   createPaystackReference,
@@ -20,7 +20,7 @@ import {
   isPaystackConfigured,
 } from '@/lib/billing/paystack'
 import { fulfillPaystackPayment, PAYSTACK_INITIATED_EVENT } from '@/lib/billing/paystack-fulfillment'
-import { getFarmAccess } from '@/lib/subscription-utils'
+import { getFarmAccess } from '@/lib/billing/subscription-utils'
 import { getBillingConfig } from '@/lib/billing/billing-config'
 import { checkPromoCode, getFarmDiscountPercent, type AppliedPromo } from '@/lib/billing/checkout-discounts'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'

@@ -5,7 +5,7 @@ import { Shield, Database, LayoutDashboard, Settings, Egg, Wheat, ThermometerSun
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { FormActions, FormNote, FormSection } from '@/components/ui/form/layout';
-import type { StaffPermissions } from '@/lib/staff-permission-defaults';
+import type { StaffPermissions } from '@/lib/auth/staff-permission-defaults';
 
 type PermissionState = Required<StaffPermissions>;
 

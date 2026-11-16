@@ -1,8 +1,8 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { requirePaymentAdminAction } from '@/lib/admin-auth'
-import { logAdminAction } from '@/lib/admin-audit'
+import { requirePaymentAdminAction } from '@/lib/admin/admin-auth'
+import { logAdminAction } from '@/lib/admin/admin-audit'
 import prisma from '@/lib/db'
 import { applyPaidUpgrade, computePaidPeriodEnd } from '@/lib/billing/apply-paid-upgrade'
 import { isPlanType } from '@/lib/billing/pricing'

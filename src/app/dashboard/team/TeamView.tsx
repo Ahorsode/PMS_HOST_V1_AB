@@ -6,7 +6,7 @@ import { Users, Mail, Shield, UserPlus, Loader2, CheckCircle2, Trash2, ShieldChe
 import { inviteWorker, getFarmMembers, deleteMember, deleteInvitation, updateWorkerPermissions, resetWorkerPermissions, updateFarmMemberRole, getUserForInvite, regenerateInviteCode, setMemberAccessPaused } from '@/lib/actions/staff-actions';
 import Link from 'next/link';
 import { InviteCodePanel, type IssuedInviteCode } from '@/components/team/InviteCodePanel';
-import { getDefaultPermissionsForRole, type RolePermissionDefaults } from '@/lib/staff-permission-defaults';
+import { getDefaultPermissionsForRole, type RolePermissionDefaults } from '@/lib/auth/staff-permission-defaults';
 import {
   Button,
   Dialog,

@@ -1,6 +1,6 @@
 import { getBillingConfig } from '@/lib/billing/billing-config';
 import { formatPlanPrice, lowestMonthlyPrice } from '@/lib/billing/pricing';
-import type { BillingCurrency } from '@/lib/countries';
+import type { BillingCurrency } from '@/lib/farm/countries';
 import OnboardingClient from './OnboardingClient';
 
 // Prices come from the admin Plans & Pricing page. Saving there revalidates this

@@ -18,7 +18,7 @@ import { restoreInventory } from '@/lib/actions/inventory-actions'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { MutationBoundary } from '@/components/ui/MutationFeedback'
-import { getBreedDisplayName } from '@/lib/livestock-breed-options'
+import { getBreedDisplayName } from '@/lib/farm/livestock-breed-options'
 import { useMoney } from '@/components/providers/CurrencyProvider'
 
 type TrashItems = {

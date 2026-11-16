@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Wheat, AlertTriangle, Activity, Package, Battery, ChevronRight } from 'lucide-react';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import Link from 'next/link';
-import { getBreedDisplayName } from '@/lib/livestock-breed-options';
+import { getBreedDisplayName } from '@/lib/farm/livestock-breed-options';
 import { getReorderThreshold, isFeedCategory, isLowStock } from '@/lib/inventory/feed-categories';
 
 export default async function FeedAnalyticsPage() {

@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
-import { requirePaymentAdminPage } from '@/lib/admin-auth'
+import { requirePaymentAdminPage } from '@/lib/admin/admin-auth'
 import { adminListFarms } from '@/lib/actions/admin-farm-actions'
 import FarmListDashboard from './FarmListDashboard'
-import { adminCan } from '@/lib/admin-permissions'
+import { adminCan } from '@/lib/admin/admin-permissions'
 
 export const dynamic = 'force-dynamic'
 

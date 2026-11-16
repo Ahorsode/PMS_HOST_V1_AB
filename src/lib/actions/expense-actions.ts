@@ -2,13 +2,13 @@
 
 import prisma from '@/lib/db'
 import { revalidatePath } from 'next/cache'
-import { getAuthContext } from '@/lib/auth-utils'
+import { getAuthContext } from '@/lib/auth/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
 import { revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 import { getSupabaseServerClient } from '@/lib/supabase-server'
 import { randomUUID } from 'crypto'
-import { parseFinancialLogDate } from '@/lib/financial-dates'
+import { parseFinancialLogDate } from '@/lib/finance/financial-dates'
 import { supplierBelongsToFarm } from '@/lib/suppliers/supplier-ownership'
 
 type AllocationMode = 'PERCENTAGE' | 'AMOUNT'

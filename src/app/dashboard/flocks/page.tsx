@@ -4,7 +4,7 @@ import { FlockActionsHeader } from './FlockActions';
 import { LivestockTable } from './LivestockTable';
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
 import { redirect } from 'next/navigation';
-import { getAuthContext } from '@/lib/auth-utils';
+import { getAuthContext } from '@/lib/auth/auth-utils';
 
 export default async function FlocksPage() {
   const { activeFarmId } = await getAuthContext();

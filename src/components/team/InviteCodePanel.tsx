@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Check, Copy, KeyRound, MessageCircle, X } from 'lucide-react';
-import { INVITE_CODE_TTL_HOURS } from '@/lib/invite-code-constants';
+import { INVITE_CODE_TTL_HOURS } from '@/lib/auth/invite-code-constants';
 
 export type IssuedInviteCode = { code: string; recipient: string };
 

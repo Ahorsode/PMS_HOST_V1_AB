@@ -1,5 +1,5 @@
 import { cache } from 'react';
-import prisma from './db';
+import prisma from '../db';
 import { SubscriptionTier } from '@prisma/client';
 import {
   applyStaffLimitOverride,
@@ -9,11 +9,11 @@ import {
   type FarmAccess,
   type FarmAccessInput,
   type FarmOverrideInput,
-} from './billing/access';
-import { getAppSettings } from './settings/app-settings';
-import { getBillingConfig } from './billing/billing-config';
-import { isPlanFeature } from './billing/pricing';
-import { getFarmRecord } from './farm-record';
+} from './access';
+import { getAppSettings } from '../settings/app-settings';
+import { getBillingConfig } from './billing-config';
+import { isPlanFeature } from './pricing';
+import { getFarmRecord } from '../farm/farm-record';
 
 export type Feature =
   | 'PDF_INVOICES'

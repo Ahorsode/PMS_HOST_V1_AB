@@ -8,7 +8,7 @@ import { Phone, ArrowRight, Loader2, Mail, Lock } from 'lucide-react';
 import { AuthDivider, AuthShell } from '@/components/auth/AuthShell';
 import GoogleButton from '@/components/auth/GoogleButton';
 import { Button, Checkbox, Form, FormError, FormRow, Input } from '@/components/ui/form';
-import { MIN_PASSWORD_LENGTH } from '@/lib/password-policy';
+import { MIN_PASSWORD_LENGTH } from '@/lib/auth/password-policy';
 
 export default function SignUpPage() {
   const [formData, setFormData] = useState({

@@ -13,7 +13,7 @@ import {
   type AdminAccountRow,
   type AdminUserActionResult,
 } from '@/lib/actions/admin-user-actions'
-import { ADMIN_ROLE_DETAILS, ADMIN_ROLES, isAdminRole } from '@/lib/admin-permissions'
+import { ADMIN_ROLE_DETAILS, ADMIN_ROLES, isAdminRole } from '@/lib/admin/admin-permissions'
 import { cn } from '@/lib/utils'
 import { controlClass } from '@/components/ui/form'
 

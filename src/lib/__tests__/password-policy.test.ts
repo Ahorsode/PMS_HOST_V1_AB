@@ -3,7 +3,7 @@ import {
   MAX_PASSWORD_LENGTH,
   MIN_PASSWORD_LENGTH,
   passwordPolicyError,
-} from "../password-policy";
+} from "../auth/password-policy";
 
 describe("password policy", () => {
   it("rejects common banned passwords", () => {

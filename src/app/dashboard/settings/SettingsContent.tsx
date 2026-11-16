@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Home, Settings as SettingsIcon, Bell, Shield, Plus, Loader2, Save, CheckCircle2, Monitor, Trash2, Egg, ShoppingCart, SlidersHorizontal, Wheat } from 'lucide-react';
 import { updateFarmInfo, createHouse, setFarmCountry } from '@/lib/actions/dashboard-actions';
-import { countryName, currencyForCountry } from '@/lib/countries';
+import { countryName, currencyForCountry } from '@/lib/farm/countries';
 import { updateFarmSettings, getFarmSettings, getSalesSettings, updateSalesSettings } from '@/lib/actions/preference-actions';
 import {
   Button,

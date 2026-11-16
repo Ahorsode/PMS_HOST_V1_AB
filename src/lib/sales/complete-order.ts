@@ -5,9 +5,9 @@ import {
   getFifoEggAvailability,
   isEggInventoryCategory,
   type BatchEggAllocation,
-} from '@/lib/egg-fifo-utils'
-import { isUnsortedEggInventory } from '@/lib/egg-sale-allocation-utils'
-import { upsertOrderLedger } from '@/lib/order-ledger-sync'
+} from '@/lib/sales/egg-fifo-utils'
+import { isUnsortedEggInventory } from '@/lib/sales/egg-sale-allocation-utils'
+import { upsertOrderLedger } from '@/lib/sales/order-ledger-sync'
 
 type OrderItemWithInventory = {
   id: string

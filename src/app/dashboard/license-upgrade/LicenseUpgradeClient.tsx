@@ -22,7 +22,7 @@ import {
   type PaidTier,
 } from "@/lib/billing/pricing";
 import { cn } from "@/lib/utils";
-import type { BillingCurrency } from "@/lib/countries";
+import type { BillingCurrency } from "@/lib/farm/countries";
 
 type PlanTypeValue = "SOLO" | "TEAM";
 

@@ -1,12 +1,12 @@
 import React from 'react';
-import { getAuthContext } from '@/lib/auth-utils';
+import { getAuthContext } from '@/lib/auth/auth-utils';
 import prisma from '@/lib/db';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { User, Mail, Shield, Building, Calendar, Download, Trash2, FileText } from 'lucide-react';
 import { EditProfileButton } from '@/components/profile/EditProfileButton';
-import { formatRoleLabel } from '@/lib/navigation-permissions';
+import { formatRoleLabel } from '@/lib/navigation/navigation-permissions';
 import { LegalLinks } from '@/components/legal/LegalPage';
-import { accountDeletionMailto, DELETION_COMPLETION_DAYS } from '@/lib/legal';
+import { accountDeletionMailto, DELETION_COMPLETION_DAYS } from '@/lib/legal/legal';
 
 export default async function ProfilePage() {
   const { userId, activeFarmId, role, isFarmOwner } = await getAuthContext();

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   buildPhoneLookupCandidates,
   normalizePhoneNumber,
-} from '@/lib/phone-auth'
+} from '@/lib/auth/phone-auth'
 
 describe('auth-utils phone helpers', () => {
   it('normalizes Ghana local numbers', () => {

@@ -24,7 +24,7 @@ import {
   getBreedOptionsForCategory,
   LIVESTOCK_CATEGORY_OPTIONS,
   normalizeBreedValue,
-} from '@/lib/livestock-breed-options';
+} from '@/lib/farm/livestock-breed-options';
 
 interface LivestockFormProps {
   houses: { id: string; name: string }[];

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getActiveAdminUser } from '@/lib/admin-auth'
+import { getActiveAdminUser } from '@/lib/admin/admin-auth'
 import { adminListAuditLog } from '@/lib/actions/admin-audit-actions'
 import { toCsv } from '@/lib/admin/plan-payments'
 

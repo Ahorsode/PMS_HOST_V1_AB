@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { requirePaymentAdminPage } from '@/lib/admin-auth'
+import { requirePaymentAdminPage } from '@/lib/admin/admin-auth'
 import { adminGetBillingSettings } from '@/lib/actions/admin-billing-actions'
 import PlanPricingEditor from './PlanPricingEditor'
 

@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import {
   allocateLineRevenueByBatch,
   moneyBalances,
-} from '@/lib/egg-fifo-utils'
-import { derivePaymentStatus } from '@/lib/order-ledger-sync'
+} from '@/lib/sales/egg-fifo-utils'
+import { derivePaymentStatus } from '@/lib/sales/order-ledger-sync'
 
 describe('allocateLineRevenueByBatch', () => {
   it('splits revenue proportionally by eggs used per batch', () => {

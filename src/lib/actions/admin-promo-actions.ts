@@ -3,8 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import prisma from '@/lib/db'
-import { requirePaymentAdminAction, type ActiveAdmin } from '@/lib/admin-auth'
-import { logAdminAction } from '@/lib/admin-audit'
+import { requirePaymentAdminAction, type ActiveAdmin } from '@/lib/admin/admin-auth'
+import { logAdminAction } from '@/lib/admin/admin-audit'
 import { normalizePromoCode } from '@/lib/billing/checkout-discounts'
 import { PLAN_TYPES } from '@/lib/billing/pricing'
 

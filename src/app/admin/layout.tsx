@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { getActiveAdminUser } from '@/lib/admin-auth'
+import { getActiveAdminUser } from '@/lib/admin/admin-auth'
 import AdminNav from './AdminNav'
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {

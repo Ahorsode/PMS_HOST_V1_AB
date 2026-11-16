@@ -8,7 +8,7 @@ import { Dialog } from '@/components/ui/Dialog';
 import { cn } from '@/lib/utils';
 import { LivestockType, Role, SubscriptionTier } from '@prisma/client';
 import { formatLivestockType } from '@/lib/utils/growth-utils';
-import { getBreedDisplayName, normalizeBreedValue } from '@/lib/livestock-breed-options';
+import { getBreedDisplayName, normalizeBreedValue } from '@/lib/farm/livestock-breed-options';
 import { g, ink } from '@/components/ui/graphite';
 import dynamic from 'next/dynamic';
 

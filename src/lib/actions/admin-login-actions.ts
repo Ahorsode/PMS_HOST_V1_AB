@@ -10,9 +10,9 @@ import {
   getPendingTwoStep,
   sanitizeAdminCallbackUrl,
   setPendingTwoStep,
-} from '@/lib/admin-session'
-import { logAdminAction } from '@/lib/admin-audit'
-import { verifyTotp } from '@/lib/admin-totp'
+} from '@/lib/admin/admin-session'
+import { logAdminAction } from '@/lib/admin/admin-audit'
+import { verifyTotp } from '@/lib/admin/admin-totp'
 import { checkRateLimit } from '@/lib/performance/rate-limit'
 import { z } from 'zod'
 

@@ -1,7 +1,7 @@
 'use server'
 
 import prisma from '@/lib/db'
-import { getAuthContext } from '@/lib/auth-utils'
+import { getAuthContext } from '@/lib/auth/auth-utils'
 
 export async function getSupplierStatement(supplierId: string) {
   const { activeFarmId } = await getAuthContext()

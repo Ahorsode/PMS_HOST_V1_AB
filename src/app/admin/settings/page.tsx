@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { requirePaymentAdminPage } from '@/lib/admin-auth'
+import { requirePaymentAdminPage } from '@/lib/admin/admin-auth'
 import { adminGetAppSettings } from '@/lib/actions/admin-settings-actions'
 import { getBillingConfig } from '@/lib/billing/billing-config'
 import { APP_SETTINGS_SECTIONS, isAppSettingsSection, type AppSettingsSection } from '@/lib/settings/schemas'

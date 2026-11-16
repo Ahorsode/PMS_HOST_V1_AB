@@ -2,8 +2,8 @@ import React from 'react'
 import dynamic from 'next/dynamic'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { getBatchPerformanceReports } from '@/lib/actions/analytics-actions'
-import { getAuthContext } from '@/lib/auth-utils'
-import { checkFeature } from '@/lib/subscription-utils'
+import { getAuthContext } from '@/lib/auth/auth-utils'
+import { checkFeature } from '@/lib/billing/subscription-utils'
 import { PlanFeatureLocked } from '@/components/billing/PlanFeatureLocked'
 
 const BatchPerformanceReportsPanel = dynamic(

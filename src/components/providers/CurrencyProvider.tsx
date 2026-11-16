@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useMemo } from 'react';
-import { DEFAULT_FARM_CURRENCY } from '@/lib/countries';
+import { DEFAULT_FARM_CURRENCY } from '@/lib/farm/countries';
 import { currencySymbol, formatCompactMoney, formatCurrency, formatMoneyCode } from '@/lib/utils';
 
 const CurrencyContext = createContext<string>(DEFAULT_FARM_CURRENCY);

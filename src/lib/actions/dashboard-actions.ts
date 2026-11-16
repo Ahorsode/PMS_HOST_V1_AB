@@ -2,19 +2,19 @@
 
 import prisma from '@/lib/db'
 import { revalidatePath, unstable_cache } from 'next/cache'
-import { getAuthContext } from '@/lib/auth-utils'
+import { getAuthContext } from '@/lib/auth/auth-utils'
 import bcrypt from 'bcryptjs'
 import { redirect } from 'next/navigation'
 import { checkWorkerPermissions } from './staff-actions'
 import { signOut } from '@/auth'
 import { farmCacheTags, revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
-import { passwordPolicyError } from '@/lib/password-policy'
+import { passwordPolicyError } from '@/lib/auth/password-policy'
 import { freeTrialFields } from '@/lib/billing/trial'
 import { getBillingConfig } from '@/lib/billing/billing-config'
 import { getAppSettings } from '@/lib/settings/app-settings'
 import type { PlanType } from '@prisma/client'
-import { currencyForCountry, isSupportedCountry } from '@/lib/countries'
+import { currencyForCountry, isSupportedCountry } from '@/lib/farm/countries'
 import {
   buildRevenueVelocitySeries,
   buildStrategicPriorities,

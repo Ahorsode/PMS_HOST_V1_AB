@@ -1,5 +1,5 @@
 import { randomInt } from 'crypto'
-import { INVITE_CODE_TTL_HOURS } from '@/lib/invite-code-constants'
+import { INVITE_CODE_TTL_HOURS } from '@/lib/auth/invite-code-constants'
 
 export { INVITE_CODE_TTL_HOURS }
 

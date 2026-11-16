@@ -6,9 +6,9 @@ import {
   getAuthContext,
   normalizePhoneNumber,
   SECURITY_PERMISSION_UPDATE_MESSAGE,
-} from '@/lib/auth-utils'
-import { generateInviteCode, inviteCodeExpiry, normalizeInviteCode } from '@/lib/invite-code'
-import { canAddWorker, getFarmStaffAccess } from '@/lib/subscription-utils'
+} from '@/lib/auth/auth-utils'
+import { generateInviteCode, inviteCodeExpiry, normalizeInviteCode } from '@/lib/auth/invite-code'
+import { canAddWorker, getFarmStaffAccess } from '@/lib/billing/subscription-utils'
 import { Role } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
@@ -16,7 +16,7 @@ import { setCachedSessionVersion } from '@/lib/performance/session-version-cache
 import {
   getDefaultPermissionsForRole,
   type StaffPermissions,
-} from '@/lib/staff-permission-defaults'
+} from '@/lib/auth/staff-permission-defaults'
 import { getAppSettings } from '@/lib/settings/app-settings'
 
 type StaffRole = 'OWNER' | 'MANAGER' | 'WORKER' | 'ACCOUNTANT' | 'FINANCE_OFFICER' | 'CASHIER'

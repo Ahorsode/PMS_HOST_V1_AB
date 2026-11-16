@@ -9,7 +9,7 @@ import {
   getDefaultPermissionsForRole,
   STAFF_ROLES,
   type StaffPermissionKey,
-} from '@/lib/staff-permission-defaults'
+} from '@/lib/auth/staff-permission-defaults'
 
 const text = (max: number, label = 'This field') =>
   z.string().trim().max(max, `${label} must be ${max} characters or fewer`)

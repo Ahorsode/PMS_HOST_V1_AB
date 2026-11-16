@@ -5,8 +5,8 @@ import {
   inviteCodeExpiry,
   isInviteCodeUsable,
   normalizeInviteCode,
-} from '@/lib/invite-code'
-import { checkLoginSecret } from '@/lib/login-credentials'
+} from '@/lib/auth/invite-code'
+import { checkLoginSecret } from '@/lib/auth/login-credentials'
 
 const now = new Date('2026-10-29T12:00:00Z')
 

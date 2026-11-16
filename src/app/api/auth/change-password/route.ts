@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import bcrypt from 'bcryptjs';
 import { auth } from '@/auth';
-import { passwordPolicyError } from '@/lib/password-policy';
+import { passwordPolicyError } from '@/lib/auth/password-policy';
 
 export async function POST(req: Request) {
   try {

@@ -1,7 +1,7 @@
 import { getTrashItems } from '@/lib/actions/trash-actions'
 import { TrashDashboardClient } from './TrashDashboardClient'
 import { redirect } from 'next/navigation'
-import { getAuthContext } from '@/lib/auth-utils'
+import { getAuthContext } from '@/lib/auth/auth-utils'
 
 export const metadata = {
   title: 'Data recovery center | Poultry Ledger',

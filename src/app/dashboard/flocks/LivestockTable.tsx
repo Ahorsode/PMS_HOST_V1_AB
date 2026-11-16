@@ -6,7 +6,7 @@ import { Bird } from 'lucide-react';
 import { FlockRowActions } from './FlockActions';
 import { formatLivestockType } from '@/lib/utils/growth-utils';
 import { WorkerStamp } from '@/components/ui/WorkerStamp';
-import { getBreedDisplayName } from '@/lib/livestock-breed-options';
+import { getBreedDisplayName } from '@/lib/farm/livestock-breed-options';
 import { cn } from '@/lib/utils';
 import { HeadCount, StatusText, formatShortDate, segmentClass, tone } from './flock-ui';
 

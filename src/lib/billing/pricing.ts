@@ -1,6 +1,6 @@
 import type { PlanType, SubscriptionTier } from '@prisma/client'
 import { z } from 'zod'
-import type { BillingCurrency } from '@/lib/countries'
+import type { BillingCurrency } from '@/lib/farm/countries'
 
 export type PaidTier = 'STANDARD' | 'PREMIUM'
 

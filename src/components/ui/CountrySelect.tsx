@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { COUNTRIES, GHANA } from '@/lib/countries';
+import { COUNTRIES, GHANA } from '@/lib/farm/countries';
 import { SearchSelect } from '@/components/ui/form/controls';
 
 const ghana = COUNTRIES.find((country) => country.code === GHANA)!;

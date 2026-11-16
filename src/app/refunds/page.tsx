@@ -6,7 +6,7 @@ import {
   CONTACT_WHATSAPP_URL,
   REFUND_PROCESSING_DAYS,
   REFUND_WINDOW_DAYS,
-} from '@/lib/legal';
+} from '@/lib/legal/legal';
 
 export const metadata: Metadata = {
   title: 'Refund Policy | Poultry Ledger',

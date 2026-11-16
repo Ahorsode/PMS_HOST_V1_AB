@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getAuthErrorCopy } from '@/lib/auth-error-messages'
+import { getAuthErrorCopy } from '@/lib/auth/auth-error-messages'
 
 describe('getAuthErrorCopy', () => {
   it('explains the Configuration error without blaming server setup', () => {

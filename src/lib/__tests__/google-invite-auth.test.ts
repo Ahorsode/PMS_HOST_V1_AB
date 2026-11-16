@@ -36,7 +36,7 @@ describe('Google sign-in for email-invited workers', () => {
   })
 
   it('accepts a pending email invitation and creates farm membership', async () => {
-    const { acceptPendingInvitationForUser } = await import('@/lib/auth-utils')
+    const { acceptPendingInvitationForUser } = await import('@/lib/auth/auth-utils')
 
     mocks.userFindUnique.mockResolvedValue({
       email: 'worker@example.com',
@@ -81,7 +81,7 @@ describe('Google sign-in for email-invited workers', () => {
   })
 
   it('matches invitations using the invited user email stored in lowercase', async () => {
-    const { acceptPendingInvitationForUser } = await import('@/lib/auth-utils')
+    const { acceptPendingInvitationForUser } = await import('@/lib/auth/auth-utils')
 
     mocks.userFindUnique.mockResolvedValue({
       email: 'Worker@Example.com',
@@ -115,7 +115,7 @@ describe('Google sign-in for email-invited workers', () => {
   })
 
   it('clears mustChangePassword when completing Google sign-in', async () => {
-    const { completeGoogleSignIn } = await import('@/lib/auth-utils')
+    const { completeGoogleSignIn } = await import('@/lib/auth/auth-utils')
 
     mocks.userFindUnique.mockResolvedValue({
       email: 'worker@example.com',

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
-import { adminCan } from '@/lib/admin-permissions'
+import { adminCan } from '@/lib/admin/admin-permissions'
 import { applyStaffLimitOverride, farmHasPlanFeature, resolveFarmAccess, type FarmAccess, type FarmAccessInput } from '@/lib/billing/access'
 import { calculateUpgradeTotal, DEFAULT_BILLING_CONFIG, parseBillingConfig, type BillingConfig } from '@/lib/billing/pricing'
 import { RATE_LIMIT_POLICIES, windowToMinutes } from '@/lib/performance/rate-limit-policies'
-import { getDefaultPermissionsForRole } from '@/lib/staff-permission-defaults'
+import { getDefaultPermissionsForRole } from '@/lib/auth/staff-permission-defaults'
 import { pickMessageNotice } from './notices'
 import {
   activeAnnouncement,

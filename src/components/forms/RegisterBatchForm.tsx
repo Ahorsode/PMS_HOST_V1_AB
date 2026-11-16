@@ -21,7 +21,7 @@ import {
   Select,
 } from '@/components/ui/form';
 import { getLivestockUnit } from '@/lib/utils/growth-utils';
-import { getBreedOptionsForCategory, LIVESTOCK_CATEGORY_OPTIONS, normalizeBreedValue } from '@/lib/livestock-breed-options';
+import { getBreedOptionsForCategory, LIVESTOCK_CATEGORY_OPTIONS, normalizeBreedValue } from '@/lib/farm/livestock-breed-options';
 
 import { FinancialInitializationModal } from '@/components/modals/FinancialInitializationModal';
 import { LivestockType } from '@prisma/client';

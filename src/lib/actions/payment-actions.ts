@@ -3,9 +3,9 @@
 import prisma from '@/lib/db'
 import { revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 import { revalidatePath } from 'next/cache'
-import { getAuthContext } from '@/lib/auth-utils'
-import { parseFinancialLogDate } from '@/lib/financial-dates'
-import { upsertOrderLedger } from '@/lib/order-ledger-sync'
+import { getAuthContext } from '@/lib/auth/auth-utils'
+import { parseFinancialLogDate } from '@/lib/finance/financial-dates'
+import { upsertOrderLedger } from '@/lib/sales/order-ledger-sync'
 
 const MONEY_EPSILON = 0.01
 

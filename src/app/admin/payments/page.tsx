@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Download } from 'lucide-react'
-import { requirePaymentAdminPage } from '@/lib/admin-auth'
+import { requirePaymentAdminPage } from '@/lib/admin/admin-auth'
 import { listMomoRequests, listOnlinePayments } from '@/lib/admin/plan-payments'
 import { isPaystackConfigured } from '@/lib/billing/paystack'
 import { cn } from '@/lib/utils'

@@ -1,14 +1,14 @@
 import React from 'react';
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
 import { redirect } from 'next/navigation';
-import { getAuthContext } from '@/lib/auth-utils';
+import { getAuthContext } from '@/lib/auth/auth-utils';
 import prisma from '@/lib/db';
 import { getFinancialTransactions } from '@/lib/actions/financial-transaction-actions';
 import { FinanceHubClient } from './FinanceHubClient';
 import { MissingCostPrompt } from '@/components/finance/MissingCostPrompt';
 import { MissingHealthCostPrompt } from '@/components/finance/MissingHealthCostPrompt';
 import { getHealthItemsMissingCost, repairMissingHealthStockExpenses } from '@/lib/actions/health-actions';
-import { checkFeature } from '@/lib/subscription-utils';
+import { checkFeature } from '@/lib/billing/subscription-utils';
 import { PlanFeatureLocked } from '@/components/billing/PlanFeatureLocked';
 
 export default async function FinancePage() {

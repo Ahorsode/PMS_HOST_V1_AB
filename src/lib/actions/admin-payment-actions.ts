@@ -1,12 +1,12 @@
 'use server'
 
-import { logAdminAction } from '@/lib/admin-audit'
+import { logAdminAction } from '@/lib/admin/admin-audit'
 import prisma from '@/lib/db'
-import { requirePaymentAdminAction } from '@/lib/admin-auth'
+import { requirePaymentAdminAction } from '@/lib/admin/admin-auth'
 import {
   generateActivationLicenseToken,
   normalizeHardwareFingerprint,
-} from '@/lib/license-token'
+} from '@/lib/billing/license-token'
 import { revalidatePath } from 'next/cache'
 import { getBillingConfig } from '@/lib/billing/billing-config'
 import { z } from 'zod'

@@ -41,7 +41,7 @@ const eslintConfig = [
       "src/app/**",
       "src/components/**",
       "src/lib/actions/**",
-      "src/lib/auth-utils.ts",
+      "src/lib/auth/auth-utils.ts",
       "src/lib/db.ts",
       "src/types/**"
     ]

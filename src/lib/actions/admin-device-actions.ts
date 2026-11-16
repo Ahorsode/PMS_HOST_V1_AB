@@ -1,8 +1,8 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { requirePaymentAdminAction, type ActiveAdmin } from '@/lib/admin-auth'
-import { logAdminAction } from '@/lib/admin-audit'
+import { requirePaymentAdminAction, type ActiveAdmin } from '@/lib/admin/admin-auth'
+import { logAdminAction } from '@/lib/admin/admin-audit'
 import prisma from '@/lib/db'
 
 /** Status given to a device an admin has switched off; reactivating restores ACTIVE or EXPIRED. */

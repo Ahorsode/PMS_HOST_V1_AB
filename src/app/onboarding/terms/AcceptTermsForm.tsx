@@ -8,7 +8,7 @@ import { ArrowRight } from 'lucide-react';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { Button, Checkbox, Form, FormError } from '@/components/ui/form';
 import { acceptCurrentTerms } from '@/lib/actions/legal-actions';
-import { LEGAL_UPDATED_LABEL } from '@/lib/legal';
+import { LEGAL_UPDATED_LABEL } from '@/lib/legal/legal';
 
 export function AcceptTermsForm() {
   const [accepted, setAccepted] = useState(false);

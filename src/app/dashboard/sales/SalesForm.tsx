@@ -30,8 +30,8 @@ import {
   requiresEggSizeSelection,
   type EggAllocationMode,
   type EggBatchStockOption,
-} from '@/lib/egg-sale-allocation-utils';
-import { toLocalDateTimeInputValue } from '@/lib/financial-dates';
+} from '@/lib/sales/egg-sale-allocation-utils';
+import { toLocalDateTimeInputValue } from '@/lib/finance/financial-dates';
 import { QuickAddCustomerButton, type SaleCustomer } from './QuickAddCustomerButton';
 import {
   computeItemGiveawayDiscount,
@@ -42,12 +42,12 @@ import {
   saleUnitPriceForDisplay,
   type EggSaleQuantityUnit,
   type LineDiscountType,
-} from '@/lib/sale-quantity-utils';
+} from '@/lib/sales/sale-quantity-utils';
 import {
   SALE_PAYMENT_METHOD_OPTIONS,
   validateSalePaymentFields,
   type SalePaymentMethod,
-} from '@/lib/sale-payment-utils';
+} from '@/lib/sales/sale-payment-utils';
 import { useMoney } from '@/components/providers/CurrencyProvider'
 
 type ProductType = 'inventory' | 'livestock' | 'custom';

@@ -38,7 +38,7 @@ vi.mock("next-auth/jwt", () => ({
   encode: mocks.encode,
 }));
 
-vi.mock("@/lib/auth-utils", () => ({
+vi.mock("@/lib/auth/auth-utils", () => ({
   recordUserSession: mocks.recordUserSession,
   acceptPendingInvitationForUser: mocks.acceptPendingInvitationForUser,
   completeGoogleSignIn: mocks.completeGoogleSignIn,

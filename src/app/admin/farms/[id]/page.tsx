@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import { requirePaymentAdminPage } from '@/lib/admin-auth'
+import { requirePaymentAdminPage } from '@/lib/admin/admin-auth'
 import { adminGetFarmDetail } from '@/lib/actions/admin-farm-actions'
 import { getBillingConfig } from '@/lib/billing/billing-config'
-import { adminCan } from '@/lib/admin-permissions'
+import { adminCan } from '@/lib/admin/admin-permissions'
 import { adminListFarmNotes } from '@/lib/actions/admin-farmer-actions'
 import FarmDetailDashboard from './FarmDetailDashboard'
 

@@ -276,7 +276,7 @@ model AdminUser {
   username              String                   @unique
   passwordHash          String                   @map("password_hash")
   isActive              Boolean                  @default(true) @map("is_active")
-  /// SUPER_ADMIN, BILLING or SUPPORT; see src/lib/admin-permissions.ts.
+  /// SUPER_ADMIN, BILLING or SUPPORT; see src/lib/admin/admin-permissions.ts.
   role                  String                   @default("SUPER_ADMIN")
   /// Base32 TOTP secret for two-step sign-in; null until set up.
   totpSecret            String?                  @map("totp_secret")

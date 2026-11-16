@@ -1,7 +1,7 @@
 'use server'
 
 import prisma from '@/lib/db'
-import { getAuthContext } from '@/lib/auth-utils'
+import { getAuthContext } from '@/lib/auth/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
 import { computeBatchFinance } from '@/lib/analytics/batch-finance'
 import { buildBatchRevenueItems } from '@/lib/analytics/batch-revenue'

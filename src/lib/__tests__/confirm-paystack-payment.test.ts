@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({
   revalidatePath: vi.fn(),
 }))
 
-vi.mock('@/lib/auth-utils', () => ({ getAuthContext: mocks.getAuthContext }))
+vi.mock('@/lib/auth/auth-utils', () => ({ getAuthContext: mocks.getAuthContext }))
 vi.mock('@/lib/db', () => ({ default: { subscriptionEvent: { findFirst: mocks.findFirst } } }))
 vi.mock('next/cache', () => ({ revalidatePath: mocks.revalidatePath }))
 vi.mock('@/lib/billing/paystack-fulfillment', () => ({
@@ -15,7 +15,7 @@ vi.mock('@/lib/billing/paystack-fulfillment', () => ({
   fulfillPaystackPayment: mocks.fulfill,
 }))
 vi.mock('@/lib/billing/paystack', () => ({}))
-vi.mock('@/lib/subscription-utils', () => ({}))
+vi.mock('@/lib/billing/subscription-utils', () => ({}))
 vi.mock('@/lib/billing/billing-config', () => ({}))
 vi.mock('@/lib/billing/checkout-discounts', () => ({}))
 vi.mock('@/lib/performance/rate-limit', () => ({}))
