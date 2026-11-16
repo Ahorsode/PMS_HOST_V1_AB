@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { JetBrains_Mono, Space_Grotesk } from 'next/font/google'
-import { requirePaymentAdminPage } from '@/lib/admin-auth'
+import { requirePaymentAdminPage } from '@/lib/admin/admin-auth'
 import { getPaymentAdminDashboardData } from '@/lib/actions/admin-payment-actions'
 import { adminListFarmChoices } from '@/lib/actions/admin-device-actions'
 import { getBillingConfig } from '@/lib/billing/billing-config'

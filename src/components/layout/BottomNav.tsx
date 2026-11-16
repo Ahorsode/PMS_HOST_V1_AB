@@ -7,14 +7,14 @@ import { AnimatePresence, m } from 'framer-motion';
 import { LogOut, X } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { cn } from '@/lib/utils';
-import { formatRoleLabel } from '@/lib/navigation-permissions';
+import { formatRoleLabel } from '@/lib/navigation/navigation-permissions';
 import {
   DASHBOARD_NAV_ITEM,
   canShowDashboardNavItem,
   getActiveNavCategoryId,
   getVisibleNavCategories,
   isNavItemActive,
-} from '@/lib/app-navigation';
+} from '@/lib/navigation/app-navigation';
 import { useNavGroupMenu } from './useNavGroupMenu';
 import { groupHue } from '@/components/ui/graphite';
 

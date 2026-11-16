@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 vi.mock('@/lib/db', () => ({ default: {} }))
 
 import { billingCurrencyForCountry, COUNTRIES, countryName, currencyForCountry, isSupportedCountry } from './countries'
-import { currencySymbol, formatCompactMoney, formatCurrency, formatMoneyCode } from './utils'
+import { currencySymbol, formatCompactMoney, formatCurrency, formatMoneyCode } from '../utils'
 import {
   calculateUpgradeTotal,
   DEFAULT_BILLING_CONFIG,
@@ -11,8 +11,8 @@ import {
   lowestMonthlyPrice,
   parseBillingConfig,
   planTypePriceSummary,
-} from './billing/pricing'
-import { checkTransactionMatches } from './billing/paystack-fulfillment'
+} from '../billing/pricing'
+import { checkTransactionMatches } from '../billing/paystack-fulfillment'
 
 describe('countries', () => {
   it('maps a country to the currency its farm records are kept in', () => {

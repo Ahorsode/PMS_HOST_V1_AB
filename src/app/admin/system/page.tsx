@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { CheckCircle2, Info, OctagonAlert, TriangleAlert } from 'lucide-react'
-import { requirePaymentAdminPage } from '@/lib/admin-auth'
+import { requirePaymentAdminPage } from '@/lib/admin/admin-auth'
 import { getSystemStatus, type CheckState, type StatusCheck } from '@/lib/admin/system-status'
 import { cn } from '@/lib/utils'
 

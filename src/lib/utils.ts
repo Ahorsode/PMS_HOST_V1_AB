@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { localeForCurrency } from '@/lib/countries';
+import { localeForCurrency } from '@/lib/farm/countries';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

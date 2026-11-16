@@ -23,7 +23,7 @@ import {
 } from 'lucide-react'
 import { logoutAdmin } from '@/lib/actions/admin-login-actions'
 import { cn } from '@/lib/utils'
-import { adminCan, ADMIN_ROLE_DETAILS, isAdminRole, type AdminPermission } from '@/lib/admin-permissions'
+import { adminCan, ADMIN_ROLE_DETAILS, isAdminRole, type AdminPermission } from '@/lib/admin/admin-permissions'
 
 const NAV_ITEMS: { href: string; label: string; icon: ElementType; permission: AdminPermission }[] = [
   { href: '/admin', label: 'Overview', icon: LayoutDashboard, permission: 'farms.view' },

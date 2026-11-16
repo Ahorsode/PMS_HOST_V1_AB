@@ -2,12 +2,12 @@ import React from 'react';
 import { getCustomerStats } from '@/lib/actions/customer-actions';
 import { Card, CardContent } from '@/components/ui/Card';
 import { formatCurrency } from '@/lib/utils';
-import { getFarmCurrency } from '@/lib/farm-currency';
+import { getFarmCurrency } from '@/lib/farm/farm-currency';
 import { Users, UserPlus, Phone, TrendingUp, Star, AlertCircle, ArrowLeft } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
 import { CustomerActionsHeader, AddPartnerBox } from './CustomerActions';
-import { checkFeature } from '@/lib/subscription-utils';
+import { checkFeature } from '@/lib/billing/subscription-utils';
 import Link from 'next/link';
 import { PlanFeatureLocked } from '@/components/billing/PlanFeatureLocked';
 import { PartnerCard } from '@/components/partners/PartnerCard';
@@ -33,7 +33,7 @@ export default async function CustomersPage() {
   }
 
   const { activeFarmId } = await (async () => {
-    const { getAuthContext } = await import('@/lib/auth-utils');
+    const { getAuthContext } = await import('@/lib/auth/auth-utils');
     return await getAuthContext();
   })();
   const currency = await getFarmCurrency(activeFarmId);

@@ -2,7 +2,7 @@
 
 import prisma from '@/lib/db'
 import { unstable_cache } from 'next/cache'
-import { getAuthContext } from '@/lib/auth-utils'
+import { getAuthContext } from '@/lib/auth/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
 import { farmCacheTags } from '@/lib/performance/cache-tags'
 

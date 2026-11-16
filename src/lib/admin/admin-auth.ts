@@ -1,6 +1,6 @@
 import prisma from '@/lib/db'
-import { getAdminSession } from '@/lib/admin-session'
-import { adminCan, type AdminPermission } from '@/lib/admin-permissions'
+import { getAdminSession } from '@/lib/admin/admin-session'
+import { adminCan, type AdminPermission } from '@/lib/admin/admin-permissions'
 import { redirect } from 'next/navigation'
 
 export type ActiveAdmin = {

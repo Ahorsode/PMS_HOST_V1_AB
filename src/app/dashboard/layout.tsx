@@ -3,11 +3,11 @@ import prisma from '@/lib/db';
 import { redirect } from 'next/navigation';
 import { SidebarWrapper } from '@/components/layout/SidebarWrapper';
 import { acceptInvitation } from '@/lib/actions/staff-actions';
-import { hasAcceptedCurrentTerms } from '@/lib/legal-acceptance';
-import { resolveFarmNavigationRole } from '@/lib/navigation-permissions';
+import { hasAcceptedCurrentTerms } from '@/lib/legal/legal-acceptance';
+import { resolveFarmNavigationRole } from '@/lib/navigation/navigation-permissions';
 import { XCircle } from 'lucide-react';
 import Link from 'next/link';
-import { getFarmStaffAccess } from '@/lib/subscription-utils';
+import { getFarmStaffAccess } from '@/lib/billing/subscription-utils';
 import { PlanAccessGate } from '@/components/billing/PlanAccessGate';
 import { AccessBlocked } from '@/components/billing/AccessBlocked';
 import { DashboardNotices } from '@/components/site/DashboardNotices';
@@ -15,8 +15,8 @@ import { MaintenanceProvider } from '@/components/site/MaintenanceContext';
 import { getAppSettings } from '@/lib/settings/app-settings';
 import { loadLastPlanPayment } from '@/lib/settings/dashboard-notices';
 import { getDashboardMessages } from '@/lib/settings/farm-messages';
-import { getAuthContext, getSession } from '@/lib/auth-utils';
-import { getFarmMoney } from '@/lib/farm-currency';
+import { getAuthContext, getSession } from '@/lib/auth/auth-utils';
+import { getFarmMoney } from '@/lib/farm/farm-currency';
 import { CurrencyProvider } from '@/components/providers/CurrencyProvider';
 
 /** Marks a lookup that is awaited later, so a failure before then is not reported as unhandled. */

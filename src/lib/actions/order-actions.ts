@@ -1,32 +1,32 @@
 'use server'
 
 import prisma from '@/lib/db'
-import { getFarmCurrency } from '@/lib/farm-currency'
+import { getFarmCurrency } from '@/lib/farm/farm-currency'
 import { formatMoneyCode } from '@/lib/utils'
 import { revalidatePath } from 'next/cache'
-import { getAuthContext, hasPermission } from '@/lib/auth-utils'
+import { getAuthContext, hasPermission } from '@/lib/auth/auth-utils'
 import { revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
-import { parseFinancialLogDate } from '@/lib/financial-dates'
+import { parseFinancialLogDate } from '@/lib/finance/financial-dates'
 import {
   computeLineDiscount,
   saleQuantityInEggs,
   saleUnitPricePerEgg,
   type EggSaleQuantityUnit,
-} from '@/lib/sale-quantity-utils'
+} from '@/lib/sales/sale-quantity-utils'
 import {
   getFifoEggAvailability,
   isEggInventoryCategory,
   moneyBalances,
-} from '@/lib/egg-fifo-utils'
-import { isUnsortedEggInventory, resolveEggFifoCategoryFilter } from '@/lib/egg-sale-allocation-utils'
-import { completeOrderInTransaction } from '@/lib/complete-order'
-import { upsertOrderLedger } from '@/lib/order-ledger-sync'
+} from '@/lib/sales/egg-fifo-utils'
+import { isUnsortedEggInventory, resolveEggFifoCategoryFilter } from '@/lib/sales/egg-sale-allocation-utils'
+import { completeOrderInTransaction } from '@/lib/sales/complete-order'
+import { upsertOrderLedger } from '@/lib/sales/order-ledger-sync'
 import {
   normalizeSalePaymentMethod,
   validateSalePaymentFields,
   type SalePaymentMethod,
-} from '@/lib/sale-payment-utils'
+} from '@/lib/sales/sale-payment-utils'
 
 const PRICE_OVERRIDE_ROLES = new Set(['OWNER', 'MANAGER'])
 const MONEY_EPSILON = 0.01

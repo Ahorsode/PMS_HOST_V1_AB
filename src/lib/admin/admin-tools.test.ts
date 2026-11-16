@@ -16,8 +16,8 @@ vi.mock('@/lib/db', () => ({
   },
 }))
 
-import { base32Decode, base32Encode, generateTotpSecret, otpauthUri, totpCode, verifyTotp } from '@/lib/admin-totp'
-import { decryptTotpSecret, encryptTotpSecret, sanitizeAdminCallbackUrl } from '@/lib/admin-session'
+import { base32Decode, base32Encode, generateTotpSecret, otpauthUri, totpCode, verifyTotp } from '@/lib/admin/admin-totp'
+import { decryptTotpSecret, encryptTotpSecret, sanitizeAdminCallbackUrl } from '@/lib/admin/admin-session'
 import { csvCell, momoStatus, revenueByMonth, toCsv } from './plan-payments'
 import { getAdminOverview } from './overview'
 

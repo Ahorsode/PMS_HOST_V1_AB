@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { LegalPage, LegalSection } from '@/components/legal/LegalPage';
-import { BUSINESS_NAME } from '@/lib/legal';
+import { BUSINESS_NAME } from '@/lib/legal/legal';
 
 export const metadata: Metadata = {
   title: 'Terms of Service | Poultry Ledger',

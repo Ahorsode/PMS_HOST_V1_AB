@@ -1,14 +1,14 @@
 import { cache } from 'react'
 import { auth } from '@/auth'
 import prisma from '@/lib/db'
-import { buildPhoneLookupCandidates } from '@/lib/phone-auth'
-import { isStaffMemberLocked } from '@/lib/subscription-utils'
+import { buildPhoneLookupCandidates } from '@/lib/auth/phone-auth'
+import { isStaffMemberLocked } from '@/lib/billing/subscription-utils'
 import { assertNotInMaintenance } from '@/lib/settings/maintenance'
 
 export {
   buildPhoneLookupCandidates,
   normalizePhoneNumber,
-} from '@/lib/phone-auth'
+} from '@/lib/auth/phone-auth'
 
 export const SECURITY_PERMISSION_UPDATE_MESSAGE = 'Your security permissions have been updated. Please sign in again to activate your new features.'
 

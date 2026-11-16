@@ -1,5 +1,5 @@
 import prisma, { type DbTransactionClient } from '@/lib/db'
-import { getAuthContext } from '@/lib/auth-utils'
+import { getAuthContext } from '@/lib/auth/auth-utils'
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions'
 import { feedCategoryFilter, isLowStock, type StockItem } from '@/lib/inventory/feed-categories'
 import { buildDailyReminderAlerts } from '@/lib/reminders/farm-reminders'

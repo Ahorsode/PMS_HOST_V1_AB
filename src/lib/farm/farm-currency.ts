@@ -1,7 +1,7 @@
 import 'server-only'
 import { cache } from 'react'
-import { getFarmRecord } from '@/lib/farm-record'
-import { billingCurrencyForCountry, currencyForCountry, DEFAULT_FARM_CURRENCY, type BillingCurrency } from '@/lib/countries'
+import { getFarmRecord } from '@/lib/farm/farm-record'
+import { billingCurrencyForCountry, currencyForCountry, DEFAULT_FARM_CURRENCY, type BillingCurrency } from '@/lib/farm/countries'
 
 export type FarmMoney = {
   /** The farm's owner, who is the only one allowed to set its country. */

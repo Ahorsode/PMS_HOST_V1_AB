@@ -3,10 +3,10 @@
 import bcrypt from 'bcryptjs'
 import { revalidatePath } from 'next/cache'
 import prisma from '@/lib/db'
-import { requirePaymentAdminAction, twoStepRequired, type ActiveAdmin } from '@/lib/admin-auth'
-import { logAdminAction } from '@/lib/admin-audit'
-import { decryptTotpSecret, encryptTotpSecret } from '@/lib/admin-session'
-import { formatSecret, generateTotpSecret, otpauthUri, verifyTotp } from '@/lib/admin-totp'
+import { requirePaymentAdminAction, twoStepRequired, type ActiveAdmin } from '@/lib/admin/admin-auth'
+import { logAdminAction } from '@/lib/admin/admin-audit'
+import { decryptTotpSecret, encryptTotpSecret } from '@/lib/admin/admin-session'
+import { formatSecret, generateTotpSecret, otpauthUri, verifyTotp } from '@/lib/admin/admin-totp'
 
 export type AdminSessionRow = {
   id: string

@@ -8,8 +8,8 @@ import { AnimatePresence, m } from 'framer-motion';
 import { LogOut, Moon, Sun, User } from 'lucide-react';
 import { useTheme } from './theme';
 import { cn } from '@/lib/utils';
-import { canShowNavigationItem, formatRoleLabel } from '@/lib/navigation-permissions';
-import { PROFILE_MENU_ITEMS } from '@/lib/app-navigation';
+import { canShowNavigationItem, formatRoleLabel } from '@/lib/navigation/navigation-permissions';
+import { PROFILE_MENU_ITEMS } from '@/lib/navigation/app-navigation';
 
 /**
  * Profile icon for the mobile header. Opens a dropdown with My Profile,

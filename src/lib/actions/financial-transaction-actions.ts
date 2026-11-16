@@ -1,14 +1,14 @@
 'use server'
 
 import prisma from '@/lib/db'
-import { getFarmCurrency } from '@/lib/farm-currency'
+import { getFarmCurrency } from '@/lib/farm/farm-currency'
 import { formatMoneyCode } from '@/lib/utils'
 import { revalidatePath } from 'next/cache'
-import { getAuthContext } from '@/lib/auth-utils'
+import { getAuthContext } from '@/lib/auth/auth-utils'
 import { checkWorkerPermissions } from './staff-actions'
 import { checkRateLimit, rateLimitActionError } from '@/lib/performance/rate-limit'
 import { revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
-import { parseFinancialLogDate } from '@/lib/financial-dates'
+import { parseFinancialLogDate } from '@/lib/finance/financial-dates'
 import { createExpense } from '@/lib/actions/expense-actions'
 import {
   encodeLedgerAllocation,

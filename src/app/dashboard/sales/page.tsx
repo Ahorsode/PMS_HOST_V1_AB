@@ -5,14 +5,14 @@ import { getAllInventory, getSellableEggInventory, getActiveBatchEggStock, getEg
 import { getAllBatches } from '@/lib/actions/dashboard-actions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { formatCurrency } from '@/lib/utils';
-import { getFarmCurrency } from '@/lib/farm-currency';
+import { getFarmCurrency } from '@/lib/farm/farm-currency';
 import { Banknote, ShoppingCart, Users, TrendingUp, Clock } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { SalesRowActions, SalesActionsHeader } from './SalesActions';
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
 import { WorkerStamp } from '@/components/ui/WorkerStamp';
 import Link from 'next/link';
-import { getAuthContext } from '@/lib/auth-utils';
+import { getAuthContext } from '@/lib/auth/auth-utils';
 import { getFarmSettings, getSalesSettings } from '@/lib/actions/preference-actions';
 
 interface OrderItem {

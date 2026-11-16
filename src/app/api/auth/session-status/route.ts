@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import prisma from '@/lib/db';
-import { SECURITY_PERMISSION_UPDATE_MESSAGE } from '@/lib/auth-utils';
+import { SECURITY_PERMISSION_UPDATE_MESSAGE } from '@/lib/auth/auth-utils';
 
 export async function GET() {
   const session = await auth();

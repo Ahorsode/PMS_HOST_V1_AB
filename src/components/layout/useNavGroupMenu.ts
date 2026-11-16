@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import type { AppNavCategory } from '@/lib/app-navigation';
+import type { AppNavCategory } from '@/lib/navigation/app-navigation';
 
 type GroupId = AppNavCategory['id'];
 

@@ -12,9 +12,9 @@ vi.mock('react', async (importOriginal) => ({
 }))
 vi.mock('@/auth', () => ({ auth: mocks.auth }))
 vi.mock('@/lib/db', () => ({ default: { user: { findUnique: mocks.userFindUnique } } }))
-vi.mock('@/lib/subscription-utils', () => ({ isStaffMemberLocked: mocks.isStaffMemberLocked }))
+vi.mock('@/lib/billing/subscription-utils', () => ({ isStaffMemberLocked: mocks.isStaffMemberLocked }))
 
-import { getAuthContext } from '@/lib/auth-utils'
+import { getAuthContext } from '@/lib/auth/auth-utils'
 
 function sessionFor(activeFarmId: string) {
   return { user: { id: 'user-1', activeFarmId, sessionVersion: 1 } }

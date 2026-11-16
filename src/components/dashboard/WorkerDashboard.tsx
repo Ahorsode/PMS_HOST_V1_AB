@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Wheat, Skull, Activity, Egg, Syringe, Banknote, ShoppingBag, Home, HeartPulse } from 'lucide-react';
-import { getBreedDisplayName } from '@/lib/livestock-breed-options';
+import { getBreedDisplayName } from '@/lib/farm/livestock-breed-options';
 import { g, ink } from '@/components/ui/graphite';
 
 interface WorkerDashboardProps {

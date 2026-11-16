@@ -2,7 +2,7 @@
 
 import { unstable_cache } from 'next/cache'
 import prisma from '@/lib/db'
-import { getAuthContext } from '@/lib/auth-utils'
+import { getAuthContext } from '@/lib/auth/auth-utils'
 import { farmCacheTags } from '@/lib/performance/cache-tags'
 
 export type FeedStaticData = {

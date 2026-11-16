@@ -2,10 +2,10 @@
 
 import prisma from "@/lib/db";
 import { revalidateFarmPerformanceCaches } from "@/lib/performance/cache-tags";
-import { getFarmRecord } from "@/lib/farm-record";
+import { getFarmRecord } from "@/lib/farm/farm-record";
 import { getAppSettings } from "@/lib/settings/app-settings";
 import { revalidatePath } from "next/cache";
-import { getAuthContext } from "@/lib/auth-utils";
+import { getAuthContext } from "@/lib/auth/auth-utils";
 
 export async function updateFarmSettings(data: {
   eggRecordReminderTime?: string;

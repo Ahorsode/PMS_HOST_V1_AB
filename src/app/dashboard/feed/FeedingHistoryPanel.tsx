@@ -4,7 +4,7 @@ import React, { useMemo } from 'react'
 import { History, Utensils } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { formatDate } from '@/lib/utils'
-import { getBreedDisplayName } from '@/lib/livestock-breed-options'
+import { getBreedDisplayName } from '@/lib/farm/livestock-breed-options'
 import { FeedLogActions } from './FeedActions'
 import { compareNewestFirst } from '@/lib/utils/chronological-sort'
 

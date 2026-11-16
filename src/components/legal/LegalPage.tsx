@@ -1,7 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { BRAND_NAME } from '@/lib/brand';
-import { BUSINESS_ADDRESS, BUSINESS_NAME, CONTACT_EMAIL, CONTACT_PHONE_DISPLAY, LEGAL_LINKS, LEGAL_UPDATED_LABEL } from '@/lib/legal';
+import { BUSINESS_ADDRESS, BUSINESS_NAME, CONTACT_EMAIL, CONTACT_PHONE_DISPLAY, LEGAL_LINKS, LEGAL_UPDATED_LABEL } from '@/lib/legal/legal';
 
 export function LegalLinks({ className = '' }: { className?: string }) {
   return (

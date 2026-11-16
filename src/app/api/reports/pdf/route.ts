@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthContext } from '@/lib/auth-utils'
+import { getAuthContext } from '@/lib/auth/auth-utils'
 import { generateComprehensiveFarmReport } from '@/lib/actions/reports'
 import PDFDocument from 'pdfkit/js/pdfkit.standalone.js'
-import { getFarmCurrency } from '@/lib/farm-currency'
+import { getFarmCurrency } from '@/lib/farm/farm-currency'
 import { formatMoneyCode } from '@/lib/utils'
 
 export async function GET(request: NextRequest) {

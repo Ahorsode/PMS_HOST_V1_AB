@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
-import { requirePaymentAdminPage } from '@/lib/admin-auth'
-import { adminCan } from '@/lib/admin-permissions'
+import { requirePaymentAdminPage } from '@/lib/admin/admin-auth'
+import { adminCan } from '@/lib/admin/admin-permissions'
 import { adminListMessages } from '@/lib/actions/admin-message-actions'
 import { adminListFarms } from '@/lib/actions/admin-farm-actions'
 import MessagesPanel from './MessagesPanel'

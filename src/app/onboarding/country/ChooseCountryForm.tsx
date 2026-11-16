@@ -6,7 +6,7 @@ import { ArrowRight } from 'lucide-react';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { Button, CountrySelect, Form, FormError } from '@/components/ui/form';
 import { setFarmCountry } from '@/lib/actions/dashboard-actions';
-import { currencyForCountry } from '@/lib/countries';
+import { currencyForCountry } from '@/lib/farm/countries';
 
 export function ChooseCountryForm({ farmName }: { farmName: string }) {
   const [country, setCountry] = useState('');

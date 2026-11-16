@@ -3,8 +3,8 @@
 import { revalidatePath, updateTag } from 'next/cache'
 import type { Prisma } from '@prisma/client'
 import prisma from '@/lib/db'
-import { requirePaymentAdminAction } from '@/lib/admin-auth'
-import { logAdminAction } from '@/lib/admin-audit'
+import { requirePaymentAdminAction } from '@/lib/admin/admin-auth'
+import { logAdminAction } from '@/lib/admin/admin-audit'
 import { appSettingsTag } from '@/lib/settings/app-settings'
 import {
   APP_SETTINGS_SECTIONS,

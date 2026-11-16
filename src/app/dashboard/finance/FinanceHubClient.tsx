@@ -41,7 +41,7 @@ import {
 } from '@/components/ui/form'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { createFinancialTransaction, settleTransaction, deleteFinancialTransaction } from '@/lib/actions/financial-transaction-actions'
-import { toLocalDateTimeInputValue } from '@/lib/financial-dates'
+import { toLocalDateTimeInputValue } from '@/lib/finance/financial-dates'
 import { SkeletonLine } from '@/components/ui/MutationFeedback'
 import { MobileCardList } from '@/components/ui/MobileCardList'
 import {

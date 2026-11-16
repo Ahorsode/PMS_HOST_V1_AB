@@ -1,6 +1,6 @@
 import prisma, { type DbTransactionClient } from '@/lib/db'
-import { getAuthContext } from '@/lib/auth-utils'
-import { getFarmStaffAccess } from '@/lib/subscription-utils'
+import { getAuthContext } from '@/lib/auth/auth-utils'
+import { getFarmStaffAccess } from '@/lib/billing/subscription-utils'
 import { teamPersonName, teamRoleLabel } from './shared'
 
 /** Most recent messages loaded into a chat. */

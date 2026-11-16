@@ -4,9 +4,9 @@ import bcrypt from 'bcryptjs'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import prisma from '@/lib/db'
-import { requirePaymentAdminAction, type ActiveAdmin } from '@/lib/admin-auth'
-import { logAdminAction } from '@/lib/admin-audit'
-import { ADMIN_ROLE_DETAILS, ADMIN_ROLES, type AdminRole } from '@/lib/admin-permissions'
+import { requirePaymentAdminAction, type ActiveAdmin } from '@/lib/admin/admin-auth'
+import { logAdminAction } from '@/lib/admin/admin-audit'
+import { ADMIN_ROLE_DETAILS, ADMIN_ROLES, type AdminRole } from '@/lib/admin/admin-permissions'
 
 export type AdminAccountRow = {
   id: string

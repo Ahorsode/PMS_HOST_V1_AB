@@ -3,8 +3,8 @@ import { getAllBatches, getIsolationRooms } from '@/lib/actions/dashboard-action
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
 import { redirect } from 'next/navigation';
 import { QuarantineView } from './QuarantineView';
-import { getAuthContext } from '@/lib/auth-utils';
-import { checkFeature } from '@/lib/subscription-utils';
+import { getAuthContext } from '@/lib/auth/auth-utils';
+import { checkFeature } from '@/lib/billing/subscription-utils';
 import { PlanFeatureLocked } from '@/components/billing/PlanFeatureLocked';
 
 export default async function QuarantinePage() {

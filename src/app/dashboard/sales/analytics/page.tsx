@@ -6,8 +6,8 @@ import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { formatDate, formatCurrency } from '@/lib/utils';
 import Link from 'next/link';
 import { MobileCardList } from '@/components/ui/MobileCardList';
-import { getFarmCurrency } from '@/lib/farm-currency';
-import { getAuthContext } from '@/lib/auth-utils';
+import { getFarmCurrency } from '@/lib/farm/farm-currency';
+import { getAuthContext } from '@/lib/auth/auth-utils';
 
 export default async function SalesAnalyticsPage() {
   const [sales, currency] = await Promise.all([

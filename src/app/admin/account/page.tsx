@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { requirePaymentAdminPage } from '@/lib/admin-auth'
+import { requirePaymentAdminPage } from '@/lib/admin/admin-auth'
 import { adminGetAccount } from '@/lib/actions/admin-account-actions'
 import AccountPanel from './AccountPanel'
 

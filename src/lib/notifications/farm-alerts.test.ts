@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/lib/db', () => ({ default: {} }))
-vi.mock('@/lib/auth-utils', () => ({ getAuthContext: vi.fn() }))
+vi.mock('@/lib/auth/auth-utils', () => ({ getAuthContext: vi.fn() }))
 vi.mock('@/lib/actions/staff-actions', () => ({ checkWorkerPermissions: vi.fn() }))
 
 import { buildFarmAlerts, type FarmAlertInput } from './farm-alerts'

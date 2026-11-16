@@ -1,7 +1,7 @@
 'use server'
 
 import { auth } from '@/auth'
-import { recordLegalAcceptance } from '@/lib/legal-acceptance'
+import { recordLegalAcceptance } from '@/lib/legal/legal-acceptance'
 
 export async function acceptCurrentTerms() {
   const session = await auth()

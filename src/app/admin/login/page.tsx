@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import { getActiveAdminUser } from '@/lib/admin-auth'
-import { sanitizeAdminCallbackUrl } from '@/lib/admin-session'
+import { getActiveAdminUser } from '@/lib/admin/admin-auth'
+import { sanitizeAdminCallbackUrl } from '@/lib/admin/admin-session'
 import AdminLoginForm from './AdminLoginForm'
 
 export const metadata: Metadata = {

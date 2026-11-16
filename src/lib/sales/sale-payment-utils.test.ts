@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   normalizeSalePaymentMethod,
   validateSalePaymentFields,
-} from '@/lib/sale-payment-utils'
+} from '@/lib/sales/sale-payment-utils'
 
 describe('sale payment wizard validation', () => {
   it('normalizes payment method aliases', () => {

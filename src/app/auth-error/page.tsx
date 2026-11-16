@@ -2,7 +2,7 @@ import Link from 'next/link'
 import type { Metadata } from 'next'
 import { AlertTriangle, ArrowLeft, ArrowRight } from 'lucide-react'
 import { auth } from '@/auth'
-import { getAuthErrorCopy } from '@/lib/auth-error-messages'
+import { getAuthErrorCopy } from '@/lib/auth/auth-error-messages'
 
 export const metadata: Metadata = {
   title: 'Sign-in problem | Poultry Ledger',

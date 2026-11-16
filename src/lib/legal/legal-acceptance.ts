@@ -1,6 +1,6 @@
 import { unstable_cache } from 'next/cache';
 import prisma from '@/lib/db';
-import { LEGAL_DOCUMENT, LEGAL_VERSION } from '@/lib/legal';
+import { LEGAL_DOCUMENT, LEGAL_VERSION } from '@/lib/legal/legal';
 
 export type LegalAcceptanceMethod = 'SIGNUP_CHECKBOX' | 'IN_APP_PROMPT';
 

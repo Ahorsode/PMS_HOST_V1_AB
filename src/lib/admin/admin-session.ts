@@ -4,7 +4,7 @@ import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, 
 import { cookies, headers } from 'next/headers'
 
 import prisma from '@/lib/db'
-import { ADMIN_SESSION_COOKIE } from '@/lib/admin-session-constants'
+import { ADMIN_SESSION_COOKIE } from '@/lib/admin/admin-session-constants'
 import { getAppSettings } from '@/lib/settings/app-settings'
 
 export { ADMIN_SESSION_COOKIE }

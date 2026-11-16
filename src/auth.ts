@@ -11,8 +11,8 @@ import {
   findUserByLoginIdentifier,
   normalizePhoneNumber,
   recordUserSession,
-} from '@/lib/auth-utils';
-import { checkLoginSecret } from '@/lib/login-credentials';
+} from '@/lib/auth/auth-utils';
+import { checkLoginSecret } from '@/lib/auth/login-credentials';
 import { getCachedSessionVersion, setCachedSessionVersion } from '@/lib/performance/session-version-cache';
 import { checkRateLimit } from '@/lib/performance/rate-limit';
 

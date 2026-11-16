@@ -1,6 +1,6 @@
 import React from 'react'
 import { redirect } from 'next/navigation'
-import { getAuthContext } from '@/lib/auth-utils'
+import { getAuthContext } from '@/lib/auth/auth-utils'
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions'
 import { generateComprehensiveFarmReport } from '@/lib/actions/reports'
 import { getAllBatches } from '@/lib/actions/dashboard-actions'

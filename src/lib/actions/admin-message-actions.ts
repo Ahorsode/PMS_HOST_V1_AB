@@ -4,8 +4,8 @@ import { revalidatePath, revalidateTag } from 'next/cache'
 import { FARM_MESSAGES_TAG } from '@/lib/settings/farm-messages'
 import { z } from 'zod'
 import prisma from '@/lib/db'
-import { requirePaymentAdminAction, type ActiveAdmin } from '@/lib/admin-auth'
-import { logAdminAction } from '@/lib/admin-audit'
+import { requirePaymentAdminAction, type ActiveAdmin } from '@/lib/admin/admin-auth'
+import { logAdminAction } from '@/lib/admin/admin-audit'
 
 export type AdminMessageRow = {
   id: string

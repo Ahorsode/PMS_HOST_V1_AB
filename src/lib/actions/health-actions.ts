@@ -2,7 +2,7 @@
 
 import prisma from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import { getAuthContext } from "@/lib/auth-utils";
+import { getAuthContext } from "@/lib/auth/auth-utils";
 import { checkWorkerPermissions } from "@/lib/actions/staff-actions";
 import {
   fetchBatchIdsForHealthItem,

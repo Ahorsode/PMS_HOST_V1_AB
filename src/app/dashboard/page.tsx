@@ -2,14 +2,14 @@ import React from 'react';
 import { getDashboardStats } from '@/lib/actions/dashboard-actions';
 import { DashboardContent } from './DashboardContent';
 import prisma from '@/lib/db';
-import { getFarmRecord } from '@/lib/farm-record';
+import { getFarmRecord } from '@/lib/farm/farm-record';
 import { getFarmSettings } from '@/lib/actions/preference-actions';
-import { getAuthContext } from '@/lib/auth-utils';
-import { effectiveFarmTier } from '@/lib/subscription-utils';
+import { getAuthContext } from '@/lib/auth/auth-utils';
+import { effectiveFarmTier } from '@/lib/billing/subscription-utils';
 import { getMonthlyProductionSummary } from '@/lib/actions/preference-actions';
 import { PullToRefresh } from '@/components/layout/PullToRefresh';
 import { redirect } from 'next/navigation';
-import { getFarmCurrency } from '@/lib/farm-currency';
+import { getFarmCurrency } from '@/lib/farm/farm-currency';
 
 export default async function DashboardPage() {
   let userId: string;

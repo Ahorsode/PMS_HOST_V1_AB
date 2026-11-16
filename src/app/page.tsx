@@ -38,7 +38,7 @@ import { LegalLinks } from '@/components/legal/LegalPage';
 import {
   BUSINESS_ADDRESS,
   BUSINESS_NAME,
-} from '@/lib/legal';
+} from '@/lib/legal/legal';
 
 const features = [
   {

@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/form';
 import { createFeedingLog, updateFeedingLog } from '@/lib/actions/feed-actions';
 import { useRouter } from 'next/navigation';
-import { getBreedDisplayName } from '@/lib/livestock-breed-options';
+import { getBreedDisplayName } from '@/lib/farm/livestock-breed-options';
 import { feedSourceFromLog, parseFeedSource } from '@/lib/inventory/feed-source';
 import { cn } from '@/lib/utils';
 

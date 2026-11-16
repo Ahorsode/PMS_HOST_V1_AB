@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react';
 import { Lock, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { Button, Form, FormError, FormRow, Input } from '@/components/ui/form';
-import { MIN_PASSWORD_LENGTH } from '@/lib/password-policy';
+import { MIN_PASSWORD_LENGTH } from '@/lib/auth/password-policy';
 
 export default function ChangePasswordPage() {
   const [firstname, setFirstname] = useState('');

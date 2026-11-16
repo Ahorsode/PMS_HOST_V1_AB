@@ -3,7 +3,7 @@
 import prisma from '@/lib/db'
 import { revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 import { revalidatePath } from 'next/cache'
-import { getAuthContext } from '@/lib/auth-utils'
+import { getAuthContext } from '@/lib/auth/auth-utils'
 
 export async function getDeleteLogs() {
   const { role, activeFarmId } = await getAuthContext()

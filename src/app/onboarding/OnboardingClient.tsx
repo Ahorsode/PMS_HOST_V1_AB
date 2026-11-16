@@ -16,7 +16,7 @@ import {
   Input,
   OptionCards,
 } from '@/components/ui/form';
-import { billingCurrencyForCountry, countryName, currencyForCountry } from '@/lib/countries';
+import { billingCurrencyForCountry, countryName, currencyForCountry } from '@/lib/farm/countries';
 
 const planTypes = [
   {

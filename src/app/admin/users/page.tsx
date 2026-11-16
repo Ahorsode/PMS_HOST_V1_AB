@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Search, UsersRound } from 'lucide-react'
-import { requirePaymentAdminPage } from '@/lib/admin-auth'
+import { requirePaymentAdminPage } from '@/lib/admin/admin-auth'
 import { adminSearchFarmers } from '@/lib/actions/admin-farmer-actions'
 import { controlClass } from '@/components/ui/form/styles'
 

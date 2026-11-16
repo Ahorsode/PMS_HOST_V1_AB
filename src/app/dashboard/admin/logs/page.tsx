@@ -1,6 +1,6 @@
 import React from 'react';
 import { redirect } from 'next/navigation';
-import { getAuthContext } from '@/lib/auth-utils';
+import { getAuthContext } from '@/lib/auth/auth-utils';
 import { getEditLogs, getDeleteLogs } from '@/lib/actions/audit-actions';
 import { getTrashItems } from '@/lib/actions/trash-actions';
 import AuditLogView from './AuditLogView';

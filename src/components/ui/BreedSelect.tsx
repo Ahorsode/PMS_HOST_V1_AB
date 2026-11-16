@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { SearchSelect } from '@/components/ui/form/controls';
-import type { BreedBadge, BreedOption } from '@/lib/livestock-breed-options';
+import type { BreedBadge, BreedOption } from '@/lib/farm/livestock-breed-options';
 
 interface BreedSelectProps {
   label?: string;

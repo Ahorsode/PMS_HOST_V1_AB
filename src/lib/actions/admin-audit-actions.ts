@@ -2,7 +2,7 @@
 
 import type { Prisma } from '@prisma/client'
 import prisma from '@/lib/db'
-import { requirePaymentAdminAction } from '@/lib/admin-auth'
+import { requirePaymentAdminAction } from '@/lib/admin/admin-auth'
 
 export type AdminAuditRow = {
   id: string

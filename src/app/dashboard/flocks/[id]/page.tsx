@@ -5,10 +5,10 @@ import { FlockDetailClient } from './FlockDetailClient';
 import { FlockLogsHistory } from './FlockLogsHistory';
 import { FlockReportGenerator } from './FlockReportGenerator';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
-import { getBreedDisplayName } from '@/lib/livestock-breed-options';
+import { getBreedDisplayName } from '@/lib/farm/livestock-breed-options';
 import { getFarmSettings } from '@/lib/actions/preference-actions';
-import { getAuthContext } from '@/lib/auth-utils';
-import { checkFeature } from '@/lib/subscription-utils';
+import { getAuthContext } from '@/lib/auth/auth-utils';
+import { checkFeature } from '@/lib/billing/subscription-utils';
 import { PlanFeatureLocked } from '@/components/billing/PlanFeatureLocked';
 import { HeadCount } from '../flock-ui';
 

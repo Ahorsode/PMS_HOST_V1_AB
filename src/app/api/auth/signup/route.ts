@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import bcrypt from 'bcryptjs';
-import { normalizePhoneNumber } from '@/lib/phone-auth';
+import { normalizePhoneNumber } from '@/lib/auth/phone-auth';
 import { checkRateLimit, getRateLimitIp, rateLimitHeaders } from '@/lib/performance/rate-limit';
-import { MAX_PASSWORD_LENGTH, passwordPolicyError } from '@/lib/password-policy';
-import { recordLegalAcceptance } from '@/lib/legal-acceptance';
+import { MAX_PASSWORD_LENGTH, passwordPolicyError } from '@/lib/auth/password-policy';
+import { recordLegalAcceptance } from '@/lib/legal/legal-acceptance';
 import { z } from 'zod';
 import { freeTrialFields } from '@/lib/billing/trial';
 import { getBillingConfig } from '@/lib/billing/billing-config';

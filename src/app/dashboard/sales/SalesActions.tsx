@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { MutationBoundary } from '@/components/ui/MutationFeedback';
 import { buildWhatsAppInvoiceUrl, downloadSalesInvoicePdf } from '@/lib/invoices/browser-invoice';
 import { useRouter } from 'next/navigation';
-import { toLocalDateTimeInputValue } from '@/lib/financial-dates';
+import { toLocalDateTimeInputValue } from '@/lib/finance/financial-dates';
 import { useMoney } from '@/components/providers/CurrencyProvider'
 
 export function SalesActionsHeader({ customers, inventory, eggInventory, eggBatchStock = [], fifoEggAvailability = { totalEggs: 0, byCategoryId: {} }, livestock, eggsPerCrate = 30, initialLivestockId, initialOpen = false, canEdit = true, canOverridePrice = false, allowBatchOverride = false, allowWorkerDiscounts = false, defaultDiscountType = 'item' }: { 

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Egg, Plus, ShoppingCart, Trash2, UsersRound } from 'lucide-react'
 import type { AdminAppSettings } from '@/lib/actions/admin-settings-actions'
 import type { FarmDefaults } from '@/lib/settings/schemas'
-import { STAFF_ROLES, type ConfigurableStaffRole, type StaffPermissionKey } from '@/lib/staff-permission-defaults'
+import { STAFF_ROLES, type ConfigurableStaffRole, type StaffPermissionKey } from '@/lib/auth/staff-permission-defaults'
 import { cn } from '@/lib/utils'
 import { Card, CheckboxField, FieldError, SaveBar, SavedStatus, TextField, inputClass, useSectionEditor } from './settings-ui'
 

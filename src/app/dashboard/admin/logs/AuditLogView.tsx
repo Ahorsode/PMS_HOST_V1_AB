@@ -21,7 +21,7 @@ import { restoreDeletedRecord } from '@/lib/actions/audit-actions';
 import { toast } from 'sonner';
 import { WorkerStamp } from '@/components/ui/WorkerStamp';
 import { MobileCardList } from '@/components/ui/MobileCardList';
-import { getBreedDisplayName } from '@/lib/livestock-breed-options';
+import { getBreedDisplayName } from '@/lib/farm/livestock-breed-options';
 
 import { restoreBatch } from '@/lib/actions/batch-actions';
 import { restoreEggProduction } from '@/lib/actions/egg-actions';

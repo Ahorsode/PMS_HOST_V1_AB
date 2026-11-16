@@ -1,8 +1,8 @@
 'use server'
 
 import { revalidatePath, updateTag } from 'next/cache'
-import { requirePaymentAdminAction } from '@/lib/admin-auth'
-import { logAdminAction } from '@/lib/admin-audit'
+import { requirePaymentAdminAction } from '@/lib/admin/admin-auth'
+import { logAdminAction } from '@/lib/admin/admin-audit'
 import prisma from '@/lib/db'
 import { BILLING_CONFIG_TAG, BILLING_SETTINGS_ID } from '@/lib/billing/billing-config'
 import {

@@ -5,8 +5,8 @@ import { formatCurrency } from '@/lib/utils';
 import { ArrowLeft, Truck, Calendar, ShoppingBag, Receipt, MapPin, Phone, Mail, Download } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { getFarmCurrency } from '@/lib/farm-currency';
-import { getAuthContext } from '@/lib/auth-utils';
+import { getFarmCurrency } from '@/lib/farm/farm-currency';
+import { getAuthContext } from '@/lib/auth/auth-utils';
 
 export default async function SupplierStatementPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

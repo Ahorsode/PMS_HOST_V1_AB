@@ -3,7 +3,7 @@ import { getGlobalEggStats } from '@/lib/actions/dashboard-actions';
 import { Egg, Calendar, Activity } from 'lucide-react';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
 import { formatDate } from '@/lib/utils';
-import { getBreedDisplayName } from '@/lib/livestock-breed-options';
+import { getBreedDisplayName } from '@/lib/farm/livestock-breed-options';
 import { getFarmSettings } from '@/lib/actions/preference-actions';
 import { MobileCardList } from '@/components/ui/MobileCardList';
 

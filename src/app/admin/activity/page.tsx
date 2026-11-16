@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { requirePaymentAdminPage } from '@/lib/admin-auth'
+import { requirePaymentAdminPage } from '@/lib/admin/admin-auth'
 import { adminListActivity } from '@/lib/actions/admin-farm-actions'
 import { adminAuditFilterOptions, adminListAuditLog, type AuditFilters } from '@/lib/actions/admin-audit-actions'
 import ActivityDashboard from './ActivityDashboard'

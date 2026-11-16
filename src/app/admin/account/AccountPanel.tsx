@@ -15,7 +15,7 @@ import {
   type AccountActionResult,
   type AdminAccount,
 } from '@/lib/actions/admin-account-actions'
-import { ADMIN_ROLE_DETAILS, isAdminRole } from '@/lib/admin-permissions'
+import { ADMIN_ROLE_DETAILS, isAdminRole } from '@/lib/admin/admin-permissions'
 import { cn } from '@/lib/utils'
 import { controlClass } from '@/components/ui/form'
 

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { getActiveAdminUser } from '@/lib/admin-auth'
-import { adminCan } from '@/lib/admin-permissions'
+import { getActiveAdminUser } from '@/lib/admin/admin-auth'
+import { adminCan } from '@/lib/admin/admin-permissions'
 import { listMomoRequests, listOnlinePayments, toCsv } from '@/lib/admin/plan-payments'
 
 export const dynamic = 'force-dynamic'

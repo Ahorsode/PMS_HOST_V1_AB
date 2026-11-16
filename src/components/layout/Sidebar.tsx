@@ -7,14 +7,14 @@ import { signOut } from 'next-auth/react';
 import { AnimatePresence, m } from 'framer-motion';
 import { LogOut, Moon, Sun, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { formatRoleLabel } from '@/lib/navigation-permissions';
+import { formatRoleLabel } from '@/lib/navigation/navigation-permissions';
 import {
   DASHBOARD_NAV_ITEM,
   canShowDashboardNavItem,
   getActiveNavCategoryId,
   getVisibleNavCategories,
   isNavItemActive,
-} from '@/lib/app-navigation';
+} from '@/lib/navigation/app-navigation';
 import { useNavGroupMenu } from './useNavGroupMenu';
 import { groupHue } from '@/components/ui/graphite';
 import { useTheme } from './theme';

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { unstable_cache } from 'next/cache'
-import { getAuthContext } from '@/lib/auth-utils'
+import { getAuthContext } from '@/lib/auth/auth-utils'
 import prisma from '@/lib/db'
 import { getBatchAnalytics, getMortalityTrends } from '@/lib/actions/analytics-actions'
 import { farmCacheTags } from '@/lib/performance/cache-tags'

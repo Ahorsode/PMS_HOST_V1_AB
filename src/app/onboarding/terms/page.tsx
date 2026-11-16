@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
-import { hasAcceptedCurrentTerms } from '@/lib/legal-acceptance';
+import { hasAcceptedCurrentTerms } from '@/lib/legal/legal-acceptance';
 import { AcceptTermsForm } from './AcceptTermsForm';
 
 export const metadata: Metadata = {

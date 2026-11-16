@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/form';
 import { updateProfile } from '@/lib/actions/dashboard-actions';
 import { useRouter } from 'next/navigation';
-import { MIN_PASSWORD_LENGTH } from '@/lib/password-policy';
+import { MIN_PASSWORD_LENGTH } from '@/lib/auth/password-policy';
 
 const profileSchema = z.object({
   firstname: z.string().min(2, "First name is required"),

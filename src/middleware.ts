@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextFetchEvent, NextRequest } from 'next/server';
 import NextAuth from 'next-auth';
 import { authConfig } from './auth.config';
-import { ADMIN_SESSION_COOKIE } from '@/lib/admin-session-constants';
+import { ADMIN_SESSION_COOKIE } from '@/lib/admin/admin-session-constants';
 
 // NextAuth's `auth` helper has overloaded signatures; cast it to the plain
 // (request, event) middleware form so we can invoke it directly.

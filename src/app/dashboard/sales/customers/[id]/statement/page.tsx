@@ -5,8 +5,8 @@ import { formatCurrency } from '@/lib/utils';
 import { ArrowLeft, User, Calendar, ShoppingCart, Receipt, MapPin, Phone, Mail, Download, Tag } from 'lucide-react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { getFarmCurrency } from '@/lib/farm-currency';
-import { getAuthContext } from '@/lib/auth-utils';
+import { getFarmCurrency } from '@/lib/farm/farm-currency';
+import { getAuthContext } from '@/lib/auth/auth-utils';
 
 export default async function CustomerStatementPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

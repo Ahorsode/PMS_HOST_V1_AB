@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs'
-import { isInviteCodeUsable, normalizeInviteCode } from '@/lib/invite-code'
+import { isInviteCodeUsable, normalizeInviteCode } from '@/lib/auth/invite-code'
 
 type LoginUser = {
   password: string | null
