@@ -5,26 +5,6 @@ import { revalidateFarmPerformanceCaches } from '@/lib/performance/cache-tags'
 import { revalidatePath } from 'next/cache'
 import { getAuthContext } from '@/lib/auth-utils'
 
-export async function getInsertLogs() {
-  const { role, activeFarmId } = await getAuthContext()
-  if (!activeFarmId || (role !== 'OWNER' && role !== 'MANAGER')) return []
-
-  return await prisma.insertLog.findMany({
-    where: { farmId: activeFarmId },
-    include: {
-      user: {
-        select: {
-          firstname: true,
-          surname: true,
-          role: true
-        }
-      }
-    },
-    orderBy: { insertedAt: 'desc' },
-    take: 100
-  })
-}
-
 export async function getDeleteLogs() {
   const { role, activeFarmId } = await getAuthContext()
   if (!activeFarmId || (role !== 'OWNER' && role !== 'MANAGER')) return []

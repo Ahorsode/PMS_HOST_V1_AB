@@ -418,6 +418,9 @@ export default function LicenseUpgradeClient({
               onKeyDown={(event) => {
                 if (event.key === "Enter") {
                   event.preventDefault();
+                  // Enter also confirms an IME candidate (Chinese, Japanese, Korean input).
+                  // Do not apply the code mid-composition; keyCode 229 covers Safari.
+                  if (event.nativeEvent.isComposing || event.keyCode === 229) return;
                   applyPromo();
                 }
               }}

@@ -451,11 +451,6 @@ export async function createHealthSchedulesBulk(entries: HealthScheduleInput[]) 
   );
 }
 
-/** Backwards-compatible single-entry create (delegates to the bulk path). */
-export async function createHealthSchedule(data: HealthScheduleInput) {
-  return createHealthSchedulesBulk([data]);
-}
-
 /**
  * Register a new vaccine or medication in inventory without creating a schedule.
  * Lets users stock an item first, then select it from the dropdown for scheduling.

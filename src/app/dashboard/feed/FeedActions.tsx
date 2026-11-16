@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, Eye, BarChart3, ArrowUpRight } from 'lucide-react';
+import { Plus, Edit2, Trash2, Eye, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { useRouter } from 'next/navigation';
@@ -87,63 +87,6 @@ export const FeedLogActions = ({ log, batches, inventory, formulations = [] }: {
         onClose={() => setShowDeleteModal(false)}
         onConfirm={handleDelete}
         itemName={`Feed Log (${new Date(log.logDate).toLocaleDateString()})`}
-        isLoading={isDeleting}
-      />
-    </div>
-  );
-};
-
-export const InventoryActions = ({ item }: { item: any }) => {
-  const [mode, setMode] = useState<'edit' | null>(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const router = useRouter();
-
-  const handleDelete = async (reason: string) => {
-    setIsDeleting(true);
-    try {
-      const { deleteInventoryItem } = await import('@/lib/actions/inventory-actions');
-      const res = await deleteInventoryItem(item.id, reason);
-      if (res.success) {
-        setShowDeleteModal(false);
-        router.refresh();
-      } else {
-        alert(res.error || 'Failed to delete item');
-      }
-    } catch (err) {
-      console.error(err);
-      alert('An unexpected error occurred');
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  return (
-    <div className="flex items-center gap-2">
-      <Link 
-        href={`/dashboard/feed/inventory/${item.id}`}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-fg-3 transition-colors duration-150 hover:bg-fg/[0.06] hover:text-fg"
-        title="Open item"
-        aria-label="Open item"
-      >
-        <ArrowUpRight className="h-4 w-4" strokeWidth={1.5} />
-      </Link>
-      <button aria-label="Edit inventory item" onClick={() => setMode('edit')} className="p-1 text-fg-2 hover:bg-fg/[0.06] rounded transition-colors">
-        <Edit2 className="h-4 w-4" />
-      </button>
-      <button aria-label="Delete inventory item" onClick={() => setShowDeleteModal(true)} className="p-1 text-fg-3 hover:bg-raised rounded transition-colors">
-        <Trash2 className="h-4 w-4" />
-      </button>
-
-      <Dialog isOpen={mode !== null} onOpenChange={(open) => !open && setMode(null)} title="Edit item">
-        {mode && <InventoryForm item={item} mode={mode} onClose={() => setMode(null)} />}
-      </Dialog>
-
-      <DeleteConfirmationModal
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        onConfirm={handleDelete}
-        itemName={item.itemName}
         isLoading={isDeleting}
       />
     </div>

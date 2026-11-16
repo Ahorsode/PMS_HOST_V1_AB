@@ -1445,41 +1445,6 @@ export async function logWeight(data: {
   })
 }
 
-export async function getInventoryDetails(id: string) {
-  const { userId, activeFarmId } = await getAuthContext()
-  if (!activeFarmId) return null
-
-  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    const item = await tx.inventory.findUnique({
-      where: { id, farmId: activeFarmId },
-      include: {
-        feedingLogs: {
-          include: { batch: true },
-          orderBy: [
-            { logDate: 'desc' },
-            { id: 'desc' },
-          ],
-        }
-      }
-    })
-
-    if (!item) return null
-
-    return {
-      ...item,
-      stockLevel: Number(item.stockLevel),
-      reorderLevel: item.reorderLevel ? Number(item.reorderLevel) : null,
-      feedingLogs: item.feedingLogs.map((log: any) => ({
-        ...log,
-        amountConsumed: Number(log.amountConsumed)
-      }))
-    }
-  }).catch((error: any) => {
-    console.error('Error fetching inventory details:', error)
-    return null
-  })
-}
-
 export async function getSaleDetails(id: string) {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return null

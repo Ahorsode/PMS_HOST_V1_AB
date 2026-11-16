@@ -519,6 +519,9 @@ export function SearchSelect({
       setActiveIndex((index) => Math.max(index - 1, 0));
     } else if (event.key === 'Enter') {
       event.preventDefault();
+      // Enter also confirms an IME candidate typed in the search box (Chinese, Japanese,
+      // Korean input). Do not pick an option mid-composition; keyCode 229 covers Safari.
+      if (event.nativeEvent.isComposing || event.keyCode === 229) return;
       const option = filtered[activeIndex];
       if (option) pick(option);
     } else if (event.key === 'Tab') {
