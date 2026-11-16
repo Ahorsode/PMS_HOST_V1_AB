@@ -195,38 +195,6 @@ async function createExpenseWithPrisma(input: {
   })
 }
 
-export async function getExpenses() {
-  const { userId, activeFarmId } = await getAuthContext()
-  if (!activeFarmId) return []
-
-  const hasViewAccess = await checkWorkerPermissions('finance', 'view')
-  if (!hasViewAccess) return []
-
-  return await (prisma as any).$withFarmContext(userId, activeFarmId, async (tx: any) => {
-    const expenses = await tx.expense.findMany({
-      where: { farmId: activeFarmId, isDeleted: false },
-      include: {
-        user: {
-          select: {
-            firstname: true,
-            surname: true,
-            role: true
-          }
-        }
-      },
-      orderBy: { expenseDate: 'desc' },
-      take: 50
-    })
-    return expenses.map((e: any) => ({
-      ...e,
-      amount: Number(e.amount)
-    }))
-  }).catch((error: any) => {
-    console.error('Error fetching expenses:', error)
-    return []
-  })
-}
-
 export async function getActiveExpenseAllocationBatches() {
   const { userId, activeFarmId } = await getAuthContext()
   if (!activeFarmId) return []

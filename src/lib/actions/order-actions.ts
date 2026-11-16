@@ -677,48 +677,6 @@ export async function updateOrderStatus(id: string, status: string) {
   }
 }
 
-export async function deleteOrder(id: string, reason: string) {
-  const { userId, role, activeFarmId } = await getAuthContext()
-  if (!activeFarmId) throw new Error('No active farm selected')
-  
-  const authorizedRoles = ['OWNER', 'MANAGER']
-  if (!authorizedRoles.includes(role)) {
-    return { success: false, error: 'Unauthorized: Only owners and managers can delete orders' }
-  }
-
-  if (!reason || reason.trim().length < 5) return { success: false, error: 'A valid reason is required for deletion' }
-
-  const limitResult = await checkRateLimit({ policy: 'orders.write', scope: 'deleteOrder', farmId: activeFarmId, userId })
-  if (!limitResult.ok) return rateLimitActionError(limitResult)
-
-  try {
-    const existing = await prisma.order.findUnique({ where: { id, farmId: activeFarmId } })
-    if (existing) {
-      await prisma.deleteLog.create({
-        data: {
-          userId,
-          farmId: activeFarmId,
-          tableName: 'orders',
-          deletedDataCsv: JSON.stringify(existing),
-          reason: reason.trim()
-        }
-      })
-    }
-
-    await prisma.order.update({
-      where: { id, farmId: activeFarmId },
-      data: { isDeleted: true, deletedAt: new Date() }
-    })
-    revalidatePath('/dashboard/sales')
-    revalidatePath('/dashboard/orders')
-    revalidateFarmPerformanceCaches(activeFarmId)
-    return { success: true, message: 'Order moved to trash' }
-  } catch (error) {
-    console.error('Error deleting order:', error)
-    return { success: false, error: 'Failed to delete order' }
-  }
-}
-
 export async function restoreOrder(id: string) {
   const { userId, role, activeFarmId } = await getAuthContext()
   if (!activeFarmId) throw new Error('No active farm selected')

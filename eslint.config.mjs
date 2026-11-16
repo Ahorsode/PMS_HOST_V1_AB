@@ -25,10 +25,7 @@ const eslintConfig = [
       // Keep the ESM app from accumulating CommonJS require() imports.
       "@typescript-eslint/no-require-imports": "error",
       "@next/next/no-img-element": "off",
-      "react/no-unescaped-entities": "off",
-      "react-hooks/static-components": "off",
-      "react-hooks/set-state-in-effect": "off",
-      "react-hooks/immutability": "off"
+      "react/no-unescaped-entities": "off"
     }
   },
   {
@@ -46,7 +43,6 @@ const eslintConfig = [
       "src/lib/actions/**",
       "src/lib/auth-utils.ts",
       "src/lib/db.ts",
-      "src/lib/supabase-client.ts",
       "src/types/**"
     ]
   }
