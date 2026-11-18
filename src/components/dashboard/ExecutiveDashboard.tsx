@@ -17,6 +17,7 @@ import type { RevenueVelocityPoint, StrategicPriority } from '@/lib/analytics/ex
 import { MobileExecutiveDashboard } from './executive/MobileExecutiveDashboard'
 import { NOTHING_URGENT, formatPriorityDetail } from './executive/priority-detail'
 import type { ExecutiveBatchRef, ExecutiveStats } from './executive/types'
+import { useIsPhone } from '@/components/ui/ql/useIsPhone'
 
 interface ExecutiveDashboardProps {
   stats: ExecutiveStats
@@ -46,6 +47,8 @@ export function ExecutiveDashboard({
   batches = [],
 }: ExecutiveDashboardProps) {
   const hasRevenueData = revenueVelocityData.some((point) => point.revenue > 0 || point.target > 0)
+  // Recharts loops on zero-size containers, so the desktop chart is not mounted on phones.
+  const phone = useIsPhone()
   const displayPriorities = strategicPriorities.length > 0 ? strategicPriorities : [NOTHING_URGENT]
 
   return (
@@ -62,6 +65,7 @@ export function ExecutiveDashboard({
         batches={batches}
       />
     </div>
+    {phone ? null : (
     <div className="hidden space-y-6 pb-12 md:block">
       <header className="px-1">
         <h1 className="text-3xl font-semibold leading-tight text-fg">Farm summary</h1>
@@ -169,6 +173,7 @@ export function ExecutiveDashboard({
         </Card>
       </div>
     </div>
+    )}
     </>
   )
 }
