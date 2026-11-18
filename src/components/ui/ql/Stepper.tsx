@@ -17,6 +17,8 @@ export function QlStepper({
   max = Number.MAX_SAFE_INTEGER,
   tone = 'default',
   id,
+  decimals = false,
+  unit,
 }: {
   label: string;
   hint?: string;
@@ -26,10 +28,22 @@ export function QlStepper({
   max?: number;
   tone?: 'default' | 'coral';
   id?: string;
+  /** Allow typed fractions (e.g. 2.5 bags); − and + still move by one. */
+  decimals?: boolean;
+  /** Shown after the number for screen readers, e.g. "bags". */
+  unit?: string;
 }) {
   const reactId = React.useId();
   const inputId = id ?? `ql-stepper-${reactId}`;
-  const clamp = (n: number) => Math.min(Math.max(Math.round(n), min), max);
+  const clamp = (n: number) => {
+    const bounded = Math.min(Math.max(n, min), max);
+    return decimals ? Math.round(bounded * 100) / 100 : Math.round(bounded);
+  };
+  // The typed text is kept apart from the number so "2." can become "2.5".
+  const [text, setText] = React.useState(String(value));
+  React.useEffect(() => {
+    setText((current) => (Number(current) === value && current !== '' ? current : String(value)));
+  }, [value]);
   const atMin = value <= min;
   const atMax = value >= max;
   const stepButton =
@@ -52,16 +66,21 @@ export function QlStepper({
       </button>
       <input
         id={inputId}
-        type="number"
-        inputMode="numeric"
-        min={min}
-        max={max === Number.MAX_SAFE_INTEGER ? undefined : max}
-        value={value}
+        type="text"
+        inputMode={decimals ? 'decimal' : 'numeric'}
+        aria-label={unit ? `${label}, in ${unit}` : undefined}
+        value={text}
         onFocus={(event) => event.target.select()}
         onChange={(event) => {
-          const raw = event.target.value.replace(/^0+(?=\d)/, '');
-          onChange(raw === '' ? min : clamp(Number(raw)));
+          const pattern = decimals ? /^\d*\.?\d{0,2}$/ : /^\d*$/;
+          const raw = event.target.value.replace(',', '.');
+          if (!pattern.test(raw)) return;
+          setText(raw);
+          const next = Number(raw);
+          if (raw !== '' && raw !== '.' && Number.isFinite(next)) onChange(clamp(next));
+          else if (raw === '') onChange(min);
         }}
+        onBlur={() => setText(String(value))}
         className="h-11 w-14 rounded-lg bg-transparent text-center font-ql-display text-xl font-semibold tabular-nums text-ql-text outline-none focus-visible:ring-2 focus-visible:ring-ql-mint/60 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
       />
       <button

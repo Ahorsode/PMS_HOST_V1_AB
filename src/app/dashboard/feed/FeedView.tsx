@@ -19,6 +19,9 @@ import { Dialog } from '@/components/ui/Dialog'
 import type { FeedPageData } from '@/lib/actions/feed-page-actions'
 import { getFeedPageData, refreshFeedDynamicData } from '@/lib/actions/feed-page-actions'
 import { getReorderThreshold, isFeedCategory, isLowStock } from '@/lib/inventory/feed-categories'
+import { MobileFeedOverview } from './MobileFeedOverview'
+import { MobileFeedHistory } from './MobileFeedHistory'
+import { feedTotals } from './feed-math'
 
 export default function FeedDashboard({
   canEdit = true,
@@ -88,10 +91,28 @@ export default function FeedDashboard({
   }
 
   const feedInventory = inventory.filter((item) => isFeedCategory(item.category))
+  const totals = feedTotals(feedingLogs)
 
   return (
-    <div className="px-0 pt-2 pb-7 md:p-5 space-y-7 animate-in fade-in duration-200">
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+    <div className="px-0 pt-2 pb-7 md:p-5 space-y-5 md:space-y-7 animate-in fade-in duration-200">
+      {/* Phone layout (Quiet Ledger); the header and grid below are tablet and desktop only. */}
+      {!showForm ? (
+        <div className="md:hidden">
+          <MobileFeedOverview
+            canEdit={canEdit}
+            today={totals.today}
+            week={totals.week}
+            activeBatchCount={batches.length}
+            stock={feedInventory}
+            efficiency={efficiency}
+            formulations={formulations}
+            onLog={() => { setSelectedFormulation(undefined); setShowLogForm(true); }}
+            onCreateFormulation={() => setShowForm(true)}
+            onLogFormulation={(id) => { setSelectedFormulation(id); setShowLogForm(true); }}
+          />
+        </div>
+      ) : null}
+      <header className={`${showForm ? 'flex' : 'hidden md:flex'} flex-col md:flex-row justify-between items-start md:items-center gap-3`}>
         <div>
           <h1 className="text-3xl font-semibold leading-tight text-fg">Feed</h1>
           <p className="mt-2 text-sm text-fg-2">Feed formulations, stock and daily feeding</p>
@@ -156,7 +177,7 @@ export default function FeedDashboard({
           onClose={() => setShowForm(false)}
         />
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <div className="hidden md:grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* Efficiency Report */}
           <div className="lg:col-span-2 space-y-5">
             <Card className="overflow-hidden">
@@ -293,14 +314,30 @@ export default function FeedDashboard({
       )}
 
       {!showForm && (
-        <FeedingHistoryPanel
-          logs={feedingLogs}
-          batches={batches}
-          inventory={feedInventory}
-          formulations={formulations}
-          canEdit={canEdit}
-          isRefreshing={refreshing}
-        />
+        <>
+          <div className="md:hidden">
+            <MobileFeedHistory
+              logs={feedingLogs}
+              batches={batches}
+              inventory={feedInventory}
+              formulations={formulations}
+              canEdit={canEdit}
+              isRefreshing={refreshing}
+              onChanged={refreshAfterLog}
+            />
+          </div>
+          <div className="hidden md:block">
+            <FeedingHistoryPanel
+              logs={feedingLogs}
+              batches={batches}
+              inventory={feedInventory}
+              formulations={formulations}
+              canEdit={canEdit}
+              isRefreshing={refreshing}
+              onChanged={refreshAfterLog}
+            />
+          </div>
+        </>
       )}
     </div>
   )

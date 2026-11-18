@@ -10,6 +10,7 @@ import { DeleteConfirmationModal } from '@/components/modals/DeleteConfirmationM
 import { QUICK_ICON, quickButtonClass } from '@/components/ui/quick-action';
 import { FeedForm } from './FeedForm';
 import { InventoryForm } from './InventoryForm';
+import { QlOverflowMenu } from '@/components/ui/ql/OverflowMenu';
 
 export const FeedActionsHeader = ({ batches, inventory, formulations = [] }: { batches: any[], inventory: any[], formulations?: any[] }) => {
   const [openFeed, setOpenFeed] = useState(false);
@@ -44,7 +45,23 @@ export const FeedActionsHeader = ({ batches, inventory, formulations = [] }: { b
   );
 };
 
-export const FeedLogActions = ({ log, batches, inventory, formulations = [] }: { log: any, batches: any[], inventory: any[], formulations?: any[] }) => {
+export const FeedLogActions = ({
+  log,
+  batches,
+  inventory,
+  formulations = [],
+  variant = 'icons',
+  onChanged,
+}: {
+  log: any;
+  batches: any[];
+  inventory: any[];
+  formulations?: any[];
+  /** `menu`: one ⋯ button with Edit and Delete (phones). */
+  variant?: 'icons' | 'menu';
+  /** Called after an edit or delete is saved, so the page can reload its list. */
+  onChanged?: () => void;
+}) => {
   const [mode, setMode] = useState<'edit' | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -57,6 +74,7 @@ export const FeedLogActions = ({ log, batches, inventory, formulations = [] }: {
       const res = await deleteFeedingLog(log.id, reason);
       if (res.success) {
         setShowDeleteModal(false);
+        onChanged?.();
         router.refresh();
       } else {
         alert(res.error || 'Failed to delete log');
@@ -69,6 +87,36 @@ export const FeedLogActions = ({ log, batches, inventory, formulations = [] }: {
     }
   };
 
+  const dialogs = (
+    <>
+      <Dialog isOpen={mode !== null} onOpenChange={(open) => !open && setMode(null)} title="Edit feeding log">
+        {mode && <FeedForm log={log} batches={batches} inventory={inventory} formulations={formulations} mode={mode} onClose={() => setMode(null)} onSaved={onChanged} />}
+      </Dialog>
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDelete}
+        itemName={`Feed Log (${new Date(log.logDate).toLocaleDateString()})`}
+        isLoading={isDeleting}
+      />
+    </>
+  );
+
+  if (variant === 'menu') {
+    return (
+      <>
+        <QlOverflowMenu
+          label="More actions for this feeding log"
+          items={[
+            { label: 'Edit log', icon: Edit2, onSelect: () => setMode('edit') },
+            { label: 'Delete log…', icon: Trash2, destructive: true, onSelect: () => setShowDeleteModal(true) },
+          ]}
+        />
+        {dialogs}
+      </>
+    );
+  }
+
   return (
     <div className="flex items-center justify-end gap-2">
       <button type="button" aria-label="Edit feeding log" title="Edit" onClick={() => setMode('edit')} className={quickButtonClass('edit')}>
@@ -78,17 +126,7 @@ export const FeedLogActions = ({ log, batches, inventory, formulations = [] }: {
         <Trash2 {...QUICK_ICON} />
       </button>
 
-      <Dialog isOpen={mode !== null} onOpenChange={(open) => !open && setMode(null)} title="Edit feeding log">
-        {mode && <FeedForm log={log} batches={batches} inventory={inventory} formulations={formulations} mode={mode} onClose={() => setMode(null)} />}
-      </Dialog>
-      
-      <DeleteConfirmationModal
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        onConfirm={handleDelete}
-        itemName={`Feed Log (${new Date(log.logDate).toLocaleDateString()})`}
-        isLoading={isDeleting}
-      />
+      {dialogs}
     </div>
   );
 };

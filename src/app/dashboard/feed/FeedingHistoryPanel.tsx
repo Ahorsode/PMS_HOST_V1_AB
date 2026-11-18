@@ -65,6 +65,7 @@ export function FeedingHistoryPanel({
   formulations,
   canEdit,
   isRefreshing = false,
+  onChanged,
 }: {
   logs: FeedingLog[]
   batches: any[]
@@ -72,6 +73,8 @@ export function FeedingHistoryPanel({
   formulations: any[]
   canEdit: boolean
   isRefreshing?: boolean
+  /** Reloads the page's logs after an edit or delete (its list is client state). */
+  onChanged?: () => void
 }) {
   const sortedLogs = useMemo(
     () => [...logs].sort((a, b) =>
@@ -160,6 +163,7 @@ export function FeedingHistoryPanel({
                               batches={batches}
                               inventory={inventory}
                               formulations={formulations}
+                              onChanged={onChanged}
                             />
                           </td>
                         )}
@@ -199,6 +203,7 @@ export function FeedingHistoryPanel({
                           batches={batches}
                           inventory={inventory}
                           formulations={formulations}
+                          onChanged={onChanged}
                         />
                       </div>
                     )}

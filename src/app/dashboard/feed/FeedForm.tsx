@@ -16,6 +16,11 @@ import { useRouter } from 'next/navigation';
 import { getBreedDisplayName } from '@/lib/farm/livestock-breed-options';
 import { feedSourceFromLog, parseFeedSource } from '@/lib/inventory/feed-source';
 import { cn } from '@/lib/utils';
+import { Check, CalendarDays } from 'lucide-react';
+import { useIsPhone } from '@/components/ui/ql/useIsPhone';
+import { QlStepper } from '@/components/ui/ql/Stepper';
+import { QlLabel } from '@/components/ui/ql/Surface';
+import { QlDerived } from '@/components/ui/ql/Derived';
 
 interface FeedFormProps {
   batches: { id: string; breedType: string; batchName?: string | null }[];
@@ -43,6 +48,10 @@ export const FeedForm = ({
   selectedFormulationId,
 }: FeedFormProps) => {
   const router = useRouter();
+  // Phones get batch cards, a stepper and a running stock figure (Quiet Ledger);
+  // the values and checks are the same as the typed fields.
+  const phone = useIsPhone();
+  const [pickDate, setPickDate] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -174,6 +183,175 @@ export const FeedForm = ({
           </Button>
         </FormActions>
       </div>
+    );
+  }
+
+  const selectedStock = (() => {
+    const { feedTypeId, formulationId } = parseFeedSource(formData.feedSource);
+    // Stock rows carry stockLevel and unit at run time; the prop types only name id and label.
+    const source = (feedTypeId
+      ? inventory.find((item) => item.id === feedTypeId)
+      : formulations.find((formulation) => formulation.id === formulationId)) as
+      | { stockLevel?: number | string | null; unit?: string | null }
+      | undefined;
+    if (!source || source.stockLevel == null) return null;
+    return { level: Number(source.stockLevel), unit: source.unit || 'bags' };
+  })();
+  const amountNumber = Number(formData.amountConsumed) || 0;
+  const todayValue = new Date().toISOString().split('T')[0];
+  const yesterdayValue = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return d.toISOString().split('T')[0];
+  })();
+  const dateChoice = formData.logDate === todayValue ? 'today' : formData.logDate === yesterdayValue ? 'yesterday' : 'pick';
+  const dateChip = (active: boolean) =>
+    cn(
+      'inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 text-[13px] font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ql-mint/60 disabled:cursor-not-allowed disabled:opacity-50',
+      active ? 'border-ql-mint/50 bg-ql-mint/12 text-ql-mint' : 'border-ql-line text-ql-text',
+    );
+  const nf = (n: number) => n.toLocaleString('en-US', { maximumFractionDigits: 2 });
+
+  if (phone) {
+    return (
+      <Form onSubmit={handleSubmit}>
+        <FormError>{error}</FormError>
+
+        <div className="font-ql-sans text-ql-text">
+          <QlLabel>Batch</QlLabel>
+          {mode === 'create' && batches.length <= 4 ? (
+            <div role="radiogroup" aria-label="Flock" className="mt-2 grid grid-cols-2 gap-2">
+              {batches.map((b, index) => {
+                const selected = formData.batchId === b.id;
+                return (
+                  <button
+                    key={b.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected}
+                    onClick={() => setFormData({ ...formData, batchId: b.id })}
+                    className={cn(
+                      'relative min-h-14 rounded-2xl border px-3 py-2 text-left transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ql-mint/60',
+                      selected ? 'border-ql-mint/60 bg-ql-mint/[0.06]' : 'border-ql-line bg-ql-surface',
+                    )}
+                  >
+                    <span className="block truncate pr-5 text-sm font-semibold">{b.batchName || `Unit ${index + 1}`}</span>
+                    <span className="block truncate text-[12px] text-ql-muted">{getBreedDisplayName(b.breedType) || 'Active'}</span>
+                    {selected ? <Check aria-hidden="true" className="absolute right-3 top-3 h-4 w-4 text-ql-mint" strokeWidth={2.5} /> : null}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
+        {mode === 'edit' || batches.length > 4 ? (
+          <SearchSelect
+            label="Flock"
+            options={batches.map((b, index) => ({
+              label: b.batchName || `Unit ${index + 1}`,
+              description: getBreedDisplayName(b.breedType),
+              value: b.id,
+            }))}
+            value={formData.batchId}
+            onChange={(batchId) => setFormData({ ...formData, batchId })}
+            placeholder="Select a flock"
+            searchPlaceholder="Search flocks"
+            emptyText="No flock matches"
+            disabled={mode === 'edit'}
+            required
+          />
+        ) : null}
+
+        <SearchSelect
+          label="Feed"
+          options={feedOptions}
+          value={formData.feedSource}
+          onChange={(feedSource) => setFormData({ ...formData, feedSource })}
+          placeholder="Select a feed"
+          searchPlaceholder="Search feed"
+          emptyText="No feed matches"
+          disabled={mode === 'edit'}
+          required
+        />
+        {selectedStock ? (
+          <p className="-mt-2 font-ql-mono text-[11px] text-ql-muted">
+            {nf(selectedStock.level)} {selectedStock.unit} in stock
+          </p>
+        ) : null}
+
+        <div className="space-y-2">
+          <QlStepper
+            label="Bags fed"
+            hint="Taken from stock"
+            decimals
+            unit="bags"
+            value={amountNumber}
+            onChange={(value) => setFormData({ ...formData, amountConsumed: value === 0 ? '' : value })}
+          />
+          <div className="grid grid-cols-4 gap-2" role="group" aria-label="Quick amounts">
+            {QUICK_AMOUNTS.map((quick) => {
+              const selected = amountNumber === quick.value;
+              return (
+                <button
+                  key={quick.value}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => setFormData({ ...formData, amountConsumed: quick.value })}
+                  className={cn(
+                    'min-h-11 rounded-xl border px-1 font-ql-sans text-sm font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ql-mint/60',
+                    selected ? 'border-ql-mint/50 bg-ql-mint/12 text-ql-mint' : 'border-ql-line text-ql-muted',
+                  )}
+                >
+                  {quick.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="font-ql-sans">
+          <QlLabel>Date</QlLabel>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <button type="button" disabled={mode === 'edit'} className={dateChip(dateChoice === 'today' && !pickDate)} onClick={() => { setPickDate(false); setFormData({ ...formData, logDate: todayValue }); }}>
+              Today
+            </button>
+            <button type="button" disabled={mode === 'edit'} className={dateChip(dateChoice === 'yesterday' && !pickDate)} onClick={() => { setPickDate(false); setFormData({ ...formData, logDate: yesterdayValue }); }}>
+              Yesterday
+            </button>
+            <button type="button" disabled={mode === 'edit'} className={dateChip(pickDate || dateChoice === 'pick')} onClick={() => setPickDate(true)}>
+              <CalendarDays aria-hidden="true" className="h-4 w-4" strokeWidth={1.75} />
+              Pick date
+            </button>
+          </div>
+          {mode === 'edit' ? <p className="mt-2 text-[12px] text-ql-muted">The date of a saved feeding cannot be changed.</p> : null}
+        </div>
+        {(pickDate || dateChoice === 'pick') && mode === 'create' ? (
+          <DateInput label="Date fed" value={formData.logDate} onChange={(e) => setFormData({ ...formData, logDate: e.target.value })} required />
+        ) : null}
+
+        {mode === 'create' && selectedStock ? (
+          <div className="rounded-[24px] rounded-tl-[8px] border border-ql-line bg-ql-surface bg-[linear-gradient(180deg,color-mix(in_srgb,var(--ql-mint)_7%,transparent),transparent_60%)] p-4 font-ql-sans text-ql-text">
+            <QlLabel>After this log</QlLabel>
+            <p className={cn('mt-3 font-ql-display text-[34px] font-semibold leading-none tabular-nums', selectedStock.level - amountNumber < 0 && 'text-ql-coral')}>
+              <QlDerived formula={`${nf(selectedStock.level)} − ${nf(amountNumber)}`}>{nf(selectedStock.level - amountNumber)}</QlDerived>{' '}
+              <span className="font-ql-sans text-base font-normal text-ql-muted">{selectedStock.unit} left</span>
+            </p>
+            <p className="mt-2 font-ql-mono text-[11px] text-ql-muted">{nf(selectedStock.level)} − {nf(amountNumber)}</p>
+            {selectedStock.level - amountNumber < 0 ? (
+              <p className="mt-2 text-[13px] text-ql-amber">That is more than the {nf(selectedStock.level)} {selectedStock.unit} in stock.</p>
+            ) : null}
+          </div>
+        ) : null}
+
+        <FormActions>
+          <Button variant="outline" type="button" onClick={onClose} disabled={isLoading}>
+            Cancel
+          </Button>
+          <Button type="submit" variant="accent" isLoading={isLoading} loadingText="Saving">
+            {mode === 'edit' ? 'Save changes' : 'Save feeding'}
+          </Button>
+        </FormActions>
+      </Form>
     );
   }
 

@@ -11,6 +11,7 @@ look. Each board lands on its own `redesign/<screen>` branch, one commit per PDF
 | Landing page + sign-up step rail | Landing-Page-Redesign.pdf (7 pages) | `redesign/landing-page` | Phone tree per section beside the unchanged desktop markup; plan chips and term prices worked out from the billing config |
 | Egg production (overview, stock & history, log form) | Egg-Production-Redesign.pdf (2 pages) | `redesign/egg-production` | Shared counts moved to `eggs/egg-math.ts`; log form switches to steppers on phones |
 | Health schedule (overview, week strip, new-schedule sheet) | Health-Schedule-Redesign.pdf (2 pages) | `redesign/health-schedule` | States in `health/schedule-state.ts`; the form opens as a sheet on phones |
+| Feed (overview, feeding history, log form) | Feed-Redesign.pdf (2 pages) | `redesign/feed` | Counts and day grouping in `feed/feed-math.ts`; batch cards, stepper and stock-after on phones |
 
 ## Shared tokens (`src/app/globals.css`)
 
@@ -56,7 +57,7 @@ Spacing: screen gutter 16 (`px-4` on the mobile shell), tile gap 12 (`gap-3`,
 | `StickyBar.tsx` | `QlStickyBar` (dim state with a mono reason) and `useNoPrimaryInView()`: shows only while no `data-ql-primary` button is on screen |
 | `primary.ts` | `QL_PRIMARY_ATTR`: spread on the screen's one filled mint button (server-safe import) |
 | `EggCrate.tsx` | The crate in three states: empty, open (n of 30), full with a mint rim |
-| `Stepper.tsx` | `QlStepper`: − / number / + with 44 px buttons, clamped whole numbers |
+| `Stepper.tsx` | `QlStepper`: − / number / + with 44 px buttons; whole numbers, or `decimals` for fractions like 2.5 bags |
 | `OverflowMenu.tsx` | `QlOverflowMenu`: the ⋯ menu (any icon, above or below); destructive items coral and last |
 | `useIsPhone.ts` | Below-md check for client-only places (dialogs) that need a different control, not just styles |
 | `ConfirmSheet.tsx` | `QlConfirmSheet`: the end of a delete; type the name, coral button dim with a reason until it matches |
@@ -91,6 +92,22 @@ Landing page:
   adds staff but drops five modules); a pricing decision, not changed here.
 - The sample card's figures are the page's own illustration (labelled Sample
   data); only the egg count is worked out (crates × 30).
+
+Feed:
+- Fixed: the feed page keeps its logs in client state seeded once from the
+  server, so editing or deleting a log from the history left the list stale
+  until a reload (desktop too). Edits and deletes now call the page's existing
+  refresh (`refreshFeedDynamicData`).
+- FCR on this page is all-time bags fed ÷ (gain between the last two weights ×
+  head count), mixing bags with kilograms and an all-time total with one
+  interval. Phones show "—" with "Needs a weight" / "Needs a second weight"
+  when it cannot be worked out, and no target chip, since the figure is not a
+  true FCR. Not changed.
+- The stock list only loads items with stock above zero, so the "Out" state
+  can never show here.
+- The board's Note field has no column on feeding logs; not added.
+- "Load older logs": the page loads the latest 100 logs; phones reveal them
+  ten days at a time ("Show older logs"), no new query.
 
 Health schedule:
 - Delete on phones now goes through the ⋯ menu and a type-the-name confirm.

@@ -31,7 +31,7 @@ export function QlLabel({
 }: {
   className?: string;
   children: React.ReactNode;
-  as?: 'p' | 'h2' | 'span';
+  as?: 'p' | 'h2' | 'h3' | 'span';
   id?: string;
 }) {
   return (
