@@ -12,6 +12,7 @@ look. Each board lands on its own `redesign/<screen>` branch, one commit per PDF
 | Egg production (overview, stock & history, log form) | Egg-Production-Redesign.pdf (2 pages) | `redesign/egg-production` | Shared counts moved to `eggs/egg-math.ts`; log form switches to steppers on phones |
 | Health schedule (overview, week strip, new-schedule sheet) | Health-Schedule-Redesign.pdf (2 pages) | `redesign/health-schedule` | States in `health/schedule-state.ts`; the form opens as a sheet on phones |
 | Feed (overview, feeding history, log form) | Feed-Redesign.pdf (2 pages) | `redesign/feed` | Counts and day grouping in `feed/feed-math.ts`; batch cards, stepper and stock-after on phones |
+| Quarantine & isolation (overview, isolate sheet, record-loss sheet) | Quarantine-Redesign.pdf (2 pages) | `redesign/quarantine` | Phone sheets call the same `logHealthEvent` / `logMortalityInIsolation` / `returnFromIsolation` actions |
 
 ## Shared tokens (`src/app/globals.css`)
 
@@ -92,6 +93,18 @@ Landing page:
   adds staff but drops five modules); a pricing decision, not changed here.
 - The sample card's figures are the page's own illustration (labelled Sample
   data); only the egg count is worked out (crates × 30).
+
+Quarantine:
+- Isolated birds are counted per flock (`isolationCount`), not per room. Room
+  use is worked out as all isolated birds against the rooms' total places; it
+  is exact with one room (the board's case) and an approximation with several,
+  so the per-room "free" chip only shows when there is one room.
+- Recovered still saves on one tap (as before); Died now opens the two-step
+  record-loss sheet ("This will … This can't be undone").
+- The isolate and loss sheets use the flock form's cause lists (exported as
+  `MORTALITY_REASONS`); "Unknown cause yet" stays the default.
+- "Add a new room" inside the old isolate form is now the + New room link,
+  which opens the existing room form.
 
 Feed:
 - Fixed: the feed page keeps its logs in client state seeded once from the

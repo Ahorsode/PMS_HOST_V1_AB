@@ -35,7 +35,8 @@ interface LivestockFormProps {
   onClose: () => void;
 }
 
-const MORTALITY_REASONS: Record<string, string[]> = {
+/** Causes and their details for deaths and sick birds; also used by the phone quarantine sheets. */
+export const MORTALITY_REASONS: Record<string, string[]> = {
   "Disease": ["Newcastle disease", "Avian influenza", "Gumboro", "Marek’s disease", "Salmonellosis", "Fowl cholera", "Colibacillosis", "Coccidiosis", "Worm infestation"],
   "Environmental": ["Heat stress", "Cold stress", "Poor ventilation", "High ammonia", "Overcrowding"],
   "Nutrition": ["Malnutrition", "Vitamin deficiency", "Moldy feed", "Poor-quality feed"],

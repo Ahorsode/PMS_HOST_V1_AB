@@ -3,6 +3,7 @@ import { InfirmaryManagement } from '../flocks/InfirmaryManagement';
 import { QuickMortalityLogger } from '../mortality/QuickMortalityLogger';
 import { NewRoomButton } from './NewRoomButton';
 import { g } from '@/components/ui/graphite';
+import { MobileQuarantine } from './MobileQuarantine';
 
 /** Compact list of the farm's isolation rooms. */
 function RoomList({ rooms }: { rooms: any[] }) {
@@ -41,8 +42,12 @@ export function QuarantineView({
   isolationRooms: any[];
 }) {
   return (
-    <div className="max-w-7xl mx-auto space-y-6 px-1 md:px-4 pt-2 pb-8 md:py-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+    <div className="max-w-7xl mx-auto md:space-y-6 md:px-4 pt-2 pb-8 md:py-8">
+      {/* Phone layout (Quiet Ledger); the sections below are tablet and desktop only. */}
+      <div className="md:hidden">
+        <MobileQuarantine canEdit={canEdit} activeBatches={activeBatches} batches={batches} isolationRooms={isolationRooms} />
+      </div>
+      <div className="hidden flex-col gap-4 sm:flex-row sm:items-start sm:justify-between md:flex">
         <div>
           <h1 className={g.title}>Quarantine and isolation</h1>
           <p className={`mt-2 text-sm ${g.secondary}`}>Isolate sick birds, then return them to their house or record the loss</p>
@@ -51,7 +56,7 @@ export function QuarantineView({
       </div>
 
       {canEdit ? (
-        <section id="quick-logger" className={`scroll-mt-6 ${g.card} p-5`}>
+        <section id="quick-logger" className={`scroll-mt-6 ${g.card} hidden p-5 md:block`}>
           <QuickMortalityLogger
             activeBatches={activeBatches}
             isolationRooms={isolationRooms}
@@ -60,12 +65,12 @@ export function QuarantineView({
           />
         </section>
       ) : (
-        <section className={`${g.card} p-5`}>
+        <section className={`${g.card} hidden p-5 md:block`}>
           <RoomList rooms={isolationRooms} />
         </section>
       )}
 
-      <section className={`${g.card} p-5`}>
+      <section className={`${g.card} hidden p-5 md:block`}>
         <InfirmaryManagement batches={batches} />
       </section>
     </div>
