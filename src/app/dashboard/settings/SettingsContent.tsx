@@ -21,7 +21,10 @@ import {
   Switch,
 } from '@/components/ui/form';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { MutationBoundary } from '@/components/ui/MutationFeedback';
+import { ArrowLeft } from 'lucide-react';
+import { SettingsHomePhone, PhoneSaveBar } from './SettingsPhone';
 
 const SHOW_USER_DESKTOP_LICENSES = process.env.NEXT_PUBLIC_SHOW_USER_DESKTOP_LICENSES !== 'false';
 
@@ -40,11 +43,24 @@ interface SettingsContentProps {
   farm: any;
   inventory?: InventoryItem[];
   isFarmOwner?: boolean;
+  /** Compact plan row for the phone settings list. */
+  phonePlan?: React.ReactNode;
 }
 
-export function SettingsContent({ farm, inventory = [], isFarmOwner = false }: SettingsContentProps) {
+const PHONE_TITLES: Record<string, string> = {
+  farm: 'Farm info',
+  notifications: 'Reminders',
+  'egg-logging': 'Egg logging',
+  sales: 'Sales',
+  preferences: 'Stock levels',
+  security: 'Security',
+};
+
+export function SettingsContent({ farm, inventory = [], isFarmOwner = false, phonePlan }: SettingsContentProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  // Phones open on a list of sections; a ?tab= opens one section.
+  const phoneHome = !searchParams.get('tab');
   const activeTabFromUrl = searchParams.get('tab') || 'farm';
   const [activeTab, setActiveTab] = useState(activeTabFromUrl);
 
@@ -83,6 +99,20 @@ export function SettingsContent({ farm, inventory = [], isFarmOwner = false }: S
   const [prefsLoaded, setPrefsLoaded] = useState(false);
   const [growthStandards, setGrowthStandards] = useState<any[]>([]);
   const [savingReorderId, setSavingReorderId] = useState<string | null>(null);
+  // Last saved values, so the phone Save stays dim (and says why) until something changes.
+  const [farmDirty, setFarmDirty] = useState(false);
+  const [saved, setSaved] = useState({
+    eggReminderTime: '18:00',
+    feedReminderTime: '18:00',
+    growthTarget: undefined as number | undefined,
+    defaultEggUnit: 'crate' as 'crate' | 'individual',
+    allowEggUnitChange: false,
+    defaultEggSortMode: 'unsorted' as 'sorted' | 'unsorted',
+    allowEggSortModeChange: false,
+    allowBatchOverride: false,
+    allowWorkerDiscounts: false,
+    defaultDiscountType: 'item' as 'flat' | 'percent' | 'item',
+  });
 
   useEffect(() => {
     if (!prefsLoaded && PREFERENCE_TABS.includes(activeTab)) {
@@ -110,6 +140,16 @@ export function SettingsContent({ farm, inventory = [], isFarmOwner = false }: S
         setAllowEggUnitChange(settings.allowEggUnitChange ?? false);
         setDefaultEggSortMode(settings.defaultEggSortMode === 'sorted' ? 'sorted' : 'unsorted');
         setAllowEggSortModeChange(settings.allowEggSortModeChange ?? false);
+        setSaved((prev) => ({
+          ...prev,
+          eggReminderTime: settings.eggRecordReminderTime || '18:00',
+          feedReminderTime: settings.feedRecordReminderTime || '18:00',
+          growthTarget: settings.growthTargetStandard ?? undefined,
+          defaultEggUnit: settings.defaultEggUnit === 'individual' ? 'individual' : 'crate',
+          allowEggUnitChange: settings.allowEggUnitChange ?? false,
+          defaultEggSortMode: settings.defaultEggSortMode === 'sorted' ? 'sorted' : 'unsorted',
+          allowEggSortModeChange: settings.allowEggSortModeChange ?? false,
+        }));
       }
 
       const salesSettings = await getSalesSettings();
@@ -120,6 +160,12 @@ export function SettingsContent({ farm, inventory = [], isFarmOwner = false }: S
         setDefaultDiscountType(
           discountType === 'flat' || discountType === 'percent' ? discountType : 'item',
         );
+        setSaved((prev) => ({
+          ...prev,
+          allowBatchOverride: salesSettings.allowBatchOverride ?? false,
+          allowWorkerDiscounts: salesSettings.allowWorkerDiscounts ?? false,
+          defaultDiscountType: discountType === 'flat' || discountType === 'percent' ? discountType : 'item',
+        }));
       }
       
       const { getGrowthStandards } = await import('@/lib/actions/preference-actions');
@@ -146,6 +192,7 @@ export function SettingsContent({ farm, inventory = [], isFarmOwner = false }: S
     try {
       const result = await updateFarmInfo({ name, location, capacity });
       if (result.success) {
+        setFarmDirty(false);
         setMessage({ type: 'success', text: 'Farm information updated successfully!' });
       } else {
         setMessage({ type: 'error', text: result.error || 'Failed to update farm info.' });
@@ -163,17 +210,21 @@ export function SettingsContent({ farm, inventory = [], isFarmOwner = false }: S
     try {
       await save();
       setMessage({ type: 'success', text: `${label} saved!` });
+      return true;
     } catch (err) {
       setMessage({ type: 'error', text: `Failed to save ${label.toLowerCase()}.` });
+      return false;
     } finally {
       setSavingSection(null);
     }
   };
 
-  const handleSaveFarmDefaults = () =>
-    saveSection('farm-defaults', 'Farm defaults', () =>
+  const handleSaveFarmDefaults = async () => {
+    const ok = await saveSection('farm-defaults', 'Farm defaults', () =>
       updateFarmSettings({ growthTargetStandard: growthTarget }),
     );
+    if (ok) setSaved((prev) => ({ ...prev, growthTarget }));
+  };
 
   const handleSaveCountry = () =>
     saveSection('country', 'Country', async () => {
@@ -182,16 +233,18 @@ export function SettingsContent({ farm, inventory = [], isFarmOwner = false }: S
       router.refresh();
     });
 
-  const handleSaveReminders = () =>
-    saveSection('reminders', 'Reminder times', () =>
+  const handleSaveReminders = async () => {
+    const ok = await saveSection('reminders', 'Reminder times', () =>
       updateFarmSettings({
         eggRecordReminderTime: eggReminderTime,
         feedRecordReminderTime: feedReminderTime,
       }),
     );
+    if (ok) setSaved((prev) => ({ ...prev, eggReminderTime, feedReminderTime }));
+  };
 
-  const handleSaveEggLogging = () =>
-    saveSection('egg-logging', 'Egg logging defaults', () =>
+  const handleSaveEggLogging = async () => {
+    const ok = await saveSection('egg-logging', 'Egg logging defaults', () =>
       updateFarmSettings({
         defaultEggUnit,
         allowEggUnitChange,
@@ -199,15 +252,31 @@ export function SettingsContent({ farm, inventory = [], isFarmOwner = false }: S
         allowEggSortModeChange,
       }),
     );
+    if (ok) setSaved((prev) => ({ ...prev, defaultEggUnit, allowEggUnitChange, defaultEggSortMode, allowEggSortModeChange }));
+  };
 
-  const handleSaveSales = () =>
-    saveSection('sales', 'Sales settings', () =>
+  const handleSaveSales = async () => {
+    const ok = await saveSection('sales', 'Sales settings', () =>
       updateSalesSettings({
         allowBatchOverride,
         allowWorkerDiscounts,
         defaultDiscountType,
       }),
     );
+    if (ok) setSaved((prev) => ({ ...prev, allowBatchOverride, allowWorkerDiscounts, defaultDiscountType }));
+  };
+
+  const remindersDirty = eggReminderTime !== saved.eggReminderTime || feedReminderTime !== saved.feedReminderTime;
+  const growthDirty = growthTarget !== saved.growthTarget;
+  const eggDirty =
+    defaultEggUnit !== saved.defaultEggUnit ||
+    allowEggUnitChange !== saved.allowEggUnitChange ||
+    defaultEggSortMode !== saved.defaultEggSortMode ||
+    allowEggSortModeChange !== saved.allowEggSortModeChange;
+  const salesDirty =
+    allowBatchOverride !== saved.allowBatchOverride ||
+    allowWorkerDiscounts !== saved.allowWorkerDiscounts ||
+    defaultDiscountType !== saved.defaultDiscountType;
 
   const handleSaveReorderLevel = async (itemId: string) => {
     if (savingReorderId === itemId) return;
@@ -257,8 +326,38 @@ export function SettingsContent({ farm, inventory = [], isFarmOwner = false }: S
   );
 
   return (
-    <div className="grid grid-cols-1 gap-5 md:grid-cols-4">
-      <nav aria-label="Settings sections" className="md:col-span-1">
+    <div className="grid grid-cols-1 gap-5 md:grid-cols-4 max-md:gap-3">
+      {phoneHome ? (
+        <SettingsHomePhone
+          farm={farm}
+          plan={phonePlan}
+          loading={isLoadingPrefs || !prefsLoaded}
+          growthTargetName={growthStandards.find((s) => s.id === growthTarget)?.name ?? null}
+          eggUnit={defaultEggUnit}
+          eggSorted={defaultEggSortMode === 'sorted'}
+          discountsOn={allowWorkerDiscounts}
+          discountType={defaultDiscountType}
+          eggReminderTime={eggReminderTime}
+          feedReminderTime={feedReminderTime}
+          inventory={inventory.map((item) => ({ ...item, reorderLevel: reorderLevels[item.id] ?? item.reorderLevel ?? 500 }))}
+          showDevices={SHOW_USER_DESKTOP_LICENSES}
+        />
+      ) : (
+        <Link
+          href="/dashboard/settings"
+          className="flex min-h-11 items-center gap-3 font-ql-sans md:hidden"
+          aria-label="Back to all settings"
+        >
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-ql-line text-ql-text">
+            <ArrowLeft className="h-5 w-5" strokeWidth={1.5} aria-hidden />
+          </span>
+          <span className="min-w-0">
+            <span className="block font-ql-display text-[22px] font-semibold leading-tight text-ql-text">{PHONE_TITLES[activeTab] ?? 'Settings'}</span>
+            <span className="block text-[13px] text-ql-muted">Settings</span>
+          </span>
+        </Link>
+      )}
+      <nav aria-label="Settings sections" className="md:col-span-1 max-md:hidden">
         <div className="flex gap-2 overflow-x-auto pb-1 md:flex-col md:overflow-visible md:pb-0">
           {tabs.map((tab) => (
             <button
@@ -278,7 +377,7 @@ export function SettingsContent({ farm, inventory = [], isFarmOwner = false }: S
         </div>
       </nav>
 
-      <div className="space-y-5 md:col-span-3">
+      <div className={`space-y-5 md:col-span-3 max-md:space-y-3 ${phoneHome ? 'max-md:hidden' : 'max-md:pb-28'}`}>
         {message ? (
           message.type === 'success' ? (
             <FormNote tone="success">
@@ -299,7 +398,7 @@ export function SettingsContent({ farm, inventory = [], isFarmOwner = false }: S
                 <CardTitle>Farm details</CardTitle>
               </CardHeader>
               <CardContent>
-                <Form onSubmit={handleUpdateFarm}>
+                <Form onSubmit={handleUpdateFarm} onChange={() => setFarmDirty(true)}>
                   <FormRow>
                     <Input label="Farm name" name="name" defaultValue={farm?.name} required />
                     <Input label="Town or city" name="location" defaultValue={farm?.location || ''} required />
@@ -313,11 +412,14 @@ export function SettingsContent({ farm, inventory = [], isFarmOwner = false }: S
                     defaultValue={farm?.capacity}
                     required
                   />
-                  <FormActions>
-                    <Button type="submit" variant="accent" isLoading={isUpdatingFarm} loadingText="Saving">
-                      Save farm details
-                    </Button>
-                  </FormActions>
+                  <div className="max-md:hidden">
+                    <FormActions>
+                      <Button type="submit" variant="accent" isLoading={isUpdatingFarm} loadingText="Saving">
+                        Save farm details
+                      </Button>
+                    </FormActions>
+                  </div>
+                  <PhoneSaveBar type="submit" dirty={farmDirty} busy={isUpdatingFarm} />
                 </Form>
               </CardContent>
             </Card>
@@ -325,6 +427,7 @@ export function SettingsContent({ farm, inventory = [], isFarmOwner = false }: S
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
+                  <span id="farm-defaults" aria-hidden className="block scroll-mt-24" />
                   <SlidersHorizontal className="h-5 w-5 text-fg-2" strokeWidth={1.75} />
                   Farm defaults
                 </CardTitle>
@@ -370,6 +473,11 @@ export function SettingsContent({ farm, inventory = [], isFarmOwner = false }: S
                     </FormSection>
 
                     <FormSection title="Growth target" hint="The standard your flocks' growth is compared against.">
+                      {!growthTarget ? (
+                        <p className="md:hidden">
+                          <span className="inline-flex h-6 items-center rounded-full bg-ql-amber/14 px-2.5 font-ql-sans text-[11px] font-semibold text-ql-amber">Not set</span>
+                        </p>
+                      ) : null}
                       <Select
                         label="Compare growth against"
                         value={growthTarget || ''}
@@ -380,11 +488,32 @@ export function SettingsContent({ farm, inventory = [], isFarmOwner = false }: S
                           <option key={s.id} value={s.id}>{s.name} ({s.livestockType})</option>
                         ))}
                       </Select>
-                      <FormActions>
-                        <Button type="button" variant="accent" onClick={handleSaveFarmDefaults} isLoading={savingSection === 'farm-defaults'} loadingText="Saving">
+                      <div className="max-md:hidden">
+                        <FormActions>
+                          <Button type="button" variant="accent" onClick={handleSaveFarmDefaults} isLoading={savingSection === 'farm-defaults'} loadingText="Saving">
+                            Save growth target
+                          </Button>
+                        </FormActions>
+                      </div>
+                      {/* Phones: outlined, and dim until the choice changes (the sticky Save is the farm details one). */}
+                      <div className="space-y-1 md:hidden">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleSaveFarmDefaults}
+                          isLoading={savingSection === 'farm-defaults'}
+                          loadingText="Saving"
+                          disabled={!growthDirty}
+                          className="w-full"
+                        >
                           Save growth target
                         </Button>
-                      </FormActions>
+                        {!growthDirty ? (
+                          <p className="text-center font-ql-mono text-[11px] uppercase tracking-[0.08em] text-ql-muted">
+                            {growthTarget ? 'No changes yet' : 'Choose a standard first'}
+                          </p>
+                        ) : null}
+                      </div>
                     </FormSection>
                   </div>
                 )}
@@ -437,11 +566,14 @@ export function SettingsContent({ farm, inventory = [], isFarmOwner = false }: S
                       onChange={e => setFeedReminderTime(e.target.value)}
                     />
                   </FormRow>
-                  <FormActions>
-                    <Button type="button" variant="accent" onClick={handleSaveReminders} isLoading={savingSection === 'reminders'} loadingText="Saving">
-                      Save reminder times
-                    </Button>
-                  </FormActions>
+                  <div className="max-md:hidden">
+                    <FormActions>
+                      <Button type="button" variant="accent" onClick={handleSaveReminders} isLoading={savingSection === 'reminders'} loadingText="Saving">
+                        Save reminder times
+                      </Button>
+                    </FormActions>
+                  </div>
+                  <PhoneSaveBar onClick={handleSaveReminders} dirty={remindersDirty} busy={savingSection === 'reminders'} />
                 </div>
               )}
             </CardContent>
@@ -494,11 +626,14 @@ export function SettingsContent({ farm, inventory = [], isFarmOwner = false }: S
                       label="Let workers choose sorted or not each time"
                     />
                   </FormSection>
-                  <FormActions>
-                    <Button type="button" variant="accent" onClick={handleSaveEggLogging} isLoading={savingSection === 'egg-logging'} loadingText="Saving">
-                      Save egg settings
-                    </Button>
-                  </FormActions>
+                  <div className="max-md:hidden">
+                    <FormActions>
+                      <Button type="button" variant="accent" onClick={handleSaveEggLogging} isLoading={savingSection === 'egg-logging'} loadingText="Saving">
+                        Save egg settings
+                      </Button>
+                    </FormActions>
+                  </div>
+                  <PhoneSaveBar onClick={handleSaveEggLogging} dirty={eggDirty} busy={savingSection === 'egg-logging'} />
                 </div>
               )}
             </CardContent>
@@ -546,11 +681,14 @@ export function SettingsContent({ farm, inventory = [], isFarmOwner = false }: S
                       ]}
                     />
                   ) : null}
-                  <FormActions>
-                    <Button type="button" variant="accent" onClick={handleSaveSales} isLoading={savingSection === 'sales'} loadingText="Saving">
-                      Save sales settings
-                    </Button>
-                  </FormActions>
+                  <div className="max-md:hidden">
+                    <FormActions>
+                      <Button type="button" variant="accent" onClick={handleSaveSales} isLoading={savingSection === 'sales'} loadingText="Saving">
+                        Save sales settings
+                      </Button>
+                    </FormActions>
+                  </div>
+                  <PhoneSaveBar onClick={handleSaveSales} dirty={salesDirty} busy={savingSection === 'sales'} />
                 </div>
               )}
             </CardContent>
@@ -589,7 +727,7 @@ export function SettingsContent({ farm, inventory = [], isFarmOwner = false }: S
                               label="Alert below"
                               wrapperClassName="w-40"
                               type="number"
-                              unit="kg"
+                              unit={item.unit || 'units'}
                               value={reorderLevels[item.id] ?? 500}
                               onChange={e => setReorderLevels(prev => ({ ...prev, [item.id]: Number(e.target.value) }))}
                               min={0}

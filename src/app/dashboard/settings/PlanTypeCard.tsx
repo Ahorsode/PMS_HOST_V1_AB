@@ -48,9 +48,12 @@ export function PlanTypeCard({
   planType,
   onPaidPlan,
   priceSummaries,
+  variant = 'card',
 }: {
   planType: PlanTypeValue;
   onPaidPlan: boolean;
+  /** 'row': the one-row summary on the phone settings list, same switch dialog. */
+  variant?: 'card' | 'row';
   /** "Solo Basic GHS 200 or Solo Plus GHS 330 a month" per plan type, from the admin-set prices. */
   priceSummaries: Record<PlanTypeValue, string>;
 }) {
@@ -82,6 +85,89 @@ export function PlanTypeCard({
       setPendingChoice(null);
       router.refresh();
     });
+  }
+
+  const current = OPTIONS.find((o) => o.value === planType) ?? OPTIONS[1];
+  const other: PlanTypeValue = planType === 'SOLO' ? 'TEAM' : 'SOLO';
+
+  const dialog = (
+      <Dialog
+        isOpen={pendingChoice !== null}
+        onOpenChange={(open) => !open && !isPending && setPendingChoice(null)}
+        title={pendingChoice === 'SOLO' ? 'Switch to Solo?' : 'Switch to Team?'}
+        description={pendingChoice ? `${OPTIONS.find((o) => o.value === pendingChoice)?.audience} ${priceSummaries[pendingChoice]}.` : undefined}
+      >
+        {pendingChoice && (
+          <div className="space-y-5 pt-2">
+            <div>
+              <p className="mb-2 text-sm font-medium text-pos">You gain</p>
+              <ul className="space-y-1.5">
+                {SWITCH_EFFECTS[pendingChoice].gain.map((item) => (
+                  <li key={item} className="flex items-start gap-2 text-sm text-fg">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-pos" aria-hidden="true" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <p className="mb-2 text-sm font-medium text-neg">You lose</p>
+              <ul className="space-y-1.5">
+                {SWITCH_EFFECTS[pendingChoice].lose.map((item) => (
+                  <li key={item} className="flex items-start gap-2 text-sm text-fg">
+                    <Minus className="mt-0.5 h-4 w-4 shrink-0 text-neg" aria-hidden="true" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            {onPaidPlan && (
+              <p className="text-[13px] leading-5 text-fg-2">
+                You are on a paid plan, so confirming takes you to the Plans page to buy a {pendingChoice === 'SOLO' ? 'Solo' : 'Team'} plan.
+              </p>
+            )}
+            <FormActions>
+              <Button type="button" variant="outline" onClick={() => setPendingChoice(null)} disabled={isPending}>
+                Keep {planType === 'SOLO' ? 'Solo' : 'Team'}
+              </Button>
+              <Button type="button" variant="accent" onClick={confirmSwitch} isLoading={isPending} loadingText="Switching">
+                {onPaidPlan ? 'Continue to Plans' : `Switch to ${pendingChoice === 'SOLO' ? 'Solo' : 'Team'}`}
+              </Button>
+            </FormActions>
+          </div>
+        )}
+      </Dialog>
+  );
+
+  if (variant === 'row') {
+    const Icon = current.icon;
+    return (
+      <section className="rounded-[24px] rounded-tl-[8px] border border-ql-line bg-ql-surface p-4 font-ql-sans" aria-labelledby="ql-plan-type">
+        <div className="flex items-center justify-between gap-3">
+          <p id="ql-plan-type" className="flex items-center gap-2 font-ql-mono text-[11px] uppercase tracking-[0.08em] text-ql-muted">
+            <Icon className="h-4 w-4" strokeWidth={1.5} aria-hidden />
+            Plan type
+          </p>
+          <button
+            type="button"
+            onClick={() => setPendingChoice(other)}
+            disabled={isPending}
+            className="relative min-h-11 px-1 text-[14px] font-semibold text-ql-mint focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ql-mint/60"
+            aria-label={`Change plan type to ${other === 'SOLO' ? 'Solo' : 'Team'}`}
+          >
+            Change
+          </button>
+        </div>
+        <p className="flex items-center gap-2 font-ql-display text-[20px] font-semibold text-ql-text">
+          {current.label}
+          <span className="inline-flex h-6 items-center rounded-full bg-ql-mint/12 px-2.5 font-ql-sans text-[11px] font-semibold text-ql-mint">Current</span>
+        </p>
+        <p className="mt-1 text-[13px] leading-snug text-ql-muted">
+          {current.audience} {priceSummaries[planType]}.
+        </p>
+        {dialog}
+      </section>
+    );
   }
 
   return (
@@ -137,52 +223,7 @@ export function PlanTypeCard({
         </p>
       </CardContent>
 
-      <Dialog
-        isOpen={pendingChoice !== null}
-        onOpenChange={(open) => !open && !isPending && setPendingChoice(null)}
-        title={pendingChoice === 'SOLO' ? 'Switch to Solo?' : 'Switch to Team?'}
-        description={pendingChoice ? `${OPTIONS.find((o) => o.value === pendingChoice)?.audience} ${priceSummaries[pendingChoice]}.` : undefined}
-      >
-        {pendingChoice && (
-          <div className="space-y-5 pt-2">
-            <div>
-              <p className="mb-2 text-sm font-medium text-pos">You gain</p>
-              <ul className="space-y-1.5">
-                {SWITCH_EFFECTS[pendingChoice].gain.map((item) => (
-                  <li key={item} className="flex items-start gap-2 text-sm text-fg">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-pos" aria-hidden="true" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <p className="mb-2 text-sm font-medium text-neg">You lose</p>
-              <ul className="space-y-1.5">
-                {SWITCH_EFFECTS[pendingChoice].lose.map((item) => (
-                  <li key={item} className="flex items-start gap-2 text-sm text-fg">
-                    <Minus className="mt-0.5 h-4 w-4 shrink-0 text-neg" aria-hidden="true" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            {onPaidPlan && (
-              <p className="text-[13px] leading-5 text-fg-2">
-                You are on a paid plan, so confirming takes you to the Plans page to buy a {pendingChoice === 'SOLO' ? 'Solo' : 'Team'} plan.
-              </p>
-            )}
-            <FormActions>
-              <Button type="button" variant="outline" onClick={() => setPendingChoice(null)} disabled={isPending}>
-                Keep {planType === 'SOLO' ? 'Solo' : 'Team'}
-              </Button>
-              <Button type="button" variant="accent" onClick={confirmSwitch} isLoading={isPending} loadingText="Switching">
-                {onPaidPlan ? 'Continue to Plans' : `Switch to ${pendingChoice === 'SOLO' ? 'Solo' : 'Team'}`}
-              </Button>
-            </FormActions>
-          </div>
-        )}
-      </Dialog>
+      {dialog}
     </Card>
   );
 }

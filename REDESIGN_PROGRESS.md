@@ -25,6 +25,7 @@ look. Each board lands on its own `redesign/<screen>` branch, one commit per PDF
 | Reports | Reports-Redesign.pdf (2 pages) | `redesign/reports` | `reports/MobileReports.tsx` inside ReportsClient; one Make a report (the existing launcher) as the sticky bar |
 | Profile (account) | Profile-Redesign.pdf (2 pages) | `redesign/profile` | `profile/MobileProfile.tsx`; Edit profile reuses EditProfileModal |
 | Inbox and team chat | Inbox-Redesign.pdf (2 pages) | `redesign/inbox` | Phone tree in `inbox/page.tsx` plus `InboxMenu.tsx`; tabs, team list and composer restyled with `max-md:` only |
+| Settings | Settings-Redesign.pdf (2 pages) | `redesign/settings` | `settings/SettingsPhone.tsx` (home list, Save bar); sections reuse the existing forms; PlanTypeCard gains a `row` variant |
 
 ## Shared tokens (`src/app/globals.css`)
 
@@ -110,6 +111,31 @@ Landing page:
   adds staff but drops five modules); a pricing decision, not changed here.
 - The sample card's figures are the page's own illustration (labelled Sample
   data); only the egg count is worked out (crates × 30).
+
+Settings:
+- Phones open on a list (Farm, Rules for workers, Account and data) where each
+  row shows today's value; `?tab=` opens one section, as before. Desktop keeps
+  its side tabs and opens on Farm info.
+- One Save per phone screen, fixed above the tab bar, dim with "No changes
+  yet" until a value differs from the last saved one. On Farm info the bar
+  saves farm details; the growth target keeps its own outlined Save, dim
+  with "Choose a standard first" when none is picked. Desktop buttons
+  unchanged. Saved values are tracked client-side only.
+- Fixed (bug, small and safe): the low-feed "Alert below" field said "kg",
+  but the alert compares the raw number with the item's stock in its own unit
+  (`isLowStock`). The field now shows the item's unit (e.g. bags), on desktop
+  too. The board's bags/kg unit switch is not needed.
+- Not built: "Batches hold more than this" capacity check (needs a batch
+  query on this page) and "Country and amounts disagree" (the farm currency
+  now always follows the country, so it can't disagree; a missing country
+  shows as "Country not set").
+- Mismatch: the settings page loads `prisma.farm.findFirst` over all farms
+  the user owns or belongs to, not the active farm, while saves go to the
+  active farm. A multi-farm user can see one farm's values and save another.
+- Deviation: segmented controls (Crates / Single eggs) keep the shared
+  Segmented look with a mint selection; restyling that shared component
+  would touch every form.
+- Connected devices and Deleted records pages are unchanged.
 
 Inbox and team chat:
 - Tabs fit four across from 360 px; a zero count is hidden on phones (desktop

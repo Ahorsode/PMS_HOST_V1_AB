@@ -45,8 +45,8 @@ export default async function SettingsPage() {
   }));
 
   return (
-    <div className="max-w-7xl mx-auto space-y-7 px-0 md:px-3 pt-2 pb-7 md:py-7">
-      <div className="flex justify-between items-center bg-fg/10 p-7 rounded-lg border border-fg/10 relative overflow-hidden">
+    <div className="max-w-7xl mx-auto md:space-y-7 px-0 md:px-3 pt-2 pb-7 md:py-7">
+      <div className="hidden md:flex justify-between items-center bg-fg/10 p-7 rounded-lg border border-fg/10 relative overflow-hidden">
         <div className="relative z-10">
           <h1 className="text-3xl font-semibold leading-tight text-fg">Settings</h1>
           <p className="mt-2 text-sm text-fg-2">
@@ -56,18 +56,37 @@ export default async function SettingsPage() {
       </div>
 
       {access ? (
-        <PlanTypeCard
-          planType={access.planType}
-          onPaidPlan={access.state === 'PAID'}
-          priceSummaries={{
-            SOLO: planTypePriceSummary(billing, 'SOLO', billingCurrency),
-            TEAM: planTypePriceSummary(billing, 'TEAM', billingCurrency),
-          }}
-        />
+        <div className="hidden md:block">
+          <PlanTypeCard
+            planType={access.planType}
+            onPaidPlan={access.state === 'PAID'}
+            priceSummaries={{
+              SOLO: planTypePriceSummary(billing, 'SOLO', billingCurrency),
+              TEAM: planTypePriceSummary(billing, 'TEAM', billingCurrency),
+            }}
+          />
+        </div>
       ) : null}
 
       <Suspense fallback={<div className="text-fg/70 text-sm animate-pulse py-8">Loading settings…</div>}>
-        <SettingsContent farm={farm} inventory={serializedInventory} isFarmOwner={isFarmOwner} />
+        <SettingsContent
+          farm={farm}
+          inventory={serializedInventory}
+          isFarmOwner={isFarmOwner}
+          phonePlan={
+            access ? (
+              <PlanTypeCard
+                variant="row"
+                planType={access.planType}
+                onPaidPlan={access.state === 'PAID'}
+                priceSummaries={{
+                  SOLO: planTypePriceSummary(billing, 'SOLO', billingCurrency),
+                  TEAM: planTypePriceSummary(billing, 'TEAM', billingCurrency),
+                }}
+              />
+            ) : null
+          }
+        />
       </Suspense>
     </div>
   );
