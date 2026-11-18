@@ -19,6 +19,7 @@ import {
   Banknote,
   BarChart3,
   Bird,
+  Check,
   ClipboardList,
   Egg,
   FileText,
@@ -39,6 +40,22 @@ import {
   BUSINESS_ADDRESS,
   BUSINESS_NAME,
 } from '@/lib/legal/legal';
+import { qlFontVariables } from '@/components/ui/ql/fonts';
+import { qlButton } from '@/components/ui/ql/Button';
+import { QL_PRIMARY_ATTR } from '@/components/ui/ql/primary';
+import { buildMobilePricing, moduleChips } from '@/components/site/landing/landing-plans';
+import { MobilePricing } from '@/components/site/landing/MobilePricing';
+import { MobileSamplePreview } from '@/components/site/landing/MobileSamplePreview';
+import {
+  MobileAuditNote,
+  MobileFeatureRows,
+  MobileModuleLinks,
+  MobileSectionHead,
+  MobileStepsRail,
+} from '@/components/site/landing/MobileSections';
+import { RoleSwitcher } from '@/components/site/landing/RoleSwitcher';
+import { MobileFooter } from '@/components/site/landing/MobileFooter';
+import { LandingStickyCta } from '@/components/site/landing/LandingStickyCta';
 
 const features = [
   {
@@ -83,6 +100,8 @@ const steps = [
     number: '02',
     title: 'Log the day in a minute',
     body: 'Workers record eggs, feed, deaths and treatments from their phones. Everything is stamped with who did it.',
+    /** Phones show the audit note once, under the steps, so step 02 drops its last sentence there. */
+    mobileBody: 'Workers record eggs, feed, deaths and treatments from their phones.',
   },
   {
     number: '03',
@@ -268,10 +287,14 @@ export default async function LandingPage() {
     : String(discountedTerms[0] ?? '');
 
   const year = new Date().getFullYear();
+  const copyright = `© ${year} ${BUSINESS_NAME}${BUSINESS_ADDRESS ? `, ${BUSINESS_ADDRESS}` : ''}. All rights reserved.`;
+  const chips = moduleChips(billing);
+  const mobilePricing = buildMobilePricing(billing, landing.planDescriptions, landing.highlightedPlan);
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-[#050d0a] text-white">
-      <div className="pointer-events-none absolute inset-0" aria-hidden>
+    <div className={`relative min-h-screen overflow-x-hidden bg-ql-ground text-white md:bg-[#050d0a] ${qlFontVariables}`}>
+      {/* Glows and dot grid stay on tablet and desktop; phones use the flat Quiet Ledger ground. */}
+      <div className="pointer-events-none absolute inset-0 hidden md:block" aria-hidden>
         <div className="absolute -top-40 left-1/2 h-[520px] w-[820px] -translate-x-1/2 rounded-full bg-emerald-500/15 blur-[140px]" />
         <div className="absolute right-[-10%] top-[40%] h-96 w-96 rounded-full bg-teal-500/10 blur-[120px]" />
         <div
@@ -280,39 +303,65 @@ export default async function LandingPage() {
         />
       </div>
 
-      <LandingNav />
+      <LandingNav contact={site.contact} />
       {announcement ? (
         <div className="relative mx-auto max-w-6xl px-4 pt-4 sm:px-6">
           <AnnouncementBanner announcement={announcement} />
         </div>
       ) : null}
 
-      <main className="relative">
+      <main className="relative pb-24 md:pb-0">
         {/* Hero */}
-        <section className="mx-auto grid max-w-6xl items-center gap-12 px-4 pb-16 pt-10 sm:px-6 sm:pt-16 lg:grid-cols-[1.05fr_1fr] lg:gap-16 lg:pb-28 lg:pt-20">
+        <section className="mx-auto grid max-w-6xl items-center gap-8 px-4 pb-12 pt-8 sm:px-6 md:gap-12 md:pb-16 md:pt-16 lg:grid-cols-[1.05fr_1fr] lg:gap-16 lg:pb-28 lg:pt-20">
           <div>
             {landing.heroBadge?.trim() && (
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1.5 text-xs font-semibold text-emerald-200">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-ql-mint/12 px-3 py-1.5 font-ql-sans text-xs font-semibold text-ql-mint md:border md:border-emerald-400/30 md:bg-emerald-400/10 md:font-sans md:text-emerald-200">
                 <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="absolute hidden h-full w-full rounded-full bg-emerald-400 opacity-75 motion-safe:animate-ping md:inline-flex" />
                   <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
                 </span>
                 {landing.heroBadge}
               </div>
             )}
 
-            <h1 className="text-[2.25rem] font-extrabold leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">
+            <h1 className="font-ql-display text-[34px] font-semibold leading-[1.05] tracking-[-0.02em] text-ql-text md:font-sans md:text-5xl md:font-extrabold md:leading-[1.08] md:tracking-tight md:text-white lg:text-6xl">
               {landing.heroTitle}
-              <span className="block bg-gradient-to-r from-emerald-300 via-emerald-400 to-teal-300 bg-clip-text text-transparent">
+              <span className="block text-ql-mint md:bg-gradient-to-r md:from-emerald-300 md:via-emerald-400 md:to-teal-300 md:bg-clip-text md:text-transparent">
                 {landing.heroTitleAccent}
               </span>
             </h1>
 
-            <p className="mt-5 max-w-xl text-base leading-relaxed text-white/70 sm:text-lg">
+            <p className="mt-4 max-w-xl font-ql-sans text-[15px] leading-relaxed text-ql-muted md:mt-5 md:font-sans md:text-lg md:text-white/70">
               {landing.heroSubtitle}
             </p>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            {/* Phones: one mint button, the trial note where the decision is made, three facts as rows. */}
+            <div className="mt-6 md:hidden">
+              <Link href="/signup" {...QL_PRIMARY_ATTR} className={qlButton('filled', 'min-h-12 w-full text-[15px]')}>
+                Create your farm account
+                <ArrowRight aria-hidden="true" className="h-4 w-4" />
+              </Link>
+              <p className="mt-2 flex items-center gap-2.5 rounded-2xl border border-ql-line bg-ql-surface px-3 py-2.5 font-ql-sans text-[13px] text-ql-muted">
+                <span aria-hidden="true" className="flex h-5 w-5 items-center justify-center rounded-full bg-ql-mint/12 text-ql-mint">
+                  <Check className="h-3 w-3" strokeWidth={2.5} />
+                </span>
+                All features free for {billing.trial.days} days
+              </p>
+              <dl className="mt-4 divide-y divide-ql-line rounded-2xl border border-ql-line bg-ql-surface px-4 font-ql-sans">
+                {[
+                  ['Sign in with', 'Phone or Google'],
+                  ['Works on', 'Phone and desktop'],
+                  ['Priced in', 'GHS in Ghana, USD elsewhere'],
+                ].map(([label, value]) => (
+                  <div key={label} className="flex items-center justify-between gap-3 py-3">
+                    <dt className="font-ql-mono text-[10px] uppercase tracking-[0.08em] text-ql-muted">{label}</dt>
+                    <dd className="text-right text-[13px] font-semibold text-ql-text">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+
+            <div className="mt-8 hidden flex-col gap-3 sm:flex-row md:flex">
               <Link
                 href="/signup"
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-400 px-7 py-3.5 text-base font-bold text-[#04150e] shadow-[0_0_40px_rgba(52,211,153,0.35)] transition-all hover:-translate-y-0.5 hover:bg-emerald-300"
@@ -328,7 +377,7 @@ export default async function LandingPage() {
               </Link>
             </div>
 
-            <dl className="mt-10 grid grid-cols-3 gap-4 border-t border-white/10 pt-6 text-sm">
+            <dl className="mt-10 hidden grid-cols-3 gap-4 border-t border-white/10 pt-6 text-sm md:grid">
               <div>
                 <dt className="text-white/50">Sign in with</dt>
                 <dd className="mt-1 font-bold text-white">Phone or Google</dd>
@@ -344,13 +393,29 @@ export default async function LandingPage() {
             </dl>
           </div>
 
-          <DashboardPreview />
+          <div className="md:hidden">
+            <MobileSamplePreview />
+          </div>
+          <div className="hidden md:block">
+            <DashboardPreview />
+          </div>
         </section>
 
         {/* Features */}
-        <section id="features" className="scroll-mt-20 border-t border-white/5 bg-white/[0.02] py-16 sm:py-24">
+        <section id="features" className="scroll-mt-16 border-t border-ql-line py-12 md:scroll-mt-20 md:border-white/5 md:bg-white/[0.02] md:py-24">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="max-w-2xl">
+            <div className="md:hidden">
+              <MobileSectionHead label="What it covers" title="Every record a farm keeps on paper, in one place.">
+                Each module feeds the others.
+              </MobileSectionHead>
+              <MobileModuleLinks />
+              <MobileFeatureRows features={features} chips={chips} />
+              <a href="#pricing" className={qlButton('ghost', 'mt-3 w-full border-ql-line text-ql-text hover:bg-ql-text/[0.04]')}>
+                Compare plans
+                <ArrowRight aria-hidden="true" className="h-4 w-4 text-ql-mint" />
+              </a>
+            </div>
+            <div className="hidden max-w-2xl md:block">
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-300">What it covers</p>
               <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
                 Every record a farm keeps on paper, in one place.
@@ -361,7 +426,7 @@ export default async function LandingPage() {
               </p>
             </div>
 
-            <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-12 hidden gap-4 md:grid md:grid-cols-2 lg:grid-cols-3">
               {features.map((feature) => (
                 <article
                   key={feature.title}
@@ -379,9 +444,17 @@ export default async function LandingPage() {
         </section>
 
         {/* How it works */}
-        <section id="how-it-works" className="scroll-mt-20 py-16 sm:py-24">
+        <section id="how-it-works" className="scroll-mt-16 border-t border-ql-line py-12 md:scroll-mt-20 md:border-t-0 md:py-24">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
+            <div className="md:hidden">
+              <MobileSectionHead label="How it works" title={<>{["Set up once.", "Log daily.", "Decide weekly."].map((line) => <span key={line} className="block">{line}</span>)}</>}>
+                Workers only see the forms they use, so logging takes a minute at the end of a shift. The owner sees
+                the result without chasing anyone for a notebook.
+              </MobileSectionHead>
+              <MobileStepsRail steps={steps.map((step) => ({ ...step, body: step.mobileBody ?? step.body }))} />
+              <MobileAuditNote>Every entry is stamped with the worker who made it, and owners can review the full audit log.</MobileAuditNote>
+            </div>
+            <div className="hidden gap-12 md:grid lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-300">How it works</p>
                 <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Set up once. Log daily. Decide weekly.</h2>
@@ -418,9 +491,16 @@ export default async function LandingPage() {
         </section>
 
         {/* Roles */}
-        <section id="roles" className="scroll-mt-20 border-y border-white/5 bg-white/[0.02] py-16 sm:py-24">
+        <section id="roles" className="scroll-mt-16 border-t border-ql-line py-12 md:scroll-mt-20 md:border-y md:border-white/5 md:bg-white/[0.02] md:py-24">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <div className="max-w-2xl">
+            <div className="md:hidden">
+              <MobileSectionHead label="Teams" title="Each person sees their part of the farm.">
+                Invite staff by phone number or email. Permissions are set per section, so a worker can log eggs
+                without ever opening the finance hub.
+              </MobileSectionHead>
+              <RoleSwitcher />
+            </div>
+            <div className="hidden max-w-2xl md:block">
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-emerald-300">Teams</p>
               <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Each person sees their part of the farm.</h2>
               <p className="mt-4 text-base text-white/65 sm:text-lg">
@@ -429,7 +509,7 @@ export default async function LandingPage() {
               </p>
             </div>
 
-            <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-12 hidden gap-4 md:grid md:grid-cols-2 lg:grid-cols-4">
               {roles.map((role) => (
                 <div key={role.title} className="rounded-2xl border border-white/10 bg-[#0a1510]/70 p-6">
                   <role.icon className="h-6 w-6 text-emerald-300" />
@@ -442,9 +522,15 @@ export default async function LandingPage() {
         </section>
 
         {/* Pricing */}
-        <section id="pricing" className="scroll-mt-20 py-16 sm:py-24">
+        <section id="pricing" className="scroll-mt-16 border-t border-ql-line py-12 md:scroll-mt-20 md:border-t-0 md:py-24">
           <div className="mx-auto max-w-[1440px] px-4 sm:px-6">
-            <div className="mx-auto max-w-2xl text-center">
+            <div className="md:hidden">
+              <MobileSectionHead label="Pricing" title={`Try everything free for ${billing.trial.days} days.`}>
+                {landing.pricingIntro.replaceAll('{trialDays}', String(billing.trial.days))}
+              </MobileSectionHead>
+              <MobilePricing data={mobilePricing} />
+            </div>
+            <div className="mx-auto hidden max-w-2xl text-center md:block">
               <p className="text-lg font-extrabold uppercase tracking-[0.2em] text-emerald-300 sm:text-xl">Pricing</p>
               <h2 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">Try everything free for 30 days.</h2>
               <p className="mt-4 text-base text-white/65 sm:text-lg">
@@ -452,25 +538,27 @@ export default async function LandingPage() {
               </p>
             </div>
 
-            <PricingPlans
-              plans={plans}
-              yearlySavePercent={Math.round((billing.termDiscounts['12'] ?? 0) * 100)}
-            />
+            <div className="hidden md:block">
+              <PricingPlans
+                plans={plans}
+                yearlySavePercent={Math.round((billing.termDiscounts['12'] ?? 0) * 100)}
+              />
+            </div>
           </div>
         </section>
 
         {/* Final CTA */}
         {landing.testimonials.length > 0 ? (
-          <section id="testimonials" className="scroll-mt-20 border-t border-white/5 py-16 sm:py-20">
+          <section id="testimonials" className="scroll-mt-16 border-t border-ql-line py-12 font-ql-sans md:scroll-mt-20 md:border-white/5 md:py-20 md:font-sans">
             <div className="mx-auto max-w-6xl px-4 sm:px-6">
-              <h2 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">What farmers say</h2>
+              <h2 className="font-ql-display text-[26px] font-semibold text-ql-text md:text-center md:font-sans md:text-4xl md:font-bold md:tracking-tight md:text-white">What farmers say</h2>
               <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
                 {landing.testimonials.map((item, index) => (
-                  <figure key={index} className="flex flex-col rounded-3xl border border-white/10 bg-[#0a1510]/70 p-6">
-                    <blockquote className="flex-1 text-base leading-relaxed text-white/80">&ldquo;{item.quote}&rdquo;</blockquote>
+                  <figure key={index} className="flex flex-col rounded-2xl border border-ql-line bg-ql-surface p-4 md:rounded-3xl md:border-white/10 md:bg-[#0a1510]/70 md:p-6">
+                    <blockquote className="flex-1 text-[15px] leading-relaxed text-ql-text md:text-base md:text-white/80">&ldquo;{item.quote}&rdquo;</blockquote>
                     <figcaption className="mt-5 text-sm">
-                      <span className="font-bold text-white">{item.name}</span>
-                      {item.detail ? <span className="text-white/55"> · {item.detail}</span> : null}
+                      <span className="font-semibold text-ql-text md:font-bold md:text-white">{item.name}</span>
+                      {item.detail ? <span className="text-ql-muted md:text-white/55"> · {item.detail}</span> : null}
                     </figcaption>
                   </figure>
                 ))}
@@ -480,14 +568,14 @@ export default async function LandingPage() {
         ) : null}
 
         {landing.faq.length > 0 ? (
-          <section id="faq" className="scroll-mt-20 border-t border-white/5 py-16 sm:py-20">
+          <section id="faq" className="scroll-mt-16 border-t border-ql-line py-12 font-ql-sans md:scroll-mt-20 md:border-white/5 md:py-20 md:font-sans">
             <div className="mx-auto max-w-3xl px-4 sm:px-6">
-              <h2 className="text-center text-3xl font-bold tracking-tight sm:text-4xl">Questions</h2>
+              <h2 className="font-ql-display text-[26px] font-semibold text-ql-text md:text-center md:font-sans md:text-4xl md:font-bold md:tracking-tight md:text-white">Questions</h2>
               <div className="mt-10 space-y-3">
                 {landing.faq.map((item, index) => (
-                  <details key={index} className="rounded-2xl border border-white/10 bg-[#0a1510]/70 px-5 py-4">
-                    <summary className="cursor-pointer font-semibold text-white">{item.question}</summary>
-                    <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-white/70">{item.answer}</p>
+                  <details key={index} className="rounded-2xl border border-ql-line bg-ql-surface px-4 py-3 md:border-white/10 md:bg-[#0a1510]/70 md:px-5 md:py-4">
+                    <summary className="cursor-pointer py-1.5 font-semibold text-ql-text md:py-0 md:text-white">{item.question}</summary>
+                    <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-ql-muted md:text-white/70">{item.answer}</p>
                   </details>
                 ))}
               </div>
@@ -495,15 +583,26 @@ export default async function LandingPage() {
           </section>
         ) : null}
 
-        <section className="px-4 pb-20 sm:px-6">
-          <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl border border-emerald-400/30 bg-gradient-to-br from-emerald-500/20 via-[#0a1510] to-[#0a1510] px-6 py-14 text-center sm:px-12">
-            <div className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl" aria-hidden />
-            <Package className="mx-auto h-10 w-10 text-emerald-300" />
-            <h2 className="mt-5 text-3xl font-bold tracking-tight sm:text-4xl">{landing.ctaTitle}</h2>
+        <section className="px-4 pb-8 pt-4 sm:px-6 md:pb-20 md:pt-0">
+          <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[24px] rounded-tl-[8px] border border-ql-mint/25 bg-ql-surface px-5 py-8 font-ql-sans md:rounded-3xl md:border-emerald-400/30 md:bg-transparent md:bg-gradient-to-br md:from-emerald-500/20 md:via-[#0a1510] md:to-[#0a1510] md:px-12 md:py-14 md:text-center md:font-sans">
+            <div className="pointer-events-none absolute -right-20 -top-20 hidden h-64 w-64 rounded-full bg-emerald-400/20 blur-3xl md:block" aria-hidden />
+            <Package className="h-7 w-7 text-ql-mint md:mx-auto md:h-10 md:w-10 md:text-emerald-300" strokeWidth={1.75} />
+            <h2 className="mt-4 font-ql-display text-[26px] font-semibold leading-[1.1] tracking-[-0.02em] text-ql-text md:mt-5 md:font-sans md:text-4xl md:font-bold md:tracking-tight md:text-white">{landing.ctaTitle}</h2>
             {landing.ctaSubtitle ? (
-              <p className="mx-auto mt-4 max-w-xl text-base text-white/70 sm:text-lg">{landing.ctaSubtitle}</p>
+              <p className="mt-3 max-w-xl text-[15px] leading-relaxed text-ql-muted md:mx-auto md:mt-4 md:text-lg md:text-white/70">{landing.ctaSubtitle}</p>
             ) : null}
-            <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+            {/* Phones: one door and one link. */}
+            <div className="mt-6 md:hidden">
+              <Link href="/signup" {...QL_PRIMARY_ATTR} className={qlButton('filled', 'min-h-12 w-full text-[15px]')}>
+                Create your farm account
+                <ArrowRight aria-hidden="true" className="h-4 w-4" />
+              </Link>
+              <p className="mt-3 text-center text-[13px] text-ql-muted">
+                Already have an account?{' '}
+                <Link href="/login" className="inline-flex min-h-11 items-center font-semibold text-ql-mint">Log in</Link>
+              </p>
+            </div>
+            <div className="mt-8 hidden flex-col justify-center gap-3 sm:flex-row md:flex">
               <Link
                 href="/signup"
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-emerald-400 px-7 py-3.5 text-base font-bold text-[#04150e] transition-colors hover:bg-emerald-300"
@@ -522,7 +621,9 @@ export default async function LandingPage() {
         </section>
       </main>
 
-      <footer id="contact" className="relative border-t border-white/10 py-10">
+      <footer id="contact" className="relative border-t border-ql-line md:border-white/10 md:py-10">
+        <MobileFooter contact={site.contact} copyright={copyright} />
+        <div className="hidden md:block">
         <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 sm:px-6 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-2.5">
             <img src="/logo.png" alt="" className="h-8 w-8 rounded-lg object-cover" />
@@ -559,10 +660,12 @@ export default async function LandingPage() {
           </div>
           <div className="space-y-2 text-sm text-white/60 md:text-right">
             <LegalLinks className="md:justify-end" />
-            <p>{`© ${year} ${BUSINESS_NAME}${BUSINESS_ADDRESS ? `, ${BUSINESS_ADDRESS}` : ''}. All rights reserved.`}</p>
+            <p>{copyright}</p>
           </div>
         </div>
+        </div>
       </footer>
+      <LandingStickyCta />
     </div>
   );
 }

@@ -8,6 +8,7 @@ look. Each board lands on its own `redesign/<screen>` branch, one commit per PDF
 | Screen | Board | Branch | Notes |
 | --- | --- | --- | --- |
 | Owner dashboard (premium, "Farm summary") | Poultry-Ledger-Dashboard-Redesign.pdf (2 pages) | `redesign/owner-dashboard` | Also restyled the shared mobile header, the content gutter and the tab bar |
+| Landing page + sign-up step rail | Landing-Page-Redesign.pdf (7 pages) | `redesign/landing-page` | Phone tree per section beside the unchanged desktop markup; plan chips and term prices worked out from the billing config |
 
 ## Shared tokens (`src/app/globals.css`)
 
@@ -28,8 +29,9 @@ CSS variables on `:root`, light-theme versions under `:root[data-theme="light"]`
 | `--ql-text` | `#E8F0EC` | primary text |
 | `--ql-muted` | `#7C8E86` | secondary text, labels |
 
-Fonts (`src/components/ui/ql/fonts.ts`, next/font, variables set on the
-dashboard shell in `SidebarWrapper`): `font-ql-display` Bricolage Grotesque,
+Fonts (`src/components/ui/ql/fonts.ts`, next/font; the variables are set on
+the dashboard shell in `SidebarWrapper`, on the landing root, and next to the
+sign-up step rail): `font-ql-display` Bricolage Grotesque,
 `font-ql-sans` Instrument Sans, `font-ql-mono` Geist Mono.
 
 Spacing: screen gutter 16 (`px-4` on the mobile shell), tile gap 12 (`gap-3`,
@@ -46,9 +48,17 @@ Spacing: screen gutter 16 (`px-4` on the mobile shell), tile gap 12 (`gap-3`,
 | `Button.ts` | `qlButton('filled' \| 'ghost' \| 'text')`. One `filled` per screen |
 | `EmptyNote.tsx` | `QlEmptyNote`: reason plus next-step link |
 | `format.ts` | `splitMoney`, `compactNumber` ("1.5M", "500k"), `compactMoney`, `percentMagnitude` |
+| `Derived.tsx` | `QlDerived`: dotted underline for a worked-out figure, formula as tooltip and screen-reader text |
+| `StickyBar.tsx` | `QlStickyBar` (dim state with a mono reason) and `useNoPrimaryInView()`: shows only while no `data-ql-primary` button is on screen |
+| `primary.ts` | `QL_PRIMARY_ATTR`: spread on the screen's one filled mint button (server-safe import) |
 
-Not built yet (no board has needed them): sticky bar, plan card, confirm sheet
-(type-the-name delete).
+Landing-only pieces live in `src/components/site/landing/` (sample card,
+section heads, module rows with plan chips, steps rail, role switcher, phone
+pricing, contact rows, footer, sticky call to action, `landing-plans.ts`).
+`src/components/auth/SignupSteps.tsx` is the four-step set-up rail.
+
+Not built yet (no board has needed them): plan card for in-app plans, confirm
+sheet (type-the-name delete).
 
 ## Shell changes (apply to every phone screen)
 
@@ -60,6 +70,21 @@ Not built yet (no board has needed them): sticky bar, plan card, confirm sheet
 - `ProfileMenu` trigger: 44 px, Quiet Ledger outline.
 
 ## Open items
+
+Landing page:
+- Sign-up by one-time code ("Send code", +233 prefix) is a concept: there is no
+  SMS/OTP endpoint, and sign-up is phone + password today. Phones get the
+  four-step rail and a dim submit with its reason; the form itself is unchanged.
+- The board's "Cashier, check this" note does not hold: the Team invite form
+  offers Worker, Cashier, Manager, Accountant and Finance officer.
+- Term prices use the admin per-term discounts, so the board's "assumes the
+  full 15%" caveat is not needed; terms with no discount show the monthly price.
+- Plan prices are close together (Solo Plus GHS 330 vs Business GHS 350, which
+  adds staff but drops five modules); a pricing decision, not changed here.
+- The sample card's figures are the page's own illustration (labelled Sample
+  data); only the egg count is worked out (crates × 30).
+
+Owner dashboard:
 
 - Fixed: `previousPeriodRevenue` in `getDashboardStats` was always 0 (sales and
   orders were loaded from 6 days back, then filtered to dates before that day),

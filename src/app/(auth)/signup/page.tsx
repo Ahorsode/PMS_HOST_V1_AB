@@ -9,6 +9,8 @@ import { AuthDivider, AuthShell } from '@/components/auth/AuthShell';
 import GoogleButton from '@/components/auth/GoogleButton';
 import { Button, Checkbox, Form, FormError, FormRow, Input } from '@/components/ui/form';
 import { MIN_PASSWORD_LENGTH } from '@/lib/auth/password-policy';
+import { SignupSteps } from '@/components/auth/SignupSteps';
+import { qlFontVariables } from '@/components/ui/ql/fonts';
 
 export default function SignUpPage() {
   const [formData, setFormData] = useState({
@@ -92,6 +94,15 @@ export default function SignUpPage() {
     signIn('google', { callbackUrl: '/dashboard' });
   };
 
+  // Why the button is dim, shown under it on phones (the order matches the form).
+  const submitBlockedReason = !formData.phoneNumber
+    ? 'Enter your phone number first'
+    : !formData.password
+      ? 'Choose a password first'
+      : !acceptTerms
+        ? 'Accept the terms first'
+        : null;
+
   if (success) {
     return (
       <AuthShell title="Your account is ready" subtitle="Opening your farm...">
@@ -120,6 +131,7 @@ export default function SignUpPage() {
         </>
       }
     >
+      <SignupSteps current={0} className={`md:hidden ${qlFontVariables}`} />
       <Form onSubmit={handleSubmit} className="space-y-5">
         <FormError>{error}</FormError>
 
@@ -213,6 +225,11 @@ export default function SignUpPage() {
           Create account
           <ArrowRight className="h-4 w-4" strokeWidth={1.75} />
         </Button>
+        {submitBlockedReason && !isLoading ? (
+          <p className={`-mt-2 text-center font-ql-mono text-[11px] uppercase tracking-[0.08em] text-ql-amber md:hidden ${qlFontVariables}`}>
+            {submitBlockedReason}
+          </p>
+        ) : null}
       </Form>
 
       <AuthDivider />
