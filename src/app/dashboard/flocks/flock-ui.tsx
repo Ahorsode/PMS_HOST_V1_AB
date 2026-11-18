@@ -196,7 +196,7 @@ export function ActionButton({
 /** Square icon-only button for row actions. */
 export function iconButtonClass(intent: 'default' | 'danger' = 'default', className?: string) {
   return cn(
-    'inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg md:h-8 md:w-8',
+    'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg md:h-8 md:w-8',
     'transition-colors disabled:pointer-events-none disabled:opacity-50',
     tone.ease,
     tone.focus,

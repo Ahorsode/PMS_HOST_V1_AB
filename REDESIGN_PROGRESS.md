@@ -17,6 +17,7 @@ look. Each board lands on its own `redesign/<screen>` branch, one commit per PDF
 | Analytics batch comparison | Analytics-Batch-Comparison-Redesign.pdf (2 pages) | `redesign/analytics-comparison` | `components/analytics/MobileBatchComparison.tsx` shares the batch selection with the desktop view |
 | Livestock list | Livestock-Redesign.pdf (2 pages) | `redesign/livestock` | `flocks/MobileLivestock.tsx`; the Manage screen is the batch details board |
 | Batch details | Batch-Details-Redesign.pdf (2 pages) | `redesign/batch-details` | `flocks/[id]/MobileFlockDetail.tsx`; desktop tree and its charts are not mounted on phones |
+| Batch details, layer edition | Womane-Batch-Redesign.pdf (2 pages) | `redesign/womane-batch` | Same component: reconciled dead count, eggs card, priced revenue entries, egg days chart |
 
 ## Shared tokens (`src/app/globals.css`)
 
@@ -102,6 +103,18 @@ Landing page:
   adds staff but drops five modules); a pricing decision, not changed here.
 - The sample card's figures are the page's own illustration (labelled Sample
   data); only the egg count is worked out (crates × 30).
+
+Batch details, layer edition:
+- Revenue entries show a price per unit; an entry more than 10× the median
+  unit price (with at least 3 priced entries) gets an amber Check chip and the
+  "one entry carries the revenue" card. It never blocks anything. In the
+  board's data, 900 units for R 1 800 000 (R 2 000 an egg) looks like a typo.
+- The dead count is reconciled as "N dead = logged + not logged". The cause of
+  the gap is not recorded; the note lists the isolation numbers and only says
+  "may have died there" when the isolation leavers match the gap exactly.
+- Batch logs (mortality records) are not filtered by `isDeleted`.
+- The egg chart draws only days with a collection (last 8), with total, shown
+  and not shown worked out.
 
 Batch details:
 - The head count's "dead" (start − alive − isolated) can disagree with logged

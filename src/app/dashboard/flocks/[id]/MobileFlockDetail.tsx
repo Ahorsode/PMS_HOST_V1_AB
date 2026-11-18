@@ -61,6 +61,43 @@ export function MobileFlockDetail({ data, eggsPerCrate = 30 }: { data: any; eggs
   )
 
   const epc = eggsPerCrate > 0 ? eggsPerCrate : 30
+  const crateLine = (eggs: number) => {
+    const n = Math.max(0, Math.floor(Number(eggs) || 0))
+    return `${nf(Math.floor(n / epc))} crates · ${n % epc} eggs`
+  }
+
+  // Dead, reconciled: the head count's dead against the deaths in the log.
+  const logged = Number(metrics.totalMortality) || 0
+  const unlogged = Math.max(0, dead - logged)
+  const sickTotal = logs.mortalityRecords
+    .filter((m: any) => m.type === 'SICK')
+    .reduce((sum: number, m: any) => sum + Number(m.count || 0), 0)
+  const leftIsolation = Math.max(0, sickTotal - isolated)
+
+  // Eggs: the total, the latest collection, and how much the day chart leaves out.
+  const isLayerLike = metrics.isLayer || Number(metrics.totalEggs) > 0
+  const latestEgg = logs.eggProduction[0]
+  const eggDays: Array<{ label: string; eggs: number }> = (series.eggDaily || []).slice(-8)
+  const eggShown = eggDays.reduce((sum, row) => sum + row.eggs, 0)
+  const eggPeak = Math.max(0, ...eggDays.map((row) => row.eggs))
+
+  // Revenue entries, priced per unit; one far above the rest is flagged to check.
+  const revenueRows: Array<any> = (finance.revenueBreakdown || []).map((item: any) => ({
+    ...item,
+    perUnit: Number(item.quantity) > 0 ? Number(item.amount || 0) / Number(item.quantity) : null,
+  }))
+  const unitPrices = revenueRows.map((row) => row.perUnit).filter((v: number | null): v is number => v !== null && v > 0).sort((a, b) => a - b)
+  const medianUnit = unitPrices.length > 0 ? unitPrices[Math.floor(unitPrices.length / 2)] : null
+  const flaggedIds = new Set(
+    revenueRows
+      .filter((row) => row.perUnit !== null && medianUnit !== null && unitPrices.length >= 3 && row.perUnit > medianUnit * 10)
+      .map((row) => row.id),
+  )
+  const topRevenue = revenueRows.reduce<any | null>((top, row) => (!top || Number(row.amount) > Number(top.amount) ? row : top), null)
+  const topShare = topRevenue ? pct(Number(topRevenue.amount), finance.totalRevenue) : 0
+  const [allRevenue, setAllRevenue] = useState(false)
+  const visibleRevenue = allRevenue ? revenueRows : revenueRows.slice(0, 4)
+  const otherPrices = unitPrices.filter((v) => !topRevenue || v !== topRevenue.perUnit)
   const mortality: Array<{ label: string; deaths: number; rate: number }> = series.mortalityDaily || []
   const vetLine = start * 0.01
   const worst = mortality.reduce<{ label: string; deaths: number } | null>((top, row) => (!top || row.deaths > top.deaths ? row : top), null)
@@ -92,6 +129,12 @@ export function MobileFlockDetail({ data, eggsPerCrate = 30 }: { data: any; eggs
           <span className="flex items-center gap-1.5"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-ql-amber" /><span className="font-semibold text-ql-text">{nf(isolated)}</span> isolated</span>
           <span className="flex items-center gap-1.5"><span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-ql-coral" /><span className="font-semibold text-ql-text">{nf(dead)}</span> dead</span>
         </p>
+        {unlogged > 0 ? (
+          <p className="mt-3 border-t border-ql-line pt-3 font-ql-mono text-[11px] uppercase tracking-[0.06em] text-ql-muted">
+            {nf(dead)} dead = {nf(logged)} logged +{' '}
+            <QlDerived formula={`${nf(dead)} dead by head count − ${nf(logged)} deaths in the log`}>{nf(unlogged)}</QlDerived> not logged
+          </p>
+        ) : null}
         <p className="mt-3 border-t border-ql-line pt-3 font-ql-mono text-[11px] uppercase tracking-[0.06em] text-ql-muted">
           Arrived {new Date(batch.arrivalDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
         </p>
@@ -106,7 +149,7 @@ export function MobileFlockDetail({ data, eggsPerCrate = 30 }: { data: any; eggs
         <QlTile className="p-3">
           <QlLabel>Mortality</QlLabel>
           <p className={cn('mt-2 font-ql-display text-xl font-semibold leading-none tabular-nums', metrics.mortalityRate > 5 && 'text-ql-coral')}>{Number(metrics.mortalityRate).toFixed(1)}%</p>
-          <p className="mt-1.5 text-[11px] text-ql-muted">{nf(metrics.totalMortality)} deaths in total</p>
+          <p className="mt-1.5 text-[11px] text-ql-muted">{nf(metrics.totalMortality)} {logged === 1 ? 'death' : 'deaths'} logged</p>
         </QlTile>
         <QlTile className="p-3">
           <QlLabel>FCR</QlLabel>
@@ -123,6 +166,25 @@ export function MobileFlockDetail({ data, eggsPerCrate = 30 }: { data: any; eggs
           )}
         </QlTile>
       </div>
+
+      {isLayerLike ? (
+        <QlTile aria-labelledby="flock-eggs-total" className="flex items-end justify-between gap-3">
+          <div className="min-w-0">
+            <QlLabel as="h2" id="flock-eggs-total">Eggs collected</QlLabel>
+            <p className="mt-3 font-ql-display text-[30px] font-semibold leading-none tabular-nums">{nf(metrics.totalEggs)}</p>
+            <p className="mt-2 font-ql-mono text-[10px] uppercase tracking-[0.06em] text-ql-muted">{crateLine(metrics.totalEggs)}</p>
+          </div>
+          {latestEgg ? (
+            <div className="shrink-0 text-right">
+              <QlLabel>Last · {new Date(latestEgg.logDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</QlLabel>
+              <p className="mt-3 font-ql-display text-lg font-semibold leading-none tabular-nums">{nf(latestEgg.eggsCollected)} <span className="font-ql-sans text-xs font-normal text-ql-muted">eggs</span></p>
+              <p className="mt-2 font-ql-mono text-[10px] uppercase tracking-[0.06em] text-ql-muted">{crateLine(latestEgg.eggsCollected)}</p>
+            </div>
+          ) : (
+            <p className="shrink-0 text-right text-[12px] text-ql-muted">No collection logged yet</p>
+          )}
+        </QlTile>
+      ) : null}
 
       <div className="grid grid-cols-2 gap-2 [&_button]:w-full [&_button]:min-h-11">
         <FlockLogsHistory data={data} />
@@ -215,23 +277,73 @@ export function MobileFlockDetail({ data, eggsPerCrate = 30 }: { data: any; eggs
             <QlLabel as="h2" id="flock-revenue">Revenue</QlLabel>
             <QlLabel as="span">{(finance.revenueBreakdown || []).length} {(finance.revenueBreakdown || []).length === 1 ? 'entry' : 'entries'} · {money(finance.totalRevenue)}</QlLabel>
           </div>
-          {(finance.revenueBreakdown || []).length === 0 ? (
+          {revenueRows.length === 0 ? (
             <div className="mt-2 rounded-2xl border border-dashed border-ql-line p-4 text-center">
               <p className="text-[13px] text-ql-muted">No revenue recorded for this batch</p>
               <Link href={`/dashboard/sales?sellBatchId=${batch.id}`} className={qlButton('ghost', 'mt-3 w-full rounded-2xl border-ql-line text-ql-text')}>Record a sale</Link>
             </div>
           ) : (
-            <ul className="mt-2 divide-y divide-ql-line overflow-hidden rounded-2xl border border-ql-line bg-ql-surface">
-              {(finance.revenueBreakdown || []).map((item: any) => (
-                <li key={item.id} className="flex items-start justify-between gap-3 px-4 py-3">
-                  <span className="min-w-0">
-                    <span className="block text-sm font-semibold">{item.description}</span>
-                    <span className="block text-[12px] text-ql-muted">{[new Date(item.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }), item.quantity != null ? `${nf(item.quantity)} units` : null, item.percentage != null ? `${item.percentage}%` : null].filter(Boolean).join(' · ')}</span>
-                  </span>
-                  <span className="shrink-0 font-ql-display text-[15px] font-semibold tabular-nums">{money(item.amount)}</span>
-                </li>
-              ))}
-            </ul>
+            <div className="mt-2 overflow-hidden rounded-2xl border border-ql-line bg-ql-surface">
+              <div className="p-4">
+                <p className="text-[clamp(26px,9vw,34px)] leading-none">
+                  <QlMoney amount={finance.totalRevenue} currency={currency} className="text-ql-mint" />
+                </p>
+                {revenueRows.length > 1 && topRevenue ? (
+                  <>
+                    <div aria-hidden="true" className="mt-3 flex h-1.5 gap-0.5 overflow-hidden rounded-full bg-ql-text/[0.06]">
+                      <span className={cn('h-full rounded-full', topShare >= 50 ? 'bg-ql-amber' : 'bg-ql-mint')} style={{ width: `${topShare}%` }} />
+                      <span className="h-full rounded-full bg-ql-mint" style={{ width: `${100 - topShare}%` }} />
+                    </div>
+                    <p className="mt-2 flex justify-between font-ql-mono text-[11px] text-ql-muted">
+                      <span>1 entry · <QlDerived formula="largest entry ÷ all revenue">{Math.round(topShare)}%</QlDerived></span>
+                      <span>{revenueRows.length - 1} others · {Math.round(100 - topShare)}%</span>
+                    </p>
+                  </>
+                ) : null}
+                {topRevenue && flaggedIds.has(topRevenue.id) && topRevenue.perUnit !== null ? (
+                  <div className="mt-3 flex gap-3 rounded-2xl border border-ql-amber/30 bg-ql-amber/[0.06] p-3">
+                    <Info aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-ql-amber" />
+                    <p className="text-[13px] text-ql-muted">
+                      <span className="block font-semibold text-ql-text">One entry carries the revenue</span>
+                      {nf(topRevenue.quantity)} units for {money(topRevenue.amount)} is{' '}
+                      <QlDerived formula="amount ÷ units">{money(topRevenue.perUnit)}</QlDerived> a unit.
+                      {otherPrices.length > 0 ? ` Other entries run from ${money(otherPrices[0])} to ${money(otherPrices[otherPrices.length - 1])}.` : ''}
+                    </p>
+                  </div>
+                ) : null}
+              </div>
+              <ul className="divide-y divide-ql-line border-t border-ql-line">
+                {visibleRevenue.map((item: any) => {
+                  const flagged = flaggedIds.has(item.id)
+                  return (
+                    <li key={item.id} className={cn('relative flex items-start justify-between gap-3 px-4 py-3', flagged && 'bg-ql-amber/[0.04]')}>
+                      {flagged ? <span aria-hidden="true" className="absolute inset-y-0 left-0 w-[3px] bg-ql-amber" /> : null}
+                      <span className="min-w-0">
+                        <span className="flex items-center gap-2">
+                          <span className="truncate text-sm font-semibold">{item.description}</span>
+                          {flagged ? <QlChip tone="amber">Check</QlChip> : null}
+                        </span>
+                        <span className="block text-[12px] text-ql-muted">
+                          {[new Date(item.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }), item.quantity != null ? `${nf(item.quantity)} units` : null, item.kind === 'EggBatch' || item.percentage != null ? 'Allocated' : null].filter(Boolean).join(' · ')}
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-right">
+                        <span className="block font-ql-display text-[15px] font-semibold tabular-nums">{money(item.amount)}</span>
+                        {item.perUnit !== null ? (
+                          <span className="block font-ql-mono text-[10px] text-ql-muted"><QlDerived formula="amount ÷ units">{money(item.perUnit)}</QlDerived> / unit</span>
+                        ) : null}
+                      </span>
+                    </li>
+                  )
+                })}
+              </ul>
+              {revenueRows.length > 4 ? (
+                <button type="button" onClick={() => setAllRevenue((v) => !v)} className="flex min-h-12 w-full items-center justify-between border-t border-ql-line px-4 text-[13px] font-semibold text-ql-mint">
+                  {allRevenue ? 'Show fewer' : `See all ${revenueRows.length} entries`}
+                  <ChevronDown aria-hidden="true" className={cn('h-4 w-4 transition-transform', allRevenue && 'rotate-180')} />
+                </button>
+              ) : null}
+            </div>
           )}
         </section>
       ) : null}
@@ -289,6 +401,20 @@ export function MobileFlockDetail({ data, eggsPerCrate = 30 }: { data: any; eggs
               <QlTile className="p-3"><QlLabel>Total</QlLabel><p className="mt-2 font-ql-display text-xl font-semibold tabular-nums"><QlDerived formula={`${nf(metrics.totalMortality)} ÷ ${nf(start)}`}>{shareText(pct(metrics.totalMortality, start))}</QlDerived></p><p className="mt-1 text-[11px] text-ql-muted">of {nf(start)}</p></QlTile>
               <QlTile className="p-3"><QlLabel>Line</QlLabel><p className={cn('mt-2 font-ql-display text-xl font-semibold tabular-nums', worst.deaths >= vetLine && 'text-ql-coral')}><QlDerived formula={`${nf(worst.deaths)} ÷ ${nf(Math.round(vetLine))} (1% of the flock)`}>{vetLine > 0 ? `${(worst.deaths / vetLine).toFixed(2)}×` : '—'}</QlDerived></p><p className="mt-1 text-[11px] text-ql-muted">the 1% a day mark</p></QlTile>
             </div>
+            {unlogged > 0 ? (
+              <div className="mt-2 flex gap-3 rounded-2xl border border-ql-amber/30 bg-ql-amber/[0.06] p-4">
+                <Info aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-ql-amber" />
+                <p className="text-[13px] text-ql-muted">
+                  <span className="block font-semibold text-ql-text">Why {nf(dead)} dead above and {nf(logged)} here?</span>
+                  The head count is missing {nf(unlogged)} more birds than the death log shows.
+                  {sickTotal > 0 && sickTotal >= isolated
+                    ? ` ${nf(sickTotal)} sick birds went to isolation and ${nf(isolated)} are still there, so ${nf(leftIsolation)} left it${leftIsolation === unlogged ? ', which matches the gap: they may have died there without a log.' : '.'}`
+                    : sickTotal > 0
+                      ? ` The isolation count (${nf(isolated)}) is also higher than the sick birds logged (${nf(sickTotal)}), so some moves were not logged.`
+                      : ' Birds that left without a death or sale log show here.'}
+                </p>
+              </div>
+            ) : null}
             {vetLine > 0 && worst.deaths >= vetLine ? (
               <div className="mt-2 flex gap-3 rounded-2xl border border-ql-coral/30 bg-ql-coral/[0.06] p-4">
                 <Info aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0 text-ql-coral" />
@@ -299,28 +425,31 @@ export function MobileFlockDetail({ data, eggsPerCrate = 30 }: { data: any; eggs
         ) : null}
       </section>
 
-      {(metrics.isLayer || metrics.totalEggs > 0) && (series.eggDaily || []).length > 0 ? (
+      {isLayerLike && eggDays.length > 0 ? (
         <section aria-labelledby="flock-eggs">
-          <QlLabel as="h2" id="flock-eggs">Eggs per day</QlLabel>
+          <div className="flex items-baseline justify-between">
+            <QlLabel as="h2" id="flock-eggs">Egg production</QlLabel>
+            <QlLabel as="span">{crateLine(metrics.totalEggs)}</QlLabel>
+          </div>
           <div className="mt-2 rounded-2xl border border-ql-line bg-ql-surface p-4">
-            {(() => {
-              const eggs: Array<{ label: string; eggs: number }> = series.eggDaily.slice(-10)
-              const top = Math.max(1, ...eggs.map((row) => row.eggs))
-              return (
-                <>
-                  <ol className="flex h-28 items-end gap-1.5" aria-label="Eggs per day">
-                    {eggs.map((row) => (
-                      <li key={row.label} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end">
-                        <span aria-label={`${row.label}: ${row.eggs} eggs, ${Math.floor(row.eggs / epc)} crates`} className="block w-full max-w-8 rounded-t-[4px] bg-ql-shell/70" style={{ height: `${Math.max((row.eggs / top) * 100, 2)}%` }} />
-                      </li>
-                    ))}
-                  </ol>
-                  <ol aria-hidden="true" className="mt-2 flex gap-1.5 font-ql-mono text-[10px] text-ql-muted">
-                    {eggs.map((row) => <li key={row.label} className="flex-1 truncate text-center">{row.label}</li>)}
-                  </ol>
-                </>
-              )
-            })()}
+            <p className="font-ql-display text-base font-semibold">Eggs per collection day</p>
+            <ol className="mt-4 flex h-32 items-end gap-1.5" aria-label="Eggs per collection day">
+              {eggDays.map((row) => (
+                <li key={row.label} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end">
+                  <span className={cn('mb-1 font-ql-mono text-[10px] font-semibold', row.eggs === eggPeak ? 'text-ql-mint' : 'text-ql-muted')}>{nf(row.eggs)}</span>
+                  <span aria-label={`${row.label}: ${row.eggs} eggs`} className={cn('block w-full max-w-8 rounded-t-[4px]', row.eggs === eggPeak ? 'bg-ql-mint' : 'bg-ql-deep')} style={{ height: `${Math.max((row.eggs / Math.max(eggPeak, 1)) * 100, 2)}%` }} />
+                </li>
+              ))}
+            </ol>
+            <ol aria-hidden="true" className="mt-2 flex gap-1.5 font-ql-mono text-[10px] text-ql-muted">
+              {eggDays.map((row) => <li key={row.label} className="flex-1 truncate text-center">{row.label}</li>)}
+            </ol>
+            <p className="mt-3 font-ql-mono text-[10px] uppercase tracking-[0.06em] text-ql-muted">Only days with a collection are drawn.</p>
+          </div>
+          <div className="mt-2 grid grid-cols-3 gap-2">
+            <QlTile className="p-3"><QlLabel>Total</QlLabel><p className="mt-2 font-ql-display text-lg font-semibold tabular-nums">{nf(metrics.totalEggs)}</p><p className="mt-1 text-[11px] text-ql-muted">eggs collected</p></QlTile>
+            <QlTile className="p-3"><QlLabel>Shown</QlLabel><p className="mt-2 font-ql-display text-lg font-semibold tabular-nums"><QlDerived formula="eggs on the days drawn">{nf(eggShown)}</QlDerived></p><p className="mt-1 text-[11px] text-ql-muted">in these {eggDays.length} days</p></QlTile>
+            <QlTile className="p-3"><QlLabel>Not shown</QlLabel><p className="mt-2 font-ql-display text-lg font-semibold tabular-nums"><QlDerived formula="total − shown">{nf(Math.max(0, Number(metrics.totalEggs) - eggShown))}</QlDerived></p><p className="mt-1 text-[11px] text-ql-muted">in older entries</p></QlTile>
           </div>
         </section>
       ) : null}
