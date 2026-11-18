@@ -16,6 +16,8 @@ import {
 import { ArrowLeft, Check, Eye, EyeOff, Layers } from 'lucide-react'
 import { cn, formatCompactMoney, formatCurrency } from '@/lib/utils'
 import { useCurrency } from '@/components/providers/CurrencyProvider'
+import { MobileBatchComparison } from './MobileBatchComparison'
+import { useIsPhone } from '@/components/ui/ql/useIsPhone'
 
 type BatchReport = {
   id: string
@@ -163,6 +165,8 @@ function plural(count: number, word: string) {
 
 export function BatchComparison({ batches, canViewFinance }: BatchComparisonProps) {
   const currency = useCurrency()
+  // Recharts loops on zero-size containers, so the desktop charts are not mounted on phones.
+  const phone = useIsPhone()
   const availableMetrics = useMemo<MetricKey[]>(() => {
     const keys = Object.keys(METRICS) as MetricKey[]
     return keys.filter((key) => canViewFinance || !METRICS[key].finance)
@@ -268,7 +272,18 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
   const shown = activeBatches.length
 
   return (
-    <div className="space-y-6">
+    <>
+    {/* Phone layout (Quiet Ledger); the rest is tablet and desktop only. It shares the batch selection. */}
+    <div className="md:hidden">
+      <MobileBatchComparison
+        batches={batches}
+        canViewFinance={canViewFinance}
+        selectedIds={selectedBatchIds.filter((id) => !hiddenBatches.includes(id))}
+        onToggle={toggleBatch}
+      />
+    </div>
+    {phone ? null : (
+    <div className="hidden space-y-6 md:block">
       <PageHeader count={batches.length} canViewFinance={canViewFinance} />
 
       {/* Totals for the batches in the comparison */}
@@ -673,6 +688,8 @@ export function BatchComparison({ batches, canViewFinance }: BatchComparisonProp
         ))}
       </div>
     </div>
+    )}
+    </>
   )
 }
 

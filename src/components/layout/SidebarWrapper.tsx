@@ -76,16 +76,19 @@ export const SidebarWrapper = ({
           )}
         >
           {isIndeptPage ? (
-            <header className="sticky top-0 z-30 -mx-4 mb-3 flex items-center gap-2 border-b border-fg/[0.08] bg-deep px-4 py-2 md:hidden">
+            <header className="sticky top-0 z-30 -mx-4 mb-3 flex items-center gap-3 border-b border-ql-line bg-ql-ground px-4 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] font-ql-sans md:hidden">
               <button
                 type="button"
                 onClick={() => router.back()}
-                className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg text-fg-2 transition-colors duration-150 hover:bg-fg/[0.06] hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-ql-line text-ql-text transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ql-mint/60"
                 aria-label="Go back"
               >
                 <ArrowLeft className="h-5 w-5" strokeWidth={1.5} />
               </button>
-              <span className="truncate text-sm font-medium text-fg">{getMobileIndeptTitle(pathname)}</span>
+              <span className="min-w-0">
+                <span className="block truncate font-ql-display text-[15px] font-semibold leading-tight text-ql-text">{getMobileIndeptTitle(pathname)}</span>
+                <span className="block text-xs leading-tight text-ql-muted">{farmName || 'Farm'}</span>
+              </span>
             </header>
           ) : null}
           <PageTransition>{children}</PageTransition>

@@ -14,6 +14,7 @@ look. Each board lands on its own `redesign/<screen>` branch, one commit per PDF
 | Feed (overview, feeding history, log form) | Feed-Redesign.pdf (2 pages) | `redesign/feed` | Counts and day grouping in `feed/feed-math.ts`; batch cards, stepper and stock-after on phones |
 | Quarantine & isolation (overview, isolate sheet, record-loss sheet) | Quarantine-Redesign.pdf (2 pages) | `redesign/quarantine` | Phone sheets call the same `logHealthEvent` / `logMortalityInIsolation` / `returnFromIsolation` actions |
 | Mortality (overview, 1% check, day detail, log-deaths sheet) | Mortality-Redesign.pdf (2 pages) | `redesign/mortality` | Figures in `mortality/mortality-math.ts`; shared `CausePicker` and `LineGauge` |
+| Analytics batch comparison | Analytics-Batch-Comparison-Redesign.pdf (2 pages) | `redesign/analytics-comparison` | `components/analytics/MobileBatchComparison.tsx` shares the batch selection with the desktop view |
 
 ## Shared tokens (`src/app/globals.css`)
 
@@ -79,6 +80,10 @@ Not built yet (no board has needed them): plan card for in-app plans.
   Dashboard is no longer a raised always-mint button. Group icons are muted
   instead of per-group hues; the group sheets above the bar are unchanged.
 - `ProfileMenu` trigger: 44 px, Quiet Ledger outline.
+- Detail pages (analytics, flock / sale / feed details): the phone back bar is
+  Quiet Ledger, with the page title and the farm name under it.
+- Pages with Recharts charts must not mount the desktop chart tree on phones
+  (`useIsPhone()`); a hidden zero-size ResponsiveContainer re-renders in a loop.
 
 ## Open items
 
@@ -94,6 +99,18 @@ Landing page:
   adds staff but drops five modules); a pricing decision, not changed here.
 - The sample card's figures are the page's own illustration (labelled Sample
   data); only the egg count is worked out (crates × 30).
+
+Analytics batch comparison:
+- The last selected batch chip is locked with "Keep one batch to compare";
+  desktop still lets you clear every batch (its empty state is unchanged).
+- Mortality is flagged above 5% (the rule the desktop cards already use for
+  red); the dashed line is the existing 3.5% benchmark. Both are shown in text.
+- FCR here comes from the analytics report; with no weights it shows "—" and
+  the Add weights step. In the local data a broiler showed FCR 0.01, which
+  points at the same bags-versus-kilograms mix noted under Feed.
+- With more than two batches the side-by-side table scrolls inside its card.
+- The egg ranking and per-batch cards from desktop are covered on phones by
+  the Eggs tab and the side-by-side table.
 
 Mortality:
 - `getAllMortalityLogs` loads the latest 50 DEAD logs, so the total (labelled
