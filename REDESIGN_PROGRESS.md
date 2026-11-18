@@ -26,6 +26,7 @@ look. Each board lands on its own `redesign/<screen>` branch, one commit per PDF
 | Profile (account) | Profile-Redesign.pdf (2 pages) | `redesign/profile` | `profile/MobileProfile.tsx`; Edit profile reuses EditProfileModal |
 | Inbox and team chat | Inbox-Redesign.pdf (2 pages) | `redesign/inbox` | Phone tree in `inbox/page.tsx` plus `InboxMenu.tsx`; tabs, team list and composer restyled with `max-md:` only |
 | Settings | Settings-Redesign.pdf (2 pages) | `redesign/settings` | `settings/SettingsPhone.tsx` (home list, Save bar); sections reuse the existing forms; PlanTypeCard gains a `row` variant |
+| Plans | Plans-Redesign.pdf (2 pages) | `redesign/plans` | `license-upgrade/MobilePlans.tsx`, fed by LicenseUpgradeClient's own state and checkout handlers |
 
 ## Shared tokens (`src/app/globals.css`)
 
@@ -111,6 +112,23 @@ Landing page:
   adds staff but drops five modules); a pricing decision, not changed here.
 - The sample card's figures are the page's own illustration (labelled Sample
   data); only the egg count is worked out (crates × 30).
+
+Plans:
+- The ticking "N days · hh:mm:ss remaining" becomes "Renews about <date> ·
+  N days" on phones. A paid plan with no end date (local data) shows no line.
+- Connected desktop devices are left off the phone plans page (Settings
+  lists them). Desktop unchanged.
+- Terms show the total for the selected plan with every discount applied
+  (term, farm and promo), the same `getTermPricing` the pay button uses.
+  Tiles show the number; the currency is named once above them.
+- One mint Pay bar with plan, term, savings and total. Paystack when on,
+  else Mobile Money; "Pay manually instead" stays when both are on. With
+  payments paused the bar is dim with the reason.
+- Switching plan type (Team to Solo or back) opens a confirm sheet: what the
+  farm becomes, from/to/term/total, and type the plan type to turn Pay on.
+  The checkout itself is unchanged.
+- Concept not built: the separate "Review and pay" screen (the Paystack popup
+  already shows the amount; the pay bar shows the breakdown).
 
 Settings:
 - Phones open on a list (Farm, Rules for workers, Account and data) where each

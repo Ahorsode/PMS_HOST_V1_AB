@@ -23,6 +23,7 @@ import {
 } from "@/lib/billing/pricing";
 import { cn } from "@/lib/utils";
 import type { BillingCurrency } from "@/lib/farm/countries";
+import { MobilePlans, PhoneManualRequest } from "./MobilePlans";
 
 type PlanTypeValue = "SOLO" | "TEAM";
 
@@ -44,6 +45,9 @@ const CORE_FEATURES = [
   "Inventory and feed formulation",
   "Reports and analytics",
 ];
+
+/** Short names of CORE_FEATURES for the phone's "In both" line. */
+const CORE_SHORT = ["Logging", "Houses", "Sales", "Inventory", "Reports"];
 
 /** "GHS 1,000.00" in Ghana, "$1,000.00" elsewhere. */
 function formatCurrency(value: number, currency: BillingCurrency) {
@@ -305,8 +309,105 @@ export default function LicenseUpgradeClient({
     { tier: "PREMIUM", icon: Crown, color: "", shadow: "", popular: true },
   ];
 
+  // ---- Phone (Quiet Ledger) view, built from the same state and handlers ----
+  const onCurrentPaidPlan = !access.isTrial && (access.state === "PAID" || access.state === "GRACE") && access.tier !== "BASIC";
+  const [phoneTier, setPhoneTier] = useState<PaidTier>(
+    onCurrentPaidPlan && planType === initialType ? (access.tier as PaidTier) : "PREMIUM",
+  );
+  const phonePlans = tiers.map(({ tier }) => {
+    const config = billing.plans[selectedType][tier];
+    const monthly = planMonthlyPrice(config, billingCurrency);
+    const pricing = getTermPricing(selectedMonths, monthly, termDiscount(billing, selectedMonths), extraDiscounts);
+    return {
+      tier,
+      name: config.name,
+      monthlyLabel: formatPlanPrice(monthly, billingCurrency),
+      staffLabel: staffLimitLabel(selectedType, config.staffLimit),
+      isCurrent: onCurrentPaidPlan && planType === selectedType && access.tier === tier,
+      allFeatures: PLAN_FEATURE_KEYS.every((key) => config.features.includes(key)),
+      total: pricing.total,
+      subtotal: selectedMonths * monthly,
+      savings: pricing.savings,
+    };
+  });
+  const phoneMonthly = planMonthlyPrice(billing.plans[selectedType][phoneTier], billingCurrency);
+  const phoneTerms = monthOptions.map((option) => ({
+    months: option.months,
+    discount: option.discount,
+    totalForSelectedTier: getTermPricing(option.months, phoneMonthly, termDiscount(billing, option.months), extraDiscounts).total,
+  }));
+  const standardFeatures = billing.plans[selectedType].STANDARD.features;
+  const premiumFeatures = billing.plans[selectedType].PREMIUM.features;
+  const phoneInBoth = [
+    ...CORE_SHORT,
+    ...PLAN_FEATURE_KEYS.filter((key) => standardFeatures.includes(key) && premiumFeatures.includes(key)).map((key) => PLAN_FEATURE_DETAILS[key].label),
+  ];
+  const phoneOnlyIn = PLAN_FEATURE_KEYS.filter((key) => standardFeatures.includes(key) !== premiumFeatures.includes(key)).map((key) => ({
+    label: PLAN_FEATURE_DETAILS[key].label,
+    standard: standardFeatures.includes(key),
+    premium: premiumFeatures.includes(key),
+  }));
+  const phoneCurrentLabel = access.isTrial
+    ? "Free trial"
+    : access.state === "LOCKED" || access.tier === "BASIC"
+      ? "No active plan"
+      : billing.plans[planType][access.tier as PaidTier].name;
+  const phoneFineprint = `${billingCurrency === "GHS" ? "Pay by Mobile Money, card or bank transfer." : "Pay by card in US dollars."} One-time payment, no auto-renew. When the term ends you have ${billing.trial.graceDays} ${billing.trial.graceDays === 1 ? "day" : "days"} to renew before paid features lock. Your records are kept.`;
+
   return (
-    <div className="mx-auto max-w-6xl space-y-8 px-0 md:px-3 pt-2 pb-7 md:py-10">
+    <>
+    <div className="md:hidden">
+      <MobilePlans
+        currentLabel={phoneCurrentLabel}
+        currentNote={current.note}
+        state={access.state}
+        isTrial={access.isTrial}
+        endsAt={access.endsAt}
+        graceEndsAt={access.graceEndsAt}
+        planType={planType}
+        selectedType={selectedType}
+        onSelectType={setSelectedType}
+        terms={phoneTerms}
+        selectedMonths={selectedMonths}
+        onSelectMonths={setSelectedMonths}
+        plans={phonePlans}
+        selectedTier={phoneTier}
+        onSelectTier={setPhoneTier}
+        inBoth={phoneInBoth}
+        onlyIn={phoneOnlyIn}
+        promoInput={promoInput}
+        onPromoInput={(value) => {
+          setPromoInput(value);
+          if (appliedPromo) setAppliedPromo(null);
+        }}
+        onApplyPromo={applyPromo}
+        checkingPromo={isCheckingPromo}
+        appliedPromo={appliedPromo}
+        farmDiscountPercent={farmDiscountPercent}
+        fineprint={phoneFineprint}
+        format={(value) => formatCurrency(value, billingCurrency)}
+        paystackAvailable={paystackAvailable}
+        manualPaymentEnabled={manualPaymentEnabled}
+        busy={isUpgrading}
+        onPaystack={() => handlePaystackCheckout(phoneTier)}
+        onManual={() => handleUpgrade(phoneTier)}
+        manualRequest={
+          manualRequest ? (
+            <PhoneManualRequest
+              amount={formatCurrency(manualRequest.amount, billingCurrency)}
+              planName={manualRequest.planName}
+              rows={[
+                ...(billing.manualPayment.network ? [["Network", billing.manualPayment.network] as [string, string]] : []),
+                ...(billing.manualPayment.momoNumber ? [["Number", billing.manualPayment.momoNumber] as [string, string]] : []),
+                ...(billing.manualPayment.accountName ? [["Account name", billing.manualPayment.accountName] as [string, string]] : []),
+              ]}
+              instructions={billing.manualPayment.instructions}
+            />
+          ) : null
+        }
+      />
+    </div>
+    <div className="mx-auto hidden max-w-6xl space-y-8 px-0 md:block md:px-3 pt-2 pb-7 md:py-10">
       <section className="rounded-lg border border-fg/10 bg-card/80 p-6 shadow-black/25">
         <p className="text-xs font-medium text-fg">Your current plan</p>
         <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
@@ -630,5 +731,6 @@ export default function LicenseUpgradeClient({
         })}
       </section>
     </div>
+    </>
   );
 }
