@@ -28,6 +28,7 @@ look. Each board lands on its own `redesign/<screen>` branch, one commit per PDF
 | Settings | Settings-Redesign.pdf (2 pages) | `redesign/settings` | `settings/SettingsPhone.tsx` (home list, Save bar); sections reuse the existing forms; PlanTypeCard gains a `row` variant |
 | Plans | Plans-Redesign.pdf (2 pages) | `redesign/plans` | `license-upgrade/MobilePlans.tsx`, fed by LicenseUpgradeClient's own state and checkout handlers |
 | Audit log | Audit-Redesign.pdf (2 pages) | `redesign/audit` | `admin/logs/MobileAuditLog.tsx`; restore handlers and the deleted-record dialog are shared |
+| Team | Team-Redesign.pdf (2 pages) | `redesign/team` | `team/MobileTeam.tsx`; invite, role, pause, reset, code and remove reuse TeamView's handlers |
 
 ## Shared tokens (`src/app/globals.css`)
 
@@ -113,6 +114,22 @@ Landing page:
   adds staff but drops five modules); a pricing decision, not changed here.
 - The sample card's figures are the page's own illustration (labelled Sample
   data); only the egg count is worked out (crates × 30).
+
+Team:
+- Each row's four icons and role dropdown become a role label and one ⋯
+  menu (Change role, Edit access, Pause/Restore access, Reset to role
+  defaults, New login code, Remove from farm), shown only to the roles that
+  had those buttons. Remove and Cancel invitation end in a type-the-name sheet.
+- Capacity says "No limit" (or "N of M", "Limit reached") instead of a bar
+  filling for ∞. The plan name isn't in this page's data, so it shows "Team
+  plan" / "Solo plan".
+- Invite staff is one sticky mint bar that opens a sheet. Send is dim with
+  the reason (no address yet, or the staff limit) until it can work.
+- Role picker covers all five roles. Manager, Worker and Accountant keep the
+  desktop's wording; Cashier and Finance officer are described from their
+  starting permissions (e.g. "Can change sales. Can see finance.").
+- Mismatch: `getFarmMembers` returns staff only, not the owner, while the
+  board counts the owner in "Active members". Phones count the rows shown.
 
 Audit log:
 - Edits are grouped into one card per moment: same second, same person. A

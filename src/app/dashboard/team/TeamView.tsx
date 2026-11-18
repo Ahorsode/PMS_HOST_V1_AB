@@ -23,6 +23,14 @@ import { useRouter } from 'next/navigation';
 import { MutationBoundary } from '@/components/ui/MutationFeedback';
 import { toast } from 'sonner';
 import { QUICK_ICON, quickButtonClass } from '@/components/ui/quick-action';
+import { MobileTeam } from './MobileTeam';
+
+/** Role descriptions for the phone role picker; the first three are the desktop's own wording. */
+const ROLE_COPY: Record<string, string> = {
+  MANAGER: 'Full visibility of all farm operations and logs. Can manage staff, inventory and sales.',
+  WORKER: 'Limited to data entry (feeding, mortality logs). Can only view their own activity records.',
+  ACCOUNTANT: 'Exclusive access to finance and sales modules. Handles commercial initialization and P&L reporting.',
+};
 
 export default function TeamView({
   canEdit = true,
@@ -271,6 +279,28 @@ export default function TeamView({
     }
   };
 
+  // ---- Phone helpers: the same actions as the desktop buttons ----
+  const roleDescriptions: Record<string, string> = Object.fromEntries(
+    ['WORKER', 'CASHIER', 'MANAGER', 'ACCOUNTANT', 'FINANCE_OFFICER'].map((role) => {
+      if (ROLE_COPY[role]) return [role, ROLE_COPY[role]];
+      // Worked out from the role's starting permissions.
+      const d = getDefaultPermissionsForRole(role, undefined, rolePermissions) as Record<string, boolean>;
+      const change = PERMISSION_MODULES.filter((m) => d[m.edit]).map((m) => m.label);
+      const see = PERMISSION_MODULES.filter((m) => d[m.view] && !d[m.edit]).map((m) => m.label);
+      const parts = [change.length ? `Can change ${change.join(', ').toLowerCase()}.` : null, see.length ? `Can see ${see.join(', ').toLowerCase()}.` : null].filter(Boolean);
+      return [role, parts.join(' ') || 'Starts with no access. Choose what they can see below.'];
+    }),
+  );
+
+  const loadInviteUser = async (invite: any) => {
+    const result = await getUserForInvite(invite.id) as any;
+    if (!result?.userId) {
+      toast.error('Could not load pending invite permissions');
+      return null;
+    }
+    return result;
+  };
+
   const getRoleBadge = (role: string) => {
     const configs: any = {
       OWNER: { class: 'bg-fg/[0.06] text-fg-2 border-fg/[0.08]', icon: ShieldCheck },
@@ -291,8 +321,65 @@ export default function TeamView({
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-7 px-0 md:px-3 pt-2 pb-7 md:py-7 relative">
+    <div className="max-w-7xl mx-auto space-y-7 px-0 md:px-3 pt-2 pb-7 md:py-7 relative max-md:space-y-3">
       {issuedCode && <InviteCodePanel issued={issuedCode} onDismiss={() => setIssuedCode(null)} />}
+      {/* Phone layout (Quiet Ledger); the sections below are tablet and desktop only. Dialogs are shared. */}
+      <div className="md:hidden">
+        <MobileTeam
+          members={members}
+          invitations={invitations}
+          loading={isLoading}
+          currentUserRole={currentUserRole}
+          canEdit={canEdit}
+          limitCheck={limitCheck}
+          staffPlan={staffPlan}
+          roleDescriptions={roleDescriptions}
+          busyUserId={updatingRoleUserId || changingAccessUserId || resettingPermissionsUserId}
+          onChangeRole={handleRoleChange}
+          onEditAccess={(member) => setPermissionTarget(member)}
+          onTogglePause={(member) => handleAccessChange(member, member.accessStatus !== 'PAUSED')}
+          onResetAccess={(member) => handleResetPermissions(member.userId, `${member.user.firstname || ''} ${member.user.surname || ''}`, member.role)}
+          onNewCode={(target) =>
+            target.invitation
+              ? handleNewCode({ invitationId: target.invitation.id }, target.invitation.email || target.invitation.phoneNumber)
+              : handleNewCode({ memberUserId: target.userId }, target.user?.phoneNumber || target.user?.email || 'this team member')
+          }
+          onRemoveMember={async (member) => {
+            await deleteMember(member.id);
+            await loadTeam();
+          }}
+          onEditInvite={async (invite) => {
+            const result = await loadInviteUser(invite);
+            if (result) {
+              setEditPermissionsInvite({
+                inviteId: invite.id,
+                userId: result.userId,
+                name: invite.email || invite.phoneNumber || 'Pending User',
+                currentPermissions: result.permissions,
+                role: invite.role,
+              });
+            }
+          }}
+          onResetInvite={async (invite) => {
+            const result = await loadInviteUser(invite);
+            if (result) await handleResetPermissions(result.userId, invite.email || invite.phoneNumber || 'Pending User', invite.role);
+          }}
+          onCancelInvite={async (invite) => {
+            await deleteInvitation(invite.id);
+            await loadTeam();
+          }}
+          inviteRole={inviteRole}
+          onInviteRole={setInviteRole}
+          onInvite={handleInvite}
+          inviting={isInviting}
+          message={message}
+          permissionToggles={
+            <InlinePermissionToggles role={inviteRole} roleDefaults={rolePermissions} value={pendingPermissions} onChange={setPendingPermissions} />
+          }
+          onResetToggles={() => setPendingPermissions({})}
+        />
+      </div>
+      <div className="hidden md:block space-y-7">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-fg/10 p-7 rounded-lg border border-fg/10 relative overflow-hidden gap-4">
         <div className="relative z-10">
           <h1 className="text-3xl font-semibold leading-tight text-fg">Team</h1>
@@ -722,6 +809,7 @@ export default function TeamView({
             </div>
           </Card>
         </div>
+      </div>
       </div>
 
       <Dialog 
