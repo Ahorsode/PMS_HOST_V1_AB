@@ -24,6 +24,7 @@ look. Each board lands on its own `redesign/<screen>` branch, one commit per PDF
 | Inventory | Inventory-Redesign.pdf (2 pages) | `redesign/inventory` | `inventory/MobileInventory.tsx` and `inventory/[id]/MobileItemHistory.tsx`; add/edit form shared |
 | Reports | Reports-Redesign.pdf (2 pages) | `redesign/reports` | `reports/MobileReports.tsx` inside ReportsClient; one Make a report (the existing launcher) as the sticky bar |
 | Profile (account) | Profile-Redesign.pdf (2 pages) | `redesign/profile` | `profile/MobileProfile.tsx`; Edit profile reuses EditProfileModal |
+| Inbox and team chat | Inbox-Redesign.pdf (2 pages) | `redesign/inbox` | Phone tree in `inbox/page.tsx` plus `InboxMenu.tsx`; tabs, team list and composer restyled with `max-md:` only |
 
 ## Shared tokens (`src/app/globals.css`)
 
@@ -109,6 +110,17 @@ Landing page:
   adds staff but drops five modules); a pricing decision, not changed here.
 - The sample card's figures are the page's own illustration (labelled Sample
   data); only the egg count is worked out (crates × 30).
+
+Inbox and team chat:
+- Tabs fit four across from 360 px; a zero count is hidden on phones (desktop
+  still shows "Messages 0"). All counts the team-unread row too, as before.
+- Reminder settings moves to the ⋯ menu (owners and managers, as before).
+- The first action on screen is the one filled mint button; later cards'
+  actions are outlined. The colour legend is dropped on phones (each card
+  has its kind chip).
+- Team chat: "Message everyone" becomes a composer fixed above the tab bar;
+  the Ctrl + Enter hint is replaced by "Sends to N people · Send turns on when
+  you type". The send logic and the 1:1 thread are unchanged.
 
 Profile (account):
 - Names are shown title-cased on phones ("Delali", not "delali"); the stored

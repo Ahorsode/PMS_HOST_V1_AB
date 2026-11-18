@@ -58,10 +58,10 @@ export default async function TeamChatPage() {
   const reachable = rows.filter((row) => row.status === 'active').length;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 px-0 md:px-5 pt-2 pb-9 md:py-9">
+    <div className="max-w-3xl mx-auto space-y-6 px-0 md:px-5 pt-2 pb-9 md:py-9 max-md:space-y-3 max-md:pb-40">
       <TeamChatAutoRefresh seconds={30} />
       <TeamChatHeader subtitle="Message your team, one person or everyone at once" />
-      <div className="px-2">
+      <div className="px-2 max-md:px-0">
         <InboxTabs active="team" unreadTeam={unread} />
       </div>
 
@@ -76,12 +76,12 @@ export default async function TeamChatPage() {
         </div>
       ) : (
         <>
-          <ul className="divide-y divide-fg/10 overflow-hidden rounded-lg border border-fg/10 bg-fg/[0.03]">
+          <ul className="divide-y divide-fg/10 overflow-hidden rounded-lg border border-fg/10 bg-fg/[0.03] max-md:divide-ql-line max-md:rounded-2xl max-md:border-ql-line max-md:bg-ql-surface max-md:font-ql-sans">
             {rows.map((row) => (
               <li key={row.memberUserId}>
                 <Link
                   href={`/dashboard/inbox/team/${row.memberUserId}`}
-                  className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-fg/[0.05]"
+                  className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-fg/[0.05] max-md:min-h-16"
                 >
                   <span
                     className={cn(
@@ -93,9 +93,9 @@ export default async function TeamChatPage() {
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-baseline justify-between gap-3">
-                      <p className={cn('truncate text-fg', row.unread > 0 ? 'font-semibold' : 'font-medium')}>{row.name}</p>
+                      <p className={cn('truncate text-fg max-md:text-[15px] max-md:text-ql-text', row.unread > 0 ? 'font-semibold' : 'font-medium max-md:font-semibold')}>{row.name}</p>
                       {row.lastMessage ? (
-                        <time dateTime={row.lastMessage.createdAt.toISOString()} className="shrink-0 text-xs text-fg/50">
+                        <time dateTime={row.lastMessage.createdAt.toISOString()} className="shrink-0 text-xs text-fg/50 max-md:font-ql-mono max-md:text-[11px] max-md:text-ql-muted">
                           {when(row.lastMessage.createdAt)}
                         </time>
                       ) : null}
@@ -119,14 +119,24 @@ export default async function TeamChatPage() {
           </ul>
 
           {reachable > 0 ? (
-            <section aria-labelledby="team-broadcast-heading" className="space-y-3 rounded-lg border border-fg/10 bg-fg/[0.03] px-4 py-4">
+            <section
+              aria-labelledby="team-broadcast-heading"
+              className="space-y-3 rounded-lg border border-fg/10 bg-fg/[0.03] px-4 py-4 max-md:fixed max-md:inset-x-0 max-md:bottom-[calc(4rem+max(env(safe-area-inset-bottom),6px))] max-md:z-40 max-md:space-y-1 max-md:rounded-none max-md:border-x-0 max-md:border-b-0 max-md:border-ql-line max-md:bg-ql-ground/95 max-md:py-2 max-md:backdrop-blur"
+            >
               <div>
-                <h2 id="team-broadcast-heading" className="font-medium text-fg">Message everyone</h2>
-                <p className="text-sm text-fg/60">
+                <h2 id="team-broadcast-heading" className="font-medium text-fg max-md:sr-only">Message everyone</h2>
+                <p className="text-sm text-fg/60 max-md:hidden">
                   Sends the same message to each of your {reachable === 1 ? 'team member' : `${reachable} team members`} in their own chat. Replies come back to you one by one.
                 </p>
               </div>
-              <TeamMessageComposer action={sendTeamBroadcast} placeholder="Write to the whole team" submitLabel="Send to all" successNote="Sent to everyone." />
+              <TeamMessageComposer
+                action={sendTeamBroadcast}
+                placeholder="Write to the whole team"
+                submitLabel="Send to all"
+                phoneSubmitLabel="Send"
+                successNote="Sent to everyone."
+                phoneHint={`Sends to ${reachable} ${reachable === 1 ? 'person' : 'people'} · Send turns on when you type`}
+              />
             </section>
           ) : null}
         </>

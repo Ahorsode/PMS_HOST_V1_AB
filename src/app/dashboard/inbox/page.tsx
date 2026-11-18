@@ -28,6 +28,10 @@ import { getFarmAlerts, type FarmAlert } from '@/lib/notifications/farm-alerts';
 import { getTeamChatViewer, getTeamUnreadCount } from '@/lib/team-messages/team-chat';
 import { cn } from '@/lib/utils';
 import { InboxTabs } from './InboxTabs';
+import { InboxMenu } from './InboxMenu';
+import { qlButton } from '@/components/ui/ql/Button';
+import { QlChip, type QlTone } from '@/components/ui/ql/Chip';
+import { QL_PRIMARY_ATTR } from '@/components/ui/ql/primary';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,6 +48,14 @@ const STYLES = {
   alert: { card: 'border-l-yolk', dot: 'bg-yolk', icon: 'text-yolk', badge: 'bg-yolk/15 text-yolk', label: 'Notification' },
   urgent: { card: 'border-l-neg', dot: 'bg-neg', icon: 'text-neg', badge: 'bg-neg/15 text-neg', label: 'Urgent' },
 } as const;
+
+/** Phone chip tone and icon colour for each kind. */
+const QL_KIND: Record<keyof typeof STYLES, { tone: QlTone; icon: string }> = {
+  team: { tone: 'mint', icon: 'text-ql-mint' },
+  message: { tone: 'neutral', icon: 'text-ql-muted' },
+  alert: { tone: 'amber', icon: 'text-ql-amber' },
+  urgent: { tone: 'coral', icon: 'text-ql-coral' },
+};
 
 type InboxItem = {
   id: string;
@@ -149,10 +161,76 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
   };
   const visible = filter === 'all' ? items : items.filter((item) => item.group === filter);
   const canEditReminders = role === 'OWNER' || role === 'MANAGER';
+  // Phones: the first action on screen is the one filled mint button; the rest are outlined.
+  const firstActionId = visible.find((item) => item.action)?.id;
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 px-0 md:px-5 pt-2 pb-9 md:py-9">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
+    <div className="max-w-3xl mx-auto md:space-y-6 px-0 md:px-5 pt-2 pb-9 md:py-9">
+      {/* Phone layout (Quiet Ledger); the sections below are tablet and desktop only. */}
+      <div className="space-y-3 font-ql-sans md:hidden">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <h1 className="font-ql-display text-[26px] font-semibold leading-tight text-ql-text">Inbox</h1>
+            <p className="text-[13px] text-ql-muted">Alerts, team chat and messages</p>
+          </div>
+          {canEditReminders ? <InboxMenu /> : null}
+        </div>
+        <InboxTabs active={filter} counts={counts} unreadTeam={teamUnread} />
+        {visible.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-ql-line bg-ql-surface px-5 py-8 text-center">
+            <Inbox className="mx-auto h-6 w-6 text-ql-muted" strokeWidth={1.5} aria-hidden />
+            <p className="mt-2 font-ql-display text-[18px] font-semibold text-ql-text">{filter === 'messages' ? 'No messages yet' : "You're all caught up"}</p>
+            <p className="mt-1 text-[13px] leading-snug text-ql-muted">
+              {filter === 'messages'
+                ? 'Messages from the Poultry Ledger team show up here. Nothing needs doing.'
+                : 'Reminders, health tasks, stock alerts and messages show up here.'}
+            </p>
+            <Link href="/dashboard/inbox/team" className={qlButton('ghost', 'mt-4 border-ql-line text-ql-text')}>
+              Open team chat
+            </Link>
+          </div>
+        ) : (
+          <ul className="space-y-2">
+            {visible.map((item) => {
+              const kind = QL_KIND[item.style];
+              const Icon = item.icon;
+              const primary = item.id === firstActionId;
+              return (
+                <li key={item.id} className="rounded-2xl border border-ql-line bg-ql-surface p-4">
+                  <div className="flex items-start gap-3">
+                    <span aria-hidden className={cn('flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-ql-line bg-ql-ground', kind.icon)}>
+                      <Icon className="h-4 w-4" strokeWidth={1.5} />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <QlChip tone={kind.tone} className="h-5 px-2">{STYLES[item.style].label}</QlChip>
+                        {item.date ? (
+                          <time dateTime={item.date.toISOString()} className="ml-auto font-ql-mono text-[11px] uppercase text-ql-muted">
+                            {formatDate(item.date)}
+                          </time>
+                        ) : null}
+                      </div>
+                      <p className="mt-1 break-words font-ql-display text-[16px] font-semibold leading-snug text-ql-text">{item.title}</p>
+                    </div>
+                  </div>
+                  <p className="mt-2 whitespace-pre-line break-words text-[14px] leading-snug text-ql-muted">{item.body}</p>
+                  {item.action ? (
+                    <Link
+                      href={item.action.href}
+                      className={qlButton(primary ? 'filled' : 'ghost', cn('mt-3 w-full', primary ? 'min-h-12 rounded-2xl' : 'border-ql-line text-ql-text'))}
+                      {...(primary ? QL_PRIMARY_ATTR : {})}
+                    >
+                      {item.action.label}
+                      <ArrowRight className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+                    </Link>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+      <div className="hidden md:flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-2">
         <div className="flex items-center gap-4">
           <Link href="/dashboard" aria-label="Back to dashboard" className="p-3 bg-fg/5 hover:bg-fg/10 rounded-full transition-colors border border-fg/10 shrink-0">
             <ArrowLeft className="w-6 h-6 text-fg-3" />
@@ -173,7 +251,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
         )}
       </div>
 
-      <div className="flex flex-col gap-3 px-2 sm:flex-row sm:items-center sm:justify-between">
+      <div className="hidden md:flex flex-col gap-3 px-2 sm:flex-row sm:items-center sm:justify-between">
         <InboxTabs active={filter} counts={counts} unreadTeam={teamUnread} />
         <ul aria-label="Colour key" className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-fg/60">
           {(['alert', 'urgent', 'message', 'team'] as const).map((key) => (
@@ -185,6 +263,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
         </ul>
       </div>
 
+      <div className="hidden md:block">
       {visible.length === 0 ? (
         <div className="flex flex-col items-center gap-3 rounded-lg border border-fg/10 bg-fg/5 px-6 py-12 text-center">
           <Inbox className="h-10 w-10 text-fg/30" />
@@ -226,6 +305,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
           })}
         </ul>
       )}
+      </div>
     </div>
   );
 }
