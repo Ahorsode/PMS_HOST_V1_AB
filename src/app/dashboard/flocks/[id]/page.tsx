@@ -40,14 +40,16 @@ export default async function FlockDetailPage({ params }: { params: Promise<{ id
 
   return (
     <div className="mx-auto max-w-7xl px-0 pb-8 pt-2 md:px-4 md:py-8">
+      <div className="hidden md:block">
       <Breadcrumbs
         items={[
           { label: 'Livestock', href: '/dashboard/flocks' },
           { label: batch.batchName || 'Unit details' }
         ]}
       />
+      </div>
 
-      <header className="mb-6 flex flex-col gap-5 px-1 md:flex-row md:items-end md:justify-between md:px-0">
+      <header className="mb-6 hidden flex-col gap-5 px-1 md:flex md:flex-row md:items-end md:justify-between md:px-0">
         <div className="min-w-0">
           <h1 className="text-[28px] font-semibold leading-tight text-fg md:text-[32px]">
             {batch.batchName || 'Unit details'}

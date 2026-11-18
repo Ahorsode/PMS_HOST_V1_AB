@@ -16,6 +16,7 @@ look. Each board lands on its own `redesign/<screen>` branch, one commit per PDF
 | Mortality (overview, 1% check, day detail, log-deaths sheet) | Mortality-Redesign.pdf (2 pages) | `redesign/mortality` | Figures in `mortality/mortality-math.ts`; shared `CausePicker` and `LineGauge` |
 | Analytics batch comparison | Analytics-Batch-Comparison-Redesign.pdf (2 pages) | `redesign/analytics-comparison` | `components/analytics/MobileBatchComparison.tsx` shares the batch selection with the desktop view |
 | Livestock list | Livestock-Redesign.pdf (2 pages) | `redesign/livestock` | `flocks/MobileLivestock.tsx`; the Manage screen is the batch details board |
+| Batch details | Batch-Details-Redesign.pdf (2 pages) | `redesign/batch-details` | `flocks/[id]/MobileFlockDetail.tsx`; desktop tree and its charts are not mounted on phones |
 
 ## Shared tokens (`src/app/globals.css`)
 
@@ -85,6 +86,7 @@ Not built yet (no board has needed them): plan card for in-app plans.
   Quiet Ledger, with the page title and the farm name under it.
 - Pages with Recharts charts must not mount the desktop chart tree on phones
   (`useIsPhone()`); a hidden zero-size ResponsiveContainer re-renders in a loop.
+- `quickButtonClass` row actions are 44 px below md (40 px from md up, as before).
 
 ## Open items
 
@@ -100,6 +102,18 @@ Landing page:
   adds staff but drops five modules); a pricing decision, not changed here.
 - The sample card's figures are the page's own illustration (labelled Sample
   data); only the egg count is worked out (crates × 30).
+
+Batch details:
+- The head count's "dead" (start − alive − isolated) can disagree with logged
+  deaths: in the local test data one batch showed 103 "dead" against 5 logged.
+  The hero shows the head-count split, the Mortality tile the logged figure.
+- The daily mortality series only has days with deaths and carries display
+  labels, not dates, so the phone chart shows logged days only (the board also
+  drew the empty days).
+- Logs history, Make a report and the embedded health schedule reuse their
+  existing components (graphite inside the Quiet Ledger page) on phones.
+- Dropped on phones as repeats, per the board: current stock, the revenue grid,
+  the batch details card, monthly finance chart. Egg days stay for layers.
 
 Livestock:
 - "Dead" is the starting count minus alive minus isolated (the existing

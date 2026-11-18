@@ -9,6 +9,8 @@ import { WorkerStamp } from '@/components/ui/WorkerStamp'
 import { Panel, PanelHeader, formatCount, formatShortDate, statusLabel, tone } from '../flock-ui'
 import { FlockHealthSchedule } from './FlockHealthSchedule'
 import { FlockQuickLog } from './FlockQuickLog'
+import { MobileFlockDetail } from './MobileFlockDetail'
+import { useIsPhone } from '@/components/ui/ql/useIsPhone'
 
 const chartLoading = () => <div className={cn(tone.panel, 'h-80')} />
 
@@ -51,6 +53,8 @@ function kindLabel(kind: string | null | undefined, percentage?: number | null) 
 
 export const FlockDetailClient = ({ data, eggsPerCrate = 30 }: FlockDetailClientProps) => {
   const currency = useCurrency()
+  // Phones get their own layout; the desktop tree (and its Recharts panels) is not mounted there.
+  const phone = useIsPhone()
   const { batch, logs, metrics, finance, series, forms } = data
   const showEggs = metrics.isLayer || metrics.totalEggs > 0
   const showSales = finance.canViewFinance && (series.salesDaily.length > 0 || finance.totalRevenue > 0)
@@ -60,7 +64,12 @@ export const FlockDetailClient = ({ data, eggsPerCrate = 30 }: FlockDetailClient
     (batch.initialCostOther?.reduce((s: number, e: any) => s + Number(e.amount || 0), 0) || 0)
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 space-y-6 duration-300">
+    <>
+    <div className="md:hidden">
+      <MobileFlockDetail data={data} eggsPerCrate={eggsPerCrate} />
+    </div>
+    {phone ? null : (
+    <div className="animate-in fade-in slide-in-from-bottom-2 hidden space-y-6 duration-300 md:block">
       <FlockQuickLog
         batchId={batch.id}
         batchName={batch.batchName || 'This batch'}
@@ -192,6 +201,8 @@ export const FlockDetailClient = ({ data, eggsPerCrate = 30 }: FlockDetailClient
         </div>
       </div>
     </div>
+    )}
+    </>
   )
 }
 

@@ -12,7 +12,7 @@ const QUICK_TONES = {
 export type QuickActionTone = keyof typeof QUICK_TONES;
 
 export function quickButtonClass(tone: QuickActionTone) {
-  return `inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-fg/30 disabled:cursor-not-allowed disabled:opacity-50 ${QUICK_TONES[tone]}`;
+  return `inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border md:h-10 md:w-10 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-fg/30 disabled:cursor-not-allowed disabled:opacity-50 ${QUICK_TONES[tone]}`;
 }
 
 /** Icon props sized for a quick-action tile. */
