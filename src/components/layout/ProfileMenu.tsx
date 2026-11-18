@@ -68,10 +68,10 @@ export const ProfileMenu = ({ role, permissions }: { role?: string; permissions?
         aria-controls="mobile-profile-menu"
         aria-label="Open profile menu"
         className={cn(
-          'flex h-10 w-10 items-center justify-center rounded-full border transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60',
+          'flex h-11 w-11 items-center justify-center rounded-full border transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ql-mint/60',
           open
-            ? 'border-fg/[0.12] bg-raised-2 text-fg'
-            : 'border-fg/[0.08] bg-raised text-fg-2',
+            ? 'border-ql-mint/40 bg-ql-raised text-ql-text'
+            : 'border-ql-line bg-ql-surface text-ql-text',
         )}
       >
         <User className="h-5 w-5" strokeWidth={1.5} />

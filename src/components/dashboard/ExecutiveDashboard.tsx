@@ -14,21 +14,18 @@ import {
 } from 'recharts'
 import { formatCurrency } from '@/lib/utils'
 import type { RevenueVelocityPoint, StrategicPriority } from '@/lib/analytics/executive-metrics'
+import { MobileExecutiveDashboard } from './executive/MobileExecutiveDashboard'
+import { NOTHING_URGENT, formatPriorityDetail } from './executive/priority-detail'
+import type { ExecutiveBatchRef, ExecutiveStats } from './executive/types'
 
 interface ExecutiveDashboardProps {
-  stats: {
-    totalProfit: number
-    profitTrend: number
-    globalFcr: number
-    totalDebt: number
-    activeLivestock: number
-    mortalityRate: number
-    supplierDebt: number
-    customerDebt: number
-  }
+  stats: ExecutiveStats
   strategicPriorities?: StrategicPriority[]
   revenueVelocityData?: RevenueVelocityPoint[]
   currency?: string
+  role?: string
+  permissions?: Record<string, boolean | null | undefined> | null
+  batches?: ExecutiveBatchRef[]
 }
 
 function formatChartDate(date: string) {
@@ -44,21 +41,28 @@ export function ExecutiveDashboard({
   strategicPriorities = [],
   revenueVelocityData = [],
   currency = 'GHS',
+  role,
+  permissions,
+  batches = [],
 }: ExecutiveDashboardProps) {
   const hasRevenueData = revenueVelocityData.some((point) => point.revenue > 0 || point.target > 0)
-  const displayPriorities =
-    strategicPriorities.length > 0
-      ? strategicPriorities
-      : [
-          {
-            title: 'Nothing urgent',
-            detail: 'No supplier, stock or performance issues right now',
-            type: 'performance' as const,
-          },
-        ]
+  const displayPriorities = strategicPriorities.length > 0 ? strategicPriorities : [NOTHING_URGENT]
 
   return (
-    <div className="space-y-6 pb-12">
+    <>
+    {/* Phone layout (Quiet Ledger). Tablet and desktop keep the grid below unchanged. */}
+    <div className="pb-4 md:hidden">
+      <MobileExecutiveDashboard
+        stats={stats}
+        priorities={strategicPriorities}
+        revenue={revenueVelocityData}
+        currency={currency}
+        role={role}
+        permissions={permissions}
+        batches={batches}
+      />
+    </div>
+    <div className="hidden space-y-6 pb-12 md:block">
       <header className="px-1">
         <h1 className="text-3xl font-semibold leading-tight text-fg">Farm summary</h1>
         <p className="mt-2 text-sm text-fg-2">Profit, feed conversion, debts and head count across the farm</p>
@@ -98,14 +102,7 @@ export function ExecutiveDashboard({
               <PriorityItem
                 key={`${priority.title}-${priority.detail}`}
                 title={priority.title}
-                detail={
-                  priority.type === 'finance'
-                    ? priority.detail.replace(
-                        /([\d,]+\.\d{2})/,
-                        (amount) => formatCurrency(Number(amount.replace(/,/g, '')), currency)
-                      )
-                    : priority.detail
-                }
+                detail={formatPriorityDetail(priority, currency)}
                 type={priority.type}
               />
             ))}
@@ -172,6 +169,7 @@ export function ExecutiveDashboard({
         </Card>
       </div>
     </div>
+    </>
   )
 }
 

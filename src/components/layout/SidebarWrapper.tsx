@@ -9,6 +9,7 @@ import { BottomNav } from './BottomNav';
 import { cn } from '@/lib/utils';
 import { PageTransition } from './PageTransition';
 import { enterDashboardTheme } from './theme';
+import { qlFontVariables } from '@/components/ui/ql/fonts';
 
 function getMobileIndeptTitle(pathname: string): string {
   if (pathname.includes('/analytics')) return 'Analytics';
@@ -44,7 +45,7 @@ export const SidebarWrapper = ({
     (segments.length > 2 && (segments[1] === 'flocks' || segments[1] === 'sales' || segments[1] === 'feed'));
 
   return (
-    <div className="relative flex min-h-screen overflow-hidden bg-page selection:bg-accent/25">
+    <div className={cn('relative flex min-h-screen overflow-hidden bg-ql-ground selection:bg-accent/25 md:bg-page', qlFontVariables)}>
       {!isIndeptPage && (
         <>
           <Sidebar role={role} permissions={permissions} />
@@ -59,23 +60,23 @@ export const SidebarWrapper = ({
         )}
       >
         {!isIndeptPage && (
-          <header className="sticky top-0 z-30 flex shrink-0 items-center gap-3 border-b border-fg/[0.08] bg-deep px-4 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] md:hidden">
-            <img src="/logo.png" alt="" className="h-8 w-8 rounded-lg object-cover" />
+          <header className="sticky top-0 z-30 flex shrink-0 items-center gap-3 bg-ql-ground px-4 py-2 pt-[max(0.5rem,env(safe-area-inset-top))] font-ql-sans md:hidden">
+            <img src="/logo.png" alt="" className="h-9 w-9 rounded-[10px] object-cover" />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-fg">{farmName || 'Farm'}</p>
-              <p className="text-xs text-fg-3">Operations</p>
+              <p className="truncate font-ql-display text-[15px] font-semibold leading-tight text-ql-text">{farmName || 'Farm'}</p>
+              <p className="text-xs leading-tight text-ql-muted">Operations</p>
             </div>
             <ProfileMenu role={role} permissions={permissions} />
           </header>
         )}
         <div
           className={cn(
-            'custom-scrollbar flex-1 overflow-x-hidden overflow-y-auto px-3 pt-3 md:px-8 md:pt-6',
+            'custom-scrollbar flex-1 overflow-x-hidden overflow-y-auto px-4 pt-3 md:px-8 md:pt-6',
             isIndeptPage ? 'pb-6 md:pb-12' : 'pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-12'
           )}
         >
           {isIndeptPage ? (
-            <header className="sticky top-0 z-30 -mx-3 mb-3 flex items-center gap-2 border-b border-fg/[0.08] bg-deep px-3 py-2 md:hidden">
+            <header className="sticky top-0 z-30 -mx-4 mb-3 flex items-center gap-2 border-b border-fg/[0.08] bg-deep px-4 py-2 md:hidden">
               <button
                 type="button"
                 onClick={() => router.back()}

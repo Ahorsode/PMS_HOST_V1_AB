@@ -410,6 +410,21 @@ export async function getDashboardStats() {
 
     const netProfitEstimate = currentPeriodRevenue - currentPeriodExpenses
     const profitTrend = computeProfitTrend({ currentPeriodRevenue, previousPeriodRevenue })
+
+    // Today's figures for the phone dashboard's period switch, read from the
+    // rows already loaded above (no extra query). Same formula as the 7-day
+    // figure: revenue minus operating expenses, trend on revenue vs yesterday.
+    const todayRevenue = revenueTrendData.at(-1)?.count ?? 0
+    const yesterdayRevenue = revenueTrendData.at(-2)?.count ?? 0
+    const todayExpenses = canViewFinance
+      ? recentExpenses
+          .filter((expense: any) => formatDate(expense.expenseDate) === todayStr)
+          .reduce((sum: number, expense: any) => sum + Number(expense.amount), 0)
+      : 0
+    const dayProfitTrend = computeProfitTrend({
+      currentPeriodRevenue: todayRevenue,
+      previousPeriodRevenue: yesterdayRevenue,
+    })
     const globalFcr = computeGlobalFcr(batchFcrSnapshots)
     const productivityIndex = computeFarmProductivityIndex(
       activeBatchesForFcr.map((batch: any) => ({
@@ -463,6 +478,8 @@ export async function getDashboardStats() {
       executiveStats: {
         totalProfit: netProfitEstimate,
         profitTrend: Number(profitTrend.toFixed(1)),
+        dayProfit: todayRevenue - todayExpenses,
+        dayProfitTrend: Number(dayProfitTrend.toFixed(1)),
         globalFcr: Number(globalFcr.toFixed(2)),
         totalDebt: Number(supplierDebt._sum.balanceOwed || 0) + Number(customerDebt._sum.balanceOwed || 0),
         supplierDebt: Number(supplierDebt._sum.balanceOwed || 0),

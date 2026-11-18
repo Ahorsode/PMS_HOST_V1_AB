@@ -31,6 +31,23 @@
   --steel: #8fa8c8;
   --shadow: rgba(0, 0, 0, 0.35);
   color-scheme: dark;
+
+  /*
+   * Quiet Ledger: the phone layout's palette (redesign boards). Used only by
+   * mobile-scoped markup, so tablet and desktop keep the graphite look above.
+   * Mint means healthy or tappable, amber means look soon, coral means act now.
+   */
+  --ql-ground: #0b0f0e;
+  --ql-surface: #121816;
+  --ql-raised: #18201d;
+  --ql-line: #1f2b26;
+  --ql-mint: #34e0a1;
+  --ql-on-mint: #0b0f0e;
+  --ql-mint-dim: #1f7a58;
+  --ql-amber: #f5b94a;
+  --ql-coral: #f0716b;
+  --ql-text: #e8f0ec;
+  --ql-muted: #7c8e86;
 }
 
 :root[data-theme="light"] {
@@ -58,6 +75,19 @@
   --steel: #4b6a91;
   --shadow: rgba(24, 24, 27, 0.08);
   color-scheme: light;
+
+  /* Quiet Ledger on the light dashboard theme: same hues, darkened to keep AA on white. */
+  --ql-ground: #f3f6f4;
+  --ql-surface: #ffffff;
+  --ql-raised: #eef3f0;
+  --ql-line: #dce5e0;
+  --ql-mint: #0b7a54;
+  --ql-on-mint: #ffffff;
+  --ql-mint-dim: #7fc9ab;
+  --ql-amber: #94600a;
+  --ql-coral: #c2413b;
+  --ql-text: #0e1512;
+  --ql-muted: #56665f;
 }
 
 @theme inline {
@@ -82,6 +112,21 @@
   --color-straw: var(--straw);
   --color-clay: var(--clay);
   --color-steel: var(--steel);
+  --color-ql-ground: var(--ql-ground);
+  --color-ql-surface: var(--ql-surface);
+  --color-ql-raised: var(--ql-raised);
+  --color-ql-line: var(--ql-line);
+  --color-ql-mint: var(--ql-mint);
+  --color-ql-on-mint: var(--ql-on-mint);
+  --color-ql-mint-dim: var(--ql-mint-dim);
+  --color-ql-amber: var(--ql-amber);
+  --color-ql-coral: var(--ql-coral);
+  --color-ql-text: var(--ql-text);
+  --color-ql-muted: var(--ql-muted);
+  /* Quiet Ledger type, loaded with next/font in components/ui/ql/fonts.ts. */
+  --font-ql-display: var(--font-bricolage), system-ui, sans-serif;
+  --font-ql-sans: var(--font-instrument), system-ui, sans-serif;
+  --font-ql-mono: var(--font-geist-mono), ui-monospace, monospace;
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }

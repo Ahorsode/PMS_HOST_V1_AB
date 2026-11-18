@@ -11,6 +11,7 @@ import { formatLivestockType } from '@/lib/utils/growth-utils';
 import { getBreedDisplayName, normalizeBreedValue } from '@/lib/farm/livestock-breed-options';
 import { g, ink } from '@/components/ui/graphite';
 import dynamic from 'next/dynamic';
+import type { ExecutiveStats } from '@/components/dashboard/executive/types';
 
 const skeleton = 'w-full animate-pulse rounded-xl bg-fg/[0.04]';
 const RegisterBatchForm = dynamic(() => import('@/components/forms/RegisterBatchForm').then(mod => mod.RegisterBatchForm), {
@@ -62,16 +63,7 @@ interface DashboardContentProps {
       type: LivestockType;
     }>;
     productivityIndex?: number;
-    executiveStats?: {
-      totalProfit: number
-      profitTrend: number
-      globalFcr: number
-      totalDebt: number
-      activeLivestock: number
-      mortalityRate: number
-      supplierDebt: number
-      customerDebt: number
-    };
+    executiveStats?: ExecutiveStats;
     strategicPriorities?: Array<{
       title: string
       detail: string
@@ -196,6 +188,9 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
         strategicPriorities={stats.strategicPriorities}
         revenueVelocityData={stats.revenueVelocityData}
         currency={currency}
+        role={role}
+        permissions={permissions}
+        batches={stats.activeBatches.map((batch) => ({ numericId: batch.numericId, type: batch.type }))}
       />
     );
   }

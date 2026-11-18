@@ -20,6 +20,11 @@ import { groupHue } from '@/components/ui/graphite';
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
+const tabClass =
+  'flex min-h-11 flex-col items-center justify-center gap-1 px-1 transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ql-mint/60';
+/** The 54×30 pill behind the lit tab's icon. */
+const pillClass = 'flex h-[30px] w-[54px] items-center justify-center rounded-full transition-colors duration-150';
+
 export const BottomNav = ({ role, permissions }: { role?: string; permissions?: any }) => {
   const pathname = usePathname();
   const roleLabel = formatRoleLabel(role);
@@ -64,7 +69,7 @@ export const BottomNav = ({ role, permissions }: { role?: string; permissions?: 
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 24, opacity: 0 }}
             transition={{ duration: 0.24, ease }}
-            className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-40 flex max-h-[min(75dvh,640px)] flex-col overflow-hidden rounded-t-2xl border border-b-0 border-fg/[0.08] bg-page shadow-[0_-16px_48px_rgba(0,0,0,0.45)]"
+            className="fixed inset-x-0 bottom-[calc(4rem+max(env(safe-area-inset-bottom),6px))] z-40 flex max-h-[min(75dvh,640px)] flex-col overflow-hidden rounded-t-2xl border border-b-0 border-fg/[0.08] bg-page shadow-[0_-16px_48px_rgba(0,0,0,0.45)]"
           >
             <div className="flex items-center justify-between px-4 pb-3 pt-4">
               <div>
@@ -131,8 +136,9 @@ export const BottomNav = ({ role, permissions }: { role?: string; permissions?: 
 
       <nav
         aria-label="Main"
-        className="fixed inset-x-0 bottom-0 z-50 border-t border-fg/[0.08] bg-deep pb-[env(safe-area-inset-bottom)]"
+        className="fixed inset-x-0 bottom-0 z-50 border-t border-ql-line bg-ql-ground pb-[max(env(safe-area-inset-bottom),6px)] font-ql-sans"
       >
+        {/* Flat bar: one lit tab at a time, its pill sitting inside the bar. */}
         <div
           className="grid h-16"
           style={{ gridTemplateColumns: `repeat(${Math.max(categories.length + (showDashboard ? 1 : 0), 1)}, minmax(0, 1fr))` }}
@@ -142,16 +148,10 @@ export const BottomNav = ({ role, permissions }: { role?: string; permissions?: 
               href={DASHBOARD_NAV_ITEM.href}
               onClick={close}
               aria-current={dashboardActive ? 'page' : undefined}
-              className="flex flex-col items-center justify-center gap-1 border-r border-fg/[0.06] px-1 text-fg"
+              className={cn(tabClass, dashboardHighlighted ? 'text-ql-mint' : 'text-ql-muted')}
             >
-              {/* Raised flat emerald button so Dashboard stays apart from the group tabs */}
-              <span
-                className={cn(
-                  '-mt-5 flex h-12 w-12 items-center justify-center rounded-full bg-accent text-accent-fg ring-4 ring-deep',
-                  dashboardHighlighted && 'outline outline-1 outline-offset-4 outline-accent/60'
-                )}
-              >
-                <DASHBOARD_NAV_ITEM.icon className="h-6 w-6" strokeWidth={1.75} />
+              <span className={cn(pillClass, dashboardHighlighted && 'bg-ql-mint/14')}>
+                <DASHBOARD_NAV_ITEM.icon className="h-5 w-5" strokeWidth={1.75} aria-hidden="true" />
               </span>
               <span className="text-[11px] font-medium leading-none">{DASHBOARD_NAV_ITEM.name}</span>
             </Link>
@@ -167,22 +167,10 @@ export const BottomNav = ({ role, permissions }: { role?: string; permissions?: 
                 onClick={() => toggle(category.id)}
                 aria-expanded={isOpen}
                 aria-controls={`mobile-nav-sheet-${category.id}`}
-                className={cn(
-                  'flex flex-col items-center justify-center gap-1 px-1 transition-colors duration-150',
-                  highlighted ? 'text-fg' : 'text-fg-3'
-                )}
+                className={cn(tabClass, highlighted ? 'text-ql-mint' : 'text-ql-muted')}
               >
-                <span
-                  className={cn(
-                    'flex h-8 w-12 items-center justify-center rounded-full transition-colors duration-150',
-                    highlighted && 'bg-raised'
-                  )}
-                >
-                  <category.icon
-                    className={cn('h-5 w-5', highlighted ? 'opacity-100' : 'opacity-70')}
-                    style={{ color: groupHue[category.id] }}
-                    strokeWidth={1.5}
-                  />
+                <span className={cn(pillClass, highlighted && 'bg-ql-mint/14')}>
+                  <category.icon className="h-5 w-5" strokeWidth={1.75} aria-hidden="true" />
                 </span>
                 <span className="text-[11px] font-medium leading-none">{category.name}</span>
               </button>
