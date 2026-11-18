@@ -21,6 +21,7 @@ import { ComprehensiveReport } from '@/lib/actions/reports'
 import { cn, formatCurrency } from '@/lib/utils'
 import { useCurrency } from '@/components/providers/CurrencyProvider'
 import { MobileCardList } from '@/components/ui/MobileCardList'
+import { MobileReports } from './MobileReports'
 
 type BatchRow = {
   id: string
@@ -136,7 +137,25 @@ export function ReportsClient({
   const batchRows = batches.length > 0 ? batches : report.batches
 
   return (
-    <div className="space-y-7">
+    <>
+    {/* Phone layout (Quiet Ledger); the sections below are tablet and desktop only. */}
+    <div className="md:hidden">
+      <MobileReports
+        report={report}
+        batches={batchRows}
+        currency={currency}
+        eggsPerCrate={epc}
+        loading={loading}
+        startDate={startDate}
+        endDate={endDate}
+        onStartDate={setStartDate}
+        onEndDate={setEndDate}
+        onPreset={applyPreset}
+        onThisMonth={applyThisMonth}
+        onRange={() => handleFetch()}
+      />
+    </div>
+    <div className="hidden md:block space-y-7">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <h1 className="text-3xl font-semibold leading-tight text-fg">Reports</h1>
@@ -333,6 +352,7 @@ export function ReportsClient({
         </div>
       </Panel>
     </div>
+    </>
   )
 }
 

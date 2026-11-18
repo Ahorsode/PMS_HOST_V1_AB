@@ -22,6 +22,7 @@ look. Each board lands on its own `redesign/<screen>` branch, one commit per PDF
 | Customers | Customers-Redesign.pdf (2 pages) | `redesign/customers` | `customers/MobileCustomers.tsx` and `customers/[id]/statement/MobileStatement.tsx`; one sticky Add customer |
 | Finance | Finance-Redesign.pdf (2 pages) | `redesign/finance` | `finance/MobileFinance.tsx` inside FinanceHubClient; the add, settle and delete dialogs stay shared |
 | Inventory | Inventory-Redesign.pdf (2 pages) | `redesign/inventory` | `inventory/MobileInventory.tsx` and `inventory/[id]/MobileItemHistory.tsx`; add/edit form shared |
+| Reports | Reports-Redesign.pdf (2 pages) | `redesign/reports` | `reports/MobileReports.tsx` inside ReportsClient; one Make a report (the existing launcher) as the sticky bar |
 
 ## Shared tokens (`src/app/globals.css`)
 
@@ -107,6 +108,25 @@ Landing page:
   adds staff but drops five modules); a pricing decision, not changed here.
 - The sample card's figures are the page's own illustration (labelled Sample
   data); only the egg count is worked out (crates × 30).
+
+Reports:
+- Expenses: `generateComprehensiveFarmReport` reads `financialTransaction`
+  only. Finance also lists the Expense table (auto-logged feed, stock and
+  health costs), so the report's expenses and net income leave those out. Not
+  fixed (it changes the report's business logic and adds a query). Phones
+  show an amber Check when expenses are 0 but there was revenue or feed use.
+- Mortality rate is (start − now) ÷ start over active batches for their whole
+  life (sales and moves count), while the death count is for the chosen dates.
+  Phones flag it when deaths ÷ rate is more than 10% off the batches' start.
+- Feed conversion is not real: it assumes 1.8 kg a bird (no weights are read)
+  and falls back to 1.65 with no data (local desktop shows 0.01). Phones show
+  "—, Needs weights". Desktop unchanged.
+- The audit trail is capped at 30 (`take: 30`); phones say "(latest 30)".
+- Kept, not on the board: the custom From/To range (behind the date row), the
+  category split, money by day (board page 2 state), per-batch Make a report
+  stays desktop only; phone batch rows open the batch.
+- Board page 2 "Make a report" screen: the existing launcher and wizard
+  already ask for batch, format and dates; unchanged.
 
 Inventory:
 - Desktop's "Total SKUs" counts inventory rows in the EGGS category, which are
