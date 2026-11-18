@@ -33,6 +33,7 @@ import { SkeletonLine } from '@/components/ui/MutationFeedback';
 import { MobileCardList } from '@/components/ui/MobileCardList';
 import { useMoney } from '@/components/providers/CurrencyProvider'
 import { QUICK_ICON, quickButtonClass } from '@/components/ui/quick-action';
+import { MobileInventory } from './MobileInventory';
 
 
 /* ───────────────────── helpers ───────────────────── */
@@ -112,6 +113,9 @@ export default function InventoryView({
   const [loading, setLoading] = useState(false);
   const [showUsedUp, setShowUsedUp] = useState(false);
   const [usedUpCount, setUsedUpCount] = useState(initialData.usedUpCount);
+  // In-stock count for the phone tab, kept while the Used up list is showing.
+  const isListed = (i: { category?: string | null }) => String(i.category || '').toUpperCase() !== 'EGGS';
+  const [activeCount, setActiveCount] = useState(initialData.items.filter(isListed).length);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<InventoryItem | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -130,6 +134,7 @@ export default function InventoryView({
     const data = await getInventoryPageData(filterMode);
     setItems((data.items as InventoryItem[]).map(i => ({ ...i, stockLevel: Number(i.stockLevel) })));
     setUsedUpCount(data.usedUpCount);
+    if (filterMode === 'active') setActiveCount(data.items.filter(isListed).length);
     setEggStock(data.activeEggStock ?? { totalEggs: 0, batches: [] });
     setSuppliers(data.suppliers);
     setLoading(false);
@@ -151,10 +156,11 @@ export default function InventoryView({
     setTimeout(() => setToast(null), 3000);
   };
 
-  const openAdd = () => {
+  const openAdd = (category = 'FEED') => {
     if (!canEdit) return;
     setEditing(null);
-    setForm({ itemName: '', stockLevel: '', unit: 'bags', category: 'FEED', costPerUnit: '', supplierId: '', paymentPlan: 'full', amountPaid: '', usageType: 'QUANTITY' });
+    const unit = category === 'FEED' ? 'bags' : category === 'VACCINE' ? 'doses' : 'units';
+    setForm({ itemName: '', stockLevel: '', unit, category, costPerUnit: '', supplierId: '', paymentPlan: 'full', amountPaid: '', usageType: 'QUANTITY' });
     setShowForm(true);
   };
 
@@ -243,6 +249,17 @@ export default function InventoryView({
     });
   };
 
+  // Phone delete: the reason comes from the type-the-name confirm sheet.
+  const deleteFromPhone = (item: InventoryItem, reason: string) => {
+    if (!canEdit || isPending) return;
+    setItemToDelete(item);
+    startTransition(async () => {
+      const res = await deleteInventoryItem(item.id, reason);
+      if (res?.success) { showToast('Item removed'); refreshList(); }
+      else showToast(res?.error || 'Delete failed', false);
+    });
+  };
+
   const handleAddNewSupplier = () => {
     setShowSupplierModal(true);
   };
@@ -260,7 +277,27 @@ export default function InventoryView({
   });
 
   return (
-    <div className="space-y-7">
+    <div className="md:space-y-7">
+      {/* Phone layout (Quiet Ledger); the sections below are tablet and desktop only. The dialogs are shared. */}
+      <div className="md:hidden">
+        <MobileInventory
+          items={items}
+          loading={loading}
+          showUsedUp={showUsedUp}
+          onShowUsedUp={setShowUsedUp}
+          usedUpCount={usedUpCount}
+          activeCount={activeCount}
+          eggStock={eggStock}
+          eggsPerCrate={eggsPerCrate}
+          canEdit={canEdit}
+          money={money}
+          busyId={mutatingItemId}
+          onAdd={(category) => openAdd(category)}
+          onEdit={(item) => openEdit(item as InventoryItem)}
+          onDelete={(item, reason) => deleteFromPhone(item as InventoryItem, reason)}
+        />
+      </div>
+      <div className="hidden md:block space-y-7">
       {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
@@ -270,7 +307,7 @@ export default function InventoryView({
         {canEdit && (
           <m.button
             whileTap={{ scale: 0.98 }}
-            onClick={openAdd}
+            onClick={() => openAdd()}
             className="flex items-center gap-2 px-4 py-2.5 rounded-md bg-fg hover:bg-fg/90 text-page font-medium text-sm transition-colors"
           >
             <Plus className="w-4 h-4" /> Add item
@@ -537,6 +574,7 @@ export default function InventoryView({
           );
         })
       )}
+      </div>
 
       {/* ── Add / Edit Modal ── */}
       <Dialog
@@ -777,7 +815,7 @@ export default function InventoryView({
         {toast && (
           <m.div
             initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 40 }}
-            className={`fixed bottom-24 right-4 md:bottom-6 md:right-6 z-[110] flex items-center gap-2 px-4 py-2 rounded-md font-medium text-sm 
+            className={`fixed bottom-40 right-4 md:bottom-6 md:right-6 z-[110] flex items-center gap-2 px-4 py-2 rounded-md font-medium text-sm 
               ${toast.ok ? 'bg-accent font-semibold text-accent-fg shadow-sm' : 'bg-red-500/90 text-fg'}`}
           >
             {toast.ok ? <CheckCircle2 className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}

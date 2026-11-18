@@ -21,6 +21,7 @@ look. Each board lands on its own `redesign/<screen>` branch, one commit per PDF
 | Sales | Sales-Redesign.pdf (2 pages) | `redesign/sales` | `sales/MobileSales.tsx`; the one Record a sale control becomes a sticky bar below md |
 | Customers | Customers-Redesign.pdf (2 pages) | `redesign/customers` | `customers/MobileCustomers.tsx` and `customers/[id]/statement/MobileStatement.tsx`; one sticky Add customer |
 | Finance | Finance-Redesign.pdf (2 pages) | `redesign/finance` | `finance/MobileFinance.tsx` inside FinanceHubClient; the add, settle and delete dialogs stay shared |
+| Inventory | Inventory-Redesign.pdf (2 pages) | `redesign/inventory` | `inventory/MobileInventory.tsx` and `inventory/[id]/MobileItemHistory.tsx`; add/edit form shared |
 
 ## Shared tokens (`src/app/globals.css`)
 
@@ -106,6 +107,21 @@ Landing page:
   adds staff but drops five modules); a pricing decision, not changed here.
 - The sample card's figures are the page's own illustration (labelled Sample
   data); only the egg count is worked out (crates × 30).
+
+Inventory:
+- Desktop's "Total SKUs" counts inventory rows in the EGGS category, which are
+  never listed (eggs come from the egg-stock card). Local data: 3 SKUs, 2 rows.
+  The phone "In stock" tab counts listed items only.
+- The board's "N% left of N bought", "Bought +N" and "N used, not linked to a
+  batch" need how much was bought per item; the item doesn't keep that. Phones
+  show stock, value (stock × cost per unit), logged use by batch and logged
+  use with no batch. "Link N bags to a batch" has no action. Both are TODOs.
+- Edit and Delete move to the card's ⋯ menu; Delete ends in the type-the-name
+  sheet with the 5-letter reason `deleteInventoryItem` records.
+- Empty categories offer Add feed / Add medicine (opens the shared form with
+  that category). Used up says why it is empty and links back.
+- Low stock stays desktop's "5 or fewer" (the item's reorderLevel, default
+  500, is not used anywhere on this screen).
 
 Finance:
 - Profit hero, "N entries carry the ledger" when one entry is at least half of

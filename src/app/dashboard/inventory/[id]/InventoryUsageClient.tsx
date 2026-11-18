@@ -5,6 +5,7 @@ import { ArrowLeft, History, Package, Syringe, Wheat } from 'lucide-react'
 import type { InventoryUsageEvent } from '@/lib/actions/inventory-actions'
 import { cn, formatCurrency } from '@/lib/utils'
 import { useCurrency } from '@/components/providers/CurrencyProvider'
+import { MobileItemHistory } from './MobileItemHistory'
 
 type Item = {
   id: string
@@ -37,7 +38,12 @@ export function InventoryUsageClient({
   const totalUsed = usageHistory.reduce((sum, row) => sum + row.quantity, 0)
 
   return (
-    <div className="space-y-7">
+    <>
+    {/* Phone layout (Quiet Ledger); the history below is tablet and desktop only. */}
+    <div className="md:hidden">
+      <MobileItemHistory item={item} usageHistory={usageHistory} isUsedUp={isUsedUp} currency={currency} />
+    </div>
+    <div className="hidden md:block space-y-7">
       <Link
         href="/dashboard/inventory"
         className="inline-flex items-center gap-2 text-sm font-medium text-fg/60 hover:text-fg transition-colors"
@@ -145,5 +151,6 @@ export function InventoryUsageClient({
         )}
       </div>
     </div>
+    </>
   )
 }
