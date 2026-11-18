@@ -19,6 +19,7 @@ look. Each board lands on its own `redesign/<screen>` branch, one commit per PDF
 | Batch details | Batch-Details-Redesign.pdf (2 pages) | `redesign/batch-details` | `flocks/[id]/MobileFlockDetail.tsx`; desktop tree and its charts are not mounted on phones |
 | Batch details, layer edition | Womane-Batch-Redesign.pdf (2 pages) | `redesign/womane-batch` | Same component: reconciled dead count, eggs card, priced revenue entries, egg days chart |
 | Sales | Sales-Redesign.pdf (2 pages) | `redesign/sales` | `sales/MobileSales.tsx`; the one Record a sale control becomes a sticky bar below md |
+| Customers | Customers-Redesign.pdf (2 pages) | `redesign/customers` | `customers/MobileCustomers.tsx` and `customers/[id]/statement/MobileStatement.tsx`; one sticky Add customer |
 
 ## Shared tokens (`src/app/globals.css`)
 
@@ -104,6 +105,26 @@ Landing page:
   adds staff but drops five modules); a pricing decision, not changed here.
 - The sample card's figures are the page's own illustration (labelled Sample
   data); only the egg count is worked out (crates × 30).
+
+Customers:
+- The customers pages sit under /dashboard/sales, so the shell already treats
+  them as detail pages (back bar, no tab bar). The back bar said "Sale
+  details"; it now says "Customers" or "Customer account". No routing change.
+- VIP is still "spent more than 1000" in the farm currency (desktop's rule,
+  now a named constant); the VIP filter says so.
+- The statement flags a balance with no orders behind it, and a balance that
+  differs from what pending orders leave unpaid (total − cash received).
+- `getCustomerStatement` does not filter deleted orders; phones mark them
+  "Deleted" and leave them out of the spent and unpaid figures. Desktop
+  unchanged.
+- Sales shows Record payment to CASHIER but `recordPayment` only allows
+  OWNER, ACCOUNTANT, FINANCE_OFFICER and MANAGER (MANAGER never sees the
+  button). Role gating left as is.
+- Concept: account-level Record payment (recordPayment without an orderId
+  only lowers the balance, with no ledger entry), Add email / Add address (no
+  customer edit flow) and the statement PDF are stubbed with TODOs.
+- The statement numbers orders newest first ("Order 1" is the latest), as
+  desktop does; Sales numbers them oldest first.
 
 Sales:
 - Desktop's "Avg daily revenue" is total ÷ days between the first and last

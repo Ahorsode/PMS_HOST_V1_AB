@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getFarmCurrency } from '@/lib/farm/farm-currency';
 import { getAuthContext } from '@/lib/auth/auth-utils';
+import { MobileStatement } from './MobileStatement';
 
 export default async function CustomerStatementPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -26,8 +27,31 @@ export default async function CustomerStatementPage({ params }: { params: Promis
   const transactions = statement.orders.sort((a, b) => new Date(b.orderDate || b.createdAt).getTime() - new Date(a.orderDate || a.createdAt).getTime());
 
   return (
-    <div className="max-w-[1200px] mx-auto space-y-7 px-0 md:px-5 pt-2 pb-9 md:py-9 relative">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="max-w-[1200px] mx-auto md:space-y-7 px-0 md:px-5 pt-2 pb-9 md:py-9 relative">
+      {/* Phone layout (Quiet Ledger); the sections below are tablet and desktop only. */}
+      <div className="md:hidden">
+        <MobileStatement
+          name={statement.name}
+          phone={statement.phone ?? null}
+          email={statement.email ?? null}
+          address={statement.address ?? null}
+          createdAt={new Date(statement.createdAt).toISOString()}
+          balanceOwed={statement.balanceOwed}
+          currency={currency}
+          orders={transactions.map((order, index) => ({
+            id: order.id,
+            number: index + 1,
+            status: order.status,
+            date: new Date(order.orderDate || order.createdAt).toISOString(),
+            totalAmount: order.totalAmount,
+            discountAmount: order.discountAmount,
+            cashReceived: Number(order.cashReceived ?? 0),
+            isDeleted: !!order.isDeleted,
+            items: order.items.map((item) => ({ description: item.description, quantity: Number(item.quantity), totalPrice: item.totalPrice })),
+          }))}
+        />
+      </div>
+      <div className="hidden md:flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-4">
           <Link href="/dashboard/sales/customers" className="p-3 bg-fg/5 hover:bg-fg/10 rounded-full transition-colors border border-fg/10 shrink-0">
             <ArrowLeft className="w-6 h-6 text-fg-2" />
@@ -43,7 +67,7 @@ export default async function CustomerStatementPage({ params }: { params: Promis
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="hidden md:grid grid-cols-1 lg:grid-cols-3 gap-6">
          {/* Sidebar Stats */}
          <div className="space-y-6">
             <Card className="bg-fg/10 border-fg/10 h-fit">

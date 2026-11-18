@@ -15,6 +15,7 @@ function getMobileIndeptTitle(pathname: string): string {
   if (pathname.includes('/analytics')) return 'Analytics';
   const segments = pathname.split('/').filter(Boolean);
   if (segments[1] === 'flocks') return 'Batch details';
+  if (segments[1] === 'sales' && segments[2] === 'customers') return segments.length > 3 ? 'Customer account' : 'Customers';
   if (segments[1] === 'sales') return 'Sale details';
   if (segments[1] === 'feed') return 'Feed details';
   return 'Details';

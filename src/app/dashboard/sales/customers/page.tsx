@@ -11,6 +11,9 @@ import { checkFeature } from '@/lib/billing/subscription-utils';
 import Link from 'next/link';
 import { PlanFeatureLocked } from '@/components/billing/PlanFeatureLocked';
 import { PartnerCard } from '@/components/partners/PartnerCard';
+import { MobileCustomers } from './MobileCustomers';
+
+const VIP_THRESHOLD = 1000;
 
 interface CustomerStat {
   id: string;
@@ -56,12 +59,23 @@ export default async function CustomersPage() {
   
   const totalValue = customerStats.reduce((sum: number, c: CustomerStat) => sum + c.totalSpent, 0);
   const totalOwed = customerStats.reduce((sum: number, c: CustomerStat) => sum + c.balanceOwed, 0);
-  const vipClients = customerStats.filter((c: CustomerStat) => c.totalSpent > 1000).length;
+  const vipClients = customerStats.filter((c: CustomerStat) => c.totalSpent > VIP_THRESHOLD).length;
 
   return (
-    <div className="max-w-[1600px] mx-auto space-y-7 px-0 md:px-5 pt-2 pb-9 md:py-9 relative">
+    <div className="max-w-[1600px] mx-auto md:space-y-7 px-0 md:px-5 pt-2 pb-9 md:py-9 relative">
+      {/* Phone layout (Quiet Ledger); the sections below are tablet and desktop only. */}
+      <div className="md:hidden">
+        <MobileCustomers
+          customers={customerStats.map((c) => ({ id: c.id, name: c.name, phone: c.phone ?? null, balanceOwed: c.balanceOwed, orderCount: c.orderCount, totalSpent: c.totalSpent }))}
+          currency={currency}
+          totalOwed={totalOwed}
+          totalSpent={totalValue}
+          vipThreshold={VIP_THRESHOLD}
+          canEdit={canEdit}
+        />
+      </div>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 px-2">
-        <div className="flex items-center gap-4">
+        <div className="hidden md:flex items-center gap-4">
           <Link href="/dashboard" className="p-3 bg-fg/5 hover:bg-fg/10 rounded-full transition-colors border border-fg/10 shrink-0">
             <ArrowLeft className="w-6 h-6 text-fg-3" />
           </Link>
@@ -70,11 +84,14 @@ export default async function CustomersPage() {
             <p className="mt-2 text-sm text-fg-2">The people and businesses who buy from you, and what they owe</p>
           </div>
         </div>
-        <CustomerActionsHeader canEdit={canEdit} />
+        {/* One Add customer control: a sticky bar at the bottom on phones, in the header from md up. */}
+        <div className="contents max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:z-40 max-md:block max-md:border-t max-md:border-ql-line max-md:bg-ql-ground/95 max-md:px-4 max-md:pt-3 max-md:pb-[max(env(safe-area-inset-bottom),12px)] max-md:backdrop-blur max-md:empty:hidden max-md:[&>button]:min-h-12 max-md:[&>button]:w-full max-md:[&>button]:rounded-2xl max-md:[&>button]:font-ql-sans">
+          <CustomerActionsHeader canEdit={canEdit} />
+        </div>
       </div>
 
       {/* CRM Stats Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+      <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
           <Card className="bg-fg/10 border-fg/10">
              <CardContent className="pt-3 md:pt-8">
                 <div className="flex items-center gap-2 md:gap-4">
@@ -133,7 +150,7 @@ export default async function CustomersPage() {
       </div>
 
       {/* Grid of Profiles */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+      <div className="hidden md:grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {customerStats.map((customer: CustomerStat) => (
             <PartnerCard key={customer.id} partner={customer} type="customer" />
           ))}
