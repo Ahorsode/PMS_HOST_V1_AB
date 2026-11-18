@@ -29,6 +29,7 @@ look. Each board lands on its own `redesign/<screen>` branch, one commit per PDF
 | Plans | Plans-Redesign.pdf (2 pages) | `redesign/plans` | `license-upgrade/MobilePlans.tsx`, fed by LicenseUpgradeClient's own state and checkout handlers |
 | Audit log | Audit-Redesign.pdf (2 pages) | `redesign/audit` | `admin/logs/MobileAuditLog.tsx`; restore handlers and the deleted-record dialog are shared |
 | Team | Team-Redesign.pdf (2 pages) | `redesign/team` | `team/MobileTeam.tsx`; invite, role, pause, reset, code and remove reuse TeamView's handlers |
+| Worker dashboard | Workers-Dashboard-Redesign.pdf (2 pages) | `redesign/workers-dashboard` | `components/dashboard/MobileWorkerDashboard.tsx` (workers and cashiers) |
 
 ## Shared tokens (`src/app/globals.css`)
 
@@ -114,6 +115,22 @@ Landing page:
   adds staff but drops five modules); a pricing decision, not changed here.
 - The sample card's figures are the page's own illustration (labelled Sample
   data); only the egg count is worked out (crates × 30).
+
+Worker dashboard:
+- Actions sit in short groups: Log (feed, eggs, deaths), Care (isolate,
+  health) and More (sale, stock, house), each shown only with its permission
+  as before. Health gets an amber dot when a vaccination or medication is due.
+- Alerts here are the dashboard's own (vaccinations, medications, low feed),
+  each with a link. The board's "Feeding/Eggs not logged today" reminders
+  come from Inbox (`getFarmAlerts`), not this page's data, so "Nothing is
+  due" points to Inbox for daily reminders. Low feed shows the number left
+  without "bags" (desktop says "bags" whatever the unit).
+- Units link to the batch only when the person can view batches. Total birds
+  is worked out from the units.
+- Mismatch: `getBreedDisplayName` doesn't know "lohmann_brown" (local data),
+  so it shows raw, on desktop too.
+- The board's Log eggs / Log feed screens are concept: tiles open the
+  existing quick-log forms (`?quick=log`).
 
 Team:
 - Each row's four icons and role dropdown become a role label and one ⋯

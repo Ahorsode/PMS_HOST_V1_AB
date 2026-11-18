@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Wheat, Skull, Activity, Egg, Syringe, Banknote, ShoppingBag, Home, HeartPulse } from 'lucide-react';
 import { getBreedDisplayName } from '@/lib/farm/livestock-breed-options';
 import { g, ink } from '@/components/ui/graphite';
+import { MobileWorkerDashboard } from './MobileWorkerDashboard';
 
 interface WorkerDashboardProps {
   stats: any;
@@ -29,7 +30,17 @@ export function WorkerDashboard({ stats, houses, permissions }: WorkerDashboardP
   const taskCount = alerts.length + lowFeed.length;
 
   return (
-    <div className="space-y-6 pb-12">
+    <>
+    {/* Phone layout (Quiet Ledger); the sections below are tablet and desktop only. */}
+    <div className="md:hidden">
+      <MobileWorkerDashboard
+        stats={stats}
+        actions={quickActions.map(({ label, href, icon }) => ({ label, href, icon }))}
+        canViewBatches={!!permissions?.canViewBatches}
+        canViewInventory={!!permissions?.canViewInventory}
+      />
+    </div>
+    <div className="hidden md:block space-y-6 pb-12">
       <header className="px-1">
         <h1 className={g.title}>Today&apos;s work</h1>
         <p className={`mt-2 text-sm ${g.secondary}`}>Log what happened on the farm and see what is due</p>
@@ -110,5 +121,6 @@ export function WorkerDashboard({ stats, houses, permissions }: WorkerDashboardP
         </section>
       </div>
     </div>
+    </>
   );
 }
