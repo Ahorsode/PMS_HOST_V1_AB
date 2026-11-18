@@ -27,6 +27,7 @@ look. Each board lands on its own `redesign/<screen>` branch, one commit per PDF
 | Inbox and team chat | Inbox-Redesign.pdf (2 pages) | `redesign/inbox` | Phone tree in `inbox/page.tsx` plus `InboxMenu.tsx`; tabs, team list and composer restyled with `max-md:` only |
 | Settings | Settings-Redesign.pdf (2 pages) | `redesign/settings` | `settings/SettingsPhone.tsx` (home list, Save bar); sections reuse the existing forms; PlanTypeCard gains a `row` variant |
 | Plans | Plans-Redesign.pdf (2 pages) | `redesign/plans` | `license-upgrade/MobilePlans.tsx`, fed by LicenseUpgradeClient's own state and checkout handlers |
+| Audit log | Audit-Redesign.pdf (2 pages) | `redesign/audit` | `admin/logs/MobileAuditLog.tsx`; restore handlers and the deleted-record dialog are shared |
 
 ## Shared tokens (`src/app/globals.css`)
 
@@ -112,6 +113,20 @@ Landing page:
   adds staff but drops five modules); a pricing decision, not changed here.
 - The sample card's figures are the page's own illustration (labelled Sample
   data); only the egg count is worked out (crates × 30).
+
+Audit log:
+- Edits are grouped into one card per moment: same second, same person. A
+  new record comes first, then what it changed. Sizes are new − old when
+  both values are numbers. Table and field names are tidied (stockLevel →
+  Stock level). Order JSON reads as total plus status and method chips; every
+  field is in the moment's detail sheet (board page 2).
+- Filter chips are built from the tables in the list. The list is the latest
+  100 edits (`take: 100`), shown 8 moments at a time.
+- Restores keep their existing `confirm()` prompts. Board's select-several
+  restore is concept (no bulk restore action); each row restores on its own.
+- Recovery's empty state links to Deletions. Desktop recovery shows feed log
+  amounts as "kg" whatever the feed's unit (same feed unit issue as before).
+- Local check used four seeded edit rows in the throwaway database.
 
 Plans:
 - The ticking "N days · hh:mm:ss remaining" becomes "Renews about <date> ·

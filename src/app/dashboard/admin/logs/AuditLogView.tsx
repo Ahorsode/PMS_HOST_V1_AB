@@ -32,6 +32,7 @@ import { restoreOrder } from '@/lib/actions/order-actions';
 import { restoreInventory } from '@/lib/actions/inventory-actions';
 import { useRouter } from 'next/navigation';
 import { useMoney } from '@/components/providers/CurrencyProvider'
+import { MobileAuditLog, type RecoveryRow } from './MobileAuditLog';
 
 interface AuditLogViewProps {
   initialEditLogs: any[];
@@ -110,10 +111,36 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
     });
   };
 
+  // Phone recovery list: the same soft-deleted records and restore actions as the desktop tab.
+  const t = (trashItems || {}) as Record<string, any[]>;
+  const recoveryRows: RecoveryRow[] = [
+    ...(t.batches ?? []).map((b: any) => ({ key: `Batch:${b.id}`, group: 'Batch', title: b.batchName, detail: `${getBreedDisplayName(b.breedType)} · ${b.currentCount} birds`, busy: isRestoring(`Batch:${b.id}`), onRestore: () => handleSoftRestore(restoreBatch, b.id, 'Batch') })),
+    ...(t.expenses ?? []).map((e: any) => ({ key: `Expense:${e.id}`, group: 'Expense', title: e.description || e.category, detail: `${e.category} · ${money.format(e.amount)}`, busy: isRestoring(`Expense:${e.id}`), onRestore: () => handleSoftRestore(restoreExpense, e.id, 'Expense') })),
+    ...(t.sales ?? []).map((x: any) => ({ key: `Sale:${x.id}`, group: 'Sale', title: x.customerName || 'Walk-in', detail: `${money.format(x.totalAmount)} · ${x.status}`, busy: isRestoring(`Sale:${x.id}`), onRestore: () => handleSoftRestore(restoreSale, x.id, 'Sale') })),
+    ...(t.orders ?? []).map((o: any) => ({ key: `Order:${o.id}`, group: 'Order', title: o.customer?.name || 'No customer', detail: `${money.format(o.totalAmount)} · ${o.status}`, busy: isRestoring(`Order:${o.id}`), onRestore: () => handleSoftRestore(restoreOrder, o.id, 'Order') })),
+    ...(t.inventory ?? []).map((i: any) => ({ key: `Inventory:${i.id}`, group: 'Inventory', title: i.itemName, detail: `${i.stockLevel} ${i.unit} · ${i.category}`, busy: isRestoring(`Inventory:${i.id}`), onRestore: () => handleSoftRestore(restoreInventory, i.id, 'Inventory') })),
+    ...(t.eggProduction ?? []).map((e: any) => ({ key: `Egg Log:${e.id}`, group: 'Egg log', title: e.batch?.batchName || 'Recovered egg log', detail: `${e.eggsCollected} collected · ${new Date(e.logDate).toLocaleDateString()}`, busy: isRestoring(`Egg Log:${e.id}`), onRestore: () => handleSoftRestore(restoreEggProduction, e.id, 'Egg Log') })),
+    ...(t.feedingLogs ?? []).map((l: any) => ({ key: `Feed Log:${l.id}`, group: 'Feed log', title: l.batch?.batchName || 'Recovered feed log', detail: `${l.amountConsumed} kg · ${new Date(l.logDate).toLocaleDateString()}`, busy: isRestoring(`Feed Log:${l.id}`), onRestore: () => handleSoftRestore(restoreFeedingLog, l.id, 'Feed Log') })),
+  ];
+
   return (
-    <div className="space-y-6">
+    <div className="md:space-y-6">
+      {/* Phone layout (Quiet Ledger); the sections below are tablet and desktop only. The details dialog is shared. */}
+      <div className="md:hidden">
+        <MobileAuditLog
+          activeTab={activeTab}
+          onTab={setActiveTab}
+          editLogs={initialEditLogs}
+          deleteLogs={uniqueDeleteLogs}
+          recovery={recoveryRows}
+          trashCount={trashCount}
+          onDetails={(log) => setSelectedLog(log)}
+          onRestore={handleRestore}
+          restoring={(id) => isRestoring(`audit:${id}`)}
+        />
+      </div>
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="hidden md:flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h1 className="text-3xl font-semibold leading-tight text-fg">Audit log</h1>
           <p className="mt-2 text-sm text-fg-2">
@@ -160,7 +187,7 @@ export default function AuditLogView({ initialEditLogs, initialDeleteLogs, trash
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
+      <div className="hidden md:grid grid-cols-1 gap-6">
         {activeTab === 'edits' ? (
           <Card className="bg-fg/5 border-fg/10 overflow-hidden">
             <CardHeader className="border-b border-fg/5 flex flex-row items-center justify-between">
