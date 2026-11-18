@@ -15,6 +15,7 @@ look. Each board lands on its own `redesign/<screen>` branch, one commit per PDF
 | Quarantine & isolation (overview, isolate sheet, record-loss sheet) | Quarantine-Redesign.pdf (2 pages) | `redesign/quarantine` | Phone sheets call the same `logHealthEvent` / `logMortalityInIsolation` / `returnFromIsolation` actions |
 | Mortality (overview, 1% check, day detail, log-deaths sheet) | Mortality-Redesign.pdf (2 pages) | `redesign/mortality` | Figures in `mortality/mortality-math.ts`; shared `CausePicker` and `LineGauge` |
 | Analytics batch comparison | Analytics-Batch-Comparison-Redesign.pdf (2 pages) | `redesign/analytics-comparison` | `components/analytics/MobileBatchComparison.tsx` shares the batch selection with the desktop view |
+| Livestock list | Livestock-Redesign.pdf (2 pages) | `redesign/livestock` | `flocks/MobileLivestock.tsx`; the Manage screen is the batch details board |
 
 ## Shared tokens (`src/app/globals.css`)
 
@@ -63,7 +64,7 @@ Spacing: screen gutter 16 (`px-4` on the mobile shell), tile gap 12 (`gap-3`,
 | `Stepper.tsx` | `QlStepper`: − / number / + with 44 px buttons; whole numbers, or `decimals` for fractions like 2.5 bags |
 | `OverflowMenu.tsx` | `QlOverflowMenu`: the ⋯ menu (any icon, above or below); destructive items coral and last |
 | `useIsPhone.ts` | Below-md check for client-only places (dialogs) that need a different control, not just styles |
-| `ConfirmSheet.tsx` | `QlConfirmSheet`: the end of a delete; type the name, coral button dim with a reason until it matches |
+| `ConfirmSheet.tsx` | `QlConfirmSheet`: the end of a delete; type the name (and, with `reason`, say why), coral button dim with a reason until both are done |
 
 Landing-only pieces live in `src/components/site/landing/` (sample card,
 section heads, module rows with plan chips, steps rail, role switcher, phone
@@ -99,6 +100,15 @@ Landing page:
   adds staff but drops five modules); a pricing decision, not changed here.
 - The sample card's figures are the page's own illustration (labelled Sample
   data); only the egg count is worked out (crates × 30).
+
+Livestock:
+- "Dead" is the starting count minus alive minus isolated (the existing
+  head-count rule), so birds that leave any other way (sold, moved) also show
+  as dead on the list and in the farm total.
+- Delete asks for the unit's name and the reason the server requires (at
+  least 5 letters); it moves the unit to the trash (soft delete), so the sheet
+  says that rather than "can't be undone".
+- The farm-wide count adds up active units only.
 
 Analytics batch comparison:
 - The last selected batch chip is locked with "Keep one batch to compare";

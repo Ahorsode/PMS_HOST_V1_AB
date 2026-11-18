@@ -18,6 +18,7 @@ export function QlConfirmSheet({
   name,
   confirmLabel = 'Delete',
   busy = false,
+  reason,
   onConfirm,
 }: {
   open: boolean;
@@ -28,15 +29,25 @@ export function QlConfirmSheet({
   name: string;
   confirmLabel?: string;
   busy?: boolean;
-  onConfirm: () => void;
+  /** Ask for a reason too (for deletes the server records), with its minimum length. */
+  reason?: { label: string; minLength: number };
+  onConfirm: (reason: string) => void;
 }) {
   const [typed, setTyped] = useState('');
+  const [why, setWhy] = useState('');
   const inputId = useId();
+  const reasonInputId = useId();
   const reasonId = useId();
-  const matches = typed.trim().toLowerCase() === name.trim().toLowerCase() && name.trim() !== '';
+  const nameMatches = typed.trim().toLowerCase() === name.trim().toLowerCase() && name.trim() !== '';
+  const reasonOk = !reason || why.trim().length >= reason.minLength;
+  const matches = nameMatches && reasonOk;
+  const blocked = !nameMatches ? 'Type the name above to delete' : !reasonOk ? `Add a reason of at least ${reason?.minLength} letters` : null;
 
   useEffect(() => {
-    if (!open) setTyped('');
+    if (!open) {
+      setTyped('');
+      setWhy('');
+    }
   }, [open]);
 
   return (
@@ -45,7 +56,7 @@ export function QlConfirmSheet({
         className="space-y-4 pb-2 font-ql-sans"
         onSubmit={(event) => {
           event.preventDefault();
-          if (matches && !busy) onConfirm();
+          if (matches && !busy) onConfirm(why.trim());
         }}
       >
         <div>
@@ -61,6 +72,18 @@ export function QlConfirmSheet({
             className="mt-2 h-12 w-full rounded-xl border border-ql-line bg-ql-ground px-3 text-[15px] text-ql-text outline-none focus-visible:ring-2 focus-visible:ring-ql-coral/50"
           />
         </div>
+        {reason ? (
+          <div>
+            <label htmlFor={reasonInputId} className="text-sm text-ql-muted">{reason.label}</label>
+            <textarea
+              id={reasonInputId}
+              value={why}
+              onChange={(event) => setWhy(event.target.value)}
+              rows={2}
+              className="mt-2 w-full rounded-xl border border-ql-line bg-ql-ground px-3 py-2 text-[15px] text-ql-text outline-none focus-visible:ring-2 focus-visible:ring-ql-coral/50"
+            />
+          </div>
+        ) : null}
         <div className="grid grid-cols-2 gap-2">
           <button
             type="button"
@@ -83,9 +106,9 @@ export function QlConfirmSheet({
             {busy ? 'Deleting…' : confirmLabel}
           </button>
         </div>
-        {!matches ? (
+        {blocked ? (
           <p id={reasonId} className="text-center font-ql-mono text-[11px] uppercase tracking-[0.08em] text-ql-amber">
-            Type the name above to delete
+            {blocked}
           </p>
         ) : null}
       </form>

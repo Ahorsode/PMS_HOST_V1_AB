@@ -2,6 +2,7 @@ import React from 'react';
 import { getAllBatches, getHouses, getIsolationRooms } from '@/lib/actions/dashboard-actions';
 import { FlockActionsHeader } from './FlockActions';
 import { LivestockTable } from './LivestockTable';
+import { MobileLivestock } from './MobileLivestock';
 import { checkWorkerPermissions } from '@/lib/actions/staff-actions';
 import { redirect } from 'next/navigation';
 import { getAuthContext } from '@/lib/auth/auth-utils';
@@ -32,8 +33,12 @@ export default async function FlocksPage() {
   const isolationRooms = JSON.parse(JSON.stringify(rawIsolationRooms));
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 px-0 pb-8 pt-2 md:px-4 md:py-8">
-      <header className="flex flex-col gap-4 px-1 md:flex-row md:items-end md:justify-between md:px-0">
+    <div className="mx-auto max-w-7xl px-0 pb-8 pt-2 md:space-y-6 md:px-4 md:py-8">
+      {/* Phone layout (Quiet Ledger); the header and register below are tablet and desktop only. */}
+      <div className="md:hidden">
+        <MobileLivestock batches={batches} houses={houses} isolationRooms={isolationRooms} canEdit={canEdit} />
+      </div>
+      <header className="hidden flex-col gap-4 px-1 md:flex md:flex-row md:items-end md:justify-between md:px-0">
         <div className="min-w-0">
           <h1 className="text-[28px] font-semibold leading-tight text-fg md:text-[32px]">Livestock</h1>
           <p className="mt-1 text-sm text-fg-2">Every batch and herd on the farm, from arrival to sale</p>
@@ -41,7 +46,9 @@ export default async function FlocksPage() {
         <FlockActionsHeader houses={houses} canEdit={canEdit} />
       </header>
 
-      <LivestockTable initialBatches={batches} houses={houses} isolationRooms={isolationRooms} canEdit={canEdit} />
+      <div className="hidden md:block">
+        <LivestockTable initialBatches={batches} houses={houses} isolationRooms={isolationRooms} canEdit={canEdit} />
+      </div>
     </div>
   );
 }
