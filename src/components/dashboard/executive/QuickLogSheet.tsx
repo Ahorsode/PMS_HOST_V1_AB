@@ -17,12 +17,13 @@ export type QuickLogTarget = {
 /** Every log a farm records day to day, in the order they usually happen. */
 export function quickLogTargets(weightsHref: string): QuickLogTarget[] {
   return [
-    { page: 'Eggs', label: 'Eggs', hint: 'Collection', href: '/dashboard/eggs', icon: Egg },
-    { page: 'Feeding', label: 'Feed', hint: 'Feeding', href: '/dashboard/feed', icon: Wheat },
+    // ?quick= opens that page's form straight away (eggs and feed log, sales sell).
+    { page: 'Eggs', label: 'Eggs', hint: 'Collection', href: '/dashboard/eggs?quick=log', icon: Egg },
+    { page: 'Feeding', label: 'Feed', hint: 'Feeding', href: '/dashboard/feed?quick=log', icon: Wheat },
     { page: 'Mortality', label: 'Deaths', hint: 'Mortality', href: '/dashboard/mortality', icon: XCircle },
     { page: 'Livestock', label: 'Weights', hint: 'Per flock', href: weightsHref, icon: Scale },
     { page: 'Health', label: 'Health', hint: 'Vaccines, meds', href: '/dashboard/health', icon: HeartPulse },
-    { page: 'Sales', label: 'Sale', hint: 'Sales', href: '/dashboard/sales', icon: Banknote },
+    { page: 'Sales', label: 'Sale', hint: 'Sales', href: '/dashboard/sales?quick=sell', icon: Banknote },
     { page: 'Finance Control', label: 'Expense', hint: 'Finance', href: '/dashboard/finance', icon: Receipt },
   ];
 }
@@ -31,10 +32,10 @@ export function quickLogTargets(weightsHref: string): QuickLogTarget[] {
  * The dashboard's one-tap log menu. Each tile opens the page where that log
  * is recorded today.
  *
- * TODO(redesign/owner-dashboard): the board implies logging straight from the
- * dashboard. The existing forms (FlockQuickLog) are per flock, so a farm-level
- * version needs a flock picker in front of them; until then this routes to the
- * page that owns each log.
+ * Eggs, feed and sales open their form on arrival (the pages' ?quick= links).
+ * TODO(redesign/owner-dashboard): deaths, weights, health and expenses still
+ * land on their page; logging those straight from the dashboard needs a flock
+ * picker in front of the per-flock FlockQuickLog forms.
  */
 export function QuickLogSheet({
   open,
