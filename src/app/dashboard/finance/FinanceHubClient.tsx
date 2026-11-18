@@ -50,6 +50,8 @@ import {
 } from '@/components/finance/SpecifyAllocationDialog'
 import { useMoney } from '@/components/providers/CurrencyProvider'
 import { QUICK_ICON, quickButtonClass } from '@/components/ui/quick-action';
+import { toast } from 'sonner'
+import { MobileFinance, LargeAmountNote } from './MobileFinance'
 
 interface Transaction {
   id: string
@@ -286,6 +288,25 @@ export function FinanceHubClient({
     }
   }
 
+  // Phone delete: the reason comes from the type-the-name confirm sheet.
+  const deleteFromPhone = async (tx: Transaction, reason: string) => {
+    if (mutationMode) return false
+    setSelectedTx(tx)
+    setMutationMode('delete')
+    try {
+      const res = await deleteFinancialTransaction(tx.id, reason)
+      if (res.success) {
+        setTransactions(prev => prev.filter(t => t.id !== tx.id))
+        setSelectedTx(null)
+        return true
+      }
+      toast.error(res.error || 'Failed to delete transaction')
+      return false
+    } finally {
+      setMutationMode(null)
+    }
+  }
+
   // How many matching rows are drawn. Changing the search or a filter starts
   // again from the first page.
   const filterKey = `${searchTerm}|${filterType}|${filterStatus}`
@@ -307,7 +328,33 @@ export function FinanceHubClient({
   const visibleTransactions = filteredTransactions.slice(0, visibleCount)
 
   return (
-    <div className="space-y-6">
+    <div className="md:space-y-6">
+      {/* Phone layout (Quiet Ledger); the sections below are tablet and desktop only. The dialogs are shared. */}
+      <div className="md:hidden">
+        <MobileFinance
+          transactions={transactions}
+          filtered={filteredTransactions}
+          totalRevenue={totalRevenue}
+          totalExpense={totalExpense}
+          netPosition={netPosition}
+          searchTerm={searchTerm}
+          onSearch={setSearchTerm}
+          filterType={filterType}
+          onFilterType={setFilterType}
+          filterStatus={filterStatus}
+          onFilterStatus={setFilterStatus}
+          canEdit={canEdit}
+          money={money}
+          busyId={mutationMode ? selectedTx?.id ?? null : null}
+          onNewEntry={() => setIsAddOpen(true)}
+          onSettle={(tx) => {
+            setSelectedTx(tx as Transaction)
+            setIsSettleOpen(true)
+          }}
+          onDelete={(tx, reason) => deleteFromPhone(tx as Transaction, reason)}
+        />
+      </div>
+      <div className="hidden md:block space-y-6">
       {/* Page header */}
       <div className="flex flex-col justify-between gap-4 px-1 md:flex-row md:items-end">
         <div>
@@ -737,6 +784,7 @@ export function FinanceHubClient({
           </div>
         </CardContent>
       </Card>
+      </div>
 
       {/* CREATE ENTRY MODAL */}
       <Dialog
@@ -789,6 +837,7 @@ export function FinanceHubClient({
               value={formData.amount}
               onChange={e => setFormData(prev => ({ ...prev, amount: e.target.value }))}
             />
+            <LargeAmountNote amount={Number(formData.amount)} type={formData.type} transactions={transactions} money={money} />
           </FormSection>
 
           <FormSection title="Payment">

@@ -20,6 +20,7 @@ look. Each board lands on its own `redesign/<screen>` branch, one commit per PDF
 | Batch details, layer edition | Womane-Batch-Redesign.pdf (2 pages) | `redesign/womane-batch` | Same component: reconciled dead count, eggs card, priced revenue entries, egg days chart |
 | Sales | Sales-Redesign.pdf (2 pages) | `redesign/sales` | `sales/MobileSales.tsx`; the one Record a sale control becomes a sticky bar below md |
 | Customers | Customers-Redesign.pdf (2 pages) | `redesign/customers` | `customers/MobileCustomers.tsx` and `customers/[id]/statement/MobileStatement.tsx`; one sticky Add customer |
+| Finance | Finance-Redesign.pdf (2 pages) | `redesign/finance` | `finance/MobileFinance.tsx` inside FinanceHubClient; the add, settle and delete dialogs stay shared |
 
 ## Shared tokens (`src/app/globals.css`)
 
@@ -105,6 +106,25 @@ Landing page:
   adds staff but drops five modules); a pricing decision, not changed here.
 - The sample card's figures are the page's own illustration (labelled Sample
   data); only the egg count is worked out (crates × 30).
+
+Finance:
+- Profit hero, "N entries carry the ledger" when one entry is at least half of
+  revenue or of expenses (3+ entries on that side), month groups with in, out
+  and net, and an entry sheet. Those entries get an amber Check.
+- Auto-logged rows (source EXPENSE: feed, stock, health, batch costs) show an
+  AUTO chip; in the entry sheet Delete is disabled with "Delete is off". Desktop
+  keeps its trash buttons on ledger rows.
+- Delete on phones ends in the type-the-name sheet, with the same 5-letter
+  reason the server records (`deleteFinancialTransaction`).
+- The add form shows an amber, non-blocking "Larger than every other expense"
+  note below md when an amount beats every earlier one of its kind.
+- Concept: "Edit entry" (no update action for ledger entries) and the
+  Outstanding vs Customers cross-check (customer balances aren't loaded on
+  this page and the brief rules out new queries) are TODOs.
+- Customer debt from sales lives on Customers (`customer.balanceOwed`); the
+  ledger's Outstanding list only holds entries saved as Not paid or Part paid,
+  so the two screens can disagree, as the board found.
+- The missing-cost prompt still opens over the page on load (unchanged).
 
 Customers:
 - The customers pages sit under /dashboard/sales, so the shell already treats
