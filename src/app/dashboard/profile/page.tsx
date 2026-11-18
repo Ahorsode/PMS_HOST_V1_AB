@@ -6,7 +6,8 @@ import { User, Mail, Shield, Building, Calendar, Download, Trash2, FileText } fr
 import { EditProfileButton } from '@/components/profile/EditProfileButton';
 import { formatRoleLabel } from '@/lib/navigation/navigation-permissions';
 import { LegalLinks } from '@/components/legal/LegalPage';
-import { accountDeletionMailto, DELETION_COMPLETION_DAYS } from '@/lib/legal/legal';
+import { accountDeletionMailto, DELETION_COMPLETION_DAYS, LEGAL_LINKS } from '@/lib/legal/legal';
+import { MobileProfile } from './MobileProfile';
 
 export default async function ProfilePage() {
   const { userId, activeFarmId, role, isFarmOwner } = await getAuthContext();
@@ -25,9 +26,29 @@ export default async function ProfilePage() {
   const farm = membership?.farm;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-7 px-0 md:px-3 pt-2 pb-11 md:py-11">
+    <div className="max-w-4xl mx-auto md:space-y-7 px-0 md:px-3 pt-2 pb-11 md:py-11">
+      {/* Phone layout (Quiet Ledger); the cards below are tablet and desktop only. */}
+      <div className="md:hidden">
+        <MobileProfile
+          name={user?.name || 'Farm user'}
+          email={user?.email || ''}
+          roleLabel={formatRoleLabel(role)}
+          createdAt={(user?.createdAt ?? new Date()).toISOString()}
+          farmName={farm?.name || ''}
+          location={farm?.location ?? null}
+          isFarmOwner={isFarmOwner}
+          deletionDays={DELETION_COMPLETION_DAYS}
+          deletionMailto={accountDeletionMailto(userId)}
+          legalLinks={LEGAL_LINKS}
+          editInitial={{
+            firstname: user?.firstname || '',
+            middleName: user?.middleName || '',
+            surname: user?.surname || ''
+          }}
+        />
+      </div>
       {/* Hero card */}
-      <div>
+      <div className="hidden md:block">
          <div className="flex flex-col items-center gap-6 rounded-xl border border-fg/[0.08] bg-card p-6 md:flex-row">
             <div className="flex h-20 w-20 items-center justify-center rounded-full border border-fg/[0.08] bg-raised">
                <User className="h-8 w-8 text-fg-3" strokeWidth={1.5} />
@@ -59,7 +80,7 @@ export default async function ProfilePage() {
       </div>
 
       {/* Farm Organization Card (full-width, no license card) */}
-      <Card className="bg-fg/[0.04] border-fg/5 overflow-hidden">
+      <Card className="hidden md:block bg-fg/[0.04] border-fg/5 overflow-hidden">
          <CardHeader className="border-b border-fg/5 bg-fg/[0.02]">
             <CardTitle className="text-sm font-medium text-fg-2 flex items-center gap-2">
                <Building className="w-4 h-4" /> Farm organization
@@ -90,7 +111,7 @@ export default async function ProfilePage() {
          </CardContent>
       </Card>
 
-      <Card className="bg-fg/[0.04] border-fg/5 overflow-hidden">
+      <Card className="hidden md:block bg-fg/[0.04] border-fg/5 overflow-hidden">
          <CardHeader className="border-b border-fg/5 bg-fg/[0.02]">
             <CardTitle className="text-sm font-medium text-fg flex items-center gap-2">
                <FileText className="w-4 h-4" /> Your data

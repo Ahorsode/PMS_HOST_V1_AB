@@ -23,6 +23,7 @@ look. Each board lands on its own `redesign/<screen>` branch, one commit per PDF
 | Finance | Finance-Redesign.pdf (2 pages) | `redesign/finance` | `finance/MobileFinance.tsx` inside FinanceHubClient; the add, settle and delete dialogs stay shared |
 | Inventory | Inventory-Redesign.pdf (2 pages) | `redesign/inventory` | `inventory/MobileInventory.tsx` and `inventory/[id]/MobileItemHistory.tsx`; add/edit form shared |
 | Reports | Reports-Redesign.pdf (2 pages) | `redesign/reports` | `reports/MobileReports.tsx` inside ReportsClient; one Make a report (the existing launcher) as the sticky bar |
+| Profile (account) | Profile-Redesign.pdf (2 pages) | `redesign/profile` | `profile/MobileProfile.tsx`; Edit profile reuses EditProfileModal |
 
 ## Shared tokens (`src/app/globals.css`)
 
@@ -108,6 +109,20 @@ Landing page:
   adds staff but drops five modules); a pricing decision, not changed here.
 - The sample card's figures are the page's own illustration (labelled Sample
   data); only the egg count is worked out (crates × 30).
+
+Profile (account):
+- Names are shown title-cased on phones ("Delali", not "delali"); the stored
+  name is unchanged and desktop shows it as stored.
+- The farm comes from `user.memberships` for the active farm. An owner with
+  no membership row sees no farm name (desktop shows a blank; phones say "Not
+  linked to your account"). Local fixture owner hits this.
+- Location "Check": flagged when it has fewer than 4 letters or is empty.
+  "Add location" goes to Settings → Farm (owners); others are told only the
+  owner can change it.
+- Request deletion moved into the ⋯ menu and ends in a type-the-farm-name
+  sheet; when it matches, it opens the same `accountDeletionMailto` link.
+- Concept: the board's edit screen adds email, entity name and location; the
+  existing EditProfileModal edits names only. Not built (no endpoint).
 
 Reports:
 - Expenses: `generateComprehensiveFarmReport` reads `financialTransaction`
