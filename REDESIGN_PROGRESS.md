@@ -18,6 +18,7 @@ look. Each board lands on its own `redesign/<screen>` branch, one commit per PDF
 | Livestock list | Livestock-Redesign.pdf (2 pages) | `redesign/livestock` | `flocks/MobileLivestock.tsx`; the Manage screen is the batch details board |
 | Batch details | Batch-Details-Redesign.pdf (2 pages) | `redesign/batch-details` | `flocks/[id]/MobileFlockDetail.tsx`; desktop tree and its charts are not mounted on phones |
 | Batch details, layer edition | Womane-Batch-Redesign.pdf (2 pages) | `redesign/womane-batch` | Same component: reconciled dead count, eggs card, priced revenue entries, egg days chart |
+| Sales | Sales-Redesign.pdf (2 pages) | `redesign/sales` | `sales/MobileSales.tsx`; the one Record a sale control becomes a sticky bar below md |
 
 ## Shared tokens (`src/app/globals.css`)
 
@@ -103,6 +104,19 @@ Landing page:
   adds staff but drops five modules); a pricing decision, not changed here.
 - The sample card's figures are the page's own illustration (labelled Sample
   data); only the egg count is worked out (crates × 30).
+
+Sales:
+- Desktop's "Avg daily revenue" is total ÷ days between the first and last
+  order, but its note says "Across N orders", which reads as per order. Phones
+  label it "Total ÷ N days, not per order". Desktop copy unchanged.
+- The page keeps one SalesActionsHeader (so `?quick=sell` and `sellBatchId`
+  open one form); below md its container is a fixed bar above the tab bar.
+- Order rows expand to named actions (Receipt, WhatsApp, Record payment) with
+  Mark completed / Cancel order in the ⋯ menu, and an Open order link.
+- The record-a-sale price check and the order-detail screen on page 2 are
+  concept: the 1,074-line SalesForm and the order detail page are unchanged.
+- An order more than 10× the median unit price gets an amber Check, and the
+  "one order is N% of revenue" card shows when one order is at least half.
 
 Batch details, layer edition:
 - Revenue entries show a price per unit; an entry more than 10× the median

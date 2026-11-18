@@ -14,6 +14,7 @@ import { WorkerStamp } from '@/components/ui/WorkerStamp';
 import Link from 'next/link';
 import { getAuthContext } from '@/lib/auth/auth-utils';
 import { getFarmSettings, getSalesSettings } from '@/lib/actions/preference-actions';
+import { MobileSales } from './MobileSales';
 
 interface OrderItem {
   id: string;
@@ -258,17 +259,38 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
   ];
 
   return (
-    <div className="max-w-[1600px] mx-auto space-y-7 px-0 md:px-6 pt-2 pb-5 md:py-10 relative">
+    <div className="max-w-[1600px] mx-auto md:space-y-7 px-0 md:px-6 pt-2 pb-5 md:py-10 relative">
+      {/* Phone layout (Quiet Ledger); the sections below are tablet and desktop only. */}
+      <div className="md:hidden">
+        <MobileSales
+          orders={orders}
+          orderCount={orderCount}
+          currency={currency}
+          thisMonthRevenue={thisMonthRevenue}
+          monthChangeLabel={monthChangeLabel}
+          totalRevenue={totalRevenue}
+          netRevenue={netRevenue}
+          pendingOrders={pendingOrders}
+          daySpan={daySpan}
+          avgDailyRevenue={avgDailyRevenue}
+          topCustomers={topCustomers.map((customer) => ({ id: customer.id, name: customer.name, revenue: customerRevenue[customer.id] ?? 0 }))}
+          canViewCustomers={canViewCustomers}
+          canEdit={canEdit}
+          canRecordPayment={canRecordPayment}
+          eggsPerCrate={eggsPerCrate}
+        />
+      </div>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-        <div>
+        <div className="hidden md:block">
           <h1 className="text-3xl font-semibold leading-tight text-fg">Sales</h1>
           <p className="mt-2 text-sm text-fg-2">Orders, payments and what customers still owe</p>
         </div>
-        <div className="flex items-center gap-2">
+        {/* One Record a sale control: a sticky bar above the tab bar on phones, in the header from md up. */}
+        <div className="flex items-center gap-2 max-md:fixed max-md:inset-x-0 max-md:bottom-[calc(4rem+max(env(safe-area-inset-bottom),6px))] max-md:z-40 max-md:border-t max-md:border-ql-line max-md:bg-ql-ground/95 max-md:px-4 max-md:py-3 max-md:backdrop-blur max-md:empty:hidden max-md:[&>button]:min-h-12 max-md:[&>button]:w-full max-md:[&>button]:rounded-2xl max-md:[&>button]:font-ql-sans">
           {canViewCustomers && (
           <Link
             href="/dashboard/sales/customers"
-            className="flex items-center gap-2 px-4 py-2 rounded-md border border-fg/10 bg-fg/[0.04] text-[11px] font-medium text-fg-2 hover:bg-fg/10 hover:text-fg transition-colors"
+            className="max-md:hidden flex items-center gap-2 px-4 py-2 rounded-md border border-fg/10 bg-fg/[0.04] text-[11px] font-medium text-fg-2 hover:bg-fg/10 hover:text-fg transition-colors"
           >
             <Users className="w-4 h-4" />
             Customers
@@ -294,7 +316,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+      <div className="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
         {stats.map((stat) => (
           <Card key={stat.name} className="bg-fg/[0.04] border-fg/5">
             <CardContent className="pt-3 md:pt-6">
@@ -313,7 +335,7 @@ export default async function SalesPage({ searchParams }: { searchParams: Promis
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-7">
+      <div className="hidden md:grid grid-cols-1 lg:grid-cols-3 gap-7">
         {/* Orders Table */}
         <div className="lg:col-span-2 bg-fg/10 rounded-[1.5rem] md:rounded-[2.5rem] border border-fg/10 overflow-hidden">
           <div className="p-3 md:p-8 border-b border-fg/5 flex justify-between items-center">

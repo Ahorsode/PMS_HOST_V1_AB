@@ -12,6 +12,7 @@ import { buildWhatsAppInvoiceUrl, downloadSalesInvoicePdf } from '@/lib/invoices
 import { useRouter } from 'next/navigation';
 import { toLocalDateTimeInputValue } from '@/lib/finance/financial-dates';
 import { useMoney } from '@/components/providers/CurrencyProvider'
+import { QlOverflowMenu } from '@/components/ui/ql/OverflowMenu'
 
 export function SalesActionsHeader({ customers, inventory, eggInventory, eggBatchStock = [], fifoEggAvailability = { totalEggs: 0, byCategoryId: {} }, livestock, eggsPerCrate = 30, initialLivestockId, initialOpen = false, canEdit = true, canOverridePrice = false, allowBatchOverride = false, allowWorkerDiscounts = false, defaultDiscountType = 'item' }: { 
   customers: any[], 
@@ -71,7 +72,7 @@ export function SalesActionsHeader({ customers, inventory, eggInventory, eggBatc
   );
 }
 
-export function SalesRowActions({ order, canEdit = true, canRecordPayment = false, eggsPerCrate = 30 }: { order: any, canEdit?: boolean, canRecordPayment?: boolean, eggsPerCrate?: number }) {
+export function SalesRowActions({ order, canEdit = true, canRecordPayment = false, eggsPerCrate = 30, variant = 'icons' }: { order: any, canEdit?: boolean, canRecordPayment?: boolean, eggsPerCrate?: number, variant?: 'icons' | 'phone' }) {
   const money = useMoney()
   const router = useRouter();
   const [updatingAction, setUpdatingAction] = useState<'completed' | 'cancelled' | 'payment' | 'whatsapp' | null>(null);
@@ -149,8 +150,101 @@ export function SalesRowActions({ order, canEdit = true, canRecordPayment = fals
     }
   };
 
+  const busyLabel = updatingAction === 'payment' ? 'Recording payment...' : updatingAction === 'whatsapp' ? 'Preparing WhatsApp...' : isDownloadingInvoice ? 'Generating invoice...' : 'Updating order...';
+  const canPay = canEdit && canRecordPayment && order.customerId && order.status === 'PENDING';
+  const canComplete = canEdit && (order.status === 'PENDING' || order.status === 'PAID');
+  const canCancel = canEdit && order.status === 'PENDING';
+  const openPayment = () => {
+    setPaymentAmount(Number(order.totalAmount));
+    setPaymentDate(toLocalDateTimeInputValue());
+    setIsPaymentOpen(true);
+  };
+
+  const paymentDialog = (
+      <Dialog 
+        isOpen={isPaymentOpen} 
+        onOpenChange={setIsPaymentOpen}
+        title="Record payment"
+      >
+        <Form onSubmit={handleRecordPayment}>
+          <FormSummary>
+            <FormSummaryRow label="This sale" value={money.format(Number(order.totalAmount || 0))} />
+            <FormSummaryRow
+              label="Customer owes in total"
+              value={money.format(Number(order.customer?.balanceOwed || 0))}
+              strong
+            />
+          </FormSummary>
+
+          <Input
+            label="Amount paid"
+            type="number"
+            step="0.01"
+            min="0"
+            unit={money.currency}
+            value={paymentAmount}
+            onChange={(e) => setPaymentAmount(Number(e.target.value))}
+            required
+          />
+
+          <Input
+            label="Date and time paid"
+            type="datetime-local"
+            value={paymentDate}
+            onChange={(e) => setPaymentDate(e.target.value)}
+            required
+          />
+
+          <FormActions>
+            <Button type="button" variant="outline" onClick={() => setIsPaymentOpen(false)} disabled={updatingAction === 'payment'}>
+              Cancel
+            </Button>
+            <Button type="submit" variant="accent" isLoading={updatingAction === 'payment'} loadingText="Saving">
+              Record payment
+            </Button>
+          </FormActions>
+        </Form>
+      </Dialog>
+  );
+
+  if (variant === 'phone') {
+    // Words, not bare icons; cancelling lives in the ⋯ menu.
+    const named = 'inline-flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-ql-line px-3 font-ql-sans text-[13px] font-semibold text-ql-text disabled:opacity-50';
+    return (
+      <MutationBoundary active={!!updatingAction || isDownloadingInvoice} label={busyLabel} className="rounded-xl">
+        <div className="flex flex-wrap items-center gap-2">
+          <button type="button" onClick={handleDownloadInvoice} disabled={isDownloadingInvoice} className={named}>
+            {isDownloadingInvoice ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" strokeWidth={1.75} />}
+            Receipt
+          </button>
+          <button type="button" onClick={handleShareWhatsApp} disabled={!!updatingAction || isDownloadingInvoice} className={named}>
+            {updatingAction === 'whatsapp' ? <Loader2 className="h-4 w-4 animate-spin" /> : <MessageCircle className="h-4 w-4" strokeWidth={1.75} />}
+            WhatsApp
+          </button>
+          {canPay ? (
+            <button type="button" onClick={openPayment} className={named}>
+              <CreditCard className="h-4 w-4" strokeWidth={1.75} />
+              Record payment
+            </button>
+          ) : null}
+          {canComplete || canCancel ? (
+            <QlOverflowMenu
+              label="More actions for this order"
+              disabled={!!updatingAction}
+              items={[
+                ...(canComplete ? [{ label: 'Mark completed', icon: CheckCircle2, onSelect: () => handleStatusUpdate('COMPLETED') }] : []),
+                ...(canCancel ? [{ label: 'Cancel order', icon: XCircle, destructive: true, onSelect: () => handleStatusUpdate('CANCELLED') }] : []),
+              ]}
+            />
+          ) : null}
+          {paymentDialog}
+        </div>
+      </MutationBoundary>
+    );
+  }
+
   return (
-    <MutationBoundary active={!!updatingAction || isDownloadingInvoice} label={updatingAction === 'payment' ? 'Recording payment...' : updatingAction === 'whatsapp' ? 'Preparing WhatsApp...' : isDownloadingInvoice ? 'Generating invoice...' : 'Updating order...'} className="rounded-md">
+    <MutationBoundary active={!!updatingAction || isDownloadingInvoice} label={busyLabel} className="rounded-md">
     <div className="flex items-center justify-end gap-2 px-2">
       <button 
         onClick={handleDownloadInvoice}
@@ -209,50 +303,7 @@ export function SalesRowActions({ order, canEdit = true, canRecordPayment = fals
         </>
       )}
 
-      <Dialog 
-        isOpen={isPaymentOpen} 
-        onOpenChange={setIsPaymentOpen}
-        title="Record payment"
-      >
-        <Form onSubmit={handleRecordPayment}>
-          <FormSummary>
-            <FormSummaryRow label="This sale" value={money.format(Number(order.totalAmount || 0))} />
-            <FormSummaryRow
-              label="Customer owes in total"
-              value={money.format(Number(order.customer?.balanceOwed || 0))}
-              strong
-            />
-          </FormSummary>
-
-          <Input
-            label="Amount paid"
-            type="number"
-            step="0.01"
-            min="0"
-            unit={money.currency}
-            value={paymentAmount}
-            onChange={(e) => setPaymentAmount(Number(e.target.value))}
-            required
-          />
-
-          <Input
-            label="Date and time paid"
-            type="datetime-local"
-            value={paymentDate}
-            onChange={(e) => setPaymentDate(e.target.value)}
-            required
-          />
-
-          <FormActions>
-            <Button type="button" variant="outline" onClick={() => setIsPaymentOpen(false)} disabled={updatingAction === 'payment'}>
-              Cancel
-            </Button>
-            <Button type="submit" variant="accent" isLoading={updatingAction === 'payment'} loadingText="Saving">
-              Record payment
-            </Button>
-          </FormActions>
-        </Form>
-      </Dialog>
+      {paymentDialog}
     </div>
     </MutationBoundary>
   );
