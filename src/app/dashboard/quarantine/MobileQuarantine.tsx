@@ -15,7 +15,7 @@ import { QL_PRIMARY_ATTR } from '@/components/ui/ql/primary';
 import { logHealthEvent, logMortalityInIsolation, returnFromIsolation } from '@/lib/actions/batch-actions';
 import { formatLivestockType, getLivestockUnit } from '@/lib/utils/growth-utils';
 import { IsolationRoomForm } from '../mortality/IsolationRoomForm';
-import { MORTALITY_REASONS } from '../flocks/FlockForm';
+import { CausePicker } from '../mortality/CausePicker';
 
 type Batch = { id: string; batchName?: string | null; type: string; currentCount: number; isolationCount?: number | null };
 type Room = { id: string | number; name: string; capacity: number };
@@ -282,33 +282,6 @@ export function MobileQuarantine({
         </>
       ) : null}
     </div>
-  );
-}
-
-/** Cause, then what exactly (the same lists as the flock form). Unknown needs no detail. */
-function CausePicker({ cause, detail, onChange }: { cause: string; detail: string; onChange: (cause: string, detail: string) => void }) {
-  const details = cause !== 'Unknown' ? MORTALITY_REASONS[cause] ?? [] : [];
-  const select = 'mt-1 h-12 w-full rounded-xl border border-ql-line bg-ql-ground px-3 text-[15px] text-ql-text';
-  return (
-    <>
-      <label className="block text-[13px] text-ql-muted">
-        Cause
-        <select value={cause} onChange={(event) => onChange(event.target.value, event.target.value === 'Unknown' ? 'Unknown cause yet' : '')} className={select}>
-          {Object.keys(MORTALITY_REASONS).map((entry) => (
-            <option key={entry} value={entry}>{entry === 'Unknown' ? 'Unknown cause yet' : entry}</option>
-          ))}
-        </select>
-      </label>
-      {details.length > 0 ? (
-        <label className="block text-[13px] text-ql-muted">
-          What exactly
-          <select value={detail} onChange={(event) => onChange(cause, event.target.value)} className={select}>
-            <option value="">Select one</option>
-            {details.map((entry) => <option key={entry} value={entry}>{entry}</option>)}
-          </select>
-        </label>
-      ) : null}
-    </>
   );
 }
 

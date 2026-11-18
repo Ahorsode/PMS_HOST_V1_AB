@@ -13,6 +13,7 @@ look. Each board lands on its own `redesign/<screen>` branch, one commit per PDF
 | Health schedule (overview, week strip, new-schedule sheet) | Health-Schedule-Redesign.pdf (2 pages) | `redesign/health-schedule` | States in `health/schedule-state.ts`; the form opens as a sheet on phones |
 | Feed (overview, feeding history, log form) | Feed-Redesign.pdf (2 pages) | `redesign/feed` | Counts and day grouping in `feed/feed-math.ts`; batch cards, stepper and stock-after on phones |
 | Quarantine & isolation (overview, isolate sheet, record-loss sheet) | Quarantine-Redesign.pdf (2 pages) | `redesign/quarantine` | Phone sheets call the same `logHealthEvent` / `logMortalityInIsolation` / `returnFromIsolation` actions |
+| Mortality (overview, 1% check, day detail, log-deaths sheet) | Mortality-Redesign.pdf (2 pages) | `redesign/mortality` | Figures in `mortality/mortality-math.ts`; shared `CausePicker` and `LineGauge` |
 
 ## Shared tokens (`src/app/globals.css`)
 
@@ -93,6 +94,20 @@ Landing page:
   adds staff but drops five modules); a pricing decision, not changed here.
 - The sample card's figures are the page's own illustration (labelled Sample
   data); only the egg count is worked out (crates × 30).
+
+Mortality:
+- `getAllMortalityLogs` loads the latest 50 DEAD logs, so the total (labelled
+  "across all active & archived batches" on desktop) can undercount.
+- It does not include `isolationRoom`, so every log reads "No room" on
+  desktop and phone.
+- It does not filter `isDeleted`, so deleted logs still count.
+- The 1% check uses each flock's current head count (the board makes the same
+  assumption) and looks at the worst flock-day in the last 7 days.
+- Cause is picked with the flock form's cause / what-exactly lists, not two
+  chips; adding a cause to an old log has no endpoint, so the nudge links to
+  the batch.
+- The log-deaths sheet has no room picker: the existing death flow never sets
+  a room (only sick birds go to a room).
 
 Quarantine:
 - Isolated birds are counted per flock (`isolationCount`), not per room. Room

@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { QuickMortalityLogger } from './QuickMortalityLogger';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { MobileMortality } from './MobileMortality';
 
 export default async function MortalityPage() {
   const hasAccess = await checkWorkerPermissions('mortality', 'view');
@@ -30,15 +31,19 @@ export default async function MortalityPage() {
   const totalMortality = logs.reduce((acc: number, log: any) => acc + log.count, 0);
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 px-0 md:px-3 pt-2 pb-7 md:py-7">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-page p-6 rounded-xl border border-fg/[0.08] gap-4">
+    <div className="max-w-7xl mx-auto md:space-y-6 px-0 md:px-3 pt-2 pb-7 md:py-7">
+      {/* Phone layout (Quiet Ledger); everything below is tablet and desktop only. */}
+      <div className="md:hidden">
+        <MobileMortality logs={JSON.parse(JSON.stringify(logs))} activeBatches={activeBatches} canEdit={canEdit} />
+      </div>
+      <div className="hidden md:flex flex-col sm:flex-row justify-between items-start sm:items-center bg-page p-6 rounded-xl border border-fg/[0.08] gap-4">
         <div>
           <h1 className="text-3xl font-semibold leading-tight text-fg">Mortality</h1>
           <p className="mt-2 text-sm text-fg-2">Deaths logged across your units, newest first</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="hidden md:grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="relative overflow-hidden bg-red-950/80 border border-fg/[0.08] text-fg p-6 rounded-xl">
           <p className="text-neg text-xs font-medium mb-1">Total deaths (history)</p>
           <h3 className="text-4xl font-medium">{totalMortality.toLocaleString()} <span className="text-xs font-normal text-neg">livestock</span></h3>
@@ -58,7 +63,7 @@ export default async function MortalityPage() {
 
       {/* Quick Logger */}
       {canEdit && (
-        <div id="quick-logger" className="scroll-mt-6 bg-card p-6 rounded-xl border border-fg/[0.08]">
+        <div id="quick-logger" className="hidden md:block scroll-mt-6 bg-card p-6 rounded-xl border border-fg/[0.08]">
           <QuickMortalityLogger activeBatches={activeBatches} isolationRooms={[]} defaultType="DEAD" />
         </div>
       )}
@@ -66,7 +71,7 @@ export default async function MortalityPage() {
 
 
       {/* Historical Log */}
-      <div className="bg-card rounded-xl border border-fg/[0.08] overflow-hidden">
+      <div className="hidden md:block bg-card rounded-xl border border-fg/[0.08] overflow-hidden">
         <div className="bg-fg/[0.04] px-6 py-4 border-b border-fg/[0.08] flex items-center gap-2">
           <History className="w-4 h-4 text-neg" />
           <h3 className="font-medium text-neg text-sm">Historical mortality record</h3>
