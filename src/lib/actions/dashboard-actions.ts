@@ -21,6 +21,7 @@ import {
   computeBatchFcr,
   computeGlobalFcr,
   computeProfitTrend,
+  sumRevenueBeforeDay,
   getFcrTarget,
 } from '@/lib/analytics/executive-metrics'
 import { computeFarmProductivityIndex } from '@/lib/analytics/productivity-index'
@@ -44,6 +45,12 @@ export async function getDashboardStats() {
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6)
     sevenDaysAgo.setHours(0, 0, 0, 0)
 
+    // Sales and orders are read for 14 days so the 7 days before this week
+    // can be compared against it; everything else uses the last 7 days.
+    const fourteenDaysAgo = new Date()
+    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 13)
+    fourteenDaysAgo.setHours(0, 0, 0, 0)
+
     const [
       totalBirds,
       eggsData,
@@ -56,9 +63,9 @@ export async function getDashboardStats() {
       todayEggs,
       recentEggs,
       recentFeed,
-      recentSales,
+      salesLast14Days,
       recentMortality,
-      recentOrders,
+      ordersLast14Days,
       supplierDebt,
       customerDebt,
       totalExpenses,
@@ -132,7 +139,7 @@ export async function getDashboardStats() {
         select: { logDate: true, amountConsumed: true, feedTypeId: true }
       }),
       canViewFinance ? tx.sale.findMany({
-        where: { saleDate: { gte: sevenDaysAgo }, farmId: activeFarmId },
+        where: { saleDate: { gte: fourteenDaysAgo }, farmId: activeFarmId },
         orderBy: { saleDate: 'asc' },
         select: { saleDate: true, totalAmount: true }
       }) : Promise.resolve([]),
@@ -142,7 +149,7 @@ export async function getDashboardStats() {
         select: { logDate: true, count: true }
       }),
       canViewFinance ? tx.order.findMany({
-        where: { orderDate: { gte: sevenDaysAgo }, farmId: activeFarmId },
+        where: { orderDate: { gte: fourteenDaysAgo }, farmId: activeFarmId },
         orderBy: { orderDate: 'asc' },
         select: { orderDate: true, totalAmount: true }
       }) : Promise.resolve([]),
@@ -214,6 +221,11 @@ export async function getDashboardStats() {
           })
         : Promise.resolve([]),
     ])
+
+    // The same rows the 7-day queries used to return, for the trends and the
+    // recent lists (the accountant dashboard shows these).
+    const recentSales = salesLast14Days.filter((sale: any) => sale.saleDate >= sevenDaysAgo)
+    const recentOrders = ordersLast14Days.filter((order: any) => order.orderDate >= sevenDaysAgo)
 
     const eggInventoryStock = eggInventoryItem ? Number(eggInventoryItem.stockLevel) : 0
     
@@ -386,20 +398,17 @@ export async function getDashboardStats() {
 
     const revenueVelocityData = buildRevenueVelocitySeries({ revenueTrendData })
 
-    const fourteenDaysAgo = new Date()
-    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 13)
-    fourteenDaysAgo.setHours(0, 0, 0, 0)
     const sevenDaysAgoMid = new Date(sevenDaysAgo)
     sevenDaysAgoMid.setHours(0, 0, 0, 0)
 
     const currentPeriodRevenue = revenueTrendData.reduce((sum, point) => sum + point.count, 0)
     const previousPeriodRevenue = canViewFinance
-      ? recentSales
-          .filter((sale: any) => formatDate(sale.saleDate) < formatDate(sevenDaysAgoMid))
-          .reduce((sum: number, sale: any) => sum + Number(sale.totalAmount), 0) +
-        recentOrders
-          .filter((order: any) => formatDate(order.orderDate) < formatDate(sevenDaysAgoMid))
-          .reduce((sum: number, order: any) => sum + Number(order.totalAmount), 0)
+      ? sumRevenueBeforeDay({
+          sales: salesLast14Days,
+          orders: ordersLast14Days,
+          beforeDay: formatDate(sevenDaysAgoMid),
+          dayOf: formatDate,
+        })
       : 0
 
     const currentPeriodExpenses = canViewFinance

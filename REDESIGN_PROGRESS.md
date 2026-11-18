@@ -61,11 +61,10 @@ Not built yet (no board has needed them): sticky bar, plan card, confirm sheet
 
 ## Open items
 
-- `previousPeriodRevenue` in `getDashboardStats` is always 0: sales/orders are
-  only loaded from 6 days back, then filtered to dates before that same day.
-  So the 7-day trend chip reads "100% revenue vs previous period" whenever
-  there is any revenue. Not fixed (widening the query also changes
-  `recentSales`/`recentOrders`, which the accountant dashboard lists).
+- Fixed: `previousPeriodRevenue` in `getDashboardStats` was always 0 (sales and
+  orders were loaded from 6 days back, then filtered to dates before that day),
+  so the trend chip read "+100%" whenever there was revenue. Sales and orders
+  now load for 14 days; `recentSales`/`recentOrders` are trimmed back to 7.
 - The trend chip compares revenue, not profit, under a "Net profit" heading
   (kept as on the board and as before).
 - "Cycle avg" is the mean of the days with revenue in the last 7 days, not a

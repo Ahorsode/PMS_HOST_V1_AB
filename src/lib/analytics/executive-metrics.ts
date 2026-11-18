@@ -130,6 +130,31 @@ export function buildRevenueVelocitySeries(input: {
   })) satisfies RevenueVelocityPoint[]
 }
 
+/**
+ * Sale and order totals dated before `beforeDay` (a YYYY-MM-DD key), for the
+ * period the dashboard compares this week's revenue against. The caller loads
+ * only that comparison window, so everything earlier than `beforeDay` counts.
+ */
+export function sumRevenueBeforeDay(input: {
+  sales: Array<{ saleDate: Date; totalAmount: unknown }>
+  orders: Array<{ orderDate: Date; totalAmount: unknown }>
+  beforeDay: string
+  dayOf: (date: Date) => string
+}) {
+  const total = (rows: Array<{ date: Date; amount: unknown }>) =>
+    rows
+      .filter((row) => {
+        const day = input.dayOf(row.date)
+        return day !== '' && day < input.beforeDay
+      })
+      .reduce((sum, row) => sum + (Number(row.amount) || 0), 0)
+
+  return (
+    total(input.sales.map((sale) => ({ date: sale.saleDate, amount: sale.totalAmount }))) +
+    total(input.orders.map((order) => ({ date: order.orderDate, amount: order.totalAmount })))
+  )
+}
+
 export function computeProfitTrend(input: {
   currentPeriodRevenue: number
   previousPeriodRevenue: number
