@@ -9,6 +9,7 @@ look. Each board lands on its own `redesign/<screen>` branch, one commit per PDF
 | --- | --- | --- | --- |
 | Owner dashboard (premium, "Farm summary") | Poultry-Ledger-Dashboard-Redesign.pdf (2 pages) | `redesign/owner-dashboard` | Also restyled the shared mobile header, the content gutter and the tab bar |
 | Landing page + sign-up step rail | Landing-Page-Redesign.pdf (7 pages) | `redesign/landing-page` | Phone tree per section beside the unchanged desktop markup; plan chips and term prices worked out from the billing config |
+| Egg production (overview, stock & history, log form) | Egg-Production-Redesign.pdf (2 pages) | `redesign/egg-production` | Shared counts moved to `eggs/egg-math.ts`; log form switches to steppers on phones |
 
 ## Shared tokens (`src/app/globals.css`)
 
@@ -28,6 +29,8 @@ CSS variables on `:root`, light-theme versions under `:root[data-theme="light"]`
 | `--ql-coral` | `#F0716B` | urgent / loss |
 | `--ql-text` | `#E8F0EC` | primary text |
 | `--ql-muted` | `#7C8E86` | secondary text, labels |
+| `--ql-shell` | `#EAD9AE` | egg objects (crate dots) |
+| `--ql-deep` | `#2A6E58` | sold / history series |
 
 Fonts (`src/components/ui/ql/fonts.ts`, next/font; the variables are set on
 the dashboard shell in `SidebarWrapper`, on the landing root, and next to the
@@ -51,6 +54,10 @@ Spacing: screen gutter 16 (`px-4` on the mobile shell), tile gap 12 (`gap-3`,
 | `Derived.tsx` | `QlDerived`: dotted underline for a worked-out figure, formula as tooltip and screen-reader text |
 | `StickyBar.tsx` | `QlStickyBar` (dim state with a mono reason) and `useNoPrimaryInView()`: shows only while no `data-ql-primary` button is on screen |
 | `primary.ts` | `QL_PRIMARY_ATTR`: spread on the screen's one filled mint button (server-safe import) |
+| `EggCrate.tsx` | The crate in three states: empty, open (n of 30), full with a mint rim |
+| `Stepper.tsx` | `QlStepper`: − / number / + with 44 px buttons, clamped whole numbers |
+| `OverflowMenu.tsx` | `QlOverflowMenu`: the ⋯ menu (any icon, above or below); destructive items coral and last |
+| `useIsPhone.ts` | Below-md check for client-only places (dialogs) that need a different control, not just styles |
 
 Landing-only pieces live in `src/components/site/landing/` (sample card,
 section heads, module rows with plan chips, steps rail, role switcher, phone
@@ -84,7 +91,23 @@ Landing page:
 - The sample card's figures are the page's own illustration (labelled Sample
   data); only the egg count is worked out (crates × 30).
 
+Egg production:
+- `getAllEggProduction` loads only the latest 50 logs. The stock summary
+  ("Usable logged", labelled "all collections" on desktop) and the page's
+  today and 7-day totals are worked out from those 50, so a farm with more
+  than 50 logs in a week undercounts. Not changed (needs a query change).
+- The board's log screen treats crates + loose as everything laid, with
+  unusable taken away (1,076 − 12). The real form treats crates + loose as
+  good eggs and adds unusable on top. Kept the real behaviour; the phone
+  summary says "good eggs" and "laid = good + unusable".
+- Delete still uses the shared reason-required confirm (moves to trash), not a
+  type-the-name screen; it now sits in the ⋯ menu on phones.
+- The flock selector picks the flock the Log production button logs for; the
+  overview figures stay farm-wide, as before.
+
 Owner dashboard:
+- Quick log now opens the eggs and feed log forms and the sell form straight
+  away (`?quick=log` / `?quick=sell`, which those pages already support).
 
 - Fixed: `previousPeriodRevenue` in `getDashboardStats` was always 0 (sales and
   orders were loaded from 6 days back, then filtered to dates before that day),

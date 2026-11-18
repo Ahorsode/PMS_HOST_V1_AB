@@ -9,6 +9,8 @@ import { useMoney } from '@/components/providers/CurrencyProvider';
 import { g, ink } from '@/components/ui/graphite';
 import { EggLogActions } from './EggActions';
 import { MobileCardList } from '@/components/ui/MobileCardList';
+import { activePercent, eggStockSummary, formatCratesAndEggs, formatCratesDot, soldEggs, soldPercent, usableEggs } from './egg-math';
+import { MobileEggHistory } from './MobileEggHistory';
 
 type EggLog = {
   id: string;
@@ -41,36 +43,6 @@ type EggSaleRow = {
 
 type StockFilter = 'active' | 'sold_out' | 'all';
 type PanelTab = 'production' | 'sales';
-
-function usableEggs(log: EggLog) {
-  return Math.max(0, log.eggsCollected - Number(log.unusableCount || 0));
-}
-
-function soldEggs(log: EggLog) {
-  return Math.max(0, usableEggs(log) - Number(log.eggsRemaining || 0));
-}
-
-function activePercent(log: EggLog) {
-  const usable = usableEggs(log);
-  if (usable <= 0) return 0;
-  return Math.round((Number(log.eggsRemaining || 0) / usable) * 100);
-}
-
-function soldPercent(log: EggLog) {
-  const usable = usableEggs(log);
-  if (usable <= 0) return 0;
-  return Math.round((soldEggs(log) / usable) * 100);
-}
-
-function formatCratesAndEggs(eggs: number, eggsPerCrate: number) {
-  const epc = eggsPerCrate > 0 ? eggsPerCrate : 30;
-  const total = Math.max(0, Math.floor(Number(eggs) || 0));
-  const crates = Math.floor(total / epc);
-  const remainder = total % epc;
-  const crateLabel = crates === 1 ? 'crate' : 'crates';
-  if (remainder === 0) return `${crates} ${crateLabel}`;
-  return `${crates} ${crateLabel} / ${remainder} eggs`;
-}
 
 function giveawayUnitsFromSale(row: EggSaleRow) {
   if (row.lineDiscountType !== 'item') return 0;
@@ -171,21 +143,7 @@ export function EggProductionHistoryPanel({
     });
   }, [productionHistory, stockFilter]);
 
-  const summary = useMemo(() => {
-    let totalUsable = 0;
-    let totalRemaining = 0;
-    let totalSold = 0;
-    for (const log of productionHistory) {
-      const usable = usableEggs(log);
-      const remaining = Number(log.eggsRemaining || 0);
-      totalUsable += usable;
-      totalRemaining += remaining;
-      totalSold += soldEggs(log);
-    }
-    const activePct = totalUsable > 0 ? Math.round((totalRemaining / totalUsable) * 100) : 0;
-    const soldPct = totalUsable > 0 ? Math.round((totalSold / totalUsable) * 100) : 0;
-    return { totalUsable, totalRemaining, totalSold, activePct, soldPct };
-  }, [productionHistory]);
+  const summary = useMemo(() => eggStockSummary(productionHistory), [productionHistory]);
 
   // Downloads exactly the rows on screen: the chosen stock filter, or the sales list.
   const shownCount = tab === 'production' ? filteredLogs.length : eggSalesHistory.length;
@@ -310,8 +268,55 @@ export function EggProductionHistoryPanel({
     }
   };
 
+  const houseByBatch = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const batch of layerBatches) {
+      if (batch?.id && batch.house?.name) map.set(String(batch.id), batch.house.name);
+    }
+    return map;
+  }, [layerBatches]);
+
+  const mobileSales = useMemo(
+    () =>
+      eggSalesHistory.map((row) => {
+        const giveawayCrates = giveawayCratesFromSale(row, eggsPerCrate);
+        return {
+          id: row.id,
+          customer: row.order.customer?.name || 'Walk-in customer',
+          date: row.order.orderDate,
+          product: row.inventory?.itemName || row.description,
+          quantity: formatCratesDot(paidEggsFromSale(row), eggsPerCrate),
+          giveaway: giveawayCrates > 0 ? `${giveawayCrates} ${giveawayCrates === 1 ? 'crate' : 'crates'}` : '–',
+          unitPrice: ghs(row.unitPrice),
+          total: ghs(row.totalPrice),
+        };
+      }),
+    [eggSalesHistory, eggsPerCrate, ghs],
+  );
+
   return (
-    <section className={cn('w-full flex flex-col min-h-[50vh] overflow-hidden', g.card, className)}>
+    <>
+    {/* Phone layout (Quiet Ledger). The section below is tablet and desktop only. */}
+    <div className="md:hidden">
+      <MobileEggHistory
+        tab={tab}
+        onTab={setTab}
+        stockFilter={stockFilter}
+        onStockFilter={setStockFilter}
+        logs={filteredLogs}
+        sales={mobileSales}
+        eggsPerCrate={eggsPerCrate}
+        houseFor={(batchId) => (batchId ? houseByBatch.get(String(batchId)) ?? null : null)}
+        actionsFor={(log) => (
+          <EggLogActions log={log} batches={layerBatches} canEdit={canEdit} variant="phone" {...eggLoggingSettings} />
+        )}
+        canDownload={shownCount > 0}
+        onCsv={handleDownload}
+        onPdf={handlePdfDownload}
+        pdfBusy={pdfBusy}
+      />
+    </div>
+    <section className={cn('w-full hidden md:flex flex-col min-h-[50vh] overflow-hidden', g.card, className)}>
       <div className={`space-y-5 border-b ${g.hairline} px-5 py-4 shrink-0`}>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -528,6 +533,7 @@ export function EggProductionHistoryPanel({
         </>
       )}
     </section>
+    </>
   );
 }
 

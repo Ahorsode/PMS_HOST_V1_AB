@@ -48,6 +48,9 @@
   --ql-coral: #f0716b;
   --ql-text: #e8f0ec;
   --ql-muted: #7c8e86;
+  /* Egg board additions: egg objects, and sold / history series. */
+  --ql-shell: #ead9ae;
+  --ql-deep: #2a6e58;
 }
 
 :root[data-theme="light"] {
@@ -88,6 +91,8 @@
   --ql-coral: #c2413b;
   --ql-text: #0e1512;
   --ql-muted: #56665f;
+  --ql-shell: #d8bd78;
+  --ql-deep: #2a6e58;
 }
 
 @theme inline {
@@ -123,6 +128,8 @@
   --color-ql-coral: var(--ql-coral);
   --color-ql-text: var(--ql-text);
   --color-ql-muted: var(--ql-muted);
+  --color-ql-shell: var(--ql-shell);
+  --color-ql-deep: var(--ql-deep);
   /* Quiet Ledger type, loaded with next/font in components/ui/ql/fonts.ts. */
   --font-ql-display: var(--font-bricolage), system-ui, sans-serif;
   --font-ql-sans: var(--font-instrument), system-ui, sans-serif;

@@ -19,6 +19,11 @@ import {
 import { createEggProduction, updateEggProduction } from '@/lib/actions/egg-actions';
 import { useRouter } from 'next/navigation';
 import { formatLivestockType } from '@/lib/utils/growth-utils';
+import { useIsPhone } from '@/components/ui/ql/useIsPhone';
+import { QlStepper } from '@/components/ui/ql/Stepper';
+import { EggCrate } from '@/components/ui/ql/EggCrate';
+import { QlLabel } from '@/components/ui/ql/Surface';
+import { QlDerived } from '@/components/ui/ql/Derived';
 
 interface EggFormProps {
   batches: { id: string; batchName: string; type: string }[];
@@ -50,6 +55,9 @@ export const EggForm = ({
   eggsPerCrate = 30,
 }: EggFormProps) => {
   const router = useRouter();
+  // Phones get two-thumb steppers and a running summary (Quiet Ledger); the
+  // values, limits and saving are the same as the typed fields.
+  const phone = useIsPhone();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const initialLoggingMode = log
@@ -172,7 +180,32 @@ export const EggForm = ({
           />
         ) : null}
 
-        {loggingMode === 'individual' ? (
+        {phone ? (
+          loggingMode === 'individual' ? (
+            <QlStepper
+              label="Good eggs"
+              hint="Single eggs, not counting unusable ones"
+              value={Number(formData.eggsCollected)}
+              onChange={(val) => setFormData({ ...formData, eggsCollected: val })}
+            />
+          ) : (
+            <div className="space-y-2">
+              <QlStepper
+                label="Full crates"
+                hint={`Good eggs, ${eggsPerCrate} each`}
+                value={crates}
+                onChange={(val) => handleCrateChange(val, remainder)}
+              />
+              <QlStepper
+                label="Loose eggs"
+                hint="Fills the open crate"
+                value={remainder}
+                max={remainderMax}
+                onChange={(val) => handleCrateChange(crates, val)}
+              />
+            </div>
+          )
+        ) : loggingMode === 'individual' ? (
           <Input
             label="Good eggs"
             type="number"
@@ -221,6 +254,15 @@ export const EggForm = ({
           </FormRow>
         )}
 
+        {phone ? (
+          <QlStepper
+            label="Unusable"
+            hint="Cracked or soiled, counted on top of the good eggs"
+            tone="coral"
+            value={Number(formData.unusableCount)}
+            onChange={(val) => setFormData({ ...formData, unusableCount: val })}
+          />
+        ) : (
         <Input
           label="Unusable eggs"
           type="number"
@@ -234,12 +276,41 @@ export const EggForm = ({
           }}
           onFocus={(e) => e.target.select()}
         />
+        )}
 
+        {phone ? (
+          <div className="rounded-[24px] rounded-tl-[8px] border border-ql-line bg-ql-surface bg-[linear-gradient(180deg,color-mix(in_srgb,var(--ql-mint)_7%,transparent),transparent_60%)] p-4 font-ql-sans text-ql-text">
+            <QlLabel>This log adds</QlLabel>
+            <div className="mt-3 flex items-end justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-ql-display text-[34px] font-semibold leading-none tabular-nums">
+                  {Number(formData.eggsCollected).toLocaleString('en-US')}{' '}
+                  <span className="font-ql-sans text-base font-normal text-ql-muted">good eggs</span>
+                </p>
+                <p className="mt-2 font-ql-mono text-[10px] uppercase tracking-[0.08em] text-ql-muted">
+                  {Math.floor(Number(formData.eggsCollected) / eggsPerCrate)} crates · {Number(formData.eggsCollected) % eggsPerCrate} eggs
+                </p>
+                <p className="mt-1 font-ql-mono text-[10px] uppercase tracking-[0.08em] text-ql-muted">
+                  <QlDerived formula={`${Number(formData.eggsCollected)} good + ${Number(formData.unusableCount)} unusable`}>
+                    {totalLaid.toLocaleString('en-US')}
+                  </QlDerived>{' '}
+                  laid
+                </p>
+              </div>
+              <EggCrate
+                filled={Number(formData.eggsCollected) % eggsPerCrate}
+                size={eggsPerCrate}
+                full={Number(formData.eggsCollected) > 0 && Number(formData.eggsCollected) % eggsPerCrate === 0}
+              />
+            </div>
+          </div>
+        ) : (
         <FormSummary>
           <FormSummaryRow label="Good eggs" value={Number(formData.eggsCollected).toLocaleString()} />
           <FormSummaryRow label="Unusable eggs" value={Number(formData.unusableCount).toLocaleString()} />
           <FormSummaryRow label="Total laid" value={`${totalLaid.toLocaleString()} eggs`} strong />
         </FormSummary>
+        )}
       </FormSection>
 
       <FormSection
@@ -351,7 +422,7 @@ export const EggForm = ({
           Cancel
         </Button>
         <Button type="submit" variant="accent" isLoading={isLoading} loadingText="Saving" disabled={isOverTotal}>
-          {mode === 'edit' ? 'Save changes' : 'Save eggs'}
+          {mode === 'edit' ? 'Save changes' : phone ? 'Save log' : 'Save eggs'}
         </Button>
       </FormActions>
     </Form>

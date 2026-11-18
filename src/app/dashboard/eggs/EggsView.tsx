@@ -2,6 +2,8 @@ import React from 'react';
 import { g } from '@/components/ui/graphite';
 import { EggActionsHeader, LogProductionButton } from './EggActions';
 import { EggProductionHistoryPanel } from './EggProductionHistoryPanel';
+import { MobileEggOverview } from './MobileEggOverview';
+import { eggStockSummary, isSameLocalDay } from './egg-math';
 
 type EggLoggingSettings = {
   defaultEggUnit: 'crate' | 'individual';
@@ -35,10 +37,27 @@ export function EggsView({
   const todayLoose = todayTotal % eggsPerCrate;
   const weekCrates = Math.floor(weekTotal / eggsPerCrate);
   const weekLoose = weekTotal % eggsPerCrate;
+  const summary = eggStockSummary(productionHistory);
+  const todayUnusable = productionHistory
+    .filter((log) => isSameLocalDay(log.logDate))
+    .reduce((sum, log) => sum + Number(log.unusableCount || 0), 0);
 
   return (
-    <div className="w-full max-w-none flex flex-col gap-6 px-1 md:px-4 pt-2 pb-8 md:py-8 min-h-[calc(100dvh-4rem)]">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between shrink-0">
+    <div className="w-full max-w-none flex flex-col gap-3 md:gap-6 md:px-4 pt-2 pb-8 md:py-8 min-h-[calc(100dvh-4rem)]">
+      {/* Phone layout (Quiet Ledger); the header and cards below are tablet and desktop only. */}
+      <div className="md:hidden">
+        <MobileEggOverview
+          layerBatches={layerBatches}
+          canEdit={canEdit}
+          eggLoggingSettings={eggLoggingSettings}
+          todayTotal={todayTotal}
+          todayUnusable={todayUnusable}
+          weekTotal={weekTotal}
+          summary={summary}
+        />
+      </div>
+
+      <div className="hidden flex-col gap-4 sm:flex-row sm:items-end sm:justify-between shrink-0 md:flex">
         <div>
           <h1 className={g.title}>Egg production</h1>
           <p className={`mt-2 text-sm ${g.secondary}`}>Daily collection and stock for your layer flocks</p>
@@ -48,7 +67,7 @@ export function EggsView({
 
       {/* No items-start: both cards stretch to the taller one, and Collected today is kept
           compact so Layer flocks is the card that sets the height. */}
-      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 shrink-0">
+      <div className="hidden grid-cols-1 xl:grid-cols-4 gap-6 shrink-0 md:grid">
         <section className={`${g.card} xl:col-span-3`}>
           <div className={`flex items-baseline justify-between border-b ${g.hairline} px-5 py-4`}>
             <h2 className={g.sectionTitle}>Layer flocks</h2>

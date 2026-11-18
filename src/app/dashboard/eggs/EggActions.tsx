@@ -9,6 +9,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { DeleteConfirmationModal } from '@/components/modals/DeleteConfirmationModal';
 import { QUICK_ICON, quickButtonClass } from '@/components/ui/quick-action';
+import { qlButton } from '@/components/ui/ql/Button';
+import { QlOverflowMenu } from '@/components/ui/ql/OverflowMenu';
 
 type EggLoggingSettings = {
   defaultEggUnit?: 'crate' | 'individual';
@@ -57,11 +59,14 @@ export const EggLogActions = ({
   log,
   batches,
   canEdit = true,
+  variant = 'icons',
   ...eggSettings
 }: {
   log: any;
   batches: any[];
   canEdit?: boolean;
+  /** `phone`: View details, Edit and a ⋯ menu with Delete (Quiet Ledger). */
+  variant?: 'icons' | 'phone';
 } & EggLoggingSettings) => {
   const [mode, setMode] = useState<'edit' | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -86,6 +91,69 @@ export const EggLogActions = ({
       setIsDeleting(false);
     }
   };
+
+  const dialogs = (
+    <>
+      <Dialog
+        isOpen={mode !== null}
+        onOpenChange={(open) => !open && setMode(null)}
+        title="Edit production log"
+      >
+        {mode && (
+          <EggForm
+            log={log}
+            batches={batches}
+            mode={mode}
+            onClose={() => setMode(null)}
+            {...eggSettings}
+          />
+        )}
+      </Dialog>
+
+      <DeleteConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDelete}
+        itemName={`Egg collection log (${new Date(log.logDate).toLocaleDateString()})`}
+        isLoading={isDeleting}
+      />
+    </>
+  );
+
+  if (variant === 'phone') {
+    return (
+      <div className="flex items-center gap-2">
+        {log.batchId ? (
+          <Link href={`/dashboard/flocks/${log.batchId}`} className={qlButton('ghost', 'flex-1 rounded-xl border-ql-line text-ql-text hover:bg-ql-text/[0.04]')}>
+            View details
+            <ArrowUpRight aria-hidden="true" className="h-4 w-4" strokeWidth={1.75} />
+          </Link>
+        ) : (
+          <span className="flex-1 font-ql-mono text-[11px] uppercase tracking-[0.08em] text-ql-muted">No batch linked</span>
+        )}
+        {canEdit ? (
+          <>
+            <button
+              type="button"
+              aria-label="Edit egg record"
+              onClick={() => setMode('edit')}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-ql-line text-ql-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ql-mint/60"
+            >
+              <Pencil className="h-4 w-4" strokeWidth={1.75} />
+            </button>
+            <QlOverflowMenu
+              label="More actions for this egg record"
+              items={[
+                { label: 'Edit log', icon: Pencil, onSelect: () => setMode('edit') },
+                { label: 'Delete log…', icon: Trash2, destructive: true, onSelect: () => setShowDeleteModal(true) },
+              ]}
+            />
+          </>
+        ) : null}
+        {dialogs}
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-end gap-2">
@@ -120,29 +188,7 @@ export const EggLogActions = ({
         </>
       )}
 
-      <Dialog 
-        isOpen={mode !== null} 
-        onOpenChange={(open) => !open && setMode(null)} 
-        title="Edit production log"
-      >
-        {mode && (
-          <EggForm 
-            log={log} 
-            batches={batches} 
-            mode={mode} 
-            onClose={() => setMode(null)}
-            {...eggSettings}
-          />
-        )}
-      </Dialog>
-      
-      <DeleteConfirmationModal
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
-        onConfirm={handleDelete}
-        itemName={`Egg collection log (${new Date(log.logDate).toLocaleDateString()})`}
-        isLoading={isDeleting}
-      />
+      {dialogs}
     </div>
   );
 };
