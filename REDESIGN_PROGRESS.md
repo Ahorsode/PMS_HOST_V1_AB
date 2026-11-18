@@ -10,6 +10,7 @@ look. Each board lands on its own `redesign/<screen>` branch, one commit per PDF
 | Owner dashboard (premium, "Farm summary") | Poultry-Ledger-Dashboard-Redesign.pdf (2 pages) | `redesign/owner-dashboard` | Also restyled the shared mobile header, the content gutter and the tab bar |
 | Landing page + sign-up step rail | Landing-Page-Redesign.pdf (7 pages) | `redesign/landing-page` | Phone tree per section beside the unchanged desktop markup; plan chips and term prices worked out from the billing config |
 | Egg production (overview, stock & history, log form) | Egg-Production-Redesign.pdf (2 pages) | `redesign/egg-production` | Shared counts moved to `eggs/egg-math.ts`; log form switches to steppers on phones |
+| Health schedule (overview, week strip, new-schedule sheet) | Health-Schedule-Redesign.pdf (2 pages) | `redesign/health-schedule` | States in `health/schedule-state.ts`; the form opens as a sheet on phones |
 
 ## Shared tokens (`src/app/globals.css`)
 
@@ -58,14 +59,14 @@ Spacing: screen gutter 16 (`px-4` on the mobile shell), tile gap 12 (`gap-3`,
 | `Stepper.tsx` | `QlStepper`: − / number / + with 44 px buttons, clamped whole numbers |
 | `OverflowMenu.tsx` | `QlOverflowMenu`: the ⋯ menu (any icon, above or below); destructive items coral and last |
 | `useIsPhone.ts` | Below-md check for client-only places (dialogs) that need a different control, not just styles |
+| `ConfirmSheet.tsx` | `QlConfirmSheet`: the end of a delete; type the name, coral button dim with a reason until it matches |
 
 Landing-only pieces live in `src/components/site/landing/` (sample card,
 section heads, module rows with plan chips, steps rail, role switcher, phone
 pricing, contact rows, footer, sticky call to action, `landing-plans.ts`).
 `src/components/auth/SignupSteps.tsx` is the four-step set-up rail.
 
-Not built yet (no board has needed them): plan card for in-app plans, confirm
-sheet (type-the-name delete).
+Not built yet (no board has needed them): plan card for in-app plans.
 
 ## Shell changes (apply to every phone screen)
 
@@ -90,6 +91,18 @@ Landing page:
   adds staff but drops five modules); a pricing decision, not changed here.
 - The sample card's figures are the page's own illustration (labelled Sample
   data); only the egg count is worked out (crates × 30).
+
+Health schedule:
+- Delete on phones now goes through the ⋯ menu and a type-the-name confirm.
+  Desktop still deletes on one tap with no confirm (unchanged, but worth a look).
+- "Reschedule" on the board has no endpoint (only status changes and delete
+  exist), so it is not shown; the ⋯ menu offers Mark done, Back to pending,
+  Cancel dose and Delete.
+- The board locks the vaccine field until a flock is picked; the real form does
+  not, and that is kept.
+- The count tiles are pending doses (pending total, pending vaccines, pending
+  medicines), as the sample figures imply; a mono note says so.
+- Required "3" counts flock, item, and amount (or date for used-once items).
 
 Egg production:
 - `getAllEggProduction` loads only the latest 50 logs. The stock summary

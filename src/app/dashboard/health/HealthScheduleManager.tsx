@@ -42,6 +42,10 @@ import {
   type HealthScheduleInput,
 } from "@/lib/actions/health-actions";
 import { QUICK_ICON, quickButtonClass } from '@/components/ui/quick-action';
+import { Dialog } from '@/components/ui/Dialog';
+import { qlButton } from '@/components/ui/ql/Button';
+import { QlLabel } from '@/components/ui/ql/Surface';
+import { MobileHealthOverview } from './MobileHealthOverview';
 
 const CUSTOM = "__custom__";
 
@@ -147,6 +151,9 @@ export function HealthScheduleManager({
 
   // Staged rows for "add multiple at once".
   const [drafts, setDrafts] = useState<DraftEntry[]>([]);
+  // Phones open the form as a sheet from one button; tablet and desktop keep it inline.
+  const [phoneFormOpen, setPhoneFormOpen] = useState(false);
+  const [phonePickDate, setPhonePickDate] = useState(false);
 
   const isVaccine = type === "VACCINATION";
   const inventory = isVaccine ? vaccineInventory : medicineInventory;
@@ -330,7 +337,7 @@ export function HealthScheduleManager({
     });
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent, onSaved?: () => void) {
     e.preventDefault();
     if (!canSave) return;
     setError(null);
@@ -366,6 +373,7 @@ export function HealthScheduleManager({
         setScheduledDate(todayInputValue());
         setStatus("PENDING");
         router.refresh();
+        onSaved?.();
       } catch (err: any) {
         setError(err?.message || "Failed to save schedules");
       }
@@ -400,8 +408,279 @@ export function HealthScheduleManager({
     });
   }
 
+  // Phone form: what is still needed before Add schedule can run.
+  const requiredSteps = [
+    { done: !!batchId, missing: "a flock" },
+    { done: !!resolvedName, missing: isVaccine ? "a vaccine" : "a medicine" },
+    showQuantity
+      ? { done: Number(quantity) > 0, missing: "an amount" }
+      : { done: !!scheduledDate, missing: "a date" },
+  ];
+  const requiredDone = requiredSteps.filter((step) => step.done).length;
+  const missing = requiredSteps.filter((step) => !step.done).map((step) => step.missing);
+  const blockedReason =
+    drafts.length > 0 || missing.length === 0
+      ? null
+      : `Choose ${missing.length > 1 ? `${missing.slice(0, -1).join(", ")} and ${missing[missing.length - 1]}` : missing[0]} to continue`;
+  const tomorrowValue = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split("T")[0];
+  })();
+  const whenChoice = scheduledDate === todayInputValue() ? "today" : scheduledDate === tomorrowValue ? "tomorrow" : "pick";
+  const scheduledLabel = scheduledDate
+    ? new Date(`${scheduledDate}T00:00:00`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" })
+    : "No date chosen";
+  const chip = (active: boolean) =>
+    cn(
+      "inline-flex min-h-11 items-center gap-1.5 rounded-full border px-4 text-[13px] font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ql-mint/60",
+      active ? "border-ql-mint/50 bg-ql-mint/12 text-ql-mint" : "border-ql-line text-ql-text"
+    );
+
+  const phoneForm = (
+    <Form onSubmit={(e) => handleSubmit(e, () => setPhoneFormOpen(false))}>
+      <div className="font-ql-sans text-ql-text">
+        <div role="tablist" aria-label="What are you scheduling" className="grid grid-cols-2 gap-1 rounded-2xl border border-ql-line bg-ql-surface p-1">
+          {([
+            ["VACCINATION", "Vaccine", Syringe],
+            ["MEDICATION", "Medicine", Pill],
+          ] as const).map(([value, label, Icon]) => (
+            <button
+              key={value}
+              type="button"
+              role="tab"
+              aria-selected={type === value}
+              onClick={() => switchType(value)}
+              className={cn(
+                "flex min-h-11 items-center justify-center gap-1.5 rounded-xl text-sm font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ql-mint/60",
+                type === value ? "bg-ql-mint text-ql-on-mint" : "text-ql-muted"
+              )}
+            >
+              <Icon aria-hidden="true" className="h-4 w-4" strokeWidth={1.75} />
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-4">
+          <div className="flex items-center justify-between">
+            <QlLabel>Required</QlLabel>
+            <QlLabel className="text-ql-text">{requiredDone} of 3</QlLabel>
+          </div>
+          <div aria-hidden="true" className="mt-2 grid grid-cols-3 gap-1.5">
+            {requiredSteps.map((step, index) => (
+              <span key={index} className={cn("h-1 rounded-full", step.done ? "bg-ql-mint" : "bg-ql-line")} />
+            ))}
+          </div>
+        </div>
+
+        <QlLabel className="mt-5">What</QlLabel>
+      </div>
+
+      <Select label="Flock" options={batchOptions} value={batchId} onChange={(e) => setBatchId(e.target.value)} />
+      <Select
+        label={isVaccine ? "Vaccine" : "Medicine"}
+        options={nameOptions}
+        value={namePreset}
+        onChange={(e) => handleNameChange(e.target.value)}
+        hint={
+          inventory.length === 0
+            ? `None in stock yet. Add a new ${isVaccine ? "vaccine" : "medicine"} below.`
+            : !isAddingNew && selectedItem
+              ? showQuantity
+                ? `Measured in ${selectedItem.unit} each time it is used.`
+                : "Used once, with no amount to measure."
+              : "These come from your stock."
+        }
+      />
+      {!isAddingNew ? (
+        <button type="button" onClick={() => handleNameChange(CUSTOM)} className="-mt-2 inline-flex min-h-11 items-center font-ql-sans text-[13px] font-semibold text-ql-mint">
+          + Add a new {isVaccine ? "vaccine" : "medicine"}
+        </button>
+      ) : null}
+
+      {isAddingNew && (
+        <>
+          <Input
+            label={isVaccine ? "Name of the new vaccine" : "Name of the new medicine"}
+            placeholder={isVaccine ? "e.g. Newcastle Lasota" : "e.g. Florfenicol"}
+            value={customName}
+            onChange={(e) => setCustomName(e.target.value)}
+          />
+          <Segmented
+            label="How is it used"
+            hint="Set once for this new item."
+            value={newUsageType}
+            onChange={setNewUsageType}
+            options={[
+              { value: "ONE_TIME", label: "Used once" },
+              { value: "QUANTITY", label: "Measured amount" },
+            ]}
+          />
+          {resolvedName ? (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleSaveToInventory}
+              disabled={!canSaveToInventory}
+              isLoading={isSavingItem}
+              loadingText="Saving"
+              className="w-full"
+            >
+              <Boxes className="h-4 w-4 shrink-0 text-fg-2" strokeWidth={1.75} />
+              <span className="truncate">Save “{resolvedName}” to stock</span>
+            </Button>
+          ) : null}
+        </>
+      )}
+
+      {showQuantity && (
+        <>
+          <QlLabel className="mt-2">How much</QlLabel>
+          <FormRow alwaysInline>
+            <Input
+              label="Amount"
+              type="number"
+              min="0"
+              step="any"
+              placeholder="e.g. 250"
+              value={quantity}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (v === "" || Number(v) >= 0) setQuantity(v);
+              }}
+              error={quantity !== "" && Number(quantity) <= 0 ? `Enter at least 1 ${unit || "unit"}` : undefined}
+            />
+            {isAddingNew ? (
+              <Select label="Measured in" options={UNIT_OPTIONS} value={unit} onChange={(e) => setUnit(e.target.value)} />
+            ) : (
+              <Input label="Measured in" value={selectedItem?.unit || unit} disabled />
+            )}
+          </FormRow>
+        </>
+      )}
+
+      <div className="font-ql-sans">
+        <QlLabel className="mt-2">When</QlLabel>
+        <div className="mt-2 flex flex-wrap gap-2">
+          <button type="button" className={chip(whenChoice === "today" && !phonePickDate)} onClick={() => { setPhonePickDate(false); setScheduledDate(todayInputValue()); }}>
+            Today
+          </button>
+          <button type="button" className={chip(whenChoice === "tomorrow" && !phonePickDate)} onClick={() => { setPhonePickDate(false); setScheduledDate(tomorrowValue); }}>
+            Tomorrow
+          </button>
+          <button type="button" className={chip(phonePickDate || whenChoice === "pick")} onClick={() => setPhonePickDate(true)}>
+            <CalendarClock aria-hidden="true" className="h-4 w-4" strokeWidth={1.75} />
+            Pick date
+          </button>
+        </div>
+        <p className="mt-2 text-[13px] text-ql-muted">{scheduledLabel}</p>
+      </div>
+      {phonePickDate || whenChoice === "pick" ? (
+        <DateInput label="Date" value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} />
+      ) : null}
+
+      <details className="group rounded-2xl border border-ql-line bg-ql-surface px-4 font-ql-sans">
+        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between [&::-webkit-details-marker]:hidden">
+          <QlLabel as="span">Status</QlLabel>
+          <span className="rounded-full border border-ql-line px-2.5 py-1 text-[11px] font-semibold text-ql-text">
+            {STATUS_OPTIONS.find((o) => o.value === status)?.label}
+          </span>
+        </summary>
+        <div className="pb-4">
+          <Segmented label="Status" value={status} onChange={setStatus} options={STATUS_OPTIONS} />
+        </div>
+      </details>
+      <details className="group rounded-2xl border border-ql-line bg-ql-surface px-4 font-ql-sans" open={notes ? true : undefined}>
+        <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between [&::-webkit-details-marker]:hidden">
+          <QlLabel as="span">Note</QlLabel>
+          <span className="font-ql-mono text-[11px] text-ql-muted">{notes ? "Added" : "Optional"}</span>
+        </summary>
+        <div className="pb-4">
+          <Input label="Notes" optional placeholder="e.g. In drinking water, 1 ml per bird" value={notes} onChange={(e) => setNotes(e.target.value)} />
+        </div>
+      </details>
+
+      {drafts.length > 0 && (
+        <FormSection title="Ready to save" aside={<span className="tabular-nums">{drafts.length}</span>}>
+          <ul className="divide-y divide-fg/[0.06] rounded-xl border border-fg/[0.08] bg-tile">
+            {drafts.map((d) => (
+              <li key={d._key} className="flex min-h-12 items-center gap-2.5 py-1 pl-3.5 pr-1 text-sm">
+                {d.type === "VACCINATION" ? (
+                  <Syringe className="h-4 w-4 shrink-0 text-fg-3" strokeWidth={1.5} />
+                ) : (
+                  <Pill className="h-4 w-4 shrink-0 text-fg-3" strokeWidth={1.5} />
+                )}
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium text-fg">{d.name}</span>
+                  <span className="block truncate text-[13px] text-fg-3">
+                    {d.batchLabel} · {d.usageType === "QUANTITY" ? `${d.quantity} ${d.unit}` : "Used once"}
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => removeDraft(d._key)}
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-fg-3"
+                  aria-label={`Remove ${d.name}`}
+                >
+                  <Trash2 className="h-4 w-4" strokeWidth={1.5} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </FormSection>
+      )}
+
+      <FormError>{error}</FormError>
+      {successMsg ? <FormNote tone="success">{successMsg}</FormNote> : null}
+
+      <div className="space-y-2 font-ql-sans">
+        {blockedReason ? (
+          <p className="text-center text-[13px] text-ql-muted">{blockedReason}</p>
+        ) : null}
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={handleAddToList}
+            disabled={!currentEntryValid || isPending}
+            className={qlButton("ghost", "rounded-2xl border-ql-line text-ql-text disabled:text-ql-muted")}
+          >
+            Add another
+          </button>
+          <button type="submit" disabled={!canSave} className={qlButton("filled", "rounded-2xl")}>
+            {isPending ? "Saving…" : totalToSave > 1 ? `Save ${totalToSave}` : "Add schedule"}
+          </button>
+        </div>
+      </div>
+    </Form>
+  );
+
   return (
-    <div className="space-y-6">
+    <>
+    {/* Phone layout (Quiet Ledger): the schedule leads and the form opens as a sheet. */}
+    <div className="md:hidden">
+      <MobileHealthOverview
+        vaccinations={vaccinations}
+        medications={medications}
+        canEdit={canEdit}
+        isPending={isPending}
+        vaccineStock={vaccineInventory.length}
+        medicineStock={medicineInventory.length}
+        onNew={(next) => {
+          if (next !== type) switchType(next);
+          setPhoneFormOpen(true);
+        }}
+        onStatusChange={handleStatusChange}
+        onDelete={handleDelete}
+      />
+      {error && !phoneFormOpen ? <p role="alert" className="mt-3 text-center text-[13px] text-ql-coral">{error}</p> : null}
+      {canEdit ? (
+        <Dialog isOpen={phoneFormOpen} onOpenChange={setPhoneFormOpen} title="New schedule" description="Farm · Health">
+          {phoneForm}
+        </Dialog>
+      ) : null}
+    </div>
+    <div className="hidden space-y-6 md:block">
       {/* New schedule form */}
       {canEdit ? (
         <Card className="border border-fg/[0.08] bg-card">
@@ -621,6 +900,7 @@ export function HealthScheduleManager({
         />
       </div>
     </div>
+    </>
   );
 }
 
