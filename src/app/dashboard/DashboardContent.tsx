@@ -12,6 +12,7 @@ import { getBreedDisplayName, normalizeBreedValue } from '@/lib/farm/livestock-b
 import { g, ink } from '@/components/ui/graphite';
 import dynamic from 'next/dynamic';
 import type { ExecutiveStats } from '@/components/dashboard/executive/types';
+import { MobileFarmOverview } from '@/components/dashboard/MobileFarmOverview';
 
 const skeleton = 'w-full animate-pulse rounded-xl bg-fg/[0.04]';
 const RegisterBatchForm = dynamic(() => import('@/components/forms/RegisterBatchForm').then(mod => mod.RegisterBatchForm), {
@@ -205,7 +206,39 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
   const alertCount = stats.alerts.length + stats.lowFeedItems.length;
 
   return (
-    <div className="mx-auto max-w-[1600px] space-y-6 pb-12">
+    <>
+    {/* Phone layout (Quiet Ledger) for managers and owners without the executive dashboard. Desktop below is unchanged. */}
+    <div className="md:hidden">
+      <MobileFarmOverview
+        stats={stats}
+        epc={epc}
+        can={can}
+        onRegister={() => setIsRegisterModalOpen(true)}
+        units={stats.activeBatches.map((batch: any, index: number) => {
+          const progress = getGrowthProgress(batch.hatchDate, batch.breed);
+          return {
+            key: batch.id,
+            numericId: batch.numericId,
+            name: batch.batchName || `Unit ${index + 1}`,
+            type: String(batch.type),
+            breed: batch.breed,
+            quantity: batch.quantity || 0,
+            hatchDate: batch.hatchDate,
+            houseNumber: batch.houseNumber,
+            days: progress.days,
+            percent: progress.percent,
+          };
+        })}
+        finance={
+          can('canViewFinance') ? (
+            <Suspense fallback={<div className={`h-40 ${skeleton}`} />}>
+              <FinancialOverview data={summary} currency={currency} />
+            </Suspense>
+          ) : null
+        }
+      />
+    </div>
+    <div className="mx-auto hidden max-w-[1600px] space-y-6 pb-12 md:block">
       <header className="flex flex-col items-start justify-between gap-4 px-1 sm:flex-row sm:items-end">
         <div>
           <h1 className={g.title}>Farm overview</h1>
@@ -383,9 +416,10 @@ export function DashboardContent({ stats, houses, summary, role, subscriptionTie
         </>
       )}
 
+    </div>
       <Dialog isOpen={isRegisterModalOpen} onOpenChange={setIsRegisterModalOpen} title="Add a flock">
         <RegisterBatchForm houses={houses} onSuccess={() => setIsRegisterModalOpen(false)} />
       </Dialog>
-    </div>
+    </>
   );
 }

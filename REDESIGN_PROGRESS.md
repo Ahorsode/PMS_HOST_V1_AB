@@ -30,6 +30,7 @@ look. Each board lands on its own `redesign/<screen>` branch, one commit per PDF
 | Audit log | Audit-Redesign.pdf (2 pages) | `redesign/audit` | `admin/logs/MobileAuditLog.tsx`; restore handlers and the deleted-record dialog are shared |
 | Team | Team-Redesign.pdf (2 pages) | `redesign/team` | `team/MobileTeam.tsx`; invite, role, pause, reset, code and remove reuse TeamView's handlers |
 | Worker dashboard | Workers-Dashboard-Redesign.pdf (2 pages) | `redesign/workers-dashboard` | `components/dashboard/MobileWorkerDashboard.tsx` (workers and cashiers) |
+| Manager dashboard | Managers-Dashboard-Redesign.pdf (2 pages) | `redesign/managers-dashboard` | `components/dashboard/MobileFarmOverview.tsx` (managers, and owners without the executive dashboard) |
 
 ## Shared tokens (`src/app/globals.css`)
 
@@ -115,6 +116,26 @@ Landing page:
   adds staff but drops five modules); a pricing decision, not changed here.
 - The sample card's figures are the page's own illustration (labelled Sample
   data); only the egg count is worked out (crates × 30).
+
+Manager dashboard:
+- The same farm overview is shown to managers and to owners not on the
+  executive (premium) dashboard, so both get the phone layout.
+- Register unit is the one mint button, by the title; it opens the existing
+  Add a flock form. Alerts come first. Four tiles keep their dot and unit;
+  "N overall" reads "N deaths".
+- Egg check: flagged when the last 7 days hold more eggs than one a day per
+  layer bird (active POULTRY_LAYER units), or eggs are logged with no layer
+  unit. "Check counts" opens the egg log; the board's per-day check screen
+  is concept. Local data trips it: 8,943 eggs vs about 7,462 possible.
+- Growth progress shows desktop's plain average and, worked out, the average
+  weighted by birds. Units read "birds" (desktop's "Quantity (kg)" is the
+  species weight unit, not a head count; desktop unchanged).
+- Mortality: the rate (0.11% locally) and the logged deaths come from
+  different sums, as noted for Reports; shown as given.
+- The finance summary card (FinancialOverview) is kept on phones for those
+  who can view finance (added, not on board).
+- Feed this week still says "bags" (feed logs mix bags and kg, noted under
+  Feed).
 
 Worker dashboard:
 - Actions sit in short groups: Log (feed, eggs, deaths), Care (isolate,
